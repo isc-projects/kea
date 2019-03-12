@@ -53,9 +53,8 @@ class CqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
-        destroyCqlSchema(false, true);
-        createCqlSchema(false, true);
+        // Ensure we have the proper schema with no transient data.
+        createCqlSchema();
 
         // Connect to the database
         try {
@@ -83,7 +82,8 @@ public:
         }
         HostMgr::delAllBackends();
         hdsptr_.reset();
-        destroyCqlSchema(false, true);
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroyCqlSchema();
     }
 
     /// @brief Constructor
@@ -187,9 +187,8 @@ public:
 
 TEST(CqlHostDataSource, OpenDatabase) {
 
-    // Schema needs to be created for the test to work.
-    destroyCqlSchema(false, true);
-    createCqlSchema(false, true);
+    // Ensure we have the proper schema with no transient data.
+    createCqlSchema();
 
     // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
@@ -259,7 +258,7 @@ TEST(CqlHostDataSource, OpenDatabase) {
                     NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Tidy up after the test
-    destroyCqlSchema(false, true);
+    destroyCqlSchema();
 }
 
 /// @brief Check conversion functions

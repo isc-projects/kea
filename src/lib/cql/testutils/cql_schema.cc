@@ -31,30 +31,19 @@ validCqlConnectionString() {
                              VALID_PASSWORD));
 }
 
-bool
-softWipeEnabled() {
-    const char* const env = getenv("KEA_TEST_CASSANDRA_WIPE");
-    if (env && (std::string(env) == std::string("soft"))) {
-        return (true);
-    }
-
-    return (false);
-}
-
 void
-destroyCqlSchema(bool force_wipe, bool show_err) {
-    if (force_wipe || !softWipeEnabled()) {
-        // Do full wipe
+destroyCqlSchema(bool show_err, bool force) {
+    // If force is true or wipeCqlData() fails, destory the schema.
+    if (force || (!softWipeEnabled()) || wipeCqlData(show_err)) {
         runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_drop.cql", show_err);
-    } else {
-        // do soft wipe (just remove the data, not the structures)
-        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/soft_wipe.cql", show_err);
     }
 }
 
 void
-createCqlSchema(bool force_wipe, bool show_err) {
-    if (force_wipe || !softWipeEnabled()) {
+createCqlSchema(bool show_err, bool force) {
+    // If force is true or wipeCqlData() fails, recreate the schema.
+    if (force || (!softWipeEnabled()) || wipeCqlData(show_err)) {
+        destroyCqlSchema(show_err, true);
         runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_create.cql", show_err);
     }
 }
@@ -64,7 +53,7 @@ runCqlScript(const std::string& path,
              const std::string& script_name,
              bool show_err) {
     std::ostringstream cmd;
-    cmd << "cqlsh -u keatest -p keatest -k keatest";
+    cmd << "cqlsh -u keatest -p keatest -k keatest --request-timeout=6000";
     if (!show_err) {
         cmd << " 2>/dev/null ";
     }
@@ -82,6 +71,28 @@ runCqlScript(const std::string& path,
         std::cerr << "runCqlSchema failed:" << cmd.str() << std::endl;
         isc_throw(Unexpected, "runCqlSchema failed:" << cmd.str());
     }
+}
+
+bool wipeCqlData(bool show_err) {
+    std::ostringstream cmd;
+    cmd << "sh " << DATABASE_SCRIPTS_DIR << "/";
+
+    std::ostringstream version;
+    version << CQL_SCHEMA_VERSION_MAJOR  << "." << CQL_SCHEMA_VERSION_MINOR;
+
+    cmd << "cql/wipe_data.sh" << " " << version.str()
+        << " -u keatest -p keatest -k keatest --request-timeout=6000";
+
+    if (!show_err) {
+        cmd << " 2>/dev/null ";
+    }
+
+    int retval = ::system(cmd.str().c_str());
+    if (retval) {
+        std::cerr << "wipeCqlData failed:[" << cmd.str() << "]" << std::endl;
+    }
+
+    return(retval);
 }
 
 }  // namespace test

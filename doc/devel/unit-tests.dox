@@ -44,6 +44,20 @@ The following environment variable can affect the unit tests:
   under /tmp folder. KEA_SOCKET_TEST_DIR can be specified to instruct
   unit-tests to use a different directory. It must not end with slash.
 
+- KEA_TEST_DB_WIPE_DATA_ONLY - Unit tests which use a Kea unit test
+  database take steps to ensure they are starting with an empty database
+  of the correct schema version.  The first step taken is to simply
+  delete the transient data (such as leases, reservations, etc..), provided
+  the schema exists and is the expected version.  If the schema does not
+  exist, is not the expected version, or for some reason the data wipe fails,
+  the schema will be dropped and recreated. Setting this value to "false"
+  will cause the test setup logic to always drop and create the database
+  schema. The default value is "true". 
+  (Currently, this is only supported by MySQL and CQL).
+
+@note Setting KEA_TEST_DB_WIPE_DATA_ONLY to false may dramatically 
+increase the time it takes each unit test to execute. 
+
 @section unitTestsDatabaseConfig Databases Configuration for Unit Tests
 
   With the use of databases requiring separate authorisation, there are

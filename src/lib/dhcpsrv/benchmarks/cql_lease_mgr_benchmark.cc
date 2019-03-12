@@ -36,8 +36,8 @@ public:
     ///
     /// It cleans up schema and recreates tables, then instantiates LeaseMgr
     void SetUp(::benchmark::State const&) override {
-        destroyCqlSchema(false, true);
-        createCqlSchema(false, true);
+        // Ensure we have the proper schema with no transient data.
+        createCqlSchema();
         try {
             LeaseMgrFactory::destroy();
             LeaseMgrFactory::create(validCqlConnectionString());
@@ -58,7 +58,8 @@ public:
                  << endl;
         }
         LeaseMgrFactory::destroy();
-        destroyCqlSchema(false, true);
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroyCqlSchema();
     }
 };
 

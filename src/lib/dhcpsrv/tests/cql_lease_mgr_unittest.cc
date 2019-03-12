@@ -55,9 +55,8 @@ class CqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
-        destroyCqlSchema(false, true);
-        createCqlSchema(false, true);
+        // Ensure we have the proper schema with no transient data.
+        createCqlSchema();
 
         // Connect to the database
         try {
@@ -82,7 +81,8 @@ public:
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         LeaseMgrFactory::destroy();
-        destroyCqlSchema(false, true);
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroyCqlSchema();
     }
 
     /// @brief Constructor
@@ -341,8 +341,7 @@ public:
 TEST(CqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyCqlSchema(false, true);
-    createCqlSchema(false, true);
+    createCqlSchema();
 
     // Check that lease manager open the database opens correctly and tidy up.
     // If it fails, print the error message.
@@ -445,7 +444,7 @@ TEST(CqlOpenTest, OpenDatabase) {
         CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Tidy up after the test
-    destroyCqlSchema(false, true);
+    destroyCqlSchema();
 }
 
 /// @brief Check the getType() method

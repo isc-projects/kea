@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -649,7 +649,7 @@ public:
     ///
     /// Recreates MySQL schema for a test.
     JSONFileBackendMySQLTest() : JSONFileBackendTest() {
-        destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
     }
 
@@ -657,6 +657,7 @@ public:
     ///
     /// Destroys MySQL schema.
     virtual ~JSONFileBackendMySQLTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyMySQLSchema();
     }
 
