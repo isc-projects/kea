@@ -1,3 +1,13 @@
+1542.	[test]		tmark	
+	MySQL and CQL unit tests will now attempt to wipe the unit test
+	data, rather than the (re)create the schema between each test. 
+	This reduces test execution time appreciably.  The behavior
+	may be overridden by defining environment variable:
+	KEA_TEST_DB_WIPE_DATA_ONLY="false".  This will cause the schema
+	to be recreated before each test but may dramatically increase
+	test execution time.
+	(Gitlab #526,!269, git 7e81d7bea27e919b652351880872aae68ad1b209)
+
 1541.	[bug]		fdupont
 	Empty Relay Agent Information option is no longer sent in server
 	responses.
