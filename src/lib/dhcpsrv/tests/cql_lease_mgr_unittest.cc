@@ -56,7 +56,6 @@ public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
         // Ensure schema is the correct one.
-        destroyCqlSchema(false, true);
         createCqlSchema(false, true);
 
         // Connect to the database
@@ -341,7 +340,6 @@ public:
 TEST(CqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyCqlSchema(false, true);
     createCqlSchema(false, true);
 
     // Check that lease manager open the database opens correctly and tidy up.

@@ -22,35 +22,52 @@ extern const char* CQL_VALID_TYPE;
 /// @return valid CQL connection string.
 std::string validCqlConnectionString();
 
-/// @brief Clear everything from the database
+/// @brief Clear the unit test database
 ///
-/// Submits the current schema drop script:
+/// In order to reduce test execution time, this function
+/// defaults to first attempting to delete transient data
+/// from the database by calling @c wipeCqlData.  If that
+/// function fails it will then attempt to destroy the database
+/// schema by running the SQL script:
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/cql/dhcpdb_drop.cql
 ///
-/// to the unit test CQL database. If the script fails, the invoking test
-/// will fail. The output of stderr is suppressed unless the parameter,
-/// show_err is true.
+/// The default behavior of wiping the data only may be overridden
+/// in one of two ways:
 ///
-/// @param force_wipe forces wipe of the database, even if
-/// KEA_TEST_CASSANDRA_WIPE is set.
+/// -# Setting the force parameter to true
+/// -# Defining the environment variable:
+///    KEA_TEST_DB_WIPE_DATA_ONLY="false"
+///
+/// @param force if true, the function will skip deleting the data and
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void destroyCqlSchema(bool force_wipe, bool show_err = false);
+/// destroy the schema.
+void destroyCqlSchema(bool force, bool show_err = false);
 
-/// @brief Create the CQL Schema
+/// @brief Create the unit test Cql Schema
 ///
-/// Submits the current schema creation script:
+/// Ensures the unit test database is a empty and version-correct.
+/// Unless, the force parameter is true, it will first attempt
+/// to wipe the data from the database by calling @c wipeCqlData.
+/// If this call succeeds the function returns, otherwise it will
+/// will call @c destroyCqlSchema to forcibly remove the
+/// existing schema and then submits the SQL script:
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/cql/dhcpdb_create.cql
 ///
-/// to the unit test CQL database. If the script fails, the invoking test
-/// will fail. The output of stderr is suppressed unless the parameter,
-/// show_err is true.
+/// to the unit test Cql database.
 ///
-/// @param force_wipe forces wipe of the database, even if
-/// KEA_TEST_CASSANDRA_WIPE is set.
+/// The default behavior of wiping the data only may be overridden
+/// in one of two ways:
+///
+/// -# Setting the force parameter to true
+/// -# Defining the environment variable:
+///    KEA_TEST_DB_WIPE_DATA_ONLY="false"
+///
+/// @param force flag when true, the function will recreate the database
+/// schema.
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void createCqlSchema(bool force_wipe, bool show_err = false);
+void createCqlSchema(bool force, bool show_err = false);
 
 /// @brief Run a CQL script against the CQL unit test database
 ///
@@ -65,6 +82,22 @@ void createCqlSchema(bool force_wipe, bool show_err = false);
 /// @throw Unexpected when the script returns an error.
 void runCqlScript(const std::string& path, const std::string& script_name,
                     bool show_err);
+
+/// @brief Attempts to wipe data from the Cql unit test database
+///
+/// Runs the shell script
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/cql/wipe_data.sh
+///
+/// This will fail if there is no schema, if the existing schema
+/// version is incorrect (i.e. does not match CQL_SCHEMA_VERSION_MAJOR
+/// and CQL_SCHEMA_VERSION_MINOR), or a SQL error occurs.  Otherwise,
+/// the script is should delete all transient data, leaving intact
+/// reference tables.
+///
+/// @param show_err flag which governs whether or not stderr is suppressed.
+bool wipeCqlData(bool show_err);
+
 };
 };
 };

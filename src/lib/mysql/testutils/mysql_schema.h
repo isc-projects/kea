@@ -24,28 +24,31 @@ std::string validMySQLConnectionString();
 
 /// @brief Clear the unit test database
 ///
-/// Either calls @c wipeData to wipe the data from the
-/// database /or destroys the database itself by submitting the
-/// SQL script:
+/// In order to reduce test execution time, this function
+/// defaults to first attempting to delete transient data
+/// from the database by calling @c wipeMySQLData.  If that
+/// function fails it will then attempt to destroy the database
+/// schema by running the SQL script:
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
 ///
-/// If wipeData() is called and fails, it will destroy
-/// the schema. If the schema destruction fails, the
-/// invoking test should fail.
+/// The default behavior of wiping the data only may be overridden
+/// in one of two ways:
 ///
-/// The output stderr is suppressed unless the parameter,
-/// show_err is true.
+/// -# Setting the force parameter to true
+/// -# Defining the environment variable:
+///    KEA_TEST_DB_WIPE_DATA_ONLY="false"
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
-/// @param force if true, the function will simply destroy the schema.
+/// @param force if true, the function will skip deleting the data and
+/// destroy the schema.
 void destroyMySQLSchema(bool show_err = false, bool force = false);
 
 /// @brief Create the unit test MySQL Schema
 ///
 /// Ensures the unit test database is a empty and version-correct.
 /// Unless, the force parameter is true, it will first attempt
-/// to wipe the data from the database by calling @c wipeData.
+/// to wipe the data from the database by calling @c wipeMySQLData.
 /// If this call succeeds the function returns, otherwise it will
 /// will call @c destroyMySQLSchema to forcibly remove the
 /// existing schema and then submits the SQL script:
@@ -53,6 +56,13 @@ void destroyMySQLSchema(bool show_err = false, bool force = false);
 ///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
 ///
 /// to the unit test MySQL database.
+///
+/// The default behavior of wiping the data only may be overridden
+/// in one of two ways:
+///
+/// -# Setting the force parameter to true
+/// -# Defining the environment variable:
+///    KEA_TEST_DB_WIPE_DATA_ONLY="false"
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
 /// @param force flag when true, the function will recreate the database
@@ -73,7 +83,7 @@ void createMySQLSchema(bool show_err = false, bool force = false);
 /// reference tables.
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
-bool wipeData(bool show_err = false);
+bool wipeMySQLData(bool show_err = false);
 
 /// @brief Run a MySQL SQL script against the MySQL unit test database
 ///
