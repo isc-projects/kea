@@ -41,8 +41,7 @@ class PgSqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
-        destroyPgSQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createPgSQLSchema();
 
         // Connect to the database
@@ -70,6 +69,7 @@ public:
         }
         HostMgr::delAllBackends();
         hdsptr_.reset();
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyPgSQLSchema();
     }
 
