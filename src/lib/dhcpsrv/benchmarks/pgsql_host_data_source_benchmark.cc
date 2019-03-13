@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -38,8 +38,8 @@ public:
     ///
     /// It cleans up schema and recreates tables, then instantiates HostMgr
     void SetUp(::benchmark::State const&) override {
-        destroyPgSQLSchema(false);
-        createPgSQLSchema(false);
+        // Ensure we have the proper schema with no transient data.
+        createPgSQLSchema();
         try {
             HostDataSourceFactory::destroy();
             HostDataSourceFactory::create(validPgSQLConnectionString());
@@ -60,7 +60,8 @@ public:
                  << endl;
         }
         HostDataSourceFactory::destroy();
-        destroyPgSQLSchema(false);
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroyPgSQLSchema();
     }
 };
 
