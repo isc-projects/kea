@@ -2234,7 +2234,7 @@ public:
     ///
     /// Recreates PgSQL schema for a test.
     DORAPgSQLTest() : DORATest() {
-        db::test::destroyPgSQLSchema();
+        // Ensure we have the proper schema with no transient data.
         db::test::createPgSQLSchema();
     }
 
@@ -2242,6 +2242,7 @@ public:
     ///
     /// Destroys PgSQL schema.
     virtual ~DORAPgSQLTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         db::test::destroyPgSQLSchema();
     }
 };

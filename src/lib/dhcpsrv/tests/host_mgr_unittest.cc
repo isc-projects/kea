@@ -864,7 +864,7 @@ public:
     /// wipe out any prior instance
     virtual void SetUp() {
         DatabaseConnection::db_lost_callback = 0;
-        destroySchema();
+        // Ensure we have the proper schema with no transient data.
         createSchema();
         // Wipe out any pre-existing mgr
         HostMgr::create();
@@ -876,6 +876,7 @@ public:
     /// we created.
     virtual void TearDown() {
         DatabaseConnection::db_lost_callback = 0;
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroySchema();
     }
 
@@ -1001,10 +1002,12 @@ MySQLHostMgrTest::TearDown() {
 class MySQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         db::test::destroyMySQLSchema();
     }
 
     virtual void createSchema() {
+        // Ensure we have the proper schema with no transient data.
         db::test::createMySQLSchema();
     }
 
@@ -1095,8 +1098,7 @@ void
 PostgreSQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
-    // Ensure schema is the correct one.
-    db::test::destroyPgSQLSchema();
+    // Ensure we have the proper schema with no transient data.
     db::test::createPgSQLSchema();
 
     // Connect to the database
@@ -1116,6 +1118,7 @@ void
 PostgreSQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("postgresql");
+    // If data wipe enabled, delete transient data otherwise destroy the schema
     db::test::destroyPgSQLSchema();
 }
 
@@ -1124,10 +1127,12 @@ PostgreSQLHostMgrTest::TearDown() {
 class PostgreSQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         db::test::destroyPgSQLSchema();
     }
 
     virtual void createSchema() {
+        // Ensure we have the proper schema with no transient data.
         db::test::createPgSQLSchema();
     }
 

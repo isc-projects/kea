@@ -53,7 +53,6 @@ The following environment variable can affect the unit tests:
   the schema will be dropped and recreated. Setting this value to "false"
   will cause the test setup logic to always drop and create the database
   schema. The default value is "true". 
-  (Currently, this is only supported by MySQL and CQL).
 
 @note Setting KEA_TEST_DB_WIPE_DATA_ONLY to false may dramatically 
 increase the time it takes each unit test to execute. 
