@@ -27,7 +27,7 @@
   },
   "tsig-keys": [],
   "forward-ddns" : {},
-  "reverse-ddns" : {},
+  "reverse-ddns" : {}
 },
 
 // Logging configuration starts here. Kea uses different loggers to log various

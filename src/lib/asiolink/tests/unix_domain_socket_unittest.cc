@@ -10,6 +10,7 @@
 #include <asiolink/unix_domain_socket.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <gtest/gtest.h>
+#include <testutils/sandbox.h>
 #include <array>
 #include <cstdio>
 #include <cstdlib>
@@ -20,15 +21,13 @@ using namespace isc::asiolink;
 
 namespace  {
 
-/// @brief Test unix socket file name.
-const std::string TEST_SOCKET = "test-socket";
-
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
 
 /// @brief Test fixture class for @ref UnixDomainSocket class.
 class UnixDomainSocketTest : public ::testing::Test {
 public:
+    isc::test::Sandbox sandbox;
 
     /// @brief Constructor.
     ///
@@ -55,17 +54,15 @@ public:
     /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
-    static std::string unixSocketFilePath() {
-        std::ostringstream s;
+    std::string unixSocketFilePath() {
+        std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            s << std::string(env);
+            socket_path = std::string(env) + "/test-socket";
         } else {
-            s << TEST_DATA_BUILDDIR;
+            socket_path = sandbox.join("test-socket");
         }
-
-        s << "/" << TEST_SOCKET;
-        return (s.str());
+        return (socket_path);
     }
 
     /// @brief Removes unix socket descriptor.

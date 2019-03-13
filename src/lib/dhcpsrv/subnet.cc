@@ -247,7 +247,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    : Subnet(prefix, length, id), Network4(), siaddr_() {
+    : Subnet(prefix, length, id), Network4() {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
@@ -307,33 +307,6 @@ Subnet4::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
     }
 
     return (Network4::clientSupported(client_classes));
-}
-
-void Subnet4::setSiaddr(const Optional<IOAddress>& siaddr) {
-    if (!siaddr.get().isV4()) {
-        isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
-                  << siaddr);
-    }
-    siaddr_ = siaddr;
-}
-
-Optional<IOAddress> Subnet4::getSiaddr() const {
-    return (siaddr_);
-}
-
-void Subnet4::setSname(const Optional<std::string>& sname) {
-    sname_ = sname;
-}
-
-const Optional<std::string>& Subnet4::getSname() const {
-    return (sname_);
-}
-void Subnet4::setFilename(const Optional<std::string>& filename) {
-    filename_ = filename;
-}
-
-const Optional<std::string>& Subnet4::getFilename() const {
-    return (filename_);
 }
 
 const PoolCollection& Subnet::getPools(Lease::Type type) const {
@@ -715,15 +688,6 @@ Subnet4::toElement() const {
     // Set DHCP4o6
     const Cfg4o6& d4o6 = get4o6();
     isc::data::merge(map, d4o6.toElement());
-
-    // Set next-server
-    map->set("next-server", Element::create(getSiaddr().get().toText()));
-
-    // Set server-hostname
-    map->set("server-hostname", Element::create(getSname()));
-
-    // Set boot-file-name
-    map->set("boot-file-name",Element::create(getFilename()));
 
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_V4);
