@@ -1,3 +1,10 @@
+1544.	[build]		fdupont
+	Message compiler is no longer needed during compilation and
+	generated message files are part of the distribution. They can be
+	regenerated using --enable-generate-messages switch passed to
+	configure script.
+	(Gitlab #441,!233, git 499b7c36454bcac2553f7bf304d48d7d80f4d4ca)
+
 1543.	[bug]		fdupont
 	Corrected behavior of the remote-subnet4-set so as it is now
 	possible to set the subnet using both an ID or a subnet prefix.
