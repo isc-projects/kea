@@ -1,3 +1,8 @@
+1543.	[bug]		fdupont
+	Corrected behavior of the remote-subnet4-set so as it is now
+	possible to set the subnet using both an ID or a subnet prefix.
+	(Gitlab #481,!251, git 9ef651950fde16e258e4b03dd21bbf6dd07d5231)
+
 1542.	[test]		tmark	
 	MySQL and CQL unit tests will now attempt to wipe the unit test
 	data, rather than the (re)create the schema between each test. 
