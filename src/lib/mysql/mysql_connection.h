@@ -478,7 +478,8 @@ public:
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
-            if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+            if ((mysql_errno(mysql_) == ER_DUP_ENTRY) ||
+                (mysql_errno(mysql_) == ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO)) {
                 isc_throw(DuplicateEntry, "Database duplicate entry error");
             }
             checkError(status, index, "unable to execute");
