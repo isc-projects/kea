@@ -1330,7 +1330,7 @@ if test "x${BOOST_LIBS}" = "x"; then
 fi
 
 # Check for functions that are not available on all platforms
-AC_CHECK_FUNCS([pselect srandomdev])
+AC_CHECK_FUNCS([pselect])
 
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
