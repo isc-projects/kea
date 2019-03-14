@@ -1664,7 +1664,7 @@ It is merely echoed by the server.
 <row><entry>pana-agent</entry><entry>136</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>v4-lost</entry><entry>137</entry><entry>fqdn</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>capwap-ac-v4</entry><entry>138</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
-<row><entry>sip-ua-cs-domains</entry><entry>142</entry><entry>fqdn</entry><entry>true</entry><entry>false</entry></row>
+<row><entry>sip-ua-cs-domains</entry><entry>141</entry><entry>fqdn</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>rdnss-selection</entry><entry>146</entry><entry>record (uint8, ipv4-address, ipv4-address, fqdn)</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>v4-portparams</entry><entry>159</entry><entry>record (uint8, psid)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>v4-captive-portal</entry><entry>160</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
