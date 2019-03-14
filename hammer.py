@@ -28,7 +28,6 @@ import xml.etree.ElementTree as ET
 # TODO:
 # - add docker provider
 #   https://developer.fedoraproject.org/tools/docker/docker-installation.html
-# - add CCACHE support
 # - improve building from tarball
 # - improve native-pkg builds
 # - avoid using network if possible (e.g. check first if pkgs are installed)
@@ -82,6 +81,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.synced_folder '.', '/vagrant', disabled: true
+  config.vm.synced_folder '{ccache_dir}', '/ccache'
 end
 """
 
@@ -294,7 +294,7 @@ class VagrantEnv(object):
     """
 
     def __init__(self, provider, system, revision, features, image_template_variant,
-                 dry_run, quiet=False, check_times=False):
+                 dry_run, quiet=False, check_times=False, ccache_dir=None):
         """VagrantEnv initializer.
 
         :param str provider: indicate backend type: virtualbox or lxc
@@ -349,8 +349,15 @@ class VagrantEnv(object):
         crc = binascii.crc32(self.vagrant_dir.encode())
         self.name = "hmr-%s-%s-kea-srv-%08d" % (system, revision.replace('.', '-'), crc)
 
+        if ccache_dir is None:
+            ccache_dir = '/'
+            self.ccache_enabled = False
+        else:
+            self.ccache_enabled = True
+
         vagrantfile = vagrantfile_tpl.format(image_tpl=image_tpl,
-                                             name=self.name)
+                                             name=self.name,
+                                             ccache_dir=ccache_dir)
 
         with open(vagrantfile_path, "w") as f:
             f.write(vagrantfile)
@@ -450,6 +457,8 @@ class VagrantEnv(object):
             bld_cmd += ' ' + self.nofeatures_arg
         if self.check_times:
             bld_cmd += ' -i'
+        if self.ccache_enabled:
+            bld_cmd += ' --ccache-dir /ccache'
         timeout = _calculate_build_timeout(self.features) + 5 * 60
         self.execute(bld_cmd, timeout=timeout, log_file_path=log_file_path, quiet=self.quiet)  # timeout: 40 minutes
 
@@ -555,11 +564,12 @@ class VagrantEnv(object):
         log.info('Prepare log file stored to %s', log_file_path)
 
         # run prepare-system inside Vagrant system
-        cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times}"
+        cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times} {ccache}"
         cmd = cmd.format(features=self.features_arg,
                          nofeatures=self.nofeatures_arg,
                          python=self.python,
-                         check_times='-i' if self.check_times else '')
+                         check_times='-i' if self.check_times else '',
+                         ccache='--ccache-dir /ccache' if self.ccache_enabled else '')
         self.execute(cmd, timeout=40 * 60, log_file_path=log_file_path, quiet=self.quiet)
 
 
@@ -735,6 +745,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'ccache' in features:
+            packages.extend(['ccache'])
+
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
         if 'unittest' in features:
@@ -764,6 +777,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'ccache' in features:
+            packages.extend(['ccache'])
+
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'unittest' in features:
@@ -790,6 +806,9 @@ def prepare_system_local(features, check_times):
 
         if 'radius' in features:
             packages.extend(['git'])
+
+        if 'ccache' in features:
+            packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
@@ -849,6 +868,9 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
+        if 'ccache' in features:
+            packages.extend(['ccache'])
+
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
         if 'cql' in features:
@@ -879,6 +901,9 @@ def prepare_system_local(features, check_times):
 
         if 'radius' in features:
             packages.extend(['git'])
+
+        if 'ccache' in features:
+            packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
@@ -927,9 +952,10 @@ def prepare_system_local(features, check_times):
 
 
 def prepare_system_in_vagrant(provider, system, revision, features, dry_run, check_times,
-                              clean_start):
+                              clean_start, ccache_dir=None):
     """Prepare specified system in Vagrant according to specified features."""
-    ve = VagrantEnv(provider, system, revision, features, 'kea', dry_run, check_times=check_times)
+    ve = VagrantEnv(provider, system, revision, features, 'kea', dry_run, check_times=check_times,
+                    ccache_dir=ccache_dir)
     if clean_start:
         ve.destroy()
     ve.up()
@@ -945,7 +971,8 @@ def _calculate_build_timeout(features):
     return timeout
 
 
-def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs, dry_run):
+def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs, dry_run,
+                               ccache_dir):
     if tarball_path:
         # unpack tarball with sources
         execute('sudo rm -rf kea-src')
@@ -1003,6 +1030,14 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     else:
         cpus = jobs
 
+    # enable ccache if requested
+    if 'ccache' in features or ccache_dir is not None:
+        if system in ['debian', 'ubuntu']:
+            ccache_bin_path = '/usr/lib/ccache/'
+        else:
+            ccache_bin_path = '/usr/lib64/ccache'
+        env['PATH'] = ccache_bin_path + ':' + env['PATH']
+        env['CCACHE_DIR'] = ccache_dir
 
     # do build
     timeout = _calculate_build_timeout(features)
@@ -1119,7 +1154,7 @@ def _build_native_pkg(system, features, tarball_path, env, check_times, dry_run)
         raise NotImplementedError
 
 
-def build_local(features, tarball_path, check_times, jobs, dry_run):
+def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir):
     """Prepare local system for Kea development based on requested features.
 
     If tarball_path is provided then instead of Kea sources from current directory
@@ -1138,13 +1173,14 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
     if 'native-pkg' in features:
         _build_native_pkg(system, features, tarball_path, env, check_times, dry_run)
     else:
-        _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs, dry_run)
+        _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs,
+                                   dry_run, ccache_dir)
 
     execute('df -h', dry_run=dry_run)
 
 
 def build_in_vagrant(provider, system, revision, features, leave_system, tarball_path,
-                     dry_run, quiet, clean_start, check_times, jobs):
+                     dry_run, quiet, clean_start, check_times, jobs, ccache_dir):
     """Build Kea via Vagrant in specified system with specified features."""
     log.info('')
     log.info(">>> Building %s, %s, %s", provider, system, revision)
@@ -1157,7 +1193,8 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
     total = 0
     passed = 0
     try:
-        ve = VagrantEnv(provider, system, revision, features, 'kea', dry_run, quiet, check_times)
+        ve = VagrantEnv(provider, system, revision, features, 'kea', dry_run, quiet, check_times,
+                        ccache_dir)
         if clean_start:
             ve.destroy()
         ve.up()
@@ -1271,7 +1308,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
 ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg',
-                'radius', 'shell', 'forge', 'perfdhcp']
+                'radius', 'shell', 'forge', 'perfdhcp', 'ccache']
 
 
 def parse_args():
@@ -1363,11 +1400,15 @@ def parse_args():
     parser.add_argument('-t', '--from-tarball', metavar='TARBALL_PATH',
                         help='Instead of building sources in current folder use provided tarball '
                         'package (e.g. tar.gz).')
+    parser.add_argument('--ccache-dir', default=None,
+                        help='Path to CCache directory on host system.')
     parser = subparsers.add_parser('prepare-system',
                                    help="Prepare system for doing Kea development i.e. install all required "
                                    "dependencies and pre-configure the system. build command always first calls "
                                    "prepare-system internally.",
                                    parents=[parent_parser1, parent_parser2])
+    parser.add_argument('--ccache-dir', default=None,
+                        help='Path to CCache directory on host system.')
     parser = subparsers.add_parser('ssh', help="SSH to indicated system.",
                                    formatter_class=argparse.RawDescriptionHelpFormatter,
                                    description="Allows getting into the system using SSH. If the system is "
@@ -1440,6 +1481,8 @@ def _get_features(args):
         features = features.union(DEFAULT_FEATURES)
     nofeatures = set(args.without)
     features = features.difference(nofeatures)
+    if hasattr(args, 'ccache_dir') and args.ccache_dir:
+        features.add('ccache')
     return features
 
 
@@ -1492,6 +1535,17 @@ def _check_system_revision(system, revision):
         sys.exit(1)
 
 
+def _prepare_ccache_dir(ccache_dir, system, revision):
+    if not ccache_dir:
+        return None
+
+    ccache_dir = os.path.join(ccache_dir, "%s-%s" % (system, revision))
+    ccache_dir = os.path.abspath(ccache_dir)
+    if not os.path.exists(ccache_dir):
+        os.makedirs(ccache_dir)
+    return ccache_dir
+
+
 def prepare_system_cmd(args):
     """Check command args and run the prepare-system command."""
     if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
@@ -1509,8 +1563,11 @@ def prepare_system_cmd(args):
         prepare_system_local(features, args.check_times)
         return
 
+    ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
+
     prepare_system_in_vagrant(args.provider, args.system, args.revision, features,
-                              args.dry_run, args.check_times, args.clean_start)
+                              args.dry_run, args.check_times, args.clean_start,
+                              ccache_dir)
 
 
 def build_cmd(args):
@@ -1518,7 +1575,8 @@ def build_cmd(args):
     features = _get_features(args)
     log.info('Enabled features: %s', ' '.join(features))
     if args.provider == 'local':
-        build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run)
+        build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run,
+                    args.ccache_dir)
         return
 
     _check_system_revision(args.system, args.revision)
@@ -1554,8 +1612,10 @@ def build_cmd(args):
 
     fail = False
     for provider, system, revision in plan:
+        ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
         result = build_in_vagrant(provider, system, revision, features, args.leave_system, args.from_tarball,
-                                  args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs))
+                                  args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs),
+                                  ccache_dir)
         results[(provider, system, revision)] = result
 
         error = result[1]
