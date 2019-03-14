@@ -19,8 +19,10 @@ CfgSharedNetworks4::hasNetworkWithServerId(const IOAddress& server_id) const {
     return (network_it != index.cend());
 }
 
+
+
 void
-CfgSharedNetworks4::merge(CfgSharedNetworks4& other) {
+CfgSharedNetworks4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4& other) {
     auto& index = networks_.get<SharedNetworkNameIndexTag>();
 
     // Iterate over the subnets to be merged. They will replace the existing
@@ -58,6 +60,9 @@ CfgSharedNetworks4::merge(CfgSharedNetworks4& other) {
             // Now we discard the existing copy of the network.
             index.erase(existing_network);
         }
+
+        // Create the network's options based on the given definitions.
+        (*other_network)->getCfgOption()->createOptions(cfg_def);
 
         // Add the new/updated nework.
         networks_.push_back(*other_network);

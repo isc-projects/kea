@@ -349,8 +349,12 @@ public:
     /// not be modified after the call to @c merge because it may affect the
     /// merged configuration.
     ///
+    /// @param cfg_def set of of user-defined option definitions to use
+    /// when creating option instances.
     /// @param option configurations to merge with.
     void merge(CfgOptionDefPtr cfg_def, CfgOption& other);
+
+    void createOptions(CfgOptionDefPtr cfg_def);
 
     /// @brief Creates an option descriptor's option based on a set of option defs
     ///

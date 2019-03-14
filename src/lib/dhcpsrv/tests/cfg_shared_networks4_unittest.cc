@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <exceptions/exceptions.h>
+#include <dhcp/option_string.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <testutils/test_to_element.h>
 #include <asiolink/io_address.h>
@@ -168,6 +169,11 @@ TEST(CfgSharedNetworks4Test, unparse) {
 
 // This test verifies that shared-network configurations are properly merged.
 TEST(CfgSharedNetworks4Test, mergeNetworks) {
+    // Create custom options dictionary for testing merge. We're keeping it
+    // simple because they are more rigorous tests elsewhere.
+    CfgOptionDefPtr cfg_def(new CfgOptionDef());
+    cfg_def->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "string"))), "isc");
+
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
                                    26, 1, 2, 100, SubnetID(1)));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
@@ -201,12 +207,11 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
 
     // Merge in an "empty" config. Should have the original config, still intact.
     CfgSharedNetworks4 cfg_from;
-    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+    ASSERT_NO_THROW(cfg_to.merge(cfg_def, cfg_from));
 
     ASSERT_EQ(3, cfg_to.getAll()->size());
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(100),
                                                std::vector<SubnetID>{SubnetID(1), SubnetID(2)}));
-
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),
                                                std::vector<SubnetID>()));
 
@@ -217,6 +222,15 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     // We'll double the valid time and add subnet4 to it
     SharedNetwork4Ptr network1b(new SharedNetwork4("network1"));
     network1b->setValid(Triplet<uint32_t>(200));
+
+    // Now let's a add generic option 1 to network1b.
+    std::string value("Yay!");
+    OptionPtr option(new Option(Option::V4, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(network1b->getCfgOption()->add(option, false, "isc"));
+    // Verify that our option is a generic option.
+    EXPECT_EQ("type=001, len=004: 59:61:79:21", option->toText());
+
     ASSERT_NO_THROW(network1b->add(subnet4));
 
     // Network2 we will not touch.
@@ -230,7 +244,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     ASSERT_NO_THROW(cfg_from.add(network1b));
     ASSERT_NO_THROW(cfg_from.add(network3b));
 
-    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+    ASSERT_NO_THROW(cfg_to.merge(cfg_def, cfg_from));
 
     // Should still have 3 networks.
 
@@ -240,6 +254,12 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     ASSERT_EQ(3, cfg_to.getAll()->size());
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(200),
                                                std::vector<SubnetID>{SubnetID(1), SubnetID(2)}));
+
+    // Make sure we have option 1 and that it has been replaced with a string option.
+    auto network = cfg_to.getByName("network1");
+    auto desc = network->getCfgOption()->get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    EXPECT_EQ("type=001, len=004: \"Yay!\" (string)", desc.option_->toText());
 
     // No changes to network2.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),

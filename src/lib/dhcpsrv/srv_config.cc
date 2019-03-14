@@ -182,15 +182,17 @@ SrvConfig::merge4(SrvConfig& other) {
     // Merge globals.
     mergeGlobals4(other);
 
-    // Merge option defs
+    // Merge option defs. We need to do this next so we
+    // pass these into subsequent merges so option instances
+    // at each level can be created based on the merged
+    // definitions.
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
-    // Merge options.  Note that we pass in the merged definitions
-    // so we can validate options against them.
+    // Merge options.  
     cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
 
     // Merge shared networks.
-    cfg_shared_networks4_->merge(*(other.getCfgSharedNetworks4()));
+    cfg_shared_networks4_->merge(cfg_option_def_, *(other.getCfgSharedNetworks4()));
 
     // Merge subnets.
     cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other.getCfgSubnets4()));
