@@ -140,6 +140,7 @@ public:
     /// configuration:
     ///     - All of its associated subnets are moved to the "other" network.
     ///     - The existing network is removed from this configuration.
+    /// - The "other" network's option instances are created.
     /// - The "other" network is added to this configuration.
     ///
     /// @warning The merge operation may affect the @c other configuration.
@@ -148,9 +149,11 @@ public:
     /// not be modified after the call to @c merge because it may affect the
     /// merged configuration.
     ///
+    /// @param cfg_def set of of user-defined option definitions to use
+    /// when creating option instances.
     /// @param other the shared network configuration to be merged into this
     /// configuration.
-    void merge(CfgSharedNetworks4& other);
+    void merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4& other);
 };
 
 /// @brief Pointer to the configuration of IPv4 shared networks.

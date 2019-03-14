@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -350,27 +350,33 @@ TEST_F(CfgOptionTest, validMerge) {
 
     // Create our existing config, that gets merged into.
     OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
+    EXPECT_EQ("type=001, len=001: 01", option->toText());
     ASSERT_NO_THROW(this_cfg.add(option, false, "isc"));
 
     // Add option 3 to "fluff"
     option.reset(new Option(Option::V4, 3, OptionBuffer(1, 0x03)));
+    EXPECT_EQ("type=003, len=001: 03", option->toText());
     ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
     // Add option 4 to "fluff".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x04)));
+    EXPECT_EQ("type=004, len=001: 04", option->toText());
     ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
     // Create our other config that will be merged from.
     // Add Option 1 to "isc",  this should "overwrite" the original.
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x10)));
+    EXPECT_EQ("type=001, len=001: 10", option->toText());
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Add option 2  to "isc".
     option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x20)));
+    EXPECT_EQ("type=002, len=001: 20", option->toText());
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Add option 4 to "isc".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x40)));
+    EXPECT_EQ("type=004, len=001: 40", option->toText());
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Merge source configuration to the destination configuration. The options
@@ -381,32 +387,27 @@ TEST_F(CfgOptionTest, validMerge) {
     // isc:1 should come from "other" config.
     OptionDescriptor desc = this_cfg.get("isc", 1);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(1, desc.option_->getData().size());
-    EXPECT_EQ(0x10, desc.option_->getData()[0]);
+    EXPECT_EQ("type=001, len=001: 16 (uint8)", desc.option_->toText());
 
     // isc:2 should come from "other" config.
     desc = this_cfg.get("isc", 2);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(1, desc.option_->getData().size());
-    EXPECT_EQ(0x20, desc.option_->getData()[0]);
+    EXPECT_EQ("type=002, len=001: 32 (uint8)", desc.option_->toText());
 
     // isc:4 should come from "other" config.
     desc = this_cfg.get("isc", 4);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(1, desc.option_->getData().size());
-    EXPECT_EQ(0x40, desc.option_->getData()[0]);
+    EXPECT_EQ("type=004, len=001: 64 (uint8)", desc.option_->toText());
 
     // fluff:3 should come from "this" config.
     desc = this_cfg.get("fluff", 3);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(1, desc.option_->getData().size());
-    EXPECT_EQ(0x03, desc.option_->getData()[0]);
+    EXPECT_EQ("type=003, len=001: 3 (uint8)", desc.option_->toText());
 
     // fluff:4 should come from "this" config.
     desc = this_cfg.get("fluff", 4);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(1, desc.option_->getData().size());
-    EXPECT_EQ(0x4, desc.option_->getData()[0]);
+    EXPECT_EQ("type=004, len=001: 4 (uint8)", desc.option_->toText());
 }
 
 // This test verifies that attempting to merge options
@@ -508,7 +509,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(opint);
     EXPECT_EQ("type=001, len=001: 119 (uint8)", opint->toText());
 
-    // Now, a user defined array of strings
+    // Now, a user defined array of ints from a formatted value
     option.reset(new Option(Option::V4, 2));
     desc.reset(new OptionDescriptor(option, false, "1,2,3"));
 

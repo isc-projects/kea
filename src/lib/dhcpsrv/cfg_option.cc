@@ -91,16 +91,34 @@ CfgOption::merge(CfgOptionDefPtr cfg_def,  CfgOption& other) {
     // duplicates).
     mergeTo(other);
 
-    // Iterate over all the options in all the spaces and
-    // validate them against the definitions.
-    for (auto space : other.getOptionSpaceNames()) {
-        for (auto opt_desc : *(other.getAll(space))) {
-            createDescriptorOption(cfg_def, space, opt_desc);
-        }
-    }
+    // Create option instances based on the given definitions.
+    other.createOptions(cfg_def);
 
     // Next we copy "other" on top of ourself.
     other.copyTo(*this);
+}
+
+void
+CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
+    // Iterate over all the option descriptors in
+    // all the spaces and instantiate the options
+    // based on the given definitions.
+
+    // Descriptors can only be fetched as copies of
+    // what is in the container.  Since we don't
+    // currently have a replace mechanism, we'll
+    // create a revamped set of descriptors and then
+    // copy them on top of ourself.
+    CfgOption revamped;
+    for (auto space : getOptionSpaceNames()) {
+        for (auto opt_desc : *(getAll(space))) {
+            createDescriptorOption(cfg_def, space, opt_desc);
+            revamped.add(opt_desc, space);
+        }
+    }
+
+    // Copy the updated descriptors over our own.
+    revamped.copyTo(*this);
 }
 
 void
@@ -110,6 +128,7 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
         isc_throw(BadValue,
                   "validateCreateOption: descriptor has no option instance");
     }
+
 
     Option::Universe universe = opt_desc.option_->getUniverse();
     uint16_t code = opt_desc.option_->getType();
@@ -141,16 +160,12 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
                       << "' but no option definition");
         }
 
-        // If there's no definition and no formatted string, we'll 
+        // If there's no definition and no formatted string, we'll
         // settle for the generic option already in the descriptor.
         return;
     }
 
     try {
-
-        std::cout << "def:" << def->getName() << ", code:" << def->getCode()
-                  <<  ", type: " << def->getType() << std::endl;
-
         // Definition found. Let's replace the generic option in
         // the descriptor with one created based on definition's factory.
         if (formatted_value.empty()) {
@@ -164,7 +179,7 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
         }
     } catch (const std::exception& ex) {
             isc_throw(InvalidOperation, "could not create option: " << space << "." << code
-                      << " from data specified, reason: " << ex.what()); 
+                      << " from data specified, reason: " << ex.what());
     }
 }
 
