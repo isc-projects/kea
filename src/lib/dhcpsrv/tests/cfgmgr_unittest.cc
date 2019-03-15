@@ -262,6 +262,7 @@ class CfgMgrTest : public ::testing::Test {
 public:
     CfgMgrTest() {
         // make sure we start with a clean configuration
+        original_datadir_ = CfgMgr::instance().getDataDir();
         clear();
     }
 
@@ -282,6 +283,7 @@ public:
 
     void clear() {
         CfgMgr::instance().setFamily(AF_INET);
+        CfgMgr::instance().setDataDir(original_datadir_);
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
     }
@@ -304,6 +306,10 @@ public:
 
     /// used in client classification (or just empty container for other tests)
     isc::dhcp::ClientClasses classify_;
+
+private:
+    /// to restore it in destructor.
+    string original_datadir_;
 };
 
 // Checks that there is a configuration structure available and that
