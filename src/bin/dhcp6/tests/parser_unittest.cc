@@ -302,7 +302,7 @@ TEST(ParserTest, file) {
 TEST(ParserTest, globalParameters) {
     ConstElementPtr json;
     Parser6Context ctx;
-    string fname = string(CFG_EXAMPLES) + "/" + "all-keys.json";
+    string fname = string(CFG_EXAMPLES) + "/" + "all-keys-current.json";
     EXPECT_NO_THROW(json = ctx.parseFile(fname, Parser6Context::PARSER_DHCP6));
     EXPECT_NO_THROW(json = json->get("Dhcp6"));
     SimpleParser6 parser;

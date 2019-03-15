@@ -292,7 +292,7 @@ TEST(ParserTest, file) {
 TEST(ParserTest, globalParameters) {
     ConstElementPtr json;
     Parser4Context ctx;
-    string fname = string(CFG_EXAMPLES) + "/" + "all-keys.json";
+    string fname = string(CFG_EXAMPLES) + "/" + "all-keys-current.json";
     EXPECT_NO_THROW(json = ctx.parseFile(fname, Parser4Context::PARSER_DHCP4));
     EXPECT_NO_THROW(json = json->get("Dhcp4"));
     SimpleParser4 parser;
