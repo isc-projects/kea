@@ -68,6 +68,31 @@ CfgOption::add(const OptionDescriptor& desc, const std::string& option_space) {
     }
 }
 
+void
+CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space) {
+    if (!desc.option_) {
+        isc_throw(isc::BadValue, "option being replaced must not be NULL");
+    } 
+
+    // Check for presence of options.
+    OptionContainerPtr options = getAll(option_space);
+    if (!options) {
+        isc_throw(isc::BadValue, "option space" << option_space << " does not exist");
+    }
+
+    // Find the option we want to replace.
+    OptionContainerTypeIndex& idx = options->get<1>();
+    OptionContainerTypeIndex::const_iterator od_itr = idx.find(desc.option_->getType());
+    if (od_itr == idx.end()) {
+        isc_throw(isc::BadValue, "cannot replace option: " 
+                  << option_space << ":" << desc.option_->getType()
+                  << ", it does not exist");
+    } 
+
+    idx.replace(od_itr, desc);
+}
+
+
 std::list<std::string>
 CfgOption::getVendorIdsSpaceNames() const {
     std::list<uint32_t> ids = getVendorIds();
@@ -103,32 +128,23 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
     // Iterate over all the option descriptors in
     // all the spaces and instantiate the options
     // based on the given definitions.
-
-    // Descriptors can only be fetched as copies of
-    // what is in the container.  Since we don't
-    // currently have a replace mechanism, we'll
-    // create a revamped set of descriptors and then
-    // copy them on top of ourself.
-    CfgOption revamped;
     for (auto space : getOptionSpaceNames()) {
         for (auto opt_desc : *(getAll(space))) {
-            createDescriptorOption(cfg_def, space, opt_desc);
-            revamped.add(opt_desc, space);
+            if (createDescriptorOption(cfg_def, space, opt_desc)) {
+                // Option was recreated, let's replace the descriptor. 
+                replace(opt_desc,space);
+            }
         }
     }
-
-    // Copy the updated descriptors over our own.
-    revamped.copyTo(*this);
 }
 
-void
+bool
 CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
                                   OptionDescriptor& opt_desc) {
     if (!opt_desc.option_) {
         isc_throw(BadValue,
                   "validateCreateOption: descriptor has no option instance");
     }
-
 
     Option::Universe universe = opt_desc.option_->getUniverse();
     uint16_t code = opt_desc.option_->getType();
@@ -162,7 +178,8 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
 
         // If there's no definition and no formatted string, we'll
         // settle for the generic option already in the descriptor.
-        return;
+        // Indicate no-change by returning false.
+        return (false);
     }
 
     try {
@@ -181,6 +198,9 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
             isc_throw(InvalidOperation, "could not create option: " << space << "." << code
                       << " from data specified, reason: " << ex.what());
     }
+
+    // Indicate we replaced the definition.
+    return(true);
 }
 
 void

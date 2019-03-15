@@ -216,6 +216,55 @@ TEST_F(CfgOptionTest, add) {
     EXPECT_TRUE(options->empty());
 }
 
+// This test verifies that options can be replaced with udpated content.
+TEST_F(CfgOptionTest, replace) {
+    CfgOption cfg;
+
+    // Let's add some options to the config to the config.
+    OptionStringPtr option(new OptionString(Option::V6, 1, "one"));
+    ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+
+    option.reset(new OptionString(Option::V6, 2, "two"));
+    ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+
+    option.reset(new OptionString(Option::V6, 3, "three"));
+    ASSERT_NO_THROW(cfg.add(option, false, "isc"));
+
+    // Now let's make sure we can find them and they are as expected.
+    OptionDescriptor desc = cfg.get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.option_->toText(),"type=00001, len=00003: \"one\" (string)");
+
+    desc = cfg.get("isc", 2);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.option_->toText(),"type=00002, len=00003: \"two\" (string)");
+
+    desc = cfg.get("isc", 3);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.option_->toText(),"type=00003, len=00005: \"three\" (string)");
+
+    // Now let's replace one and three.
+    desc.option_.reset(new OptionString(Option::V6, 1, "new one"));
+    ASSERT_NO_THROW(cfg.replace(desc, "isc"));
+
+    desc.option_.reset(new OptionString(Option::V6, 3, "new three"));
+    ASSERT_NO_THROW(cfg.replace(desc, "isc"));
+
+    // Now let's make sure we can find them again and they are as expected.
+    desc = cfg.get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.option_->toText(),"type=00001, len=00007: \"new one\" (string)");
+
+    desc = cfg.get("isc", 2);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.option_->toText(),"type=00002, len=00003: \"two\" (string)");
+
+    desc = cfg.get("isc", 3);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.option_->toText(),"type=00003, len=00009: \"new three\" (string)");
+}
+
+
 // This test verifies that one configuration can be merged into another.
 TEST_F(CfgOptionTest, mergeTo) {
     CfgOption cfg_src;
@@ -482,7 +531,9 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     option->setData(value.begin(), value.end());
     OptionDescriptorPtr desc(new OptionDescriptor(option, false));
 
-    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    bool updated = false;
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_TRUE(updated);
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc->option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("type=012, len=011: \"example.org\" (string)", opstr->toText());
@@ -493,7 +544,8 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     option.reset(new Option(Option::V4, 2));
     desc.reset(new OptionDescriptor(option, false, value));
 
-    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_TRUE(updated);
     std::cout << "option:" << desc->option_->toText() << std::endl;
     Option4AddrLstPtr opaddrs = boost::dynamic_pointer_cast<Option4AddrLst>(desc->option_);
     ASSERT_TRUE(opaddrs);
@@ -504,7 +556,8 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x77)));
     desc.reset(new OptionDescriptor(option, false));
 
-    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_TRUE(updated);
     OptionUint8Ptr opint = boost::dynamic_pointer_cast<OptionUint8>(desc->option_);
     ASSERT_TRUE(opint);
     EXPECT_EQ("type=001, len=001: 119 (uint8)", opint->toText());
@@ -513,17 +566,19 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     option.reset(new Option(Option::V4, 2));
     desc.reset(new OptionDescriptor(option, false, "1,2,3"));
 
-    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_TRUE(updated);
     OptionUint8ArrayPtr oparray = boost::dynamic_pointer_cast<OptionUint8Array>(desc->option_);
     ASSERT_TRUE(oparray);
     EXPECT_EQ("type=002, len=003: 1(uint8) 2(uint8) 3(uint8)", oparray->toText());
 
     // Finally, a generic, undefined option
-    option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x77)));
+    option.reset(new Option(Option::V4, 199, OptionBuffer(1, 0x77)));
     desc.reset(new OptionDescriptor(option, false));
 
-    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
-    EXPECT_EQ("type=002, len=001: 119(uint8)", desc->option_->toText());
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_FALSE(updated);
+    EXPECT_EQ("type=199, len=001: 77", desc->option_->toText());
 }
 
 // This test verifies that encapsulated options are added as sub-options

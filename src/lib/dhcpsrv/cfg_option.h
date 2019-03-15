@@ -333,13 +333,15 @@ public:
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionDescriptor& desc, const std::string& option_space);
 
+    void replace(const OptionDescriptor& desc, const std::string& option_space);
+
     /// @brief Merges another option configuration into this one.
     ///
     /// This method calls @c mergeTo() to add this configuration's
     /// options into @c other (skipping any duplicates).  Next it calls
     /// @c createDescriptorOption() for each option descriptor in the
     /// merged set.  This (re)-creates each descriptor's option based on
-    /// the merged set of opt definitioins. Finally, it calls
+    /// the merged set of opt definitions. Finally, it calls
     /// @c copyTo() to overwrite this configuration's options with
     /// the merged set in @c other.
     ///
@@ -354,6 +356,15 @@ public:
     /// @param option configurations to merge with.
     void merge(CfgOptionDefPtr cfg_def, CfgOption& other);
 
+    /// @brief Re-create the option in each descriptor based on given definitions
+    ///
+    /// Invokes @c createDescriptorOption() on each option descriptor in
+    /// each option space, passing in the the given dictionary of option
+    /// definitions.  If the descriptor's option is re-created, then the
+    /// descriptor is updated by calling @c replace().
+    ///
+    /// @param cfg_def set of of user-defined option definitions to use
+    /// when creating option instances.
     void createOptions(CfgOptionDefPtr cfg_def);
 
     /// @brief Creates an option descriptor's option based on a set of option defs
@@ -392,10 +403,11 @@ public:
     /// @param space the option space name of the option
     /// @param opt_desc OptionDescriptor describing the option.
     ///
+    /// @return True if the descriptor's option instance was replaced.
     /// @throw InvalidOperation if the descriptor conveys a formatted value and
     /// there is no definition matching the option code in the given space, or
     /// if the definition factory invocation fails.
-    static void createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
+    static bool createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
                              OptionDescriptor& opt_desc);
 
     /// @brief Merges this configuration to another configuration.
