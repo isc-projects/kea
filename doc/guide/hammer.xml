@@ -113,6 +113,19 @@ freebsd:
   </para>
 
   <para>
+    It is possible to speed up subsequent Hammer builds. To achieve this Hammer
+    employs <ulink url="https://ccache.samba.org/">CCache</ulink>. During compilation
+    CCache stores object to shared folder. In subsequent runs instead doing actuall
+    compilation CCache just returns stored earlier objects. Cache with objects for
+    reuse needs to be stored outside of VM or LXC. To indicate such folder Hammer
+    requires providing --ccache-dir parameter. In indicated folder there are stored
+    objects for each target operating system separatelly.
+    <screen><userinput>
+      ./hammer.py build -p lxc -s ubuntu -r 18.04 --ccache-dir ~/kea-ccache
+    </userinput></screen>
+  </para>
+
+  <para>
     For more information check: <screen><userinput>./hammer.py --help</userinput></screen>
   </para>
 
