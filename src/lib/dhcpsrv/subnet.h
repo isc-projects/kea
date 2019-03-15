@@ -289,7 +289,6 @@ public:
         shared_network_name_ = shared_network_name;
     }
 
-protected:
     /// @brief Returns all pools (non-const variant)
     ///
     /// The reference is only valid as long as the object that returned it.
@@ -297,6 +296,8 @@ protected:
     /// @param type lease type to be set
     /// @return a collection of all pools
     PoolCollection& getPoolsWritable(Lease::Type type);
+
+protected:
 
     /// @brief Protected constructor
     //
