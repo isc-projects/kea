@@ -80,6 +80,9 @@ ConfigBase::copy(ConfigBase& other) const {
     } else {
         other.config_ctl_info_.reset();
     }
+
+    // Clone server tag.
+    other.server_tag_ = server_tag_;
 }
 
 void
@@ -96,6 +99,11 @@ ConfigBase::merge(ConfigBase& other) {
         } else {
             config_ctl_info_ = other.config_ctl_info_;
         }
+    }
+
+    // Merge server tag.
+    if (!other.server_tag_.unspecified()) {
+        server_tag_ = other.server_tag_.get();
     }
 }
 
@@ -115,6 +123,11 @@ ConfigBase::toElement() const {
         }
         logging->set("loggers", loggers);
         result->set("Logging", logging);
+    }
+
+    // server-tag
+    if (!server_tag_.unspecified()) {
+        result->set("server-tag", Element::create(server_tag_.get()));
     }
 
     // We do NOT output ConfigControlInfo here, as it is not a

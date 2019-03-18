@@ -2497,8 +2497,8 @@ getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
 
 AuditEntryCollection
 MySqlConfigBackendDHCPv4::
-getRecentAuditEntries4(const db::ServerSelector& server_selector,
-                       const boost::posix_time::ptime& modification_time) const {
+getRecentAuditEntries(const db::ServerSelector& server_selector,
+                      const boost::posix_time::ptime& modification_time) const {
     AuditEntryCollection audit_entries;
     impl_->getRecentAuditEntries(MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
                                  server_selector, modification_time, audit_entries);

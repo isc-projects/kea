@@ -212,8 +212,8 @@ TestConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& 
 }
 
 AuditEntryCollection
-TestConfigBackendDHCPv4::getRecentAuditEntries4(const db::ServerSelector&,
-                                                const boost::posix_time::ptime&) const {
+TestConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector&,
+                                               const boost::posix_time::ptime&) const {
     return (AuditEntryCollection());
 }
 

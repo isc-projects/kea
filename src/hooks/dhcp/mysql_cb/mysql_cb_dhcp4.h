@@ -192,8 +192,8 @@ public:
     /// result set, i.e. entries later than specified time are returned.
     /// @return Collection of audit entries.
     virtual db::AuditEntryCollection
-    getRecentAuditEntries4(const db::ServerSelector& server_selector,
-                           const boost::posix_time::ptime& modification_time) const;
+    getRecentAuditEntries(const db::ServerSelector& server_selector,
+                          const boost::posix_time::ptime& modification_time) const;
 
     /// @brief Creates or updates a subnet.
     ///
