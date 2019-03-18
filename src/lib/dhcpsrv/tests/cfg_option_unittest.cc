@@ -546,7 +546,6 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_TRUE(updated);
-    std::cout << "option:" << desc->option_->toText() << std::endl;
     Option4AddrLstPtr opaddrs = boost::dynamic_pointer_cast<Option4AddrLst>(desc->option_);
     ASSERT_TRUE(opaddrs);
     EXPECT_EQ("type=002, len=008: 192.0.2.1 192.0.2.2", opaddrs->toText());
