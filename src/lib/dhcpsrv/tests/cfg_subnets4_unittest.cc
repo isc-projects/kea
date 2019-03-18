@@ -10,6 +10,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/shared_network.h>
@@ -204,8 +205,6 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     OptionPtr option(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
-    // Verify that our option is a generic option.
-    EXPECT_EQ("type=001, len=004: 59:61:79:21", option->toText());
 
     // subnet 3b updates subnet 3 and removes it from network 2
     Subnet4Ptr subnet3b(new Subnet4(IOAddress("192.0.3.0"),
@@ -216,8 +215,6 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
-    // Verify that our option is a generic option.
-    EXPECT_EQ("type=001, len=005: 54:65:61:6d:21", option->toText());
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.4.0"),
@@ -236,7 +233,6 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
-    EXPECT_EQ(option->toText(), "type=001, len=005: 50:4f:4f:4c:53");
     subnet5->addPool(pool);
 
     // Add pool 2
@@ -245,7 +241,6 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
-    EXPECT_EQ(option->toText(), "type=001, len=005: 52:55:4c:45:21");
     subnet5->addPool(pool);
 
     // Add subnets to the merge from config.
@@ -266,7 +261,9 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     auto subnet = cfg_to.getByPrefix("192.0.1.0/26");
     auto desc = subnet->getCfgOption()->get("isc", 1);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ(desc.option_->toText(), "type=001, len=004: \"Yay!\" (string)");
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Yay!", opstr->getValue());
 
     // The subnet2 should not be affected because it was not present.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
@@ -279,7 +276,9 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     subnet = cfg_to.getByPrefix("192.0.3.0/26");
     desc = subnet->getCfgOption()->get("isc", 1);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ(desc.option_->toText(), "type=001, len=005: \"Team!\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Team!", opstr->getValue());
 
     // subnet4 should be replaced by subnet4b and moved to network1.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
@@ -294,14 +293,16 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     const PoolPtr merged_pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.5.10"));
     ASSERT_TRUE(merged_pool);
     desc = merged_pool->getCfgOption()->get("isc", 1);
-    ASSERT_TRUE(desc.option_);
-    EXPECT_EQ(desc.option_->toText(), "type=001, len=005: \"POOLS\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("POOLS", opstr->getValue());
 
     const PoolPtr merged_pool2 = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.5.30"));
     ASSERT_TRUE(merged_pool2);
     desc = merged_pool2->getCfgOption()->get("isc", 1);
-    ASSERT_TRUE(desc.option_);
-    EXPECT_EQ(desc.option_->toText(), "type=001, len=005: \"RULE!\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("RULE!", opstr->getValue());
 }
 
 // This test verifies that it is possible to retrieve a subnet using an
