@@ -598,12 +598,20 @@ The default value for Cassandra is 2000 ms.
       <listitem><simpara>
         <command>consistency</command> - configures consistency level.
         The default is "quorum".
+        Supported values: any, one, two, three, quorum, all, local-quorum, each-quorum,
+        serial, local-serial, local-one.
+        See <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html">Cassandra consistency</link>
+        for more details.
       </simpara></listitem>
 
       <listitem><simpara>
         <command>serial-consistency</command> - configures serial consistency
         level which manages lightweight transaction isolation. The default is
         "serial".
+        Supported values: any, one, two, three, quorum, all, local-quorum, each-quorum,
+        serial, local-serial, local-one.
+        See <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html">Cassandra serial consistency</link>
+        for more details.
       </simpara></listitem>
 
     </itemizedlist>

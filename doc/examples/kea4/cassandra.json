@@ -49,10 +49,36 @@
       "tcp-nodelay": true,
 
       // This parameter configures consistency level. The default is "quorum".
+      // Supported values:
+      // - any
+      // - one
+      // - two
+      // - three
+      // - quorum
+      // - all
+      // - local-quorum
+      // - each-quorum
+      // - serial
+      // - local-serial
+      // - local-one
+      // See https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html for more details.
       "consistency": "quorum",
 
       // This parameter configures serial consistency level which manages
       // lightweight transaction isolation. The default is "serial".
+      // Supported values:
+      // - any
+      // - one
+      // - two
+      // - three
+      // - quorum
+      // - all
+      // - local-quorum
+      // - each-quorum
+      // - serial
+      // - local-serial
+      // - local-one
+      // See https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html for more details.
       "serial-consistency": "serial"
   },
 
