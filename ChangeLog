@@ -1,3 +1,8 @@
+1546.	[func]		tmark
+	kea-dhcp4 now uses options fetched from configured
+	backends.
+	(Gitlab #401,!254, git 6a33a6f1810f5899ff9c8bc79d0093eebad5c728)
+
 1545.	[func]		fdupont
 	A new parameter "data-directory" has been added to DHCPv6.
 	If specified, it allows DHCPv6 server to store lease and
