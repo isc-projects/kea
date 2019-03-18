@@ -77,7 +77,8 @@ CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space
     // Check for presence of options.
     OptionContainerPtr options = getAll(option_space);
     if (!options) {
-        isc_throw(isc::BadValue, "option space" << option_space << " does not exist");
+        isc_throw(isc::BadValue, "option space " << option_space
+                  << " does not exist");
     }
 
     // Find the option we want to replace.
