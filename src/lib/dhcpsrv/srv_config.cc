@@ -166,7 +166,7 @@ SrvConfig::merge(ConfigBase& other) {
         if (CfgMgr::instance().getFamily() == AF_INET) {
             merge4(other_srv_config);
         } else {
-            // @todo merge6();
+            /// @todo merge6();
         }
     } catch (const std::bad_cast&) {
         isc_throw(InvalidOperation, "internal server error: must use derivation"
@@ -450,7 +450,7 @@ SrvConfig::toElement() const {
     }
     // Set client-classes
     ConstElementPtr client_classes = class_dictionary_->toElement();
-    // @todo accept empty list
+    /// @todo accept empty list
     if (!client_classes->empty()) {
         dhcp->set("client-classes", client_classes);
     }
