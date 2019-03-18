@@ -70,6 +70,8 @@ public:
     ///    -# If it belongs to a shared network, remove it from that network
     ///    -# Remove the subnet from this configuration and discard it
     ///
+    /// - Create the subnet's option instance, as well as any options
+    ///   that belong to any of the subnet's pools.
     /// - Add the subnet from @c other to this configuration.
     /// - If that subnet is associated to shared network, find that network
     ///   in @ networks and add that subnet to it.
@@ -80,12 +82,15 @@ public:
     /// not be modified after the call to @c merge because it may affect the
     /// merged configuration.
     ///
+    /// @param cfg_def set of of user-defined option definitions to use
+    /// when creating option instances.
     /// @param networks collection of shared networks that to which assignments
     /// should be added. In other words, the list of shared networks that belong
     /// to the same SrvConfig instance we are merging into.
     /// @param other the subnet configuration to be merged into this
     /// configuration.
-    void merge(CfgSharedNetworks4Ptr networks, CfgSubnets4& other);
+    void merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
+               CfgSubnets4& other);
 
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///

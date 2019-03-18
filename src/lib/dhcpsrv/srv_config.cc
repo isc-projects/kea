@@ -166,7 +166,7 @@ SrvConfig::merge(ConfigBase& other) {
         if (CfgMgr::instance().getFamily() == AF_INET) {
             merge4(other_srv_config);
         } else {
-            // @todo merge6();
+            /// @todo merge6();
         }
     } catch (const std::bad_cast&) {
         isc_throw(InvalidOperation, "internal server error: must use derivation"
@@ -177,21 +177,26 @@ SrvConfig::merge(ConfigBase& other) {
 
 void
 SrvConfig::merge4(SrvConfig& other) {
-    /// We merge objects in order of dependency (real or theoretical).
+    // We merge objects in order of dependency (real or theoretical).
 
-    /// Merge globals.
+    // Merge globals.
     mergeGlobals4(other);
 
-    /// Merge option defs
+    // Merge option defs. We need to do this next so we
+    // pass these into subsequent merges so option instances
+    // at each level can be created based on the merged
+    // definitions.
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
-    /// @todo merge options
+    // Merge options.  
+    cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
 
     // Merge shared networks.
-    cfg_shared_networks4_->merge(*(other.getCfgSharedNetworks4()));
+    cfg_shared_networks4_->merge(cfg_option_def_, *(other.getCfgSharedNetworks4()));
 
-    /// Merge subnets.
-    cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other.getCfgSubnets4()));
+    // Merge subnets.
+    cfg_subnets4_->merge(cfg_option_def_, getCfgSharedNetworks4(), 
+                         *(other.getCfgSubnets4()));
 
     /// @todo merge other parts of the configuration here.
 }
@@ -454,7 +459,7 @@ SrvConfig::toElement() const {
     }
     // Set client-classes
     ConstElementPtr client_classes = class_dictionary_->toElement();
-    // @todo accept empty list
+    /// @todo accept empty list
     if (!client_classes->empty()) {
         dhcp->set("client-classes", client_classes);
     }
