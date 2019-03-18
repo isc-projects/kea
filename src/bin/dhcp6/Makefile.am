@@ -20,8 +20,6 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES = dhcp6_messages.h dhcp6_messages.cc s-messages
-
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml
@@ -43,14 +41,6 @@ $(man_MANS):
 
 endif
 
-dhcp6_messages.h dhcp6_messages.cc: s-messages
-
-s-messages: dhcp6_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
-	touch $@
-
-BUILT_SOURCES = dhcp6_messages.h dhcp6_messages.cc
-
 # convenience archive
 
 noinst_LTLIBRARIES = libdhcp6.la
@@ -64,7 +54,7 @@ libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
 libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
 libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
+libdhcp6_la_SOURCES += dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
 sbin_PROGRAMS = kea-dhcp6
@@ -116,6 +106,39 @@ kea_dhcp6_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp6dir = $(pkgdatadir)
+
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f dhcp6_messages.h dhcp6_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: dhcp6_messages.h dhcp6_messages.cc
+	@echo Message files regenerated
+
+dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+
+else
+
+messages dhcp6_messages.h dhcp6_messages.cc:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
 
 if GENERATE_PARSER
 

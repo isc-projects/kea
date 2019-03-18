@@ -64,21 +64,6 @@ if test "$sep" = "__NONE__"; then
 fi
 AC_SUBST(SEP)
 
-# If cross compiling assume the message compiler executable was
-# magically already in place...
-if test "$cross_compiling" = "yes"; then
-        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
-	if test -x "${srcdir}/src/lib/log/compiler/message"; then
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN("you must install a message compiler in:")
-		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
-		AC_MSG_WARN("compiled for build ($build).")
-	fi
-fi
-AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
-
 # pkg-config can be required.
 AC_PATH_PROG([PKG_CONFIG], [pkg-config])
 
@@ -1370,6 +1355,19 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
+AC_ARG_ENABLE(generate_messages, [AC_HELP_STRING([--enable-generate-messages],
+  [indicates that the messages files will be regenerated. [default=no]])],
+  enable_generate_messages=$enableval, enable_generate_messages=no)
+
+AM_CONDITIONAL([GENERATE_MESSAGES], [test x$enable_generate_messages != xno])
+
+# cross compiling is not compatible with enable-generate-messages.
+if test "$cross_compiling" = "yes"; then
+    if test "$enable_generate_messages" != "no"; then
+        AC_MSG_WARN([To build the message compiler is not compatible with cross compiling])
+    fi
+fi
+
 AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
   [indicates that the parsers will be regenerated. This implies that the
    bison and flex are required [default=no]])],
@@ -1381,11 +1379,12 @@ AC_PROG_LEX
 
 # Check if bison is available. Bison is not needed for building Kea sources,
 # unless you want to regenerate grammars
-AC_PROG_YACC
+AC_PATH_PROG(YACC, bison)
+AC_SUBST(YACC)
 
 if test "x$enable_generate_parser" != "xno"; then
 
-    if test "x$LEX" == "x"; then
+    if test "x$LEX" != "xflex"; then
        AC_MSG_ERROR([Flex is required for enable-generate-parser, but was not found])
     fi
 
@@ -1518,7 +1517,6 @@ AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
-                 dns++.pc
                  doc/Makefile
                  doc/guide/Makefile
                  doc/version.ent
@@ -1685,6 +1683,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/cql/Makefile
                  src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
+                 src/share/database/scripts/cql/wipe_data.sh
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
@@ -1696,6 +1695,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
                  src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
                  src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
+                 src/share/database/scripts/mysql/wipe_data.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
@@ -1966,15 +1966,16 @@ fi
 cat >> config.report << END
 
 Developer:
-  Enable Debugging:       $debug_enabled
-  Google Tests:           $enable_gtest
-  Valgrind:               $found_valgrind
-  C++ Code Coverage:      $USE_LCOV
-  Logger checks:          $enable_logger_checks
-  Generate Documentation: $enable_generate_docs
-  Parser Generation:      $enable_generate_parser
-  Perfdhcp:               $enable_perfdhcp
-  Kea-shell:              $enable_shell
+  Enable Debugging:          $debug_enabled
+  Google Tests:              $enable_gtest
+  Valgrind:                  $found_valgrind
+  C++ Code Coverage:         $USE_LCOV
+  Logger checks:             $enable_logger_checks
+  Generate Documentation:    $enable_generate_docs
+  Generate Parser:           $enable_generate_parser
+  Generate Messages Files:   $enable_generate_messages
+  Perfdhcp:                  $enable_perfdhcp
+  Kea-shell:                 $enable_shell
 
 END
 

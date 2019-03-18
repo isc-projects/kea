@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -415,48 +415,57 @@ included in the Makefile.am for each component that uses logging.
 The following segment from the "hooks" Makefile.am illustrates
 the entries needed.
 @code
-# Define rule to build logging source files from message file
-hooks_messages.h hooks_messages.cc: s-messages
-
-s-messages: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
-	touch $@
-
-# Tell automake that the message files are built as part of the build process
-# (so that they are built before the main library is built).
-BUILT_SOURCES = hooks_messages.h hooks_messages.cc
-
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = hooks_messages.mes
 
-# Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+        rm -f hooks_messages.h hooks_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: hooks_messages.h hooks_messages.cc
+        @echo Message files regenerated
+
+hooks_messages.h hooks_messages.cc: hooks_messages.mes
+        $(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+
+else
+
+messages hooks_messages.h hooks_messages.cc:
+        @echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
 @endcode
-The first two rules relate the output .h and .cc files produced by the
-message compiler to the input .mes file.  The intermediate "s-messages"
-file is used to overcome synchronization issues with parallel builds
-(where "make" uses multiple processes running in parallel).  Note that the
-reference to both the compiler and the input message file are via absolute
-paths defined in terms of Automake macros.  In particular it is important
-that the message compiler - which is created during the build process - is
-referred to via the "top_builddir" macro, whereas the input message file -
-which is in the repository - is accessed through the "top_srcdir" macro.
+The first rule adds a hook to make maintainer-clean which is the standard
+way to regenerate all messages files. The second rule adds the new
+messages-clean target to regenerate local messages files.
 
-The BUILT_SOURCES line notifies the Automake that the .h and .cc files
-need to be created before they can be used in the compilation, so
-instructs it to organize things so that the message compiler is run first.
-
-As the .mes file is not directly included in any compilation, it will
-not be automatically copied into a distribution created through this
-Makefile.am.  The EXTRA_DIST line informs Automake that this file does
-need to be included.
-
-Finally, the intermediate files - the .cc and .h file, as well as the
-intermediate s-messages file - need to be removed when "make clean" is run.
-These files are therefore included in the definition of the CLEANFILES macro.
+The GENERATE_MESSAGES conditional part is the (re)generation of
+the messages files. When configured with --enable-generate-messages
+and the source (.mes file) is newer these files are generated using
+the Kea message compiler. When configured without --enable-generate-messages
+(the default) and the source (.mes file) is newer a message is emitted.
 
 Not shown are the Makefile.am lines where the .h and .cc file are used.  These
 are the same as other lines specifying .h and .cc source files.
+
+And finally please note the message header (e.g. hooks_messages.h)
+should be installed, i.e. in the include_HEADERS list.
 
 @subsection logUsage Using Logging Files in Program Development
 

@@ -225,6 +225,10 @@ ALTER TABLE dhcp4_audit
 --   hand, if the global option is being added, the
 --   audit entry for the option must be created because
 --   it is the sole object modified in that case.
+--   Session variable disable_audit is used to disable
+--   the procedure when wiping the database during
+--   unit tests.  This avoids issues with revision_id
+--   being null.
 -- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DELIMITER $$
@@ -234,11 +238,13 @@ CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP,
                                           IN cascade_transaction TINYINT(1))
 BEGIN
     DECLARE srv_id BIGINT(20);
-    SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
-    INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
-       VALUES (audit_ts, srv_id, audit_log_message);
-    SET @audit_revision_id = LAST_INSERT_ID();
-    SET @cascade_transaction = cascade_transaction;
+    IF @disable_audit IS NULL OR @disable_audit = 0 THEN
+        SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
+        INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
+            VALUES (audit_ts, srv_id, audit_log_message);
+        SET @audit_revision_id = LAST_INSERT_ID();
+        SET @cascade_transaction = cascade_transaction;
+    END IF;
 END $$
 DELIMITER ;
 
@@ -257,6 +263,10 @@ DELIMITER ;
 -- - modification_type_val: string value indicating the
 --   type of the change, i.e. "create", "update" or
 --   "delete".
+--   Session variable disable_audit is used to disable
+--   the procedure when wiping the database during
+--   unit tests.  This avoids issues with revision_id
+--   being null.
 -- ----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditEntryDHCP4;
 DELIMITER $$
@@ -264,10 +274,12 @@ CREATE PROCEDURE createAuditEntryDHCP4(IN object_type_val VARCHAR(256),
                                        IN object_id_val BIGINT(20) UNSIGNED,
                                        IN modification_type_val VARCHAR(32))
 BEGIN
-    INSERT INTO dhcp4_audit (object_type, object_id, modification_type, revision_id)
-        VALUES (object_type_val, object_id_val, \
-               (SELECT id FROM modification WHERE modification_type = modification_type_val), \
-                @audit_revision_id);
+    IF @disable_audit IS NULL OR @disable_audit = 0 THEN
+        INSERT INTO dhcp4_audit (object_type, object_id, modification_type, revision_id)
+            VALUES (object_type_val, object_id_val, \
+                (SELECT id FROM modification WHERE modification_type = modification_type_val), \
+                 @audit_revision_id);
+    END IF;
 END $$
 DELIMITER ;
 
@@ -578,6 +590,23 @@ ALTER TABLE dhcp6_shared_network_server
     REFERENCES dhcp6_shared_network (id)
     ON DELETE CASCADE ON UPDATE NO ACTION;
 
+-- Update dhcp4_subnet_server and dhcp6_subnet_server to allow update
+-- on the prefix too by setting the CASCADE action.
+
+ALTER TABLE dhcp4_subnet_server
+    DROP FOREIGN KEY fk_dhcp4_subnet_server_subnet_id;
+ALTER TABLE dhcp4_subnet_server
+    ADD CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp4_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_subnet_server
+    DROP FOREIGN KEY fk_dhcp6_subnet_server_subnet_id;
+ALTER TABLE dhcp6_subnet_server
+    ADD CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
 -- -----------------------------------------------------
 -- Table dhcp6_audit_revision
 -- -----------------------------------------------------
@@ -637,6 +666,10 @@ ALTER TABLE dhcp6_audit
 --   hand, if the global option is being added, the
 --   audit entry for the option must be created because
 --   it is the sole object modified in that case.
+--   Session variable disable_audit is used to disable
+--   the procedure when wiping the database during
+--   unit tests.  This avoids issues with revision_id
+--   being null.
 -- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP6;
 DELIMITER $$
@@ -646,11 +679,13 @@ CREATE PROCEDURE createAuditRevisionDHCP6(IN audit_ts TIMESTAMP,
                                           IN cascade_transaction TINYINT(1))
 BEGIN
     DECLARE srv_id BIGINT(20);
-    SELECT id INTO srv_id FROM dhcp6_server WHERE tag = server_tag;
-    INSERT INTO dhcp6_audit_revision (modification_ts, server_id, log_message)
-       VALUES (audit_ts, srv_id, audit_log_message);
-    SET @audit_revision_id = LAST_INSERT_ID();
-    SET @cascade_transaction = cascade_transaction;
+    IF @disable_audit IS NULL OR @disable_audit = 0 THEN
+        SELECT id INTO srv_id FROM dhcp6_server WHERE tag = server_tag;
+        INSERT INTO dhcp6_audit_revision (modification_ts, server_id, log_message)
+            VALUES (audit_ts, srv_id, audit_log_message);
+        SET @audit_revision_id = LAST_INSERT_ID();
+        SET @cascade_transaction = cascade_transaction;
+    END IF;
 END $$
 DELIMITER ;
 
@@ -669,6 +704,10 @@ DELIMITER ;
 -- - modification_type_val: string value indicating the
 --   type of the change, i.e. "create", "update" or
 --   "delete".
+--   Session variable disable_audit is used to disable
+--   the procedure when wiping the database during
+--   unit tests.  This avoids issues with revision_id
+--   being null.
 -- ----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditEntryDHCP6;
 DELIMITER $$
@@ -676,10 +715,12 @@ CREATE PROCEDURE createAuditEntryDHCP6(IN object_type_val VARCHAR(256),
                                        IN object_id_val BIGINT(20) UNSIGNED,
                                        IN modification_type_val VARCHAR(32))
 BEGIN
-    INSERT INTO dhcp6_audit (object_type, object_id, modification_type, revision_id)
-        VALUES (object_type_val, object_id_val, \
+    IF @disable_audit IS NULL OR @disable_audit = 0 THEN
+        INSERT INTO dhcp6_audit (object_type, object_id, modification_type, revision_id)
+            VALUES (object_type_val, object_id_val, \
                (SELECT id FROM modification WHERE modification_type = modification_type_val), \
                 @audit_revision_id);
+    END IF;
 END $$
 DELIMITER ;
 

@@ -20,7 +20,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda dhcp4_messages.h dhcp4_messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda
 
 man_MANS = kea-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
@@ -42,14 +42,6 @@ $(man_MANS):
 
 endif
 
-dhcp4_messages.h dhcp4_messages.cc: s-messages
-
-s-messages: dhcp4_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
-	touch $@
-
-BUILT_SOURCES = dhcp4_messages.h dhcp4_messages.cc
-
 # convenience archive
 
 noinst_LTLIBRARIES = libdhcp4.la
@@ -63,8 +55,7 @@ libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
 libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
 libdhcp4_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-
-nodist_libdhcp4_la_SOURCES = dhcp4_messages.h dhcp4_messages.cc
+libdhcp4_la_SOURCES += dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
 
 sbin_PROGRAMS = kea-dhcp4
@@ -115,6 +106,39 @@ kea_dhcp4_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp4dir = $(pkgdatadir)
+
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f dhcp4_messages.h dhcp4_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: dhcp4_messages.h dhcp4_messages.cc
+	@echo Message files regenerated
+
+dhcp4_messages.h dhcp4_messages.cc: dhcp4_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
+
+else
+
+messages dhcp4_messages.h dhcp4_messages.cc:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
 
 if GENERATE_PARSER
 

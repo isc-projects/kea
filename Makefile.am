@@ -157,9 +157,6 @@ EXTRA_DIST += tools/mk_cfgrpt.sh
 #### include external sources in the distributed tarball:
 EXTRA_DIST += ext/coroutine/coroutine.hpp
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = dns++.pc
-
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
 
 # config.h may be included by headers supplied for building user-written

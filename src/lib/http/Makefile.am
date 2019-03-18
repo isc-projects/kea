@@ -4,22 +4,10 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
-# Define rule to build logging source files from message file
-http_messages.h http_messages.cc: s-messages
-
-s-messages: http_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
-	touch $@
-
-# Tell automake that the message files are built as part of the build process
-# (so that they are built before the main library is built).
-BUILT_SOURCES = http_messages.h http_messages.cc
-
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = http_messages.mes
 
-# Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda http_messages.h http_messages.cc s-messages
+CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-http.la
 libkea_http_la_SOURCES  = client.cc client.h
@@ -32,6 +20,7 @@ libkea_http_la_SOURCES += http_acceptor.h
 libkea_http_la_SOURCES += http_header.cc http_header.h
 libkea_http_la_SOURCES += http_message.cc http_message.h
 libkea_http_la_SOURCES += http_message_parser_base.cc http_message_parser_base.h
+libkea_http_la_SOURCES += http_messages.cc http_messages.h
 libkea_http_la_SOURCES += http_types.h
 libkea_http_la_SOURCES += listener.cc listener.h
 libkea_http_la_SOURCES += post_request.cc post_request.h
@@ -47,8 +36,6 @@ libkea_http_la_SOURCES += response_creator_factory.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
 libkea_http_la_SOURCES += url.cc url.h
 
-nodist_libkea_http_la_SOURCES = http_messages.cc http_messages.h
-
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
@@ -63,6 +50,39 @@ libkea_http_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_http_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f http_messages.h http_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: http_messages.h http_messages.cc
+	@echo Message files regenerated
+
+http_messages.h http_messages.cc: http_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
+
+else
+
+messages http_messages.h http_messages.cc:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
+
 # Specify the headers for copying into the installation directory tree.
 libkea_http_includedir = $(pkgincludedir)/http
 libkea_http_include_HEADERS = \
@@ -76,6 +96,7 @@ libkea_http_include_HEADERS = \
 	http_log.h \
 	http_message.h \
 	http_message_parser_base.h \
+	http_messages.h \
 	http_types.h \
 	listener.h \
 	post_request.h \

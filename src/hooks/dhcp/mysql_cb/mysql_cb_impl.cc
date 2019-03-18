@@ -8,11 +8,8 @@
 #include <mysql_cb_impl.h>
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
-#include <dhcp/libdhcp++.h>
 #include <dhcp/option_space.h>
 #include <util/buffer.h>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <cstdint>
@@ -605,51 +602,20 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         code = (*(first_binding + 1))->getInteger<uint16_t>();
     }
 
-    // See if the option has standard definition.
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
-    // If there is no definition but the option is vendor specific,
-    // we should search the definition within the vendor option space.
-    if (!def && (space != DHCP4_OPTION_SPACE) && (space != DHCP6_OPTION_SPACE)) {
-        uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(space);
-        if (vendor_id > 0) {
-            def = LibDHCP::getVendorOptionDef(universe, vendor_id, code);
-        }
-    }
-
-    // Still haven't found the definition. Check if user has specified
-    // option definition in the server configuration.
-    if (!def) {
-        def = LibDHCP::getRuntimeOptionDef(space, code);
-    }
-
-    // Option can be stored as a blob or formatted value in the configuration.
-    std::vector<uint8_t> blob;
-    if (!(*(first_binding + 2))->amNull()) {
-        blob = (*(first_binding + 2))->getBlob();
-    }
-    OptionBuffer buf(blob.begin(), blob.end());
 
     // Get formatted value if available.
     std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
 
-    OptionPtr option;
-    if (!def) {
-        // No option definition. Create generic option instance.
-        option.reset(new Option(universe, code, buf.begin(), buf.end()));
+    OptionPtr option(new Option(universe, code));
 
-    } else {
-        // Option definition found. Use formatted value if available or
-        // a blob.
-        if (formatted_value.empty()) {
-            option = def->optionFactory(universe, code, buf.begin(),
-                                        buf.end());
-        } else {
-            // Spit the value specified in comma separated values
-            // format.
-            std::vector<std::string> split_vec;
-            boost::split(split_vec, formatted_value, boost::is_any_of(","));
-            option = def->optionFactory(universe, code, split_vec);
+    // If we don't have a formatted value, check for a blob. Add it to the
+    // option if it exists.
+    if (formatted_value.empty()) {
+        std::vector<uint8_t> blob;
+        if (!(*(first_binding + 2))->amNull()) {
+            blob = (*(first_binding + 2))->getBlob();
         }
+        option->setData(blob.begin(), blob.end());
     }
 
     // Check if the option is persistent.

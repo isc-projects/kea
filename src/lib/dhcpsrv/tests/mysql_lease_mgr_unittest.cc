@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,8 +43,7 @@ class MySqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
-        destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
         // Connect to the database
@@ -70,6 +69,7 @@ public:
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         LeaseMgrFactory::destroy();
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyMySQLSchema();
     }
 
@@ -110,7 +110,6 @@ public:
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlOpenTest, OpenDatabase) {
     // Schema needs to be created for the test to work.
-    destroyMySQLSchema(true);
     createMySQLSchema(true);
 
     // Check that lease manager open the database opens correctly and tidy up.

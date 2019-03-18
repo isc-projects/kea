@@ -310,6 +310,16 @@ public:
     virtual uint64_t
     deleteAllSubnets6(const db::ServerSelector& server_selector) = 0;
 
+    /// @brief Deletes all subnets belonging to a specified shared network.
+    ///
+    /// @param server_selector Server selector.
+    /// @param shared_network_name Name of the shared network for which the
+    /// subnets should be deleted.
+    /// @return Number of deleted subnets.
+    virtual uint64_t
+    deleteSharedNetworkSubnets6(const db::ServerSelector& server_selector,
+                                const std::string& shared_network_name) = 0;
+
     /// @brief Deletes shared network by name.
     ///
     /// @param server_selector Server selector.

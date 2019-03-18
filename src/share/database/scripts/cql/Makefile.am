@@ -5,6 +5,6 @@ sqlscripts_DATA = dhcpdb_create.cql
 sqlscripts_DATA += dhcpdb_drop.cql
 sqlscripts_DATA += upgrade_1.0_to_2.0.sh
 sqlscripts_DATA += upgrade_2.0_to_3.0.sh
-sqlscripts_DATA += soft_wipe.cql
+sqlscripts_DATA += wipe_data.sh
 
 EXTRA_DIST = ${sqlscripts_DATA}

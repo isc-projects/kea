@@ -11,7 +11,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda netconf_messages.h netconf_messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda
 
 man_MANS = kea-netconf.8
 DISTCLEANFILES = $(man_MANS)
@@ -31,14 +31,6 @@ $(man_MANS):
 	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
 endif
-
-netconf_messages.h netconf_messages.cc: s-messages
-
-s-messages: netconf_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/netconf/netconf_messages.mes
-	touch $@
-
-BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 
 # convenience archive
 
@@ -60,8 +52,7 @@ libnetconf_la_SOURCES += parser_context_decl.h
 libnetconf_la_SOURCES += simple_parser.cc simple_parser.h
 libnetconf_la_SOURCES += location.hh position.hh stack.hh
 libnetconf_la_SOURCES += netconf_lexer.ll netconf_parser.yy
-
-nodist_libnetconf_la_SOURCES = netconf_messages.h netconf_messages.cc
+libnetconf_la_SOURCES += netconf_messages.h netconf_messages.cc
 
 EXTRA_DIST += netconf_messages.mes
 EXTRA_DIST += netconf_lexer.ll
@@ -88,6 +79,39 @@ kea_netconf_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) $(SYSREPO_LI
 
 
 kea_netconfdir = $(pkgdatadir)
+
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f netconf_messages.h netconf_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: netconf_messages.h netconf_messages.cc
+	@echo Message files regenerated
+
+netconf_messages.h netconf_messages.cc: netconf_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/netconf/netconf_messages.mes
+
+else
+
+messages netconf_messages.h netconf_messages.cc:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
 
 if GENERATE_PARSER
 

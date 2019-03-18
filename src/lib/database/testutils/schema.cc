@@ -89,6 +89,16 @@ string connectionString(const char* type, const char* name, const char* host,
     return (result);
 }
 
+bool
+softWipeEnabled() {
+    const char* const wipe_only = getenv("KEA_TEST_DB_WIPE_DATA_ONLY");
+    if (wipe_only && (std::string(wipe_only) == std::string("false"))) {
+        return (false);
+    }
+
+    return (true);
+}
+
 };
 };
 };

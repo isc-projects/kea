@@ -41,8 +41,7 @@ class MySqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
-        destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
         // Connect to the database
@@ -70,6 +69,8 @@ public:
         }
         HostMgr::delAllBackends();
         hdsptr_.reset();
+
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyMySQLSchema();
     }
 
@@ -158,7 +159,6 @@ public:
 TEST(MySqlHostDataSource, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyMySQLSchema();
     createMySQLSchema();
 
     // Check that host manager open the database opens correctly and tidy up.

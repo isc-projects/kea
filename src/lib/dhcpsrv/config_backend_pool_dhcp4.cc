@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -313,6 +313,15 @@ ConfigBackendPoolDHCPv4::deleteAllSubnets4(const BackendSelector& backend_select
                                           const ServerSelector& server_selector) {
     return (createUpdateDeleteProperty<uint64_t>
             (&ConfigBackendDHCPv4::deleteAllSubnets4, backend_selector, server_selector));
+}
+
+uint64_t
+ConfigBackendPoolDHCPv4::deleteSharedNetworkSubnets4(const db::BackendSelector& backend_selector,
+                                                     const db::ServerSelector& server_selector,
+                                                     const std::string& shared_network_name) {
+    return (createUpdateDeleteProperty<uint64_t, const std::string&>
+            (&ConfigBackendDHCPv4::deleteSharedNetworkSubnets4, backend_selector, server_selector,
+             shared_network_name));
 }
 
 uint64_t

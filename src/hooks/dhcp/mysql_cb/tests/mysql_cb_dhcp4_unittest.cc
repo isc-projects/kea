@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <mysql_cb_dhcp4.h>
+#include <database/db_exceptions.h>
 #include <database/testutils/schema.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
@@ -47,8 +48,7 @@ public:
     /// @brief Constructor.
     MySqlConfigBackendDHCPv4Test()
         : test_subnets_(), test_networks_(), timestamps_(), audit_entries_() {
-        // Recreate database schema.
-        destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
         try {
@@ -77,6 +77,7 @@ public:
     /// @brief Destructor.
     virtual ~MySqlConfigBackendDHCPv4Test() {
         cbptr_.reset();
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
     }
 
@@ -289,7 +290,10 @@ public:
         desc.space_name_ = "isc";
         test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-        // Add definitions for DHCPv4 non-standard options.
+        // Add definitions for DHCPv4 non-standard options in case we need to
+        // compare subnets, networks and pools in JSON format. In that case,
+        // the @c toElement functions require option definitions to generate the
+        // proper output.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "vendor-encapsulated-1", 1, "uint32")),
                      "vendor-encapsulated-options");
@@ -622,7 +626,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 
     // Fetching the subnet for an explicitly specified server tag should
-    // succeeed too.
+    // succeed too.
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
@@ -633,6 +637,32 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
                           AuditEntry::ModificationType::UPDATE,
                           "subnet set");
     }
+
+    // Insert another subnet.
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]);
+
+    // Fetch this subnet by prefix and verify it matches.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                         test_subnets_[2]->toText());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(test_subnets_[2]->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the subnet in the database (both use the same prefix).
+    subnet2.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 30, 40, 60, 8192));
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2);
+
+    // Fetch again and verify.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                         test_subnets_[2]->toText());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the subnet when it conflicts same id and same prefix both
+    // with different subnets. This should throw.
+    // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
+    subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2),
+                 DuplicateEntry);
 }
 
 // Test that the information about unspecified optional parameters gets
@@ -1088,21 +1118,60 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
                   networks[i]->toElement()->str());
     }
 
+    // Add some subnets.
+    test_networks_[1]->add(test_subnets_[0]);
+    test_subnets_[2]->setSharedNetworkName("level2");
+    test_networks_[2]->add(test_subnets_[3]);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[3]);
+
+    // Both ways to attach a subnet are equivalent.
+    Subnet4Ptr subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                           test_subnets_[0]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("level1", subnet->getSharedNetworkName());
+
+    {
+        SCOPED_TRACE("CREATE audit entry for subnets");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "subnet set", 3);
+    }
+
     // Deleting non-existing shared network should return 0.
     EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               "big-fish"));
     // All shared networks should be still there.
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
-    // Should not delete the subnet for explicit server tag because
-    // our shared network is for all servers.
+    // Should not delete the shared network for explicit server tag
+    // because our shared network is for all servers.
     EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"),
                                               test_networks_[1]->getName()));
 
     // Same for all shared networks.
     EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
 
-    // Delete first shared network and verify it is gone.
+    // Delete first shared network with it subnets and verify it is gone.
+
+    // Begin by its subnet.
+    EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
+                                                     test_networks_[1]->getName()));
+
+    {
+        SCOPED_TRACE("DELETE audit entry for subnets of the first shared network");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleted all subnets for a shared network");
+    }
+
+    // Check that the subnet is gone..
+    subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                test_subnets_[0]->getID());
+    EXPECT_FALSE(subnet);
+
+    // And after the shared network itself.
     EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
@@ -1127,6 +1196,16 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
                           AuditEntry::ModificationType::DELETE,
                           "deleted all shared networks", 2);
     }
+
+    // Check that subnets are still there but detached.
+    subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                test_subnets_[2]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getSharedNetworkName().empty());
+    subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                test_subnets_[3]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getSharedNetworkName().empty());
 }
 
 // Test that shared networks modified after given time can be fetched.
@@ -1356,7 +1435,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
                            opt_boot_file_name->option_->getType(),
                            opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
-    EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify created option");
+        testOptionsEquivalent(*test_options_[0], *returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("CREATE audit entry for an option");
@@ -1376,7 +1459,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
                                                      opt_boot_file_name->option_->getType(),
                                                      opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
-    EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify updated option");
+        testOptionsEquivalent(*opt_boot_file_name, *returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an option");
@@ -1431,17 +1518,26 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
 
     // Verify that all options we put into the database were
     // returned.
-    auto option0 = index.find(test_options_[0]->option_->getType());
-    ASSERT_FALSE(option0 == index.end());
-    EXPECT_TRUE(option0->equals(*test_options_[0]));
+    {
+        SCOPED_TRACE("verify test_options_[0]");
+        auto option0 = index.find(test_options_[0]->option_->getType());
+        ASSERT_FALSE(option0 == index.end());
+        testOptionsEquivalent(*test_options_[0], *option0);
+    }
 
-    auto option1 = index.find(test_options_[1]->option_->getType());
-    ASSERT_FALSE(option1 == index.end());
-    EXPECT_TRUE(option1->equals(*test_options_[1]));
+    {
+        SCOPED_TRACE("verify test_options_[1]");
+        auto option1 = index.find(test_options_[1]->option_->getType());
+        ASSERT_FALSE(option1 == index.end());
+        testOptionsEquivalent(*test_options_[1], *option1);
+    }
 
-    auto option5 = index.find(test_options_[5]->option_->getType());
-    ASSERT_FALSE(option5 == index.end());
-    EXPECT_TRUE(option5->equals(*test_options_[5]));
+    {
+        SCOPED_TRACE("verify test_options_[5]");
+        auto option5 = index.find(test_options_[5]->option_->getType());
+        ASSERT_FALSE(option5 == index.end());
+        testOptionsEquivalent(*test_options_[5], *option5);
+    }
 }
 
 // This test verifies that modified global options can be retrieved.
@@ -1478,7 +1574,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
     const OptionContainerTypeIndex& index = returned_options.get<1>();
     auto option0 = index.find(test_options_[0]->option_->getType());
     ASSERT_FALSE(option0 == index.end());
-    EXPECT_TRUE(option0->equals(*test_options_[0]));
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*test_options_[0], *option0);
+    }
 }
 
 // This test verifies that subnet level option can be added, updated and
@@ -1511,7 +1610,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     OptionDescriptor returned_opt_boot_file_name =
         returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an added subnet option");
@@ -1534,7 +1637,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     returned_opt_boot_file_name =
         returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an updated subnet option");
@@ -1605,7 +1712,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     OptionDescriptor returned_opt_boot_file_name =
         returned_pool->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned pool option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet after adding an option "
@@ -1635,7 +1746,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     returned_opt_boot_file_name =
         returned_pool1->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet when updating pool "
@@ -1714,7 +1829,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     OptionDescriptor returned_opt_boot_file_name =
         returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for the added shared network option");
@@ -1738,7 +1857,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     returned_opt_boot_file_name =
         returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for the updated shared network option");

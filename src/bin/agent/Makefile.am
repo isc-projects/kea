@@ -9,7 +9,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda ca_messages.h ca_messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda
 
 man_MANS = kea-ctrl-agent.8
 DISTCLEANFILES = $(man_MANS)
@@ -30,15 +30,6 @@ $(man_MANS):
 
 endif
 
-ca_messages.h ca_messages.cc: s-messages
-
-s-messages: ca_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ca_messages.mes
-	touch $@
-
-BUILT_SOURCES = ca_messages.h ca_messages.cc
-
-
 # convenience archive
 
 noinst_LTLIBRARIES = libagent.la
@@ -55,8 +46,7 @@ libagent_la_SOURCES += ca_response_creator_factory.h
 libagent_la_SOURCES += simple_parser.cc simple_parser.h
 libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libagent_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
-
-nodist_libagent_la_SOURCES = ca_messages.h ca_messages.cc
+libagent_la_SOURCES += ca_messages.h ca_messages.cc
 EXTRA_DIST += ca_messages.mes
 EXTRA_DIST += agent_lexer.ll
 EXTRA_DIST += agent_parser.yy
@@ -87,6 +77,39 @@ kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_ctrl_agent_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_ctrl_agent_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f ca_messages.h ca_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: ca_messages.h ca_messages.cc
+	@echo Message files regenerated
+
+ca_messages.h ca_messages.cc: ca_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ca_messages.mes
+
+else
+
+messages ca_messages.h ca_messages.cc:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
 
 if GENERATE_PARSER
 

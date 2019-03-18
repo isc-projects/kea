@@ -1,3 +1,39 @@
+1544.	[build]		fdupont
+	Message compiler is no longer needed during compilation and
+	generated message files are part of the distribution. They can be
+	regenerated using --enable-generate-messages switch passed to
+	configure script.
+	(Gitlab #441,!233, git 499b7c36454bcac2553f7bf304d48d7d80f4d4ca)
+
+1543.	[bug]		fdupont
+	Corrected behavior of the remote-subnet4-set so as it is now
+	possible to set the subnet using both an ID or a subnet prefix.
+	(Gitlab #481,!251, git 9ef651950fde16e258e4b03dd21bbf6dd07d5231)
+
+1542.	[test]		tmark	
+	MySQL and CQL unit tests will now attempt to wipe the unit test
+	data, rather than the (re)create the schema between each test. 
+	This reduces test execution time appreciably.  The behavior
+	may be overridden by defining environment variable:
+	KEA_TEST_DB_WIPE_DATA_ONLY="false".  This will cause the schema
+	to be recreated before each test but may dramatically increase
+	test execution time.
+	(Gitlab #526,!269, git 7e81d7bea27e919b652351880872aae68ad1b209)
+
+1541.	[bug]		fdupont
+	Empty Relay Agent Information option is no longer sent in server
+	responses.
+	(Gitlab #519,#510,!271, git f3563396d2227e48e96a5d65587406d8d1868db5)
+
+1540.	[func]		fdupont
+	Added a new method deleteSharedNetworkSubnets4 in the config
+	backend API to delete all subnets belonging to a shared network.
+	(Gitlab #512,!256, git 76991c42d115641c7fdcd0f215137be578fb39a0)
+
+1539.	[build]		fdupont
+	Obsolete dns++.pc file for pkg-config was removed.
+	(Gitlab #498,!274, git 93cd62c99f69cc379c08cd06791db522c1fb0aca)
+
 1538.	[func]		marcin
 	DHCP configuration parsers correctly handle unspecified parameters.
 	This change was required for the MySQL Config Backend to record

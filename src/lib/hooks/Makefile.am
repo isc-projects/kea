@@ -4,17 +4,6 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
-# Define rule to build logging source files from message file
-hooks_messages.h hooks_messages.cc: s-messages
-
-s-messages: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
-	touch $@
-
-# Tell automake that the message files are built as part of the build process
-# (so that they are built before the main library is built).
-BUILT_SOURCES = hooks_messages.h hooks_messages.cc
-
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = hooks_messages.mes
 
@@ -26,8 +15,7 @@ EXTRA_DIST += images/DataScopeArgument.dia images/DataScopeArgument.png
 EXTRA_DIST += images/DataScopeContext.dia images/DataScopeContext.png
 EXTRA_DIST += images/HooksUml.dia images/HooksUml.png
 
-# Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
+CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-hooks.la
 libkea_hooks_la_SOURCES  =
@@ -46,8 +34,7 @@ libkea_hooks_la_SOURCES += library_manager_collection.cc library_manager_collect
 libkea_hooks_la_SOURCES += parking_lots.h
 libkea_hooks_la_SOURCES += pointer_converter.h
 libkea_hooks_la_SOURCES += server_hooks.cc server_hooks.h
-
-nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
+libkea_hooks_la_SOURCES += hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -61,6 +48,39 @@ libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.l
 libkea_hooks_la_LIBADD += $(BOOST_LIBS)
 libkea_hooks_la_LIBADD += $(LOG4CPLUS_LIBS)
 
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f hooks_messages.h hooks_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: hooks_messages.h hooks_messages.cc
+	@echo Message files regenerated
+
+hooks_messages.h hooks_messages.cc: hooks_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+
+else
+
+messages hooks_messages.h hooks_messages.cc:
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
+
+endif
+
 # Specify the headers for copying into the installation directory tree.
 libkea_hooks_includedir = $(pkgincludedir)/hooks
 libkea_hooks_include_HEADERS = \
@@ -71,6 +91,7 @@ libkea_hooks_include_HEADERS = \
 	hooks_config.h \
 	hooks_log.h \
 	hooks_manager.h \
+	hooks_messages.h \
 	hooks_parser.h \
 	libinfo.h \
 	library_handle.h \

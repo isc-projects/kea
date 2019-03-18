@@ -383,9 +383,31 @@ TestConfigBackendDHCPv6::deleteAllSubnets6(const db::ServerSelector& /* server_s
 }
 
 uint64_t
+TestConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& /* server_selector */,
+                                                     const std::string& shared_network_name) {
+    uint64_t cnt = 0;
+    auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto network_it = index.find(shared_network_name);
+    if (network_it == index.end()) {
+        return (cnt);
+    }
+    for (auto subnet : *(*network_it)->getAllSubnets()) {
+        const SubnetID& subnet_id = subnet->getID();
+        auto& subnet_index = subnets_.get<SubnetSubnetIdIndexTag>();
+        cnt += subnet_index.erase(subnet_id);
+    }
+    (*network_it)->delAll();
+    return (cnt);
+}
+
+uint64_t
 TestConfigBackendDHCPv6::deleteSharedNetwork6(const db::ServerSelector& /* server_selector */,
                                               const std::string& name) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto network_it = index.find(name);
+    if (network_it != index.end()) {
+        (*network_it)->delAll();
+    }
     return (index.erase(name));
 }
 

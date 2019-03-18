@@ -1,5 +1,2 @@
 kea-netconf
 kea-netconf.8
-netconf_messages.cc
-netconf_messages.h
-s-messages
