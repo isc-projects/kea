@@ -333,6 +333,19 @@ public:
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionDescriptor& desc, const std::string& option_space);
 
+    /// @brief Replaces the instance of an option within this collection
+    ///
+    /// This method locates the option within the given space and replaces
+    /// it with a copy of the given descriptor.  This effectively updates
+    /// the contents without altering the container indexing.
+    ///
+    /// @param desc Option descriptor holding option instance and other
+    /// parameters pertaining to the option.
+    /// @param option_space Option space name.
+    ///
+    /// @throw isc::BadValue if the descriptor's option instance is null,
+    /// if  space is invalid, or if the option does not already exist
+    /// in the given space.
     void replace(const OptionDescriptor& desc, const std::string& option_space);
 
     /// @brief Merges another option configuration into this one.
