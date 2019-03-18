@@ -23,6 +23,7 @@
 #include <sstream>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace {
@@ -233,15 +234,21 @@ TEST_F(CfgOptionTest, replace) {
     // Now let's make sure we can find them and they are as expected.
     OptionDescriptor desc = cfg.get("isc", 1);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.option_->toText(),"type=00001, len=00003: \"one\" (string)");
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("one", opstr->getValue());
 
     desc = cfg.get("isc", 2);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.option_->toText(),"type=00002, len=00003: \"two\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("two", opstr->getValue());
 
     desc = cfg.get("isc", 3);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.option_->toText(),"type=00003, len=00005: \"three\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("three", opstr->getValue());
 
     // Now let's replace one and three.
     desc.option_.reset(new OptionString(Option::V6, 1, "new one"));
@@ -253,17 +260,22 @@ TEST_F(CfgOptionTest, replace) {
     // Now let's make sure we can find them again and they are as expected.
     desc = cfg.get("isc", 1);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.option_->toText(),"type=00001, len=00007: \"new one\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("new one", opstr->getValue());
 
     desc = cfg.get("isc", 2);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.option_->toText(),"type=00002, len=00003: \"two\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("two", opstr->getValue());
 
     desc = cfg.get("isc", 3);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.option_->toText(),"type=00003, len=00009: \"new three\" (string)");
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("new three", opstr->getValue());
 }
-
 
 // This test verifies that one configuration can be merged into another.
 TEST_F(CfgOptionTest, mergeTo) {
@@ -399,33 +411,27 @@ TEST_F(CfgOptionTest, validMerge) {
 
     // Create our existing config, that gets merged into.
     OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
-    EXPECT_EQ("type=001, len=001: 01", option->toText());
     ASSERT_NO_THROW(this_cfg.add(option, false, "isc"));
 
     // Add option 3 to "fluff"
     option.reset(new Option(Option::V4, 3, OptionBuffer(1, 0x03)));
-    EXPECT_EQ("type=003, len=001: 03", option->toText());
     ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
     // Add option 4 to "fluff".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x04)));
-    EXPECT_EQ("type=004, len=001: 04", option->toText());
     ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
     // Create our other config that will be merged from.
     // Add Option 1 to "isc",  this should "overwrite" the original.
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x10)));
-    EXPECT_EQ("type=001, len=001: 10", option->toText());
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Add option 2  to "isc".
     option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x20)));
-    EXPECT_EQ("type=002, len=001: 20", option->toText());
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Add option 4 to "isc".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x40)));
-    EXPECT_EQ("type=004, len=001: 40", option->toText());
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Merge source configuration to the destination configuration. The options
@@ -436,27 +442,37 @@ TEST_F(CfgOptionTest, validMerge) {
     // isc:1 should come from "other" config.
     OptionDescriptor desc = this_cfg.get("isc", 1);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ("type=001, len=001: 16 (uint8)", desc.option_->toText());
+    OptionUint8Ptr opint = boost::dynamic_pointer_cast<OptionUint8>(desc.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(16, opint->getValue());
 
     // isc:2 should come from "other" config.
     desc = this_cfg.get("isc", 2);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ("type=002, len=001: 32 (uint8)", desc.option_->toText());
+    opint = boost::dynamic_pointer_cast<OptionUint8>(desc.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(32, opint->getValue());
 
     // isc:4 should come from "other" config.
     desc = this_cfg.get("isc", 4);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ("type=004, len=001: 64 (uint8)", desc.option_->toText());
+    opint = boost::dynamic_pointer_cast<OptionUint8>(desc.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(64, opint->getValue());
 
     // fluff:3 should come from "this" config.
     desc = this_cfg.get("fluff", 3);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ("type=003, len=001: 3 (uint8)", desc.option_->toText());
+    opint = boost::dynamic_pointer_cast<OptionUint8>(desc.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(3, opint->getValue());
 
     // fluff:4 should come from "this" config.
     desc = this_cfg.get("fluff", 4);
     ASSERT_TRUE(desc.option_);
-    EXPECT_EQ("type=004, len=001: 4 (uint8)", desc.option_->toText());
+    opint = boost::dynamic_pointer_cast<OptionUint8>(desc.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(4, opint->getValue());
 }
 
 // This test verifies that attempting to merge options
@@ -536,7 +552,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(updated);
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc->option_);
     ASSERT_TRUE(opstr);
-    EXPECT_EQ("type=012, len=011: \"example.org\" (string)", opstr->toText());
+    EXPECT_EQ("example.org", opstr->getValue());
 
     // Next we'll try a vendor option with a formatted value
     space = "vendor-4491";
@@ -548,7 +564,8 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(updated);
     Option4AddrLstPtr opaddrs = boost::dynamic_pointer_cast<Option4AddrLst>(desc->option_);
     ASSERT_TRUE(opaddrs);
-    EXPECT_EQ("type=002, len=008: 192.0.2.1 192.0.2.2", opaddrs->toText());
+    Option4AddrLst::AddressContainer exp_addresses = { IOAddress("192.0.2.1"), IOAddress("192.0.2.2") };
+    EXPECT_EQ(exp_addresses, opaddrs->getAddresses());
 
     // Now, a user defined uint8 option
     space = "isc";
@@ -559,7 +576,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(updated);
     OptionUint8Ptr opint = boost::dynamic_pointer_cast<OptionUint8>(desc->option_);
     ASSERT_TRUE(opint);
-    EXPECT_EQ("type=001, len=001: 119 (uint8)", opint->toText());
+    EXPECT_EQ(119, opint->getValue());
 
     // Now, a user defined array of ints from a formatted value
     option.reset(new Option(Option::V4, 2));
@@ -569,7 +586,8 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(updated);
     OptionUint8ArrayPtr oparray = boost::dynamic_pointer_cast<OptionUint8Array>(desc->option_);
     ASSERT_TRUE(oparray);
-    EXPECT_EQ("type=002, len=003: 1(uint8) 2(uint8) 3(uint8)", oparray->toText());
+    std::vector<uint8_t> exp_ints = { 1, 2, 3 };
+    EXPECT_EQ(exp_ints, oparray->getValues());
 
     // Finally, a generic, undefined option
     option.reset(new Option(Option::V4, 199, OptionBuffer(1, 0x77)));
@@ -577,7 +595,8 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_FALSE(updated);
-    EXPECT_EQ("type=199, len=001: 77", desc->option_->toText());
+    ASSERT_EQ(1, desc->option_->getData().size());
+    EXPECT_EQ(0x77, desc->option_->getData()[0]);
 }
 
 // This test verifies that encapsulated options are added as sub-options
