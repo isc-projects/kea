@@ -202,12 +202,12 @@ getModifiedGlobalParameters4(const db::BackendSelector& backend_selector,
 
 AuditEntryCollection
 ConfigBackendPoolDHCPv4::
-getRecentAuditEntries4(const db::BackendSelector& backend_selector,
-                       const db::ServerSelector& server_selector,
-                       const boost::posix_time::ptime& modification_time) const {
+getRecentAuditEntries(const db::BackendSelector& backend_selector,
+                      const db::ServerSelector& server_selector,
+                      const boost::posix_time::ptime& modification_time) const {
     AuditEntryCollection audit_entries;
     getMultiplePropertiesConst<AuditEntryCollection, const boost::posix_time::ptime&>
-        (&ConfigBackendDHCPv4::getRecentAuditEntries4, backend_selector,
+        (&ConfigBackendDHCPv4::getRecentAuditEntries, backend_selector,
          server_selector, audit_entries, modification_time);
     return (audit_entries);
 }

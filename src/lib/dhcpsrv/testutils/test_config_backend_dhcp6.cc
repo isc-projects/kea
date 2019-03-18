@@ -211,8 +211,8 @@ TestConfigBackendDHCPv6::getModifiedGlobalParameters6(const db::ServerSelector& 
 }
 
 AuditEntryCollection
-TestConfigBackendDHCPv6::getRecentAuditEntries6(const db::ServerSelector&,
-                                                const boost::posix_time::ptime&) const {
+TestConfigBackendDHCPv6::getRecentAuditEntries(const db::ServerSelector&,
+                                               const boost::posix_time::ptime&) const {
     return (AuditEntryCollection());
 }
 

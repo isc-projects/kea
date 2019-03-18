@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <cc/user_context.h>
 #include <process/config_ctl_info.h>
 #include <process/logging_info.h>
+#include <util/optional.h>
 
 namespace isc {
 namespace process {
@@ -118,6 +119,21 @@ public:
         config_ctl_info_ = config_ctl_info;
     }
 
+    /// @brief Sets the server's logical name
+    ///
+    /// @param server_tag a unique string name which identifies this server
+    /// from any other configured servers
+    void setServerTag(const util::Optional<std::string>& server_tag) {
+        server_tag_ = server_tag;
+    }
+
+    /// @brief Returns the server's logical name
+    ///
+    /// @return string containing the server's tag
+    util::Optional<std::string> getServerTag() const {
+        return (server_tag_);
+    }
+
 protected:
     /// @brief Copies the current configuration to a new configuration.
     ///
@@ -135,6 +151,9 @@ private:
 
     /// @brief Configuration control information.
     process::ConfigControlInfoPtr config_ctl_info_;
+
+    /// @brief Logical name of the server
+    util::Optional<std::string> server_tag_;
 };
 
 /// @brief Non-const pointer to the @c SrvConfig.

@@ -16,6 +16,7 @@ DISTCLEANFILES = spec_config.h.pre
 
 lib_LTLIBRARIES = libkea-process.la
 libkea_process_la_SOURCES  = config_base.cc config_base.h
+libkea_process_la_SOURCES += config_ctl_base.h
 libkea_process_la_SOURCES += config_ctl_info.cc config_ctl_info.h
 libkea_process_la_SOURCES += config_ctl_parser.cc config_ctl_parser.h
 libkea_process_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
@@ -83,6 +84,7 @@ endif
 libkea_process_includedir = $(pkgincludedir)/process
 libkea_process_include_HEADERS = \
 	config_base.h \
+	config_ctl_base.h \
 	config_ctl_info.h \
 	config_ctl_parser.h \
 	daemon.h \

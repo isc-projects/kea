@@ -7043,7 +7043,7 @@ TEST_F(Dhcp6ParserTest, serverTag) {
 
     // Configuration with the tag should have the tag value.
     configure(config_tag, CONTROL_RESULT_SUCCESS, "");
-    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag());
+    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag().get());
 
     // Make sure a invalid server-tag fails to parse.
     ASSERT_THROW(parseDHCP6(bad_tag), std::exception);

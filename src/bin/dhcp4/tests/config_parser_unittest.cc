@@ -6467,7 +6467,7 @@ TEST_F(Dhcp4ParserTest, serverTag) {
 
     // Configuration with the tag should have the tag value.
     configure(config_tag, CONTROL_RESULT_SUCCESS, "");
-    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag());
+    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag().get());
 
     // Make sure a invalid server-tag fails to parse.
     ASSERT_THROW(parseDHCP4(bad_tag), std::exception);

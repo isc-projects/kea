@@ -295,22 +295,6 @@ TEST_F(SrvConfigTest, echoClientId) {
     EXPECT_TRUE(conf1.getEchoClientId());
 }
 
-// This test verifies that server-tag may be configured.
-TEST_F(SrvConfigTest, serverTag) {
-    SrvConfig conf;
-
-    // Check that the default is an empty string.
-    EXPECT_TRUE(conf.getServerTag().empty());
-
-    // Check that it can be modified.
-    conf.setServerTag("boo");
-    EXPECT_EQ("boo", conf.getServerTag());
-
-    // Check the other constructor has the same default
-    SrvConfig conf1(1);
-    EXPECT_EQ("boo", conf.getServerTag());
-}
-
 // This test checks if entire configuration can be copied and that the sequence
 // number is not affected.
 TEST_F(SrvConfigTest, copy) {
@@ -1039,7 +1023,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
 
     //  server-tag port should be the "from" configured value.
-    EXPECT_EQ("use_this_server", cfg_to.getServerTag());
+    EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
     // Next we check the explicitly "configured" globals. 
     // The list should be all of the "to" + "from", with the

@@ -360,8 +360,8 @@ public:
                            const std::string& exp_log_message,
                            const size_t new_entries_num = 1) {
         auto audit_entries_size_save = audit_entries_.size();
-        audit_entries_ = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
-                                                        timestamps_["two days ago"]);
+        audit_entries_ = cbptr_->getRecentAuditEntries(ServerSelector::ALL(),
+                                                       timestamps_["two days ago"]);
         ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_.size())
             << logExistingAuditEntries();
 
