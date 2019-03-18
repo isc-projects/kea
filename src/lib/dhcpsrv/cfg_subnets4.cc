@@ -56,7 +56,7 @@ CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
 }
 
 void
-CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
+CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
                    CfgSubnets4& other) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
 
@@ -92,6 +92,12 @@ CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
 
             // Now we remove the existing subnet.
             index.erase(subnet_it);
+        }
+
+        // Create the subnet's options based on the given definitions.
+        (*other_subnet)->getCfgOption()->createOptions(cfg_def);
+        for (auto pool : (*other_subnet)->getPoolsWritable(Lease::TYPE_V4)) {
+            pool->getCfgOption()->createOptions(cfg_def);
         }
 
         // Add the "other" subnet to the our collection of subnets.
