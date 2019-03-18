@@ -91,6 +91,7 @@ public:
     ///
     /// It is always needed when there are virtual methods.
     virtual ~CBControlBase() {
+        databaseConfigDisconnect();
     }
 
     /// @brief (Re)connects to the specified configuration backends.
