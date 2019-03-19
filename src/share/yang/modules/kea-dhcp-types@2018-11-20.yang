@@ -145,15 +145,6 @@ module kea-dhcp-types {
       description "Cassandra database keyspace (this is Cassandra's equivalent
                    of a database name).";
     }
-    leaf consistency {
-      type string;
-      description "Consistency level.";
-    }
-    leaf serial-consistency {
-      type string;
-      description "Serial consistency level which manages lightweight
-                   transaction isolation.";
-    }
     leaf max-reconnect-tries {
       type uint32;
       description "Maximum of recovery attempts before exit.";
