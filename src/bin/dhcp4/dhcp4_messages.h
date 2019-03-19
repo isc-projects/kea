@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Feb 08 2019 20:32
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Mar 19 2019 10:21
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -26,9 +26,7 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS;
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL;
 extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED;
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE;
-extern const isc::log::MessageID DHCP4_CONFIG_FETCH;
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL;
-extern const isc::log::MessageID DHCP4_CONFIG_MERGED;
 extern const isc::log::MessageID DHCP4_CONFIG_NEW_SUBNET;
 extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE;
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE;
