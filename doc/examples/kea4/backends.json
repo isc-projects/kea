@@ -51,7 +51,7 @@
 // password is not necessary to connect and that timeout is 5 seconds.
 // Kea must be compiled with --with-pgsql option to use this backend.
 //  "lease-database": {
-//      "type": "pgsql",
+//      "type": "postgresql",
 //      "name": "keatest",
 //      "host": "localhost",
 //      "port": 5432,

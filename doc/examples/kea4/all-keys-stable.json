@@ -257,7 +257,7 @@
                 // Port on which the database is available.
                 "port": 3306,
 
-                // Type of the database, e.g. "mysql", "pgsql", "cql".
+                // Type of the database, e.g. "mysql", "postgresql", "cql".
                 "type": "mysql",
 
                 // User name to be used to access the database.
@@ -332,8 +332,8 @@
             // because non stored leases will be lost upon Kea server restart.
             "persist": true,
 
-            // Lease database backend type, i.e. "memfile", "mysql", "pgsql"
-            // or "cql".
+            // Lease database backend type, i.e. "memfile", "mysql",
+            // "postgresql" or "cql".
             "type": "memfile"
         },
 
@@ -674,7 +674,7 @@
                     // Name of the database to connect to.
                     "name": "config",
 
-                    // Type of the database, e.g. "mysql", "pgsql", "cql".
+                    // Type of the database, e.g. "mysql", "postgresql", "cql".
                     "type": "mysql"
                 }
             ]
