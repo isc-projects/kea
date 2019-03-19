@@ -316,6 +316,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     if (!check_only) {
         TimerMgr::instance()->unregisterTimers();
         server.discardPackets();
+        server.getCBControl()->reset();
     }
 
     // Revert any runtime option definitions configured so far and not committed.
