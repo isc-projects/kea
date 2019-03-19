@@ -341,6 +341,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"config-fetch-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONFIG_CONTROL:
+        return isc::dhcp::Dhcp4Parser::make_CONFIG_FETCH_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("config-fetch-wait-time", driver.loc_);
+    }
+}
+
 \"readonly\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:

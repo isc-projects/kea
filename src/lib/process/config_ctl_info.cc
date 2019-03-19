@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <process/config_ctl_info.h>
 
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace process {
@@ -42,7 +43,8 @@ ConfigDbInfo::getParameterValue(const std::string& name, std::string& value) con
 
 //********* ConfiControlInfo ************//
 
-ConfigControlInfo::ConfigControlInfo(const ConfigControlInfo& other) {
+ConfigControlInfo::ConfigControlInfo(const ConfigControlInfo& other)
+    : config_fetch_wait_time_(other.config_fetch_wait_time_) {
     for (auto db : other.db_infos_) {
         addConfigDatabase(db.getAccessString());
     }
@@ -88,6 +90,7 @@ ConfigControlInfo::EMPTY_DB() {
 void
 ConfigControlInfo::clear() {
     db_infos_.clear();
+    config_fetch_wait_time_ = Optional<uint16_t>(30, true);
 }
 
 void
@@ -106,12 +109,19 @@ ConfigControlInfo::toElement() const {
     }
 
     result->set("config-databases", db_list);
+
+    if (!config_fetch_wait_time_.unspecified()) {
+        result->set("config-fetch-wait-time",
+                    Element::create(static_cast<int>(config_fetch_wait_time_)));
+    }
+
     return(result);
 }
 
 bool
 ConfigControlInfo::equals(const ConfigControlInfo& other) const {
-   return (db_infos_ == other.db_infos_);
+   return ((db_infos_ == other.db_infos_) &&
+           (config_fetch_wait_time_ == other.config_fetch_wait_time_));
 }
 
 } // end of namespace isc::process

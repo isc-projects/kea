@@ -242,6 +242,7 @@ const char* PARSER_CONFIGS[] = {
     "    \"rebind-timer\": 2000, \n"
     "    \"renew-timer\": 1000, \n"
     "    \"config-control\": { \n"
+    "       \"config-fetch-wait-time\": 10, \n"
     "       \"config-databases\": [ { \n"
     "               \"type\": \"mysql\", \n"
     "               \"name\": \"keatest1\", \n"
@@ -6434,6 +6435,10 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
               dblist.front().getAccessString());
     EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest",
               dblist.back().getAccessString());
+
+    // Verify that the config-fetch-wait-time is correct.
+    EXPECT_FALSE(info->getConfigFetchWaitTime().unspecified());
+    EXPECT_EQ(10, info->getConfigFetchWaitTime().get());
 }
 
 // Check whether it is possible to configure server-tag

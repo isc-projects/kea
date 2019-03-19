@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <cc/cfg_to_element.h>
 #include <database/database_connection.h>
+#include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
@@ -139,10 +140,35 @@ class ConfigControlInfo : public isc::data::CfgToElement {
 public:
 
     /// @brief Constructor.
-    ConfigControlInfo() {};
+    ConfigControlInfo()
+        : config_fetch_wait_time_(30, true) {};
 
     /// @brief Copy Constructor.
     ConfigControlInfo(const ConfigControlInfo& other);
+
+    /// @brief Sets new value of the config-fetch-wait-time.
+    ///
+    /// @param config_fetch_wait_time New value of the parameter which
+    /// specifies a time period in seconds between the attempts to
+    /// fetch the server configuration updates. The value of 0 disables
+    /// the periodic attempts to fetch the updates.
+    void setConfigFetchWaitTime(const util::Optional<uint16_t>& config_fetch_wait_time) {
+        config_fetch_wait_time_ = config_fetch_wait_time;
+    }
+
+    /// @brief Returns configured config-fetch-wait-time value.
+    ///
+    /// This value specifies the time period in seconds between the
+    /// attempts to fetch the server configuration updates via the
+    /// configuration backends. The value of 0 means that the
+    /// mechanism to periodically fetch the configuration updates
+    /// is disabled.
+    ///
+    /// @return Time period between the subsequent attempts to
+    /// fetch server configuration updates in seconds.
+    const util::Optional<uint16_t>& getConfigFetchWaitTime() const {
+        return (config_fetch_wait_time_);
+    }
 
     /// @brief Sets configuration database access string.
     ///
@@ -199,6 +225,9 @@ public:
     bool equals(const ConfigControlInfo& other) const;
 
 private:
+
+    /// @brief Configured value of the config-fetch-wait-time.
+    util::Optional<uint16_t> config_fetch_wait_time_;
 
     /// @brief List of configuration databases
     ConfigDbInfoList db_infos_;

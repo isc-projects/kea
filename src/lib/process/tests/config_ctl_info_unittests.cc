@@ -15,6 +15,7 @@
 
 using namespace isc::process;
 using namespace isc::data;
+using namespace isc::util;
 
 // Verifies initializing via an access string and unparsing into elements
 // We just test basic unparsing, as more rigorous testing is done in
@@ -108,6 +109,13 @@ TEST(ConfigControlInfo, basicOperation) {
     ConfigControlInfo ctl;
     // We should have no dbs in the list.
     EXPECT_EQ(0, ctl.getConfigDatabases().size());
+    // The default fetch time is 30 and it is unspecified.
+    EXPECT_TRUE(ctl.getConfigFetchWaitTime().unspecified());
+    EXPECT_EQ(30, ctl.getConfigFetchWaitTime().get());
+
+    // Override the default fetch time.
+    ctl.setConfigFetchWaitTime(Optional<uint16_t>(123));
+    EXPECT_EQ(123, ctl.getConfigFetchWaitTime().get());
 
     // We should be able to add two distinct, valid dbs
     std::string access_str1 = "type=mysql host=machine1.org";
@@ -140,9 +148,11 @@ TEST(ConfigControlInfo, basicOperation) {
     const ConfigDbInfo& db_info3 = ctl.findConfigDb("type", "bogus");
     EXPECT_TRUE(db_info3 == ConfigControlInfo::EMPTY_DB());
 
-    // Verify we can clear the list of dbs.
+    // Verify we can clear the list of dbs and the fetch time.
     ctl.clear();
     EXPECT_EQ(0, ctl.getConfigDatabases().size());
+    EXPECT_TRUE(ctl.getConfigFetchWaitTime().unspecified());
+    EXPECT_EQ(30, ctl.getConfigFetchWaitTime().get());
 }
 
 // Verifies the copy ctor and equality functions ConfigControlInfo
@@ -152,6 +162,7 @@ TEST(ConfigControlInfo, copyAndEquality) {
     ConfigControlInfo ctl1;
     ASSERT_NO_THROW(ctl1.addConfigDatabase("type=mysql host=mach1.org"));
     ASSERT_NO_THROW(ctl1.addConfigDatabase("type=postgresql host=mach2.org"));
+    ctl1.setConfigFetchWaitTime(Optional<uint16_t>(123));
 
     // Clone that instance.
     ConfigControlInfo ctl2(ctl1);
@@ -166,3 +177,4 @@ TEST(ConfigControlInfo, copyAndEquality) {
     // They should not equal.
     EXPECT_FALSE(ctl3.equals(ctl1));
 }
+
