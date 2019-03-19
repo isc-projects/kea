@@ -257,11 +257,74 @@
                 // Port on which the database is available.
                 "port": 3306,
 
-                // Type of the database, e.g. "mysql", "pgsql", "cql".
+                // Type of the database, e.g. "mysql", "postgresql", "cql".
                 "type": "mysql",
 
                 // User name to be used to access the database.
                 "user": "kea"
+            },
+            {
+                // Name of the database to connect to.
+                "name": "kea",
+
+                // Host on which the database resides.
+                "host": "localhost",
+
+                // Database password.
+                "password": "kea",
+
+                // Port on which the database is available.
+                "port": 5432,
+
+                // Type of the database, e.g. "mysql", "postgresql", "cql".
+                "type": "postgresql",
+
+                // User name to be used to access the database.
+                "user": "kea"
+            },
+            {
+                // Name of the database to connect to.
+                "keyspace": "kea",
+
+                // Host on which the database resides.
+                "contact-points": "127.0.0.1",
+
+                // Database password.
+                "password": "kea",
+
+                // Port on which the database is available.
+                "port": 9042,
+
+                // Type of the database, e.g. "mysql", "postgresql", "cql".
+                "type": "cql",
+
+                // User name to be used to access the database.
+                "user": "kea",
+
+                // Consistency level for all queries.
+                // Supported values: any, one, two, three, quorum, all,
+                // local-quorum, each-quorum, serial, local-serial, local-one.
+                "consistency": "quorum",
+
+                // Serial consistency level for all queries.
+                // Supported values: any, one, two, three, quorum, all,
+                // local-quorum, each-quorum, serial, local-serial, local-one.
+                "serial-consistency": "serial",
+
+                // Connection reconnect wait time.
+                "reconnect-wait-time": 100,
+
+                // Connection connect timeout.
+                "connect-timeout": 100,
+
+                // Connection request timeout.
+                "request-timeout": 100,
+
+                // Connection tcp keepalive.
+                "tcp-keepalive": 100,
+
+                // Connection tcp nodelay.
+                "tcp-nodelay": true
             }
         ],
 
@@ -332,8 +395,8 @@
             // because non stored leases will be lost upon Kea server restart.
             "persist": true,
 
-            // Lease database backend type, i.e. "memfile", "mysql", "pgsql"
-            // or "cql".
+            // Lease database backend type, i.e. "memfile", "mysql",
+            // "postgresql" or "cql".
             "type": "memfile"
         },
 
@@ -677,7 +740,7 @@
                     // Name of the database to connect to.
                     "name": "config",
 
-                    // Type of the database, e.g. "mysql", "pgsql", "cql".
+                    // Type of the database, e.g. "mysql", "postgresql", "cql".
                     "type": "mysql"
                 }
             ]

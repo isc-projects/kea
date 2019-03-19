@@ -150,7 +150,7 @@ CqlConnection::openDatabase() {
         sconsistency = getParameter("consistency");
         consistency = sconsistency.c_str();
     } catch (...) {
-        // No user. Fine, we'll use NULL.
+        // No consistency. Fine, we'll use "quorum".
     }
 
     const char* serial_consistency = NULL;
@@ -159,7 +159,7 @@ CqlConnection::openDatabase() {
         sserial_consistency = getParameter("serial-consistency");
         serial_consistency = sserial_consistency.c_str();
     } catch (...) {
-        // No user. Fine, we'll use NULL.
+        // No serial consistency. Fine, we'll use "serial".
     }
 
     const char* reconnect_wait_time = NULL;
