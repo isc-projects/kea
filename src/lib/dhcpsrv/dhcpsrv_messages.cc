@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Feb 08 2019 20:31
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Mar 19 2019 10:19
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -13,6 +13,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_SUBNET6 = "DHCPSRV_CFGMGR_AD
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE = "DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CFG_DHCP_DDNS = "DHCPSRV_CFGMGR_CFG_DHCP_DDNS";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES = "DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_CONFIG4_MERGED = "DHCPSRV_CFGMGR_CONFIG4_MERGED";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CONFIGURE_SERVERID = "DHCPSRV_CFGMGR_CONFIGURE_SERVERID";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET4 = "DHCPSRV_CFGMGR_DEL_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET6 = "DHCPSRV_CFGMGR_DEL_SUBNET6";
@@ -243,6 +244,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE", "enabling listening on all interfaces",
     "DHCPSRV_CFGMGR_CFG_DHCP_DDNS", "Setting DHCP-DDNS configuration to: %1",
     "DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES", "stop listening on all interfaces",
+    "DHCPSRV_CFGMGR_CONFIG4_MERGED", "Configuration backend data has been merged.",
     "DHCPSRV_CFGMGR_CONFIGURE_SERVERID", "server configuration includes specification of a server identifier",
     "DHCPSRV_CFGMGR_DEL_SUBNET4", "IPv4 subnet %1 removed",
     "DHCPSRV_CFGMGR_DEL_SUBNET6", "IPv6 subnet %1 removed",

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Feb 08 2019 20:32
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Mar 19 2019 10:21
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -25,9 +25,7 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_H
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
 extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED = "DHCP4_COMMAND_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE = "DHCP4_CONFIG_COMPLETE";
-extern const isc::log::MessageID DHCP4_CONFIG_FETCH = "DHCP4_CONFIG_FETCH";
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL = "DHCP4_CONFIG_LOAD_FAIL";
-extern const isc::log::MessageID DHCP4_CONFIG_MERGED = "DHCP4_CONFIG_MERGED";
 extern const isc::log::MessageID DHCP4_CONFIG_NEW_SUBNET = "DHCP4_CONFIG_NEW_SUBNET";
 extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE = "DHCP4_CONFIG_OPTION_DUPLICATE";
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE = "DHCP4_CONFIG_PACKET_QUEUE";
@@ -158,9 +156,7 @@ const char* values[] = {
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
     "DHCP4_COMMAND_RECEIVED", "received command %1, arguments: %2",
     "DHCP4_CONFIG_COMPLETE", "DHCPv4 server has completed configuration: %1",
-    "DHCP4_CONFIG_FETCH", "Fetching configuration data from config backends.",
     "DHCP4_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
-    "DHCP4_CONFIG_MERGED", "Configuration backend data has been merged.",
     "DHCP4_CONFIG_NEW_SUBNET", "a new subnet has been added to configuration: %1",
     "DHCP4_CONFIG_OPTION_DUPLICATE", "multiple options with the code %1 added to the subnet %2",
     "DHCP4_CONFIG_PACKET_QUEUE", "DHCPv4 packet queue info after configuration: %1",
