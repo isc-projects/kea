@@ -447,7 +447,8 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
     : io_service_(new IOService()), shutdown_(true), alloc_engine_(),
       server_port_(server_port), use_bcast_(use_bcast),
       client_port_(client_port),
-      network_state_(new NetworkState(NetworkState::DHCPv4)) {
+      network_state_(new NetworkState(NetworkState::DHCPv4)),
+      cb_control_(new CBControlDHCPv4()) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
         .arg(server_port);
