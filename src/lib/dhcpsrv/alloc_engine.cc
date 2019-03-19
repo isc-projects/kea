@@ -544,10 +544,10 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
     // client rather than a query for each subnet within this shared network.
     // The only case when it is going to be less efficient is when there are
     // more host identifier types in use than subnets within a shared network.
-    // As it breaks RADIUS and host caching this can be disabled by the
+    // As it breaks RADIUS use of host caching this can be disabled by the
     // host manager.
     const bool use_single_query = network &&
-        !HostMgr::instance().getPreventCollection() &&
+        !HostMgr::instance().getDisableSingleQuery() &&
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {
@@ -3073,10 +3073,10 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     // client rather than a query for each subnet within this shared network.
     // The only case when it is going to be less efficient is when there are
     // more host identifier types in use than subnets within a shared network.
-    // As it breaks RADIUS and host caching this can be disabled by the
+    // As it breaks RADIUS use of host caching this can be disabled by the
     // host manager.
     const bool use_single_query = network &&
-        !HostMgr::instance().getPreventCollection() &&
+        !HostMgr::instance().getDisableSingleQuery() &&
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {

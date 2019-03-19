@@ -808,6 +808,8 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolClassification) {
 // reservations belong.
 TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
 
+    EXPECT_FALSE(HostMgr::instance().getDisableSingleQuery());
+
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
@@ -843,11 +845,13 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
 // Test that reservations within shared network take precedence over the
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong. Host lookups returning a collection are disabled.
+// As it is only an optimization the behavior (so the test) must stay
+// unchanged.
 TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsNoColl) {
 
     // Disable host lookups returning a collection.
-    ASSERT_FALSE(HostMgr::instance().getPreventCollection());
-    HostMgr::instance().setPreventCollection(true);
+    ASSERT_FALSE(HostMgr::instance().getDisableSingleQuery());
+    HostMgr::instance().setDisableSingleQuery(true);
 
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
@@ -1105,6 +1109,8 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
 // reservations belong (DHCPREQUEST case).
 TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
 
+    EXPECT_FALSE(HostMgr::instance().getDisableSingleQuery());
+
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
@@ -1143,12 +1149,13 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
 // Test that reservations within shared network take precedence over the
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong (DHCPREQUEST case). Host lookups returning a collection
-// are disabled.
+// are disabled. As it is only an optimization the behavior (so the test)
+// must stay unchanged.
 TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
 
     // Disable host lookups returning a collection.
-    ASSERT_FALSE(HostMgr::instance().getPreventCollection());
-    HostMgr::instance().setPreventCollection(true);
+    ASSERT_FALSE(HostMgr::instance().getDisableSingleQuery());
+    HostMgr::instance().setDisableSingleQuery(true);
 
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
