@@ -94,6 +94,15 @@ public:
         databaseConfigDisconnect();
     }
 
+    /// @brief Resets the state of this object.
+    ///
+    /// Disconnects the configuration backends resets the recorded last
+    /// audit entry time.
+    void reset() {
+        databaseConfigDisconnect();
+        last_audit_entry_time_ = getInitialAuditEntryTime();
+    }
+
     /// @brief (Re)connects to the specified configuration backends.
     ///
     /// This method disconnects from any existing configuration backends
