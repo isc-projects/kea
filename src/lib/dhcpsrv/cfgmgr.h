@@ -15,6 +15,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/srv_config.h>
 #include <util/buffer.h>
+#include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -85,12 +86,13 @@ public:
     /// This method returns a path to writable directory that DHCP servers
     /// can store data in.
     /// @return data directory
-    std::string getDataDir() const;
+    util::Optional<std::string> getDataDir() const;
 
     /// @brief Sets new data directory.
     ///
     /// @param datadir New data directory.
-    void setDataDir(const std::string& datadir);
+    /// @param unspecified Initial state. Default is "unspecified".
+    void setDataDir(const std::string& datadir, bool unspecified = true);
 
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
     ///
@@ -313,7 +315,7 @@ private:
     void mergeIntoCfg(const SrvConfigPtr& taget_config, const uint32_t seq);
 
     /// @brief directory where data files (e.g. server-id) are stored
-    std::string datadir_;
+    util::Optional<std::string> datadir_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;

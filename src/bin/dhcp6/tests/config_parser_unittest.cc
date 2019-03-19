@@ -5451,6 +5451,74 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+/// Check that not existent data directory returns an error.
+TEST_F(Dhcp6ParserTest, notExistDataDir) {
+
+    string config_txt = "{\n"
+        "\"data-directory\": \"/does-not-exist--\"\n"
+        "}";
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_txt));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 1 (error)
+    int rcode;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    EXPECT_EQ(1, rcode);
+    string text;
+    ASSERT_NO_THROW(text = comment->stringValue());
+    EXPECT_EQ("Bad directory '/does-not-exist--': No such file or directory",
+              text);
+}
+
+/// Check that not a directory data directory returns an error.
+TEST_F(Dhcp6ParserTest, notDirDataDir) {
+
+    string config_txt = "{\n"
+        "\"data-directory\": \"/dev/null\"\n"
+        "}";
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_txt));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 1 (error)
+    int rcode;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    EXPECT_EQ(1, rcode);
+    string text;
+    ASSERT_NO_THROW(text = comment->stringValue());
+    EXPECT_EQ("'/dev/null' is not a directory", text);
+}
+
+/// Check that a valid data directory is accepted.
+TEST_F(Dhcp6ParserTest, testDataDir) {
+
+    EXPECT_TRUE(CfgMgr::instance().getDataDir().unspecified());
+    string original_datadir(CfgMgr::instance().getDataDir());
+    string datadir(TEST_DATA_BUILDDIR);
+    string config_txt = "{\n"
+        "\"data-directory\": \"" + datadir + "\"\n"
+        "}";
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_txt));
+    // Do not export it as it will keep the current TEST_DATA_BUILDDIR...
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // returned value should be 0 (success);
+    checkResult(status, 0);
+
+    // The value of data-directory was updated.
+    EXPECT_FALSE(CfgMgr::instance().getDataDir().unspecified());
+    EXPECT_EQ(datadir, string(CfgMgr::instance().getDataDir()));
+    EXPECT_NE(original_datadir, string(CfgMgr::instance().getDataDir()));
+}
+
 /// Check that the decline-probation-period value has a default value if not
 /// specified explicitly.
 TEST_F(Dhcp6ParserTest, declineTimerDefault) {

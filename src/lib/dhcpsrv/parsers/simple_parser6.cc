@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,6 +35,7 @@ namespace dhcp {
 /// list and map types for entries.
 /// Order follows global_param rule in bison grammar.
 const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
+    { "data-directory",               Element::string },
     { "preferred-lifetime",           Element::integer },
     { "valid-lifetime",               Element::integer },
     { "renew-timer",                  Element::integer },

@@ -65,6 +65,21 @@ using namespace isc::hooks;
 
 namespace {
 
+/// @brief Checks if specified directory exists.
+///
+/// @param dir_path Path to a directory.
+/// @throw BadValue If the directory does not exist or is not a directory.
+void dirExists(const string& dir_path) {
+    struct stat statbuf;
+    if (stat(dir_path.c_str(), &statbuf) < 0) {
+        isc_throw(BadValue, "Bad directory '" << dir_path
+                  << "': " << strerror(errno));
+    }
+    if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
+        isc_throw(BadValue, "'" << dir_path << "' is not a directory");
+    }
+}
+
 /// @brief Parser for list of RSOO options
 ///
 /// This parser handles a Dhcp6/relay-supplied-options entry. It contains a
@@ -148,6 +163,7 @@ public:
     ///
     /// Currently this method sets the following global parameters:
     ///
+    /// - data-directory
     /// - decline-probation-period
     /// - dhcp4o6-port
     /// - user-context
@@ -155,6 +171,12 @@ public:
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
     void parse(const SrvConfigPtr& srv_config, const ConstElementPtr& global) {
+
+        // Set the data directory for server id file.
+        if (global->contains("data-directory")) {
+          CfgMgr::instance().setDataDir(getString(global, "data-directory"),
+                                        false);
+        }
 
         // Set the probation period for decline handling.
         uint32_t probation_period =
@@ -457,6 +479,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // boost, but would make the code less readable. We had serious issues
             // with the parser code debugability, so I decided to keep it as a
             // series of independent ifs.
+
+            if (config_pair.first == "data-directory") {
+                // Specific check for this global parameter.
+                dirExists(config_pair.second->stringValue());
+                continue;
+            }
 
             if (config_pair.first == "option-def") {
                 // This is converted to SimpleParser and is handled already above.

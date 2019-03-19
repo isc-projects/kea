@@ -10,6 +10,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/shared_network.h>
@@ -38,11 +39,11 @@ void checkMergedSubnet(CfgSubnets4& cfg_subnets,
                        const std::string& prefix,
                        int exp_valid,
                        SharedNetwork4Ptr exp_network) {
-
-    // The subnet1 should be replaced by subnet4 but the shared network
-    // should not be affected.
+    // Look for the network by prefix.
     auto subnet = cfg_subnets.getByPrefix(prefix);
     ASSERT_TRUE(subnet) << "subnet: " << prefix << " not found";
+
+    // Make sure we have the one we expect.
     ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
     ASSERT_EQ(exp_valid, subnet->getValid()) << "subnet valid time is wrong";
 
@@ -139,6 +140,11 @@ TEST(CfgSubnets4Test, deleteSubnet) {
 
 // This test verifies that subnets configuration is properly merged.
 TEST(CfgSubnets4Test, mergeSubnets) {
+    // Create custom options dictionary for testing merge. We're keeping it
+    // simple because they are more rigorous tests elsewhere.
+    CfgOptionDefPtr cfg_def(new CfgOptionDef());
+    cfg_def->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "string"))), "isc");
+
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
                                    26, 1, 2, 100, SubnetID(1)));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
@@ -147,7 +153,6 @@ TEST(CfgSubnets4Test, mergeSubnets) {
                                    26, 1, 2, 100, SubnetID(3)));
     Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.4.0"),
                                    26, 1, 2, 100, SubnetID(4)));
-
 
     // Create the "existing" list of shared networks
     CfgSharedNetworks4Ptr networks(new CfgSharedNetworks4());
@@ -171,15 +176,13 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     ASSERT_NO_THROW(cfg_to.add(subnet3));
     ASSERT_NO_THROW(cfg_to.add(subnet4));
 
-
     // Merge in an "empty" config. Should have the original config,
     // still intact.
     CfgSubnets4 cfg_from;
-    ASSERT_NO_THROW(cfg_to.merge(networks, cfg_from));
+    ASSERT_NO_THROW(cfg_to.merge(cfg_def, networks, cfg_from));
 
     // We should have all four subnets, with no changes.
     ASSERT_EQ(4, cfg_to.getAll()->size());
-
 
     // Should be no changes to the configuration.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
@@ -197,9 +200,21 @@ TEST(CfgSubnets4Test, mergeSubnets) {
                                    26, 2, 3, 400, SubnetID(1)));
     subnet1b->setSharedNetworkName("shared-network1");
 
+    // Add generic option 1 to subnet 1b.
+    std::string value("Yay!");
+    OptionPtr option(new Option(Option::V4, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+
     // subnet 3b updates subnet 3 and removes it from network 2
     Subnet4Ptr subnet3b(new Subnet4(IOAddress("192.0.3.0"),
                                    26, 3, 4, 500, SubnetID(3)));
+
+    // Now Add generic option 1 to subnet 3b.
+    value = "Team!";
+    option.reset(new Option(Option::V4, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.4.0"),
@@ -207,9 +222,26 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     subnet4b->setSharedNetworkName("shared-network1");
 
     // subnet 5 is new and belongs to network 2
+    // Has two pools both with an option 1
     Subnet4Ptr subnet5(new Subnet4(IOAddress("192.0.5.0"),
                                    26, 1, 2, 300, SubnetID(5)));
     subnet5->setSharedNetworkName("shared-network2");
+
+    // Add pool 1
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.5.10"), IOAddress("192.0.5.20")));
+    value = "POOLS";
+    option.reset(new Option(Option::V4, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    subnet5->addPool(pool);
+
+    // Add pool 2
+    pool.reset(new Pool4(IOAddress("192.0.5.30"), IOAddress("192.0.5.40")));
+    value ="RULE!";
+    option.reset(new Option(Option::V4, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    subnet5->addPool(pool);
 
     // Add subnets to the merge from config.
     ASSERT_NO_THROW(cfg_from.add(subnet1b));
@@ -218,12 +250,20 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     ASSERT_NO_THROW(cfg_from.add(subnet5));
 
     // Merge again.
-    ASSERT_NO_THROW(cfg_to.merge(networks, cfg_from));
+    ASSERT_NO_THROW(cfg_to.merge(cfg_def, networks, cfg_from));
     ASSERT_EQ(5, cfg_to.getAll()->size());
 
     // The subnet1 should be replaced by subnet1b.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
                                               "192.0.1.0/26", 400, shared_network1));
+
+    // Let's verify that our option is there and populated correctly.
+    auto subnet = cfg_to.getByPrefix("192.0.1.0/26");
+    auto desc = subnet->getCfgOption()->get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Yay!", opstr->getValue());
 
     // The subnet2 should not be affected because it was not present.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
@@ -232,6 +272,13 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     // subnet3 should be replaced by subnet3b and no longer assigned to a network.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
                                               "192.0.3.0/26", 500, no_network));
+    // Let's verify that our option is there and populated correctly.
+    subnet = cfg_to.getByPrefix("192.0.3.0/26");
+    desc = subnet->getCfgOption()->get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Team!", opstr->getValue());
 
     // subnet4 should be replaced by subnet4b and moved to network1.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
@@ -240,6 +287,22 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     // subnet5 should have been added to configuration.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(5),
                                               "192.0.5.0/26", 300, shared_network2));
+
+    // Let's verify that both pools have the proper options.
+    subnet = cfg_to.getByPrefix("192.0.5.0/26");
+    const PoolPtr merged_pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.5.10"));
+    ASSERT_TRUE(merged_pool);
+    desc = merged_pool->getCfgOption()->get("isc", 1);
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("POOLS", opstr->getValue());
+
+    const PoolPtr merged_pool2 = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.5.30"));
+    ASSERT_TRUE(merged_pool2);
+    desc = merged_pool2->getCfgOption()->get("isc", 1);
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("RULE!", opstr->getValue());
 }
 
 // This test verifies that it is possible to retrieve a subnet using an

@@ -12,6 +12,7 @@
 #include <cc/cfg_to_element.h>
 #include <cc/stamped_element.h>
 #include <cc/user_context.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/key_from_key.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -332,14 +333,102 @@ public:
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionDescriptor& desc, const std::string& option_space);
 
+    /// @brief Replaces the instance of an option within this collection
+    ///
+    /// This method locates the option within the given space and replaces
+    /// it with a copy of the given descriptor.  This effectively updates
+    /// the contents without altering the container indexing.
+    ///
+    /// @param desc Option descriptor holding option instance and other
+    /// parameters pertaining to the option.
+    /// @param option_space Option space name.
+    ///
+    /// @throw isc::BadValue if the descriptor's option instance is null,
+    /// if  space is invalid, or if the option does not already exist
+    /// in the given space.
+    void replace(const OptionDescriptor& desc, const std::string& option_space);
+
+    /// @brief Merges another option configuration into this one.
+    ///
+    /// This method calls @c mergeTo() to add this configuration's
+    /// options into @c other (skipping any duplicates).  Next it calls
+    /// @c createDescriptorOption() for each option descriptor in the
+    /// merged set.  This (re)-creates each descriptor's option based on
+    /// the merged set of opt definitions. Finally, it calls
+    /// @c copyTo() to overwrite this configuration's options with
+    /// the merged set in @c other.
+    ///
+    /// @warning The merge operation will affect the @c other configuration.
+    /// Therefore, the caller must not rely on the data held in the @c other
+    /// object after the call to @c merge. Also, the data held in @c other must
+    /// not be modified after the call to @c merge because it may affect the
+    /// merged configuration.
+    ///
+    /// @param cfg_def set of of user-defined option definitions to use
+    /// when creating option instances.
+    /// @param option configurations to merge with.
+    void merge(CfgOptionDefPtr cfg_def, CfgOption& other);
+
+    /// @brief Re-create the option in each descriptor based on given definitions
+    ///
+    /// Invokes @c createDescriptorOption() on each option descriptor in
+    /// each option space, passing in the the given dictionary of option
+    /// definitions.  If the descriptor's option is re-created, then the
+    /// descriptor is updated by calling @c replace().
+    ///
+    /// @param cfg_def set of of user-defined option definitions to use
+    /// when creating option instances.
+    void createOptions(CfgOptionDefPtr cfg_def);
+
+    /// @brief Creates an option descriptor's option based on a set of option defs
+    ///
+    /// This function's primary use is to create definition specific options for
+    /// option descriptors fetched from a configuration backend, as part of a
+    /// configuration merge.
+    ///
+    /// Given an OptionDescriptor whose option_ member contains a generic option
+    /// (i.e has a code and/or data), this function will attempt to find a matching
+    /// definition and then use that definition's factory to create an option
+    /// instance specific to that definition.   It will then replace the descriptor's
+    /// generic option with the specific option.
+    ///
+    /// Three sources of definitions are searched, in the following order:
+    ///
+    /// 1. Standard option definitions (@c LIBDHCP::getOptionDef))
+    /// 2. Vendor option definitions (@c LIBDHCP::getVendorOptionDef))
+    /// 3. User specified definitions passed in via cfg_def parameter.
+    ///
+    /// The code will use the first matching definition found.  It then applies
+    /// the following rules:
+    ///
+    /// -# If no definition is found but the descriptor conveys a non-empty
+    /// formatted value, throw an error.
+    /// -# If not definition is found and there is no formatted value, return
+    /// This leaves intact the generic option in the descriptor.
+    /// -# If a definition is found and there is no formatted value, pass the
+    /// descriptor's generic option's data into the definition's factory. Replace
+    /// the descriptor's option with the newly created option.
+    /// -# If a definition is found and there is a formatted value, split
+    /// the value into vector of values and pass that into the definition's
+    /// factory. Replace the descriptor's option with the newly created option.
+    ///
+    /// @param cfg_def the user specified definitions to use
+    /// @param space the option space name of the option
+    /// @param opt_desc OptionDescriptor describing the option.
+    ///
+    /// @return True if the descriptor's option instance was replaced.
+    /// @throw InvalidOperation if the descriptor conveys a formatted value and
+    /// there is no definition matching the option code in the given space, or
+    /// if the definition factory invocation fails.
+    static bool createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
+                             OptionDescriptor& opt_desc);
+
     /// @brief Merges this configuration to another configuration.
     ///
     /// This method iterates over the configuration items held in this
     /// configuration and copies them to the configuration specified
     /// as a parameter. If an item exists in the destination it is not
     /// copied.
-    ///
-    /// @note: this method is not longer used so should become private.
     ///
     /// @param [out] other Configuration object to merge to.
     void mergeTo(CfgOption& other) const;

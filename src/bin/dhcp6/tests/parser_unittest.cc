@@ -270,7 +270,7 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("advanced.json");
-    configs.push_back("all-keys.json");
+    configs.push_back("all-keys-current.json");
     configs.push_back("backends.json");
     configs.push_back("cassandra.json");
     configs.push_back("classify.json");
@@ -302,7 +302,7 @@ TEST(ParserTest, file) {
 TEST(ParserTest, globalParameters) {
     ConstElementPtr json;
     Parser6Context ctx;
-    string fname = string(CFG_EXAMPLES) + "/" + "all-keys.json";
+    string fname = string(CFG_EXAMPLES) + "/" + "all-keys-current.json";
     EXPECT_NO_THROW(json = ctx.parseFile(fname, Parser6Context::PARSER_DHCP6));
     EXPECT_NO_THROW(json = json->get("Dhcp6"));
     SimpleParser6 parser;

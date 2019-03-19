@@ -335,15 +335,19 @@ TEST_F(Dhcp4CBTest, mergeOptionDefs) {
 
 // This test verifies that externally configured options
 // merged correctly into staging configuration.
-// @todo enable test when SrvConfig can merge options.
-TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
+TEST_F(Dhcp4CBTest, mergeOptions) {
     string base_config =
         "{ \n"
-        "    \"option-data\": [ {"
-        "        \"name\": \"dhcp-message\","
-        "        \"data\": \"0A0B0C0D\","
-        "        \"csv-format\": false"
-        "     } ],"
+        "    \"option-data\": [ { \n"
+        "        \"name\": \"dhcp-message\", \n"
+        "        \"data\": \"0A0B0C0D\", \n"
+        "        \"csv-format\": false \n"
+        "     },{ \n" 
+        "        \"name\": \"host-name\", \n"
+        "        \"data\": \"old.example.com\", \n"
+        "        \"csv-format\": true \n"
+        "     } \n"
+        "    ], \n"
         "    \"config-control\": { \n"
         "       \"config-databases\": [ { \n"
         "               \"type\": \"memfile\", \n"
@@ -358,19 +362,28 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
 
     extractConfig(base_config);
 
-    // Create option two and add it to first backend.
-    OptionDescriptorPtr opt_two(new OptionDescriptor(
-        createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                   true, false, "my-boot-file")));
-    opt_two->space_name_ = DHCP4_OPTION_SPACE;
-    db1_->createUpdateOption4(ServerSelector::ALL(), opt_two);
+    OptionDescriptorPtr opt;
 
-    // Create option three and add it to second backend.
-    OptionDescriptorPtr opt_three(new OptionDescriptor(
-        createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                   true, false, "your-boot-file")));
-    opt_three->space_name_ = DHCP4_OPTION_SPACE;
-    db2_->createUpdateOption4(ServerSelector::ALL(), opt_three);
+    // Add host-name to the first backend.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V4, DHO_HOST_NAME,
+                                         true, false, "new.example.com")));
+    opt->space_name_ = DHCP4_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt);
+
+    // Add boot-file-name to the first backend.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                         true, false, "my-boot-file")));
+    opt->space_name_ = DHCP4_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt);
+
+    // Add boot-file-name to the second backend.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                         true, false, "your-boot-file")));
+    opt->space_name_ = DHCP4_OPTION_SPACE;
+    db2_->createUpdateOption4(ServerSelector::ALL(), opt);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -381,13 +394,21 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
     // Option definition from JSON should be there.
     CfgOptionPtr options = staging_cfg->getCfgOption();
 
+    // dhcp-message should come from the original config.
     OptionDescriptor found_opt = options->get("dhcp4", DHO_DHCP_MESSAGE);
     ASSERT_TRUE(found_opt.option_);
     EXPECT_EQ("0x0A0B0C0D", found_opt.option_->toHexString());
 
+    // host-name should come from the first back end, 
+    // (overwriting the original).
+    found_opt = options->get("dhcp4", DHO_HOST_NAME);
+    ASSERT_TRUE(found_opt.option_);
+    EXPECT_EQ("new.example.com", found_opt.option_->toString());
+
+    // booth-file-name should come from the first back end.
     found_opt = options->get("dhcp4", DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("my-boot-file", found_opt.formatted_value_);
+    EXPECT_EQ("my-boot-file", found_opt.option_->toString());
 }
 
 // This test verifies that externally configured shared-networks are
