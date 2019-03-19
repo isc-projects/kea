@@ -381,6 +381,14 @@ TEST_F(CBControlBaseTest, getMgr) {
     EXPECT_EQ(TEST_INSTANCE_ID, mgr.getInstanceId());
 }
 
+// This test verifies that last audit entry time is reset upon the
+// call to CBControlBase::reset().
+TEST_F(CBControlBaseTest, reset) {
+    cb_ctl_.setLastAuditEntryTime(timestamps_["tomorrow"]);
+    cb_ctl_.reset();
+    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+}
+
 // This test verifies that it is correctly determined whether the
 // server should fetch the particular configuration element.
 TEST_F(CBControlBaseTest, fetchConfigElement) {
