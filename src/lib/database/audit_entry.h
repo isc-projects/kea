@@ -8,8 +8,8 @@
 #define AUDIT_ENTRY_H
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index_container.hpp>
-#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/shared_ptr.hpp>
@@ -170,12 +170,20 @@ typedef boost::multi_index_container<
     AuditEntryPtr,
     // First index allows for accessing by the object type.
     boost::multi_index::indexed_by<
-        boost::multi_index::hashed_non_unique<
+        boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<AuditEntryObjectTypeTag>,
-            boost::multi_index::const_mem_fun<
+            boost::multi_index::composite_key<
                 AuditEntry,
-                std::string,
-                &AuditEntry::getObjectType
+                boost::multi_index::const_mem_fun<
+                    AuditEntry,
+                    std::string,
+                    &AuditEntry::getObjectType
+                >,
+                boost::multi_index::const_mem_fun<
+                    AuditEntry,
+                    AuditEntry::ModificationType,
+                    &AuditEntry::getModificationType
+                >
             >
         >,
 
