@@ -427,17 +427,17 @@ public:
         negative_caching_ = negative_caching;
     }
 
-    /// @brief Returns the prevent collection flag.
+    /// @brief Returns the disable single query flag.
     ///
-    /// @return the prevent collection flag.
-    bool getPreventCollection() const {
-        return (prevent_collection_);
+    /// @return the disable single query flag.
+    bool getDisableSingleQuery() const {
+        return (disable_single_query_);
     }
 
-    /// @brief Sets the prevent collection flag.
+    /// @brief Sets the disable single query flag.
     ///
-    void setPreventCollection(bool prevent_collection) {
-        prevent_collection_ = prevent_collection;
+    void setDisableSingleQuery(bool disable_single_query) {
+        disable_single_query_ = disable_single_query;
     }
 
 protected:
@@ -448,11 +448,12 @@ protected:
     /// This works for get[46] for a subnet and an identifier.
     bool negative_caching_;
 
-    /// @brief The prevent collection flag.
+    /// @brief The disable single query flag.
     ///
-    /// When true prevent the use of lookup methods returning a
-    /// collection when methods returning a single object are usable instead.
-    bool prevent_collection_;
+    /// When true prevent the use of lookup methods returning a collection
+    /// aka single queries when methods returning a host object are usable
+    /// instead.
+    bool disable_single_query_;
 
     /// @brief Cache an answer.
     ///
@@ -475,7 +476,7 @@ protected:
 private:
 
     /// @brief Private default constructor.
-    HostMgr() : negative_caching_(false), prevent_collection_(false) { }
+    HostMgr() : negative_caching_(false), disable_single_query_(false) { }
 
     /// @brief List of alternate host data sources.
     HostDataSourceList alternate_sources_;

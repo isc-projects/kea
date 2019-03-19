@@ -2581,6 +2581,8 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkPoolClassification) {
 // even if this address belongs to another subnet within the same
 // shared network.
 TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkReservations) {
+    EXPECT_FALSE(HostMgr::instance().getDisableSingleQuery());
+
     // Create reservation for the client in the second subnet.
     subnet_ = subnet2_;
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
@@ -2605,10 +2607,12 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkReservations) {
 // This test verifies that the client is offerred a reserved address
 // even if this address belongs to another subnet within the same
 // shared network. Host lookups returning a collection are disabled.
+// As it is only an optimization the behavior (so the test) must stay
+// unchanged.
 TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkReservationsNoColl) {
     // Disable host lookups returning a collection.
-    ASSERT_FALSE(HostMgr::instance().getPreventCollection());
-    HostMgr::instance().setPreventCollection(true);
+    ASSERT_FALSE(HostMgr::instance().getDisableSingleQuery());
+    HostMgr::instance().setDisableSingleQuery(true);
 
     // Create reservation for the client in the second subnet.
     subnet_ = subnet2_;
@@ -2635,6 +2639,8 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkReservationsNoColl) {
 // even if this address belongs to another subnet within the same
 // shared network.
 TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkReservations) {
+    EXPECT_FALSE(HostMgr::instance().getDisableSingleQuery());
+
     // Create reservation for the client in the second subnet.
     subnet_ = subnet2_;
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
@@ -2659,10 +2665,12 @@ TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkReservations) {
 // This test verifies that the client is allocated a reserved address
 // even if this address belongs to another subnet within the same
 // shared network. Host lookups returning a collection are disabled.
+// As it is only an optimization the behavior (so the test) must stay
+// unchanged.
 TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkReservationsNoColl) {
     // Disable host lookups returning a collection.
-    ASSERT_FALSE(HostMgr::instance().getPreventCollection());
-    HostMgr::instance().setPreventCollection(true);
+    ASSERT_FALSE(HostMgr::instance().getDisableSingleQuery());
+    HostMgr::instance().setDisableSingleQuery(true);
 
     // Create reservation for the client in the second subnet.
     subnet_ = subnet2_;
