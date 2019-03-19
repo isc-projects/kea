@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <cc/dhcp_config_error.h>
 #include <process/config_ctl_parser.h>
 #include <database/dbaccess_parser.h>
+#include <cstdint>
 #include <string>
 
 using namespace isc;
@@ -41,6 +42,14 @@ ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
                 ctl_info->addConfigDatabase(access_string);
             }
         }
+
+        if (config_control->contains("config-fetch-wait-time")) {
+            auto config_fetch_wait_time = getInteger(config_control,
+                                                     "config-fetch-wait-time",
+                                                     0, 65535);
+            ctl_info->setConfigFetchWaitTime(static_cast<uint16_t>(config_fetch_wait_time));
+        }
+
     } catch (const isc::ConfigError&) {
         // Position was already added
         throw;

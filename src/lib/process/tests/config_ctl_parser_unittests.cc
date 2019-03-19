@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,9 @@ TEST(ConfigCtlInfoParser, validConfigs) {
     std::string configs[] = {
        "{}",
 
-       "{ \"config-databases\": [] }",
+       "{ \"config-databases\": [], \n"
+       "  \"config-fetch-wait-time\": 20 \n"
+       "}",
 
        "{ \"config-databases\": [ \n"
        "    { \n"
@@ -79,7 +81,10 @@ TEST(ConfigCtlInfoParser, invalidConfigs) {
        "    { \n"
        "        \"bogus\": \"param\" \n"
        "    } \n"
-       "] } \n"
+       "] } \n",
+       "{ \"config-fetch-wait-time\": -1 }",
+       "{ \"config-fetch-wait-time\": 65537 }",
+       "{ \"config-fetch-wait-time\": \"a-string\" }",
     };
 
     for (auto config : configs) {
