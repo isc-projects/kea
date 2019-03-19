@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,47 +59,6 @@ isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set,
                      bool check_only = false);
-
-/// @brief Fetch and merge data from config backends into the staging config
-///
-/// If the given SrvConfig specifies one or more config backends it calls
-/// @c databaseConfigConnect() to open connections to them, otherwise it
-/// simply returns.  Next it creates an external SrvConfig instance,
-/// and populates with data it fetches from the  config backends.
-/// Finally, it merges this external config into the staging config.
-///
-/// @param srv_cfg server configuration that (may) specify the backends
-/// should be merged
-void
-databaseConfigFetch(const SrvConfigPtr& srv_cfg);
-
-/// @brief Attempts to connect to configured CB databases
-///
-/// First, this function will close all existing CB backends. It
-/// will then attempt to connect to all of the CB backends defined
-/// in the given SrvConfig (if any).
-///
-/// It will return true if there are configured CB databases,
-/// and false otherwise.  Any errors encountered along the way
-/// should generate throws.
-///
-/// @param srv_cfg Server configuration from which to get
-/// the config-control information to use.
-///
-/// @return True if there are configured CB databases, false if not.
-bool
-databaseConfigConnect(const SrvConfigPtr& srv_cfg);
-
-/// @brief Adds globals fetched from config backend(s) to a SrvConfig instance
-///
-/// Iterates over the given collection of global parameters and adds them to the
-/// given configuration's list of configured globals.
-///
-/// @param external_cfg SrvConfig instance to update
-/// @param cb_globals collection of global parameters supplied by configuration
-/// backend
-void addGlobalsToConfig(SrvConfigPtr external_cfg,
-                        data::StampedValueCollection& cb_globals);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
