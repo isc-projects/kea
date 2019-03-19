@@ -180,9 +180,12 @@ public:
         /// @todo We need a separate API call for the latter case to only
         /// fetch the last audit entry rather than all of them.
 
+        // Save the timestamp indicating last audit entry time.
+        auto lb_modification_time = last_audit_entry_time_;
+
         audit_entries = getMgr().getPool()->getRecentAuditEntries(backend_selector,
                                                                   server_selector,
-                                                                  last_audit_entry_time_);
+                                                                  lb_modification_time);
         // Store the last audit entry time. It should be set to the most recent
         // audit entry fetched. If returned audit is empty we don't update.
         updateLastAuditEntryTime(audit_entries);
@@ -198,11 +201,46 @@ public:
         // execute the server specific function that fetches and merges the data
         // into the given configuration.
         if (!fetch_updates_only || !audit_entries.empty()) {
-            databaseConfigApply(srv_cfg, backend_selector, server_selector, audit_entries);
+            databaseConfigApply(srv_cfg, backend_selector, server_selector,
+                                lb_modification_time, audit_entries);
         }
     }
 
 protected:
+
+    /// @brief Checks if there are new or updated configuration elements of
+    /// specific type to be fetched from the database.
+    ///
+    /// This is convenience method invoked from the implementations of the
+    /// @c databaseConfigApply function. This method is invoked in two cases:
+    /// when the server starts up and fetches the entire configuration available
+    /// for it and when it should fetch the updates to the existing configuration.
+    /// In the former case, the collection of audit entries is always empty.
+    /// In the latter case it contains audit entries indicating the updates
+    /// to be fetched. This method checks if the implementation of the
+    /// @c databaseConfigApply should fetch updated configuration of the
+    /// configuration elements of the specific type. Therefore, it returns true
+    /// if the audit entries collection is empty (the former case described
+    /// above) or the audit entries collection contains CREATE or UPDATE
+    /// entries of the specific type.
+    ///
+    /// @return true if there are new or updated configuration elements to
+    /// be fetched from the database or the audit entries collection is empty.
+    bool fetchConfigElement(const db::AuditEntryCollection& audit_entries,
+                            const std::string& object_type) const {
+        if (!audit_entries.empty()) {
+            const auto& index = audit_entries.get<db::AuditEntryObjectTypeTag>();
+            auto range = index.equal_range(object_type);
+            for (auto it = range.first; it != range.second; ++it) {
+                if ((*it)->getModificationType() != db::AuditEntry::ModificationType::DELETE) {
+                    return (true);
+                }
+            }
+            return (false);
+        }
+
+        return (true);
+    }
 
     /// @brief Server specific method to apply fetched configuration into
     /// the local configuration.
@@ -227,12 +265,15 @@ protected:
     /// @pararm srv_cfg Pointer to the local server configuration.
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
+    /// @param lb_modification_time Lower bound modification time for the
+    /// configuration elements to be fetched.
     /// @param audit_entries Audit entries fetched from the database since
     /// the last configuration update. This collection is empty if there
     /// were no updates.
     virtual void databaseConfigApply(const ConfigPtr& srv_cfg,
                                      const db::BackendSelector& backend_selector,
                                      const db::ServerSelector& server_selector,
+                                     const boost::posix_time::ptime& lb_modification_time,
                                      const db::AuditEntryCollection& audit_entries) = 0;
 
     /// @brief Returns the instance of the Config Backend Manager used by

@@ -222,6 +222,7 @@ public:
 class CBControl : public CBControlBase<CBControlBackendMgr> {
 public:
 
+    using CBControlBase<CBControlBackendMgr>::fetchConfigElement;
     using CBControlBase<CBControlBackendMgr>::getMgr;
     using CBControlBase<CBControlBackendMgr>::getInitialAuditEntryTime;
 
@@ -246,6 +247,7 @@ public:
     virtual void databaseConfigApply(const ConfigPtr& srv_cfg,
                                      const BackendSelector& backend_selector,
                                      const ServerSelector& server_selector,
+                                     const boost::posix_time::ptime&,
                                      const AuditEntryCollection& audit_entries) {
         ++merges_num_;
         backend_selector_ = backend_selector;
@@ -377,6 +379,42 @@ public:
 TEST_F(CBControlBaseTest, getMgr) {
     auto mgr = cb_ctl_.getMgr();
     EXPECT_EQ(TEST_INSTANCE_ID, mgr.getInstanceId());
+}
+
+// This test verifies that it is correctly determined whether the
+// server should fetch the particular configuration element.
+TEST_F(CBControlBaseTest, fetchConfigElement) {
+    db::AuditEntryCollection audit_entries;
+    // When audit entries collection is empty it indicates that this
+    // is the case of the full server reconfiguration. Always indicate
+    // that the configuration elements must be fetched.
+    EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
+
+    // Now test the case that there is a DELETE audit entry. In this case
+    // our function should indicate that the configuration should not be
+    // fetched for the given object type. Note that when the configuration
+    // element is deleted, it no longer exists in database so there is
+    // no reason to fetch the data from the database.
+    AuditEntryPtr audit_entry(new AuditEntry("dhcp4_subnet", 1234 ,
+                                             AuditEntry::ModificationType::DELETE,
+                                             "added audit entry"));
+    audit_entries.insert(audit_entry);
+    EXPECT_FALSE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
+
+    // Add another audit entry which indicates creation of the configuration element.
+    // This time we should get 'true'.
+    audit_entry.reset(new AuditEntry("my_object_type", 5678,
+                                     AuditEntry::ModificationType::CREATE,
+                                     "added audit entry"));
+    audit_entries.insert(audit_entry);
+    EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "my_object_type"));
+
+    // Also we should get 'true' for the UPDATE case.
+    audit_entry.reset(new AuditEntry("another_object_type",
+                                     5678, AuditEntry::ModificationType::UPDATE,
+                                     "added audit entry"));
+    audit_entries.insert(audit_entry);
+    EXPECT_TRUE(cb_ctl_.fetchConfigElement(audit_entries, "another_object_type"));
 }
 
 // This test verifies that true is return when the server successfully
