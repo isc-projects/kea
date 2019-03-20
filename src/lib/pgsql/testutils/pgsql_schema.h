@@ -47,11 +47,11 @@ void destroyPgSQLSchema(bool show_err = false, bool force = false);
 /// @brief Create the unit test PgSQL Schema
 ///
 /// Ensures the unit test database is empty and version-correct.
-/// Unless, the force parameter is true, it will first attempt
+/// Unless,the force parameter is true, it will first attempt
 /// to wipe the data from the database by calling @c wipePgSQLData.
 /// If this call succeeds the function returns, otherwise it will
-/// will call @c destroyPgSQLSchema to forcibly remove the
-/// existing schema and then submits the SQL script:
+/// call @c destroyPgSQLSchema to forcibly remove the existing
+/// schema and then submits the SQL script:
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/dhcpdb_create.pgsql
 ///
