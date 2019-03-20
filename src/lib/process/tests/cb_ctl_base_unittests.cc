@@ -232,7 +232,8 @@ public:
         merges_num_(0),
         backend_selector_(BackendSelector::Type::MYSQL),
         server_selector_(ServerSelector::UNASSIGNED()),
-        audit_entries_num_(-1) {
+        audit_entries_num_(-1),
+        enable_throw_(false) {
     }
 
     /// @brief Implementation of the method called to fetch and apply
@@ -253,6 +254,10 @@ public:
         backend_selector_ = backend_selector;
         server_selector_ = server_selector;
         audit_entries_num_ = static_cast<int>(audit_entries.size());
+
+        if (enable_throw_) {
+            isc_throw(Unexpected, "throwing from databaseConfigApply");
+        }
     }
 
     /// @brief Returns the number of times the @c databaseConfigApply was called.
@@ -290,6 +295,13 @@ public:
         last_audit_entry_time_ = last_audit_entry_time;
     }
 
+    /// @brief Enables the @c databaseConfigApply function to throw.
+    ///
+    /// This is useful to test scenarios when configuration merge fails.
+    void enableThrow() {
+        enable_throw_ = true;
+    }
+
 private:
 
     /// @brief Recorded number of calls to @c databaseConfigApply.
@@ -303,6 +315,9 @@ private:
 
     /// @brief Recorded number of audit entries.
     int audit_entries_num_;
+
+    /// @brief Boolean value indicating if the @c databaseConfigApply should throw.
+    bool enable_throw_;
 };
 
 /// @brief Out of the blue instance id used in tests.
@@ -573,6 +588,44 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
     // The databaseConfigApply should not be called because there are
     // no new audit entires to process.
     ASSERT_EQ(0, cb_ctl_.getMergesNum());
+}
+
+TEST_F(CBControlBaseTest, fetchFailure) {
+    auto config_base = makeConfigBase("type=db1");
+
+    // Connect to the database and store an audit entry. Do not close
+    // the database connection to simulate the case when the server
+    // uses existing connection to fetch configuration updates.
+    ASSERT_TRUE(cb_ctl_.databaseConfigConnect(config_base));
+    cb_ctl_.getMgr().getPool()->addAuditEntry(BackendSelector::UNSPEC(),
+                                              ServerSelector::ALL(),
+                                              "sql_table_1",
+                                              3456,
+                                              timestamps_["today"]);
+
+    // Configure the CBControl to always throw simulating the failure
+    // during configuration merge.
+    cb_ctl_.enableThrow();
+
+    // Verify that various indicators are set to their initial values.
+    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
+    ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
+    ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
+    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+
+    ASSERT_THROW(cb_ctl_.databaseConfigFetch(config_base, true), isc::Unexpected);
+
+    // There should be one invocation to databaseConfigApply recorded.
+    ASSERT_EQ(1, cb_ctl_.getMergesNum());
+    // The number of audit entries passed to this function should be 1.
+    EXPECT_EQ(1, cb_ctl_.getAuditEntriesNum());
+    EXPECT_EQ(BackendSelector::Type::UNSPEC, cb_ctl_.getBackendSelector().getBackendType());
+    EXPECT_EQ(ServerSelector::Type::ALL, cb_ctl_.getServerSelector().getType());
+    // The last audit entry time should not be modified because there was a merge
+    // error.
+    EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
+
 }
 
 }

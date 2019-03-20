@@ -210,8 +210,17 @@ public:
         // execute the server specific function that fetches and merges the data
         // into the given configuration.
         if (!fetch_updates_only || !audit_entries.empty()) {
-            databaseConfigApply(srv_cfg, backend_selector, server_selector,
-                                lb_modification_time, audit_entries);
+            try {
+                databaseConfigApply(srv_cfg, backend_selector, server_selector,
+                                    lb_modification_time, audit_entries);
+            } catch (...) {
+                // Revert last audit entry time so as we can retry from the
+                // last successful attempt.
+                /// @todo Consider reverting to the initial value to reload
+                /// the entire configuration if the update failed.
+                last_audit_entry_time_ = lb_modification_time;
+                throw;
+            }
         }
     }
 
