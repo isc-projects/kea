@@ -188,7 +188,17 @@ CfgMgr::mergeIntoStagingCfg(const uint32_t seq) {
 
 void
 CfgMgr::mergeIntoCurrentCfg(const uint32_t seq) {
-    mergeIntoCfg(getCurrentCfg(), seq);
+    try {
+        // First we need to remove statistics.
+        getCurrentCfg()->removeStatistics();
+        mergeIntoCfg(getCurrentCfg(), seq);
+
+    } catch (...) {
+        // Make sure the statistics is updated even if the merge failed.
+        getCurrentCfg()->updateStatistics();
+        throw;
+    }
+    getCurrentCfg()->updateStatistics();
 }
 
 void
