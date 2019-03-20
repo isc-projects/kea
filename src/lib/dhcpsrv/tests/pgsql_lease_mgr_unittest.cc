@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,8 +43,7 @@ class PgSqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
-        destroyPgSQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createPgSQLSchema();
 
         // Connect to the database
@@ -70,6 +69,7 @@ public:
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         LeaseMgrFactory::destroy();
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyPgSQLSchema();
     }
 
@@ -110,10 +110,8 @@ public:
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(PgSqlOpenTest, OpenDatabase) {
-
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema(true);
-    createPgSQLSchema(true);
+    createPgSQLSchema();
 
     // Check that lease manager open the database opens correctly and tidy up.
     // If it fails, print the error message.
@@ -193,7 +191,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyPgSQLSchema(true);
+    destroyPgSQLSchema();
 }
 
 /// @brief Test fixture class for validating @c LeaseMgr using
@@ -201,10 +199,12 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 class PgSqlLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyPgSQLSchema();
     }
 
     virtual void createSchema() {
+        // Ensure we have the proper schema with no transient data.
         createPgSQLSchema();
     }
 
