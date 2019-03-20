@@ -32,7 +32,7 @@ validPgSQLConnectionString() {
 }
 
 void destroyPgSQLSchema(bool show_err, bool force) {
-    // If force is true or wipePgSQLData() fails, destory the schema.
+    // If force is true or wipePgSQLData() fails, destroy the schema.
     if (force || (!softWipeEnabled()) || wipePgSQLData(show_err)) {
         runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_drop.pgsql", show_err);
     }
