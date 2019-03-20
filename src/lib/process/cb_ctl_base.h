@@ -158,8 +158,8 @@ public:
     /// @param fetch_updates_only boolean value indicating if the method is
     /// called upon the server start up (false) or it is called to fetch
     /// configuration updates (true).
-    void databaseConfigFetch(const ConfigPtr& srv_cfg,
-                             const bool fetch_updates_only = false) {
+    virtual void databaseConfigFetch(const ConfigPtr& srv_cfg,
+                                     const bool fetch_updates_only = false) {
         // If the server starts up we need to connect to the database(s).
         // If there are no databases available simply do nothing.
         if (!fetch_updates_only && !databaseConfigConnect(srv_cfg)) {

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Mar 19 2019 10:21
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Mar 20 2019 11:09
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -13,6 +13,7 @@ extern const isc::log::MessageID DHCP4_BUFFER_RECEIVED = "DHCP4_BUFFER_RECEIVED"
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVE_FAIL = "DHCP4_BUFFER_RECEIVE_FAIL";
 extern const isc::log::MessageID DHCP4_BUFFER_UNPACK = "DHCP4_BUFFER_UNPACK";
 extern const isc::log::MessageID DHCP4_BUFFER_WAIT_SIGNAL = "DHCP4_BUFFER_WAIT_SIGNAL";
+extern const isc::log::MessageID DHCP4_CB_FETCH_UPDATES_FAIL = "DHCP4_CB_FETCH_UPDATES_FAIL";
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED = "DHCP4_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED = "DHCP4_CLASS_UNCONFIGURED";
 extern const isc::log::MessageID DHCP4_CLASS_UNDEFINED = "DHCP4_CLASS_UNDEFINED";
@@ -144,6 +145,7 @@ const char* values[] = {
     "DHCP4_BUFFER_RECEIVE_FAIL", "error on attempt to receive packet: %1",
     "DHCP4_BUFFER_UNPACK", "parsing buffer received from %1 to %2 over interface %3",
     "DHCP4_BUFFER_WAIT_SIGNAL", "signal received while waiting for next packet, next waiting signal is %1",
+    "DHCP4_CB_FETCH_UPDATES_FAIL", "error on attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class(es): %2",
     "DHCP4_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
     "DHCP4_CLASS_UNDEFINED", "required class %1 has no definition",

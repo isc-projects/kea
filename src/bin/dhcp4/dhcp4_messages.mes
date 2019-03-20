@@ -46,6 +46,13 @@ by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
 
+% DHCP4_CB_FETCH_UPDATES_FAIL error on attempt to fetch configuration updates from the configuration backend(s): %1
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this attempt failed.
+The server will re-try according to the configured value of the
+config-fetch-wait-time parameter. The sole argument contains the
+reason for failure.
+
 % DHCP4_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
 class or classes. This is a normal behavior and indicates successful operation.
