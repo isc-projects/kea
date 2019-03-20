@@ -21,15 +21,16 @@
 	possible to set the subnet using both an ID or a subnet prefix.
 	(Gitlab #481,!251, git 9ef651950fde16e258e4b03dd21bbf6dd07d5231)
 
-1542.	[test]		tmark	
-	MySQL and CQL unit tests will now attempt to wipe the unit test
-	data, rather than the (re)create the schema between each test. 
-	This reduces test execution time appreciably.  The behavior
-	may be overridden by defining environment variable:
+1542.	[test]		tmark
+	MySQL, PostgreSQL, and CQL unit tests will now attempt to wipe
+	the unit test data, rather than the (re)create the schema between
+	each test.  This reduces test execution time appreciably.  The
+	behavior may be overridden by defining environment variable:
 	KEA_TEST_DB_WIPE_DATA_ONLY="false".  This will cause the schema
 	to be recreated before each test but may dramatically increase
 	test execution time.
 	(Gitlab #526,!269, git 7e81d7bea27e919b652351880872aae68ad1b209)
+	(Gitlab #531,!279, git 7f8c4fc535df3019789aea1881b7bb3bd539963a)
 
 1541.	[bug]		fdupont
 	Empty Relay Agent Information option is no longer sent in server
