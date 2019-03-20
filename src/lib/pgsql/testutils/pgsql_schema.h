@@ -46,7 +46,7 @@ void destroyPgSQLSchema(bool show_err = false, bool force = false);
 
 /// @brief Create the unit test PgSQL Schema
 ///
-/// Ensures the unit test database is an empty and version-correct.
+/// Ensures the unit test database is empty and version-correct.
 /// Unless, the force parameter is true, it will first attempt
 /// to wipe the data from the database by calling @c wipePgSQLData.
 /// If this call succeeds the function returns, otherwise it will
