@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -359,6 +359,16 @@ private:
     ///
     /// @return false if reconnect is not configured, true otherwise
     bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+
+    /// @brief Callback invoked periodically to fetch configuration updates
+    /// from the Config Backends.
+    ///
+    /// This method calls @c CBControlDHCPv4::databaseConfigFetch and then
+    /// reschedules the timer.
+    ///
+    /// @param srv_cfg Server configuration holding the database credentials
+    /// and server tag.
+    void cbFetchUpdates(const SrvConfigPtr& srv_cfg);
 
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -674,6 +674,32 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    auto ctl_info = CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
+    if (ctl_info) {
+        long fetch_time = static_cast<long>(ctl_info->getConfigFetchWaitTime());
+        // Only schedule the CB fetch timer if the fetch wait time is greater
+        // than 0.
+        if (fetch_time > 0) {
+            // The port number is 0 only when we run unit tests. In such case, we
+            // want to use milliseconds unit for the specified interval. Otherwise,
+            // we use seconds. Note that using milliseconds as a unit in unit tests
+            // prevents us from waiting 1 second on more before the timer goes off.
+            // Instead, we wait one millisecond which significantly reduces the
+            // test time.
+            if (server_->getServerPort() != 0) {
+                fetch_time = 1000 * fetch_time;
+            }
+
+            TimerMgr::instance()->
+                registerTimer("Dhcp4CBFetchTimer",
+                              boost::bind(&ControlledDhcpv4Srv::cbFetchUpdates,
+                                          server_, CfgMgr::instance().getStagingCfg()),
+                              fetch_time,
+                              asiolink::IntervalTimer::ONE_SHOT);
+            TimerMgr::instance()->setup("Dhcp4CBFetchTimer");
+        }
+    }
+
     // This hook point notifies hooks libraries that the configuration of the
     // DHCPv4 server has completed. It provides the hook library with the pointer
     // to the common IO service object, new server configuration in the JSON
@@ -939,6 +965,26 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     dbReconnect(db_reconnect_ctl);
 
     return(true);
+}
+
+void
+ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg) {
+    try {
+        // The true value indicates that the server should not reconnect
+        // to the configuration backends and should take into account
+        // audit entries stored in the database since last fetch.
+        server_->getCBControl()->databaseConfigFetch(srv_cfg, true);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
+            .arg(ex.what());
+    }
+
+    // Reschedule the timer to fetch new updates or re-try if
+    // the previous attempt resulted in an error.
+    if (TimerMgr::instance()->isTimerRegistered("Dhcp4CBFetchTimer")) {
+        TimerMgr::instance()->setup("Dhcp4CBFetchTimer");
+    }
 }
 
 }; // end of isc::dhcp namespace
