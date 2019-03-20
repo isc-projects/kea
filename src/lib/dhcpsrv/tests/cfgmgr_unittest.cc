@@ -611,6 +611,58 @@ TEST_F(CfgMgrTest, commitStats4) {
     EXPECT_EQ(128, total_addrs->getInteger().first);
 }
 
+// This test verifies that once the configuration is merged into the current
+// configuration, statistics are updated appropriately.
+TEST_F(CfgMgrTest, mergeIntoCurrentStats4) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    startBackend(AF_INET);
+
+    // Let's prepare the "old" configuration: a subnet with id 123
+    // and pretend there were addresses assigned, so statistics are non-zero.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+    CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
+    subnets->add(subnet1);
+    cfg_mgr.commit();
+    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
+
+    // There should be no stats for subnet 42 at this point.
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[42].total-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[42].assigned-addresses"));
+
+    // Now, let's create new configuration with updates.
+
+    // There's a subnet 192.1.3.0/24 with ID=42
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.1.3.0"), 24, 1, 2, 3, 42));
+
+    // Let's make a pool with 128 addresses available.
+    PoolPtr pool(new Pool4(IOAddress("192.1.3.0"), 25)); // 128 addrs
+    subnet2->addPool(pool);
+
+    // Create external configuration to be merged into current one.
+    auto external_cfg = CfgMgr::instance().createExternalCfg();
+    subnets = external_cfg->getCfgSubnets4();
+    subnets->add(subnet2);
+
+    // Let's merge it.
+    cfg_mgr.mergeIntoCurrentCfg(external_cfg->getSequence());
+
+    // The stats should have been updated and so we should be able to get
+    // obeservations for subnet 42.
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-addresses"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[42].assigned-addresses"));
+
+    // And also for 123
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-addresses"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+
+    ObservationPtr total_addrs;
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-addresses"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(128, total_addrs->getInteger().first);
+}
+
 // This test verifies that once the configuration is cleared, the statistics
 // are removed.
 TEST_F(CfgMgrTest, clearStats4) {
@@ -679,6 +731,71 @@ TEST_F(CfgMgrTest, commitStats6) {
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-pds"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-pds"));
+
+    ObservationPtr total_addrs;
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(128, total_addrs->getInteger().first);
+
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-pds"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(65536, total_addrs->getInteger().first);
+}
+
+// This test verifies that once the configuration is merged into the current
+// configuration, statistics are updated appropriately.
+/// @todo Enable this test once merging v6 configuration is enabled.
+TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
+    startBackend(AF_INET6);
+
+    // Let's prepare the "old" configuration: a subnet with id 123
+    // and pretend there were addresses assigned, so statistics are non-zero.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 123));
+    CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
+    subnets->add(subnet1);
+    cfg_mgr.commit();
+    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
+
+    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
+
+    // There should be no stats for subnet 42 at this point.
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[42].total-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[42].assigned-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[42].total-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[42].assigned-pds"));
+
+    // Now, let's create new configuration with updates.
+
+    // There's a subnet 2001:db8:2::/48 with ID=42
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4, 42));
+
+    // Let's make pools with 128 addresses and 65536 prefixes available.
+    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"), 121)); // 128 addrs
+    PoolPtr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::"), 96, 112)); // 65536 prefixes
+    subnet2->addPool(pool1);
+    subnet2->addPool(pool2);
+
+    // Create external configuration to be merged into current one.
+    auto external_cfg = CfgMgr::instance().createExternalCfg();
+    subnets = external_cfg->getCfgSubnets6();
+    subnets->add(subnet2);
+
+    // Let's merge it.
+    cfg_mgr.mergeIntoCurrentCfg(external_cfg->getSequence());
+
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-nas"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[42].assigned-nas"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-pds"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[42].assigned-pds"));
+
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-nas"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-nas"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-pds"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-pds"));
 
     ObservationPtr total_addrs;
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
