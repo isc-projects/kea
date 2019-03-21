@@ -149,35 +149,6 @@ public:
         }
     }
 
-    /// @brief Tests that a given global is in the staged configured globals
-    ///
-    /// @param name name of the global parameter
-    /// @param exp_value expected value of the global paramter as an Element
-    void checkConfiguredGlobal(const std::string &name,
-                               ConstElementPtr exp_value) {
-        SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
-        ConstElementPtr globals = staging_cfg->getConfiguredGlobals();
-        ConstElementPtr found_global = globals->get(name);
-        ASSERT_TRUE(found_global) << "expected global: "
-                    << name << " not found";
-
-        ASSERT_EQ(exp_value->getType(), found_global->getType())
-                  << "expected global: " << name << " has wrong type";
-
-        ASSERT_EQ(*exp_value, *found_global)
-                  << "expected global: " << name << " has wrong value";
-    }
-
-    /// @brief Tests that a given global is in the staged configured globals
-    ///
-    /// @param exp_global StampedValue representing the global value to verify
-    ///
-    /// @todo At the point in time StampedVlaue carries type, exp_type should be
-    /// replaced with exp_global->getType()
-    void checkConfiguredGlobal(StampedValuePtr& exp_global) {
-        checkConfiguredGlobal(exp_global->getName(), exp_global->getElementValue());
-    }
-
     boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
     ConstElementPtr comment_;           ///< Reason for parse fail
@@ -247,14 +218,16 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     EXPECT_EQ(86400, staging_cfg->getDeclinePeriod());
 
     // Verify that the implicit globals from JSON are there.
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("valid-lifetime", Element::create(1000)));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("rebind-timer", Element::create(800)));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, "valid-lifetime",
+                                                  Element::create(1000)));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, "rebind-timer",
+                                                  Element::create(800)));
 
     // Verify that the implicit globals from the backend are there.
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(server_hostname));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(calc_tee_times));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(t2_percent));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(renew_timer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, server_hostname));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, calc_tee_times));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, t2_percent));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
 }
 
 // This test verifies that externally configured option definitions

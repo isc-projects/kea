@@ -12,6 +12,8 @@
 #include <util/buffer.h>
 #include <typeinfo>
 
+using namespace isc::data;
+
 namespace isc {
 namespace dhcp {
 namespace test {
@@ -97,6 +99,28 @@ GenericBackendTest::testOptionsEquivalent(const OptionDescriptor& ref_option,
     EXPECT_EQ(ref_option.formatted_value_, tested_option.formatted_value_);
     EXPECT_EQ(ref_option.persistent_, tested_option.persistent_);
     EXPECT_EQ(ref_option.space_name_, tested_option.space_name_);
+}
+
+void
+GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
+                                          const std::string &name,
+                                          ConstElementPtr exp_value) {
+    ConstElementPtr globals = srv_cfg->getConfiguredGlobals();
+    ConstElementPtr found_global = globals->get(name);
+    ASSERT_TRUE(found_global) << "expected global: "
+                              << name << " not found";
+
+    ASSERT_EQ(exp_value->getType(), found_global->getType())
+        << "expected global: " << name << " has wrong type";
+
+    ASSERT_EQ(*exp_value, *found_global)
+        << "expected global: " << name << " has wrong value";
+}
+
+void
+GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
+                                          StampedValuePtr& exp_global) {
+    checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue());
 }
 
 

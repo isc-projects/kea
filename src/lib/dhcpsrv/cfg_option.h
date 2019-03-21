@@ -98,7 +98,8 @@ public:
     ///
     /// @param desc descriptor
     OptionDescriptor(const OptionDescriptor& desc)
-        : data::StampedElement(), option_(desc.option_),
+        : data::StampedElement(desc),
+          option_(desc.option_),
           persistent_(desc.persistent_),
           formatted_value_(desc.formatted_value_),
           space_name_(desc.space_name_) {

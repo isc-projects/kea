@@ -245,8 +245,7 @@ public:
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param audit_entries Collection of audit entries.
-    virtual void databaseConfigApply(const ConfigPtr& srv_cfg,
-                                     const BackendSelector& backend_selector,
+    virtual void databaseConfigApply(const BackendSelector& backend_selector,
                                      const ServerSelector& server_selector,
                                      const boost::posix_time::ptime&,
                                      const AuditEntryCollection& audit_entries) {

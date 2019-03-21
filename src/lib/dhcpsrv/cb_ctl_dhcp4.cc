@@ -16,8 +16,7 @@ namespace isc {
 namespace dhcp {
 
 void
-CBControlDHCPv4::databaseConfigApply(const ConfigPtr& srv_cfg,
-                                     const db::BackendSelector& backend_selector,
+CBControlDHCPv4::databaseConfigApply(const db::BackendSelector& backend_selector,
                                      const db::ServerSelector& server_selector,
                                      const boost::posix_time::ptime& lb_modification_time,
                                      const db::AuditEntryCollection& audit_entries) {
