@@ -39,7 +39,9 @@
 
 1541.	[bug]		fdupont
 	Empty Relay Agent Information option is no longer sent in server
-	responses.
+	responses. Thanks to Geoffrey Huang from Qingdao Agricultural
+	University, and Jiaqi Liu from Qingdao WuKeSong Company
+	Communication Limited, Shandong, PRC for reporting this issue.
 	(Gitlab #519,#510,!271, git f3563396d2227e48e96a5d65587406d8d1868db5)
 
 1540.	[func]		fdupont
