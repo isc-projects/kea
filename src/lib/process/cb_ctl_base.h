@@ -211,7 +211,7 @@ public:
         // into the given configuration.
         if (!fetch_updates_only || !audit_entries.empty()) {
             try {
-                databaseConfigApply(srv_cfg, backend_selector, server_selector,
+                databaseConfigApply(backend_selector, server_selector,
                                     lb_modification_time, audit_entries);
             } catch (...) {
                 // Revert last audit entry time so as we can retry from the
@@ -280,7 +280,6 @@ protected:
     /// - Merge the fetched configuration into the local server's
     ///   configuration.
     ///
-    /// @pararm srv_cfg Pointer to the local server configuration.
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param lb_modification_time Lower bound modification time for the
@@ -288,8 +287,7 @@ protected:
     /// @param audit_entries Audit entries fetched from the database since
     /// the last configuration update. This collection is empty if there
     /// were no updates.
-    virtual void databaseConfigApply(const ConfigPtr& srv_cfg,
-                                     const db::BackendSelector& backend_selector,
+    virtual void databaseConfigApply(const db::BackendSelector& backend_selector,
                                      const db::ServerSelector& server_selector,
                                      const boost::posix_time::ptime& lb_modification_time,
                                      const db::AuditEntryCollection& audit_entries) = 0;

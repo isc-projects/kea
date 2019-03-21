@@ -26,23 +26,17 @@ namespace dhcp {
 class CBControlDHCPv4 : public CBControlDHCP<ConfigBackendDHCPv4Mgr> {
 protected:
 
-    /// @brief Fetches the entire or partial configuration from the database.
+    /// @brief DHCPv4 server specific method to apply fetch configuration
+    /// into the local configuration.
     ///
-    /// This method is called by the starting up server to fetch and merge
-    /// the entire configuration from the database or to fetch configuration
-    /// updates periodically, e.g. as a result of triggering an interval
-    /// timer callback.
-    ///
-    /// @param srv_cfg pointer to the staging configuration that should
-    /// hold the config backends list and other partial configuration read
-    /// from the file in case the method is called upon the server's start
-    /// up. It is a pointer to the current server configuration if the
-    /// method is called to fetch configuration updates.
-    /// @param fetch_updates_only boolean value indicating if the method is
-    /// called upon the server start up (false) or it is called to fetch
-    /// configuration updates (true).
-    virtual void databaseConfigApply(const process::ConfigPtr& srv_cfg,
-                                     const db::BackendSelector& backend_selector,
+    /// @param backend_selector Backend selector.
+    /// @param server_selector Server selector.
+    /// @param lb_modification_time Lower bound modification time for the
+    /// configuration elements to be fetched.
+    /// @param audit_entries Audit entries fetched from the database since
+    /// the last configuration update. This collection is empty if there
+    /// were no updates.
+    virtual void databaseConfigApply(const db::BackendSelector& backend_selector,
                                      const db::ServerSelector& server_selector,
                                      const boost::posix_time::ptime& lb_modification_time,
                                      const db::AuditEntryCollection& audit_entries);

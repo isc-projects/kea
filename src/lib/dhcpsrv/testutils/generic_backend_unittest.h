@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,10 @@
 #define GENERIC_BACKEND_UNITTEST_H
 
 #include <asiolink/io_address.h>
+#include <cc/stamped_value.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/srv_config.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdint>
@@ -242,6 +244,26 @@ public:
     /// @param tested_option Option returned by the backend to be tested.
     void testOptionsEquivalent(const OptionDescriptor& ref_option,
                                const OptionDescriptor& tested_option) const;
+
+    /// @brief Tests that a given global is in the configured globals
+    ///
+    /// @param srv_cfg server config where the global should be checked.
+    /// @param name name of the global parameter
+    /// @param exp_value expected value of the global paramter as an Element
+    void checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
+                               const std::string &name,
+                               data::ConstElementPtr exp_value);
+
+    /// @brief Tests that a given global is in the configured globals
+    ///
+    /// @param srv_cfg server config where the global should be checked.
+    /// @param exp_global StampedValue representing the global value to verify
+    ///
+    /// @todo At the point in time StampedVlaue carries type, exp_type should be
+    /// replaced with exp_global->getType()
+    void checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
+                               data::StampedValuePtr& exp_global);
+
 };
 
 } // end of namespace isc::dhcp::test
