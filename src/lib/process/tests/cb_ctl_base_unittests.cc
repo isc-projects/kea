@@ -148,7 +148,7 @@ public:
                        const std::string& object_type,
                        const uint64_t object_id,
                        const boost::posix_time::ptime& modification_time) {
-        createUpdateDeleteProperty<void, const std::string&, const uint64_t,
+        createUpdateDeleteProperty<void, const std::string&, uint64_t,
                                    const boost::posix_time::ptime&>
             (&CBControlBackend::addAuditEntry, backend_selector, server_selector,
              object_type, object_id, modification_time);
