@@ -37,13 +37,12 @@ public:
 
     /// @brief Retrieves the audit entries later than specified time.
     ///
-    /// @param server_selector Server selector.
     /// @param modification_time The lower bound time for which audit
     /// entries should be returned.
     ///
     /// @return Collection of audit entries later than specified time.
     virtual db::AuditEntryCollection
-    getRecentAuditEntries(const db::ServerSelector& server_selector,
+    getRecentAuditEntries(const db::ServerSelector&,
                           const boost::posix_time::ptime& modification_time) const {
         db::AuditEntryCollection filtered_entries;
 
