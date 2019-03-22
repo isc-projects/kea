@@ -1,8 +1,13 @@
+1548.	[func]		razvan
+	Added consistency and serial-consistency parameters to CQL
+	connection.
+	(Gitlab #16,!266, git 5771173d721464d879869fad6456211031858d6c)
+
 1547.	[bug, doc]		fdupont
 	Option value for sip-ua-cs-domains has been corrected in the
 	Kea User's Guide. Thanks to Shawn Routhier from Infoblox for
 	reporting this issue.
-	(Gitlan #536,!281, git c128fd9a6b7bffc36ba4fe9a0badebe55441d673(
+	(Gitlab #536,!281, git c128fd9a6b7bffc36ba4fe9a0badebe55441d673)
 
 1546.	[func]		tmark
 	kea-dhcp4 now uses options fetched from configured backends.
