@@ -159,7 +159,7 @@ Network::toElement() const {
     }
 
     // Set reservation mode
-    Optional<Network::HRMode> hrmode = getHostReservationMode();
+    Optional<Network::HRMode> hrmode = host_reservation_mode_;
     if (!hrmode.unspecified()) {
         std::string mode;
         switch (hrmode.get()) {

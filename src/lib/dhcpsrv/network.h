@@ -29,11 +29,20 @@ namespace dhcp {
 /// List of IOAddresses
 typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
 
+class Network;
+
+/// @brief Pointer to the @ref Network object.
+typedef boost::shared_ptr<Network> NetworkPtr;
+
+/// @brief Weak pointer to the @ref Network object.
+typedef boost::weak_ptr<Network> WeakNetworkPtr;
+
+
 /// @brief Common interface representing a network to which the DHCP clients
 /// are connected.
 ///
 /// The most common type of network, in Kea's terminology, is a subnet. The
-/// @ref Subnet implements this interface. Another types of objects implementing
+/// @ref Subnet derives from this class. Another types of objects implementing
 /// this interface are @ref SharedNetwork4 and @ref SharedNetwork6 objects.
 /// They group multiple subnets together to provide means for
 /// extending available address pools (a single client may obtain IP
@@ -43,10 +52,60 @@ typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
 /// selected for cable modems, different one for routers).
 ///
 /// The subnets and shared networks share many data structures, e.g. DHCP
-/// options, local interface name, address manipulation methods, thus this
-/// class provides an abstract interface that must be implemented by derived
-/// classes and, where appropriate, implements common methods used by the
-/// derived classes.
+/// options, local interface name, address manipulation methods. Both subnets
+/// and shared networks derive from this class to provide the common
+/// functionality.
+///
+/// The DHCP server configuration is complex because many parameters may
+/// be specified at different levels of hierarchy. The lower level values,
+/// e.g. subnet specific values, take precedence over upper level values,
+/// e.g. shared network specific ones. For historical reasons, the DHCP
+/// servers expect that the appropriate values are inherited from the
+/// upper configuration levels to the lower configuration levels upon
+/// the reconfiguration. For example: if a user didn't specify
+/// valid-lifetime for a subnet, calling @c Subnet4::getValid() should
+/// result in returning a global value of valid-lifetime. In the early
+/// Kea days it was achieved by the configuration parsers which would
+/// explicitly assign the global valid lifetime to the @c Subnet4
+/// instances for which the subnet specific value was not provided. This
+/// approach has a major benefit that it is fast. However, it makes
+/// the subnets tightly dependent on the global values (and shared
+/// network specific values). Modification of the global value must
+/// result in modification of this value in all subnets for which
+/// there is no explicit value provided. This issue became a serious
+/// road block during the implementation of the Configuration Backend.
+///
+/// The @c Network object has been modified to address the problem of
+/// inheritance of global, shared network specific and subnet specific
+/// parameters in a generic way, at the same time minimizing the need to
+/// change the existing server logic.
+///
+/// The @c Network object now holds the pointer to the "parent" @c Network
+/// object. The parent network is a shared network. The object having
+/// a parent is a subnet. The subnet may or may not have a parent.
+/// The general idea is that the accessor functions of the network
+/// will first check if the accessed value is specified or not (that
+/// is handled by @c util::Optional object). If the value is specified
+/// it is returned. Otherwise, the object will check if there is a
+/// parent object it belongs to and will call the appropriate method
+/// of that object. If the value is present it is returned. Otherwise
+/// the global value is returned.
+///
+/// Accessing global values from the @c Network object is troublesome.
+/// There is no uniform way to access those values. For example, the
+/// given network may be in a staging or current configuration and
+/// it really has no means to know in which of the two it belongs.
+/// In fact, an attempt to pass the pointer to the @c SrvConfig object
+/// would cause a circular dependency between the @c Network and the
+/// @c SrvConfig. Even if it was possible and the @c Network had
+/// access to the specific @c SrvConfig instance, it doesn't handle
+/// the cases when the @c SrvConfig instance was modified.
+///
+/// To deal with the problem of accessing the global parameters in a
+/// flexible manner, we elected to use an optional callback function
+/// which can be associated with the @c Network object. This callback
+/// implements the logic to retrieve global parameters and return them
+/// in a well known form, so as the @c Network accessors can use them.
 class Network : public virtual isc::data::StampedElement,
                 public virtual isc::data::UserContext,
                 public isc::data::CfgToElement {
@@ -127,6 +186,60 @@ public:
     ///
     /// Does nothing at the moment.
     virtual ~Network() { };
+
+    /// @brief Retrieves pointer to a shared network associated with a subnet.
+    ///
+    /// By implementing it as a template function we overcome a need to
+    /// include shared_network.h header file to specify return type explicitly.
+    /// The header can't be included because it would cause circular dependency
+    /// between subnet.h and shared_network.h.
+    ///
+    /// This method uses an argument to hold a return value to allow the compiler
+    /// to infer the return type without a need to call this function with an
+    /// explicit return type as template argument.
+    ///
+    /// @param [out] shared_network Pointer to the shared network where returned
+    /// value should be assigned.
+    ///
+    /// @tparam Type of the shared network, i.e. @ref SharedNetwork4 or a
+    /// @ref SharedNetwork6.
+    template<typename SharedNetworkPtrType>
+    void getSharedNetwork(SharedNetworkPtrType& shared_network) const {
+        shared_network = boost::dynamic_pointer_cast<
+            typename SharedNetworkPtrType::element_type>(parent_network_.lock());
+    }
+
+    /// @brief Assigns shared network to a subnet.
+    ///
+    /// This method replaces any shared network associated with a subnet with
+    /// a new shared network.
+    ///
+    /// @param shared_network Pointer to a new shared network to be associated
+    /// with the subnet.
+    void setSharedNetwork(const NetworkPtr& shared_network) {
+        parent_network_ = shared_network;
+    }
+
+    /// @brief Returns shared network name.
+    std::string getSharedNetworkName() const {
+        return (shared_network_name_);
+    }
+
+    /// @brief Sets new shared network name.
+    ///
+    /// In certain cases the subnet must be associated with the shared network
+    /// but the shared network object is not available. In particular, subnets
+    /// are returned from the configuration database with only names of the
+    /// shared networks. The actual shared networks must be fetched from the
+    /// database using a separate query. In order to not loose associations
+    /// of subnets with shared networks, the configuration backends will use
+    /// this method to store the shared network names. The servers will later
+    /// use those names to associate subnets with shared network instances.
+    ///
+    /// @param shared_network_name New shared network name.
+    void setSharedNetworkName(const std::string& shared_network_name) {
+        shared_network_name_ = shared_network_name;
+    }
 
     /// @brief Sets local name of the interface for which this network is
     /// selected.
@@ -289,7 +402,7 @@ public:
     /// @return whether in-pool host reservations are allowed.
     util::Optional<HRMode>
     getHostReservationMode() const {
-        return (host_reservation_mode_);
+        return (getProperty(&Network::getHostReservationMode, host_reservation_mode_));
     }
 
     /// @brief Sets host reservation mode.
@@ -355,6 +468,23 @@ public:
 
 protected:
 
+    template<typename ReturnType, typename PropertyType>
+    util::Optional<ReturnType>
+    getProperty(util::Optional<ReturnType>(Network::*MethodPointer)() const,
+                PropertyType property) const {
+        if (property.unspecified()) {
+            auto sn = parent_network_.lock();
+            if (sn) {
+                auto value = ((*sn).*MethodPointer)();
+                if (!value.unspecified()) {
+                    return (value);
+                }
+            }
+        }
+        return (property);
+
+    }
+
     /// @brief Holds interface name for which this network is selected.
     util::Optional<std::string> iface_name_;
 
@@ -401,13 +531,18 @@ protected:
 
     /// @brief Percentage of the lease lifetime to use when calculating T2 timer
     util::Optional<double> t2_percent_;
+
+    /// @brief Pointer to another network that this network belongs to.
+    ///
+    /// The most common case is that this instance is a subnet which belongs
+    /// to a shared network and the @c parent_network_ points to the shared
+    /// network object. If the network instance (subnet) doesn't belong to
+    /// a shared network this pointer is null.
+    WeakNetworkPtr parent_network_;
+
+    /// @brief Shared network name.
+    std::string shared_network_name_;
 };
-
-/// @brief Pointer to the @ref Network object.
-typedef boost::shared_ptr<Network> NetworkPtr;
-
-/// @brief Weak pointer to the @ref Network object.
-typedef boost::weak_ptr<Network> WeakNetworkPtr;
 
 /// @brief Specialization of the @ref Network object for DHCPv4 case.
 class Network4 : public Network {

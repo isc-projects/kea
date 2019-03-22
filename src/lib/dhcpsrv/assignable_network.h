@@ -33,27 +33,6 @@ protected:
     ///
     /// @return Pointer to this network.
     virtual NetworkPtr sharedFromThis() = 0;
-
-    /// @brief Associates a subnet with this network.
-    ///
-    /// @param subnet Pointer to a subnet to be associated with the network.
-    ///
-    /// @tparam SubnetPtr Type of the subnet pointer.
-    template<typename SubnetPtr>
-    void setSharedNetwork(const SubnetPtr& subnet) {
-        subnet->setSharedNetwork(sharedFromThis());
-    }
-
-    /// @brief Removes association of a subnet with a network.
-    ///
-    /// @param subnet Pointer to a subnet for which association should be
-    /// removed.
-    ///
-    /// @tparam SubnetPtr Type of the subnet pointer.
-    template<typename SubnetPtr>
-    void clearSharedNetwork(const SubnetPtr& subnet) {
-        subnet->setSharedNetwork(NetworkPtr());
-    }
 };
 
 } // end of namespace isc::dhcp
