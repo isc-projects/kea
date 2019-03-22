@@ -2856,7 +2856,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         }
     }
 
-    // If it is possiblem use client identifier to try to find client's lease.
+    // If it is possible to use client identifier to try to find client's lease.
     if (try_clientid_lookup) {
         // Get all leases for this client identifier. When shared networks are
         // in use it is more efficient to make a single query rather than
