@@ -912,6 +912,17 @@ CqlExchange::executeMutation(const CqlConnection& connection, const AnyArray& da
                       " statement consistency for statement " << tagged_statement.name_
                       << ", Cassandra error code: " << cass_error_desc(rc));
         }
+        if (connection.serial_consistency_ != CASS_CONSISTENCY_UNKNOWN) {
+            rc = cass_statement_set_serial_consistency(statement, connection.serial_consistency_);
+            if (rc != CASS_OK) {
+                cass_statement_free(statement);
+                isc_throw(DbOperationError,
+                          "CqlExchange::executeMutation(): unable to set statement "
+                          "serial consistency for statement "
+                              << tagged_statement.name_
+                              << ", Cassandra error code: " << cass_error_desc(rc));
+            }
+        }
     }
 
     CqlCommon::bindData(data, statement);
