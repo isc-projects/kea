@@ -5,8 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/option.h>
+#include <slaac/nd_option.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
@@ -15,7 +14,6 @@
 #include <list>
 #include <sstream>
 
-#include <arpa/inet.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -23,83 +21,40 @@ using namespace std;
 using namespace isc::util;
 
 namespace isc {
-namespace dhcp {
+namespace slaac {
 
-OptionPtr
-Option::factory(Option::Universe u,
-        uint16_t type,
-        const OptionBuffer& buf) {
-    return(LibDHCP::optionFactory(u, type, buf));
+Option::Option(uint8_t type)
+    : type_(type) {
 }
 
-
-Option::Option(Universe u, uint16_t type)
-    :universe_(u), type_(type) {
-
-    // END option (type 255 is forbidden as well)
-    if ((u == V4) && ((type == 0) || (type > 254))) {
-        isc_throw(BadValue, "Can't create V4 option of type "
-                  << type << ", V4 options are in range 1..254");
-    }
-}
-
-Option::Option(Universe u, uint16_t type, const OptionBuffer& data)
-    :universe_(u), type_(type), data_(data) {
+Option::Option(uint8_t type, const OptionBuffer& data)
+    : type_(type), data_(data) {
     check();
 }
 
-Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
+Option::Option(uint8_t type, OptionBufferConstIter first,
                OptionBufferConstIter last)
-    :universe_(u), type_(type), data_(first, last) {
+    : type_(type), data_(first, last) {
     check();
 }
 
 Option::Option(const Option& option)
-    : universe_(option.universe_), type_(option.type_),
-      data_(option.data_), options_(),
-      encapsulated_space_(option.encapsulated_space_) {
-    option.getOptionsCopy(options_);
+    : type_(option.type_), data_(option.data_), options_(option.options_) {
 }
 
 Option&
 Option::operator=(const Option& rhs) {
     if (&rhs != this) {
-        universe_ = rhs.universe_;
         type_ = rhs.type_;
         data_ = rhs.data_;
-        rhs.getOptionsCopy(options_);
-        encapsulated_space_ = rhs.encapsulated_space_;
+        options_ = rhs.options_;
     }
     return (*this);
 }
 
-OptionPtr
-Option::clone() const {
-    return (cloneInternal<Option>());
-}
-
 void
 Option::check() const {
-    if ( (universe_ != V4) && (universe_ != V6) ) {
-        isc_throw(BadValue, "Invalid universe type specified. "
-                  << "Only V4 and V6 are allowed.");
-    }
-
-    if (universe_ == V4) {
-
-        if (type_ > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option type " << type_ << " is too big. "
-                      << "For DHCPv4 allowed type range is 0..255");
-        } else if (data_.size() > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big.");
-            /// TODO Larger options can be stored as separate instances
-            /// of DHCPv4 options. Clients MUST concatenate them.
-            /// Fortunately, there are no such large options used today.
-        }
-    }
-
-    // no need to check anything for DHCPv6. It allows full range (0-64k) of
-    // both types and data size.
+    // Does nothing for now.
 }
 
 void Option::pack(isc::util::OutputBuffer& buf) const {
@@ -115,35 +70,16 @@ void Option::pack(isc::util::OutputBuffer& buf) const {
 
 void
 Option::packHeader(isc::util::OutputBuffer& buf) const {
-    if (universe_ == V4) {
-        if (len() > 255) {
-            isc_throw(OutOfRange, "DHCPv4 Option " << type_ << " is too big. "
-                      << "At most 255 bytes are supported.");
-            /// TODO Larger options can be stored as separate instances
-            /// of DHCPv4 options. Clients MUST concatenate them.
-            /// Fortunately, there are no such large options used today.
-        }
-
-        buf.writeUint8(type_);
-        buf.writeUint8(len() - getHeaderLen());
-
-    } else {
-        buf.writeUint16(type_);
-        buf.writeUint16(len() - getHeaderLen());
-    }
+    buf.writeUint8(type_);
+    buf.writeUint8(len());
 }
 
 void
 Option::packOptions(isc::util::OutputBuffer& buf) const {
-    switch (universe_) {
-    case V4:
-        LibDHCP::packOptions4(buf, options_);
-        return;
-    case V6:
-        LibDHCP::packOptions6(buf, options_);
-        return;
-    default:
-        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
+    for (OptionCollection::const_iterator it = options_.begin();
+         it != options_.end();
+         ++it) {
+        it->second->pack(buf);
     }
 }
 
@@ -154,23 +90,11 @@ void Option::unpack(OptionBufferConstIter begin,
 
 void
 Option::unpackOptions(const OptionBuffer& buf) {
-    list<uint16_t> deferred;
-    switch (universe_) {
-    case V4:
-        LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(),
-                                options_, deferred);
-        return;
-    case V6:
-        LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_);
-        return;
-    default:
-        isc_throw(isc::BadValue, "Invalid universe type " << universe_);
-    }
+    isc_throw(NotImplemented, "Can't unpack suboptions");
 }
 
-uint16_t Option::len() const {
-    // Returns length of the complete option (data length + DHCPv4/DHCPv6
-    // option header)
+uint8_t Option::len() const {
+    // Returns length of the complete option.
 
     // length of the whole option is header and data stored in this option...
     size_t length = getHeaderLen() + data_.size();
@@ -182,24 +106,16 @@ uint16_t Option::len() const {
         length += (*it).second->len();
     }
 
-    // note that this is not equal to length field. This value denotes
-    // number of bytes required to store this option. length option should
-    // contain (len()-getHeaderLen()) value.
-    return (static_cast<uint16_t>(length));
+    return (static_cast<uint8_t>(length));
 }
 
 bool
 Option::valid() const {
-    if (universe_ != V4 &&
-        universe_ != V6) {
-        return (false);
-    }
-
     return (true);
 }
 
-OptionPtr Option::getOption(uint16_t opt_type) const {
-    isc::dhcp::OptionCollection::const_iterator x =
+OptionPtr Option::getOption(uint8_t opt_type) const {
+    OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
         return (*x).second;
@@ -207,22 +123,8 @@ OptionPtr Option::getOption(uint16_t opt_type) const {
     return OptionPtr(); // NULL
 }
 
-void
-Option::getOptionsCopy(OptionCollection& options_copy) const {
-    OptionCollection local_options;
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end(); ++it) {
-        OptionPtr copy = it->second->clone();
-        local_options.insert(std::make_pair(it->second->getType(),
-                                            copy));
-    }
-    // All options copied successfully, so assign them to the output
-    // parameter.
-    options_copy.swap(local_options);
-}
-
-bool Option::delOption(uint16_t opt_type) {
-    isc::dhcp::OptionCollection::iterator x = options_.find(opt_type);
+bool Option::delOption(uint8_t opt_type) {
+    OptionCollection::iterator x = options_.find(opt_type);
     if ( x != options_.end() ) {
         options_.erase(x);
         return true; // delete successful
@@ -230,9 +132,8 @@ bool Option::delOption(uint16_t opt_type) {
     return (false); // option not found, can't delete
 }
 
-
-std::string Option::toText(int indent) const {
-    std::stringstream output;
+string Option::toText(int indent) const {
+    stringstream output;
     output << headerToText(indent) << ": ";
 
     for (unsigned int i = 0; i < data_.size(); i++) {
@@ -249,13 +150,7 @@ std::string Option::toText(int indent) const {
     return (output.str());
 }
 
-std::string
-Option::toString() const {
-    /// @todo: Implement actual conversion in derived classes.
-    return (toText(0));
-}
-
-std::vector<uint8_t>
+vector<uint8_t>
 Option::toBinary(const bool include_header) const {
     OutputBuffer buf(len());
     try {
@@ -271,78 +166,63 @@ Option::toBinary(const bool include_header) const {
 
     // Assign option data to a vector, with or without option header depending
     // on the value of "include_header" flag.
-    std::vector<uint8_t> option_vec(option_data + (include_header ? 0 : getHeaderLen()),
-                                    option_data + buf.getLength());
+    vector<uint8_t> option_vec(option_data +
+                               (include_header ? 0 : getHeaderLen()),
+                               option_data + buf.getLength());
     return (option_vec);
 }
 
-std::string
+string
 Option::toHexString(const bool include_header) const {
     // Prepare binary version of the option.
-    std::vector<uint8_t> option_vec = toBinary(include_header);
+    vector<uint8_t> option_vec = toBinary(include_header);
 
     // Return hexadecimal representation prepended with 0x or empty string
     // if option has no payload and the header fields are excluded.
-    std::ostringstream s;
+    ostringstream s;
     if (!option_vec.empty()) {
         s << "0x" << encode::encodeHex(option_vec);
     }
     return (s.str());
 }
 
-std::string
-Option::headerToText(const int indent, const std::string& type_name) const {
-    std::stringstream output;
+string
+Option::headerToText(const int indent, const string& type_name) const {
+    stringstream output;
     for (int i = 0; i < indent; i++)
         output << " ";
 
-    int field_len = (getUniverse() == V4 ? 3 : 5);
-    output << "type=" << std::setw(field_len) << std::setfill('0')
-           << type_;
+    output << "type=" << setw(3) << setfill('0') << type_;
 
     if (!type_name.empty()) {
         output << "(" << type_name << ")";
     }
 
-    output << ", len=" << std::setw(field_len) << std::setfill('0')
-           << len()-getHeaderLen();
+    output << ", len=" << setw(3) << setfill('0') << len();
     return (output.str());
 }
 
-std::string
+string
 Option::suboptionsToText(const int indent) const {
-    std::stringstream output;
+    stringstream output;
 
     if (!options_.empty()) {
-        output << "," << std::endl << "options:";
+        output << "," << endl << "options:";
         for (OptionCollection::const_iterator opt = options_.begin();
              opt != options_.end(); ++opt) {
-            output << std::endl << (*opt).second->toText(indent);
+            output << endl << (*opt).second->toText(indent);
         }
     }
 
     return (output.str());
 }
 
-uint16_t
+uint8_t
 Option::getHeaderLen() const {
-    switch (universe_) {
-    case V4:
-        return OPTION4_HDR_LEN; // header length for v4
-    case V6:
-        return OPTION6_HDR_LEN; // header length for v6
-    }
-    return 0; // should not happen
+    return OPTION_HDR_LEN; // header length for ND
 }
 
 void Option::addOption(OptionPtr opt) {
-    if (universe_ == V4) {
-        // check for uniqueness (DHCPv4 options must be unique)
-        if (getOption(opt->getType())) {
-            isc_throw(BadValue, "Option " << opt->getType()
-                      << " already present in this message.");
-        }
-    }
     options_.insert(make_pair(opt->getType(), opt));
 }
 
@@ -392,5 +272,5 @@ Option::~Option() {
 
 }
 
-} // end of isc::dhcp namespace
+} // end of isc::slaac namespace
 } // end of isc namespace

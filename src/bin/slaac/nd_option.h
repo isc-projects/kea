@@ -19,7 +19,7 @@
 namespace isc {
 namespace slaac {
 
-/// @brief buffer types used in DHCP code.
+/// @brief buffer types used in ND code.
 ///
 /// Dereferencing OptionBuffer iterator will point out to contiguous memory.
 typedef std::vector<uint8_t> OptionBuffer;
@@ -30,7 +30,7 @@ typedef OptionBuffer::iterator OptionBufferIter;
 /// const_iterator for walking over OptionBuffer
 typedef OptionBuffer::const_iterator OptionBufferConstIter;
 
-/// pointer to a DHCP buffer
+/// pointer to a ND buffer
 typedef boost::shared_ptr<OptionBuffer> OptionBufferPtr;
 
 /// shared pointer to Option object
@@ -45,55 +45,7 @@ typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 class Option {
 public:
     /// length of the usual ND option header (there are exceptions)
-    const static size_t OPTION4_HDR_LEN = 2;
-
-    /// @brief a factory function prototype
-    ///
-    /// @param u option universe (DHCPv4 or DHCPv6)
-    /// @param type option type
-    /// @param buf pointer to a buffer
-    ///
-    /// @todo Passing a separate buffer for each option means that a copy
-    ///       was done. We can avoid it by passing 2 iterators.
-    ///
-    /// @return a pointer to a created option object
-    typedef OptionPtr Factory(uint8_t type, const OptionBuffer& buf);
-
-    /// @brief Factory function to create instance of option.
-    ///
-    /// Factory method creates instance of specified option. The option
-    /// to be created has to have corresponding factory function
-    /// registered with \ref LibDHCP::OptionFactoryRegister.
-    ///
-    /// @param u universe of the option (V4 or V6)
-    /// @param type option-type
-    /// @param buf option-buffer
-    ///
-    /// @return instance of option.
-    ///
-    /// @throw isc::InvalidOperation if there is no factory function
-    ///        registered for specified option type.
-    static OptionPtr factory(uint8_t type,
-                             const OptionBuffer& buf);
-
-    /// @brief Factory function to create instance of option.
-    ///
-    /// Factory method creates instance of specified option. The option
-    /// to be created has to have corresponding factory function
-    /// registered with \ref LibDHCP::OptionFactoryRegister.
-    /// This method creates empty \ref OptionBuffer object. Use this
-    /// factory function if it is not needed to pass custom buffer.
-    ///
-    /// @param u universe of the option (V4 or V6)
-    /// @param type option-type
-    ///
-    /// @return instance of option.
-    ///
-    /// @throw isc::InvalidOperation if there is no factory function
-    ///        registered for specified option type.
-    static OptionPtr factory(uint8_t type) {
-        return factory(type, OptionBuffer());
-    }
+    const static size_t OPTION_HDR_LEN = 2;
 
     /// @brief ctor, used for options constructed, usually during transmission
     ///
@@ -107,7 +59,6 @@ public:
     /// option object. V4 Options follow that approach already.
     /// @todo Migrate V6 options to that approach.
     ///
-    /// @param u specifies universe (V4 or V6)
     /// @param type option type (0-255 for V4 and 0-65535 for V6)
     /// @param data content of the option
     Option(uint8_t type, const OptionBuffer& data);
@@ -119,16 +70,15 @@ public:
     ///
     /// @todo This can be templated to use different containers, not just
     /// vector. Prototype should look like this:
-    /// template<typename InputIterator> Option(Universe u, uint16_t type,
+    /// template<typename InputIterator> Option(uint8_t type,
     /// InputIterator first, InputIterator last);
     ///
     /// vector<int8_t> myData;
-    /// Example usage: new Option(V4, 123, myData.begin()+1, myData.end()-1)
-    /// This will create DHCPv4 option of type 123 that contains data from
+    /// Example usage: new Option(123, myData.begin()+1, myData.end()-1)
+    /// This will create ND option of type 123 that contains data from
     /// trimmed (first and last byte removed) myData vector.
     ///
-    /// @param u specifies universe (V4 or V6)
-    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    /// @param type option type
     /// @param first iterator to the first element that should be copied
     /// @param last iterator to the next element after the last one
     ///        to be copied.
@@ -159,8 +109,6 @@ public:
     /// another).
     ///
     /// @param buf pointer to a buffer
-    ///
-    /// @throw BadValue Universe of the option is neither V4 nor V6.
     virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
@@ -195,21 +143,20 @@ public:
     /// @return String containing hexadecimal representation of the option.
     virtual std::string toHexString(const bool include_header = false) const;
 
-    /// Returns option type (0-255 for DHCPv4, 0-65535 for DHCPv6)
+    /// Returns option type
     ///
     /// @return option type
-    uint16_t getType() const { return (type_); }
+    uint8_t getType() const { return (type_); }
 
-    /// Returns length of the complete option (data length + DHCPv4/DHCPv6
-    /// option header)
+    /// Returns length of the complete option
     ///
     /// @return length of the option
-    virtual uint16_t len() const;
+    virtual uint8_t len() const;
 
     /// @brief Returns length of header (2 for v4, 4 for v6)
     ///
     /// @return length of option header
-    virtual uint16_t getHeaderLen() const;
+    virtual uint8_t getHeaderLen() const;
 
     /// returns if option is valid (e.g. option may be truncated)
     ///
@@ -224,7 +171,7 @@ public:
 
     /// Adds a sub-option.
     ///
-    /// Some DHCPv6 options can have suboptions. This method allows adding
+    /// Some ND options can have suboptions. This method allows adding
     /// options within options.
     ///
     /// Note: option is passed by value. That is very convenient as it allows
@@ -241,7 +188,7 @@ public:
     /// @param type type of requested suboption
     ///
     /// @return shared_ptr to requested suboption
-    OptionPtr getOption(uint16_t type) const;
+    OptionPtr getOption(uint8_t type) const;
 
     /// @brief Returns all encapsulated options.
     ///
@@ -347,12 +294,7 @@ protected:
     /// @brief Store option's header in a buffer.
     ///
     /// This method writes option's header into a buffer in the
-    /// on-wire format. The universe set for the particular option
-    /// is used to determine whether option code and length are
-    /// stored as 2-byte (for DHCPv6) or single-byte (for DHCPv4)
-    /// values. For DHCPv4 options, this method checks if the
-    /// length does not exceed 255 bytes and throws exception if
-    /// it does.
+    /// on-wire format.
     /// This method is used by derived classes to pack option's
     /// header into a buffer. This method should not be called
     /// directly by other classes.
@@ -419,8 +361,7 @@ protected:
     /// @brief A protected method used for option correctness.
     ///
     /// It is used in constructors. In there are any problems detected
-    /// (like specifying type > 255 for DHCPv4 option), it will throw
-    /// BadValue or OutOfRange exceptions.
+    /// it will throw BadValue or OutOfRange exceptions.
     void check() const;
 
     /// option type (0-255 for ND)

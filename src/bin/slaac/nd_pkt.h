@@ -8,6 +8,7 @@
 #define ND_PKT_H
 
 #include <asiolink/io_address.h>
+#include <nd_option.h>
 #include <util/buffer.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -18,8 +19,6 @@
 namespace isc {
 
 namespace slaac {
-
-class OptionPtr;
 
 /// @brief Base class for classes representing ND messages.
 ///
