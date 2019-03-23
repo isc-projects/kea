@@ -7,7 +7,7 @@
 #ifndef SLAAC_PROCESS_H
 #define SLAAC_PROCESS_H
 
-#include <slaac/cfg_mgr.h>
+#include <slaac/slaac_cfg_mgr.h>
 #include <process/d_process.h>
 #include <vector>
 
