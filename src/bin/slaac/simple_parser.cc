@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <slaac/simple_parser.h>
-#include <slaac/slaac_config.h>
+#include <slaac/slaac_cfg_mgr.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>

@@ -20,18 +20,18 @@ using namespace isc::data;
 namespace isc {
 namespace slaac {
 
-SlaacCfg::SlaacCfg()
+SlaacConfig::SlaacConfig()
     :http_host_(""), http_port_(0) {
 }
 
-SlaacCfg::SlaacCfg(const SlaacCfg& orig)
+SlaacConfig::SlaacConfig(const SlaacConfig& orig)
     : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
       hooks_config_(orig.hooks_config_) {
 }
 
 SlaacCfgMgr::SlaacCfgMgr()
-    : DCfgMgrBase(ConfigPtr(new SlaacCfg())) {
+    : DCfgMgrBase(ConfigPtr(new SlaacConfig())) {
 }
 
 SlaacCfgMgr::~SlaacCfgMgr() {
@@ -40,7 +40,7 @@ SlaacCfgMgr::~SlaacCfgMgr() {
 std::string
 SlaacCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
-    SlaacCfgPtr ctx = getSlaacCfg();
+    SlaacConfigPtr ctx = getSlaacConfig();
 
     // First print the http stuff.
     std::ostringstream s;
@@ -62,7 +62,7 @@ SlaacCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
 ConfigPtr
 SlaacCfgMgr::createNewContext() {
-    return (ConfigPtr(new SlaacCfg()));
+    return (ConfigPtr(new SlaacConfig()));
 }
 
 isc::data::ConstElementPtr
@@ -72,7 +72,7 @@ SlaacCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
         isc_throw(DhcpConfigError, "Mandatory config parameter not provided");
     }
 
-    SlaacCfgPtr ctx = getSlaacCfg();
+    SlaacConfigPtr ctx = getSlaacConfig();
 
     // Set the defaults
     ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
@@ -115,19 +115,19 @@ SlaacCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
 }
 
 data::ConstElementPtr
-SlaacCfg::getControlSocketInfo(const std::string& service) const {
+SlaacConfig::getControlSocketInfo(const std::string& service) const {
     auto si = ctrl_sockets_.find(service);
     return ((si != ctrl_sockets_.end()) ? si->second : ConstElementPtr());
 }
 
 void
-SlaacCfg::setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
+SlaacConfig::setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
                                           const std::string& service) {
     ctrl_sockets_[service] = control_socket;
 }
 
 std::string
-SlaacCfg::getControlSocketInfoSummary() const {
+SlaacConfig::getControlSocketInfoSummary() const {
     std::ostringstream s;
     for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.end(); ++si) {
         if (s.tellp() != 0) {
@@ -144,7 +144,7 @@ SlaacCfg::getControlSocketInfoSummary() const {
 }
 
 ElementPtr
-SlaacCfg::toElement() const {
+SlaacConfig::toElement() const {
     ElementPtr ca = Element::createMap();
     // Set user-context
     contextToElement(ca);

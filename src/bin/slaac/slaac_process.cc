@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,25 +6,26 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
-#include <agent/ca_process.h>
-#include <agent/ca_controller.h>
-#include <agent/ca_response_creator_factory.h>
-#include <agent/ca_log.h>
+#include <slaac/slaac_process.h>
+#include <slaac/slaac_controller.h>
+#include <slaac/slaac_log.h>
+#include <process/d_cfg_mgr.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <cc/command_interpreter.h>
 #include <boost/pointer_cast.hpp>
+#include <process/config_base.h>
 
 using namespace isc::asiolink;
 using namespace isc::process;
 
 
 namespace isc {
-namespace agent {
+namespace slaac {
 
 SlaacProcess::SlaacProcess(const char* name,
                                    const asiolink::IOServicePtr& io_service)
-    : DProcessBase(name, io_service, DCfgMgrBasePtr(new SlaacCfgMgr())),
-      http_listeners_() {
+    : DProcessBase(name, io_service, DCfgMgrBasePtr(new SlaacCfgMgr())) {
 }
 
 SlaacProcess::~SlaacProcess() {
@@ -36,7 +37,7 @@ SlaacProcess::init() {
 
 void
 SlaacProcess::run() {
-    LOG_INFO(agent_logger, CTRL_AGENT_STARTED).arg(VERSION);
+    LOG_INFO(slaac_logger, SLAAC_STARTED).arg(VERSION);
 
     try {
         // Register commands.
@@ -51,12 +52,11 @@ SlaacProcess::run() {
             // Remove unused listeners within the main loop because new listeners
             // are created in within a callback method. This avoids removal the
             // listeners within a callback.
-            garbageCollectListeners();
             runIO();
         }
         stopIOService();
     } catch (const std::exception& ex) {
-        LOG_FATAL(agent_logger, CTRL_AGENT_FAILED).arg(ex.what());
+        LOG_FATAL(slaac_logger, SLAAC_FAILED).arg(ex.what());
         try {
             stopIOService();
         } catch (...) {
@@ -76,7 +76,7 @@ SlaacProcess::run() {
         // What to do? Simply ignore...
     }
 
-    LOG_DEBUG(agent_logger, isc::log::DBGLVL_START_SHUT, SLAAC_RUN_EXIT);
+    LOG_DEBUG(slaac_logger, isc::log::DBGLVL_START_SHUT, SLAAC_RUN_EXIT);
 }
 
 size_t
@@ -110,9 +110,8 @@ SlaacProcess::configure(isc::data::ConstElementPtr config_set,
     ConstElementPtr answer = getCfgMgr()->simpleParseConfig(config_set,
                                                             check_only,
                                                             [this]() {
-        DCfgContextBasePtr base_ctx = getCfgMgr()->getContext();
-        SlaacCfgContextPtr
-            ctx = boost::dynamic_pointer_cast<SlaacCfgContext>(base_ctx);
+        ConfigBasePtr base_ctx = getCfgMgr()->getContext();
+        SlaacConfigPtr ctx = boost::dynamic_pointer_cast<SlaacConfig>(base_ctx);
 
         if (!ctx) {
             isc_throw(Unexpected, "Internal logic error: bad context type");
@@ -120,7 +119,8 @@ SlaacProcess::configure(isc::data::ConstElementPtr config_set,
 
         /// @todo: Start the actual thing here.
 
-
+        std::string interfaces = "eth0 eth1 eth2";
+        
         // Ok, seems we're good to go.
         LOG_INFO(slaac_logger, SLAAC_SERVICE_STARTED).arg(interfaces);
 

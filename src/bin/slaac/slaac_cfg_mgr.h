@@ -17,9 +17,9 @@
 namespace isc {
 namespace slaac {
 
-class SlaacCfg;
+class SlaacConfig;
 /// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<SlaacCfg> SlaacCfgPtr;
+typedef boost::shared_ptr<SlaacConfig> SlaacConfigPtr;
 
 /// @brief Control Agent Configuration Context.
 ///
@@ -28,11 +28,11 @@ typedef boost::shared_ptr<SlaacCfg> SlaacCfgPtr;
 /// and any other Control Agent specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
 /// It is derived from the context base class, ConfigBase.
-class SlaacCfg : public process::ConfigBase {
+class SlaacConfig : public process::ConfigBase {
 public:
 
     /// @brief Default constructor
-    SlaacCfg();
+    SlaacConfig();
 
     /// @brief Creates a clone of this context object.
     ///
@@ -41,7 +41,7 @@ public:
     ///
     /// @return A pointer to the new clone.
     virtual process::ConfigPtr clone() {
-        return (process::ConfigPtr(new SlaacCfg(*this)));
+        return (process::ConfigPtr(new SlaacConfig(*this)));
     }
 
     /// @brief Returns information about control socket
@@ -131,12 +131,12 @@ private:
     /// The only legal way to copy a context is to call @ref clone().
     ///
     /// @param orig the original context to copy from
-    SlaacCfg(const SlaacCfg& orig);
+    SlaacConfig(const SlaacConfig& orig);
 
     /// @brief Private assignment operator to avoid potential for slicing.
     ///
     /// @param rhs Context to be assigned.
-    SlaacCfg& operator=(const SlaacCfg& rhs);
+    SlaacConfig& operator=(const SlaacConfig& rhs);
 
     /// Socket information will be stored here (for all supported servers)
     std::map<std::string, isc::data::ConstElementPtr> ctrl_sockets_;
@@ -168,8 +168,8 @@ public:
     /// context.
     ///
     /// @return returns a pointer to the configuration context.
-    SlaacCfgPtr getSlaacCfg() {
-        return (boost::dynamic_pointer_cast<SlaacCfg>(getContext()));
+    SlaacConfigPtr getSlaacConfig() {
+        return (boost::dynamic_pointer_cast<SlaacConfig>(getContext()));
     }
 
     /// @brief Returns configuration summary in the textual format.
@@ -191,11 +191,11 @@ protected:
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only);
 
-    /// @brief Creates a new, blank SlaacCfg context.
+    /// @brief Creates a new, blank SlaacConfig context.
     ///
     ///
     /// This method is used at the beginning of configuration process to
-    /// create a fresh, empty copy of a SlaacCfg. This new context
+    /// create a fresh, empty copy of a SlaacConfig . This new context
     /// will be populated during the configuration process and will replace the
     /// existing context provided the configuration process completes without
     /// error.
@@ -204,7 +204,7 @@ protected:
     virtual process::ConfigPtr createNewContext();
 };
 
-/// @brief Defines a shared pointer to SlaacCfgMgr.
+/// @brief Defines a shared pointer to SlaacConfigMgr.
 typedef boost::shared_ptr<SlaacCfgMgr> SlaacCfgMgrPtr;
 
 } // namespace isc::agent
