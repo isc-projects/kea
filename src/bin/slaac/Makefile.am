@@ -36,16 +36,17 @@ endif
 noinst_LTLIBRARIES = libslaac.la
 
 libslaac_la_SOURCES  = 
-libslaac_la_SOURCES += slaac_parser.cc slaac_parser.h
-libslaac_la_SOURCES += slaac_lexer.cc
+libslaac_la_SOURCES += nd_pkt.cc nd_pkt.h
+libslaac_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+libslaac_la_SOURCES += simple_parser.cc simple_parser.h
 libslaac_la_SOURCES += slaac_cfg_mgr.cc slaac_cfg_mgr.h
 libslaac_la_SOURCES += slaac_controller.cc slaac_controller.h
-libslaac_la_SOURCES += slaac_log.cc slaac_log.h
-libslaac_la_SOURCES += slaac_process.cc slaac_process.h
-libslaac_la_SOURCES += simple_parser.cc simple_parser.h
-libslaac_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+libslaac_la_SOURCES += slaac_lexer.cc
 libslaac_la_SOURCES += slaac_lexer.ll slaac_parser.yy
+libslaac_la_SOURCES += slaac_log.cc slaac_log.h
 libslaac_la_SOURCES += slaac_messages.h slaac_messages.cc
+libslaac_la_SOURCES += slaac_parser.cc slaac_parser.h
+libslaac_la_SOURCES += slaac_process.cc slaac_process.h
 
 EXTRA_DIST += slaac_messages.mes
 EXTRA_DIST += slaac_lexer.ll

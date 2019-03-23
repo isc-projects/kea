@@ -258,14 +258,14 @@ not_empty_global_params: global_param
 // Slaac.
 global_param: hop_limit
             | managed_flag
-	    | other_flag
-	    | router_lifetime
-	    | reachable_time
-	    | retrans_timer
-	    // source_lla
-	    // mtu
-	    // prefix_info
-	    // universal_xxx
+            | other_flag
+            | router_lifetime
+            | reachable_time
+            | retrans_timer
+            // source_lla
+            // mtu
+            // prefix_info
+            // universal_xxx
             | user_context
             | comment
             | unknown_map_entry
