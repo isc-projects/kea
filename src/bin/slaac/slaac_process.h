@@ -108,6 +108,12 @@ public:
     /// @brief Returns a pointer to the configuration manager.
     SlaacCfgMgrPtr getSlaacCfgMgr();
 
+    /// @brief Polls all ready handlers and then runs one handler if none
+    /// handlers have been executed as a result of polling.
+    ///
+    /// @return Number of executed handlers.
+    size_t runIO();
+
     /// @brief Checks if the process is listening to the HTTP requests.
     ///
     /// @return true if the process is listening.

@@ -15,9 +15,11 @@
 #include <cc/command_interpreter.h>
 #include <boost/pointer_cast.hpp>
 #include <process/config_base.h>
+#include <cc/data.h>
 
 using namespace isc::asiolink;
 using namespace isc::process;
+using namespace isc::data;
 
 
 namespace isc {
@@ -110,8 +112,12 @@ SlaacProcess::configure(isc::data::ConstElementPtr config_set,
     ConstElementPtr answer = getCfgMgr()->simpleParseConfig(config_set,
                                                             check_only,
                                                             [this]() {
-        ConfigBasePtr base_ctx = getCfgMgr()->getContext();
-        SlaacConfigPtr ctx = boost::dynamic_pointer_cast<SlaacConfig>(base_ctx);
+        SlaacCfgMgrPtr cfg_mgr = boost::dynamic_pointer_cast<SlaacCfgMgr>(getCfgMgr());
+        if (!cfg_mgr) {
+            isc_throw(Unexpected, "Internal logic error: bad CfgMgr type");
+        }
+
+        SlaacConfigPtr ctx = cfg_mgr->getSlaacConfig();
 
         if (!ctx) {
             isc_throw(Unexpected, "Internal logic error: bad context type");
@@ -120,7 +126,7 @@ SlaacProcess::configure(isc::data::ConstElementPtr config_set,
         /// @todo: Start the actual thing here.
 
         std::string interfaces = "eth0 eth1 eth2";
-        
+
         // Ok, seems we're good to go.
         LOG_INFO(slaac_logger, SLAAC_SERVICE_STARTED).arg(interfaces);
 
