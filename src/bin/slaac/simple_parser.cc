@@ -36,6 +36,12 @@ namespace slaac {
 ///
 /// These are global Slaac parameters.
 const SimpleDefaults SlaacSimpleParser::SLAAC_DEFAULTS = {
+    { "hop-limit",       Element::integer, "0" },
+    { "managed-flag",    Element::boolean, "true" },
+    { "other-flag",      Element::boolean, "false" },
+    { "router-lifetime", Element::integer, "0" },
+    { "reachable-time",  Element::integer, "0" },
+    { "retranb-timer",   Element::integer, "0" }
 };
 
 /// @}

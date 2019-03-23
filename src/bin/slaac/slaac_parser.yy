@@ -53,6 +53,13 @@ using namespace std;
   USER_CONTEXT "user-context"
   COMMENT "comment"
 
+  HOP_LIMIT "hop-limit"
+  MANAGED_FLAG "managed-flag"
+  OTHER_FLAG "other-flag"
+  ROUTER_LIFETIME "router-lifetime"
+  REACHABLE_TIME "reachable-time"
+  RETRANS_TIMER "retrans-timer"
+
   LOGGING "Logging"
   LOGGERS "loggers"
   NAME "name"
@@ -249,8 +256,17 @@ not_empty_global_params: global_param
 
 // These are the parameters that are allowed in the top-level for
 // Slaac.
-global_param:
-          /*|*/user_context
+global_param: hop_limit
+            | managed_flag
+	    | other_flag
+	    | router_lifetime
+	    | reachable_time
+	    | retrans_timer
+	    // source_lla
+	    // mtu
+	    // prefix_info
+	    // universal_xxx
+            | user_context
             | comment
             | unknown_map_entry
             ;
@@ -305,6 +321,36 @@ comment: COMMENT {
     // Set the user context
     parent->set("user-context", user_context);
     ctx.leave();
+};
+
+hop_limit: HOP_LIMIT COLON INTEGER {
+    ElementPtr hl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("hop-limit", hl);
+};
+
+managed_flag: MANAGED_FLAG COLON BOOLEAN {
+    ElementPtr f(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("managed-flag", f);
+};
+
+other_flag: OTHER_FLAG COLON BOOLEAN {
+    ElementPtr f(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("other-flag", f);
+};
+
+router_lifetime: ROUTER_LIFETIME COLON INTEGER {
+    ElementPtr rl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("router-lifetime", rl);
+};
+
+reachable_time: REACHABLE_TIME COLON INTEGER {
+    ElementPtr rt(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reachable-time", rt);
+};
+
+retrans_timer: RETRANS_TIMER COLON INTEGER {
+    ElementPtr rt(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("retrans-timer", rt);
 };
 
 // --- Logging starts here -----------------------------------------------------

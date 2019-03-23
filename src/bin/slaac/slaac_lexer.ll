@@ -202,6 +202,60 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"hop-limit\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_HOP_LIMIT(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("hop-limit", driver.loc_);
+    }
+}
+
+\"managed-flag\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_MANAGED_FLAG(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("managed-flag", driver.loc_);
+    }
+}
+
+\"other-flag\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_OTHER_FLAG(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("other-flag", driver.loc_);
+    }
+}
+
+\"router-lifetime\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_ROUTER_LIFETIME(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("router-lifetime", driver.loc_);
+    }
+}
+
+\"reachable-time\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_REACHABLE_TIME(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("reachable-time", driver.loc_);
+    }
+}
+
+\"retrans-timer\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_RETRANS_TIMER(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("retrans-timer", driver.loc_);
+    }
+}
+
 \"Logging\" {
     switch(driver.ctx_) {
     case ParserContext::CONFIG:
