@@ -442,4 +442,4 @@ protected:
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif // OPTION_H
+#endif // ND_OPTION_H

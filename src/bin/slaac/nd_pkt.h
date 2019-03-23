@@ -185,8 +185,6 @@ public:
     /// data format change etc.
     OptionBuffer data_;
 
-public:
-
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
