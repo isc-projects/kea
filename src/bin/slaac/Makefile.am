@@ -36,7 +36,7 @@ endif
 noinst_LTLIBRARIES = libslaac.la
 
 libslaac_la_SOURCES  = 
-libslaac_la_SOURCES  = slaac_parser.cc slaac_parser.h
+libslaac_la_SOURCES += slaac_parser.cc slaac_parser.h
 libslaac_la_SOURCES += slaac_lexer.cc
 libslaac_la_SOURCES += slaac_controller.cc slaac_controller.h
 libslaac_la_SOURCES += slaac_log.cc slaac_log.h
