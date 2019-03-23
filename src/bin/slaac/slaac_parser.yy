@@ -80,7 +80,6 @@ using namespace std;
 
 %type <ElementPtr> value
 %type <ElementPtr> map_value
-%type <ElementPtr> socket_type_value
 
 %printer { yyoutput << $$; } <*>;
 
