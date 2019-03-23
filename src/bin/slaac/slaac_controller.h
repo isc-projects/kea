@@ -38,11 +38,11 @@ public:
 
     /// @brief Defines the application name, this is passed into base class
     /// and appears in log statements.
-    static const char* _app_name_;
+    static const char* slaac_app_name_;
 
     /// @brief Defines the executable name. This is passed into the base class
     /// by convention this should match the executable name.
-    static const char* _bin_name_;
+    static const char* slaac_bin_name_;
 
     /// @brief Parses the configuration file using ::ParserContext (bison)
     ///

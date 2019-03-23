@@ -8,3 +8,17 @@ $NAMESPACE isc::slaac
 
 % SLAAC_START Some message param %1 (details %2)
 This is a dummy message. Pls ingore it.
+
+% SLAAC_CONFIG_CHECK_FAIL Slaac configuration check failed: %1
+This error message indicates that the CA had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+% SLAAC_CONFIG_FAIL Slaac configuration failed: %1
+This error message indicates that the CA had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+% SLAAC_FAILED application experienced a fatal error: %1
+This is a fatal error message issued when the Control Agent application
+encounters an unrecoverable error from within the event loop.
