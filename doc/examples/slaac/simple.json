@@ -1,0 +1,40 @@
+{
+    "Slaac": {
+
+        // These are parameters to be advertised in RA
+        "hop-limit": 64,
+        "managed-flag": true,
+        "router-lifetime": 9000,
+        "reachable-time": 3600,
+        "retrans-timer": 10,
+        "comment": "Kea is doing now RA. yay!",
+
+        // This section determines local network configuration.
+        // We should listen on the following interfaces
+        "interfaces-config": {
+            "interfaces": [ "ethX" ]
+        },
+
+        // This section determines whether we should send universal RA
+        // option (https://tools.ietf.org/html/draft-troan-6man-universal-ra-option-01).
+        "universal-ra": {
+            "send": true,
+        },
+
+        // This is our logging configuration.
+        "Logging": {
+            "loggers": [
+                {
+                    "name": "kea-slaac",
+                    "output_options": [
+                        {
+                            "output": "stdout"
+                        }
+                    ],
+                    "severity": "INFO"
+                }
+            ]
+        }
+
+    }
+}
