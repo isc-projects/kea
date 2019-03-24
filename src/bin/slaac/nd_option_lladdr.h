@@ -16,6 +16,14 @@ namespace slaac {
 class OptionLLAddr;
 typedef boost::shared_ptr<OptionLLAddr> OptionLLAddrPtr;
 
+/// @brief Class for Source/Target Link-layer Address options.
+///
+///      0                   1                   2                   3
+///      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+///     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///     |     Type      |    Length     |    Link-Layer Address ...
+///     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///
 class OptionLLAddr : public Option {
 public:
     /// @brief ctor, used for options constructed, usually during transmission

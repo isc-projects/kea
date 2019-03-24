@@ -16,6 +16,16 @@ namespace slaac {
 class OptionMtu;
 typedef boost::shared_ptr<OptionMtu> OptionMtuPtr;
 
+/// @brief Class for MTU option.
+///
+///       0                   1                   2                   3
+///       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+///      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///      |     Type      |    Length     |           Reserved            |
+///      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///      |                              MTU                              |
+///      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///
 class OptionMtu : public Option {
 public:
 
@@ -94,6 +104,9 @@ public:
     void setMtu(uint32_t mtu) { mtu_ = mtu; }
 
 protected:
+
+    /// @brief Parses option buffer.
+    virtual void unpack();
 
     /// @brief Recommended MTU for the link.
     uint32_t mtu_;

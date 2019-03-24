@@ -44,6 +44,16 @@ typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 /// A pointer to an OptionCollection
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 
+/// @brief Base class for ND options.
+///
+///        0                   1                   2                   3
+///        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+///       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///       |     Type      |    Length     |              ...              |
+///       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///       ~                              ...                              ~
+///       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///
 class Option {
 public:
     /// @brief Length of the ND option header.

@@ -8,6 +8,7 @@
 #include <slaac/nd.h>
 #include <slaac/nd_option_mtu.h>
 #include <exceptions/exceptions.h>
+#include <util/io_utilities.h>
 
 #include <iomanip>
 #include <sstream>
@@ -27,45 +28,38 @@ OptionMtu::OptionMtu()
 
 OptionMtu::OptionMtu(const OptionBuffer& data)
     : Option(ND_MTU, data) {
-    mtu_ = getUint32();
+    unpack();
 }
 
 OptionMtu::OptionMtu(OptionBufferConstIter first, OptionBufferConstIter last)
     : Option(ND_MTU, first, last) {
-    mtu_ = getUint32();
+    unpack();
 }
 
-void OptionMtu::pack(isc::util::OutputBuffer& buf) const {
+void OptionMtu::pack(OutputBuffer& buf) const {
     // Write a header.
     packHeader(buf);
-    if (!data_.empty()) {
-        // Write data.
-        buf.writeData(&data_[0], data_.size());
-    } else {
-        // Write MTU.
-        buf.writeUint32(mtu_);
-        // Pad to 8 bytes.
-        buf.writeUint16(0);
-    }
+
+    // Write reserved.
+    buf.writeUint16(0);
+
+    // Write MTU.
+    buf.writeUint32(mtu_);
 }
 
 void OptionMtu::unpack(OptionBufferConstIter begin,
                        OptionBufferConstIter end) {
-    setData(begin, end);
-    mtu_ = getUint32();
+    Option::unpack(begin, end);
+    unpack();
+}
+
+void OptionMtu::unpack() {
+    mtu_ = readUint32(&data_[2], data_.size() - 2);
 }
 
 string OptionMtu::toText(int indent) const {
     stringstream output;
-    output << headerToText(indent, "MTU") << ": ";
-
-    for (unsigned int i = 0; i < data_.size(); i++) {
-        if (i) {
-            output << ":";
-        }
-        output << setfill('0') << setw(2) << hex
-            << static_cast<unsigned short>(data_[i]);
-    }
+    output << headerToText(indent, "MTU") << ": " << mtu_ << endl;
 
     return (output.str());
 }

@@ -88,6 +88,7 @@ Option::packHeader(isc::util::OutputBuffer& buf) const {
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
     setData(begin, end);
+    check();
 }
 
 size_t Option::len() const {
