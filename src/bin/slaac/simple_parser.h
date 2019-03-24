@@ -10,6 +10,8 @@
 #include <cc/simple_parser.h>
 #include <slaac/slaac_cfg_mgr.h>
 
+using namespace isc::data;
+
 namespace isc {
 namespace slaac {
 
@@ -48,6 +50,14 @@ public:
     void parse(const SlaacConfigPtr& ctx,
                const isc::data::ConstElementPtr& config,
                bool check_only);
+
+ private:
+    void parseExperimental(const SlaacConfigPtr& config,
+                           const ConstElementPtr& json);
+
+
+    void parseInterfaces(const SlaacConfigPtr& config,
+                         const ConstElementPtr& json);
 
     // see simple_parser.cc for comments for those parameters
     static const isc::data::SimpleDefaults SLAAC_DEFAULTS;

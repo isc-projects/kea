@@ -44,8 +44,7 @@ SlaacProcess::run() {
     try {
         // Register commands.
         SlaacControllerPtr controller =
-            boost::dynamic_pointer_cast<SlaacController>(
-                SlaacController::instance());
+            boost::dynamic_pointer_cast<SlaacController>(SlaacController::instance());
         controller->registerCommands();
 
         // Let's process incoming data or expiring timers in a loop until
@@ -64,15 +63,13 @@ SlaacProcess::run() {
         } catch (...) {
             // Ignore double errors
         }
-        isc_throw(DProcessBaseError,
-                  "Process run method failed: " << ex.what());
+        isc_throw(DProcessBaseError, "Process run method failed: " << ex.what());
     }
 
     try {
         // Deregister commands.
         SlaacControllerPtr controller =
-            boost::dynamic_pointer_cast<SlaacController>(
-                SlaacController::instance());
+            boost::dynamic_pointer_cast<SlaacController>(SlaacController::instance());
         controller->deregisterCommands();
     } catch (const std::exception&) {
         // What to do? Simply ignore...

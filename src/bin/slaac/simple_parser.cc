@@ -66,14 +66,44 @@ size_t SlaacSimpleParser::deriveParameters(ConstElementPtr /*global*/) {
 }
 
 void
-SlaacSimpleParser::parse(const SlaacConfigPtr& ctx,
-                         const ConstElementPtr& config,
+SlaacSimpleParser::parseExperimental(const SlaacConfigPtr& config,
+                                     const ConstElementPtr& json) {
+    if (!json) {
+        return;
+    }
+
+    /// @todo: parse experimental structure
+}
+
+void
+SlaacSimpleParser::parseInterfaces(const SlaacConfigPtr& config,
+                                   const ConstElementPtr& json) {
+    if (!json) {
+        return;
+    }
+
+    /// @todo: parse interfaces
+}
+
+void
+SlaacSimpleParser::parse(const SlaacConfigPtr& config,
+                         const ConstElementPtr& json,
                          bool /*check_only*/) {
 
+    config->setHopLimit(getUint8(json, "hop-limit"));
+    config->setManagedFlag(getBoolean(json, "managed-flag"));
+    config->setRouterLifetime(getUint32(json, "router-lifetime"));
+    config->setReachableTime(getUint32(json, "reachable-time"));
+    config->setRetransTime(getUint32(json, "retrans-timer"));
+
+    parseExperimental(config, json->get("experimental"));
+
+    parseInterfaces(config, json->get("interfaces-list"));
+
     // User context can be done at anytime.
-    ConstElementPtr user_context = config->get("user-context");
+    ConstElementPtr user_context = json->get("user-context");
     if (user_context) {
-        ctx->setContext(user_context);
+        config->setContext(user_context);
     }
 }
 

@@ -91,6 +91,47 @@ public:
     /// the initial configuration object
     virtual isc::data::ElementPtr toElement() const;
 
+
+    void setHopLimit(uint8_t limit) {
+        hop_limit_ = limit;
+    }
+
+    uint8_t getHopLimit() {
+        return (hop_limit_);
+    }
+
+    void setManagedFlag(bool managed) {
+        managed_flag_ = managed;
+    }
+
+    uint8_t getManagedFlag() {
+        return (managed_flag_);
+    }
+
+    void setRouterLifetime(uint32_t lft) {
+        router_lifetime_ = lft;
+    }
+
+    uint8_t getRouterLifetime() {
+        return (router_lifetime_);
+    }
+
+    void setReachableTime(uint32_t lft) {
+        reachable_time_ = lft;
+    }
+
+    uint8_t getRechableTime() {
+        return (reachable_time_);
+    }
+
+    void setRetransTime(uint32_t lft) {
+        retrans_time_ = lft;
+    }
+
+    uint8_t getRetransTimeTime() {
+        return (retrans_time_);
+    }
+
 private:
 
     /// @brief Private copy constructor
@@ -108,7 +149,17 @@ private:
 
     /// Socket information will be stored here (for all supported servers)
     std::map<std::string, isc::data::ConstElementPtr> ctrl_sockets_;
+    
+    uint8_t hop_limit_;
 
+    bool managed_flag_;
+
+    uint32_t router_lifetime_;
+
+    uint32_t reachable_time_;
+
+    uint32_t retrans_time_;
+        
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
 };

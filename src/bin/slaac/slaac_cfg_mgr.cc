@@ -7,7 +7,7 @@
 #include <config.h>
 #include <slaac/slaac_cfg_mgr.h>
 #include <slaac/slaac_log.h>
-// #include <slaac/simple_parser.h>
+#include <slaac/simple_parser.h>
 #include <cc/simple_parser.h>
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
@@ -69,19 +69,20 @@ SlaacCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
         isc_throw(DhcpConfigError, "Mandatory config parameter not provided");
     }
 
-    SlaacConfigPtr ctx = getSlaacConfig();
+    SlaacConfigPtr config = getSlaacConfig();
 
     // Set the defaults
-    ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
-    // AgentSimpleParser::setAllDefaults(cfg);
+    ElementPtr json_cfg = boost::const_pointer_cast<Element>(config_set);
+
+    SlaacSimpleParser::setAllDefaults(json_cfg);
 
     // And parse the configuration.
     ConstElementPtr answer;
     std::string excuse;
     try {
         // Do the actual parsing
-        //AgentSimpleParser parser;
-        //parser.parse(ctx, cfg, check_only);
+        SlaacSimpleParser parser;
+        parser.parse(config, json_cfg, check_only);
     } catch (const isc::Exception& ex) {
         excuse = ex.what();
         answer = createAnswer(CONTROL_RESULT_ERROR, excuse);
