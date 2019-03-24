@@ -53,10 +53,10 @@ Option::operator=(const Option& rhs) {
 
 void
 Option::check() const {
-    size_t length = getHeaderLen() + data_.size();
-    if (length == 0) {
+    if (data_.empty()) {
         isc_throw(OutOfRange, "empty ND option");
     }
+    size_t length = OPTION_HDR_LEN + data_.size();
     if (length > 255) {
         isc_throw(OutOfRange, "too large ND option: " << length);
     }
@@ -91,7 +91,7 @@ size_t Option::len() const {
     // Returns length of the complete option.
 
     // length of the whole option is header and data stored in this option...
-    return (getHeaderLen() + data_.size());
+    return (OPTION_HDR_LEN + data_.size());
 }
 
 bool
@@ -131,7 +131,7 @@ Option::toBinary(const bool include_header) const {
     // Assign option data to a vector, with or without option header depending
     // on the value of "include_header" flag.
     vector<uint8_t> option_vec(option_data +
-                               (include_header ? 0 : getHeaderLen()),
+                               (include_header ? 0 : OPTION_HDR_LEN),
                                option_data + buf.getLength());
     return (option_vec);
 }
@@ -164,11 +164,6 @@ Option::headerToText(const int indent, const string& type_name) const {
 
     output << ", len=" << setw(5) << setfill('0') << len();
     return (output.str());
-}
-
-size_t
-Option::getHeaderLen() const {
-    return OPTION_HDR_LEN; // header length for ND
 }
 
 uint8_t Option::getUint8() const {
@@ -215,6 +210,65 @@ bool Option::equals(const Option& other) const {
 
 Option::~Option() {
 
+}
+
+void packOptions(OutputBuffer& buf, const OptionCollection& options) {
+    for (OptionCollection::const_iterator it = options.begin();
+         it != options.end(); ++it) {
+        it->second->pack(buf);
+    }
+}
+
+void unpackOptions(const OptionBuffer& buf, size_t offset,
+                   OptionCollection& options) {
+    size_t length = buf.size();
+    while (offset < length) {
+        // Check if there is room for another option.
+        if (offset + 8 > length) {
+            isc_throw(BadValue, "Got " << (offset + 8 - length)
+                      << " extra bytes at the end of packet");
+        }
+
+        // Parse the option header.
+        uint8_t type = buf[offset];
+        size_t len = static_cast<size_t>(buf[offset + 1]) << 3;
+
+        // Check the length.
+        if (len == 0) {
+            isc_throw(BadValue, "Got zero length option of type " << type);
+        }
+        if (offset + len > length) {
+            isc_throw(BadValue, "Overflow option of type " << type
+                      << " and length " << len << " with available "
+                      << (offset + len - length) << " bytes");
+        }
+
+        OptionPtr opt;
+        auto opt_begin = buf.begin() + offset + Option::OPTION_HDR_LEN;
+        auto opt_end = buf.begin() + offset + len;
+        // Could use a registration / factory system?
+        switch (type) {
+        default:
+            opt.reset(new Option(type, opt_begin, opt_end));
+        }
+        options.insert(make_pair(type, opt));
+    }
+}
+
+void printOptions(const OptionCollection& options, ostream& out) {
+    for (OptionCollection::const_iterator it = options.begin();
+         it != options.end(); ++it) {
+        out << it->second->toText() << endl;
+    }
+}
+
+size_t lenOptions(const OptionCollection& options) {
+    size_t length = 0;
+    for (OptionCollection::const_iterator it = options.begin();
+         it != options.end(); ++it) {
+        length += it->second->len();
+    }
+    return (length);
 }
 
 } // end of isc::slaac namespace

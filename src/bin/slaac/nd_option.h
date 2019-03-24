@@ -12,6 +12,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -45,7 +46,7 @@ typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 
 class Option {
 public:
-    /// length of the usual ND option header (there are exceptions)
+    /// @brief Length of the ND option header.
     const static size_t OPTION_HDR_LEN = 2;
 
     /// @brief ctor, used for options constructed, usually during transmission
@@ -153,11 +154,6 @@ public:
     ///
     /// @return length of the option
     virtual size_t len() const;
-
-    /// @brief Returns length of header (2 for ND)
-    ///
-    /// @return length of option header
-    virtual size_t getHeaderLen() const;
 
     /// returns if option is valid (e.g. option may be truncated)
     ///
@@ -292,9 +288,48 @@ protected:
     OptionBuffer data_;
 };
 
-/// @brief 
+/// @brief Stores ND options in a buffer.
+///
+/// Stores all options defined in options containers in a on-wire format
+/// in output buffer specified by buf.
+///
+/// May throw different exceptions if option assembly fails. There
+/// may be different reasons (option too large, option malformed etc.)
+///
+/// Currently there's no special logic in it. Options are stored in
+/// the order of their option types.
+///
+/// @param buf output buffer (assembled options will be stored here).
+/// @param options collection of options to store to.
+void packOptions(isc::util::OutputBuffer& buf,
+                 const OptionCollection& options);
+
+/// @brief Parses provided buffer as ND options and creates Option objects.
+///
+/// Parses provided buffer and stores created Option objects in
+/// options container.
+///
+/// @param buf Buffer to be parsed.
+/// @param offset offset to the first byte after the message header.
+/// @param options Reference to option container. Options will be put here.
+void unpackOptions(const OptionBuffer& buf, size_t offset,
+                   OptionCollection& options);
+
+/// @brief Print options from a container to a specified stream.
+///
+/// @param options collection of options to print.
+/// @param out specifies stream to print options to.
+void printOptions(const OptionCollection& options,
+                  std::ostream& out = std::cout);
+
+/// @brief Compute the cumulated length of options.
+///
+/// @param options collection of options to add length of.
+/// @return the cumulated on-wire length of options from the container.
+size_t lenOptions(const OptionCollection& options);
 
 } // namespace isc::slaac
 } // namespace isc
+
 
 #endif // ND_OPTION_H

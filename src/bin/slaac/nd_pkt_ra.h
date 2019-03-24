@@ -13,10 +13,23 @@ namespace isc {
 
 namespace slaac {
 
-/// @brief Base class for classes representing Router Solicitation messages.
+/// @brief Class for classes representing Router Solicitation messages.
+///
+///      0                   1                   2                   3
+///      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+///     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///     |     Type      |     Code      |          Checksum             |
+///     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///     |                            Reserved                           |
+///     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+///     |   Options ...
+///     +-+-+-+-+-+-+-+-+-+-+-+-
 ///
 class RSPkt : public NDPkt {
 public:
+
+    /// @brief Minimal RS length.
+    static const size_t RS_MIN_LEN = 8;
 
     /// @brief Constructor.
     ///
@@ -25,7 +38,7 @@ public:
     ///
     /// @param local_addr local IPv6 address
     /// @param remote_addr remote IPv6 address
-    NSPkt(const isc::asiolink::IOAddress& local_addr,
+    RSPkt(const isc::asiolink::IOAddress& local_addr,
           const isc::asiolink::IOAddress& remote_addr);
 
     /// @brief Constructor.
@@ -37,7 +50,7 @@ public:
     /// @param len length of the pointer specified in buf
     /// @param local_addr local IPv4 or IPv6 address
     /// @param remote_addr remote IPv4 or IPv6 address
-    NDPkt(const uint8_t* buf, uint32_t len,
+    RSPkt(const uint8_t* buf, uint32_t len,
           const isc::asiolink::IOAddress& local_addr,
           const isc::asiolink::IOAddress& remote_addr);
 

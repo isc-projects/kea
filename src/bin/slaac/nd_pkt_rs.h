@@ -38,7 +38,7 @@ public:
     ///
     /// @param local_addr local IPv6 address
     /// @param remote_addr remote IPv6 address
-    NSPkt(const isc::asiolink::IOAddress& local_addr,
+    RSPkt(const isc::asiolink::IOAddress& local_addr,
           const isc::asiolink::IOAddress& remote_addr);
 
     /// @brief Constructor.
@@ -50,7 +50,7 @@ public:
     /// @param len length of the pointer specified in buf
     /// @param local_addr local IPv4 or IPv6 address
     /// @param remote_addr remote IPv4 or IPv6 address
-    NDPkt(const uint8_t* buf, uint32_t len,
+    RSPkt(const uint8_t* buf, uint32_t len,
           const isc::asiolink::IOAddress& local_addr,
           const isc::asiolink::IOAddress& remote_addr);
 
