@@ -106,8 +106,6 @@ public:
     /// @brief Adds an option to this packet.
     ///
     /// Derived classes may provide more specialized implementations.
-    /// In particular @c Pkt4 provides one that checks if option is
-    /// unique.
     ///
     /// @param opt option to be added.
     virtual void addOption(const OptionPtr& opt);

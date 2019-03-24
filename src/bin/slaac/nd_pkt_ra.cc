@@ -62,7 +62,7 @@ bool
 NDPkt::delOption(uint16_t type) {
 
     OptionCollection::iterator x = options_.find(type);
-    if (x != options_.end()) {
+    if (x!=options_.end()) {
         options_.erase(x);
         return (true); // delete successful
     } else {

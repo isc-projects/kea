@@ -292,6 +292,8 @@ protected:
     OptionBuffer data_;
 };
 
+/// @brief 
+
 } // namespace isc::slaac
 } // namespace isc
 
