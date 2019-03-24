@@ -56,6 +56,9 @@ using namespace std;
   USER_CONTEXT "user-context"
   COMMENT "comment"
 
+  EXPERIMENTAL "experimental"
+  UNIVERSAL_RA "universal-ra"
+
   HOP_LIMIT "hop-limit"
   MANAGED_FLAG "managed-flag"
   OTHER_FLAG "other-flag"
@@ -266,6 +269,7 @@ global_param: interfaces_config
             | router_lifetime
             | reachable_time
             | retrans_timer
+            | experimental
             // source_lla
             // mtu
             // prefix_info
@@ -379,6 +383,27 @@ comment: COMMENT {
     parent->set("user-context", user_context);
     ctx.leave();
 };
+
+experimental: EXPERIMENTAL {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("experimental", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.EXPERIMENTAL);
+} COLON LCURLY_BRACKET experimental_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+experimental_params: experimental_param
+                    | experimental_params COMMA experimental_param;
+
+experimental_param: universal_ra;
+
+universal_ra: UNIVERSAL_RA COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("universal-ra", n);
+}
+
 
 hop_limit: HOP_LIMIT COLON INTEGER {
     ElementPtr hl(new IntElement($3, ctx.loc2pos(@3)));

@@ -274,6 +274,23 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"experimental\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_EXPERIMENTAL(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("experimental", driver.loc_);
+    }
+}
+
+\"universal-ra\" {
+    switch(driver.ctx_) {
+    case ParserContext::EXPERIMENTAL:
+        return SlaacParser::make_UNIVERSAL_RA(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("universal-ra", driver.loc_);
+    }
+}
 
 \"Logging\" {
     switch(driver.ctx_) {

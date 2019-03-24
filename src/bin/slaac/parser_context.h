@@ -178,6 +178,12 @@ public:
         ///< Used while parsing Logging/loggers structures.
         LOGGERS,
 
+        ///< Interfaces-config section.
+        INTERFACES_CONFIG,
+
+        ///< experimental
+        EXPERIMENTAL,
+
         ///< Used while parsing Logging/loggers/output_options structures.
         OUTPUT_OPTIONS
 
