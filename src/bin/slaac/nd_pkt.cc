@@ -14,22 +14,26 @@ namespace slaac {
 
 NDPkt::NDPkt(const isc::asiolink::IOAddress& local_addr,
              const isc::asiolink::IOAddress& remote_addr)
-    :iface_(""),
-     ifindex_(-1),
-     local_addr_(local_addr),
-     remote_addr_(remote_addr),
-     buffer_out_(0)
+    : type_(0),
+      code_(0),
+      iface_(""),
+      ifindex_(-1),
+      local_addr_(local_addr),
+      remote_addr_(remote_addr),
+      buffer_out_(0)
 {
 }
 
 NDPkt::NDPkt(const uint8_t* buf, uint32_t len,
              const isc::asiolink::IOAddress& local_addr,
              const isc::asiolink::IOAddress& remote_addr)
-    :iface_(""),
-     ifindex_(-1),
-     local_addr_(local_addr),
-     remote_addr_(remote_addr),
-     buffer_out_(0)
+    : type_(0),
+      code_(0),
+      iface_(""),
+      ifindex_(-1),
+      local_addr_(local_addr),
+      remote_addr_(remote_addr),
+      buffer_out_(0)
 {
     if (len != 0) {
         if (buf == NULL) {

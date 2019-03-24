@@ -37,7 +37,7 @@ protected:
     /// @param local_addr local IPv6 address
     /// @param remote_addr remote IPv6 address
     NDPkt(const isc::asiolink::IOAddress& local_addr,
-        const isc::asiolink::IOAddress& remote_addr);
+          const isc::asiolink::IOAddress& remote_addr);
 
     /// @brief Constructor.
     ///
@@ -67,13 +67,13 @@ public:
     /// in the derived classes.
     ///
     /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// the derived classes. The @c RAPkt and @c RSPkt class have respective
     /// implementations of this method.
     ///
     /// @throw InvalidOperation if packing fails
     virtual void pack() = 0;
 
-    /// @brief Parses on-wire form of DHCP (either v4 or v6) packet.
+    /// @brief Parses on-wire form of ND packet.
     ///
     /// Parses received packet, stored in on-wire format in data_.
     ///
@@ -81,7 +81,7 @@ public:
     /// be stored in options_ container.
     ///
     /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// the derived classes. The @c RAPkt and @c RSPkt class have respective
     /// implementations of this method.
     ///
     /// Method will throw exception if packet parsing fails.
@@ -127,7 +127,7 @@ public:
     /// This function is useful mainly for debugging.
     ///
     /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// the derived classes. The @c RAOkt and @c RSPkt class have respective
     /// implementations of this method.
     ///
     /// @return string with text representation
@@ -139,7 +139,7 @@ public:
     /// it in on-wire format.
     ///
     /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
+    /// the derived classes. The @c RAOkt and @c RSPkt class have respective
     /// implementations of this method.
     ///
     /// @return packet size in bytes
@@ -147,28 +147,30 @@ public:
 
     /// @brief Returns message type (e.g. 133 = Router Solicitation).
     ///
-    /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
-    /// implementations of this method.
-    ///
     /// @return message type
-    virtual uint8_t getType() const = 0;
+    virtual uint8_t getType() const { return (type_); };
 
     /// @brief Sets message type (e.g. 133 = RS).
     ///
-    /// @note This is a pure virtual method and must be implemented in
-    /// the derived classes. The @c RAPkt and @c RSPkt class have respective
-    /// implementations of this method.
-    ///
     /// @param type message type to be set
-    virtual void setType(uint8_t type) = 0;
+    virtual void setType(uint8_t type) { type_ = type; };
+
+    /// @brief Returns message code (always 0 in standard ND messages).
+    ///
+    /// @return message code
+    virtual uint8_t getCode() const { return (code_); };
+
+    /// @brief Sets message code (always 0 in standard ND messages).
+    ///
+    /// @param code message code to be set
+    virtual void setCode(uint8_t code) { code_ = code; };
 
     /// @brief Returns name of the ND message.
     ///
     /// For all unsupported messages the derived classes must return
     /// "UNKNOWN".
     ///
-    /// @return Pointer to "const" string containing DHCP message name.
+    /// @return Pointer to "const" string containing ND message name.
     /// The implementations in the derived classes should statically
     /// allocate returned strings and the caller must not release the
     /// returned pointer.
@@ -177,8 +179,7 @@ public:
     /// @brief Unparsed data (in received packets).
     ///
     /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
+    /// classes directly. The impact on derived classes'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
@@ -186,9 +187,9 @@ public:
 
     /// @brief Returns the first option of specified type.
     ///
-    /// Returns the first option of specified type. Note that in DHCPv6 several
+    /// Returns the first option of specified type. Note that in ND several
     /// instances of the same option are allowed (and frequently used).
-    /// Also see @ref Pkt6::getOptions().
+    /// Also see @ref Pkt::getOptions().
     ///
     /// The options will be only returned after unpack() is called.
     ///
@@ -321,6 +322,14 @@ public:
 
 protected:
 
+    /// @brief Type of the message (e.g. 133 = RS).
+    uint8_t type_;
+
+    /// @brief Code of the message (always 0 in standard ND messages).
+    uint8_t code_;
+
+    /// @brief Interface name.
+    ///
     /// Name of the network interface the packet was received/to be sent over.
     std::string iface_;
 
@@ -331,19 +340,19 @@ protected:
     /// when using odd systems that allow spaces in interface names.
     int64_t ifindex_;
 
-    /// @brief Local IP (v4 or v6) address.
+    /// @brief Local IPv6 address.
     ///
-    /// Specifies local IPv4 or IPv6 address. It is a destination address for
+    /// Specifies local IPv6 address. It is a destination address for
     /// received packet, and a source address if it packet is being transmitted.
     isc::asiolink::IOAddress local_addr_;
 
-    /// @brief Remote IP address.
+    /// @brief Remote IPv6 address.
     ///
-    /// Specifies local IPv4 or IPv6 address. It is source address for received
+    /// Specifies remote IPv6 address. It is source address for received
     /// packet and a destination address for packet being transmitted.
     isc::asiolink::IOAddress remote_addr_;
 
-    /// Output buffer (used during message transmission)
+    /// @brief Output buffer (used during message transmission)
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -353,7 +362,7 @@ protected:
     /// data format change etc.
     isc::util::OutputBuffer buffer_out_;
 
-    /// packet timestamp
+    /// @brief Packet timestamp
     boost::posix_time::ptime timestamp_;
 
 };
