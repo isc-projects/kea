@@ -39,6 +39,7 @@ typedef boost::shared_ptr<Option> OptionPtr;
 
 /// A collection of ND options
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
+
 /// A pointer to an OptionCollection
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 
@@ -169,43 +170,6 @@ public:
     ///         if there is no data)
     virtual const OptionBuffer& getData() const { return (data_); }
 
-    /// Adds a sub-option.
-    ///
-    /// Some ND options can have suboptions. This method allows adding
-    /// options within options.
-    ///
-    /// Note: option is passed by value. That is very convenient as it allows
-    /// downcasting from any derived classes, e.g. shared_ptr<Option6_IA> type
-    /// can be passed directly, without any casts. That would not be possible
-    /// with passing by reference. addOption() is expected to be used in
-    /// many places. Requiring casting is not feasible.
-    ///
-    /// @param opt shared pointer to a suboption that is going to be added.
-    void addOption(OptionPtr opt);
-
-    /// Returns shared_ptr to suboption of specific type
-    ///
-    /// @param type type of requested suboption
-    ///
-    /// @return shared_ptr to requested suboption
-    OptionPtr getOption(uint8_t type) const;
-
-    /// @brief Returns all encapsulated options.
-    ///
-    /// @warning This function returns a reference to the container holding
-    /// encapsulated options, which is valid as long as the object which
-    /// returned it exists.
-    const OptionCollection& getOptions() const {
-        return (options_);
-    }
-
-    /// Attempts to delete first suboption of requested type
-    ///
-    /// @param type Type of option to be deleted.
-    ///
-    /// @return true if option was deleted, false if no such option existed
-    bool delOption(uint8_t type);
-
     /// @brief Returns content of first byte.
     ///
     /// @throw isc::OutOfRange Thrown if the option has a length of 0.
@@ -302,35 +266,6 @@ protected:
     /// @param [out] buf output buffer.
     void packHeader(isc::util::OutputBuffer& buf) const;
 
-    /// @brief Store sub options in a buffer.
-    ///
-    /// This method stores all sub-options defined for a particular
-    /// option in a on-wire format in output buffer provided.
-    /// This function is called by pack function in this class or
-    /// derived classes that override pack.
-    ///
-    /// @param [out] buf output buffer.
-    ///
-    /// @todo The set of exceptions thrown by this function depend on
-    /// exceptions thrown by pack methods invoked on objects
-    /// representing sub options. We should consider whether to aggregate
-    /// those into one exception which can be documented here.
-    void packOptions(isc::util::OutputBuffer& buf) const;
-
-    /// @brief Builds a collection of sub options from the buffer.
-    ///
-    /// This method parses the provided buffer and builds a collection
-    /// of objects representing sub options. This function may throw
-    /// different exceptions when option assembly fails.
-    ///
-    /// @param buf buffer to be parsed.
-    ///
-    /// @todo The set of exceptions thrown by this function depend on
-    /// exceptions thrown by unpack methods invoked on objects
-    /// representing sub options. We should consider whether to aggregate
-    /// those into one exception which can be documented here.
-    void unpackOptions(const OptionBuffer& buf);
-
     /// @brief Returns option header in the textual format.
     ///
     /// This protected method should be called by the derived classes in
@@ -344,20 +279,6 @@ protected:
     std::string headerToText(const int indent = 0,
                              const std::string& type_name = "") const;
 
-    /// @brief Returns collection of suboptions in the textual format.
-    ///
-    /// This protected method should be called by the derived classes
-    /// in their respective @c toText implementations to append the
-    /// suboptions held by this option. Note that there are some
-    /// option types which don't have suboptions because they contain
-    /// variable length fields. For such options this method is not
-    /// called.
-    ///
-    /// @param indent Number of spaces to insert before the text.
-    ///
-    //// @return Suboptions in the textual format.
-    std::string suboptionsToText(const int indent = 0) const;
-
     /// @brief A protected method used for option correctness.
     ///
     /// It is used in constructors. In there are any problems detected
@@ -369,18 +290,9 @@ protected:
 
     /// contains content of this data
     OptionBuffer data_;
-
-    /// collection for storing suboptions
-    OptionCollection options_;
-
-    /// Name of the option space being encapsulated by this option.
-    std::string encapsulated_space_;
-
-    /// @todo probably 2 different containers have to be used for v4 (unique
-    /// options) and v6 (options with the same type can repeat)
 };
 
-} // namespace isc::dhcp
+} // namespace isc::slaac
 } // namespace isc
 
 #endif // ND_OPTION_H

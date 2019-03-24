@@ -39,7 +39,7 @@ Option::Option(uint8_t type, OptionBufferConstIter first,
 }
 
 Option::Option(const Option& option)
-    : type_(option.type_), data_(option.data_), options_(option.options_) {
+    : type_(option.type_), data_(option.data_) {
 }
 
 Option&
@@ -47,7 +47,6 @@ Option::operator=(const Option& rhs) {
     if (&rhs != this) {
         type_ = rhs.type_;
         data_ = rhs.data_;
-        options_ = rhs.options_;
     }
     return (*this);
 }
@@ -64,8 +63,6 @@ void Option::pack(isc::util::OutputBuffer& buf) const {
     if (!data_.empty()) {
         buf.writeData(&data_[0], data_.size());
     }
-    // Write sub-options.
-    packOptions(buf);
 }
 
 void
@@ -74,23 +71,9 @@ Option::packHeader(isc::util::OutputBuffer& buf) const {
     buf.writeUint8(len());
 }
 
-void
-Option::packOptions(isc::util::OutputBuffer& buf) const {
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        it->second->pack(buf);
-    }
-}
-
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
     setData(begin, end);
-}
-
-void
-Option::unpackOptions(const OptionBuffer& buf) {
-    isc_throw(NotImplemented, "Can't unpack suboptions");
 }
 
 uint8_t Option::len() const {
@@ -99,37 +82,12 @@ uint8_t Option::len() const {
     // length of the whole option is header and data stored in this option...
     size_t length = getHeaderLen() + data_.size();
 
-    // ... and sum of lengths of all suboptions
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
-    }
-
     return (static_cast<uint8_t>(length));
 }
 
 bool
 Option::valid() const {
     return (true);
-}
-
-OptionPtr Option::getOption(uint8_t opt_type) const {
-    OptionCollection::const_iterator x =
-        options_.find(opt_type);
-    if ( x != options_.end() ) {
-        return (*x).second;
-    }
-    return OptionPtr(); // NULL
-}
-
-bool Option::delOption(uint8_t opt_type) {
-    OptionCollection::iterator x = options_.find(opt_type);
-    if ( x != options_.end() ) {
-        options_.erase(x);
-        return true; // delete successful
-    }
-    return (false); // option not found, can't delete
 }
 
 string Option::toText(int indent) const {
@@ -143,9 +101,6 @@ string Option::toText(int indent) const {
         output << setfill('0') << setw(2) << hex
             << static_cast<unsigned short>(data_[i]);
     }
-
-    // Append suboptions.
-    output << suboptionsToText(indent + 2);
 
     return (output.str());
 }
@@ -202,28 +157,9 @@ Option::headerToText(const int indent, const string& type_name) const {
     return (output.str());
 }
 
-string
-Option::suboptionsToText(const int indent) const {
-    stringstream output;
-
-    if (!options_.empty()) {
-        output << "," << endl << "options:";
-        for (OptionCollection::const_iterator opt = options_.begin();
-             opt != options_.end(); ++opt) {
-            output << endl << (*opt).second->toText(indent);
-        }
-    }
-
-    return (output.str());
-}
-
 uint8_t
 Option::getHeaderLen() const {
     return OPTION_HDR_LEN; // header length for ND
-}
-
-void Option::addOption(OptionPtr opt) {
-    options_.insert(make_pair(opt->getType(), opt));
 }
 
 uint8_t Option::getUint8() const {
