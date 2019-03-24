@@ -23,12 +23,14 @@ enum NDMessageType {
 
 /// @brief Neighbor Discover option types.
 enum NDOptionType {
-    ND_SRC_LLA    = 1,  //< Source Link-Layer Address
-    ND_DST_LLA    = 2,  //< Target Link-Layer Address
-    ND_PREF_INFO  = 3,  //< Prefix Information
-    ND_RED_HDR    = 4,  //< Redirected Header
-    ND_MTU        = 5,  //< MTU
-    ND_UNIVERSAL  = 42  //< Universal RA Option
+    ND_SRC_LL_ADDR    = 1,  //< Source Link-Layer Address
+    ND_TGT_LL_ADDR    = 2,  //< Target Link-Layer Address
+    ND_PREFIX_INFO    = 3,  //< Prefix Information
+    ND_REDIRECT_HDR   = 4,  //< Redirected Header
+    ND_MTU            = 5,  //< MTU
+    // Many new options...
+    // reference IANA "IPv6 Neighbor Discovery Option Formats" registry.
+    ND_UNIVERSAL_RA   = 42  //< Universal RA Option
 };
 
 }; // namespace isc::slaac

@@ -5,7 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <slaac/nd.h>
 #include <slaac/nd_option.h>
+#include <slaac/nd_option_lladdr.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
@@ -248,6 +250,10 @@ void unpackOptions(const OptionBuffer& buf, size_t offset,
         auto opt_end = buf.begin() + offset + len;
         // Could use a registration / factory system?
         switch (type) {
+        case ND_SRC_LL_ADDR:
+        case ND_TGT_LL_ADDR:
+            opt.reset(new OptionLLAddr(type, opt_begin, opt_end));
+            break;
         default:
             opt.reset(new Option(type, opt_begin, opt_end));
         }

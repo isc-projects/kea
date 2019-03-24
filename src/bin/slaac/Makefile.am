@@ -38,6 +38,7 @@ noinst_LTLIBRARIES = libslaac.la
 libslaac_la_SOURCES  =
 libslaac_la_SOURCES += nd.h
 libslaac_la_SOURCES += nd_option.cc nd_option.h
+libslaac_la_SOURCES += nd_option_lladdr.cc nd_option_lladdr.h
 libslaac_la_SOURCES += nd_pkt.cc nd_pkt.h
 libslaac_la_SOURCES += nd_pkt_ra.cc nd_pkt_ra.h
 libslaac_la_SOURCES += nd_pkt_rs.cc nd_pkt_rs.h

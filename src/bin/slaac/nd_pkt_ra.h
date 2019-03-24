@@ -145,6 +145,8 @@ public:
     /// @param other_flag other flag to be set.
     void setOtherFlag(bool other_flag) { other_flag_ = other_flag; };
 
+    /// @note: RFC 5175 defines some new flags...
+
     /// @brief Returns router lifetime.
     ///
     /// @return router lifetime (zero means the router is not a default router).
