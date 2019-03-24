@@ -58,8 +58,7 @@ public:
     ///
     /// This constructor takes vector<uint8_t>& which is used in cases
     /// when content of the option will be copied and stored within
-    /// option object. V4 Options follow that approach already.
-    /// @todo Migrate V6 options to that approach.
+    /// option object.
     ///
     /// @param type option type (0-255 for V4 and 0-65535 for V6)
     /// @param data content of the option
@@ -120,7 +119,7 @@ public:
     virtual void unpack(OptionBufferConstIter begin,
                         OptionBufferConstIter end);
 
-    /// Returns string representation of the option.
+    /// @brief Returns string representation of the option.
     ///
     /// @param indent number of spaces before printing text
     ///
@@ -145,22 +144,22 @@ public:
     /// @return String containing hexadecimal representation of the option.
     virtual std::string toHexString(const bool include_header = false) const;
 
-    /// Returns option type
+    /// @brief Returns option type
     ///
     /// @return option type
     uint8_t getType() const { return (type_); }
 
-    /// Returns length of the complete option
+    /// @brief Returns length of the complete option
     ///
     /// @return length of the option
     virtual size_t len() const;
 
-    /// returns if option is valid (e.g. option may be truncated)
+    /// @brief returns if option is valid (e.g. option may be truncated)
     ///
     /// @return true, if option is valid
     virtual bool valid() const;
 
-    /// Returns pointer to actual data.
+    /// @brief Returns pointer to actual data.
     ///
     /// @return pointer to actual data (or reference to an empty vector
     ///         if there is no data)
@@ -222,7 +221,7 @@ public:
         data_.assign(first, last);
     }
 
-    /// just to force that every option has virtual dtor
+    /// @brief just to force that every option has virtual dtor
     virtual ~Option();
 
     /// @brief Checks if options are equal.
@@ -281,10 +280,10 @@ protected:
     /// it will throw BadValue or OutOfRange exceptions.
     void check() const;
 
-    /// option type (0-255 for ND)
+    /// @brief option type (0-255 for ND)
     uint8_t type_;
 
-    /// contains content of this data
+    /// @brief contains content of this data
     OptionBuffer data_;
 };
 
