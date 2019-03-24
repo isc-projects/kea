@@ -30,8 +30,8 @@ public:
         SlaacProcess("agent-test",
                          IOServicePtr(new isc::asiolink::IOService())) {
         SlaacConfigPtr ctx = getSlaacCfgMgr()->getSlaacConfig();
-        ctx->setHttpHost("127.0.0.1");
-        ctx->setHttpPort(8081);
+
+        /// @todo: put some defaults here
     }
 
     /// @brief Destructor

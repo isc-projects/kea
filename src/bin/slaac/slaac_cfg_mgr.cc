@@ -20,13 +20,11 @@ using namespace isc::data;
 namespace isc {
 namespace slaac {
 
-SlaacConfig::SlaacConfig()
-    :http_host_(""), http_port_(0) {
+SlaacConfig::SlaacConfig() {
 }
 
 SlaacConfig::SlaacConfig(const SlaacConfig& orig)
     : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
-      http_host_(orig.http_host_), http_port_(orig.http_port_),
       hooks_config_(orig.hooks_config_) {
 }
 
@@ -44,8 +42,7 @@ SlaacCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
     // First print the http stuff.
     std::ostringstream s;
-    s << "listening on " << ctx->getHttpHost() << ", port "
-      << ctx->getHttpPort() << ", control sockets: ";
+    s << "listening on TBD interface(s), control sockets: ";
 
     // Then print the control-sockets
     s << ctx->getControlSocketInfoSummary();
@@ -148,10 +145,6 @@ SlaacConfig::toElement() const {
     ElementPtr ca = Element::createMap();
     // Set user-context
     contextToElement(ca);
-    // Set http-host
-    ca->set("http-host", Element::create(http_host_));
-    // Set http-port
-    ca->set("http-port", Element::create(static_cast<int64_t>(http_port_)));
     // Set hooks-libraries
     ca->set("hooks-libraries", hooks_config_.toElement());
     // Set control-sockets
