@@ -256,9 +256,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"interfaces-config\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_INTERFACES_CONFIG(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("interfaces-config", driver.loc_);
+    }
+}
+
+\"interfaces\" {
+    switch(driver.ctx_) {
+    case ParserContext::INTERFACES_CONFIG:
+        return SlaacParser::make_INTERFACES(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("interfaces", driver.loc_);
+    }
+}
+
+
 \"Logging\" {
     switch(driver.ctx_) {
-    case ParserContext::CONFIG:
+    case ParserContext::SLAAC:
         return SlaacParser::make_LOGGING(driver.loc_);
     default:
         return SlaacParser::make_STRING("Logging", driver.loc_);

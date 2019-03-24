@@ -50,6 +50,9 @@ using namespace std;
 
   SLAAC "Slaac"
 
+  INTERFACES_CONFIG "interfaces-config"
+  INTERFACES "interfaces"
+
   USER_CONTEXT "user-context"
   COMMENT "comment"
 
@@ -225,7 +228,6 @@ global_objects: global_object
 
 // This represents a single top level entry, e.g. Slaac or Logging.
 global_object: slaac_object
-             | logging_object
              ;
 
 // This define the Slaac object.
@@ -256,7 +258,9 @@ not_empty_global_params: global_param
 
 // These are the parameters that are allowed in the top-level for
 // Slaac.
-global_param: hop_limit
+global_param: interfaces_config
+            | logging_object
+            | hop_limit
             | managed_flag
             | other_flag
             | router_lifetime
@@ -295,6 +299,59 @@ user_context: USER_CONTEXT {
     parent->set("user-context", user_context);
     ctx.leave();
 };
+
+interfaces_config: INTERFACES_CONFIG {
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("interfaces-config", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.INTERFACES_CONFIG);
+} COLON LCURLY_BRACKET interfaces_config_params RCURLY_BRACKET {
+    // No interfaces config param is required
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+interfaces_config_params: interfaces_config_param
+                        | interfaces_config_params COMMA interfaces_config_param
+                        ;
+
+interfaces_config_param: interfaces_list
+                       | user_context
+                       | comment
+                       | unknown_map_entry
+                       ;
+
+interfaces_list: INTERFACES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("interfaces", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+// This one is used in syntax parser and is restricted to strings.
+list_strings: LSQUARE_BRACKET {
+    // List parsing about to start
+} list_strings_content RSQUARE_BRACKET {
+    // list parsing complete. Put any sanity checking here
+    //ctx.stack_.pop_back();
+};
+
+list_strings_content: %empty // Empty list
+                    | not_empty_list_strings
+                    ;
+
+not_empty_list_strings: STRING {
+                          ElementPtr s(new StringElement($1, ctx.loc2pos(@1)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      | not_empty_list_strings COMMA STRING {
+                          ElementPtr s(new StringElement($3, ctx.loc2pos(@3)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      ;
 
 comment: COMMENT {
     ctx.enter(ctx.NO_KEYWORDS);

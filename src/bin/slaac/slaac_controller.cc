@@ -8,6 +8,7 @@
 
 #include <slaac/slaac_controller.h>
 #include <slaac/slaac_process.h>
+#include <slaac/parser_context.h>
 #include <cc/data.h>
 
 using namespace isc::process;
@@ -44,10 +45,8 @@ SlaacController::createProcess() {
 isc::data::ConstElementPtr
 SlaacController::parseFile(const std::string& name) {
 
-    /// @todo: implement actual parser
-    // ParserContext parser;
-    // return (parser.parseFile(name, ParserContext::PARSER_SLAAC));
-    return (isc::data::Element::fromJSON("{\"Slaac\": { } }"));
+    ParserContext parser;
+    return (parser.parseFile(name, ParserContext::PARSER_SLAAC));
 }
 
 void

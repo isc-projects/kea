@@ -17,9 +17,9 @@
 
         // This section determines whether we should send universal RA
         // option (https://tools.ietf.org/html/draft-troan-6man-universal-ra-option-01).
-        "universal-ra": {
+        /*"universal-ra": {
             "send": true,
-        },
+        },*/
 
         // This is our logging configuration.
         "Logging": {
