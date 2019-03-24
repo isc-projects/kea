@@ -70,11 +70,6 @@ public:
     /// @return string with text representation.
     virtual std::string toText(int indent = 0) const;
 
-    /// @brief returns if option is valid (e.g. option may be truncated)
-    ///
-    /// @return true, if option is valid
-    virtual bool valid() const;
-
     /// @brief just to force that every option has virtual dtor
     virtual ~OptionLLAddr();
 };

@@ -8,6 +8,7 @@
 #include <slaac/nd.h>
 #include <slaac/nd_option.h>
 #include <slaac/nd_option_lladdr.h>
+#include <slaac/nd_option_pref_info.h>
 #include <slaac/nd_option_mtu.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/hex.h>
@@ -255,6 +256,9 @@ void unpackOptions(const OptionBuffer& buf, size_t offset,
         case ND_SRC_LL_ADDR:
         case ND_TGT_LL_ADDR:
             opt.reset(new OptionLLAddr(type, opt_begin, opt_end));
+            break;
+        case ND_PREFIX_INFO:
+            opt.reset(new OptionPrefInfo(opt_begin, opt_end));
             break;
         case ND_MTU:
             opt.reset(new OptionMtu(opt_begin, opt_end));
