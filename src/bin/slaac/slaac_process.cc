@@ -16,18 +16,28 @@
 #include <boost/pointer_cast.hpp>
 #include <process/config_base.h>
 #include <cc/data.h>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio/ip/icmp.hpp>
+#include <boost/asio/ip/address_v6.hpp>
+
+#include "nd_pkt_rs.h"
 
 using namespace isc::asiolink;
 using namespace isc::process;
 using namespace isc::data;
+
+using namespace boost::asio;
 
 
 namespace isc {
 namespace slaac {
 
 SlaacProcess::SlaacProcess(const char* name,
-                                   const asiolink::IOServicePtr& io_service)
-    : DProcessBase(name, io_service, DCfgMgrBasePtr(new SlaacCfgMgr())) {
+                           const asiolink::IOServicePtr& io_service) :
+    DProcessBase(name, io_service, DCfgMgrBasePtr(new SlaacCfgMgr())),
+    req_hdlr_(io_service->get_io_service())
+{
 }
 
 SlaacProcess::~SlaacProcess() {
@@ -93,6 +103,67 @@ SlaacProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
     return (isc::config::createAnswer(0, "Slaac is shutting down"));
 }
 
+// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+RequestHandler::RequestHandler(boost::asio::io_service& io_service):
+    socket_(io_service)
+{
+//    boost::asio::ip::multicast::join_group mo(boost::asio::ip::address_v6::from_string("ff02::2"));
+    socket_.open(boost::asio::ip::icmp::socket::protocol_type::v6());
+    //socket_.set_option(odtone::net::ip::icmp::filter(true, ND_ROUTER_SOLICIT));
+//    socket_.set_option(mo);
+
+    // struct ifreq ifr;
+    // memset(&ifr, 0, sizeof(ifr));
+    // strncpy(ifr.ifr_name, "enp0s10", sizeof(ifr.ifr_name) - 1);
+    // if (setsockopt(socket_.native(), SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
+    //     //log_(0, "Cannot bind to specific interface.");
+    //     throw("Cannot bind to specific interface.");
+    // }
+
+    buffer_.consume(buffer_.size());
+}
+
+void
+RequestHandler::start_receiving()
+{
+    socket_.async_receive(
+                buffer_.prepare(65536),
+                boost::bind(&RequestHandler::handle_receive, this, _1, _2));
+}
+
+
+void
+RequestHandler::handle_receive(const boost::system::error_code &err_code, std::size_t size)
+{
+    LOG_INFO(slaac_logger, "Received err: %1 size: %2").arg(err_code.message()).arg(size);
+    if (err_code) {
+        return;
+    }
+
+    if (size == 0) {
+        return;
+    }
+
+    buffer_.commit(size);
+    uint8_t buf[size];
+    std::istream is(&buffer_);
+    is.read((char*)buf, size);
+
+    // check if this is ICMP ND RS
+    if (buf[0] == 133) {
+        printf("bingo\n");
+        RSPkt pkt(buf, size, IOAddress::IPV6_ZERO_ADDRESS(), IOAddress::IPV6_ZERO_ADDRESS());
+        pkt.unpack();
+        std::cout << pkt.toText() << std::endl;
+    } else {
+        printf("not bingo %d - drop\n", buf[0]);
+    }
+
+    start_receiving();
+}
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 isc::data::ConstElementPtr
 SlaacProcess::configure(isc::data::ConstElementPtr config_set,
                             bool check_only) {
@@ -121,6 +192,9 @@ SlaacProcess::configure(isc::data::ConstElementPtr config_set,
         }
 
         /// @todo: Start the actual thing here.
+
+        req_hdlr_.start_receiving();
+
 
         std::string interfaces = "eth0 eth1 eth2";
 

@@ -11,8 +11,24 @@
 #include <process/d_process.h>
 #include <vector>
 
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio/ip/icmp.hpp>
+#include <boost/asio/ip/address_v6.hpp>
+
+
 namespace isc {
 namespace slaac {
+
+class RequestHandler
+{
+public:
+    RequestHandler(boost::asio::io_service& io_service);
+    void start_receiving();
+    void handle_receive(const boost::system::error_code &err_code, std::size_t size);
+    boost::asio::streambuf buffer_;
+    boost::asio::ip::icmp::socket socket_;
+};
 
 /// @brief Kea Control Agent Application Process
 ///
@@ -120,6 +136,8 @@ public:
     bool isListening() const;
 
 private:
+
+    RequestHandler req_hdlr_;
 
 };
 
