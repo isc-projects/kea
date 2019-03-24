@@ -35,7 +35,7 @@ endif
 
 noinst_LTLIBRARIES = libslaac.la
 
-libslaac_la_SOURCES  = 
+libslaac_la_SOURCES  =
 libslaac_la_SOURCES += nd.h
 libslaac_la_SOURCES += nd_option.cc nd_option.h
 libslaac_la_SOURCES += nd_pkt.cc nd_pkt.h
@@ -68,11 +68,11 @@ kea_slaac_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
-#kea_slaac_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_slaac_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_slaac_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-#kea_slaac_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_slaac_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 #kea_slaac_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_slaac_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
