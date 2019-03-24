@@ -67,7 +67,7 @@ public:
     /// @throw InvalidOperation if packing fails
     virtual void pack();
 
-    /// @brief Parses on-wire form of ND packet.
+    /// @brief Parses on-wire form of RS packet.
     ///
     /// Parses received packet, stored in on-wire format in data_.
     ///

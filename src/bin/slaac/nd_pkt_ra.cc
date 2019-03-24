@@ -6,23 +6,25 @@
 
 #include <config.h>
 #include <slaac/nd.h>
-#include <slaac/nd_pkt_rs.h>
+#include <slaac/nd_pkt_ra.h>
 
 #include <sstream>
 
 using namespace std;
+using namespace isc;
+using namespace isc::util;
 
 namespace isc {
 namespace slaac {
 
-RSPkt::RSPkt(const isc::asiolink::IOAddress& local_addr,
+RAPkt::RAPkt(const isc::asiolink::IOAddress& local_addr,
              const isc::asiolink::IOAddress& remote_addr)
     : NDPkt(local_addr, remote_addr)
 {
-    type_ = ND_RT_SOL;
+    type_ = ND_RT_ADV;
 }
 
-RSPkt::RSPkt(const uint8_t* buf, uint32_t len,
+RAPkt::RAPkt(const uint8_t* buf, uint32_t len,
              const isc::asiolink::IOAddress& local_addr,
              const isc::asiolink::IOAddress& remote_addr)
     : NDPkt(buf, len, local_addr, remote_addr)
@@ -31,16 +33,31 @@ RSPkt::RSPkt(const uint8_t* buf, uint32_t len,
 }
 
 void
-RSPkt::pack() {
+RAPkt::pack() {
     try {
         // Make sure that the buffer is empty before we start writing to it.
         buffer_out_.clear();
 
-        // Put type, code, checksum and reserved.
+        // Put type, code, checksum and hop limit.
         buffer_out_.writeUint8(type_);
         buffer_out_.writeUint8(code_);
         buffer_out_.writeUint16(0);
-        buffer_out_.writeUint32(0);
+        buffer_out_.writeUint8(hop_limit_);
+
+        // Put flags.
+        uint8_t flags = 0;
+        if (managed_flag_) {
+            flags |= MANAGED_FLAG;
+        }
+        if (other_flag_) {
+            flags |= OTHER_FLAG;
+        }
+        buffer_out_.writeUint8(flags);
+
+        // Put router lifetime, reachable time and retrans timer.
+        buffer_out_.writeUint16(router_lifetime_);
+        buffer_out_.writeUint32(reachable_time_);
+        buffer_out_.writeUint32(retrans_timer_);
 
         // Append options.
         packOptions(buffer_out_, options_);
@@ -51,41 +68,62 @@ RSPkt::pack() {
 }
 
 void
-RSPkt::unpack() {
+RAPkt::unpack() {
     // Check length.
-    if (data_.size() < RS_MIN_LEN) {
-        isc_throw(BadValue, "Received truncated RS packet of size "
-                  <<  data_.size() << ", RS header alone has 8 bytes.");
+    if (data_.size() < RA_MIN_LEN) {
+        isc_throw(BadValue, "Received truncated RA packet of size "
+                  <<  data_.size() << ", RA header alone has 16 bytes.");
     }
 
-    // Get type (ND_RT_SOL (133)).
-    type_ = data_[0];
-    if (type_ != ND_RT_SOL) {
-        isc_throw(BadValue, "Received RS packet has type "
+    // Input buffer (used during message reception).
+    InputBuffer buffer(&data_[0], RA_MIN_LEN);
+
+    // Get type (ND_RT_ADV (134)).
+    type_ = buffer.readUint8();
+    if (type_ != ND_RT_ADV) {
+        isc_throw(BadValue, "Received RA packet has type "
                   << static_cast<unsigned>(type_)
-                  << ", expected " << ND_RT_SOL);
+                  << ", expected " << ND_RT_ADV);
     }
 
     // Get code (0).
-    code_ = data_[1];
+    code_ = buffer.readUint8();
     if (code_ != 0) {
-        isc_throw(BadValue, "Received RS packet has code "
+        isc_throw(BadValue, "Received RA packet has code "
                   << static_cast<unsigned>(code_) << ", expected 0.");
     }
 
-    // Skip checksum and reserved.
+    // Skip checksum.
+    static_cast<void>(buffer.readUint16());
+
+    // Get hop limit.
+    hop_limit_ = buffer.readUint8();
+
+    // Get flags.
+    uint8_t flags = buffer.readUint8();
+    managed_flag_ = ((flags & MANAGED_FLAG) != 0);
+    other_flag_ = ((flags & OTHER_FLAG) != 0);
+
+    // Get router lifetime.
+    router_lifetime_ = buffer.readUint16();
+
+    // Get reachable time.
+    reachable_time_ = buffer.readUint32();
+
+    // Get retrans timer.
+    retrans_timer_ = buffer.readUint32();
 
     // Get options.
-    unpackOptions(data_, RS_MIN_LEN, options_);
+    unpackOptions(data_, RA_MIN_LEN, options_);
 }
 
 string
-RSPkt::toText() const
+RAPkt::toText() const
 {
     stringstream tmp;
 
     // First print basic
-    tmp << "RS (type=" << static_cast<unsigned>(type_)
+    tmp << "RA (type=" << static_cast<unsigned>(type_)
         << ", code=" << static_cast<unsigned>(code_)
         << ") localAddr=" << local_addr_
         << ", remoteAddr=" << remote_addr_
@@ -93,15 +131,22 @@ RSPkt::toText() const
         << "(" << ifindex_
         << ")" << endl;
 
-    // Then print the options.
+    // Then print parameters,
+    tmp << "hop_limit=" << static_cast<unsigned>(hop_limit_)
+        << " flags" << (managed_flag_ ? "M" : "") << (other_flag_ ? "O" : "")
+        << " router_lifetime=" << router_lifetime_ << endl
+        << "reachable_time=" << reachable_time_
+        << " retrans_timer=" << retrans_timer_ << endl;
+
+    // Finally print the options.
     printOptions(options_, tmp);
 
     return (tmp.str());
 }
 
 size_t
-RSPkt::len() {
-    return (RS_MIN_LEN + lenOptions(options_));
+RAPkt::len() {
+    return (RA_MIN_LEN + lenOptions(options_));
 }
 
 };
