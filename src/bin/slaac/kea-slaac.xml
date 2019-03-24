@@ -14,29 +14,28 @@
     <date>June 15, 2018</date>
     <edition>1.4.0</edition>
     <author>
-      <contrib>The Kea software has been written by a number of
-        engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
-        Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
-        Wlodek Wencel and Shawn Routhier.  That list is roughly in the
+      <contrib>The Kea slaac software has been written by a number of
+        engineers working for ISC: Tomek Mrugalski, Francis Dupont,
+        and Michal Nowikowski. That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
         contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
   </info>
 
   <refmeta>
-    <refentrytitle>kea-ctrl-agent</refentrytitle>
+    <refentrytitle>kea-slaac</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class="manual">Kea</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>kea-ctrl-agent</refname>
-    <refpurpose>Control Agent process in Kea</refpurpose>
+    <refname>kea-slaac</refname>
+    <refpurpose>Stateles (RA) process in Kea</refpurpose>
   </refnamediv>
 
   <docinfo>
     <copyright>
-      <year>2016-2018</year>
+      <year>2019</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -57,12 +56,7 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>kea-ctrl-agent</command> provides a REST service for
-      controlling Kea services. The received HTTP requests are decapsulated
-      and forwarded to the respective Kea services in JSON format. Received
-      JSON responses are encapsulated within HTTP responses and returned to
-      the controlling entity. Some commands may be handled by the Control
-      Agent directly, and not forwarded to any Kea service.
+      The <command>kea-slaac</command> provides nothing yet.
     </para>
 
   </refsect1>
@@ -165,8 +159,8 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>kea-ctrl-agent</command> was first coded in December 2016
-      by Marcin Siodelski.
+      The <command>kea-slaac</command> was first coded in March 2019
+      by Tomek Mrugalski, Francis Dupont and Michal Nowikowski.
     </para>
   </refsect1>
 
