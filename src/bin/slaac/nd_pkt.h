@@ -8,7 +8,7 @@
 #define ND_PKT_H
 
 #include <asiolink/io_address.h>
-#include <nd_option.h>
+#include <slaac/nd_option.h>
 #include <util/buffer.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>

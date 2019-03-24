@@ -7,7 +7,7 @@
 #ifndef ND_PKT_RA_H
 #define ND_PKT_RA_H
 
-#include <nd_pkt.h>
+#include <slaac/nd_pkt.h>
 
 namespace isc {
 
