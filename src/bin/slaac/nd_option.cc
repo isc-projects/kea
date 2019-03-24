@@ -53,10 +53,21 @@ Option::operator=(const Option& rhs) {
 
 void
 Option::check() const {
-    // Does nothing for now.
+    size_t length = getHeaderLen() + data_.size();
+    if (length == 0) {
+        isc_throw(OutOfRange, "empty ND option");
+    }
+    if (length > 255) {
+        isc_throw(OutOfRange, "too large ND option: " << length);
+    }
+    if ((length & 7) != 0) {
+        isc_throw(BadValue, "length is not a multiple of 8: " << length);
+    }
 }
 
 void Option::pack(isc::util::OutputBuffer& buf) const {
+    // Avoid malformed options.
+    check();
     // Write a header.
     packHeader(buf);
     // Write data.
@@ -68,7 +79,7 @@ void Option::pack(isc::util::OutputBuffer& buf) const {
 void
 Option::packHeader(isc::util::OutputBuffer& buf) const {
     buf.writeUint8(type_);
-    buf.writeUint8(len());
+    buf.writeUint8(len() >> 3);
 }
 
 void Option::unpack(OptionBufferConstIter begin,
@@ -76,13 +87,11 @@ void Option::unpack(OptionBufferConstIter begin,
     setData(begin, end);
 }
 
-uint8_t Option::len() const {
+size_t Option::len() const {
     // Returns length of the complete option.
 
     // length of the whole option is header and data stored in this option...
-    size_t length = getHeaderLen() + data_.size();
-
-    return (static_cast<uint8_t>(length));
+    return (getHeaderLen() + data_.size());
 }
 
 bool
@@ -153,17 +162,17 @@ Option::headerToText(const int indent, const string& type_name) const {
         output << "(" << type_name << ")";
     }
 
-    output << ", len=" << setw(3) << setfill('0') << len();
+    output << ", len=" << setw(5) << setfill('0') << len();
     return (output.str());
 }
 
-uint8_t
+size_t
 Option::getHeaderLen() const {
     return OPTION_HDR_LEN; // header length for ND
 }
 
 uint8_t Option::getUint8() const {
-    if (data_.size() < sizeof(uint8_t) ) {
+    if (data_.size() < sizeof(uint8_t)) {
         isc_throw(OutOfRange, "Attempt to read uint8 from option " << type_
                   << " that has size " << data_.size());
     }

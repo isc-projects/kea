@@ -152,12 +152,12 @@ public:
     /// Returns length of the complete option
     ///
     /// @return length of the option
-    virtual uint8_t len() const;
+    virtual size_t len() const;
 
-    /// @brief Returns length of header (2 for v4, 4 for v6)
+    /// @brief Returns length of header (2 for ND)
     ///
     /// @return length of option header
-    virtual uint8_t getHeaderLen() const;
+    virtual size_t getHeaderLen() const;
 
     /// returns if option is valid (e.g. option may be truncated)
     ///
