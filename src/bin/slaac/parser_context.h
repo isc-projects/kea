@@ -166,23 +166,23 @@ public:
         ///< This one is used in pure JSON mode.
         NO_KEYWORDS,
 
-        ///< Used while parsing top level (that contains Slaac, Logging and others)
+        ///< Used while parsing top level (that contains Slaac)
         CONFIG,
 
         ///< Used while parsing content of Slaac.
         SLAAC,
+
+        ///< Interfaces-config section.
+        INTERFACES_CONFIG,
+
+	///< Prefix-infos section.
+	PREFIX_INFOS,
 
         ///< Used while parsing content of Logging.
         LOGGING,
 
         ///< Used while parsing Logging/loggers structures.
         LOGGERS,
-
-        ///< Interfaces-config section.
-        INTERFACES_CONFIG,
-
-        ///< experimental
-        EXPERIMENTAL,
 
         ///< Used while parsing Logging/loggers/output_options structures.
         OUTPUT_OPTIONS

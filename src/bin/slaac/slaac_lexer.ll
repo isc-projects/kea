@@ -256,6 +256,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"source-ll-address\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_SOURCE_LL_ADDRESS(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("source-ll-address", driver.loc_);
+    }
+}
+
+\"mtu\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_MTU(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("mtu", driver.loc_);
+    }
+}
+
+\"universal-ra\" {
+    switch(driver.ctx_) {
+    case ParserContext::SLAAC:
+        return SlaacParser::make_UNIVERSAL_RA(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("universal-ra", driver.loc_);
+    }
+}
+
 \"interfaces-config\" {
     switch(driver.ctx_) {
     case ParserContext::SLAAC:
@@ -274,21 +301,57 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"experimental\" {
+\"prefix-infos\" {
     switch(driver.ctx_) {
     case ParserContext::SLAAC:
-        return SlaacParser::make_EXPERIMENTAL(driver.loc_);
+        return SlaacParser::make_PREFIX_INFOS(driver.loc_);
     default:
-        return SlaacParser::make_STRING("experimental", driver.loc_);
+        return SlaacParser::make_STRING("prefix-infos", driver.loc_);
     }
 }
 
-\"universal-ra\" {
+\"prefix\" {
     switch(driver.ctx_) {
-    case ParserContext::EXPERIMENTAL:
-        return SlaacParser::make_UNIVERSAL_RA(driver.loc_);
+    case ParserContext::PREFIX_INFOS:
+        return SlaacParser::make_PREFIX(driver.loc_);
     default:
-        return SlaacParser::make_STRING("universal-ra", driver.loc_);
+        return SlaacParser::make_STRING("prefix", driver.loc_);
+    }
+}
+
+\"on-link-flag\" {
+    switch(driver.ctx_) {
+    case ParserContext::PREFIX_INFOS:
+        return SlaacParser::make_ON_LINK_FLAG(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("on-link-flag", driver.loc_);
+    }
+}
+
+\"address-config-flag\" {
+    switch(driver.ctx_) {
+    case ParserContext::PREFIX_INFOS:
+        return SlaacParser::make_ADDRESS_CONFIG_FLAG(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("address-config-flag", driver.loc_);
+    }
+}
+
+\"valid-lifetime\" {
+    switch(driver.ctx_) {
+    case ParserContext::PREFIX_INFOS:
+        return SlaacParser::make_VALID_LIFETIME(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("valid-lifetime", driver.loc_);
+    }
+}
+
+\"preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case ParserContext::PREFIX_INFOS:
+        return SlaacParser::make_PREFERRED_LIFETIME(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("preferred-lifetime", driver.loc_);
     }
 }
 

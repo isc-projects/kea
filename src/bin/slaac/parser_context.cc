@@ -138,6 +138,10 @@ ParserContext::contextName()
         return ("toplevel");
     case SLAAC:
         return ("Slaac");
+    case INTERFACES_CONFIG:
+	return ("interfaces-config");
+    case PREFIX_INFOS:
+	return ("prefix-infos");
     case LOGGING:
         return ("Logging");
     case LOGGERS:

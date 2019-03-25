@@ -50,14 +50,11 @@ using namespace std;
 
   SLAAC "Slaac"
 
-  INTERFACES_CONFIG "interfaces-config"
-  INTERFACES "interfaces"
-
   USER_CONTEXT "user-context"
   COMMENT "comment"
 
-  EXPERIMENTAL "experimental"
-  UNIVERSAL_RA "universal-ra"
+  INTERFACES_CONFIG "interfaces-config"
+  INTERFACES "interfaces"
 
   HOP_LIMIT "hop-limit"
   MANAGED_FLAG "managed-flag"
@@ -65,6 +62,17 @@ using namespace std;
   ROUTER_LIFETIME "router-lifetime"
   REACHABLE_TIME "reachable-time"
   RETRANS_TIMER "retrans-timer"
+
+  SOURCE_LL_ADDRESS "source-ll-address"
+  MTU "mtu"
+  UNIVERSAL_RA "universal-ra"
+  PREFIX_INFOS "prefix-infos"
+
+  PREFIX "prefix"
+  ON_LINK_FLAG "on-link-flag"
+  ADDRESS_CONFIG_FLAG "address-config-flag"
+  VALID_LIFETIME "valid-lifetime"
+  PREFERRED_LIFETIME "preferred-lifetime"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -198,6 +206,28 @@ not_empty_list: value {
                   }
               ;
 
+// This one is used in syntax parser and is restricted to strings.
+list_strings: LSQUARE_BRACKET {
+    // List parsing about to start
+} list_strings_content RSQUARE_BRACKET {
+    // list parsing complete. Put any sanity checking here
+    //ctx.stack_.pop_back();
+};
+
+list_strings_content: %empty // Empty list
+                    | not_empty_list_strings
+                    ;
+
+not_empty_list_strings: STRING {
+                          ElementPtr s(new StringElement($1, ctx.loc2pos(@1)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      | not_empty_list_strings COMMA STRING {
+                          ElementPtr s(new StringElement($3, ctx.loc2pos(@3)));
+                          ctx.stack_.back()->add(s);
+                          }
+                      ;
+
 // --- generic JSON parser ends here -------------------------------------------
 
 // --- syntax checking parser starts here --------------------------------------
@@ -212,26 +242,17 @@ unknown_map_entry: STRING COLON {
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 };
 
-// This defines the top-level { } that holds Slaac or Logging objects.
+// This defines the top-level { } that holds Slaac object.
 slaac_syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
-} global_objects RCURLY_BRACKET {
+} slaac_object RCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
-
-// This represents top-level entries: Slaac, Logging, possibly others
-global_objects: global_object
-              | global_objects COMMA global_object
-              ;
-
-// This represents a single top level entry, e.g. Slaac or Logging.
-global_object: slaac_object
-             ;
 
 // This define the Slaac object.
 slaac_object: SLAAC {
@@ -269,11 +290,10 @@ global_param: interfaces_config
             | router_lifetime
             | reachable_time
             | retrans_timer
-            | experimental
-            // source_lla
-            // mtu
-            // prefix_info
-            // universal_xxx
+            | source_ll_address
+            | mtu
+            | universal_ra
+            | prefix_infos
             | user_context
             | comment
             | unknown_map_entry
@@ -297,6 +317,33 @@ user_context: USER_CONTEXT {
         }
         // Merge the comment
         user_context->set("comment", old->get("comment"));
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
+    ctx.leave();
+};
+
+comment: COMMENT {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
+    ElementPtr comment(new StringElement($4, ctx.loc2pos(@4)));
+    user_context->set("comment", comment);
+
+    // Handle already existing user context
+    ConstElementPtr old = parent->get("user-context");
+    if (old) {
+        // Check for duplicate comment
+        if (old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context/comment entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the user context in the comment
+        merge(user_context, old);
     }
 
     // Set the user context
@@ -335,76 +382,6 @@ interfaces_list: INTERFACES {
     ctx.leave();
 };
 
-// This one is used in syntax parser and is restricted to strings.
-list_strings: LSQUARE_BRACKET {
-    // List parsing about to start
-} list_strings_content RSQUARE_BRACKET {
-    // list parsing complete. Put any sanity checking here
-    //ctx.stack_.pop_back();
-};
-
-list_strings_content: %empty // Empty list
-                    | not_empty_list_strings
-                    ;
-
-not_empty_list_strings: STRING {
-                          ElementPtr s(new StringElement($1, ctx.loc2pos(@1)));
-                          ctx.stack_.back()->add(s);
-                          }
-                      | not_empty_list_strings COMMA STRING {
-                          ElementPtr s(new StringElement($3, ctx.loc2pos(@3)));
-                          ctx.stack_.back()->add(s);
-                          }
-                      ;
-
-comment: COMMENT {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON STRING {
-    ElementPtr parent = ctx.stack_.back();
-    ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
-    ElementPtr comment(new StringElement($4, ctx.loc2pos(@4)));
-    user_context->set("comment", comment);
-
-    // Handle already existing user context
-    ConstElementPtr old = parent->get("user-context");
-    if (old) {
-        // Check for duplicate comment
-        if (old->contains("comment")) {
-            std::stringstream msg;
-            msg << "duplicate user-context/comment entries (previous at "
-                << old->getPosition().str() << ")";
-            error(@1, msg.str());
-        }
-        // Merge the user context in the comment
-        merge(user_context, old);
-    }
-
-    // Set the user context
-    parent->set("user-context", user_context);
-    ctx.leave();
-};
-
-experimental: EXPERIMENTAL {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("experimental", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.EXPERIMENTAL);
-} COLON LCURLY_BRACKET experimental_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-experimental_params: experimental_param
-                    | experimental_params COMMA experimental_param;
-
-experimental_param: universal_ra;
-
-universal_ra: UNIVERSAL_RA COLON BOOLEAN {
-    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("universal-ra", n);
-}
-
-
 hop_limit: HOP_LIMIT COLON INTEGER {
     ElementPtr hl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("hop-limit", hl);
@@ -433,6 +410,93 @@ reachable_time: REACHABLE_TIME COLON INTEGER {
 retrans_timer: RETRANS_TIMER COLON INTEGER {
     ElementPtr rt(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("retrans-timer", rt);
+};
+
+source_ll_address: SOURCE_LL_ADDRESS COLON BOOLEAN {
+    ElementPtr lla(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("source-ll-address", lla);
+};
+
+mtu: MTU COLON INTEGER {
+    ElementPtr mtu(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("mtu", mtu);
+};
+
+// In theory a map with an "ietf" entry but simple accept any JSON.
+universal_ra: UNIVERSAL_RA {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON value {
+    ctx.stack_.back()->set("universal-ra", $4);
+    ctx.leave();
+};
+
+prefix_infos: PREFIX_INFOS {
+    ElementPtr l(new LisElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("prefix-infos", l);
+    ctx.stack_.push_back(l);
+} COLON LSQUARE_BRACKET prefix_info_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+prefix_info_list: %empty
+                | not_empty_prefix_info_list
+                ;
+
+not_empty_prefix_info_list: prefix_info
+                          | not_empty_prefix_info_list COMMA prefix_info
+                          ;
+
+prefix_info: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} prefix_info_params RCURLY_BRACKET {
+    // The prefix parameter is required
+    ctx.require("prefix", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.stack_.pop_back();
+};
+
+prefix_info_params: prefix_info_param
+                  | prefix_info_params COMMA prefix_info_param
+                  ;
+
+prefix_info_param: prefix
+                 | on_link_flag
+                 | address_config_flag
+                 | valid_lifetime
+                 | preferred_lifetime
+                 | user_context
+                 | comment
+                 | unknown_map_entry
+                 ;
+
+prefix: PREFIX {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr pref(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("prefix", pref);
+    ctx.leave();
+};
+
+on_link_flag: ON_LINK_FLAG COLON BOOLEAN {
+    ElementPtr f(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("on-link-flag", f);
+};
+
+address_config_flag: ADDRESS_CONFIG_FLAG COLON BOOLEAN {
+    ElementPtr f(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("address-config-flag", f);
+};
+
+valid_lifetime: VALID_LIFETIME COLON INTEGER {
+    ElementPtr rl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("valid-lifetime", rl);
+};
+
+preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
+    ElementPtr rl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("preferred-lifetime", rl);
 };
 
 // --- Logging starts here -----------------------------------------------------
