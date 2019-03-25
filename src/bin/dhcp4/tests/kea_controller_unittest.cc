@@ -72,7 +72,7 @@ public:
     /// @brief Constructor.
     TestCBControlDHCPv4()
         : CBControlDHCPv4(), db_config_fetch_calls_(0),
-          enable_check_fetch_updates_only_(false), enable_throw_(false) {
+          enable_check_fetch_mode_(false), enable_throw_(false) {
     }
 
     /// @brief Stub implementation of the "fetch" function.
@@ -82,23 +82,22 @@ public:
     /// throws an exception when desired by a test, to verify that the
     /// server gracefully handles such exception.
     ///
-    /// @param fetch_updates_only Boolean flag indicating that the function
-    /// is executed to fetch configuration updates from the database. It
-    /// should be set to false when the server is starting up.
+    /// @param fetch_mode value indicating if the method is called upon the
+    /// server start up or it is called to fetch configuration updates.
     ///
     /// @throw Unexpected when configured to do so.
     virtual void databaseConfigFetch(const process::ConfigPtr&,
-                                     const bool fetch_updates_only) {
+                                     const FetchMode& fetch_mode) {
         ++db_config_fetch_calls_;
 
-        if (enable_check_fetch_updates_only_) {
-            if ((db_config_fetch_calls_ <= 1) && fetch_updates_only) {
+        if (enable_check_fetch_mode_) {
+            if ((db_config_fetch_calls_ <= 1) && (fetch_mode == FetchMode::FETCH_UPDATE)) {
                 ADD_FAILURE() << "databaseConfigFetch was called with the value "
-                    "of fetch_updates_only=true upon the server configuration";
+                    "of fetch_mode=FetchMode::FETCH_UPDATE upon the server configuration";
 
-            } else if ((db_config_fetch_calls_ > 1) && !fetch_updates_only) {
+            } else if ((db_config_fetch_calls_ > 1) && (fetch_mode == FetchMode::FETCH_ALL)) {
                 ADD_FAILURE() << "databaseConfigFetch was called with the value "
-                    "of fetch_updates_only=false during fetching the updates";
+                    "of fetch_mode=FetchMode::FETCH_ALL during fetching the updates";
             }
         }
 
@@ -112,9 +111,9 @@ public:
         return (db_config_fetch_calls_);
     }
 
-    /// @brief Enables checking of the @c fetch_updates_only value.
-    void enableCheckFetchUpdatesOnly() {
-        enable_check_fetch_updates_only_ = true;
+    /// @brief Enables checking of the @c fetch_mode value.
+    void enableCheckFetchMode() {
+        enable_check_fetch_mode_ = true;
     }
 
     /// @brief Enables the object to throw from @c databaseConfigFetch.
@@ -127,9 +126,9 @@ private:
     /// @brief Counter holding number of invocations of the @c databaseConfigFetch.
     size_t db_config_fetch_calls_;
 
-    /// @brief Boolean flag indicated if the value of the @c fetch_updates_only
+    /// @brief Boolean flag indicated if the value of the @c fetch_mode
     /// should be verified.
-    bool enable_check_fetch_updates_only_;
+    bool enable_check_fetch_mode_;
 
     /// @brief Boolean flag indicating if the @c databaseConfigFetch should
     /// throw.
@@ -245,9 +244,9 @@ public:
         // Get the CBControlDHCPv4 object belonging to this server.
         auto cb_control = boost::dynamic_pointer_cast<TestCBControlDHCPv4>(srv->getCBControl());
 
-        // Verify that the boolean parameter passed to the databaseConfigFetch
-        // has an expected value.
-        cb_control->enableCheckFetchUpdatesOnly();
+        // Verify that the parameter passed to the databaseConfigFetch has an
+        // expected value.
+        cb_control->enableCheckFetchMode();
 
         // Instruct our stub implementation of the CBControlDHCPv4 to throw as a
         // result of fetch if desired.
