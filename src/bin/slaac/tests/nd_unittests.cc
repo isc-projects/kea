@@ -11,9 +11,11 @@
 #include <slaac/nd_option_lladdr.h>
 #include <slaac/nd_option_pref_info.h>
 #include <slaac/nd_option_mtu.h>
+#include <slaac/nd_option_univ_ra.h>
 #include <slaac/nd_pkt.h>
 #include <slaac/nd_pkt_rs.h>
 #include <slaac/nd_pkt_ra.h>
+#include <slaac/json.hpp>
 
 #include <gtest/gtest.h>
 
@@ -23,6 +25,8 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::slaac;
 using namespace isc::util;
+
+using json = nlohmann::json;
 
 namespace {
 
@@ -311,6 +315,105 @@ TEST(SlaacNd, prefInfoRA) {
     expected_opt += "20010DB8000000000000000000000000";
     EXPECT_EQ(expected_opt, opt->toHexString(true));
     EXPECT_EQ(expected_opt, pi->toHexString(true));
+}
+
+// Test Router Advertisement with an universal RA option.
+TEST(SlaacNd, universalRA) {
+    // Get a RA.
+    const IOAddress& local = IOAddress("2001:db8::1");
+    const IOAddress& remote = IOAddress("2001:db8::2");
+    RAPktPtr ra(new RAPkt(local, remote));
+
+    // Check RA defaults.
+    EXPECT_EQ(0, ra->getHopLimit());
+    EXPECT_FALSE(ra->getManagedFlag());
+    EXPECT_FALSE(ra->getOtherFlag());
+    EXPECT_EQ(0, ra->getRouterLifetime());
+    EXPECT_EQ(0, ra->getReachableTime());
+    EXPECT_EQ(0, ra->getRetransTimer());
+
+    // Fill the RA.
+    ra->setIface("eth");
+    ra->setIndex(1);
+    ra->setHopLimit(64); // 64 hops
+    ra->setManagedFlag(true);
+    ra->setOtherFlag(true);
+    ra->setRouterLifetime(3600); // one hour
+    ra->setReachableTime(300000); // 5 mn
+    ra->setRetransTimer(100); // 100 ms
+
+    // Create an universal RA option.
+
+    // Get CBOR content.
+    string sample = "{\n"
+        "    \"ietf\": {\n"
+        "        \"dns\": {\n"
+        "            \"dnssl\": [\n"
+        "                \"example.com\"\n"
+        "            ],\n"
+        "            \"rdnss\": [\n"
+        "                \"2001:db8::1\",\n"
+        "                \"2001:db8::2\"\n"
+        "            ],\n"
+        "            \"nat64\": {\n"
+        "                \"prefix\": \"64:ff9b::/96\"\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}\n";
+    json ura_json;
+    ASSERT_NO_THROW(ura_json  = json::parse(sample));
+    vector<uint8_t> cbor;
+    ASSERT_NO_THROW(cbor = json::to_cbor(ura_json));
+
+    // Pad to 6 modulo 8.
+    size_t round = ((cbor.size() + 1) | 7) - 1;
+    if (round > cbor.size()) {
+        cbor.resize(round, 0);
+    }
+    OptionUnivRaPtr ura(new OptionUnivRa(cbor));
+    ASSERT_TRUE(ura);
+
+    // Add universal RA option to RA.
+    ra->addOption(ura);
+    EXPECT_EQ(1, ra->getOptions().size());
+    EXPECT_TRUE(ra->getOption(ND_UNIVERSAL_RA));
+
+    // Check RA (binary).
+    uint8_t ra_data[] = {
+        134, // type 134 RA
+        0, // code 0
+        0, 0, // checksum
+        64, // hop limit
+        0xc0, // flags
+        0x0e, 0x10, // router lifetime (3600)
+        0x00, 0x04, 0x93, 0xe0, // reachable time (300000)
+        0, 0, 0, 100 // retrans timer (100)
+    };
+    EXPECT_NO_THROW(ra->pack());
+    const OutputBuffer& output = ra->getBuffer();
+    ASSERT_LT(sizeof(ra_data), output.getLength());
+    EXPECT_EQ(0, memcmp(ra_data, output.getData(), sizeof(ra_data)));
+
+    // Check Option.
+    uint8_t opt_type = output[RAPkt::RA_MIN_LEN];
+    ASSERT_EQ(ND_UNIVERSAL_RA, opt_type);
+    size_t opt_len = output[RAPkt::RA_MIN_LEN + 1] << 3;
+    ASSERT_EQ(RAPkt::RA_MIN_LEN + opt_len, output.getLength());
+    vector<uint8_t> content;
+    for (size_t i = RAPkt::RA_MIN_LEN + Option::OPTION_HDR_LEN;
+	 i < output.getLength(); ++i) {
+	content.push_back(output[i]);
+    }
+    OptionPtr opt;
+    EXPECT_NO_THROW(opt.reset(new Option(opt_type, content.begin(), content.end())));
+    ASSERT_TRUE(opt);
+    // Debug
+    // cout << opt->toHexString(true) << endl;
+    json opt_json;
+    // Disable EOF checking aka strict mode (second argument, default true).
+    ASSERT_NO_THROW(opt_json = json::from_cbor(opt->getData(), false));
+    EXPECT_EQ(ura_json, opt_json);
 }
 
 }
