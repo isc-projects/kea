@@ -1026,12 +1026,6 @@ protected:
     /// @brief Packet processing thread pool
     ThreadPool pkt_thread_pool_;
 
-    // Global mutex used to serialize packet thread pool's threads
-    // on the not thread safe code and allow threads to run
-    // simultaneously on the thread safe portions
-    // (e.g. CqlLeaseMgr class instance).
-    boost::scoped_ptr<std::mutex> mutex_;
-
     // Specifies if the application will use a thread pool or will process
     // received DHCP packets on the main thread.
     // It is mandatory to be set on false when running the test cases.

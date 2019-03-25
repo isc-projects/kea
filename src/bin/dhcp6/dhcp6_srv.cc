@@ -181,15 +181,14 @@ namespace dhcp {
 
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port, bool run_multithreaded /* = false */)
+Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port,
+                     bool run_multithreaded /* = false */)
     : io_service_(new IOService()), server_port_(server_port),
       client_port_(client_port), serverid_(), shutdown_(true),
       alloc_engine_(), name_change_reqs_(),
       network_state_(new NetworkState(NetworkState::DHCPv6)),
       cb_control_(new CBControlDHCPv6()),
       run_multithreaded_(run_multithreaded) {
-
-    mutex_.reset(new std::mutex());
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET)
         .arg(server_port);

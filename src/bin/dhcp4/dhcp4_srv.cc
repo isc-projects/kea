@@ -454,8 +454,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
       cb_control_(new CBControlDHCPv4()),
       run_multithreaded_(run_multithreaded) {
 
-    mutex_.reset(new std::mutex());
-
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
         .arg(server_port);
 
