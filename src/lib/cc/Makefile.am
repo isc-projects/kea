@@ -6,6 +6,7 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = data.cc data.h
+libkea_cc_la_SOURCES += element_extractor.h
 libkea_cc_la_SOURCES += cfg_to_element.h dhcp_config_error.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 libkea_cc_la_SOURCES += json_feed.cc json_feed.h
@@ -28,6 +29,7 @@ libkea_cc_include_HEADERS = \
 	command_interpreter.h \
 	data.h \
 	dhcp_config_error.h \
+	element_extractor.h \
 	json_feed.h \
 	simple_parser.h \
 	stamped_element.h \
