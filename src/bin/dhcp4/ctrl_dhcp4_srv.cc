@@ -686,7 +686,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             // prevents us from waiting 1 second on more before the timer goes off.
             // Instead, we wait one millisecond which significantly reduces the
             // test time.
-            if (server_->getServerPort() != 0) {
+            if (!server_->inTestMode()) {
                 fetch_time = 1000 * fetch_time;
             }
 

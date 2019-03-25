@@ -234,6 +234,14 @@ public:
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     virtual ~Dhcpv4Srv();
 
+    /// @brief Checks if the server is running in a test mode.
+    ///
+    /// @return true if the server is running in the test mode,
+    /// false otherwise.
+    bool inTestMode() const {
+        return (server_port_ == 0);
+    }
+
     /// @brief Returns pointer to the IO service used by the server.
     asiolink::IOServicePtr& getIOService() {
         return (io_service_);
