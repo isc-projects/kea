@@ -38,7 +38,6 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
-#include <dhcpsrv/utils.h>
 #include <eval/evaluate.h>
 #include <eval/eval_messages.h>
 #include <hooks/callout_handle.h>
