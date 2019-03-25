@@ -664,7 +664,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
-        openSockets(AF_INET, srv->getServerPort(),
+        openSockets(AF_INET, srv->getServerPort(), srv->serverLock(),
                     getInstance()->useBroadcast());
 
     // Install the timers for handling leases reclamation.
