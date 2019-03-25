@@ -165,11 +165,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
 void
 ControlledDhcpv4Srv::init(const std::string& file_name) {
     // Configure the server using JSON file.
-    ConstElementPtr result;
-    {
-        LockGuard<mutex> lock(serverLock());
-        result = loadConfigFile(file_name);
-    }
+    ConstElementPtr result = loadConfigFile(file_name);
 
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
@@ -532,10 +528,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
     }
 
     if (srv->run_multithreaded_) {
-        {
-            ReverseLock<std::mutex> rlk(srv->serverLock());
-            srv->pkt_thread_pool_.destroy();
-        }
+        srv->pkt_thread_pool_.destroy();
         srv->pkt_thread_pool_.create(Dhcpv4Srv::threadCount());
     }
 
@@ -671,7 +664,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
-        openSockets(AF_INET, srv->getServerPort(), srv->serverLock(),
+        openSockets(AF_INET, srv->getServerPort(),
                     getInstance()->useBroadcast());
 
     // Install the timers for handling leases reclamation.

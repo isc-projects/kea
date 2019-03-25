@@ -752,10 +752,7 @@ Dhcpv4Srv::run() {
     while (!shutdown_) {
         try {
             run_one();
-            {
-                LockGuard<mutex> lock(serverLock());
-                getIOService()->poll();
-            }
+            getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
@@ -800,11 +797,8 @@ Dhcpv4Srv::run_one() {
         // because it is important that the select() returns control
         // frequently so as the IOService can be polled for ready handlers.
         uint32_t timeout = 1;
-        {
-            // LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
-            LockGuard<mutex> lock(serverLock());
-            query = receivePacket(timeout);
-        }
+        // LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
+        query = receivePacket(timeout);
 
         // Log if packet has arrived. We can't log the detailed information
         // about the DHCP message because it hasn't been unpacked/parsed
@@ -851,7 +845,6 @@ Dhcpv4Srv::run_one() {
     // receivePacket the process could wait up to the duration of timeout
     // of select() to terminate.
     try {
-        LockGuard<mutex> lock(serverLock());
         handleSignal();
     } catch (const std::exception& e) {
         // Standard exception occurred. Let's be on the safe side to
@@ -898,7 +891,6 @@ Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
 void
 Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp) {
-    LockGuard<mutex> lock(serverLock());
     processPacket(query, rsp);
     if (!rsp) {
         return;

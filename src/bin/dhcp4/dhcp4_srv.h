@@ -276,11 +276,6 @@ public:
     /// @brief returns Kea DHCPv4 server max thread queue size.
     static uint32_t maxThreadQueueSize();
 
-    /// @brief returns Kea DHCPv4 server mutex.
-    std::mutex* serverLock() {
-        return mutex_.get();
-    }
-
     /// @brief Main server processing loop.
     ///
     /// Main server processing loop. Call the processing step routine

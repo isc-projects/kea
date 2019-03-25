@@ -131,11 +131,6 @@ public:
     /// @brief returns Kea DHCPv6 server max thread queue size.
     static uint32_t maxThreadQueueSize();
 
-    /// @brief returns Kea DHCPv6 server mutex.
-    std::mutex* serverLock() {
-        return mutex_.get();
-    }
-
     /// @brief Returns server-identifier option.
     ///
     /// @return server-id option

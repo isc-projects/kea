@@ -168,11 +168,7 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
 void
 ControlledDhcpv6Srv::init(const std::string& file_name) {
     // Configure the server using JSON file.
-    ConstElementPtr result;
-    {
-        LockGuard<mutex> lock(serverLock());
-        result = loadConfigFile(file_name);
-    }
+    ConstElementPtr result = loadConfigFile(file_name);
 
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
@@ -535,10 +531,7 @@ ControlledDhcpv6Srv::processCommand(const string& command,
     }
 
     if (srv->run_multithreaded_) {
-        {
-            ReverseLock<std::mutex> rlk(srv->serverLock());
-            srv->pkt_thread_pool_.destroy();
-        }
+        srv->pkt_thread_pool_.destroy();
         srv->pkt_thread_pool_.create(Dhcpv6Srv::threadCount());
     }
 
@@ -634,7 +627,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Regenerate server identifier if needed.
     try {
-        const std::string duid_file = CfgMgr::instance().getDataDir() + "/" +
+        const std::string duid_file =
+            std::string(CfgMgr::instance().getDataDir()) + "/" +
             std::string(SERVER_DUID_FILE);
         DuidPtr duid = CfgMgr::instance().getStagingCfg()->getCfgDUID()->create(duid_file);
         server_->serverid_.reset(new Option(Option::V6, D6O_SERVERID, duid->getDuid()));
@@ -692,7 +686,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
-        openSockets(AF_INET6, srv->getServerPort(), srv->serverLock());
+        openSockets(AF_INET6, srv->getServerPort());
 
     // Install the timers for handling leases reclamation.
     try {
