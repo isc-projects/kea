@@ -31,8 +31,8 @@ namespace process {
 /// has to be merged.
 ///
 /// When the server starts up, the existing configuration is the one that
-/// the server read from the configuration file. Usually, the configuration
-/// fetched from the file will be disjoint with the configuration in the
+/// the server reads from the configuration file. Usually, the configuration
+/// fetched from the file will be disjointed with the configuration in the
 /// database, e.g. all subnets should be specified either in the configuration
 /// file or a database, not in both. However, there may be other cases when
 /// option definitions are held in the configuration file, but the DHCP
@@ -43,7 +43,7 @@ namespace process {
 /// database. Finally, both configurations should be merged and committed
 /// if they are deemed sane.
 ///
-/// When the server is already running it uses "audit" (a.k.a. journal)
+/// When the server is already running it may use "audit" (a.k.a. journal)
 /// to periodically check if there are any pending configuration updates.
 /// If changes are present, it will be fetched and used to create a new
 /// configuration object (derived from the @c ConfigBase) holding this
@@ -63,7 +63,7 @@ namespace process {
 ///   databases via the configuration backends,
 /// - fetch the audit trail to detect configuration updates,
 /// - store the timestamp of the most recent audit entry fetched from the
-///   database, so as next time it can only fetch the later updates.
+///   database, so as next time it can fetch only the later updates.
 ///
 /// The server specific part to be implemented in derived classes must
 /// correctly interpret the audit entries and make appropriate API calls
@@ -260,8 +260,8 @@ protected:
         return (true);
     }
 
-    /// @brief Server specific method to apply fetched configuration into
-    /// the local configuration.
+    /// @brief Server specific method to fetch and apply back end
+    /// configuration into the local configuration.
     ///
     /// This pure virtual method must be implemented in the derived classes
     /// to provide server specific implementation of fetching and applying

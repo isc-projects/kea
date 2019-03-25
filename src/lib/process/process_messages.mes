@@ -50,7 +50,7 @@ configuration is committed by the administrator.  Additional information
 may be provided.
 
 % DCTL_CONFIG_FETCH Fetching configuration data from config backends.
-This is an informational message emitted when the Kea server about to begin
+This is an informational message emitted when the Kea server is about to begin
 retrieving configuration data from one or more configuration backends.
 
 % DCTL_CONFIG_FILE_LOAD_FAIL %1 reason: %2

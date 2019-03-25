@@ -26,8 +26,8 @@ namespace dhcp {
 class CBControlDHCPv4 : public CBControlDHCP<ConfigBackendDHCPv4Mgr> {
 protected:
 
-    /// @brief DHCPv4 server specific method to apply fetch configuration
-    /// into the local configuration.
+    /// @brief DHCPv4 server specific method to fetch and apply back end
+    /// configuration into the local configuration.
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.

@@ -387,7 +387,7 @@ public:
     std::map<std::string, boost::posix_time::ptime> timestamps_;
 };
 
-// This test verifies that the correct instance of the Config
+// This test verifies that the same instance of the Config
 // Backend Manager is returned.
 TEST_F(CBControlBaseTest, getMgr) {
     auto mgr = cb_ctl_.getMgr();
