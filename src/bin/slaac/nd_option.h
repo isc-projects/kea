@@ -327,8 +327,10 @@ void unpackOptions(const OptionBuffer& buf, size_t offset,
 /// @brief Print options from a container to a specified stream.
 ///
 /// @param options collection of options to print.
+/// @param indent Number of spaces to insert before the text.
 /// @param out specifies stream to print options to.
 void printOptions(const OptionCollection& options,
+                  const int indent = 0,
                   std::ostream& out = std::cout);
 
 /// @brief Compute the cumulated length of options.

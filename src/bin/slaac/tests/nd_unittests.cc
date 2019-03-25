@@ -80,4 +80,60 @@ TEST(SlaacNd, emptyRS) {
     EXPECT_EQ(0, memcmp(data, output.getData(), sizeof(data)));
 }
 
+// Test valid common Router Solicitation.
+TEST(SlaacNd, commonRS) {
+    // Common RS content.
+    uint8_t data[] = {
+        133, // type 133 ND_RT_SOL
+        0, // code 0
+        0, 0, // checksum
+        0, 0, 0, 0, // reserved
+
+	1, // type 1 ND_SRC_LL_ADD
+	1, // length (8 bytes)
+	0, 1, 2, 3, 4, 5 // MAC address 00:01:02:03:04:05
+    };
+
+    const IOAddress& local = IOAddress("2001:db8::1");
+    const IOAddress& remote = IOAddress("2001:db8::2");
+    RSPktPtr rs;
+    EXPECT_NO_THROW(rs.reset(new RSPkt(data, sizeof(data), local, remote)));
+    ASSERT_TRUE(rs);
+
+    // Check RS.
+    EXPECT_NO_THROW(rs->unpack());
+    EXPECT_EQ(ND_RT_SOL, rs->getType());
+    EXPECT_EQ(0, rs->getCode());
+    EXPECT_EQ(sizeof(data), rs->len());
+    EXPECT_EQ("RS", rs->getName());
+    EXPECT_EQ("", rs->getIface());
+    EXPECT_EQ(-1, rs->getIndex());
+    EXPECT_EQ(1, rs->getOptions().size());
+
+    // Check option.
+    OptionPtr opt = rs->getOption(ND_SRC_LL_ADDR);
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(ND_SRC_LL_ADDR, opt->getType());
+    OptionLLAddrPtr lla = boost::dynamic_pointer_cast<OptionLLAddr>(opt);
+    ASSERT_TRUE(lla);
+    EXPECT_EQ(8, lla->len());
+
+    // Check text display.
+    rs->setIface("eth");
+    rs->setIndex(1);
+    string expected = "RS (type=133, code=0)";
+    expected += " localAddr=2001:db8::1";
+    expected += ", remoteAddr=2001:db8::2";
+    expected += " on eth(1)\n";
+    expected += "options:\n";
+    expected += " type=1(SrcLLAddr), len=1: 00:01:02:03:04:05\n";
+    EXPECT_EQ(expected, rs->toText());
+
+    // Check packing.
+    EXPECT_NO_THROW(rs->pack());
+    const OutputBuffer& output = rs->getBuffer();
+    ASSERT_EQ(sizeof(data), output.getLength());
+    EXPECT_EQ(0, memcmp(data, output.getData(), sizeof(data)));
+}
+
 }

@@ -29,7 +29,7 @@ RAPkt::RAPkt(const uint8_t* buf, uint32_t len,
              const isc::asiolink::IOAddress& remote_addr)
     : NDPkt(buf, len, local_addr, remote_addr)
 {
-    unpack();
+    type_ = ND_RT_ADV;
 }
 
 void
@@ -139,7 +139,10 @@ RAPkt::toText() const
         << " retrans_timer=" << retrans_timer_ << endl;
 
     // Finally print the options.
-    printOptions(options_, tmp);
+    if (!options_.empty()) {
+        tmp << "options:" << endl;
+        printOptions(options_, 1, tmp);
+    }
 
     return (tmp.str());
 }

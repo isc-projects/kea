@@ -161,13 +161,13 @@ Option::headerToText(const int indent, const string& type_name) const {
     for (int i = 0; i < indent; i++)
         output << " ";
 
-    output << "type=" << setw(3) << setfill('0') << type_;
+    output << "type=" << static_cast<unsigned>(type_);
 
     if (!type_name.empty()) {
         output << "(" << type_name << ")";
     }
 
-    output << ", len=" << setw(5) << setfill('0') << len();
+    output << ", len=" << (len() >> 3);
     return (output.str());
 }
 
@@ -271,10 +271,12 @@ void unpackOptions(const OptionBuffer& buf, size_t offset,
     }
 }
 
-void printOptions(const OptionCollection& options, ostream& out) {
+void printOptions(const OptionCollection& options,
+                  const int indent,
+                  ostream& out) {
     for (OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
-        out << it->second->toText() << endl;
+        out << it->second->toText(indent) << endl;
     }
 }
 
