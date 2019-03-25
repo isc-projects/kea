@@ -242,7 +242,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
         // LOG_ERROR(dhcp6_logger, DHCP6_SRV_DHCP4O6_ERROR).arg(ex.what());
     }
 
-    IfaceMgr::instance().closeSockets(serverLock());
+    IfaceMgr::instance().closeSockets();
 
     LeaseMgrFactory::destroy();
 
@@ -256,7 +256,7 @@ void Dhcpv6Srv::shutdown() {
 }
 
 Pkt6Ptr Dhcpv6Srv::receivePacket(int timeout) {
-    return (IfaceMgr::instance().receive6(timeout, 0, serverLock()));
+    return (IfaceMgr::instance().receive6(timeout));
 }
 
 void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
@@ -421,10 +421,7 @@ bool Dhcpv6Srv::run() {
     while (!shutdown_) {
         try {
             run_one();
-            {
-                LockGuard<mutex> lock(serverLock());
-                getIOService()->poll();
-            }
+            getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
@@ -521,7 +518,6 @@ void Dhcpv6Srv::run_one() {
     // process could wait up to the duration of timeout of select() to
     // terminate.
     try {
-        LockGuard<mutex> lock(serverLock());
         handleSignal();
     } catch (const std::exception& e) {
         // An (a standard or ISC) exception occurred.

@@ -750,10 +750,7 @@ Dhcpv4Srv::run() {
     while (!shutdown_) {
         try {
             run_one();
-            {
-                LockGuard<mutex> lock(serverLock());
-                getIOService()->poll();
-            }
+            getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
@@ -846,7 +843,6 @@ Dhcpv4Srv::run_one() {
     // receivePacket the process could wait up to the duration of timeout
     // of select() to terminate.
     try {
-        LockGuard<mutex> lock(serverLock());
         handleSignal();
     } catch (const std::exception& e) {
         // Standard exception occurred. Let's be on the safe side to
