@@ -32,16 +32,70 @@ namespace slaac {
 ///
 /// @{
 
+/// @brief This table defines all global parameters in Slaac.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries, any matches all types.
+/// Order follows global_param rule in bison grammar.
+const SimpleKeywords SlaacSimpleParser::SLAAC_PARAMETERS = {
+    { "interfaces-config", Element::map },
+    { "Logging",           Element::map },
+    { "hop-limit",         Element::integer },
+    { "managed-flag",      Element::boolean },
+    { "other-flag",        Element::boolean },
+    { "router-lifetime",   Element::integer },
+    { "reachable-time",    Element::integer },
+    { "retrans-timer",     Element::integer },
+    { "source-ll-address", Element::boolean },
+    { "mtu",               Element::integer },
+    { "universal-ra",      Element::any },
+    { "prefix-infos",      Element::list },
+    { "user-context",      Element::map },
+    { "comment",           Element::string }
+};
+
 /// @brief This table defines default values for global options.
 ///
 /// These are global Slaac parameters.
 const SimpleDefaults SlaacSimpleParser::SLAAC_DEFAULTS = {
-    { "hop-limit",       Element::integer, "0" },
-    { "managed-flag",    Element::boolean, "true" },
-    { "other-flag",      Element::boolean, "false" },
-    { "router-lifetime", Element::integer, "0" },
-    { "reachable-time",  Element::integer, "0" },
-    { "retrans-timer",   Element::integer, "0" }
+    { "hop-limit",         Element::integer, "0" },
+    { "managed-flag",      Element::boolean, "true" },
+    { "other-flag",        Element::boolean, "false" },
+    { "router-lifetime",   Element::integer, "0" },
+    { "reachable-time",    Element::integer, "0" },
+    { "retrans-timer",     Element::integer, "0" },
+    { "source-ll-address", Element::boolean, "false" },
+    { "mtu",               Element::integer, "0" }
+};
+
+/// @brief This table defines all required prefix info parameters.
+const SimpleRequiredKeywords SlaacSimpleParser::PREFIX_INFO_REQUIRED = {
+    "prefix"
+};
+
+/// @brief This table defines all prefix info parameters in Slaac.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries, any matches all types.
+/// Order follows global_param rule in bison grammar.
+const SimpleKeywords SlaacSimpleParser::PREFIX_INFO_PARAMETERS = {
+    { "prefix",              Element::string },
+    { "on-link-flag",        Element::boolean },
+    { "address-config-flag", Element::boolean },
+    { "valid-lifetime",      Element::integer },
+    { "preferred-lifetime",  Element::integer },
+    { "user-context",        Element::map },
+    { "comment",             Element::string }
+};
+
+/// @brief This table defines default values for prefix info  options.
+///
+/// These are Prefix Info parameters.
+const SimpleDefaults SlaacSimpleParser::PREFIX_INFO_DEFAULTS = {
+    { "on-link-flag",        Element::boolean, "false" },
+    { "address-config-flag", Element::boolean, "false" },
+    { "valid-lifetime",      Element::integer, "0" },
+    { "preferred-lifetime",  Element::integer, "0" }
 };
 
 /// @}
@@ -90,11 +144,18 @@ SlaacSimpleParser::parse(const SlaacConfigPtr& config,
                          const ConstElementPtr& json,
                          bool /*check_only*/) {
 
+    checkKeywords(SlaacSimpleParser::SLAAC_PARAMETERS, json);
+
     config->setHopLimit(getUint8(json, "hop-limit"));
     config->setManagedFlag(getBoolean(json, "managed-flag"));
-    config->setRouterLifetime(getUint32(json, "router-lifetime"));
+    config->setOtherFlag(getBoolean(json, "other-flag"));
+    config->setRouterLifetime(getUint16(json, "router-lifetime"));
     config->setReachableTime(getUint32(json, "reachable-time"));
-    config->setRetransTime(getUint32(json, "retrans-timer"));
+    config->setRetransTimer(getUint32(json, "retrans-timer"));
+
+    config->setSrcLlAddr(getBoolean(json, "source-ll-address"));
+    config->setMtu(getUint32(json, "mtu"));
+    config->setUnivRa(json->get("universal-ra"));
 
     parseExperimental(config, json->get("experimental"));
 

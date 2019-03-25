@@ -9,6 +9,9 @@
 #include <slaac/slaac_process.h>
 #include <slaac/slaac_controller.h>
 #include <slaac/slaac_log.h>
+#include <slaac/nd.h>
+#include <slaac/nd_pkt_rs.h>
+#include <slaac/nd_pkt_ra.h>
 #include <process/d_cfg_mgr.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
@@ -153,7 +156,7 @@ RequestHandler::handle_receive(const boost::system::error_code &err_code, std::s
     is.read((char*)buf, size);
 
     // check if this is ICMP ND RS
-    if (buf[0] == 133) {
+    if (buf[0] == ND_RT_SOL) {
         printf("bingo\n");
         RSPkt rs_pkt(buf, size, IOAddress::IPV6_ZERO_ADDRESS(), IOAddress::IPV6_ZERO_ADDRESS());
         rs_pkt.unpack();

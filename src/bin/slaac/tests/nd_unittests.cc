@@ -402,8 +402,8 @@ TEST(SlaacNd, universalRA) {
     ASSERT_EQ(RAPkt::RA_MIN_LEN + opt_len, output.getLength());
     vector<uint8_t> content;
     for (size_t i = RAPkt::RA_MIN_LEN + Option::OPTION_HDR_LEN;
-	 i < output.getLength(); ++i) {
-	content.push_back(output[i]);
+         i < output.getLength(); ++i) {
+        content.push_back(output[i]);
     }
     OptionPtr opt;
     EXPECT_NO_THROW(opt.reset(new Option(opt_type, content.begin(), content.end())));

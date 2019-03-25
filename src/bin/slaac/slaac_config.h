@@ -92,44 +92,76 @@ public:
     virtual isc::data::ElementPtr toElement() const;
 
 
-    void setHopLimit(uint8_t limit) {
-        hop_limit_ = limit;
+    void setHopLimit(uint8_t hop_limit) {
+        hop_limit_ = hop_limit;
     }
 
-    uint8_t getHopLimit() {
+    uint8_t getHopLimit() const {
         return (hop_limit_);
     }
 
-    void setManagedFlag(bool managed) {
-        managed_flag_ = managed;
+    void setManagedFlag(bool managed_flag) {
+        managed_flag_ = managed_flag;
     }
 
-    uint8_t getManagedFlag() {
+    bool getManagedFlag() const {
         return (managed_flag_);
     }
 
-    void setRouterLifetime(uint32_t lft) {
-        router_lifetime_ = lft;
+    void setOtherFlag(bool other_flag) {
+        other_flag_ = other_flag;
     }
 
-    uint8_t getRouterLifetime() {
+    bool getOtherFlag() const {
+        return (other_flag_);
+    }
+
+    void setRouterLifetime(uint16_t router_lifetime) {
+        router_lifetime_ = router_lifetime;
+    }
+
+    uint16_t getRouterLifetime() const {
         return (router_lifetime_);
     }
 
-    void setReachableTime(uint32_t lft) {
-        reachable_time_ = lft;
+    void setReachableTime(uint32_t reachable_time) {
+        reachable_time_ = reachable_time;
     }
 
-    uint8_t getRechableTime() {
+    uint32_t getReachableTime() const {
         return (reachable_time_);
     }
 
-    void setRetransTime(uint32_t lft) {
-        retrans_time_ = lft;
+    void setRetransTimer(uint32_t retrans_timer) {
+        retrans_timer_ = retrans_timer;
     }
 
-    uint8_t getRetransTimeTime() {
-        return (retrans_time_);
+    uint32_t getRetransTimer() const {
+        return (retrans_timer_);
+    }
+
+    void setSrcLlAddr(bool src_ll_addr) {
+        src_ll_addr_ = src_ll_addr;
+    }
+
+    bool getSrcLlAddr() const {
+        return (src_ll_addr_);
+    }
+
+    void setMtu(uint32_t mtu) {
+        mtu_ = mtu;
+    }
+
+    uint32_t getMtu() const {
+        return (mtu_);
+    }
+
+    isc::data::ConstElementPtr getUnivRa() const {
+        return (universal_ra_);
+    }
+
+    void setUnivRa(const isc::data::ConstElementPtr& universal_ra) {
+        universal_ra_ = universal_ra;
     }
 
 private:
@@ -149,17 +181,25 @@ private:
 
     /// Socket information will be stored here (for all supported servers)
     std::map<std::string, isc::data::ConstElementPtr> ctrl_sockets_;
-    
+
     uint8_t hop_limit_;
 
     bool managed_flag_;
 
-    uint32_t router_lifetime_;
+    bool other_flag_;
+
+    uint16_t router_lifetime_;
 
     uint32_t reachable_time_;
 
-    uint32_t retrans_time_;
-        
+    uint32_t retrans_timer_;
+
+    bool src_ll_addr_;
+
+    uint32_t mtu_;
+
+    isc::data::ConstElementPtr universal_ra_;
+
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
 };

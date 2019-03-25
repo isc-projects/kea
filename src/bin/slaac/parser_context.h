@@ -175,8 +175,8 @@ public:
         ///< Interfaces-config section.
         INTERFACES_CONFIG,
 
-	///< Prefix-infos section.
-	PREFIX_INFOS,
+        ///< Prefix-infos section.
+        PREFIX_INFOS,
 
         ///< Used while parsing content of Logging.
         LOGGING,

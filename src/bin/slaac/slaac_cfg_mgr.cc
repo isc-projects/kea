@@ -143,21 +143,45 @@ SlaacConfig::getControlSocketInfoSummary() const {
 
 ElementPtr
 SlaacConfig::toElement() const {
-    ElementPtr ca = Element::createMap();
+    ElementPtr slaac = Element::createMap();
     // Set user-context
-    contextToElement(ca);
-    // Set hooks-libraries
-    ca->set("hooks-libraries", hooks_config_.toElement());
-    // Set control-sockets
-    ElementPtr control_sockets = Element::createMap();
-    for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.cend(); ++si) {
-        ConstElementPtr socket = UserContext::toElement(si->second);
-        control_sockets->set(si->first, socket);
+    contextToElement(slaac);
+    // No hooks-libraries
+    // No control-sockets
+
+    // Add hop limit
+    slaac->set("hop-limit",
+               Element::create(static_cast<int64_t>(getHopLimit())));
+    // Add managed flag
+    slaac->set("managed-flag", Element::create(getManagedFlag()));
+    // Add other flag
+    slaac->set("other-flag", Element::create(getOtherFlag()));
+    // Add router lifetime
+    slaac->set("router-lifetime",
+               Element::create(static_cast<int64_t>(getRouterLifetime())));
+    // Add reachable time
+    slaac->set("reachable-time",
+               Element::create(static_cast<int64_t>(getReachableTime())));
+    // Add retrans timer
+    slaac->set("retrans-timer",
+               Element::create(static_cast<int64_t>(getRetransTimer())));
+
+    // Add source ll address
+    slaac->set("source-ll-address", Element::create(getSrcLlAddr()));
+    // Add mtu
+    slaac->set("mtu", Element::create(static_cast<int64_t>(getMtu())));
+    // Add universal ra
+    ConstElementPtr universal_ra = getUnivRa();
+    if (universal_ra) {
+        slaac->set("universal-ra", universal_ra);
     }
-    ca->set("control-sockets", control_sockets);
-    // Set Control-agent
+
+    // @todo add prefix infos
+    // @todo add interfaces config
+
+    // Set Slaac
     ElementPtr result = Element::createMap();
-    result->set("Control-agent", ca);
+    result->set("Slaac", slaac);
 
     // Set Logging (not yet)
 
