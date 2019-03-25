@@ -10,10 +10,12 @@
 #include <stats/stats_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <util/threads/lock_guard.h>
 
 using namespace std;
 using namespace isc::data;
 using namespace isc::config;
+using namespace isc::util::thread;
 
 namespace isc {
 namespace stats {
@@ -25,53 +27,64 @@ StatsMgr& StatsMgr::instance() {
 
 StatsMgr::StatsMgr()
     :global_(new StatContext()) {
-
+    mutex_.reset(new std::mutex());
 }
 
 void StatsMgr::setValue(const std::string& name, const int64_t value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     setValueInternal(name, value);
 }
 
 void StatsMgr::setValue(const std::string& name, const double value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     setValueInternal(name, value);
 }
 
 void StatsMgr::setValue(const std::string& name, const StatsDuration& value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     setValueInternal(name, value);
 }
 void StatsMgr::setValue(const std::string& name, const std::string& value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     setValueInternal(name, value);
 }
 
 void StatsMgr::addValue(const std::string& name, const int64_t value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     addValueInternal(name, value);
 }
 
 void StatsMgr::addValue(const std::string& name, const double value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     addValueInternal(name, value);
 }
 
 void StatsMgr::addValue(const std::string& name, const StatsDuration& value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     addValueInternal(name, value);
 }
 
 void StatsMgr::addValue(const std::string& name, const std::string& value) {
+    LockGuard<std::mutex> lock(mutex_.get());
     addValueInternal(name, value);
 }
 
 ObservationPtr StatsMgr::getObservation(const std::string& name) const {
+    LockGuard<std::mutex> lock(mutex_.get());
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->get(name));
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat) {
+    LockGuard<std::mutex> lock(mutex_.get());
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->add(stat));
 }
 
 bool StatsMgr::deleteObservation(const std::string& name) {
+    LockGuard<std::mutex> lock(mutex_.get());
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->del(name));
@@ -79,10 +92,12 @@ bool StatsMgr::deleteObservation(const std::string& name) {
 
 void StatsMgr::setMaxSampleAge(const std::string& ,
                                const StatsDuration&) {
+    LockGuard<std::mutex> lock(mutex_.get());
     isc_throw(NotImplemented, "setMaxSampleAge not implemented");
 }
 
 void StatsMgr::setMaxSampleCount(const std::string& , uint32_t){
+    LockGuard<std::mutex> lock(mutex_.get());
     isc_throw(NotImplemented, "setMaxSampleCount not implemented");
 }
 
@@ -97,10 +112,12 @@ bool StatsMgr::reset(const std::string& name) {
 }
 
 bool StatsMgr::del(const std::string& name) {
+    LockGuard<std::mutex> lock(mutex_.get());
     return (global_->del(name));
 }
 
 void StatsMgr::removeAll() {
+    LockGuard<std::mutex> lock(mutex_.get());
     global_->stats_.clear();
 }
 
@@ -114,6 +131,7 @@ isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
 }
 
 isc::data::ConstElementPtr StatsMgr::getAll() const {
+    LockGuard<std::mutex> lock(mutex_.get());
     isc::data::ElementPtr map = isc::data::Element::createMap(); // a map
 
     // Let's iterate over all stored statistics...
@@ -127,6 +145,7 @@ isc::data::ConstElementPtr StatsMgr::getAll() const {
 }
 
 void StatsMgr::resetAll() {
+    LockGuard<std::mutex> lock(mutex_.get());
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
          s != global_->stats_.end(); ++s) {
@@ -137,6 +156,7 @@ void StatsMgr::resetAll() {
 }
 
 size_t StatsMgr::count() const {
+    LockGuard<std::mutex> lock(mutex_.get());
     return (global_->stats_.size());
 }
 

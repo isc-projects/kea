@@ -10,8 +10,10 @@
 #include <stats/observation.h>
 #include <stats/context.h>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -424,6 +426,8 @@ private:
 
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
+
+    boost::scoped_ptr<std::mutex> mutex_;
 };
 
 };
