@@ -81,10 +81,10 @@ namespace yang {
 /// +--rw lease-database!                <database>
 /// +--rw hosts-database*
 /// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-class*
+/// +--rw client-classes*
 /// +--rw option-def*
 /// +--rw option-data*
-/// +--rw hook-library*
+/// +--rw hooks-libraries*
 ///    +--rw library                     string
 ///    +--rw parameters?                 string
 /// +--rw expired-leases-processing      <expired-leases-processing>
@@ -105,7 +105,10 @@ namespace yang {
 /// +--rw config-control
 ///    +--rw config-database*
 /// +--rw server-tag                     string
-/// +--rw dhcp-queue-control             string
+/// +--rw dhcp-queue-control
+///    +--rw capacity                    uint32
+///    +--rw enable-queue                boolean
+///    +--rw queue-type                  string
 /// +--rw logger*
 /// @endcode
 ///
@@ -218,10 +221,10 @@ namespace yang {
 /// +--rw relay-supplied-options*        string
 /// +--rw mac-sources*                   string
 /// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-class*
+/// +--rw client-classes*
 /// +--rw option-def*
 /// +--rw option-data*
-/// +--rw hook-library*
+/// +--rw hooks-libraries*
 ///    +--rw library                     string
 ///    +--rw parameters?                 string
 /// +--rw expired-leases-processing      <expired-leases-processing>
@@ -238,7 +241,10 @@ namespace yang {
 /// +--rw config-control
 ///    +--rw config-database*
 /// +--rw server-tag                     string
-/// +--rw dhcp-queue-control             string
+/// +--rw dhcp-queue-control
+///    +--rw capacity                    uint32
+///    +--rw enable-queue                boolean
+///    +--rw queue-type                  string
 /// +--rw logger*
 /// @endcode
 ///
@@ -515,11 +521,29 @@ protected:
     /// @return ElementList with dhcp-ddns configuration.
     isc::data::ElementPtr getDdnsKea(const std::string& xpath);
 
+    /// @brief Retrieves DHCP queue control from sysrepo.
+    ///
+    /// @param xpath path to dhcp-queue-control configuration
+    /// @return ElementMap with dhcp-queue-control configuration
+    isc::data::ElementPtr getDhcpQueueControl(std::string const& xpath);
+
     /// @brief Retrieves configuration control from sysrepo.
     ///
     /// @param xpath path to configuration control.
     /// @return ElementMap with configuration control.
     isc::data::ElementPtr getConfigControlKea(const std::string& xpath);
+
+    /// @brief Set dhcp-queue-control for *:dhcp-queue-control.
+    ///
+    /// @param xpath path to dhcp-queue-control
+    /// @param elem the JSON element
+    void setDhcpQueueControl(std::string const& xpath, isc::data::ConstElementPtr elem);
+
+    /// @brief Set dhcp-queue-control for kea-*:dhcp-queue-control.
+    ///
+    /// @param xpath path to dhcp-queue-control
+    /// @param elem the JSON element
+    void setDhcpQueueControlKea(std::string const& xpath, isc::data::ConstElementPtr elem);
 
     /// @brief setServer for kea-dhcp4-server:config.
     ///

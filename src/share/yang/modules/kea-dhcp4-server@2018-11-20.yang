@@ -147,7 +147,7 @@ module kea-dhcp4-server {
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
-      list pool {
+      list pools {
         key "start-address end-address";
         ordered-by user;
         description "Pool list.";
@@ -213,7 +213,7 @@ module kea-dhcp4-server {
 
   grouping client-classes {
     description "Client class grouping.";
-    list client-class {
+    list client-classes {
       key name;
       ordered-by user;
       description "List of client classes.";

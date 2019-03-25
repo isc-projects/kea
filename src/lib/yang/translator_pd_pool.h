@@ -35,7 +35,7 @@ namespace yang {
 /// @code
 ///  +--rw pool-id                     uint32
 ///  +--rw prefix                      inet:ipv6-prefix
-///  +--rw prefix-length               uint8
+///  +--rw prefix-len                  uint8
 ///  +--rw valid-lifetime              yang:timeticks
 ///  +--rw renew-time                  yang:timeticks
 ///  +--rw rebind-time                 yang:timeticks
@@ -89,7 +89,7 @@ namespace yang {
 ///     pd-pool[pool-id='0']/prefix = 2001:db8:0:1000::/56
 ///  /ietf-dhcpv6-server:server/server-config/network-ranges
 ///     network-range[network-range-id='111']/pd-pools/
-///     pd-pool[pool-id='0']/prefix-length = 56
+///     pd-pool[pool-id='0']/prefix-len = 56
 ///  /ietf-dhcpv6-server:server/server-config/network-ranges
 ///     network-range[network-range-id='111']/pd-pools/
 ///     pd-pool[pool-id='0']/max-pd-space-utilization = disabled
@@ -213,7 +213,9 @@ protected:
     ///
     /// @param xpath The xpath of the pd-pool list.
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPoolsCommon(const std::string& xpath);
+    isc::data::ElementPtr getPdPoolsIetf(std::string const& xpath);
+
+    isc::data::ElementPtr getPdPoolsKea(std::string const& xpath);
 
     /// @brief setPdPools using pool-id.
     ///

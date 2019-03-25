@@ -88,7 +88,7 @@ module kea-dhcp-types {
 
   grouping database {
     description "Database grouping.";
-    leaf database-type {
+    leaf type {
       type string;
       mandatory true;
       description "Database type (e.g. mysql).";
@@ -184,7 +184,7 @@ module kea-dhcp-types {
       uses database;
     }
     list hosts-database {
-      key database-type;
+      key type;
       description "List of databases.";
       uses database;
     }
@@ -745,7 +745,7 @@ module kea-dhcp-types {
     container config-control {
       description "Config control.";
       list config-database {
-        key database-type;
+        key type;
         description "List of databases.";
         uses database;
       }
@@ -761,11 +761,29 @@ module kea-dhcp-types {
   }
 
   grouping dhcp-queue-control {
-    description "DHCP queue control grouping.";
-    leaf dhcp-queue-control {
-      type string;
-      description "DHCP queue control (JSON map).";
+    description
+      "DHCP queue control grouping";
+    container dhcp-queue-control {
+      presence "DHCP queue control";
+      description
+        "DHCP queue control";
+      leaf capacity {
+        type uint32;
+        description
+          "capacity";
+      }
+
+      leaf enable-queue {
+        type boolean;
+        description
+          "enable-queue";
+      }
+
+      leaf queue-type {
+        type string;
+        description
+          "queue-type";
+      }
     }
   }
-
 }

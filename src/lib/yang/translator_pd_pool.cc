@@ -103,63 +103,47 @@ TranslatorPdPool::getPdPoolIetf6(const string& xpath) {
 ElementPtr
 TranslatorPdPool::getPdPoolKea(const string& xpath) {
     ElementPtr result = Element::createMap();
+
     ConstElementPtr pref = getItem(xpath + "/prefix");
     if (!pref) {
         isc_throw(BadValue, "getPdPoolKea: no prefix defined at " << xpath);
     }
-    const string& prefix = pref->stringValue();
-    size_t slash = prefix.find("/");
-    if (slash == string::npos) {
-        isc_throw(BadValue,
-                  "getPdPoolKea: no '/' in prefix '" << prefix << "'");
+    const string& address = pref->stringValue();
+
+    ConstElementPtr prefix_len = getItem(xpath + "/prefix-len");
+    if (!prefix_len) {
+        isc_throw(BadValue, "getPdPoolKea: no prefix-len defined at " << xpath);
     }
-    const string& address = prefix.substr(0, slash);
-    const string& length = prefix.substr(slash + 1, string::npos);
-    if (address.empty() || length.empty()) {
-        isc_throw(BadValue,
-                  "getPdPoolKea: malformed prefix '" << prefix << "'");
+    int const length = prefix_len->intValue();
+
+    if (address.empty()) {
+        isc_throw(BadValue, "getPdPoolKea: malformed prefix '" << address << "/" << length << "'");
     }
+
     result->set("prefix", Element::create(address));
-    try {
-        unsigned len = boost::lexical_cast<unsigned>(length);
-        result->set("prefix-len", Element::create(static_cast<int>(len)));
-    } catch (const boost::bad_lexical_cast&) {
-        isc_throw(BadValue,
-                  "getPdPoolKea: bad prefix length in '" << prefix << "'");
+    result->set("prefix-len", Element::create(length));
+
+    ConstElementPtr delegated = getItem(xpath + "/delegated-len");
+    if (delegated) {
+        int const delegated_len = delegated->intValue();
+        result->set("delegated-len", Element::create(delegated_len));
     }
 
     ConstElementPtr xpref = getItem(xpath + "/excluded-prefix");
     if (xpref) {
-        const string& xprefix = xpref->stringValue();
-        size_t xslash = xprefix.find("/");
-        if (xslash == string::npos) {
-            isc_throw(BadValue,
-                      "getPdPoolKea: no '/' in excluded prefix '"
-                      << xprefix << "'");
-        }
-        const string& xaddress = xprefix.substr(0, xslash);
-        const string& xlength = xprefix.substr(xslash + 1, string::npos);
-        if (xaddress.empty() || xlength.empty()) {
-            isc_throw(BadValue,
-                      "getPdPoolKea: malformed excluded prefix '"
-                      << xprefix << "'");
+        const string& xaddress = xpref->stringValue();
+        if (xaddress.empty()) {
+            isc_throw(BadValue, "getPdPoolKea: empty excluded address");
         }
         result->set("excluded-prefix", Element::create(xaddress));
-        try {
-            unsigned xlen = boost::lexical_cast<unsigned>(xlength);
-            result->set("excluded-prefix-len",
-                        Element::create(static_cast<int>(xlen)));
-        } catch (const boost::bad_lexical_cast&) {
-            isc_throw(BadValue,
-                      "getPdPoolKea: bad excluded prefix length in '"
-                      << xprefix << "'");
+
+        ConstElementPtr xprefix_len = getItem(xpath + "/excluded-prefix-len");
+        if (xprefix_len) {
+            int const xlength = xprefix_len->intValue();
+            result->set("excluded-prefix-len", Element::create(xlength));
         }
     }
 
-    ConstElementPtr delegated = getItem(xpath + "/delegated-len");
-    if (delegated) {
-        result->set("delegated-len", delegated);
-    }
     ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
@@ -242,18 +226,25 @@ TranslatorPdPool::setPdPoolIetf6(const string& xpath, ConstElementPtr elem) {
 void
 TranslatorPdPool::setPdPoolKea(const string& xpath, ConstElementPtr elem) {
     // Skip prefix as it is the key.
+    ConstElementPtr e_prefix_len = elem->get("prefix-len");
+    if (e_prefix_len) {
+        uint8_t const prefix_len = e_prefix_len->intValue();
+        setItem(xpath + "/prefix-len", Element::create(prefix_len), SR_UINT8_T);
+    }
+
     bool created = false;
     ConstElementPtr delegated = elem->get("delegated-len");
     if (delegated) {
-        setItem(xpath + "/delegated-len", delegated, SR_UINT8_T);
+        uint8_t const delegated_len = delegated->intValue();
+        setItem(xpath + "/delegated-len", Element::create(delegated_len), SR_UINT8_T);
     }
     ConstElementPtr xprefix = elem->get("excluded-prefix");
     ConstElementPtr xlen = elem->get("excluded-prefix-len");
     if (xprefix && xlen) {
-        ostringstream xpref;
-        xpref << xprefix->stringValue() << "/" << xlen->intValue();
-        setItem(xpath + "/excluded-prefix", Element::create(xpref.str()),
+        setItem(xpath + "/excluded-prefix", Element::create(xprefix->stringValue()),
                 SR_STRING_T);
+        setItem(xpath + "/excluded-prefix-len", Element::create(xlen->intValue()),
+                SR_UINT8_T);
         created = true;
     }
     ConstElementPtr options = elem->get("option-data");
@@ -299,9 +290,10 @@ TranslatorPdPools::~TranslatorPdPools() {
 ElementPtr
 TranslatorPdPools::getPdPools(const string& xpath) {
     try {
-        if ((model_ == IETF_DHCPV6_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER)) {
-            return (getPdPoolsCommon(xpath));
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return getPdPoolsIetf(xpath);
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            return getPdPoolsKea(xpath);
         }
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
@@ -312,8 +304,9 @@ TranslatorPdPools::getPdPools(const string& xpath) {
               "getPdPools not implemented for the model: " << model_);
 }
 
+
 ElementPtr
-TranslatorPdPools::getPdPoolsCommon(const string& xpath) {
+TranslatorPdPools::getPdPoolsIetf(string const& xpath) {
     ElementPtr result = Element::createList();
     S_Iter_Value iter = getIter(xpath + "/pd-pool");
     if (!iter) {
@@ -321,13 +314,31 @@ TranslatorPdPools::getPdPoolsCommon(const string& xpath) {
         isc_throw(Unexpected, "getPdPools: can't get iterator: " << xpath);
     }
     for (;;) {
-        const string& pool = getNext(iter);
+        string const& pool = getNext(iter);
         if (pool.empty()) {
             break;
         }
         result->add(getPdPool(pool));
     }
-    return (result);
+    return result;
+}
+
+ElementPtr
+TranslatorPdPools::getPdPoolsKea(string const& xpath) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/pd-pools");
+    if (!iter) {
+        // Can't happen.
+        isc_throw(Unexpected, "getPdPools: can't get iterator: " << xpath);
+    }
+    for (;;) {
+        string const& pool = getNext(iter);
+        if (pool.empty()) {
+            break;
+        }
+        result->add(getPdPool(pool));
+    }
+    return result;
 }
 
 void
@@ -368,9 +379,8 @@ TranslatorPdPools::setPdPoolsPrefix(const string& xpath,
                       << pool->str());
         }
         ostringstream prefix;
-        prefix << xpath << "/pd-pool[prefix='"
-               << pool->get("prefix")->stringValue() << "/"
-               << pool->get("prefix-len")->intValue() << "']";
+        prefix << xpath << "/pd-pools[prefix='"
+               << pool->get("prefix")->stringValue() << "']";
         setPdPool(prefix.str(), pool);
     }
 }

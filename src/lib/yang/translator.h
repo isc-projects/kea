@@ -120,6 +120,11 @@ public:
     std::string getNext(S_Iter_Value iter);
 #endif
 
+    void checkAndSetItem(isc::data::ConstElementPtr& from,
+                         std::string const& xpath,
+                         std::string const& name,
+                         sr_type_t const& type);
+
 protected:
     /// @brief The sysrepo session.
 #ifndef HAVE_PRE_0_7_6_SYSREPO

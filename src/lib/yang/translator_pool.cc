@@ -315,7 +315,7 @@ TranslatorPools::getPoolsIetf(const string& xpath) {
 ElementPtr
 TranslatorPools::getPoolsKea(const string& xpath) {
     ElementPtr result = Element::createList();
-    S_Iter_Value iter = getIter(xpath + "/pool");
+    S_Iter_Value iter = getIter(xpath + "/pools");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getPoolsKea can't get iterator: " << xpath);
@@ -365,7 +365,7 @@ TranslatorPools::setPoolsByAddresses(const string& xpath,
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr pool = elem->get(i);
         if (!pool->contains("pool")) {
-            isc_throw(BadValue, "setPoolsByAddresses: missing required pool: "
+            isc_throw(BadValue, "setPoolsByAddresses(): missing \"pool\" element in: "
                       << pool->str());
         }
         string pref = pool->get("pool")->stringValue();
@@ -373,7 +373,7 @@ TranslatorPools::setPoolsByAddresses(const string& xpath,
         string end_addr;
         getAddresses(pref, start_addr, end_addr);
         ostringstream prefix;
-        prefix << xpath << "/pool[start-address='" << start_addr
+        prefix << xpath << "/pools[start-address='" << start_addr
                << "'][end-address='" << end_addr << "']";
         setPool(prefix.str(), pool);
     }

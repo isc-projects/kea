@@ -40,11 +40,11 @@ namespace yang {
 /// }
 /// @endcode
 ///
-/// YANG syntax for kea-dhcp[46] is using database-type as the list key:
+/// YANG syntax for kea-dhcp[46] is using type as the list key:
 /// @code
 ///  +--rw database                (list)
 ///    |
-///    +--rw database-type?        string
+///    +--rw type?                 string
 ///    +--rw user?                 string
 ///    +--rw password?             string
 ///    +--rw host?                 string
@@ -80,19 +80,19 @@ namespace yang {
 /// @code
 /// /kea-dhcp6-server:config (container)
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql'] (list instance)
+///    hosts-database[type='mysql'] (list instance)
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql']/type = mysql
+///    hosts-database[type='mysql']/type = mysql
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql']/name = kea
+///    hosts-database[type='mysql']/name = kea
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql']/user = kea
+///    hosts-database[type='mysql']/user = kea
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql']/password = kea
+///    hosts-database[type='mysql']/password = kea
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql']/host = localhost
+///    hosts-database[type='mysql']/host = localhost
 /// /kea-dhcp6-server:config/
-///    hosts-database[database-type='mysql']/port = 3306
+///    hosts-database[type='mysql']/port = 3306
 /// @endcode
 
 /// @brief A translator class for converting a database access parameters

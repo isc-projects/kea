@@ -80,7 +80,7 @@ namespace yang {
 ///  +--rw option-set-id?
 ///     /server/server-config/option-sets/option-set/option-set-id
 ///  +--rw address-pool*         [pool-id]
-///  +--rw pd-pool*              [pool-id]
+///  +--rw pd-pools*              [pool-id]
 ///  +--rw host-reservations     host-reservation* [cli-id]
 /// @endcode
 ///
@@ -111,7 +111,7 @@ namespace yang {
 ///  +--rw authoritative?            boolean
 ///  (DHCPv6 only)
 ///  +--rw preferred-lifetime?       uint32
-///  +--rw pd-pool*
+///  +--rw pd-pools*
 ///  +--rw interface-id?             string
 ///  +--rw rapid-commit?             boolean
 /// @endcode

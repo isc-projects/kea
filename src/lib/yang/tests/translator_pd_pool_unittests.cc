@@ -82,7 +82,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
     const string& subnet_subnet = subnet + "/network-prefix";
     EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
 
-    // Create the pd-pool 2001:db8:0:1000::/64 #222.
+    // Create the pd-pool 2001:db8:0:1000::/56 #222.
     const string& xpath = subnet + "/pd-pools/pd-pool[pool-id='222']";
     const string& prefix = xpath + "/prefix";
     S_Val s_prefix(new Val("2001:db8:0:1000::/56"));
@@ -122,10 +122,16 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
     const string& subnet = xpath + "/subnet";
     EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
-    // Create the pd-pool 2001:db8:0:1000::/64.
-    const string& prefix = "2001:db8:0:1000::/56";
+    // Create the pd-pool 2001:db8:0:1000::/56.
+    const string& prefix = "2001:db8:0:1000::";
     ostringstream spool;
-    spool << xpath + "/pd-pool[prefix='" << prefix << "']";
+    spool << xpath + "/pd-pools[prefix='" << prefix << "']";
+
+    const string& x_prefix_len = spool.str() + "/prefix-len";
+    uint8_t prefix_len = 56;
+    S_Val s_prefix_len(new Val(prefix_len, SR_UINT8_T));
+    EXPECT_NO_THROW(sess_->set_item(x_prefix_len.c_str(), s_prefix_len));
+
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
     S_Val s_delegated(new Val(dl, SR_UINT8_T));
@@ -303,11 +309,14 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
         "     |\n"
         "     -- subnet = 2001:db8::/48\n"
         "     |\n"
-        "     -- pd-pool (list instance)\n"
+        "     -- pd-pools (list instance)\n"
         "         |\n"
-        "         -- prefix = 2001:db8:0:1000::/56\n"
+        "         -- prefix = 2001:db8:0:1000::\n"
+        "         |\n"
+        "         -- prefix-len = 56\n"
         "         |\n"
         "         -- delegated-len = 64\n";
+
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.
@@ -327,18 +336,30 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Create the first pd-pool 2001:db8:0:1000::/56.
-    const string& prefix = "2001:db8:0:1000::/56";
+    const string& prefix = "2001:db8:0:1000::";
     ostringstream spool;
-    spool << xpath + "/pd-pool[prefix='" << prefix << "']";
+    spool << xpath + "/pd-pools[prefix='" << prefix << "']";
+
+    const string& x_prefix_len = spool.str() + "/prefix-len";
+    uint8_t prefix_len = 56;
+    S_Val s_prefix_len(new Val(prefix_len, SR_UINT8_T));
+    EXPECT_NO_THROW(sess_->set_item(x_prefix_len.c_str(), s_prefix_len));
+
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
     S_Val s_delegated(new Val(dl, SR_UINT8_T));
     EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
 
     // Create the second pd-pool 2001:db8:0:2000::/56
-    const string& prefix2 = "2001:db8:0:2000::/56";
+    const string& prefix2 = "2001:db8:0:2000::";
     ostringstream spool2;
-    spool2 << xpath + "/pd-pool[prefix='" << prefix2 << "']";
+    spool2 << xpath + "/pd-pools[prefix='" << prefix2 << "']";
+
+    const string& x_prefix_len2 = spool2.str() + "/prefix-len";
+    uint8_t prefix_len2 = 56;
+    S_Val s_prefix_len2(new Val(prefix_len2, SR_UINT8_T));
+    EXPECT_NO_THROW(sess_->set_item(x_prefix_len2.c_str(), s_prefix_len2));
+
     const string& x_delegated2 = spool2.str() + "/delegated-len";
     uint8_t dl2 = 60;
     S_Val s_delegated2(new Val(dl2, SR_UINT8_T));

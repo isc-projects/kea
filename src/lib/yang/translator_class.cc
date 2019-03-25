@@ -194,7 +194,7 @@ TranslatorClasses::getClasses(const string& xpath) {
 
 ElementPtr
 TranslatorClasses::getClassesKea(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/client-class");
+    S_Iter_Value iter = getIter(xpath + "/client-classes");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getClassesKea: can't get iterator: " << xpath);
@@ -240,7 +240,7 @@ TranslatorClasses::setClassesKea(const string& xpath, ConstElementPtr elem) {
         }
         string name = cclass->get("name")->stringValue();
         ostringstream key;
-        key << xpath << "/client-class[name='" << name << "']";
+        key << xpath << "/client-classes[name='" << name << "']";
         setClass(key.str(), cclass);
     }
 }

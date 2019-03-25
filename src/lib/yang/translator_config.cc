@@ -123,7 +123,7 @@ TranslatorConfig::getParam(ElementPtr& storage, const std::string& xpath,
 
 ElementPtr
 TranslatorConfig::getHooksKea(const std::string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/hook-library");
+    S_Iter_Value iter = getIter(xpath + "/hooks-libraries");
     if (iter) {
         ElementPtr hook_libs = Element::createList();
         for (;;) {
@@ -221,6 +221,21 @@ TranslatorConfig::getConfigControlKea(const string& xpath) {
 }
 
 ElementPtr
+TranslatorConfig::getDhcpQueueControl(string const& xpath) {
+    ElementPtr dhcp_queue_control = Element::createMap();
+
+    getParam(dhcp_queue_control, xpath, "capacity");
+    getParam(dhcp_queue_control, xpath, "enable-queue");
+    getParam(dhcp_queue_control, xpath, "queue-type");
+
+    if (!dhcp_queue_control->empty()) {
+        return dhcp_queue_control;
+    }
+
+    return ElementPtr();
+}
+
+ElementPtr
 TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     ElementPtr result = Element::createMap();
 
@@ -297,10 +312,9 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
         result->set("config-control", config_ctrl);
     }
     getParam(result, xpath, "server-tag");
-    ConstElementPtr queue_ctrl = getItem(xpath + "/dhcp-queue-control");
+    ConstElementPtr queue_ctrl = getDhcpQueueControl(xpath + "/dhcp-queue-control");
     if (queue_ctrl) {
-        result->set("dhcp-queue-control",
-                    Element::fromJSON(queue_ctrl->stringValue()));
+        result->set("dhcp-queue-control", queue_ctrl);
     }
     ConstElementPtr loggers = getLoggers(xpath);
     if (loggers && !loggers->empty()) {
@@ -550,7 +564,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
                 continue;
             }
             ostringstream hook_lib;
-            hook_lib << xpath << "/hook-library[library='"
+            hook_lib << xpath << "/hooks-libraries[library='"
                      << name->stringValue() << "']";
             ConstElementPtr params = lib->get("parameters");
             if (params) {
@@ -712,10 +726,9 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     if (server_tag) {
         setItem(xpath + "/server-tag", server_tag, SR_STRING_T);
     }
-    ConstElementPtr queue_ctrl = elem->get("dhcp-queue-control");
-    if (queue_ctrl) {
-        ConstElementPtr repr = Element::create(queue_ctrl->str());
-        setItem(xpath + "/dhcp-queue-control", repr, SR_STRING_T);
+    ConstElementPtr dhcp_queue_control = elem->get("dhcp-queue-control");
+    if (dhcp_queue_control) {
+        setDhcpQueueControl(xpath + "/dhcp-queue-control", dhcp_queue_control);
     }
 }
 
@@ -860,6 +873,26 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
             setItem(xpath + "/server-id/user-context", repr, SR_STRING_T);
         }
     }
+}
+
+void TranslatorConfig::setDhcpQueueControl(string const& xpath, ConstElementPtr elem) {
+    try {
+        if ((model_ == KEA_DHCP4_SERVER) || (model_ == KEA_DHCP6_SERVER)) {
+            setDhcpQueueControlKea(xpath, elem);
+        } else {
+            isc_throw(NotImplemented,
+                      "setDhcpQueueControl() not implemented for the model: " << model_);
+        }
+    } catch (const sysrepo_exception& ex) {
+        isc_throw(SysrepoError, "sysrepo error setting dhcp-queue-control '"
+                                    << elem->str() << "' at '" << xpath << "': " << ex.what());
+    }
+}
+
+void TranslatorConfig::setDhcpQueueControlKea(string const& xpath, ConstElementPtr elem) {
+    checkAndSetItem(elem, xpath, "capacity", SR_UINT32_T);
+    checkAndSetItem(elem, xpath, "enable-queue", SR_BOOL_T);
+    checkAndSetItem(elem, xpath, "queue-type", SR_STRING_T);
 }
 
 void

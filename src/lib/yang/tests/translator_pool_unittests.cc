@@ -122,7 +122,7 @@ TEST_F(TranslatorPoolsTest, getKea) {
     EXPECT_EQ("2001:db8::1:0", start_addr);
     EXPECT_EQ("2001:db8::1:ffff", end_addr);
     ostringstream spool;
-    spool << xpath + "/pool[start-address='" << start_addr
+    spool << xpath + "/pools[start-address='" << start_addr
           << "'][end-address='" << end_addr << "']";
     const string& x_prefix = spool.str() + "/prefix";
     S_Val s_prefix(new Val("2001:db8::1:0/112", SR_STRING_T));
@@ -296,7 +296,7 @@ TEST_F(TranslatorPoolsTest, setKea) {
         "     |\n"
         "     -- subnet = 2001:db8::/48\n"
         "     |\n"
-        "     -- pool (list instance)\n"
+        "     -- pools (list instance)\n"
         "         |\n"
         "         -- start-address = 2001:db8::1\n"
         "         |\n"

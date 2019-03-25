@@ -58,17 +58,17 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/client-class[name='foo'] (list instance)
-///  /kea-dhcp6-server:config/client-class[name='foo']/name = foo
-///  /kea-dhcp6-server:config/client-class[name='foo']/test = ''==''
-///  /kea-dhcp6-server:config/client-class[name='foo']/only-if-required = false
+///  /kea-dhcp6-server:config/client-classes[name='foo'] (list instance)
+///  /kea-dhcp6-server:config/client-classes[name='foo']/name = foo
+///  /kea-dhcp6-server:config/client-classes[name='foo']/test = ''==''
+///  /kea-dhcp6-server:config/client-classes[name='foo']/only-if-required = false
 /// @endcode
 
 /// @brief A translator class for converting a client class between
 /// YANG and JSON.
 ///
 /// Currently supports on kea-dhcp[46]-server. Ietf-dhcpv6-server does
-/// not define client classe contents.
+/// not define client classes contents.
 class TranslatorClass : virtual public TranslatorOptionDataList,
     virtual public TranslatorOptionDefList  {
 public:

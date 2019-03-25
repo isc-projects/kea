@@ -48,7 +48,11 @@ TranslatorBasic::~TranslatorBasic() {
 }
 
 ElementPtr
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+TranslatorBasic::value(sysrepo::S_Val s_val) {
+#else
 TranslatorBasic::value(S_Val s_val) {
+#endif
     if (!s_val) {
         isc_throw(BadValue, "value called with null");
     }
@@ -96,7 +100,7 @@ TranslatorBasic::value(S_Val s_val) {
 
     default:
         isc_throw(NotImplemented,
-                  "value called with unupported type: " << s_val->type());
+                  "value called with unsupported type: " << s_val->type());
     }
 }
 
@@ -240,7 +244,7 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
 
     default:
         isc_throw(NotImplemented,
-                  "value called with unupported type: " << type);
+                  "value called with unsupported type: " << type);
     }
 
     return (s_val);
@@ -295,6 +299,16 @@ TranslatorBasic::getNext(S_Iter_Value iter) {
         return ("");
     }
     return (s_val->xpath());
+}
+
+void TranslatorBasic::checkAndSetItem(ConstElementPtr& from,
+                                      std::string const& xpath,
+                                      std::string const& name,
+                                      sr_type_t const& type) {
+    ConstElementPtr x = from->get(name);
+    if (x) {
+        setItem(xpath + "/" + name, x, type);
+    }
 }
 
 }; // end of namespace isc::yang

@@ -125,7 +125,7 @@ module kea-dhcp6-server {
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
-      list pool {
+      list pools {
         key "start-address end-address";
         ordered-by user;
         description "Pool list.";
@@ -148,14 +148,19 @@ module kea-dhcp6-server {
         uses dhcp:pool-require-client-classes;
         uses dhcp:pool-user-context;
       }
-      list pd-pool {
+      list pd-pools {
         key prefix;
         ordered-by user;
         description "Prefix delegation pool list.";
         leaf prefix {
-          type inet:ipv6-prefix;
+          type inet:ipv6-address;
           mandatory true;
           description "IPv6 pool prefix.";
+        }
+        leaf prefix-len {
+          type uint8;
+          description
+            "Prefix length";
         }
         leaf delegated-len {
           type uint8;
@@ -175,8 +180,13 @@ module kea-dhcp6-server {
           }
         }
         leaf excluded-prefix {
-          type inet:ipv6-prefix;
+          type inet:ipv6-address;
           description "Prefix pool excluded prefix.";
+        }
+        leaf excluded-prefix-len {
+          type uint8;
+          description
+            "Excluded prefix length";
         }
         uses kea:user-context {
           refine user-context {
@@ -220,7 +230,7 @@ module kea-dhcp6-server {
 
   grouping client-classes {
     description "Client classes grouping.";
-    list client-class {
+    list client-classes {
       key name;
       ordered-by user;
       description "List of client classes.";
@@ -489,7 +499,7 @@ module kea-dhcp6-server {
           mandatory true;
           description "Lease IA ID.";
         }
-        leaf prefix-length {
+        leaf prefix-len {
           type uint8 {
             range 0..128;
           }

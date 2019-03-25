@@ -45,7 +45,7 @@ TranslatorDatabase::getDatabase(const string& xpath) {
 
 ElementPtr
 TranslatorDatabase::getDatabaseKea(const string& xpath) {
-    ConstElementPtr type = getItem(xpath + "/database-type");
+    ConstElementPtr type = getItem(xpath + "/type");
     if (!type) {
         return (ElementPtr());
     }
@@ -155,7 +155,7 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
             isc_throw(BadValue, "setDatabase requires database type: "
                       << elem->str());
         }
-        setItem(xpath + "/database-type", type, SR_STRING_T);
+        setItem(xpath + "/type", type, SR_STRING_T);
     }
     ConstElementPtr user = elem->get("user");
     if (user) {
@@ -307,7 +307,7 @@ TranslatorDatabases::setDatabasesKea(const string& xpath,
         }
         string type = database->get("type")->stringValue();
         ostringstream key;
-        key << xpath << "[database-type='" << type << "']";
+        key << xpath << "[type='" << type << "']";
         setDatabase(key.str(), database, true);
     }
 }

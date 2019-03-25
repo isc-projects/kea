@@ -57,7 +57,7 @@ TEST_F(TranslatorDatabaseTest, get) {
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
-    const string& xtype = xpath + "/database-type";
+    const string& xtype = xpath + "/type";
     const string& xinterval = xpath + "/lfc-interval";
     S_Val s_type(new Val("memfile"));
     EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
@@ -115,7 +115,7 @@ TEST_F(TranslatorDatabaseTest, setEmpty) {
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
-    const string& xtype = xpath + "/database-type";
+    const string& xtype = xpath + "/type";
     const string& xinterval = xpath + "/lfc-interval";
     S_Val s_type(new Val("memfile"));
     EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
@@ -166,7 +166,7 @@ TEST_F(TranslatorDatabasesTest, get) {
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-database";
-    const string& xdatabase = xpath + "[database-type='mysql']";
+    const string& xdatabase = xpath + "[type='mysql']";
     const string& xname = xdatabase + "/name";
     const string& xuser = xdatabase + "/user";
     const string& xpassword = xdatabase + "/password";
@@ -262,7 +262,7 @@ TEST_F(TranslatorDatabasesTest, setEmpty) {
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-database";
-    const string& xdatabase = xpath + "[database-type='mysql']";
+    const string& xdatabase = xpath + "[type='mysql']";
     const string& xname = xdatabase + "/name";
     const string& xuser = xdatabase + "/user";
     const string& xpassword = xdatabase + "/password";
@@ -296,7 +296,7 @@ TEST_F(TranslatorDatabasesTest, setEmpties) {
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-database";
-    const string& xdatabase = xpath + "[database-type='mysql']";
+    const string& xdatabase = xpath + "[type='mysql']";
     const string& xname = xdatabase + "/name";
     const string& xuser = xdatabase + "/user";
     const string& xpassword = xdatabase + "/password";

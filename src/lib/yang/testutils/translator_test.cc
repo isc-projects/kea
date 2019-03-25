@@ -95,7 +95,7 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
 
         default:
             isc_throw(NotImplemented,
-                      "YangReprItem called with unupported type: " << type);
+                      "YangReprItem called with unsupported type: " << type);
         }
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
@@ -246,7 +246,7 @@ YangRepr::set(const Tree& tree, S_Session session) const {
 
             default:
                 isc_throw(NotImplemented,
-                          "YangRepr::set called with unupported type: "
+                          "YangRepr::set called with unsupported type: "
                           << item.type_);
             }
             session->set_item(item.xpath_.c_str(), s_val);
