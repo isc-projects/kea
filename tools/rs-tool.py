@@ -14,4 +14,4 @@ ans, unans = sr(m)
 
 print("RECEIVED:")
 for s, r in ans:
-    s.show()
+    r.show()

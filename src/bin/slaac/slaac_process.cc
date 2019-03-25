@@ -20,8 +20,10 @@
 #include <boost/bind.hpp>
 #include <boost/asio/ip/icmp.hpp>
 #include <boost/asio/ip/address_v6.hpp>
+#include <boost/asio/ip/address.hpp>
 
 #include "nd_pkt_rs.h"
+#include "nd_pkt_ra.h"
 
 using namespace isc::asiolink;
 using namespace isc::process;
@@ -126,8 +128,9 @@ RequestHandler::RequestHandler(boost::asio::io_service& io_service):
 void
 RequestHandler::start_receiving()
 {
-    socket_.async_receive(
+    socket_.async_receive_from(
                 buffer_.prepare(65536),
+                endpoint_,
                 boost::bind(&RequestHandler::handle_receive, this, _1, _2));
 }
 
@@ -152,9 +155,21 @@ RequestHandler::handle_receive(const boost::system::error_code &err_code, std::s
     // check if this is ICMP ND RS
     if (buf[0] == 133) {
         printf("bingo\n");
-        RSPkt pkt(buf, size, IOAddress::IPV6_ZERO_ADDRESS(), IOAddress::IPV6_ZERO_ADDRESS());
-        pkt.unpack();
-        std::cout << pkt.toText() << std::endl;
+        RSPkt rs_pkt(buf, size, IOAddress::IPV6_ZERO_ADDRESS(), IOAddress::IPV6_ZERO_ADDRESS());
+        rs_pkt.unpack();
+        std::cout << rs_pkt.toText() << std::endl;
+
+        // prepare and send response
+        RAPkt ra_pkt(IOAddress::IPV6_ZERO_ADDRESS(), IOAddress::IPV6_ZERO_ADDRESS());
+        ra_pkt.setHopLimit(0);
+        ra_pkt.setManagedFlag(false);
+        ra_pkt.setOtherFlag(false);
+        ra_pkt.setRouterLifetime(123);
+        ra_pkt.setReachableTime(456);
+        ra_pkt.setRetransTimer(789);
+        ra_pkt.pack();
+        socket_.send_to(buffer(ra_pkt.getBuffer().getData(), ra_pkt.len()), endpoint_);
+        std::cout << ra_pkt.toText() << std::endl;
     } else {
         printf("not bingo %d - drop\n", buf[0]);
     }
