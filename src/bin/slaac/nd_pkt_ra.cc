@@ -133,7 +133,7 @@ RAPkt::toText() const
 
     // Then print parameters,
     tmp << "hop_limit=" << static_cast<unsigned>(hop_limit_)
-        << " flags" << (managed_flag_ ? "M" : "") << (other_flag_ ? "O" : "")
+        << " flags=" << (managed_flag_ ? "M" : "") << (other_flag_ ? "O" : "")
         << " router_lifetime=" << router_lifetime_ << endl
         << "reachable_time=" << reachable_time_
         << " retrans_timer=" << retrans_timer_ << endl;
