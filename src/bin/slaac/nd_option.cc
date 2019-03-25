@@ -267,6 +267,7 @@ void unpackOptions(const OptionBuffer& buf, size_t offset,
             opt.reset(new Option(type, opt_begin, opt_end));
         }
         options.insert(make_pair(type, opt));
+        offset += len;
     }
 }
 
