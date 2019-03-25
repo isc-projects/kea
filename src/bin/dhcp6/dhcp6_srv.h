@@ -156,6 +156,24 @@ public:
     /// a response.
     void run_one();
 
+    /// @brief Process a single incoming DHCPv6 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp);
+
+    /// @brief Process a single incoming DHCPv6 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp);
+
     /// @brief Process a single incoming DHCPv6 packet.
     ///
     /// It verifies correctness of the passed packet, call per-type processXXX
