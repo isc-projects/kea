@@ -244,16 +244,11 @@ public:
 namespace isc {
 namespace dhcp {
 
-NetworkPtr
-SharedNetwork4::sharedFromThis() {
-    return (shared_from_this());
-}
-
 void
 SharedNetwork4::add(const Subnet4Ptr& subnet) {
     Impl::add(subnets_, subnet);
     // Associate the subnet with this network.
-    subnet->setSharedNetwork(sharedFromThis());
+    subnet->setSharedNetwork(shared_from_this());
     subnet->setSharedNetworkName(name_);
 }
 
@@ -309,16 +304,11 @@ SharedNetwork4::toElement() const {
     return (map);
 }
 
-NetworkPtr
-SharedNetwork6::sharedFromThis() {
-    return (shared_from_this());
-}
-
 void
 SharedNetwork6::add(const Subnet6Ptr& subnet) {
     Impl::add(subnets_, subnet);
     // Associate the subnet with this network.
-    subnet->setSharedNetwork(sharedFromThis());
+    subnet->setSharedNetwork(shared_from_this());
     subnet->setSharedNetworkName(name_);
 }
 

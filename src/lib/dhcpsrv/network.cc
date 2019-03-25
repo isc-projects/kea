@@ -249,8 +249,8 @@ Network4::toElement() const {
     }
 
     // Set authoritative
-    if (!getAuthoritative().unspecified()) {
-        map->set("authoritative", Element::create(getAuthoritative().get()));
+    if (!authoritative_.unspecified()) {
+        map->set("authoritative", Element::create(authoritative_.get()));
     }
 
     // Set next-server

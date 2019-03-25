@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,6 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
-#include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/enable_shared_from_this.hpp>
@@ -41,9 +39,8 @@ struct SharedNetworkModificationTimeIndexTag { };
 /// @brief Shared network holding IPv4 subnets.
 ///
 /// Specialization of the @ref Network4 class for IPv4 shared networks.
-class SharedNetwork4 : public Network4,
-                       public boost::enable_shared_from_this<SharedNetwork4>,
-                       public AssignableNetwork {
+    class SharedNetwork4 : public virtual Network4,
+                           public boost::enable_shared_from_this<SharedNetwork4> {
 public:
 
     /// @brief Constructor.
@@ -52,13 +49,6 @@ public:
     explicit SharedNetwork4(const std::string& name)
         : name_(name), subnets_() {
     }
-
-    /// @brief Returns shared pointer to this network.
-    ///
-    /// This method is required by the parent @ref AssignableNetwork class.
-    ///
-    /// @return Shared pointer to this object.
-    virtual NetworkPtr sharedFromThis();
 
     /// @brief Returns a name of the shared network.
     std::string getName() const {
@@ -206,9 +196,8 @@ typedef boost::multi_index_container<
 /// @brief Shared network holding IPv6 subnets.
 ///
 /// Specialization of the @ref Network6 class for IPv6 shared networks.
-class SharedNetwork6 : public Network6,
-                       public boost::enable_shared_from_this<SharedNetwork6>,
-                       public AssignableNetwork {
+class SharedNetwork6 : public virtual Network6,
+                       public boost::enable_shared_from_this<SharedNetwork6> {
 public:
 
     /// @brief Constructor.
@@ -217,13 +206,6 @@ public:
     explicit SharedNetwork6(const std::string& name)
         : name_(name), subnets_() {
     }
-
-    /// @brief Returns shared pointer to this network.
-    ///
-    /// This method is required by the parent @ref AssignableNetwork class.
-    ///
-    /// @return Shared pointer to this object.
-    virtual NetworkPtr sharedFromThis();
 
     /// @brief Returns a name of the shared network.
     std::string getName() const {
