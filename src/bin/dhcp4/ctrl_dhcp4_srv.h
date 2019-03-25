@@ -368,7 +368,11 @@ private:
     ///
     /// @param srv_cfg Server configuration holding the database credentials
     /// and server tag.
-    void cbFetchUpdates(const SrvConfigPtr& srv_cfg);
+    /// @param failure_count pointer to failure counter which causes this
+    /// callback to stop scheduling the timer after 10 consecutive failures
+    /// to fetch the updates.
+    void cbFetchUpdates(const SrvConfigPtr& srv_cfg,
+                        boost::shared_ptr<unsigned> failure_count);
 
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///

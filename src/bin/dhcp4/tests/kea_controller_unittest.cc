@@ -259,7 +259,7 @@ public:
         EXPECT_EQ(1, cb_control->getDatabaseConfigFetchCalls());
 
 
-        if (config_wait_fetch_time > 0) {
+        if ((config_wait_fetch_time > 0) && (!throw_during_fetch)) {
             // If we're configured to run the timer, we expect that it was
             // invoked at least 3 times. This is sufficient to verify that
             // the timer was scheduled and that the timer continued to run
@@ -274,10 +274,21 @@ public:
             EXPECT_GE(cb_control->getDatabaseConfigFetchCalls(), 3);
 
         } else {
-            // If the server is not configured to schedule the timer,
-            // we should still have one fetch attempt recorded.
             ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 500));
-            EXPECT_EQ(1, cb_control->getDatabaseConfigFetchCalls());
+
+            if (throw_during_fetch) {
+                // If we're simulating the failure condition the number
+                // of consecutive failures should not exceed 10. Therefore
+                // the number of recorded fetches should be 12. One at
+                // startup, 10 failures and one that causes the timer
+                // to stop.
+                EXPECT_EQ(12, cb_control->getDatabaseConfigFetchCalls());
+
+            } else {
+                // If the server is not configured to schedule the timer,
+                // we should still have one fetch attempt recorded.
+                EXPECT_EQ(1, cb_control->getDatabaseConfigFetchCalls());
+            }
         }
     }
 
