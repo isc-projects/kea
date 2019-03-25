@@ -31,6 +31,9 @@ using namespace std;
 /// instantiates ControlledDhcpv4Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv4 server object as well.
+///
+/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
+/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 
 namespace {
 
@@ -57,7 +60,7 @@ usage() {
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
-} // end of anonymous namespace
+}  // namespace
 
 int
 main(int argc, char* argv[]) {
@@ -98,7 +101,7 @@ main(int argc, char* argv[]) {
             config_file = optarg;
             break;
 
-        case 'p':
+        case 'p': // server port number
             try {
                 server_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
@@ -113,7 +116,7 @@ main(int argc, char* argv[]) {
             }
             break;
 
-        case 'P':
+        case 'P': // client port number
             try {
                 client_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
@@ -138,7 +141,6 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-
     // Configuration file is required.
     if (config_file.empty()) {
         cerr << "Configuration file not specified." << endl;
@@ -150,7 +152,6 @@ main(int argc, char* argv[]) {
 
     if (check_mode) {
         try {
-
             // We need to initialize logging, in case any error messages are to be printed.
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);
@@ -214,12 +215,12 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp4_logger, DHCP4_STARTING).arg(VERSION);
 
         // Create the server instance.
-        ControlledDhcpv4Srv server(server_port_number, client_port_number);
+        ControlledDhcpv4Srv server(server_port_number, client_port_number, true);
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
 
-        // Create our PID file.
+        // Create our PID file
         server.setProcName(DHCP4_NAME);
         server.setConfigFile(config_file);
         server.createPIDFile();
