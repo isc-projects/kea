@@ -118,7 +118,7 @@ public:
     /// @param type Type of option to be deleted.
     ///
     /// @return true if option was deleted, false if no such option existed
-    bool delOption(uint16_t type);
+    bool delOption(uint8_t type);
 
     /// @brief Returns text representation of the packet.
     ///
@@ -194,7 +194,7 @@ public:
     /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
-    OptionPtr getOption(const uint16_t type);
+    OptionPtr getOption(const uint8_t type);
 
     /// @brief Returns all options.
     ///

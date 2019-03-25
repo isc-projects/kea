@@ -106,6 +106,13 @@ public:
     /// @return option type
     uint8_t getType() const { return (ND_PREFIX_INFO); }
 
+    /// @brief Returns length of the complete option
+    ///
+    /// @return length of the option
+    virtual size_t len() const {
+        return (OPTION_HDR_LEN + PREFIX_INFO_LEN);
+    }
+
     /// @brief just to force that every option has virtual dtor
     virtual ~OptionPrefInfo();
 
@@ -150,7 +157,7 @@ public:
     }
 
     /// @brief Addr-config (A) flag bit.
-    static const uint8_t ADDR_CONFIG_FLAG = 0x80;
+    static const uint8_t ADDR_CONFIG_FLAG = 0x40;
 
     /// @brief Returns valid lifetime.
     ///

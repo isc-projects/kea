@@ -170,7 +170,7 @@ TEST(SlaacNd, emptyRA) {
     expected_txt += "hop_limit=64 flags=MO router_lifetime=3600\n";
     expected_txt += "reachable_time=300000 retrans_timer=100\n";
     EXPECT_EQ(expected_txt, ra->toText());
-    
+
     // Check it (binary).
     uint8_t expected_data[] = {
         134, // type 134 RA
@@ -186,7 +186,7 @@ TEST(SlaacNd, emptyRA) {
     const OutputBuffer& output = ra->getBuffer();
     ASSERT_EQ(sizeof(expected_data), output.getLength());
     EXPECT_EQ(0, memcmp(expected_data, output.getData(), output.getLength()));
-    
+
     // Check unpacking.
     EXPECT_NO_THROW(ra.reset(new RAPkt(expected_data, sizeof(expected_data),
                                        local, remote)));
@@ -199,7 +199,7 @@ TEST(SlaacNd, emptyRA) {
     EXPECT_EQ(300000, ra->getReachableTime());
     EXPECT_EQ(100, ra->getRetransTimer());
 }
-    
+
 // Test Router Advertisement with a prefix info option.
 TEST(SlaacNd, prefInfoRA) {
     // Get a RA.
@@ -227,24 +227,29 @@ TEST(SlaacNd, prefInfoRA) {
     ra->setRetransTimer(100); // 100 ms
 
     // Create a Prefix Info.
-    OptionPrefInfoPtr opt(new OptionPrefInfo());
-    ASSERT_TRUE(opt);
+    OptionPrefInfoPtr pi(new OptionPrefInfo());
+    ASSERT_TRUE(pi);
 
     // Check Prefix Info Defaults.
-    EXPECT_EQ(128, opt->getPrefixLength());
-    EXPECT_FALSE(opt->getOnLinkFlag());
-    EXPECT_FALSE(opt->getAddrConfigFlag());
-    EXPECT_EQ(0, opt->getValidLifetime());
-    EXPECT_EQ(0, opt->getPreferredLifetime());
-    EXPECT_EQ("::", opt->getPrefix().toText());
+    EXPECT_EQ(128, pi->getPrefixLength());
+    EXPECT_FALSE(pi->getOnLinkFlag());
+    EXPECT_FALSE(pi->getAddrConfigFlag());
+    EXPECT_EQ(0, pi->getValidLifetime());
+    EXPECT_EQ(0, pi->getPreferredLifetime());
+    EXPECT_EQ("::", pi->getPrefix().toText());
 
     // Fill Prefix Info.
-    opt->setPrefixLength(64);
-    opt->setOnLinkFlag(true);
-    opt->setAddrConfigFlag(true);
-    opt->setValidLifetime(86400); // one day
-    opt->setPreferredLifetime(21600); // 6 hours
-    opt->setPrefix(IOAddress("2001:db8::")); // 2001:db8::/64
+    pi->setPrefixLength(64);
+    pi->setOnLinkFlag(true);
+    pi->setAddrConfigFlag(true);
+    pi->setValidLifetime(86400); // one day
+    pi->setPreferredLifetime(21600); // 6 hours
+    pi->setPrefix(IOAddress("2001:db8::")); // 2001:db8::/64
+
+    // Add Prefix Info to RA.
+    ra->addOption(pi);
+    EXPECT_EQ(1, ra->getOptions().size());
+    EXPECT_TRUE(ra->getOption(ND_PREFIX_INFO));
 
     // Check RA (textual).
     string expected_txt = "RA (type=134, code=0)";
@@ -253,10 +258,14 @@ TEST(SlaacNd, prefInfoRA) {
     expected_txt += " on eth(1)\n";
     expected_txt += "hop_limit=64 flags=MO router_lifetime=3600\n";
     expected_txt += "reachable_time=300000 retrans_timer=100\n";
-    expected_txt += "options:";
-    expected_txt += "prefix info...";
+    expected_txt += "options:\n";
+    expected_txt += " type=3(PrefInfo), len=4:";
+    expected_txt += " flags=LA";
+    expected_txt += ", prefix-2001:db8::/64\n";
+    expected_txt += " valid-lifetime=86400";
+    expected_txt += ", preferred-lifetime=21600\n";
     EXPECT_EQ(expected_txt, ra->toText());
-    
+
     // Check RA (binary).
     uint8_t expected_data[] = {
         134, // type 134 RA
@@ -266,13 +275,23 @@ TEST(SlaacNd, prefInfoRA) {
         0xc0, // flags
         0x0e, 0x10, // router lifetime (3600)
         0x00, 0x04, 0x93, 0xe0, // reachable time (300000)
-        0, 0, 0, 100 // retrans timer (100)
+        0, 0, 0, 100, // retrans timer (100)
+
+        3, // type 3 Prefix Info
+        4, // length
+        64, // prefix length
+        0xc0, // flags
+        0x00, 0x01, 0x51, 0x80, // valid lifetime (86400)
+        0x00, 0x00, 0x54, 0x60, // preferred lifetime (21600)
+        0, 0, 0, 0, // reserved2
+        0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0 // prefix 2001:db8::
     };
     EXPECT_NO_THROW(ra->pack());
     const OutputBuffer& output = ra->getBuffer();
     ASSERT_EQ(sizeof(expected_data), output.getLength());
     EXPECT_EQ(0, memcmp(expected_data, output.getData(), output.getLength()));
-    
+
     // Check unpacking.
     EXPECT_NO_THROW(ra.reset(new RAPkt(expected_data, sizeof(expected_data),
                                        local, remote)));
@@ -284,6 +303,14 @@ TEST(SlaacNd, prefInfoRA) {
     EXPECT_EQ(3600, ra->getRouterLifetime());
     EXPECT_EQ(300000, ra->getReachableTime());
     EXPECT_EQ(100, ra->getRetransTimer());
+
+    EXPECT_EQ(1, ra->getOptions().size());
+    OptionPtr opt = ra->getOption(ND_PREFIX_INFO);
+    ASSERT_TRUE(opt);
+    string expected_opt = "0x030440C0000151800000546000000000";
+    expected_opt += "20010DB8000000000000000000000000";
+    EXPECT_EQ(expected_opt, opt->toHexString(true));
+    EXPECT_EQ(expected_opt, pi->toHexString(true));
 }
-    
+
 }

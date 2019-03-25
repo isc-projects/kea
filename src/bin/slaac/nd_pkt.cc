@@ -50,7 +50,7 @@ NDPkt::addOption(const OptionPtr& opt) {
 }
 
 OptionPtr
-NDPkt::getOption(const uint16_t type) {
+NDPkt::getOption(const uint8_t type) {
     OptionCollection::iterator x = options_.find(type);
     if (x != options_.end()) {
         return (x->second);
@@ -59,7 +59,7 @@ NDPkt::getOption(const uint16_t type) {
 }
 
 bool
-NDPkt::delOption(uint16_t type) {
+NDPkt::delOption(uint8_t type) {
 
     OptionCollection::iterator x = options_.find(type);
     if (x != options_.end()) {

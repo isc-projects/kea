@@ -24,26 +24,27 @@ namespace isc {
 namespace slaac {
 
 OptionPrefInfo::OptionPrefInfo()
-    : Option(ND_MTU), prefix_length_(128), on_link_flag_(false),
+    : Option(ND_PREFIX_INFO), prefix_length_(128), on_link_flag_(false),
       addr_config_flag_(false), valid_lifetime_(0), preferred_lifetime_(0),
       prefix_(IOAddress::IPV6_ZERO_ADDRESS()) {
 }
 
 OptionPrefInfo::OptionPrefInfo(const OptionBuffer& data)
-    : Option(ND_MTU, data), prefix_length_(128), on_link_flag_(false),
+    : Option(ND_PREFIX_INFO, data), prefix_length_(128), on_link_flag_(false),
       addr_config_flag_(false), valid_lifetime_(0), preferred_lifetime_(0),
       prefix_(IOAddress::IPV6_ZERO_ADDRESS()) {
     unpack();
 }
 
 OptionPrefInfo::OptionPrefInfo(OptionBufferConstIter first, OptionBufferConstIter last)
-    : Option(ND_MTU, first, last), prefix_length_(128), on_link_flag_(false),
-      addr_config_flag_(false), valid_lifetime_(0), preferred_lifetime_(0),
+    : Option(ND_PREFIX_INFO, first, last), prefix_length_(128),
+      on_link_flag_(false), addr_config_flag_(false),
+      valid_lifetime_(0), preferred_lifetime_(0),
       prefix_(IOAddress::IPV6_ZERO_ADDRESS()) {
     unpack();
 }
 
-void OptionPrefInfo::pack(isc::util::OutputBuffer& buf) const {
+void OptionPrefInfo::pack(OutputBuffer& buf) const {
     // Write a header.
     packHeader(buf);
 
@@ -126,9 +127,14 @@ string OptionPrefInfo::toText(int indent) const {
            << "flags=" << (on_link_flag_ ? "L" : "")
            << (addr_config_flag_ ? "A" : "")
            << ", prefix-" << prefix_.toText() << "/"
-           << static_cast<unsigned>(prefix_length_) << endl
-           << "valid-lifetime=" << valid_lifetime_
-           << ", preferred-lifetime="<< preferred_lifetime_ << endl;
+           << static_cast<unsigned>(prefix_length_) << endl;
+
+    for (int i = 0; i < indent; i++) {
+        output << " ";
+    }
+
+    output << "valid-lifetime=" << valid_lifetime_
+           << ", preferred-lifetime="<< preferred_lifetime_;
 
     return (output.str());
 }

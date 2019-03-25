@@ -19,7 +19,9 @@ namespace slaac {
 
 RAPkt::RAPkt(const isc::asiolink::IOAddress& local_addr,
              const isc::asiolink::IOAddress& remote_addr)
-    : NDPkt(local_addr, remote_addr)
+    : NDPkt(local_addr, remote_addr), hop_limit_(0),
+      managed_flag_(false), other_flag_(false), router_lifetime_(0),
+      reachable_time_(0), retrans_timer_(0)
 {
     type_ = ND_RT_ADV;
 }
@@ -27,7 +29,9 @@ RAPkt::RAPkt(const isc::asiolink::IOAddress& local_addr,
 RAPkt::RAPkt(const uint8_t* buf, uint32_t len,
              const isc::asiolink::IOAddress& local_addr,
              const isc::asiolink::IOAddress& remote_addr)
-    : NDPkt(buf, len, local_addr, remote_addr)
+    : NDPkt(buf, len, local_addr, remote_addr), hop_limit_(0),
+      managed_flag_(false), other_flag_(false),router_lifetime_(0),
+      reachable_time_(0), retrans_timer_(0)
 {
     type_ = ND_RT_ADV;
 }
