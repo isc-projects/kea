@@ -23,6 +23,10 @@ import textwrap
 import functools
 import subprocess
 import multiprocessing
+try:
+    import urllib.request
+except:
+    pass
 import xml.etree.ElementTree as ET
 
 # TODO:
@@ -69,11 +73,13 @@ IMAGE_TEMPLATES = {
 
 LXC_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
 # vi: set ft=ruby :
+ENV["LC_ALL"] = "C"
 
 Vagrant.configure("2") do |config|
   config.vm.hostname = "{name}"
 
   config.vm.box = "{image_tpl}"
+  {box_version}
 
   config.vm.provider "lxc" do |lxc|
     lxc.container_name = "{name}"
@@ -87,11 +93,13 @@ end
 
 VBOX_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
 # vi: set ft=ruby :
+ENV["LC_ALL"] = "C"
 
 Vagrant.configure("2") do |config|
   config.vm.hostname = "{name}"
 
   config.vm.box = "{image_tpl}"
+  {box_version}
 
   config.vm.provider "virtualbox" do |v|
     v.name = "{name}"
@@ -245,6 +253,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         log_file.close()
 
     if exitcode != 0 and raise_error:
+        if capture and quiet:
+            log.error(output)
         raise ExecutionError("The command return non-zero exitcode %s, cmd: '%s'" % (exitcode, cmd))
 
     if capture:
@@ -252,7 +262,36 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     return exitcode
 
 
-def install_pkgs(pkgs, timeout=60, env=None, check_times=False):
+def _prepare_installed_packages_cache_for_debs():
+    pkg_cache = {}
+
+    _, out = execute("dpkg -l", timeout=15, capture=True, quiet=True)
+
+    for line in out.splitlines():
+        line = line.strip()
+        m = re.search('^([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+(.+)', line)
+        if not m:
+            continue
+        status, name, version, arch, descr = m.groups()
+        name = name.split(':')[0]
+        pkg_cache[name] = dict(status=status, version=version, arch=arch, descr=descr)
+
+    return pkg_cache
+
+
+def _prepare_installed_packages_cache_for_rpms():
+    pkg_cache = {}
+
+    _, out = execute("rpm -qa --qf '%{NAME}\\n'", timeout=15, capture=True, quiet=True)
+
+    for line in out.splitlines():
+        name = line.strip()
+        pkg_cache[name] = dict(status='ii')
+
+    return pkg_cache
+
+
+def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
     """Install native packages in a system.
 
     :param dict pkgs: specifies a list of packages to be installed
@@ -263,6 +302,27 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False):
     """
     system, revision = get_system_revision()
 
+    if not isinstance(pkgs, list):
+        pkgs = pkgs.split()
+
+    # prepare cache if needed
+    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu']:
+        if system in ['centos', 'rhel', 'fedora']:
+            pkg_cache.update(_prepare_installed_packages_cache_for_rpms())
+        elif system in ['debian', 'ubuntu']:
+            pkg_cache.update(_prepare_installed_packages_cache_for_debs())
+
+        # check if packages actually need to be installed
+        pkgs_to_install = []
+        for pkg in pkgs:
+            if pkg not in pkg_cache or pkg_cache[pkg]['status'] != 'ii':
+                pkgs_to_install.append(pkg)
+        pkgs = pkgs_to_install
+
+    if not pkgs:
+        log.info('all packages already installed')
+        return
+
     if system in ['centos', 'rhel'] and revision == '7':
         # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
         # but we want an error
@@ -270,18 +330,18 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False):
     elif system == 'fedora' or (system in ['centos', 'rhel'] and revision == '8'):
         cmd = 'sudo dnf -y install'
     elif system in ['debian', 'ubuntu']:
+        # prepare the command for ubuntu/debian
         if not env:
             env = os.environ.copy()
         env['DEBIAN_FRONTEND'] = 'noninteractive'
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
         cmd = 'sudo pkg install -y'
+    else:
+        raise NotImplementedError
 
-    if isinstance(pkgs, list):
-        pkgs = ' '.join(pkgs)
-
+    pkgs = ' '.join(pkgs)
     cmd += ' ' + pkgs
-
     execute(cmd, timeout=timeout, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
 
@@ -324,8 +384,8 @@ class VagrantEnv(object):
         elif provider == "lxc":
             vagrantfile_tpl = LXC_VAGRANTFILE_TPL
 
-        key = "%s-%s-%s" % (system, revision, provider)
-        image_tpl = IMAGE_TEMPLATES[key][image_template_variant]
+        self.key = key = "%s-%s-%s" % (system, revision, provider)
+        self.image_tpl = image_tpl = IMAGE_TEMPLATES[key][image_template_variant]
         self.repo_dir = os.getcwd()
 
         sys_dir = "%s-%s" % (system, revision)
@@ -355,9 +415,17 @@ class VagrantEnv(object):
         else:
             self.ccache_enabled = True
 
+        if '/' in image_tpl:
+            self.latest_version = self._get_latest_cloud_version()
+            box_version = 'config.vm.box_version = "%s"' % self.latest_version
+        else:
+            self.latest_version = None
+            box_version = ""
+
         vagrantfile = vagrantfile_tpl.format(image_tpl=image_tpl,
                                              name=self.name,
-                                             ccache_dir=ccache_dir)
+                                             ccache_dir=ccache_dir,
+                                             box_version=box_version)
 
         with open(vagrantfile_path, "w") as f:
             f.write(vagrantfile)
@@ -366,15 +434,77 @@ class VagrantEnv(object):
 
     def up(self):
         """Do Vagrant up."""
-        execute("vagrant box update", cwd=self.vagrant_dir, timeout=20 * 60, dry_run=self.dry_run)
         execute("vagrant up --no-provision --provider %s" % self.provider,
                 cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
+
+    def _get_cloud_meta(self, image_tpl=None):
+        if '/' not in self.image_tpl:
+            return {}
+        url = 'https://app.vagrantup.com/api/v1/box/' + (image_tpl if image_tpl else self.image_tpl)
+        try:
+            with urllib.request.urlopen(url) as response:
+                data = response.read()
+        except:
+            log.exception('ignored exception')
+            return {}
+        data = json.loads(data)
+        return data
+
+    def _get_local_meta(self):
+        meta_file = os.path.join(self.vagrant_dir, '.vagrant/machines/default', self.provider, 'box_meta')
+        if not os.path.exists(meta_file):
+            return {}
+        with open(meta_file) as f:
+            data = f.read()
+        data = json.loads(data)
+        return data
+
+    def _get_latest_cloud_version(self, image_tpl=None):
+        cloud_meta = self._get_cloud_meta(image_tpl)
+        if not cloud_meta and 'versions' not in cloud_meta:
+            return 0
+        latest_version = 0
+        for ver in cloud_meta['versions']:
+            provider_found = False
+            for p in ver['providers']:
+                if p['name'] == self.provider:
+                    provider_found = True
+                    break
+            if provider_found:
+                v = int(ver['number'])
+                if v > latest_version:
+                    latest_version = v
+        return latest_version
+
+    def get_status(self):
+        """Return system status.
+
+        Status can be: 'not created', 'running', 'stopped', etc.
+        """
+        _, out = execute("vagrant status", cwd=self.vagrant_dir, timeout=15, capture=True, quiet=True)
+        m = re.search('default\s+(.+)\(', out)
+        if not m:
+            raise Exception('cannot get status in:\n%s' % out)
+        return m.group(1).strip()
+
+    def bring_up_latest_box(self):
+        if self.get_status() == 'running':
+            self.reload()
+        else:
+            self.up()
+
+    def reload(self):
+        """Do Vagrant reload."""
+        execute("vagrant reload --no-provision --force",
+                cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
+
 
     def package(self):
         """Package Vagrant system into Vagrant box."""
 
         if self.provider == 'virtualbox':
-            cmd = "vagrant package --output kea-%s-%s.box" % (self.system, self.revision)
+            box_path = "kea-%s-%s.box" % (self.system, self.revision)
+            cmd = "vagrant package --output %s" % box_path
             execute(cmd, cwd=self.vagrant_dir, timeout=4 * 60, dry_run=self.dry_run)
 
         elif self.provider == 'lxc':
@@ -414,6 +544,21 @@ class VagrantEnv(object):
 
             execute('tar -czf %s ./*' % box_path, cwd=lxc_box_dir)
             execute('sudo rm -rf %s' % lxc_box_dir)
+
+        return box_path
+
+    def upload_to_cloud(self, box_path):
+        image_tpl = IMAGE_TEMPLATES[self.key]['kea']
+        if '/' not in image_tpl:
+            return
+
+        latest_version = self._get_latest_cloud_version(image_tpl)
+        new_version = latest_version + 1
+
+        cmd = "vagrant cloud publish -f -r %s %s %s %s"
+        cmd = cmd % (image_tpl, new_version, self.provider, box_path)
+
+        execute(cmd, cwd=self.vagrant_dir, timeout=60 * 60)
 
     def upload(self, src):
         """Upload src to Vagrant system, home folder."""
@@ -489,6 +634,9 @@ class VagrantEnv(object):
                         results = json.loads(txt)
                         total = results['grand_total']
                         passed = results['grand_passed']
+
+                cmd = 'scp -F %s -r default:/home/vagrant/aggregated_tests.xml .' % ssh_cfg_path
+                execute(cmd, cwd=self.vagrant_dir)
         except:  # pylint: disable=bare-except
             log.exception('ignored issue with parsing unit test results')
 
@@ -563,6 +711,8 @@ class VagrantEnv(object):
         log_file_path = os.path.join(self.vagrant_dir, 'prepare.log')
         log.info('Prepare log file stored to %s', log_file_path)
 
+        t0 = time.time()
+
         # run prepare-system inside Vagrant system
         cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times} {ccache}"
         cmd = cmd.format(features=self.features_arg,
@@ -571,6 +721,14 @@ class VagrantEnv(object):
                          check_times='-i' if self.check_times else '',
                          ccache='--ccache-dir /ccache' if self.ccache_enabled else '')
         self.execute(cmd, timeout=40 * 60, log_file_path=log_file_path, quiet=self.quiet)
+
+        t1 = time.time()
+        dt = int(t1 - t0)
+
+        log.info('')
+        log.info(">>> Preparing %s, %s, %s completed in %s:%s", self.provider, self.system, self.revision,
+                 dt // 60, dt % 60)
+        log.info('')
 
 
 def _install_gtest_sources():
@@ -642,8 +800,12 @@ def _configure_pgsql(system, features):
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
         if exitcode != 0:
-            execute('sudo postgresql-setup --initdb --unit postgresql')
+            if system == 'centos':
+                execute('sudo postgresql-setup initdb')
+            else:
+                execute('sudo postgresql-setup --initdb --unit postgresql')
     execute('sudo systemctl start postgresql.service')
+    execute('sudo systemctl enable postgresql.service')
     cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
     cmd += "DROP DATABASE IF EXISTS keatest;\n"
     cmd += "DROP USER IF EXISTS keatest;\n"
@@ -665,9 +827,15 @@ def _configure_pgsql(system, features):
         cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
         cmd += "EOF\n\""
         execute(cmd)
+        # TODO: in /etc/postgresql/10/main/pg_hba.conf
+        # change:
+        #    local   all             all                                     peer
+        # to:
+        #    local   all             all                                     md5
+    log.info('postgresql just configured')
 
 
-def _install_cassandra_deb(env, check_times):
+def _install_cassandra_deb(system, revision, env, check_times):
     """Install Cassandra and cpp-driver using DEB package."""
     if not os.path.exists('/usr/sbin/cassandra'):
         cmd = 'echo "deb http://www.apache.org/dist/cassandra/debian 311x main" '
@@ -679,18 +847,51 @@ def _install_cassandra_deb(env, check_times):
         install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
-        execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
-                env=env, check_times=check_times)
-        execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
-                env=env, check_times=check_times)
+        if system == 'ubuntu' and revision == '16.04':
+            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
+                    env=env, check_times=check_times)
+            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/16.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
+                    env=env, check_times=check_times)
+        else:
+            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
+                    env=env, check_times=check_times)
+            execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
+                    env=env, check_times=check_times)
         execute('sudo dpkg -i cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb',
                 env=env, check_times=check_times)
         execute('rm -rf cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb',
                 env=env, check_times=check_times)
 
 
+def _install_cassandra_rpm(system, env, check_times):
+    """Install Cassandra and cpp-driver using RPM package."""
+    if not os.path.exists('/usr/bin/cassandra'):
+        if system == 'centos':
+            install_pkgs('yum-utils', env=env, check_times=check_times)
+            execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
+            execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
+            pkgs = 'cassandra cassandra-tools libuv libuv-devel openssl'
+        else:
+            pkgs = 'cassandra cassandra-server libuv libuv-devel'
+        install_pkgs(pkgs, env=env, check_times=check_times)
+
+    if system == 'centos':
+        execute('sudo systemctl daemon-reload')
+    execute('sudo systemctl start cassandra')
+
+    if not os.path.exists('/usr/include/cassandra.h'):
+        execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm')
+        execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+        execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+        execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+
+
 def _install_freeradius_client(env, check_times):
     """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
+    if (os.path.exists('/usr/local/lib/libfreeradius-client.so.2.0.0') and
+        os.path.exists('/usr/local/include/freeradius-client.h')):
+        log.info('freeradius is already installed')
+        return
     execute('rm -rf freeradius-client')
     execute('git clone https://github.com/fxdupont/freeradius-client.git', env=env, check_times=check_times)
     execute('git checkout iscdev', cwd='freeradius-client', env=env, check_times=check_times)
@@ -699,22 +900,7 @@ def _install_freeradius_client(env, check_times):
     execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
     execute('sudo ldconfig', env=env, check_times=check_times)
     execute('rm -rf freeradius-client')
-
-
-def _install_cassandra_rpm(env, check_times):
-    """Install Cassandra and cpp-driver using RPM package."""
-    if not os.path.exists('/usr/bin/cassandra'):
-        #execute('sudo dnf config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
-        #execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
-        install_pkgs('cassandra cassandra-server libuv libuv-devel', env=env, check_times=check_times)
-
-    execute('sudo systemctl start cassandra')
-
-    if not os.path.exists('/usr/include/cassandra.h'):
-        execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm')
-        execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+    log.info('freeradius just installed')
 
 
 def prepare_system_local(features, check_times):
@@ -756,7 +942,7 @@ def prepare_system_local(features, check_times):
         execute('sudo dnf clean packages', env=env, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_rpm(env, check_times)
+            _install_cassandra_rpm(system, env, check_times)
 
     # prepare centos
     elif system == 'centos':
@@ -786,7 +972,7 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(env, check_times)
+            _install_cassandra_rpm(system, env, check_times)
 
     # prepare rhel
     elif system == 'rhel':
@@ -832,7 +1018,7 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(env, check_times)
+            _install_cassandra_rpm(system, env, check_times)
 
     # prepare ubuntu
     elif system == 'ubuntu':
@@ -863,7 +1049,10 @@ def prepare_system_local(features, check_times):
                 packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+            if revision == '16.04':
+                packages.extend(['postgresql-client', 'libpq-dev', 'postgresql', 'postgresql-server-dev-all'])
+            else:
+                packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -874,7 +1063,7 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_deb(env, check_times)
+            _install_cassandra_deb(system, revision, env, check_times)
 
     # prepare debian
     elif system == 'debian':
@@ -899,6 +1088,9 @@ def prepare_system_local(features, check_times):
             else:
                 packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
 
+        if 'pgsql' in features:
+            packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+
         if 'radius' in features:
             packages.extend(['git'])
 
@@ -909,7 +1101,7 @@ def prepare_system_local(features, check_times):
 
         if 'cql' in features and revision != '8':
             # there is no libuv1 package in case of debian 8
-            _install_cassandra_deb(env, check_times)
+            _install_cassandra_deb(system, revision, env, check_times)
 
     # prepare freebsd
     elif system == 'freebsd':
@@ -958,7 +1150,7 @@ def prepare_system_in_vagrant(provider, system, revision, features, dry_run, che
                     ccache_dir=ccache_dir)
     if clean_start:
         ve.destroy()
-    ve.up()
+    ve.bring_up_latest_box()
     ve.prepare_system()
 
 
@@ -1063,12 +1255,15 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         results = {}
         grand_total = 0
         grand_not_passed = 0
+        aggregated_root = ET.Element('testsuites')
         for fn in os.listdir(results_dir):
             if not fn.endswith('.xml'):
                 continue
             fp = os.path.join(results_dir, fn)
             tree = ET.parse(fp)
             root = tree.getroot()
+
+            # prepare stats for json
             total = int(root.get('tests'))
             failures = int(root.get('failures'))
             disabled = int(root.get('disabled'))
@@ -1077,6 +1272,13 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             grand_total += total
             grand_not_passed += failures + errors
 
+            # append testsuits to aggregated root
+            for ts in root.findall('testsuite'):
+                if not ts:
+                    continue
+                aggregated_root.append(ts)
+
+        # prepare and stats in json
         grand_passed = grand_total - grand_not_passed
         results['grand_passed'] = grand_total - grand_not_passed
         results['grand_total'] = grand_total
@@ -1090,6 +1292,12 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
 
         with open('unit-test-results.json', 'w') as f:
             f.write(json.dumps(results))
+
+        # store aggregated results in XML
+        if os.path.exists('aggregated_tests.xml'):
+            os.unlink('aggregated_tests.xml')
+        aggr = ET.ElementTree(aggregated_root)
+        aggr.write('aggregated_tests.xml')
 
     if 'install' in features:
         execute('sudo make install', timeout=2 * 60,
@@ -1197,7 +1405,7 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
                         ccache_dir)
         if clean_start:
             ve.destroy()
-        ve.up()
+        ve.bring_up_latest_box()
         ve.prepare_system()
         total, passed = ve.run_build_and_test(tarball_path, jobs)
         msg = ' - ' + green('all ok')
@@ -1229,10 +1437,11 @@ def package_box(provider, system, revision, features, dry_run, check_times):
     """Prepare Vagrant box of specified system."""
     ve = VagrantEnv(provider, system, revision, features, 'bare', dry_run, check_times=check_times)
     ve.destroy()
-    ve.up()
+    ve.bring_up_latest_box()
     ve.prepare_system()
     # TODO cleanup
-    ve.package()
+    box_path = ve.package()
+    ve.upload_to_cloud(box_path)
 
 
 def ssh(provider, system, revision):
