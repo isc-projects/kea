@@ -128,6 +128,7 @@ libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_utils.cc test_utils.h
 libdhcpsrv_unittests_SOURCES += timer_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_state_unittest.cc
+libdhcpsrv_unittests_SOURCES += network_unittest.cc
 
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 if HAVE_MYSQL

@@ -62,7 +62,6 @@ libkea_dhcpsrv_la_SOURCES  =
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
-libkea_dhcpsrv_la_SOURCES += assignable_network.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
@@ -281,7 +280,6 @@ libkea_dhcpsrv_include_HEADERS = \
 	alloc_engine.h \
 	alloc_engine_log.h \
 	alloc_engine_messages.h \
-	assignable_network.h \
 	base_host_data_source.h \
 	cache_host_data_source.h \
 	callout_handle_store.h \

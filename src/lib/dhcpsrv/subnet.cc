@@ -59,7 +59,9 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       last_allocated_ia_(lastAddrInPrefix(prefix, len)),
       last_allocated_ta_(lastAddrInPrefix(prefix, len)),
       last_allocated_pd_(lastAddrInPrefix(prefix, len)),
-      last_allocated_time_() {
+      last_allocated_time_(),
+      iface_(),
+      shared_network_name_() {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,

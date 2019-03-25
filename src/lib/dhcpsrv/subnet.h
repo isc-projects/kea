@@ -11,8 +11,8 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
-#include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
@@ -31,12 +31,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public virtual data::UserContext, public data::CfgToElement {
-
-    // Assignable network is our friend to allow it to call
-    // @ref Subnet::setSharedNetwork private function.
-    friend class AssignableNetwork;
-
+class Subnet : public virtual Network {
 public:
 
     /// @brief checks if specified address is in range
@@ -231,6 +226,60 @@ public:
         static_id_ = 1;
     }
 
+    /// @brief Retrieves pointer to a shared network associated with a subnet.
+    ///
+    /// By implementing it as a template function we overcome a need to
+    /// include shared_network.h header file to specify return type explicitly.
+    /// The header can't be included because it would cause circular dependency
+    /// between subnet.h and shared_network.h.
+    ///
+    /// This method uses an argument to hold a return value to allow the compiler
+    /// to infer the return type without a need to call this function with an
+    /// explicit return type as template argument.
+    ///
+    /// @param [out] shared_network Pointer to the shared network where returned
+    /// value should be assigned.
+    ///
+    /// @tparam Type of the shared network, i.e. @ref SharedNetwork4 or a
+    /// @ref SharedNetwork6.
+    template<typename SharedNetworkPtrType>
+    void getSharedNetwork(SharedNetworkPtrType& shared_network) const {
+        shared_network = boost::dynamic_pointer_cast<
+            typename SharedNetworkPtrType::element_type>(parent_network_.lock());
+    }
+
+    /// @brief Assigns shared network to a subnet.
+    ///
+    /// This method replaces any shared network associated with a subnet with
+    /// a new shared network.
+    ///
+    /// @param shared_network Pointer to a new shared network to be associated
+    /// with the subnet.
+    void setSharedNetwork(const NetworkPtr& shared_network) {
+        parent_network_ = shared_network;
+    }
+
+    /// @brief Returns shared network name.
+    std::string getSharedNetworkName() const {
+        return (shared_network_name_);
+    }
+
+    /// @brief Sets new shared network name.
+    ///
+    /// In certain cases the subnet must be associated with the shared network
+    /// but the shared network object is not available. In particular, subnets
+    /// are returned from the configuration database with only names of the
+    /// shared networks. The actual shared networks must be fetched from the
+    /// database using a separate query. In order to not loose associations
+    /// of subnets with shared networks, the configuration backends will use
+    /// this method to store the shared network names. The servers will later
+    /// use those names to associate subnets with shared network instances.
+    ///
+    /// @param shared_network_name New shared network name.
+    void setSharedNetworkName(const std::string& shared_network_name) {
+        shared_network_name_ = shared_network_name;
+    }
+
     /// @brief Returns all pools (non-const variant)
     ///
     /// The reference is only valid as long as the object that returned it.
@@ -385,6 +434,9 @@ protected:
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
+
+    /// @brief Shared network name.
+    std::string shared_network_name_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object

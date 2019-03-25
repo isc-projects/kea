@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/element_extractor.h>
 #include <cc/stamped_element.h>
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
@@ -21,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <cstdint>
+#include <functional>
 #include <string>
 
 namespace isc {
@@ -37,6 +39,9 @@ typedef boost::shared_ptr<Network> NetworkPtr;
 /// @brief Weak pointer to the @ref Network object.
 typedef boost::weak_ptr<Network> WeakNetworkPtr;
 
+/// @brief Callback function for @c Network that retrieves globally
+/// configured parameters.
+typedef std::function<data::ConstElementPtr()> FetchNetworkGlobalsFn;
 
 /// @brief Common interface representing a network to which the DHCP clients
 /// are connected.
@@ -187,58 +192,12 @@ public:
     /// Does nothing at the moment.
     virtual ~Network() { };
 
-    /// @brief Retrieves pointer to a shared network associated with a subnet.
+    /// @brief Sets the optional callback function used to fetch globally
+    /// configured parameters.
     ///
-    /// By implementing it as a template function we overcome a need to
-    /// include shared_network.h header file to specify return type explicitly.
-    /// The header can't be included because it would cause circular dependency
-    /// between subnet.h and shared_network.h.
-    ///
-    /// This method uses an argument to hold a return value to allow the compiler
-    /// to infer the return type without a need to call this function with an
-    /// explicit return type as template argument.
-    ///
-    /// @param [out] shared_network Pointer to the shared network where returned
-    /// value should be assigned.
-    ///
-    /// @tparam Type of the shared network, i.e. @ref SharedNetwork4 or a
-    /// @ref SharedNetwork6.
-    template<typename SharedNetworkPtrType>
-    void getSharedNetwork(SharedNetworkPtrType& shared_network) const {
-        shared_network = boost::dynamic_pointer_cast<
-            typename SharedNetworkPtrType::element_type>(parent_network_.lock());
-    }
-
-    /// @brief Assigns shared network to a subnet.
-    ///
-    /// This method replaces any shared network associated with a subnet with
-    /// a new shared network.
-    ///
-    /// @param shared_network Pointer to a new shared network to be associated
-    /// with the subnet.
-    void setSharedNetwork(const NetworkPtr& shared_network) {
-        parent_network_ = shared_network;
-    }
-
-    /// @brief Returns shared network name.
-    std::string getSharedNetworkName() const {
-        return (shared_network_name_);
-    }
-
-    /// @brief Sets new shared network name.
-    ///
-    /// In certain cases the subnet must be associated with the shared network
-    /// but the shared network object is not available. In particular, subnets
-    /// are returned from the configuration database with only names of the
-    /// shared networks. The actual shared networks must be fetched from the
-    /// database using a separate query. In order to not loose associations
-    /// of subnets with shared networks, the configuration backends will use
-    /// this method to store the shared network names. The servers will later
-    /// use those names to associate subnets with shared network instances.
-    ///
-    /// @param shared_network_name New shared network name.
-    void setSharedNetworkName(const std::string& shared_network_name) {
-        shared_network_name_ = shared_network_name;
+    /// @param fetch_globals_fn Pointer to the function.
+    void setFetchGlobalsFn(FetchNetworkGlobalsFn fetch_globals_fn) {
+        fetch_globals_fn_ = fetch_globals_fn;
     }
 
     /// @brief Sets local name of the interface for which this network is
@@ -258,7 +217,7 @@ public:
     ///
     /// @return Interface name as text.
     util::Optional<std::string> getIface() const {
-        return (iface_name_);
+        return (getProperty(&Network::getIface, iface_name_, "interface"));
     };
 
     /// @brief Sets information about relay
@@ -402,7 +361,9 @@ public:
     /// @return whether in-pool host reservations are allowed.
     util::Optional<HRMode>
     getHostReservationMode() const {
-        return (getProperty(&Network::getHostReservationMode, host_reservation_mode_));
+        return (getProperty<Network>(&Network::getHostReservationMode,
+                                     host_reservation_mode_,
+                                     "reservation-mode"));
     }
 
     /// @brief Sets host reservation mode.
@@ -468,21 +429,32 @@ public:
 
 protected:
 
-    template<typename ReturnType, typename PropertyType>
+    template<typename BaseType, typename ReturnType>
     util::Optional<ReturnType>
-    getProperty(util::Optional<ReturnType>(Network::*MethodPointer)() const,
-                PropertyType property) const {
+    getProperty(util::Optional<ReturnType>(BaseType::*MethodPointer)() const,
+                util::Optional<ReturnType> property, const std::string& global_name) const {
         if (property.unspecified()) {
-            auto sn = parent_network_.lock();
-            if (sn) {
-                auto value = ((*sn).*MethodPointer)();
-                if (!value.unspecified()) {
-                    return (value);
+            auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
+            if (parent) {
+                auto parent_property = ((*parent).*MethodPointer)();
+                if (!parent_property.unspecified()) {
+                    return (parent_property);
+
+                }
+            }
+
+            if (fetch_globals_fn_) {
+                data::ConstElementPtr globals = fetch_globals_fn_();
+                if (globals && (globals->getType() == data::Element::map)) {
+                    data::ConstElementPtr global_param = globals->get(global_name);
+                    if (global_param) {
+                        return (data::ElementExtractor<ReturnType>()(global_param));
+                    }
                 }
             }
         }
-        return (property);
 
+        return (property);
     }
 
     /// @brief Holds interface name for which this network is selected.
@@ -540,12 +512,13 @@ protected:
     /// a shared network this pointer is null.
     WeakNetworkPtr parent_network_;
 
-    /// @brief Shared network name.
-    std::string shared_network_name_;
+    /// @brief Pointer to the optional callback used to fetch globally
+    /// configured parameters inherited to the @c Network object.
+    FetchNetworkGlobalsFn fetch_globals_fn_;
 };
 
 /// @brief Specialization of the @ref Network object for DHCPv4 case.
-class Network4 : public Network {
+class Network4 : public virtual Network {
 public:
 
     /// @brief Constructor.
@@ -577,7 +550,8 @@ public:
     /// @return true if requests for unknown IP addresses should be rejected,
     /// false otherwise.
     util::Optional<bool> getAuthoritative() const {
-        return (authoritative_);
+        return (getProperty<Network4>(&Network4::getAuthoritative, authoritative_,
+                                      "authoritative"));
     }
 
     /// @brief Sets the flag indicating if requests for unknown IP addresses
@@ -652,7 +626,7 @@ private:
 };
 
 /// @brief Specialization of the @ref Network object for DHCPv6 case.
-class Network6 : public Network {
+class Network6 : public virtual Network {
 public:
 
     /// @brief Constructor.
