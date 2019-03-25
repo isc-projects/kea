@@ -590,6 +590,8 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
     ASSERT_EQ(0, cb_ctl_.getMergesNum());
 }
 
+// This test verifies that database config fetch failures are handled
+// gracefully.
 TEST_F(CBControlBaseTest, fetchFailure) {
     auto config_base = makeConfigBase("type=db1");
 

@@ -53,6 +53,13 @@ The server will re-try according to the configured value of the
 config-fetch-wait-time parameter. The sole argument contains the
 reason for failure.
 
+% DHCP4_CB_FETCH_UPDATES_RETRIES_EXHAUSTED maximum number of configuration fetch attempts: 10, has been exhausted without success
+This error indicates that the server has made a number of unsuccessful
+attempts to fetch configuration updates from a configuration backend.
+The server will continue to operate but won't make any further attempts
+to fetch configuration updates. The administrator must fix the configuration
+in the database and reload (or restart) the server.
+
 % DHCP4_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
 class or classes. This is a normal behavior and indicates successful operation.

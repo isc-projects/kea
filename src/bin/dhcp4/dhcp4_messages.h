@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Mar 20 2019 11:09
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Mon Mar 25 2019 20:13
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -15,6 +15,7 @@ extern const isc::log::MessageID DHCP4_BUFFER_RECEIVE_FAIL;
 extern const isc::log::MessageID DHCP4_BUFFER_UNPACK;
 extern const isc::log::MessageID DHCP4_BUFFER_WAIT_SIGNAL;
 extern const isc::log::MessageID DHCP4_CB_FETCH_UPDATES_FAIL;
+extern const isc::log::MessageID DHCP4_CB_FETCH_UPDATES_RETRIES_EXHAUSTED;
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED;
 extern const isc::log::MessageID DHCP4_CLASS_UNDEFINED;

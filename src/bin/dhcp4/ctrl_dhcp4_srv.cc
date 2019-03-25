@@ -690,10 +690,12 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
                 fetch_time = 1000 * fetch_time;
             }
 
+            boost::shared_ptr<unsigned> failure_count(new unsigned(0));
             TimerMgr::instance()->
                 registerTimer("Dhcp4CBFetchTimer",
                               boost::bind(&ControlledDhcpv4Srv::cbFetchUpdates,
-                                          server_, CfgMgr::instance().getStagingCfg()),
+                                          server_, CfgMgr::instance().getStagingCfg(),
+                                          failure_count),
                               fetch_time,
                               asiolink::IntervalTimer::ONE_SHOT);
             TimerMgr::instance()->setup("Dhcp4CBFetchTimer");
@@ -968,17 +970,27 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
 }
 
 void
-ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg) {
+ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
+                                    boost::shared_ptr<unsigned> failure_count) {
     try {
         // The true value indicates that the server should not reconnect
         // to the configuration backends and should take into account
         // audit entries stored in the database since last fetch.
         server_->getCBControl()->databaseConfigFetch(srv_cfg,
                                                      CBControlDHCPv4::FetchMode::FETCH_UPDATE);
+        (*failure_count) = 0;
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
             .arg(ex.what());
+
+        // We allow at most 10 consecutive failures after which we stop
+        // making further attempts to fetch the configuration updates.
+        // Let's return without re-scheduling the timer.
+        if (++(*failure_count) > 10) {
+            LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_RETRIES_EXHAUSTED);
+            return;
+        }
     }
 
     // Reschedule the timer to fetch new updates or re-try if
