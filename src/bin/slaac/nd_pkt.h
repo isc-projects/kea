@@ -196,6 +196,15 @@ public:
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(const uint16_t type);
 
+    /// @brief Returns all options.
+    ///
+    /// @warning This function returns a reference to the container holding
+    /// encapsulated options, which is valid as long as the object which
+    /// returned it exists.
+    const OptionCollection& getOptions() const {
+        return (options_);
+    }
+
     /// @brief Update packet timestamp.
     ///
     /// Updates packet timestamp. This method is invoked
@@ -308,16 +317,6 @@ public:
     virtual ~NDPkt() {
     }
 
-    /// @brief Collection of options present in this message.
-    ///
-    /// @warning This public member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived classes'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::slaac::OptionCollection options_;
-
 protected:
 
     /// @brief Type of the message (e.g. 133 = RS).
@@ -325,6 +324,9 @@ protected:
 
     /// @brief Code of the message (always 0 in standard ND messages).
     uint8_t code_;
+
+    /// @brief Collection of options present in this message.
+    OptionCollection options_;
 
     /// @brief Interface name.
     ///
