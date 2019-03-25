@@ -41,7 +41,7 @@ const SimpleDefaults SlaacSimpleParser::SLAAC_DEFAULTS = {
     { "other-flag",      Element::boolean, "false" },
     { "router-lifetime", Element::integer, "0" },
     { "reachable-time",  Element::integer, "0" },
-    { "retranb-timer",   Element::integer, "0" }
+    { "retrans-timer",   Element::integer, "0" }
 };
 
 /// @}

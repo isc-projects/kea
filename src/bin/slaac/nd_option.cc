@@ -10,6 +10,7 @@
 #include <slaac/nd_option_lladdr.h>
 #include <slaac/nd_option_pref_info.h>
 #include <slaac/nd_option_mtu.h>
+#include <slaac/nd_option_univ_ra.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
@@ -262,6 +263,9 @@ void unpackOptions(const OptionBuffer& buf, size_t offset,
             break;
         case ND_MTU:
             opt.reset(new OptionMtu(opt_begin, opt_end));
+            break;
+        case ND_UNIVERSAL_RA:
+            opt.reset(new OptionUnivRa(opt_begin, opt_end));
             break;
         default:
             opt.reset(new Option(type, opt_begin, opt_end));
