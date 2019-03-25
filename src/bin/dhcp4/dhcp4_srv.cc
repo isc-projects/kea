@@ -46,7 +46,7 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <util/strutil.h>
-#include <stats/stats_mgr.h>
+#include <util/threads/lock_guard.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <cfgrpt/config_report.h>
@@ -70,6 +70,7 @@
 
 #include <iomanip>
 
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::cryptolink;
@@ -79,6 +80,8 @@ using namespace isc::hooks;
 using namespace isc::log;
 using namespace isc::stats;
 using namespace std;
+
+using isc::util::thread::LockGuard;
 
 namespace {
 
@@ -187,7 +190,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             .arg(query_->getLabel())
             .arg(classes.toText());
     }
-};
+}
 
 void
 Dhcpv4Exchange::initResponse() {
@@ -443,15 +446,20 @@ Dhcpv4Exchange::setReservedMessageFields() {
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
+                     bool run_multithreaded /* = false */,
                      const bool use_bcast, const bool direct_response_desired)
     : io_service_(new IOService()), shutdown_(true), alloc_engine_(),
       server_port_(server_port), use_bcast_(use_bcast),
       client_port_(client_port),
       network_state_(new NetworkState(NetworkState::DHCPv4)),
-      cb_control_(new CBControlDHCPv4()) {
+      cb_control_(new CBControlDHCPv4()),
+      run_multithreaded_(run_multithreaded) {
+
+    mutex_.reset(new std::mutex());
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
         .arg(server_port);
+
     try {
         // Port 0 is used for testing purposes where we don't open broadcast
         // capable sockets. So, set the packet filter handling direct traffic
@@ -734,10 +742,21 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 
 bool
 Dhcpv4Srv::run() {
+    if (run_multithreaded_) {
+        // Creating the process packet thread pool
+        // The number of thread pool's threads should be read from configuration
+        // file or it should be determined by the number of hardware threads and
+        // the number of Cassandra DB nodes.
+        pkt_thread_pool_.create(Dhcpv4Srv::threadCount());
+    }
+
     while (!shutdown_) {
         try {
             run_one();
-            getIOService()->poll();
+            {
+                LockGuard<mutex> lock(serverLock());
+                getIOService()->poll();
+            }
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
@@ -751,6 +770,11 @@ Dhcpv4Srv::run() {
         }
     }
 
+    // destroying the thread pool
+    if (run_multithreaded_) {
+        pkt_thread_pool_.destroy();
+    }
+
     return (true);
 }
 
@@ -761,11 +785,27 @@ Dhcpv4Srv::run_one() {
     Pkt4Ptr rsp;
 
     try {
+
+        // Do not read more packets from socket if there are enough
+        // packets to be processed in the packet thread pool queue
+        const int max_queued_pkt_per_thread = Dhcpv4Srv::maxThreadQueueSize();
+        const auto queue_full_wait = std::chrono::milliseconds(1);
+        size_t pkt_queue_size = pkt_thread_pool_.count();
+        if (pkt_queue_size >= Dhcpv4Srv::threadCount() *
+            max_queued_pkt_per_thread) {
+            std::this_thread::sleep_for(queue_full_wait);
+            return;
+        }
+
         // Set select() timeout to 1s. This value should not be modified
         // because it is important that the select() returns control
         // frequently so as the IOService can be polled for ready handlers.
         uint32_t timeout = 1;
-        query = receivePacket(timeout);
+        {
+            // LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT).arg(timeout);
+            LockGuard<mutex> lock(serverLock());
+            query = receivePacket(timeout);
+        }
 
         // Log if packet has arrived. We can't log the detailed information
         // about the DHCP message because it hasn't been unpacked/parsed
@@ -812,6 +852,7 @@ Dhcpv4Srv::run_one() {
     // receivePacket the process could wait up to the duration of timeout
     // of select() to terminate.
     try {
+        LockGuard<mutex> lock(serverLock());
         handleSignal();
     } catch (const std::exception& e) {
         // Standard exception occurred. Let's be on the safe side to
@@ -834,9 +875,32 @@ Dhcpv4Srv::run_one() {
             .arg(query->getLabel());
         return;
     } else {
-        processPacket(query, rsp);
+    if (run_multithreaded_) {
+        ThreadPool::WorkItemCallBack call_back =
+            std::bind(&Dhcpv4Srv::processPacketAndSendResponseNoThrow, this, query, rsp);
+        pkt_thread_pool_.add(call_back);
+    } else {
+        processPacketAndSendResponse(query, rsp);
     }
+    }
+}
 
+void
+Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp) {
+    try {
+        processPacketAndSendResponse(query, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+void
+Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp) {
+    LockGuard<mutex> lock(serverLock());
+    processPacket(query, rsp);
     if (!rsp) {
         return;
     }
@@ -3682,6 +3746,23 @@ int Dhcpv4Srv::getHookIndexLease4Decline() {
     return (Hooks.hook_index_lease4_decline_);
 }
 
+uint32_t Dhcpv4Srv::threadCount() {
+    uint32_t sys_threads = CfgMgr::instance().getCurrentCfg()->getServerThreadCount();
+    if (sys_threads) {
+        return sys_threads;
+    }
+    sys_threads = std::thread::hardware_concurrency();
+    return sys_threads * 4;
+}
+
+uint32_t Dhcpv4Srv::maxThreadQueueSize() {
+    uint32_t max_thread_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
+    if (max_thread_queue_size) {
+        return max_thread_queue_size;
+    }
+    return 4;
+}
+
 void Dhcpv4Srv::discardPackets() {
     // Clear any packets held by the callhout handle store and
     // all parked packets
@@ -3690,5 +3771,5 @@ void Dhcpv4Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-}   // namespace dhcp
-}   // namespace isc
+}  // namespace dhcp
+}  // namespace isc

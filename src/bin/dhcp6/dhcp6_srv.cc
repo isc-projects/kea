@@ -45,11 +45,11 @@
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
-
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/pointer_util.h>
 #include <util/range_utilities.h>
+#include <util/threads/lock_guard.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <cfgrpt/config_report.h>
@@ -89,6 +89,8 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
+
+using isc::util::thread::LockGuard;
 
 namespace {
 
@@ -172,19 +174,23 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
     return (option_status);
 }
 
-}; // anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
 
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
+Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port, bool run_multithreaded /* = false */)
     : io_service_(new IOService()), server_port_(server_port),
       client_port_(client_port), serverid_(), shutdown_(true),
       alloc_engine_(), name_change_reqs_(),
       network_state_(new NetworkState(NetworkState::DHCPv6)),
-      cb_control_(new CBControlDHCPv6()) {
+      cb_control_(new CBControlDHCPv6()),
+      run_multithreaded_(run_multithreaded) {
+
+    mutex_.reset(new std::mutex());
+
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET)
         .arg(server_port);
 
@@ -237,7 +243,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
         // LOG_ERROR(dhcp6_logger, DHCP6_SRV_DHCP4O6_ERROR).arg(ex.what());
     }
 
-    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().closeSockets(serverLock());
 
     LeaseMgrFactory::destroy();
 
@@ -251,7 +257,7 @@ void Dhcpv6Srv::shutdown() {
 }
 
 Pkt6Ptr Dhcpv6Srv::receivePacket(int timeout) {
-    return (IfaceMgr::instance().receive6(timeout));
+    return (IfaceMgr::instance().receive6(timeout, 0, serverLock()));
 }
 
 void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
@@ -405,10 +411,21 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 }
 
 bool Dhcpv6Srv::run() {
+    if (run_multithreaded_) {
+        // Creating the process packet thread pool
+        // The number of thread pool's threads should be read from configuration
+        // file or it should be determined by the number of hardware threads and
+        // the number of Cassandra DB nodes.
+        pkt_thread_pool_.create(Dhcpv6Srv::threadCount());
+    }
+
     while (!shutdown_) {
         try {
             run_one();
-            getIOService()->poll();
+            {
+                LockGuard<mutex> lock(serverLock());
+                getIOService()->poll();
+            }
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
@@ -421,6 +438,11 @@ bool Dhcpv6Srv::run() {
         }
     }
 
+    // destroying the thread pool
+    if (run_multithreaded_) {
+        pkt_thread_pool_.destroy();
+    }
+
     return (true);
 }
 
@@ -430,11 +452,27 @@ void Dhcpv6Srv::run_one() {
     Pkt6Ptr rsp;
 
     try {
+
+        // Do not read more packets from socket if there are enough
+        // packets to be processed in the packet thread pool queue
+        const int max_queued_pkt_per_thread = Dhcpv6Srv::maxThreadQueueSize();
+        const auto queue_full_wait = std::chrono::milliseconds(1);
+        size_t pkt_queue_size = pkt_thread_pool_.count();
+        if (pkt_queue_size >= Dhcpv6Srv::threadCount() *
+            max_queued_pkt_per_thread) {
+            std::this_thread::sleep_for(queue_full_wait);
+            return;
+        }
+
         // Set select() timeout to 1s. This value should not be modified
         // because it is important that the select() returns control
         // frequently so as the IOService can be polled for ready handlers.
         uint32_t timeout = 1;
-        query = receivePacket(timeout);
+        {
+            // LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT).arg(timeout);
+            LockGuard<mutex> lock(serverLock());
+            query = receivePacket(timeout);
+        }
 
         // Log if packet has arrived. We can't log the detailed information
         // about the DHCP message because it hasn't been unpacked/parsed
@@ -487,6 +525,7 @@ void Dhcpv6Srv::run_one() {
     // process could wait up to the duration of timeout of select() to
     // terminate.
     try {
+        LockGuard<mutex> lock(serverLock());
         handleSignal();
     } catch (const std::exception& e) {
         // An (a standard or ISC) exception occurred.
@@ -507,9 +546,32 @@ void Dhcpv6Srv::run_one() {
             .arg(query->getLabel());
         return;
     } else {
-        processPacket(query, rsp);
+    if (run_multithreaded_) {
+        ThreadPool::WorkItemCallBack call_back =
+            std::bind(&Dhcpv6Srv::processPacketAndSendResponseNoThrow, this, query, rsp);
+        pkt_thread_pool_.add(call_back);
+    } else {
+        processPacketAndSendResponse(query, rsp);
     }
+    }
+}
 
+void
+Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    try {
+        processPacketAndSendResponse(query, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+void
+Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    LockGuard<mutex> lock(serverLock());
+    processPacket(query, rsp);
     if (!rsp) {
         return;
     }
@@ -1289,7 +1351,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
         switch (pkt->getType()) {
         case DHCPV6_SOLICIT:
         case DHCPV6_REBIND:
-    case DHCPV6_CONFIRM:
+        case DHCPV6_CONFIRM:
             sanityCheck(pkt, MANDATORY, FORBIDDEN);
             return (true);
 
@@ -1511,6 +1573,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
+            break;
         }
         default:
             break;
@@ -2242,7 +2305,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
 
-
         if (pd_exclude_requested) {
             // PD exclude option has been requested via ORO, thus we need to
             // include it if the pool configuration specifies this option.
@@ -2256,7 +2318,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                 }
             }
         }
-
 
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
             .arg(query->getLabel())
@@ -3862,6 +3923,23 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
     return (false);
 }
 
+uint32_t Dhcpv6Srv::threadCount() {
+    uint32_t sys_threads = CfgMgr::instance().getCurrentCfg()->getServerThreadCount();
+    if (sys_threads) {
+        return sys_threads;
+    }
+    sys_threads = std::thread::hardware_concurrency();
+    return sys_threads * 4;
+}
+
+uint32_t Dhcpv6Srv::maxThreadQueueSize() {
+    uint32_t max_thread_queue_size = CfgMgr::instance().getCurrentCfg()->getServerMaxThreadQueueSize();
+    if (max_thread_queue_size) {
+        return max_thread_queue_size;
+    }
+    return 4;
+}
+
 void Dhcpv6Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
     isc::dhcp::Pkt6Ptr pkt6ptr_empty;
@@ -3869,5 +3947,5 @@ void Dhcpv6Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc

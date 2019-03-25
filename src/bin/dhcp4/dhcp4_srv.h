@@ -15,6 +15,7 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp_ddns/ncr_msg.h>
+#include <dhcpsrv/thread_pool.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
@@ -30,6 +31,8 @@
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <boost/scoped_ptr.hpp>
+#include <atomic>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in
@@ -223,11 +226,13 @@ public:
     ///
     /// @param server_port specifies port number to listen on
     /// @param client_port specifies port number to send to
+    /// @param run_multithreaded enables or disables multithreaded mode
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param direct_response_desired specifies if it is desired to
     /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t server_port = DHCP4_SERVER_PORT,
               uint16_t client_port = 0,
+              bool run_multithreaded = false,
               const bool use_bcast = true,
               const bool direct_response_desired = true);
 
@@ -265,6 +270,17 @@ public:
     /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
 
+    /// @brief returns Kea DHCPv4 server thread count.
+    static uint32_t threadCount();
+
+    /// @brief returns Kea DHCPv4 server max thread queue size.
+    static uint32_t maxThreadQueueSize();
+
+    /// @brief returns Kea DHCPv4 server mutex.
+    std::mutex* serverLock() {
+        return mutex_.get();
+    }
+
     /// @brief Main server processing loop.
     ///
     /// Main server processing loop. Call the processing step routine
@@ -279,6 +295,24 @@ public:
     /// the processing packet routing and (if necessary) transmits
     /// a response.
     void run_one();
+
+    /// @brief Process a single incoming DHCPv4 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp);
+
+    /// @brief Process a single incoming DHCPv4 packet and sends the response.
+    ///
+    /// It verifies correctness of the passed packet, call per-type processXXX
+    /// methods, generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param rsp A pointer to the response
+    void processPacketAndSendResponseNoThrow(Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
@@ -302,8 +336,8 @@ public:
     ///
     /// @brief Get UDP port on which server should listen.
     ///
-    /// Typically, server listens on UDP port number 67. Other ports are used
-    /// for testing purposes only.
+    /// Typically, server listens on UDP port 67. Other ports are only
+    /// used for testing purposes.
     ///
     /// @return UDP port on which server should listen.
     uint16_t getServerPort() const {
@@ -994,6 +1028,20 @@ protected:
     /// @brief Controls access to the configuration backends.
     CBControlDHCPv4Ptr cb_control_;
 
+    /// @brief Packet processing thread pool
+    ThreadPool pkt_thread_pool_;
+
+    // Global mutex used to serialize packet thread pool's threads
+    // on the not thread safe code and allow threads to run
+    // simultaneously on the thread safe portions
+    // (e.g. CqlLeaseMgr class instance).
+    boost::scoped_ptr<std::mutex> mutex_;
+
+    // Specifies if the application will use a thread pool or will process
+    // received DHCP packets on the main thread.
+    // It is mandatory to be set on false when running the test cases.
+    std::atomic_bool run_multithreaded_;
+
 public:
     /// Class methods for DHCPv4-over-DHCPv6 handler
 
@@ -1034,7 +1082,7 @@ public:
     static int getHookIndexLease4Decline();
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP4_SRV_H

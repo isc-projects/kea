@@ -16,6 +16,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/thread_pool.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cb_ctl_dhcp6.h>
@@ -29,6 +30,8 @@
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <boost/scoped_ptr.hpp>
+#include <atomic>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in
@@ -51,7 +54,7 @@ public:
 
 /// @brief DHCPv6 server service.
 ///
-/// This class represents DHCPv6 server. It contains all
+/// This singleton class represents DHCPv6 server. It contains all
 /// top-level methods and routines necessary for server operation.
 /// In particular, it instantiates IfaceMgr, loads or generates DUID
 /// that is going to be used as server-identifier, receives incoming
@@ -83,8 +86,10 @@ public:
     ///
     /// @param server_port port on which all sockets will listen
     /// @param client_port port to which all responses will be sent
+    /// @param run_multithreaded enables or disables multithreaded mode
     Dhcpv6Srv(uint16_t server_port = DHCP6_SERVER_PORT,
-              uint16_t client_port = 0);
+              uint16_t client_port = 0,
+              bool run_multithreaded = false);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
@@ -119,6 +124,17 @@ public:
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
+
+    /// @brief returns Kea DHCPv6 server thread count.
+    static uint32_t threadCount();
+
+    /// @brief returns Kea DHCPv6 server max thread queue size.
+    static uint32_t maxThreadQueueSize();
+
+    /// @brief returns Kea DHCPv6 server mutex.
+    std::mutex* serverLock() {
+        return mutex_.get();
+    }
 
     /// @brief Returns server-identifier option.
     ///
@@ -1018,9 +1034,23 @@ protected:
 
     /// @brief Controls access to the configuration backends.
     CBControlDHCPv6Ptr cb_control_;
+
+    /// @brief Packet processing thread pool
+    ThreadPool pkt_thread_pool_;
+
+    // Global mutex used to serialize packet thread pool's threads
+    // on the not thread safe code and allow threads to run
+    // simultaneously on the thread safe portions
+    // (e.g. CqlLeaseMgr class instance).
+    boost::scoped_ptr<std::mutex> mutex_;
+
+    // Specifies if the application will use a thread pool or will process
+    // received DHCP packets on the main thread.
+    // It is mandatory to be set on false when running the test cases.
+    std::atomic_bool run_multithreaded_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP6_SRV_H
