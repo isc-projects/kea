@@ -128,7 +128,7 @@ public:
         retrans_time_ = lft;
     }
 
-    uint8_t getRetransTime() {
+    uint8_t getRetransTimeTime() {
         return (retrans_time_);
     }
 
