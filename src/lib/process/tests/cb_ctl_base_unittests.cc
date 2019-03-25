@@ -549,7 +549,8 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
 
-    ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base, true));
+    ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base,
+                                                CBControl::FetchMode::FETCH_UPDATE));
 
     // There should be one invocation to databaseConfigApply recorded.
     ASSERT_EQ(1, cb_ctl_.getMergesNum());
@@ -581,7 +582,8 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
 
     ASSERT_EQ(0, cb_ctl_.getMergesNum());
 
-    ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base, true));
+    ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base,
+                                                CBControl::FetchMode::FETCH_UPDATE));
 
     // The databaseConfigApply should not be called because there are
     // no new audit entires to process.
@@ -612,7 +614,8 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditEntryTime(), cb_ctl_.getLastAuditEntryTime());
 
-    ASSERT_THROW(cb_ctl_.databaseConfigFetch(config_base, true), isc::Unexpected);
+    ASSERT_THROW(cb_ctl_.databaseConfigFetch(config_base, CBControl::FetchMode::FETCH_UPDATE),
+                 isc::Unexpected);
 
     // There should be one invocation to databaseConfigApply recorded.
     ASSERT_EQ(1, cb_ctl_.getMergesNum());

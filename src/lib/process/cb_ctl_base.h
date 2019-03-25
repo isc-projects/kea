@@ -80,6 +80,16 @@ template<typename ConfigBackendMgrType>
 class CBControlBase {
 public:
 
+    /// @brief Fetch mode used in invocations to @c databaseConfigFetch.
+    ///
+    /// One of the values indicates that the entire configuration should
+    /// be fetched. The other one indicates that only configuration updates
+    /// should be fetched.
+    enum class FetchMode {
+        FETCH_ALL,
+        FETCH_UPDATE
+    };
+
     /// @brief Constructor.
     ///
     /// Sets the time of the last fetched audit entry to Jan 1st, 1970.
@@ -155,14 +165,13 @@ public:
     /// from the file in case the method is called upon the server's start
     /// up. It is a pointer to the current server configuration if the
     /// method is called to fetch configuration updates.
-    /// @param fetch_updates_only boolean value indicating if the method is
-    /// called upon the server start up (false) or it is called to fetch
-    /// configuration updates (true).
+    /// @param fetch_mode value indicating if the method is called upon the
+    /// server start up or it is called to fetch configuration updates.
     virtual void databaseConfigFetch(const ConfigPtr& srv_cfg,
-                                     const bool fetch_updates_only = false) {
+                                     const FetchMode& fetch_mode = FetchMode::FETCH_ALL) {
         // If the server starts up we need to connect to the database(s).
         // If there are no databases available simply do nothing.
-        if (!fetch_updates_only && !databaseConfigConnect(srv_cfg)) {
+        if ((fetch_mode == FetchMode::FETCH_ALL) && !databaseConfigConnect(srv_cfg)) {
             // There are no CB databases so we're done
             return;
         }
@@ -201,7 +210,7 @@ public:
 
         // If this is full reconfiguration we don't need the audit entries anymore.
         // Let's remove them and proceed as if they don't exist.
-        if (!fetch_updates_only) {
+        if (fetch_mode == FetchMode::FETCH_ALL) {
             audit_entries.clear();
         }
 
@@ -209,7 +218,7 @@ public:
         // audit entries indicating that there are some pending updates, let's
         // execute the server specific function that fetches and merges the data
         // into the given configuration.
-        if (!fetch_updates_only || !audit_entries.empty()) {
+        if ((fetch_mode == FetchMode::FETCH_ALL) || !audit_entries.empty()) {
             try {
                 databaseConfigApply(backend_selector, server_selector,
                                     lb_modification_time, audit_entries);

@@ -973,7 +973,8 @@ ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg) {
         // The true value indicates that the server should not reconnect
         // to the configuration backends and should take into account
         // audit entries stored in the database since last fetch.
-        server_->getCBControl()->databaseConfigFetch(srv_cfg, true);
+        server_->getCBControl()->databaseConfigFetch(srv_cfg,
+                                                     CBControlDHCPv4::FetchMode::FETCH_UPDATE);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
