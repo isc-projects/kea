@@ -23,12 +23,15 @@ namespace slaac {
 class RequestHandler
 {
 public:
-    RequestHandler(boost::asio::io_service& io_service);
+    RequestHandler(boost::asio::io_service& io_service,
+                   const SlaacCfgMgrPtr& cfg_mgr);
     void start_receiving();
     void handle_receive(const boost::system::error_code &err_code, std::size_t size);
     boost::asio::streambuf buffer_;
     boost::asio::ip::icmp::socket socket_;
     boost::asio::ip::icmp::endpoint endpoint_;
+
+    const SlaacCfgMgrPtr& cfg_mgr_;
 };
 
 /// @brief Kea Control Agent Application Process

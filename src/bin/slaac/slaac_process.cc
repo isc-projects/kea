@@ -9,6 +9,7 @@
 #include <slaac/slaac_process.h>
 #include <slaac/slaac_controller.h>
 #include <slaac/slaac_log.h>
+#include <slaac/slaac_config.h>
 #include <process/d_cfg_mgr.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
@@ -38,7 +39,7 @@ namespace slaac {
 SlaacProcess::SlaacProcess(const char* name,
                            const asiolink::IOServicePtr& io_service) :
     DProcessBase(name, io_service, DCfgMgrBasePtr(new SlaacCfgMgr())),
-    req_hdlr_(io_service->get_io_service())
+    req_hdlr_(io_service->get_io_service(), getSlaacCfgMgr())
 {
 }
 
@@ -106,8 +107,9 @@ SlaacProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
 }
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-RequestHandler::RequestHandler(boost::asio::io_service& io_service):
-    socket_(io_service)
+RequestHandler::RequestHandler(boost::asio::io_service& io_service,
+                               const SlaacCfgMgrPtr& cfg_mgr):
+    socket_(io_service), cfg_mgr_(cfg_mgr)
 {
 //    boost::asio::ip::multicast::join_group mo(boost::asio::ip::address_v6::from_string("ff02::2"));
     socket_.open(boost::asio::ip::icmp::socket::protocol_type::v6());
@@ -147,6 +149,8 @@ RequestHandler::handle_receive(const boost::system::error_code &err_code, std::s
         return;
     }
 
+    SlaacConfigPtr cfg = cfg_mgr_->getSlaacConfig();
+
     buffer_.commit(size);
     uint8_t buf[size];
     std::istream is(&buffer_);
@@ -161,12 +165,12 @@ RequestHandler::handle_receive(const boost::system::error_code &err_code, std::s
 
         // prepare and send response
         RAPkt ra_pkt(IOAddress::IPV6_ZERO_ADDRESS(), IOAddress::IPV6_ZERO_ADDRESS());
-        ra_pkt.setHopLimit(0);
-        ra_pkt.setManagedFlag(false);
+        ra_pkt.setHopLimit(cfg->getHopLimit());
+        ra_pkt.setManagedFlag(cfg->getManagedFlag());
         ra_pkt.setOtherFlag(false);
-        ra_pkt.setRouterLifetime(123);
-        ra_pkt.setReachableTime(456);
-        ra_pkt.setRetransTimer(789);
+        ra_pkt.setRouterLifetime(cfg->getRouterLifetime());
+        ra_pkt.setReachableTime(cfg->getRechableTime());
+        ra_pkt.setRetransTimer(cfg->getRetransTime());
         ra_pkt.pack();
         socket_.send_to(buffer(ra_pkt.getBuffer().getData(), ra_pkt.len()), endpoint_);
         std::cout << ra_pkt.toText() << std::endl;
