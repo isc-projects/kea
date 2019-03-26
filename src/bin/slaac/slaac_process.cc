@@ -12,6 +12,8 @@
 #include <slaac/nd.h>
 #include <slaac/nd_pkt_rs.h>
 #include <slaac/nd_pkt_ra.h>
+#include <slaac/nd_option_univ_ra.h>
+#include <slaac/json.hpp>
 #include <process/d_cfg_mgr.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
@@ -34,6 +36,7 @@ using namespace isc::data;
 
 using namespace boost::asio;
 
+using json = nlohmann::json;
 
 namespace isc {
 namespace slaac {
@@ -170,6 +173,32 @@ RequestHandler::handle_receive(const boost::system::error_code &err_code, std::s
         ra_pkt.setRouterLifetime(123);
         ra_pkt.setReachableTime(456);
         ra_pkt.setRetransTimer(789);
+
+        std::string sample = "{"
+        "    \"ietf\": {"
+        "        \"dns\": {"
+        "            \"dnssl\": ["
+        "                \"example.com\""
+        "            ],"
+        "            \"rdnss\": ["
+        "                \"2001:db8::1\","
+        "                \"2001:db8::2\""
+        "            ],"
+        "            \"nat64\": {"
+        "                \"prefix\": \"64:ff9b::/96\""
+        "            }"
+        "        }"
+        "    }"
+        "}";
+        json ura_json = json::parse(sample);
+        std::vector<uint8_t> cbor = json::to_cbor(ura_json);
+        OptionUnivRaPtr ura(new OptionUnivRa(cbor));
+        // Pad to 6 modulo 8.
+        size_t round = ((cbor.size() + 1) | 7) - 1;
+        if (round > cbor.size()) {
+            cbor.resize(round, 0);
+        }
+        ra_pkt.addOption(ura);
         ra_pkt.pack();
         socket_.send_to(buffer(ra_pkt.getBuffer().getData(), ra_pkt.len()), endpoint_);
         std::cout << ra_pkt.toText() << std::endl;
