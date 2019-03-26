@@ -53,6 +53,8 @@ using namespace std;
   DATA_DIRECTORY "data-directory"
   CONFIG_CONTROL "config-control"
   CONFIG_DATABASES "config-databases"
+  CONFIG_FETCH_WAIT_TIME "config-fetch-wait-time"
+
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   RE_DETECT "re-detect"
@@ -2219,6 +2221,7 @@ config_control_params: config_control_param
 
 // This defines a list of allowed parameters for each subnet.
 config_control_param: config_databases
+                    | config_fetch_wait_time
                     ;
 
 config_databases: CONFIG_DATABASES {
@@ -2229,6 +2232,11 @@ config_databases: CONFIG_DATABASES {
 } COLON LSQUARE_BRACKET database_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+config_fetch_wait_time: CONFIG_FETCH_WAIT_TIME COLON INTEGER {
+    ElementPtr value(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("config-fetch-wait-time", value);
 };
 
 // --- logging entry -----------------------------------------

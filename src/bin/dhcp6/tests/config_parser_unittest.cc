@@ -25,6 +25,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
 #include <hooks/hooks_manager.h>
 #include <process/config_ctl_info.h>
 
@@ -242,6 +243,7 @@ const char* PARSER_CONFIGS[] = {
     "    \"rebind-timer\": 2000, \n"
     "    \"renew-timer\": 1000, \n"
     "    \"config-control\": { \n"
+    "       \"config-fetch-wait-time\": 10, \n"
     "       \"config-databases\": [ { \n"
     "               \"type\": \"mysql\", \n"
     "               \"name\": \"keatest1\", \n"
@@ -6990,7 +6992,12 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
 // This test verifies that configuration control info gets populated.
 TEST_F(Dhcp6ParserTest, configControlInfo) {
     string config = PARSER_CONFIGS[8];
-    extractConfig(config);
+
+    // Should be able to register a backend factory for "mysql".
+    ASSERT_TRUE(TestConfigBackendDHCPv6::
+                registerBackendType(ConfigBackendDHCPv6Mgr::instance(),
+                                    "mysql"));
+
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
     // Make sure the config control info is there.
@@ -7009,6 +7016,10 @@ TEST_F(Dhcp6ParserTest, configControlInfo) {
               dblist.front().getAccessString());
     EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest",
               dblist.back().getAccessString());
+
+    // Verify that the config-fetch-wait-time is correct.
+    EXPECT_FALSE(info->getConfigFetchWaitTime().unspecified());
+    EXPECT_EQ(10, info->getConfigFetchWaitTime().get());
 }
 
 // Check whether it is possible to configure server-tag

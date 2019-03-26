@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cb_ctl_dhcp6.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>
@@ -88,6 +89,14 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
+    /// @brief Checks if the server is running in unit test mode.
+    ///
+    /// @return true if the server is running in unit test mode,
+    /// false otherwise.
+    bool inTestMode() const {
+        return (server_port_ == 0);
+    }
+
     /// @brief Returns pointer to the IO service used by the server.
     asiolink::IOServicePtr& getIOService() {
         return (io_service_);
@@ -96,6 +105,15 @@ public:
     /// @brief Returns pointer to the network state used by the server.
     NetworkStatePtr& getNetworkState() {
         return (network_state_);
+    }
+
+    /// @brief Returns an object which controls access to the configuration
+    /// backends.
+    ///
+    /// @return Pointer to the instance of the object which controls
+    /// access to the configuration backends.
+    CBControlDHCPv6Ptr getCBControl() const {
+        return (cb_control_);
     }
 
     /// @brief returns Kea version on stdout and exit.
@@ -998,6 +1016,8 @@ protected:
     /// disabled subnet/network scopes.
     NetworkStatePtr network_state_;
 
+    /// @brief Controls access to the configuration backends.
+    CBControlDHCPv6Ptr cb_control_;
 };
 
 }; // namespace isc::dhcp
