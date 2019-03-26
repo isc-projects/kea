@@ -191,6 +191,14 @@ public:
         universal_ra_ = universal_ra;
     }
 
+    const std::list<std::string>& getIfaces() const {
+        return (ifaces_);
+    }
+
+    std::list<std::string>& getIfaces() {
+        return (ifaces_);
+    }
+
 private:
 
     /// @brief Private copy constructor
@@ -228,6 +236,8 @@ private:
     PrefixInfosConfig prefix_infos_;
 
     isc::data::ConstElementPtr universal_ra_;
+
+    std::list<std::string> ifaces_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;

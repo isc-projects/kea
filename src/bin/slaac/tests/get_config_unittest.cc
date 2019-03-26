@@ -100,6 +100,7 @@ parseSLAAC(const std::string& in,  bool verbose = false) {
 class NakedSlaacCfgMgr : public SlaacCfgMgr {
 public:
     using SlaacCfgMgr::parse;
+    using SlaacCfgMgr::resetContext;
 };
 
 }
@@ -151,8 +152,8 @@ public:
         }
 
         // get Slaac element
-        ConstElementPtr ca = json->get("Slaac");
-        if (!ca) {
+        ConstElementPtr slaac = json->get("Slaac");
+        if (!slaac) {
             ADD_FAILURE() << "cannot get Slaac for " << operation
                           << " on\n" << prettyPrint(json) << "\n";
             return (false);
@@ -161,7 +162,11 @@ public:
         // try SLAAC configure
         ConstElementPtr status;
         try {
-            status = srv_->parse(ca, true);
+            // Get logging info.
+            Daemon::configureLogger(slaac, srv_->getSlaacConfig());
+
+            // Parse configuration.
+            status = srv_->parse(slaac, true);
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "configure for " << operation
                           << " failed with " << ex.what()
@@ -196,13 +201,12 @@ public:
     /// @brief Reset configuration database.
     ///
     /// This function resets configuration data base by
-    /// removing managed servers and hooks. Reset must
+    /// removing prefix infos and hooks. Reset must
     /// be performed after each test to make sure that
     /// contents of the database do not affect result of
     /// subsequent tests.
     void resetConfiguration() {
-        string config = "{ \"Slaac\": { } }";
-        EXPECT_TRUE(executeConfiguration(config, "reset config"));
+        srv_->resetContext();
     }
 
     boost::scoped_ptr<NakedSlaacCfgMgr> srv_; ///< Slaac server under test
@@ -262,7 +266,8 @@ TEST_F(SlaacGetCfgTest, simple) {
         }
     }
 
-    // execute the slaact configuration
+    // execute the slaac configuration
+    resetConfiguration();
     EXPECT_TRUE(executeConfiguration(expected, "unparsed config"));
 
     // is it a fixed point?

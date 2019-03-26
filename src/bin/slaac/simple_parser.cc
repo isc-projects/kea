@@ -68,6 +68,15 @@ const SimpleDefaults SlaacSimpleParser::SLAAC_DEFAULTS = {
     { "mtu",               Element::integer, "0" }
 };
 
+/// @brief This table defines all interfaces config parameters in Slaac
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries, any matches all types.
+/// Order follows interfaces_config_param rule in bison grammar.
+const SimpleKeywords SlaacSimpleParser::INTERFACES_CONFIG_PARAMETERS = {
+    { "interfaces", Element::list }
+};
+
 /// @brief This table defines all required prefix info parameters.
 const SimpleRequiredKeywords SlaacSimpleParser::PREFIX_INFO_REQUIRED = {
     "prefix"
@@ -77,7 +86,7 @@ const SimpleRequiredKeywords SlaacSimpleParser::PREFIX_INFO_REQUIRED = {
 ///
 /// Boolean, integer, real and string types are for scalar parameters,
 /// list and map types for entries, any matches all types.
-/// Order follows global_param rule in bison grammar.
+/// Order follows prefix_info_param rule in bison grammar.
 const SimpleKeywords SlaacSimpleParser::PREFIX_INFO_PARAMETERS = {
     { "prefix",              Element::string },
     { "on-link-flag",        Element::boolean },
@@ -205,11 +214,23 @@ SlaacSimpleParser::parsePrefixInfo(ElementPtr json) {
 void
 SlaacSimpleParser::parseInterfaces(const SlaacConfigPtr& config,
                                    const ConstElementPtr& json) {
-    if (!json) {
+    std::list<std::string>& ifaces = config->getIfaces();
+    ifaces.clear();
+
+    if (!json || json->empty()) {
         return;
     }
 
-    /// @todo: parse interfaces
+    checkKeywords(SlaacSimpleParser::INTERFACES_CONFIG_PARAMETERS, json);
+
+    const ConstElementPtr& list = json->get("interfaces");
+    if (!json || json->empty()) {
+        return;
+    }
+
+    for (auto elem : list->listValue()) {
+        ifaces.push_back(elem->stringValue());
+    }
 }
 
 void

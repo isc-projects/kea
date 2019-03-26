@@ -2,6 +2,24 @@
     "Slaac": {
         "comment": "Kea is doing now RA. yay!",
         "hop-limit": 64,
+        "interfaces-config": {
+            "interfaces": [ "ethX" ]
+        },
+        "loggers": [
+            {
+                "debuglevel": 0,
+                "name": "kea-slaac",
+                "output_options": [
+                    {
+                        "flush": true,
+                        "maxsize": 10240000,
+                        "maxver": 1,
+                        "output": "stdout"
+                    }
+                ],
+                "severity": "INFO"
+            }
+        ],
         "managed-flag": true,
         "mtu": 0,
         "other-flag": true,

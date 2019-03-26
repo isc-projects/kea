@@ -185,7 +185,13 @@ SlaacConfig::toElement() const {
         slaac->set("prefix-infos", prefs);
     }
 
-    // @todo add interfaces config
+    ElementPtr ifaces = Element::createList();
+    for (std::string iface : getIfaces()) {
+        ifaces->add(Element::create(iface));
+    }
+    ElementPtr if_config = Element::createMap();
+    if_config->set("interfaces", ifaces);
+    slaac->set("interfaces-config", if_config);
 
     // Add loggers.
     ElementPtr loggers = Element::createList();

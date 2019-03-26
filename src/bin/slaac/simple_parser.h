@@ -54,6 +54,7 @@ public:
     // see simple_parser.cc for comments for those parameters
     static const isc::data::SimpleKeywords SLAAC_PARAMETERS;
     static const isc::data::SimpleDefaults SLAAC_DEFAULTS;
+    static const isc::data::SimpleKeywords INTERFACES_CONFIG_PARAMETERS;
     static const isc::data::SimpleRequiredKeywords PREFIX_INFO_REQUIRED;
     static const isc::data::SimpleKeywords PREFIX_INFO_PARAMETERS;
     static const isc::data::SimpleDefaults PREFIX_INFO_DEFAULTS;
