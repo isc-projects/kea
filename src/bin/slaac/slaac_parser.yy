@@ -434,6 +434,7 @@ prefix_infos: PREFIX_INFOS {
     ElementPtr l(new LisElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("prefix-infos", l);
     ctx.stack_.push_back(l);
+    ctx.enter(ctx.PREFIX_INFOS);
 } COLON LSQUARE_BRACKET prefix_info_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();

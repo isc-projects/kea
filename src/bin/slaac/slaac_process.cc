@@ -192,12 +192,12 @@ RequestHandler::handle_receive(const boost::system::error_code &err_code, std::s
         "}";
         json ura_json = json::parse(sample);
         std::vector<uint8_t> cbor = json::to_cbor(ura_json);
-        OptionUnivRaPtr ura(new OptionUnivRa(cbor));
         // Pad to 6 modulo 8.
         size_t round = ((cbor.size() + 1) | 7) - 1;
         if (round > cbor.size()) {
             cbor.resize(round, 0);
         }
+        OptionUnivRaPtr ura(new OptionUnivRa(cbor));
         ra_pkt.addOption(ura);
         ra_pkt.pack();
         socket_.send_to(buffer(ra_pkt.getBuffer().getData(), ra_pkt.len()), endpoint_);

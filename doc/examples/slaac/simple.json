@@ -4,6 +4,7 @@
         // These are parameters to be advertised in RA
         "hop-limit": 64,
         "managed-flag": true,
+        "other-flag": true,
         "router-lifetime": 9000,
         "reachable-time": 3600,
         "retrans-timer": 10,
@@ -15,12 +16,41 @@
             "interfaces": [ "ethX" ]
         },
 
-        // This section governs whether some experimental features are to be used
-        // or not. The name 'experimental'
-        "experimental": {
-            // This section determines whether we should send universal RA
-            // option (https://tools.ietf.org/html/draft-troan-6man-universal-ra-option-01).
-            "universal-ra": true
+        // No source link-layer address option
+        "source-ll-address": false,
+
+        // No MTU option
+        "mtu": 0,
+
+        // Prefix Info options
+        "prefix-infos": [
+           {
+              "prefix": "2001:db8::/64",
+              "on-link-flag": true,
+              "address-config-flag": true,
+              "valid-lifetime": 86400,
+              "preferred-lifetime": 21600
+           }
+        ],
+
+        // Universal IPv6 RA option.
+        // Any valid JSON is accepted but the I-D says a map (JSON object)
+        // with an "ietf" entry. Here is the I-D example.
+        "universal-ra": {
+            "ietf": {
+               "dns": {
+                  "dnssl": [
+                      "example.com"
+                  ],
+                  "rdnss": [
+                      "2001:db8::1",
+                      "2001:db8::2"
+                  ]
+               },
+               "nat64": {
+                   "prefix": "64:ff9b::/96"
+               }
+           }
         },
 
         // This is our logging configuration.
