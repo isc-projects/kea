@@ -59,11 +59,13 @@ public:
     static const isc::data::SimpleDefaults PREFIX_INFO_DEFAULTS;
 
 private:
-    void parsePrefixInfos(const SlaacConfigPtr& config,
+    void parsePrefixInfos(PrefixInfosConfig& config,
                           const ConstElementPtr& json);
 
     void parseExperimental(const SlaacConfigPtr& config,
                            const ConstElementPtr& json);
+
+    PrefixInfoConfigPtr parsePrefixInfo(ElementPtr json);
 
     void parseInterfaces(const SlaacConfigPtr& config,
                          const ConstElementPtr& json);

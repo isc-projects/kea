@@ -1,0 +1,33 @@
+{
+    "Slaac": {
+        "comment": "Kea is doing now RA. yay!",
+        "hop-limit": 64,
+        "managed-flag": true,
+        "mtu": 0,
+        "other-flag": true,
+        "prefix-infos": [
+            {
+                "address-config-flag": true,
+                "on-link-flag": true,
+                "preferred-lifetime": 21600,
+                "prefix": "2001:db8::/64",
+                "valid-lifetime": 86400
+            }
+        ],
+        "reachable-time": 3600,
+        "retrans-timer": 10,
+        "router-lifetime": 9000,
+        "source-ll-address": false,
+        "universal-ra": {
+            "ietf": {
+                "dns": {
+                    "dnssl": [ "example.com" ],
+                    "rdnss": [ "2001:db8::1", "2001:db8::2" ]
+                },
+                "nat64": {
+                    "prefix": "64:ff9b::/96"
+                }
+            }
+        }
+    }
+}

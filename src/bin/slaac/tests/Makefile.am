@@ -1,6 +1,5 @@
 SHTESTS =
 
-
 EXTRA_DIST  = testdata/get_config.json
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -13,7 +12,7 @@ AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/slaac\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES =
+DISTCLEANFILES = test_data_files_config.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -33,7 +32,9 @@ slaac_unittests_SOURCES = process_unittests.cc
 slaac_unittests_SOURCES += nd_unittests.cc
 slaac_unittests_SOURCES += cfg_mgr_unittests.cc
 slaac_unittests_SOURCES += parser_unittests.cc
+slaac_unittests_SOURCES += get_config_unittest.cc
 slaac_unittests_SOURCES += slaac_unittests.cc
+nodist_slaac_unittests_SOURCES = test_data_files_config.h
 
 slaac_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 slaac_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)

@@ -176,8 +176,25 @@ SlaacConfig::toElement() const {
         slaac->set("universal-ra", universal_ra);
     }
 
-    // @todo add prefix infos
+    // Add prefix infos.
+    ElementPtr prefs = Element::createList();
+    for (auto pref : getPrefixInfosConfig()) {
+        prefs->add(pref->toElement());
+    }
+    if (!prefs->empty()) {
+        slaac->set("prefix-infos", prefs);
+    }
+
     // @todo add interfaces config
+
+    // Add loggers.
+    ElementPtr loggers = Element::createList();
+    for (auto logger : getLoggingInfo()) {
+        loggers->add(logger.toElement());
+    }
+    if (!loggers->empty()) {
+        slaac->set("loggers", loggers);
+    }
 
     // Set Slaac
     ElementPtr result = Element::createMap();
@@ -202,7 +219,7 @@ PrefixInfoConfig::toElement() const {
     // Set on link (L) flag
     result->set("on-link-flag", Element::create(getOnLinkFlag()));
     // Set autonomous address configuration (A) flag
-    result->set("address-config", Element::create(getAddrConfigFlag()));
+    result->set("address-config-flag", Element::create(getAddrConfigFlag()));
     // Set valid lifetime
     result->set("valid-lifetime",
                 Element::create(static_cast<int64_t>(getValidLifetime())));
