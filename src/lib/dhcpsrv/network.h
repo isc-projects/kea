@@ -311,13 +311,13 @@ public:
     /// returned it is valid.
     ///
     /// @return client class @ref client_class_
-    const util::Optional<ClientClass>& getClientClass() const {
-        return (client_class_);
+    util::Optional<ClientClass> getClientClass() const {
+        return (getProperty<Network>(&Network::getClientClass, client_class_));
     }
 
     /// @brief Return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
-        return (valid_);
+        return (getProperty<Network>(&Network::getValid, valid_, "valid-lifetime"));
     }
 
     /// @brief Sets new valid lifetime for a network.
@@ -329,7 +329,7 @@ public:
 
     /// @brief Returns T1 (renew timer), expressed in seconds
     Triplet<uint32_t> getT1() const {
-        return (t1_);
+        return (getProperty<Network>(&Network::getT1, t1_, "renew-timer"));
     }
 
     /// @brief Sets new renew timer for a network.
@@ -341,7 +341,7 @@ public:
 
     /// @brief Returns T2 (rebind timer), expressed in seconds
     Triplet<uint32_t> getT2() const {
-        return (t2_);
+        return (getProperty<Network>(&Network::getT2, t2_, "rebind-timer"));
     }
 
     /// @brief Sets new rebind timer for a network.
@@ -388,7 +388,9 @@ public:
 
     /// @brief Returns whether or not T1/T2 calculation is enabled.
     util::Optional<bool> getCalculateTeeTimes() const {
-        return (calculate_tee_times_);
+        return (getProperty<Network>(&Network::getCalculateTeeTimes,
+                                     calculate_tee_times_,
+                                     "calculate-tee-times"));
     }
 
     /// @brief Sets whether or not T1/T2 calculation is enabled.
@@ -400,7 +402,9 @@ public:
 
     /// @brief Returns percentage to use when calculating the T1 (renew timer).
     util::Optional<double> getT1Percent() const {
-        return (t1_percent_);
+        return (getProperty<Network>(&Network::getT1Percent,
+                                     t1_percent_,
+                                     "t1-percent"));
     }
 
     /// @brief Sets new precentage for calculating T1 (renew timer).
@@ -412,7 +416,9 @@ public:
 
     /// @brief Returns percentage to use when calculating the T2 (rebind timer).
     util::Optional<double> getT2Percent() const {
-        return (t2_percent_);
+        return (getProperty<Network>(&Network::getT2Percent,
+                                     t2_percent_,
+                                     "t2-percent"));
     }
 
     /// @brief Sets new precentage for calculating T2 (rebind timer).
@@ -430,9 +436,10 @@ public:
 protected:
 
     template<typename BaseType, typename ReturnType>
-    util::Optional<ReturnType>
-    getProperty(util::Optional<ReturnType>(BaseType::*MethodPointer)() const,
-                util::Optional<ReturnType> property, const std::string& global_name) const {
+    ReturnType
+    getProperty(ReturnType(BaseType::*MethodPointer)() const,
+                ReturnType property,
+                const std::string& global_name = "") const {
         if (property.unspecified()) {
             auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
             if (parent) {
@@ -443,12 +450,12 @@ protected:
                 }
             }
 
-            if (fetch_globals_fn_) {
+            if (!global_name.empty() && fetch_globals_fn_) {
                 data::ConstElementPtr globals = fetch_globals_fn_();
                 if (globals && (globals->getType() == data::Element::map)) {
                     data::ConstElementPtr global_param = globals->get(global_name);
                     if (global_param) {
-                        return (data::ElementExtractor<ReturnType>()(global_param));
+                        return (data::ElementExtractor<typename ReturnType::ValueType>()(global_param));
                     }
                 }
             }
@@ -532,7 +539,9 @@ public:
     ///
     /// @return true if client identifiers should be used, false otherwise.
     util::Optional<bool> getMatchClientId() const {
-        return (match_client_id_);
+        return (getProperty<Network4>(&Network4::getMatchClientId,
+                                      match_client_id_,
+                                      "match-client-id"));
     }
 
     /// @brief Sets the flag indicating if the client identifier should be
@@ -573,7 +582,9 @@ public:
     /// @brief Returns siaddr for this network.
     ///
     /// @return siaddr value
-    const util::Optional<asiolink::IOAddress>& getSiaddr() const;
+    util::Optional<asiolink::IOAddress> getSiaddr() const {
+        return (siaddr_);
+    }
 
     /// @brief Sets server hostname for the network.
     ///
@@ -583,7 +594,9 @@ public:
     /// @brief Returns server hostname for this network.
     ///
     /// @return server hostname value
-    const util::Optional<std::string>& getSname() const;
+    util::Optional<std::string> getSname() const {
+        return (sname_);
+    }
 
     /// @brief Sets boot file name for the network.
     ///
@@ -593,7 +606,9 @@ public:
     /// @brief Returns boot file name for this subnet
     ///
     /// @return boot file name value
-    const util::Optional<std::string>& getFilename() const;
+    util::Optional<std::string> getFilename() const {
+        return (filename_);
+    }
 
     /// @brief Unparses network object.
     ///

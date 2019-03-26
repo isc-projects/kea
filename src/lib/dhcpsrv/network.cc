@@ -107,8 +107,8 @@ Network::toElement() const {
     contextToElement(map);
 
     // Set interface
-    if (!getIface().unspecified()) {
-        map->set("interface", Element::create(getIface().get()));
+    if (!iface_name_.unspecified()) {
+        map->set("interface", Element::create(iface_name_.get()));
     }
 
     ElementPtr relay_map = Element::createMap();
@@ -122,8 +122,8 @@ Network::toElement() const {
     map->set("relay", relay_map);
 
     // Set client-class
-    if (!getClientClass().unspecified()) {
-        map->set("client-class", Element::create(getClientClass().get()));
+    if (!client_class_.unspecified()) {
+        map->set("client-class", Element::create(client_class_.get()));
     }
 
     // Set require-client-classes
@@ -140,22 +140,21 @@ Network::toElement() const {
     // T1, T2, and Valid are optional for SharedNetworks, and
     // T1 and T2 are optional for Subnet4 thus we will only
     // output them if they are marked as specified.
-    if (!getT1().unspecified()) {
+    if (!t1_.unspecified()) {
         map->set("renew-timer",
-                 Element::create(static_cast<long long>(getT1().get())));
+                 Element::create(static_cast<long long>(t1_.get())));
     }
 
     // Set rebind-timer
-    if (!getT2().unspecified()) {
+    if (!t2_.unspecified()) {
         map->set("rebind-timer",
-                 Element::create(static_cast<long long>(getT2().get())));
+                 Element::create(static_cast<long long>(t2_.get())));
     }
 
     // Set valid-lifetime
-    if (!getValid().unspecified()) {
+    if (!valid_.unspecified()) {
         map->set("valid-lifetime",
-                 Element::create(static_cast<long long>
-                                 (getValid().get())));
+                 Element::create(static_cast<long long>(valid_.get())));
     }
 
     // Set reservation mode
@@ -186,20 +185,17 @@ Network::toElement() const {
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
 
-    // Output calcualte-tee-times and percentages if calculation is enabled.
-    auto calc_tee_times = getCalculateTeeTimes();
-    if (!calc_tee_times.unspecified()) {
-        map->set("calculate-tee-times", Element::create(calc_tee_times));
+    // Output calculate-tee-times and percentages if calculation is enabled.
+    if (!calculate_tee_times_.unspecified()) {
+        map->set("calculate-tee-times", Element::create(calculate_tee_times_));
     }
 
-    auto t1_percent = getT1Percent();
-    if (!t1_percent.unspecified()) {
-        map->set("t1-percent", Element::create(getT1Percent()));
+    if (!t1_percent_.unspecified()) {
+        map->set("t1-percent", Element::create(t1_percent_));
     }
 
-    auto t2_percent = getT2Percent();
-    if (!t2_percent.unspecified()) {
-        map->set("t2-percent", Element::create(getT2Percent()));
+    if (!t2_percent_.unspecified()) {
+        map->set("t2-percent", Element::create(t2_percent_));
     }
 
     return (map);
@@ -214,19 +210,9 @@ Network4::setSiaddr(const Optional<IOAddress>& siaddr) {
     siaddr_ = siaddr;
 }
 
-const Optional<IOAddress>&
-Network4::getSiaddr() const {
-    return (siaddr_);
-}
-
 void
 Network4::setSname(const Optional<std::string>& sname) {
     sname_ = sname;
-}
-
-const Optional<std::string>&
-Network4::getSname() const {
-    return (sname_);
 }
 
 void
@@ -234,18 +220,13 @@ Network4::setFilename(const Optional<std::string>& filename) {
     filename_ = filename;
 }
 
-const Optional<std::string>&
-Network4::getFilename() const {
-    return (filename_);
-}
-
 ElementPtr
 Network4::toElement() const {
     ElementPtr map = Network::toElement();
 
     // Set match-client-id
-    if (!getMatchClientId().unspecified()) {
-        map->set("match-client-id", Element::create(getMatchClientId().get()));
+    if (!match_client_id_.unspecified()) {
+        map->set("match-client-id", Element::create(match_client_id_.get()));
     }
 
     // Set authoritative
@@ -254,18 +235,18 @@ Network4::toElement() const {
     }
 
     // Set next-server
-    if (!getSiaddr().unspecified()) {
-        map->set("next-server", Element::create(getSiaddr().get().toText()));
+    if (!siaddr_.unspecified()) {
+        map->set("next-server", Element::create(siaddr_.get().toText()));
     }
 
     // Set server-hostname
-    if (!getSname().unspecified()) {
-        map->set("server-hostname", Element::create(getSname().get()));
+    if (!sname_.unspecified()) {
+        map->set("server-hostname", Element::create(sname_.get()));
     }
 
     // Set boot-file-name
-    if (!getFilename().unspecified()) {
-        map->set("boot-file-name",Element::create(getFilename().get()));
+    if (!filename_.unspecified()) {
+        map->set("boot-file-name",Element::create(filename_.get()));
     }
 
     return (map);
