@@ -39,7 +39,7 @@ namespace slaac {
 /// Order follows global_param rule in bison grammar.
 const SimpleKeywords SlaacSimpleParser::SLAAC_PARAMETERS = {
     { "interfaces-config", Element::map },
-    { "Logging",           Element::map },
+    { "loggers",           Element::list },
     { "hop-limit",         Element::integer },
     { "managed-flag",      Element::boolean },
     { "other-flag",        Element::boolean },

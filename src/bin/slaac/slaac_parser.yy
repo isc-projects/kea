@@ -74,7 +74,6 @@ using namespace std;
   VALID_LIFETIME "valid-lifetime"
   PREFERRED_LIFETIME "preferred-lifetime"
 
-  LOGGING "Logging"
   LOGGERS "loggers"
   NAME "name"
   OUTPUT_OPTIONS "output_options"
@@ -107,7 +106,7 @@ using namespace std;
 %%
 
 // The whole grammar starts with a map, because the config file
-// consists of Slaac, DhcpX, Logger and DhcpDdns entries in one big { }.
+// consists of Slaac entry in one big { }.
 %start start;
 
 // The starting token can be one of those listed below. Note these are
@@ -283,7 +282,7 @@ not_empty_global_params: global_param
 // These are the parameters that are allowed in the top-level for
 // Slaac.
 global_param: interfaces_config
-            | logging_object
+            | loggers
             | hop_limit
             | managed_flag
             | other_flag
@@ -500,30 +499,7 @@ preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
 
 // --- Logging starts here -----------------------------------------------------
 
-// This defines the top level "Logging" object. It parses
-// the following "Logging": { ... }. The ... is defined
-// by logging_params
-logging_object: LOGGING {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("Logging", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.LOGGING);
-} COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-// This defines the list of allowed parameters that may appear
-// in the top-level Logging object. It can either be a single
-// parameter or several parameters separated by commas.
-logging_params: logging_param
-              | logging_params COMMA logging_param
-              ;
-
-// There's currently only one parameter defined, which is "loggers".
-logging_param: loggers;
-
-// "loggers", the only parameter currently defined in "Logging" object,
+// "loggers", the only parameter which was defined in "Logging" object,
 // is "Loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));

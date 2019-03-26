@@ -178,9 +178,6 @@ public:
         ///< Prefix-infos section.
         PREFIX_INFOS,
 
-        ///< Used while parsing content of Logging.
-        LOGGING,
-
         ///< Used while parsing Logging/loggers structures.
         LOGGERS,
 

@@ -142,8 +142,6 @@ ParserContext::contextName()
         return ("interfaces-config");
     case PREFIX_INFOS:
         return ("prefix-infos");
-    case LOGGING:
-        return ("Logging");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:

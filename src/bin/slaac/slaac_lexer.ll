@@ -357,18 +357,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"Logging\" {
-    switch(driver.ctx_) {
-    case ParserContext::SLAAC:
-        return SlaacParser::make_LOGGING(driver.loc_);
-    default:
-        return SlaacParser::make_STRING("Logging", driver.loc_);
-    }
-}
-
 \"loggers\" {
     switch(driver.ctx_) {
-    case ParserContext::LOGGING:
+    case ParserContext::SLAAC:
         return SlaacParser::make_LOGGERS(driver.loc_);
     default:
         return SlaacParser::make_STRING("loggers", driver.loc_);

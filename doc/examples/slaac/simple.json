@@ -53,20 +53,16 @@
            }
         },
 
-        // This is our logging configuration.
-        "Logging": {
-            "loggers": [
-                {
-                    "name": "kea-slaac",
-                    "output_options": [
-                        {
-                            "output": "stdout"
-                        }
-                    ],
-                    "severity": "INFO"
-                }
-            ]
-        }
-
+        "loggers": [
+            {
+                "name": "kea-slaac",
+                "output_options": [
+                    {
+                        "output": "stdout"
+                    }
+                ],
+                "severity": "INFO"
+            }
+        ]
     }
 }
