@@ -8,12 +8,26 @@
 #define SLAAC_CONFIG_H
 
 #include <process/d_cfg_mgr.h>
-
+#include <asiolink/io_address.h>
+#include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
+#include <list>
 
 namespace isc {
 namespace slaac {
 
+/// @brief Forward declaration of PrefixInfoConfig class.
+class PrefixInfoConfig;
+
+/// @brief Pointer to a Prefix Info configuration.
+typedef boost::shared_ptr<PrefixInfoConfig> PrefixInfoConfigPtr;
+
+/// @Bbrief List of pointers to Prefix Info configurations.
+typedef std::list<PrefixInfoConfigPtr> PrefixInfosConfig;
+
+/// @brief Forward declaration of SlaacConfig class.
 class SlaacConfig;
+
 /// @brief Pointer to a configuration context.
 typedef boost::shared_ptr<SlaacConfig> SlaacConfigPtr;
 
@@ -91,6 +105,19 @@ public:
     /// the initial configuration object
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Return non-const reference to the prefix info list.
+    ///
+    /// @return non-const reference to the prefix info configuration list.
+    PrefixInfosConfig& getPrefixInfosConfig() {
+        return (prefix_infos_);
+    }
+
+    /// @brief Return const reference to the prefix info list.
+    ///
+    /// @return const reference to the prefix info configuration list.
+    const PrefixInfosConfig& getPrefixInfosConfig() const {
+        return (prefix_infos_);
+    }
 
     void setHopLimit(uint8_t hop_limit) {
         hop_limit_ = hop_limit;
@@ -198,14 +225,104 @@ private:
 
     uint32_t mtu_;
 
+    PrefixInfosConfig prefix_infos_;
+
     isc::data::ConstElementPtr universal_ra_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
 };
 
-};
+/// @brief Prefix Info Configuration.
+class PrefixInfoConfig : public isc::data::UserContext,
+    public isc::data::CfgToElement {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param prefix The prefix (IPv6 address part).
+    /// @param prefix_length The prefix length (should be in 0..128)
+    PrefixInfoConfig(const isc::asiolink::IOAddress& prefix,
+                     uint8_t prefix_length)
+        : prefix_(prefix), prefix_length_(prefix_length),
+        on_link_flag_(false), addr_config_flag_(false),
+        valid_lifetime_(0), preferred_lifetime_(0) {
+    }
+
+    /// @brief Destructor (doing nothing).
+    virtual ~PrefixInfoConfig() {
+    }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to a configuration which can be parsed into
+    /// the initial configuration object
+    virtual isc::data::ElementPtr toElement() const;
+
+    const isc::asiolink::IOAddress& getPrefix() const {
+        return (prefix_);
+    }
+
+    void setPrefix(const isc::asiolink::IOAddress& prefix) {
+        prefix_ = prefix;
+    }
+
+    uint8_t getPrefixLength() const {
+        return (prefix_length_);
+    }
+
+    void setPrefixLength(uint8_t prefix_length) {
+        prefix_length_ = prefix_length;
+    }
+
+    bool getOnLinkFlag() const {
+        return (on_link_flag_);
+    }
+
+    void setOnLinkFlag(bool on_link_flag) {
+        on_link_flag_ = on_link_flag;
+    }
+
+    bool getAddrConfigFlag() const {
+        return (addr_config_flag_);
+    }
+
+    void setAddrConfigFlag(bool addr_config_flag) {
+        addr_config_flag_ = addr_config_flag;
+    }
+
+    uint32_t getValidLifetime() const {
+        return (valid_lifetime_);
+    }
+
+    void setValidLifetime(uint32_t valid_lifetime) {
+        valid_lifetime_ = valid_lifetime;
+    }
+
+    uint32_t getPreferredLifetime() const {
+        return (preferred_lifetime_);
+    }
+
+    void setPreferredLifetime(uint32_t preferred_lifetime) {
+        preferred_lifetime_ = preferred_lifetime;
+    }
+
+private:
+
+    isc::asiolink::IOAddress prefix_;
+
+    uint8_t prefix_length_;
+
+    bool on_link_flag_;
+
+    bool addr_config_flag_;
+
+    uint32_t valid_lifetime_;
+
+    uint32_t preferred_lifetime_;
 };
 
+};
+};
 
 #endif

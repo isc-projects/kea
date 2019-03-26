@@ -188,5 +188,30 @@ SlaacConfig::toElement() const {
     return (result);
 }
 
+ElementPtr
+PrefixInfoConfig::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set user-context
+    contextToElement(result);
+
+    // Set prefix
+    std::ostringstream pref;
+    pref << getPrefix() << "/" << static_cast<unsigned>(getPrefixLength());
+    result->set("prefix", Element::create(pref.str()));
+
+    // Set on link (L) flag
+    result->set("on-link-flag", Element::create(getOnLinkFlag()));
+    // Set autonomous address configuration (A) flag
+    result->set("address-config", Element::create(getAddrConfigFlag()));
+    // Set valid lifetime
+    result->set("valid-lifetime",
+                Element::create(static_cast<int64_t>(getValidLifetime())));
+    // Set preferred lifetime
+    result->set("preferred-lifetime",
+                Element::create(static_cast<int64_t>(getPreferredLifetime())));
+
+    return (result);
+}
+
 } // namespace isc::agent
 } // namespace isc
