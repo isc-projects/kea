@@ -183,9 +183,8 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
     : io_service_(new IOService()), server_port_(server_port),
       client_port_(client_port), serverid_(), shutdown_(true),
       alloc_engine_(), name_change_reqs_(),
-      network_state_(new NetworkState(NetworkState::DHCPv6))
-{
-
+      network_state_(new NetworkState(NetworkState::DHCPv6)),
+      cb_control_(new CBControlDHCPv6()) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET)
         .arg(server_port);
 
