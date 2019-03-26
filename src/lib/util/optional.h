@@ -36,6 +36,9 @@ template<typename T>
 class Optional {
 public:
 
+    /// @brief Type of the encapsulated value.
+    typedef T ValueType;
+
     /// @brief Assigns a new value value and marks it "specified".
     ///
     /// @tparam A Type of the value to be assigned. Typically this is @c T, but

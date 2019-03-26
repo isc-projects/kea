@@ -42,6 +42,10 @@ public:
         return (globals_);
     }
 
+    template<typename>
+    void testNetworkInheritance() {
+    }
+
     ElementPtr globals_;
 };
 
