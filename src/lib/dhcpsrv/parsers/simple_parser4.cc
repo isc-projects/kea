@@ -71,7 +71,8 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "reservation-mode",             Element::string },
     { "calculate-tee-times",          Element::boolean },
     { "t1-percent",                   Element::real },
-    { "t2-percent",                   Element::real }
+    { "t2-percent",                   Element::real },
+    { "loggers",                      Element::list }
 };
 
 /// @brief This table defines default values for option definitions in DHCPv4.
