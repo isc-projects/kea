@@ -62,7 +62,7 @@ Option::check() const {
         isc_throw(OutOfRange, "empty ND option");
     }
     size_t length = OPTION_HDR_LEN + data_.size();
-    if (length > 255) {
+    if (length > 2040) {
         isc_throw(OutOfRange, "too large ND option: " << length);
     }
     if ((length & 7) != 0) {

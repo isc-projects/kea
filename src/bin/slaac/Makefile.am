@@ -36,6 +36,7 @@ endif
 noinst_LTLIBRARIES = libslaac.la
 
 libslaac_la_SOURCES  =
+libslaac_la_SOURCES += build_ra.cc build_ra.h
 libslaac_la_SOURCES += nd.h
 libslaac_la_SOURCES += nd_option.cc nd_option.h
 libslaac_la_SOURCES += nd_option_lladdr.cc nd_option_lladdr.h

@@ -8,6 +8,7 @@
 
 #include <slaac/simple_parser.h>
 #include <slaac/slaac_cfg_mgr.h>
+#include <slaac/build_ra.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <boost/algorithm/string.hpp>
@@ -236,7 +237,7 @@ SlaacSimpleParser::parseInterfaces(const SlaacConfigPtr& config,
 void
 SlaacSimpleParser::parse(const SlaacConfigPtr& config,
                          const ConstElementPtr& json,
-                         bool /*check_only*/) {
+                         bool check_only) {
 
     checkKeywords(SlaacSimpleParser::SLAAC_PARAMETERS, json);
 
@@ -262,6 +263,21 @@ SlaacSimpleParser::parse(const SlaacConfigPtr& config,
     ConstElementPtr user_context = json->get("user-context");
     if (user_context) {
         config->setContext(user_context);
+    }
+
+    // If check only we are done.
+    if (check_only) {
+        return;
+    }
+
+    try {
+        const RAPktPtr& ra = buildRA(config);
+        if (!ra) {
+            isc_throw(Unexpected, "buildRA return null?");
+        }
+    } catch (const std::exception& ex) {
+        isc_throw(ConfigError, "failed to build a valid RA packet from "
+                  "this configuration: " << ex.what());
     }
 }
 
