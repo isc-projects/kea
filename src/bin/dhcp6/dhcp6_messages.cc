@@ -22,10 +22,13 @@ extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED = "DHCP6_CLASS_UNDEFINED"
 extern const isc::log::MessageID DHCP6_CLASS_UNTESTABLE = "DHCP6_CLASS_UNTESTABLE";
 extern const isc::log::MessageID DHCP6_COMMAND_RECEIVED = "DHCP6_COMMAND_RECEIVED";
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE = "DHCP6_CONFIG_COMPLETE";
+extern const isc::log::MessageID DHCP6_CONFIG_DEPRECATED_OBJECT = "DHCP6_CONFIG_DEPRECATED_OBJECT";
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL = "DHCP6_CONFIG_LOAD_FAIL";
+extern const isc::log::MessageID DHCP6_CONFIG_OBSOLETE_OBJECT = "DHCP6_CONFIG_OBSOLETE_OBJECT";
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE = "DHCP6_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED = "DHCP6_CONFIG_RECEIVED";
 extern const isc::log::MessageID DHCP6_CONFIG_START = "DHCP6_CONFIG_START";
+extern const isc::log::MessageID DHCP6_CONFIG_UNKNOWN_OBJECT = "DHCP6_CONFIG_UNKNOWN_OBJECT";
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE = "DHCP6_CONFIG_UPDATE";
 extern const isc::log::MessageID DHCP6_DB_BACKEND_STARTED = "DHCP6_DB_BACKEND_STARTED";
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_ATTEMPT_FAILED = "DHCP6_DB_RECONNECT_ATTEMPT_FAILED";
@@ -162,10 +165,13 @@ const char* values[] = {
     "DHCP6_CLASS_UNTESTABLE", "required class %1 has no test expression",
     "DHCP6_COMMAND_RECEIVED", "received command %1, arguments: %2",
     "DHCP6_CONFIG_COMPLETE", "DHCPv6 server has completed configuration: %1",
+    "DHCP6_CONFIG_DEPRECATED_OBJECT", "DHCPv6 server configuration includes a deprecated object: %1",
     "DHCP6_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
+    "DHCP6_CONFIG_OBSOLETE_OBJECT", "DHCPv6 server configuration includes an obsolete object: %1",
     "DHCP6_CONFIG_PACKET_QUEUE", "DHCPv6 packet queue info after configuration: %1",
     "DHCP6_CONFIG_RECEIVED", "received configuration: %1",
     "DHCP6_CONFIG_START", "DHCPv6 server is processing the following configuration: %1",
+    "DHCP6_CONFIG_UNKNOWN_OBJECT", "DHCPv6 server configuration includes an unknown object: %1",
     "DHCP6_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP6_DB_BACKEND_STARTED", "lease database started (type: %1, name: %2)",
     "DHCP6_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
