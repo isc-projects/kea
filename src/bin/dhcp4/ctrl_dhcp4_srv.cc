@@ -680,12 +680,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         // Only schedule the CB fetch timer if the fetch wait time is greater
         // than 0.
         if (fetch_time > 0) {
-            // The port number is 0 only when we run unit tests. In such case, we
-            // want to use milliseconds unit for the specified interval. Otherwise,
-            // we use seconds. Note that using milliseconds as a unit in unit tests
-            // prevents us from waiting 1 second on more before the timer goes off.
-            // Instead, we wait one millisecond which significantly reduces the
-            // test time.
+            // When we run unit tests, we want to use milliseconds unit for the
+            // specified interval. Otherwise, we use seconds. Note that using
+            // milliseconds as a unit in unit tests prevents us from waiting 1
+            // second on more before the timer goes off. Instead, we wait one
+            // millisecond which significantly reduces the test time.
             if (!server_->inTestMode()) {
                 fetch_time = 1000 * fetch_time;
             }

@@ -388,7 +388,7 @@ public:
 };
 
 // This test verifies that the same instance of the Config
-// Backend Manager is returned.
+// Backend Manager is returned all the time.
 TEST_F(CBControlBaseTest, getMgr) {
     auto mgr = cb_ctl_.getMgr();
     EXPECT_EQ(TEST_INSTANCE_ID, mgr.getInstanceId());
