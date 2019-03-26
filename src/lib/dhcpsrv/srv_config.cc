@@ -38,6 +38,8 @@ SrvConfig::SrvConfig()
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
+      server_threads_(0),
+      server_max_thread_queue_size_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
       cfg_consist_(new CfgConsistency()) {
@@ -56,6 +58,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
+      server_threads_(0),
+      server_max_thread_queue_size_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
       cfg_consist_(new CfgConsistency()) {
@@ -250,7 +254,6 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
 
 void
 SrvConfig::removeStatistics() {
-
     // Removes statistics for v4 and v6 subnets
     getCfgSubnets4()->removeStatistics();
 

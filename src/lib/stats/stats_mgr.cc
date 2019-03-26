@@ -30,61 +30,107 @@ StatsMgr::StatsMgr()
     mutex_.reset(new std::mutex());
 }
 
-void StatsMgr::setValue(const std::string& name, const int64_t value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::setValue(const std::string& name, const int64_t value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     setValueInternal(name, value);
 }
 
-void StatsMgr::setValue(const std::string& name, const double value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::setValue(const std::string& name, const double value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     setValueInternal(name, value);
 }
 
-void StatsMgr::setValue(const std::string& name, const StatsDuration& value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::setValue(const std::string& name, const StatsDuration& value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     setValueInternal(name, value);
 }
-void StatsMgr::setValue(const std::string& name, const std::string& value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+
+void StatsMgr::setValue(const std::string& name, const std::string& value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     setValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, const int64_t value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::addValue(const std::string& name, const int64_t value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     addValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, const double value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::addValue(const std::string& name, const double value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     addValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, const StatsDuration& value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::addValue(const std::string& name, const StatsDuration& value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     addValueInternal(name, value);
 }
 
-void StatsMgr::addValue(const std::string& name, const std::string& value) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::addValue(const std::string& name, const std::string& value, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     addValueInternal(name, value);
 }
 
-ObservationPtr StatsMgr::getObservation(const std::string& name) const {
-    LockGuard<std::mutex> lock(mutex_.get());
+ObservationPtr StatsMgr::getObservation(const std::string& name, bool lock) const {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->get(name));
+
 }
 
-void StatsMgr::addObservation(const ObservationPtr& stat) {
-    LockGuard<std::mutex> lock(mutex_.get());
+void StatsMgr::addObservation(const ObservationPtr& stat, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->add(stat));
 }
 
-bool StatsMgr::deleteObservation(const std::string& name) {
-    LockGuard<std::mutex> lock(mutex_.get());
+bool StatsMgr::deleteObservation(const std::string& name, bool lock) {
+    std::mutex* mlock = nullptr;
+    if (lock) {
+        mlock = mutex_.get();
+    }
+    LockGuard<std::mutex> lockGuard(mlock);
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->del(name));
@@ -102,7 +148,8 @@ void StatsMgr::setMaxSampleCount(const std::string& , uint32_t){
 }
 
 bool StatsMgr::reset(const std::string& name) {
-    ObservationPtr obs = getObservation(name);
+    LockGuard<std::mutex> lock(mutex_.get());
+    ObservationPtr obs = getObservation(name, false);
     if (obs) {
         obs->reset();
         return (true);
@@ -122,8 +169,9 @@ void StatsMgr::removeAll() {
 }
 
 isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
+    LockGuard<std::mutex> lock(mutex_.get());
     isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
-    ObservationPtr obs = getObservation(name);
+    ObservationPtr obs = getObservation(name, false);
     if (obs) {
         response->set(name, obs->getJSON()); // that contains the observation
     }
