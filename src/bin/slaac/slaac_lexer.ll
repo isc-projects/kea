@@ -185,6 +185,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"user-context\" {
     switch(driver.ctx_) {
     case ParserContext::SLAAC:
+    case ParserContext::PREFIX_INFOS:
     case ParserContext::LOGGERS:
         return SlaacParser::make_USER_CONTEXT(driver.loc_);
     default:
@@ -195,6 +196,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"comment\" {
     switch(driver.ctx_) {
     case ParserContext::SLAAC:
+    case ParserContext::PREFIX_INFOS:
     case ParserContext::LOGGERS:
         return SlaacParser::make_COMMENT(driver.loc_);
     default:

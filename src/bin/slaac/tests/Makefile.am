@@ -32,6 +32,7 @@ TESTS += slaac_unittests
 slaac_unittests_SOURCES = process_unittests.cc
 slaac_unittests_SOURCES += nd_unittests.cc
 slaac_unittests_SOURCES += cfg_mgr_unittests.cc
+slaac_unittests_SOURCES += parser_unittests.cc
 slaac_unittests_SOURCES += slaac_unittests.cc
 
 slaac_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

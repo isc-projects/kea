@@ -367,8 +367,6 @@ interfaces_config_params: interfaces_config_param
                         ;
 
 interfaces_config_param: interfaces_list
-                       | user_context
-                       | comment
                        | unknown_map_entry
                        ;
 
