@@ -272,10 +272,9 @@ Network6::toElement() const {
     ElementPtr map = Network::toElement();
 
     // Set preferred-lifetime
-    if (!getPreferred().unspecified()) {
+    if (!preferred_.unspecified()) {
         map->set("preferred-lifetime",
-                 Element::create(static_cast<long long>
-                                 (getPreferred().get())));
+                 Element::create(static_cast<long long>(preferred_.get())));
     }
 
     // Set interface-id
@@ -291,8 +290,8 @@ Network6::toElement() const {
     }
 
     // Set rapid-commit
-    if (!getRapidCommit().unspecified()) {
-        map->set("rapid-commit", Element::create(getRapidCommit().get()));
+    if (!rapid_commit_.unspecified()) {
+        map->set("rapid-commit", Element::create(rapid_commit_.get()));
     }
 
     return (map);
