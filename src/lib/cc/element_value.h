@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef ELEMENT_EXTRACTOR_H
-#define ELEMENT_EXTRACTOR_H
+#ifndef ELEMENT_VALUE_H
+#define ELEMENT_VALUE_H
 
 #include <cc/data.h>
 #include <string>
@@ -39,7 +39,7 @@ namespace data {
 ///
 /// @tparam T Type of the value to be extracted.
 template<typename T>
-class ElementExtractor {
+class ElementValue {
 public:
 
     /// @brief Function operator extracting an @c Element value as
@@ -51,9 +51,9 @@ public:
     }
 };
 
-/// @brief The @c ElementExtractor specialization for double.
+/// @brief The @c ElementValue specialization for double.
 template<>
-class ElementExtractor<double> {
+class ElementValue<double> {
 public:
 
     /// @brief Function operator extracting an @c Element value as
@@ -65,9 +65,9 @@ public:
     }
 };
 
-/// @brief The @c ElementExtractor specialization for boolean.
+/// @brief The @c ElementValue specialization for boolean.
 template<>
-class ElementExtractor<bool> {
+class ElementValue<bool> {
 public:
 
     /// @brief Function operator extracting an @c Element value as
@@ -80,9 +80,9 @@ public:
 
 };
 
-/// @brief The @c ElementExtractor specialization for string.
+/// @brief The @c ElementValue specialization for string.
 template<>
-class ElementExtractor<std::string> {
+class ElementValue<std::string> {
 public:
 
     /// @brief Function operator extracting an @c Element value as
@@ -97,4 +97,4 @@ public:
 } // end of namespace isc::data
 } // end of namespace isc
 
-#endif // ELEMENT_EXTRACTOR_H
+#endif // ELEMENT_VALUE_H
