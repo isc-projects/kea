@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,9 +16,12 @@ using namespace isc::data;
 namespace {
 
 // Tests that the modification timestamp is by default set to current
-// time.
+// time and the identifier is set to 0.
 TEST(StampedElementTest, create) {
     StampedElement element;
+
+    // Default identifier is 0.
+    EXPECT_EQ(0, element.getId());
 
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.
@@ -26,6 +29,13 @@ TEST(StampedElementTest, create) {
         boost::posix_time::second_clock::local_time() -
         element.getModificationTime();
     EXPECT_LT(delta.seconds(), 5);
+}
+
+// Tests that default id can be overriden by a new value.
+TEST(StampedElementTest, setId) {
+    StampedElement element;
+    element.setId(123);
+    EXPECT_EQ(123, element.getId());
 }
 
 // Tests that the modification timestamp can be set to an arbitrary
