@@ -7850,9 +7850,6 @@ const char* UNPARSED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
-"        \"preferred-lifetime\": 3600,\n"
-"        \"reservation-mode\": \"all\",\n"
-"        \"server-tag\": \"\",\n"
 "    }\n"
 };
 
