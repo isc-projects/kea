@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Mar 19 2019 10:19
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Mar 27 2019 10:16
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -15,6 +15,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CFG_DHCP_DDNS;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CONFIG4_MERGED;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_CONFIG6_MERGED;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_CONFIGURE_SERVERID;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_DEL_SUBNET6;

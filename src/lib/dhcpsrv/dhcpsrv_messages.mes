@@ -36,6 +36,11 @@ This is an informational message emitted when the DHCPv4 server has
 successfully merged configuration data retrieved from its configuration
 backends into the current configuration.
 
+% DHCPSRV_CFGMGR_CONFIG6_MERGED Configuration backend data has been merged.
+This is an informational message emitted when the DHCPv6 server has
+successfully merged configuration data retrieved from its configuration
+backends into the current configuration.
+
 % DHCPSRV_CFGMGR_CONFIGURE_SERVERID server configuration includes specification of a server identifier
 This warning message is issued when the server specified configuration of
 a server identifier. If this new configuration overrides an existing

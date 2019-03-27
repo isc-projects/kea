@@ -74,6 +74,20 @@ has no definition.
 This debug message informs that a class was listed for required evaluation but
 its definition does not include a test expression to evaluate.
 
+% DHCP6_CB_FETCH_UPDATES_FAIL error on attempt to fetch configuration updates from the configuration backend(s): %1
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this attempt failed.
+The server will re-try according to the configured value of the
+config-fetch-wait-time parameter. The sole argument contains the
+reason for failure.
+
+% DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED maximum number of configuration fetch attempts: 10, has been exhausted without success
+This error indicates that the server has made a number of unsuccessful
+attempts to fetch configuration updates from a configuration backend.
+The server will continue to operate but won't make any further attempts
+to fetch configuration updates. The administrator must fix the configuration
+in the database and reload (or restart) the server.
+
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the IPv6 DHCP server.
