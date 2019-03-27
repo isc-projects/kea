@@ -26,6 +26,26 @@
 #include <string>
 
 namespace isc {
+namespace data {
+
+/// @brief The @c ElementExtractor specialization for IOAddress.
+template<>
+class data::ElementExtractor<asiolink::IOAddress> {
+public:
+
+    /// @brief Function operator extracting an @c Element value as
+    /// string.
+    ///
+    /// @param el Element holding a value to be extracted.
+    asiolink::IOAddress operator()(ConstElementPtr el) const {
+        return (asiolink::IOAddress(el->stringValue()));
+    }
+};
+
+} // end of namespace isc::data
+} // end of namespace isc
+
+namespace isc {
 namespace dhcp {
 
 /// List of IOAddresses
@@ -435,32 +455,107 @@ public:
 
 protected:
 
+    /// @brief Returns a value associated with a network using inheritance.
+    ///
+    /// This template method provides a generic mechanism to retrieve a
+    /// network parameter using inheritance. It is called from public
+    /// accessor methods which return an @c OptionalValue or @c Triplet.
+    ///
+    /// @tparam BaseType Type of this instance, e.g. @c Network, @c Network4
+    /// etc, which exposes a method to be called.
+    /// @tparam ReturnType Type of the returned value, e.g.
+    /// @c Optional<std::string>.
+    ///
+    /// @param MethodPointer Pointer to the method of the base class which
+    /// should be called on the parent network instance (typically on
+    /// @c SharedNetwork4 or @c SharedNetwork6) to fetch the parent specific
+    /// value if the value is unspecified for this instance.
+    /// @param global_name Optional name of the global parameter which value
+    /// should be returned if the given parameter is not specified on network
+    /// level. This value is empty by default, which indicates that the
+    /// global value for the given parameter is not supported and shouldn't
+    /// be fetched.
+    ///
+    /// @return Optional value fetched from this instance level, parent
+    /// network level or global level
     template<typename BaseType, typename ReturnType>
     ReturnType
     getProperty(ReturnType(BaseType::*MethodPointer)() const,
                 ReturnType property,
                 const std::string& global_name = "") const {
+        // If the value is specified on this level, let's simply return it.
+        // The lower level value always takes precedence.
         if (property.unspecified()) {
+            // Check if this instance has a parent network.
             auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
             if (parent) {
+                // Run the same method on the parent instance to fetch the
+                // parent level (typically shared network level) value.
                 auto parent_property = ((*parent).*MethodPointer)();
+                // If the value is found, return it.
                 if (!parent_property.unspecified()) {
                     return (parent_property);
-
                 }
             }
 
+            // The value is not specified on network level. If the value
+            // can be specified on global level and there is a callback
+            // that returns the global values, try to find this parameter
+            // at the global scope.
             if (!global_name.empty() && fetch_globals_fn_) {
                 data::ConstElementPtr globals = fetch_globals_fn_();
                 if (globals && (globals->getType() == data::Element::map)) {
                     data::ConstElementPtr global_param = globals->get(global_name);
                     if (global_param) {
+                        // If there is a global parameter, convert it to the
+                        // optional value of the given type and return.
                         return (data::ElementExtractor<typename ReturnType::ValueType>()(global_param));
                     }
                 }
             }
         }
 
+        // We haven't found the value at any level, so return the unspecified.
+        return (property);
+    }
+
+    /// @brief Returns option pointer associated with a network using inheritance.
+    ///
+    /// This template method provides a generic mechanism to retrieve a
+    /// network parameter using inheritance. It is called from public
+    /// accessor methods which return an @c OptionPtr.
+    ///
+    /// @tparam BaseType Type of this instance, e.g. @c Network, @c Network4
+    /// etc, which exposes a method to be called.
+    ///
+    /// @param MethodPointer Pointer to the method of the base class which
+    /// should be called on the parent network instance (typically on
+    /// @c SharedNetwork4 or @c SharedNetwork6) to fetch the parent specific
+    /// value if the value is unspecified for this instance.
+    ///
+    /// @return Option pointer fetched from this instance level or parent
+    /// network level.
+    template<typename BaseType>
+    OptionPtr
+    getOptionProperty(OptionPtr(BaseType::*MethodPointer)() const,
+                      OptionPtr property) const {
+        // If the value is specified on this level, let's simply return it.
+        // The lower level value always takes precedence.
+        if (!property) {
+            // Check if this instance has a parent network.
+            auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
+            if (parent) {
+                // Run the same method on the parent instance to fetch the
+                // parent level (typically shared network level) value.
+                auto parent_property = ((*parent).*MethodPointer)();
+                // If the value is found, return it.
+                if (parent_property) {
+                    return (parent_property);
+                }
+            }
+        }
+
+        // We haven't found the value at any level, so return the unspecified.
         return (property);
     }
 
@@ -583,7 +678,8 @@ public:
     ///
     /// @return siaddr value
     util::Optional<asiolink::IOAddress> getSiaddr() const {
-        return (siaddr_);
+        return (getProperty<Network4>(&Network4::getSiaddr, siaddr_,
+                                      "next-server"));
     }
 
     /// @brief Sets server hostname for the network.
@@ -595,7 +691,8 @@ public:
     ///
     /// @return server hostname value
     util::Optional<std::string> getSname() const {
-        return (sname_);
+        return (getProperty<Network4>(&Network4::getSname, sname_,
+                                      "server-hostname"));
     }
 
     /// @brief Sets boot file name for the network.
@@ -607,7 +704,8 @@ public:
     ///
     /// @return boot file name value
     util::Optional<std::string> getFilename() const {
-        return (filename_);
+        return (getProperty<Network4>(&Network4::getFilename, filename_,
+                                      "boot-file-name"));
     }
 
     /// @brief Unparses network object.
@@ -653,7 +751,8 @@ public:
     ///
     /// @return a triplet with preferred lifetime
     Triplet<uint32_t> getPreferred() const {
-        return (preferred_);
+        return (getProperty<Network6>(&Network6::getPreferred, preferred_,
+                                      "preferred-lifetime"));
     }
 
     /// @brief Sets new preferred lifetime for a network.
@@ -667,7 +766,7 @@ public:
     ///
     /// @return interface-id option (if defined)
     OptionPtr getInterfaceId() const {
-        return (interface_id_);
+        return (getOptionProperty<Network6>(&Network6::getInterfaceId, interface_id_));
     }
 
     /// @brief sets interface-id option (if defined)
@@ -682,7 +781,8 @@ public:
     ///
     /// @return true if the Rapid Commit option is supported, false otherwise.
     util::Optional<bool> getRapidCommit() const {
-        return (rapid_commit_);
+        return (getProperty<Network6>(&Network6::getRapidCommit, rapid_commit_,
+                                      "rapid-commit"));
     }
 
     /// @brief Enables or disables Rapid Commit option support for the subnet.
