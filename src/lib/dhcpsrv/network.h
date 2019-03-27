@@ -220,6 +220,14 @@ public:
         fetch_globals_fn_ = fetch_globals_fn;
     }
 
+    /// @brief Checks if the network is associated with a function used to
+    /// fetch globally configured parameters.
+    ///
+    /// @return true if it is associated, false otherwise.
+    bool hasFetchGlobalsFn() const {
+        return (static_cast<bool>(fetch_globals_fn_));
+    }
+
     /// @brief Sets local name of the interface for which this network is
     /// selected.
     ///
