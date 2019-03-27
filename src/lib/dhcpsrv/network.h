@@ -106,8 +106,10 @@ typedef std::function<data::ConstElementPtr()> FetchNetworkGlobalsFn;
 /// change the existing server logic.
 ///
 /// The @c Network object now holds the pointer to the "parent" @c Network
-/// object. The parent network is a shared network. The object having
-/// a parent is a subnet. The subnet may or may not have a parent.
+/// object. Thus subnets which belong to a shared network will have
+/// that shared network as its parent. Stand-alone subnets, will have
+/// no parent.
+///
 /// The general idea is that the accessor functions of the network
 /// will first check if the accessed value is specified or not (that
 /// is handled by @c util::Optional object). If the value is specified

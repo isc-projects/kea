@@ -39,8 +39,8 @@ struct SharedNetworkModificationTimeIndexTag { };
 /// @brief Shared network holding IPv4 subnets.
 ///
 /// Specialization of the @ref Network4 class for IPv4 shared networks.
-    class SharedNetwork4 : public virtual Network4,
-                           public boost::enable_shared_from_this<SharedNetwork4> {
+class SharedNetwork4 : public virtual Network4,
+                       public boost::enable_shared_from_this<SharedNetwork4> {
 public:
 
     /// @brief Constructor.
