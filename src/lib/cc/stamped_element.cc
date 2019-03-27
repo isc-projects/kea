@@ -12,7 +12,7 @@ namespace data {
 StampedElement::StampedElement()
     /// @todo Change it to microsec_clock once we transition to subsecond
     /// precision.
-    : timestamp_(boost::posix_time::second_clock::local_time()) {
+    : id_(0), timestamp_(boost::posix_time::second_clock::local_time()) {
 }
 
 void
