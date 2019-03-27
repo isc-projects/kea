@@ -343,9 +343,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // Get the staging configuration
         srv_cfg = CfgMgr::instance().getStagingCfg();
 
-        // Preserve all scalar global parameters
-        srv_cfg->extractConfiguredGlobals(config_set);
-
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.

@@ -451,9 +451,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // Get the staging configuration.
         srv_config = CfgMgr::instance().getStagingCfg();
 
-        // Preserve all scalar global parameters
-        srv_config->extractConfiguredGlobals(config_set);
-
         // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
 
