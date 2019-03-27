@@ -2371,6 +2371,8 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getSubnet(123);
     ASSERT_TRUE(subnet);
 
+    EXPECT_TRUE(subnet->hasFetchGlobalsFn());
+
     EXPECT_TRUE(subnet->getIface().unspecified());
     EXPECT_TRUE(subnet->getIface().empty());
 
@@ -2440,6 +2442,8 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getSubnet(123);
     ASSERT_TRUE(subnet);
 
+    EXPECT_TRUE(subnet->hasFetchGlobalsFn());
+
     EXPECT_TRUE(subnet->getIface().unspecified());
     EXPECT_TRUE(subnet->getIface().empty());
 
@@ -2492,6 +2496,8 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
         CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->getByName("frog");
     ASSERT_TRUE(network);
 
+    EXPECT_TRUE(network->hasFetchGlobalsFn());
+
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
@@ -2543,6 +2549,8 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     auto network =
         CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->getByName("frog");
     ASSERT_TRUE(network);
+
+    EXPECT_TRUE(network->hasFetchGlobalsFn());
 
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());

@@ -532,13 +532,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
-            // Timers are not used in the global scope. Their values are derived
-            // to specific subnets (see SimpleParser6::deriveParameters).
-            // decline-probation-period, dhcp4o6-port, echo-client-id,
-            // user-context are handled in global_parser.parse() which
-            // sets global parameters.
-            // match-client-id and authoritative are derived to subnet scope
-            // level.
+            // As of Kea 1.6.0 we have two ways of inheriting the global parameters.
+            // The old method is used in JSON configuration parsers when the global
+            // parameters are derived into the subnets and shared networks and are
+            // being treated as explicitly specified. The new way used by the config
+            // backend is the dynamic inheritance whereby each subnet and shared
+            // network uses a callback function to return global parameter if it
+            // is not specified at lower level. This callback uses configured globals.
+            // Let's store all globals there so as they can be accessed.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "valid-lifetime") ||
@@ -556,6 +557,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent")) {
+
+                CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
+                                                                        config_pair.second);
                 continue;
             }
 
