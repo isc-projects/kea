@@ -660,7 +660,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // backend is the dynamic inheritance whereby each subnet and shared
             // network uses a callback function to return global parameter if it
             // is not specified at lower level. This callback uses configured globals.
-            // Let's store all globals there so as they can be accessed.
+            // We deliberately include both default and explicitly specified globals
+            // so as the callback can access the appropriate global values regardless
+            // whether they are set to a default or other value.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "preferred-lifetime") ||
