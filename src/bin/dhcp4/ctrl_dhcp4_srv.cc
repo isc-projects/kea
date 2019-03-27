@@ -972,9 +972,7 @@ void
 ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
                                     boost::shared_ptr<unsigned> failure_count) {
     try {
-        // The true value indicates that the server should not reconnect
-        // to the configuration backends and should take into account
-        // audit entries stored in the database since last fetch.
+        // Fetch any configuration backend updates since our last fetch.
         server_->getCBControl()->databaseConfigFetch(srv_cfg,
                                                      CBControlDHCPv4::FetchMode::FETCH_UPDATE);
         (*failure_count) = 0;

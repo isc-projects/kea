@@ -695,6 +695,34 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Setup config backend polling, if configured for it.
+    auto ctl_info = CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
+    if (ctl_info) {
+        long fetch_time = static_cast<long>(ctl_info->getConfigFetchWaitTime());
+        // Only schedule the CB fetch timer if the fetch wait time is greater
+        // than 0.
+        if (fetch_time > 0) {
+            // When we run unit tests, we want to use milliseconds unit for the
+            // specified interval. Otherwise, we use seconds. Note that using
+            // milliseconds as a unit in unit tests prevents us from waiting 1
+            // second on more before the timer goes off. Instead, we wait one
+            // millisecond which significantly reduces the test time.
+            if (!server_->inTestMode()) {
+                fetch_time = 1000 * fetch_time;
+            }
+
+            boost::shared_ptr<unsigned> failure_count(new unsigned(0));
+            TimerMgr::instance()->
+                registerTimer("Dhcp6CBFetchTimer",
+                              boost::bind(&ControlledDhcpv6Srv::cbFetchUpdates,
+                                          server_, CfgMgr::instance().getStagingCfg(),
+                                          failure_count),
+                              fetch_time,
+                              asiolink::IntervalTimer::ONE_SHOT);
+            TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
+        }
+    }
+
     // Finally, we can commit runtime option definitions in libdhcp++. This is
     // exception free.
     LibDHCP::commitRuntimeOptionDefs();
@@ -960,6 +988,35 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     dbReconnect(db_reconnect_ctl);
 
     return(true);
+}
+
+void
+ControlledDhcpv6Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
+                                    boost::shared_ptr<unsigned> failure_count) {
+    try {
+        // Fetch any configuration backend updates since our last fetch.
+        server_->getCBControl()->databaseConfigFetch(srv_cfg,
+                                                     CBControlDHCPv6::FetchMode::FETCH_UPDATE);
+        (*failure_count) = 0;
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_CB_FETCH_UPDATES_FAIL)
+            .arg(ex.what());
+
+        // We allow at most 10 consecutive failures after which we stop
+        // making further attempts to fetch the configuration updates.
+        // Let's return without re-scheduling the timer.
+        if (++(*failure_count) > 10) {
+            LOG_ERROR(dhcp6_logger, DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED);
+            return;
+        }
+    }
+
+    // Reschedule the timer to fetch new updates or re-try if
+    // the previous attempt resulted in an error.
+    if (TimerMgr::instance()->isTimerRegistered("Dhcp6CBFetchTimer")) {
+        TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
+    }
 }
 
 }; // end of isc::dhcp namespace

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Feb 08 2019 20:33
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Mar 26 2019 13:41
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -14,6 +14,8 @@ extern const isc::log::MessageID DHCP6_ALREADY_RUNNING = "DHCP6_ALREADY_RUNNING"
 extern const isc::log::MessageID DHCP6_BUFFER_RECEIVED = "DHCP6_BUFFER_RECEIVED";
 extern const isc::log::MessageID DHCP6_BUFFER_UNPACK = "DHCP6_BUFFER_UNPACK";
 extern const isc::log::MessageID DHCP6_BUFFER_WAIT_SIGNAL = "DHCP6_BUFFER_WAIT_SIGNAL";
+extern const isc::log::MessageID DHCP6_CB_FETCH_UPDATES_FAIL = "DHCP6_CB_FETCH_UPDATES_FAIL";
+extern const isc::log::MessageID DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED = "DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED";
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED = "DHCP6_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED = "DHCP6_CLASS_UNCONFIGURED";
 extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED = "DHCP6_CLASS_UNDEFINED";
@@ -152,6 +154,8 @@ const char* values[] = {
     "DHCP6_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
     "DHCP6_BUFFER_UNPACK", "parsing buffer received from %1 to %2 over interface %3",
     "DHCP6_BUFFER_WAIT_SIGNAL", "signal received while waiting for next packet, next waiting signal is %1",
+    "DHCP6_CB_FETCH_UPDATES_FAIL", "error on attempt to fetch configuration updates from the configuration backend(s): %1",
+    "DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED", "maximum number of configuration fetch attempts: 10, has been exhausted without success",
     "DHCP6_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class(es): %2",
     "DHCP6_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
     "DHCP6_CLASS_UNDEFINED", "required class %1 has no definition",

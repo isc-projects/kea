@@ -68,6 +68,7 @@ libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
 libkea_dhcpsrv_la_SOURCES += cb_ctl_dhcp.h
 libkea_dhcpsrv_la_SOURCES += cb_ctl_dhcp4.cc cb_ctl_dhcp4.h
+libkea_dhcpsrv_la_SOURCES += cb_ctl_dhcp6.cc cb_ctl_dhcp6.h
 libkea_dhcpsrv_la_SOURCES += cfg_4o6.cc cfg_4o6.h
 libkea_dhcpsrv_la_SOURCES += cfg_consistency.cc cfg_consistency.h
 libkea_dhcpsrv_la_SOURCES += cfg_db_access.cc cfg_db_access.h
@@ -286,6 +287,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	callout_handle_store.h \
 	cb_ctl_dhcp.h \
 	cb_ctl_dhcp4.h \
+	cb_ctl_dhcp6.h \
 	cfg_4o6.h \
 	cfg_consistency.h \
 	cfg_db_access.h \

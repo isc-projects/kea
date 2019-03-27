@@ -16,6 +16,7 @@
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
@@ -419,6 +420,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     if (!check_only) {
         TimerMgr::instance()->unregisterTimers();
         server.discardPackets();
+        server.getCBControl()->reset();
     }
 
     // Revert any runtime option definitions configured so far and not committed.
@@ -444,9 +446,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // the parsers.  It is declared outside the loop so in case of error, the
     // name of the failing parser can be retrieved within the "catch" clause.
     ConfigPair config_pair;
+    SrvConfigPtr srv_config;
     try {
-
-        SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
+        // Get the staging configuration.
+        srv_config = CfgMgr::instance().getStagingCfg();
 
         // Preserve all scalar global parameters
         srv_config->extractConfiguredGlobals(config_set);
@@ -739,6 +742,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
+
+            // If there are config backends, fetch and merge into staging config
+            server.getCBControl()->databaseConfigFetch(srv_config,
+                                                       CBControlDHCPv6::FetchMode::FETCH_ALL);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());

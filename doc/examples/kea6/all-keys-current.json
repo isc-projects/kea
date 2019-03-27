@@ -699,7 +699,10 @@
                     // Type of the database, e.g. "mysql", "postgresql", "cql".
                     "type": "mysql"
                 }
-            ]
+            ],
+            // Intervals between attempts to fetch configuration updates
+            // via the configuration backends used.
+            "config-fetch-wait-time": 30
         },
 
         // Server tag.
