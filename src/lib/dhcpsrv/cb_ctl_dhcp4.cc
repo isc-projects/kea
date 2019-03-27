@@ -57,6 +57,12 @@ CBControlDHCPv4::databaseConfigApply(const db::BackendSelector& backend_selector
             getMgr().getPool()->getModifiedSharedNetworks4(backend_selector, server_selector,
                                                            lb_modification_time);
         for (auto network = networks.begin(); network != networks.end(); ++network) {
+            // In order to take advantage of the dynamic inheritance of global
+            // parameters to a shared network we need to set a callback function
+            // for each network which can be used to fetch global parameters.
+            (*network)->setFetchGlobalsFn([] () -> ConstElementPtr {
+                return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+            });
             external_cfg->getCfgSharedNetworks4()->add((*network));
         }
     }
@@ -67,6 +73,12 @@ CBControlDHCPv4::databaseConfigApply(const db::BackendSelector& backend_selector
                                                                             server_selector,
                                                                             lb_modification_time);
         for (auto subnet = subnets.begin(); subnet != subnets.end(); ++subnet) {
+            // In order to take advantage of the dynamic inheritance of global
+            // parameters to a subnet we need to set a callback function for each
+            // subnet which can be used to fetch global parameters.
+            (*subnet)->setFetchGlobalsFn([] () -> ConstElementPtr {
+                return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+            });
             external_cfg->getCfgSubnets4()->add((*subnet));
         }
     }

@@ -295,6 +295,7 @@ public:
         if (fetchConfigElement("dhcp4_shared_network") &&
             (network->getModificationTime() > lb_modification_time)) {
             EXPECT_TRUE(found_network);
+            EXPECT_TRUE(found_network->hasFetchGlobalsFn());
 
         } else {
             EXPECT_FALSE(found_network);
@@ -306,7 +307,8 @@ public:
         auto found_subnet = subnets->getSubnet(1);
         if (fetchConfigElement("dhcp4_subnet") &&
             (subnet->getModificationTime() > lb_modification_time)) {
-            EXPECT_TRUE(found_subnet);
+            ASSERT_TRUE(found_subnet);
+            EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
 
         } else {
             EXPECT_FALSE(found_subnet);
