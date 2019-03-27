@@ -8,6 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
@@ -171,6 +172,13 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
                   << shared_network_data->getPosition() << ")");
     }
 
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a shared network we need to set a callback function
+    // for each shared network to allow for fetching global parameters.
+     shared_network->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+    });
+
     return (shared_network);
 }
 
@@ -269,6 +277,13 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");
     }
+
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a shared network we need to set a callback function
+    // for each shared network which can be used to fetch global parameters.
+     shared_network->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+    });
 
     return (shared_network);
 }
