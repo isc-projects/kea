@@ -10,7 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
-#include <cc/element_extractor.h>
+#include <cc/element_value.h>
 #include <cc/stamped_element.h>
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
@@ -28,9 +28,9 @@
 namespace isc {
 namespace data {
 
-/// @brief The @c ElementExtractor specialization for IOAddress.
+/// @brief The @c ElementValue specialization for IOAddress.
 template<>
-class ElementExtractor<asiolink::IOAddress> {
+class ElementValue<asiolink::IOAddress> {
 public:
 
     /// @brief Function operator extracting an @c Element value as
@@ -519,7 +519,7 @@ protected:
                     if (global_param) {
                         // If there is a global parameter, convert it to the
                         // optional value of the given type and return.
-                        return (data::ElementExtractor<typename ReturnType::ValueType>()(global_param));
+                        return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
                     }
                 }
             }
