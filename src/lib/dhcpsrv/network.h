@@ -30,7 +30,7 @@ namespace data {
 
 /// @brief The @c ElementExtractor specialization for IOAddress.
 template<>
-class data::ElementExtractor<asiolink::IOAddress> {
+class ElementExtractor<asiolink::IOAddress> {
 public:
 
     /// @brief Function operator extracting an @c Element value as
