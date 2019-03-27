@@ -13,6 +13,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
@@ -25,6 +26,9 @@ namespace dhcp {
 
 /// @brief A tag for accessing random access index.
 struct SharedNetworkRandomAccessIndexTag { };
+
+/// @brief A tag for accessing index by id.
+struct SharedNetworkIdIndexTag { };
 
 /// @brief A tag for accessing index by shared network name.
 struct SharedNetworkNameIndexTag { };
@@ -170,20 +174,26 @@ typedef boost::multi_index_container<
         boost::multi_index::random_access<
             boost::multi_index::tag<SharedNetworkRandomAccessIndexTag>
         >,
-        // Second index allows for access by shared network's name.
+        // Second index allows for access by shared network id.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<SharedNetworkIdIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
+                                              &data::StampedElement::getId>
+        >,
+        // Third index allows for access by shared network's name.
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SharedNetworkNameIndexTag>,
             boost::multi_index::const_mem_fun<SharedNetwork4, std::string,
                                               &SharedNetwork4::getName>
         >,
-        // Third index allows for access by server identifier specified for the
+        // Fourth index allows for access by server identifier specified for the
         // network.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkServerIdIndexTag>,
             boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
                                               &Network4::getServerId>
         >,
-        // Fourth index allows for searching using subnet modification time.
+        // Fifth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
             boost::multi_index::const_mem_fun<data::StampedElement,
@@ -327,13 +337,19 @@ typedef boost::multi_index_container<
         boost::multi_index::random_access<
             boost::multi_index::tag<SharedNetworkRandomAccessIndexTag>
         >,
-        // Second index allows for access by shared network's name.
+        // Second index allows for access by shared network id.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<SharedNetworkIdIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
+                                              &data::StampedElement::getId>
+        >,
+        // Third index allows for access by shared network's name.
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SharedNetworkNameIndexTag>,
             boost::multi_index::const_mem_fun<SharedNetwork6, std::string,
                                               &SharedNetwork6::getName>
         >,
-        // Third index allows for searching using subnet modification time.
+        // Fourth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
             boost::multi_index::const_mem_fun<data::StampedElement,
