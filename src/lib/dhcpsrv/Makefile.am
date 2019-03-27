@@ -287,6 +287,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	callout_handle_store.h \
 	cb_ctl_dhcp.h \
 	cb_ctl_dhcp4.h \
+	cb_ctl_dhcp6.h \
 	cfg_4o6.h \
 	cfg_consistency.h \
 	cfg_db_access.h \

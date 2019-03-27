@@ -162,7 +162,7 @@ public:
 
 // This test verifies that externally configured globals are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, mergeGlobals) {
+TEST_F(Dhcp6CBTest, DISABLED_mergeGlobals) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -230,10 +230,9 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
 }
 
-#if 0
 // This test verifies that externally configured option definitions
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, mergeOptionDefs) {
+TEST_F(Dhcp6CBTest, DISABLED_mergeOptionDefs) {
     string base_config =
         "{ \n"
         "    \"option-def\": [ { \n"
@@ -309,7 +308,7 @@ TEST_F(Dhcp6CBTest, mergeOptionDefs) {
 
 // This test verifies that externally configured options
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, mergeOptions) {
+TEST_F(Dhcp6CBTest, DISABLED_mergeOptions) {
     string base_config =
         "{ \n"
         "    \"option-data\": [ { \n"
@@ -387,7 +386,7 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
 
 // This test verifies that externally configured shared-networks are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, mergeSharedNetworks) {
+TEST_F(Dhcp6CBTest, DISABLED_mergeSharedNetworks) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -447,7 +446,7 @@ TEST_F(Dhcp6CBTest, mergeSharedNetworks) {
 
 // This test verifies that externally configured subnets are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, mergeSubnets) {
+TEST_F(Dhcp6CBTest, DISABLED_mergeSubnets) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -505,6 +504,5 @@ TEST_F(Dhcp6CBTest, mergeSubnets) {
     staged_subnet = subnets->getSubnet(3);
     ASSERT_FALSE(staged_subnet);
 }
-#endif
 
 }

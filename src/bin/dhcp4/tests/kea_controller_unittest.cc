@@ -77,10 +77,12 @@ public:
 
     /// @brief Stub implementation of the "fetch" function.
     ///
-    /// It checks if the @c fetch_updates_only is set to true when it
-    /// is a later than first invocation of the function. It also
-    /// throws an exception when desired by a test, to verify that the
-    /// server gracefully handles such exception.
+    /// If this is not the first invocation of this function, it
+    /// verifies that the @c fetch_mode has been correctly set to
+    /// @c FetchMode::FETCH_UPDATE.
+    ///
+    /// It also throws an exception when desired by a test, to
+    /// verify that the server gracefully handles such exception.
     ///
     /// @param fetch_mode value indicating if the method is called upon the
     /// server start up or it is called to fetch configuration updates.
