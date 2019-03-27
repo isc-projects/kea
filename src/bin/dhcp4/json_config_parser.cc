@@ -546,7 +546,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "echo-client-id") ||
-                 (config_pair.first == "user-context") ||
                  (config_pair.first == "match-client-id") ||
                  (config_pair.first == "authoritative") ||
                  (config_pair.first == "next-server") ||
@@ -560,6 +559,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
+                continue;
+
+            }
+
+            // Nothing to configure for the user-context.
+            if (config_pair.first == "user-context") {
                 continue;
             }
 

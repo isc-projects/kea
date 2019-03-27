@@ -670,11 +670,15 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
-                 (config_pair.first == "user-context") ||
                  (config_pair.first == "server-tag") ||
                  (config_pair.first == "reservation-mode")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
+                continue;
+            }
+
+            // Nothing to configure for the user-context.
+            if (config_pair.first == "user-context") {
                 continue;
             }
 
