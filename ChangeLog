@@ -1,3 +1,8 @@
+1549.	[func]		tmark
+	kea-dhcp6 can now be configured to fetch data from configuration
+	back ends. It does not yet utilize the data fetched.
+	(Gitlab #104,!290, git d8a25c1ecd17ad24bdce6af19e7a42ce66d4c4f2)
+
 1548.	[func]		razvan
 	Added consistency and serial-consistency parameters to CQL
 	connection.
