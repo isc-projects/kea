@@ -166,7 +166,7 @@ a new benchmark.
 benchmarks should, otherwise the major benefit of comparing different backends
 would disappear), there should be a method in the base class (either
 @ref isc::dhcp::bench::GenericHostDataSourceBenchmark or
-@ref isc::dhcp::bench::GenericLeaseMgrBenchmark). See 
+@ref isc::dhcp::bench::GenericLeaseMgrBenchmark). See
 @ref isc::dhcp::bench::GenericLeaseMgrBenchmark::benchUpdateLeases4 as an example.
 
 -# You need to define a benchmark suing BENCHMARK_DEFINE_F macro. This should be
