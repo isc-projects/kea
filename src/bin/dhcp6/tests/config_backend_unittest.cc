@@ -98,6 +98,7 @@ public:
 
         // Create fresh context.
         resetConfiguration();
+        CfgMgr::instance().setFamily(AF_INET6);
     }
 
     /// Destructor
@@ -222,7 +223,7 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
 
 // This test verifies that externally configured option definitions
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeOptionDefs) {
+TEST_F(Dhcp6CBTest, mergeOptionDefs) {
     string base_config =
         "{ \n"
         "    \"option-def\": [ { \n"
