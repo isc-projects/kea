@@ -72,8 +72,6 @@ public:
         ::benchmark::State const& cs = s;
         TearDown(cs);
     }
-
-
 };
 
 // Defines a benchmark that measures IPv4 leases insertion.
