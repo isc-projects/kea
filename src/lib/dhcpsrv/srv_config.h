@@ -652,8 +652,34 @@ private:
     /// into this configuration.
     void merge4(SrvConfig& other);
 
+    /// @brief Merges the DHCPv6 configuration specified as a parameter into
+    /// this configuration.
+    ///
+    /// The general rule is that the configuration data from the @c other
+    /// object replaces configuration data held in this object instance.
+    /// The data that do not overlap between the two objects is simply
+    /// inserted into this configuration.
+    ///
+    /// @warning The call to @c merge may modify the data in the @c other
+    /// object. Therefore, the caller must not rely on the data held
+    /// in the @c other object after the call to @c merge. Also, the
+    /// data held in @c other must not be modified after the call to
+    /// @c merge because it may affect the merged configuration.
+    ///
+    /// The @c other parameter must be a @c SrvConfig or its derivation.
+    ///
+    /// Currently, the following parts of the v6 configuration are merged:
+    /// - globals
+    /// - shared-networks
+    /// - subnets
+    ///
+    /// @todo Add support for merging other configuration elements.
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void merge6(SrvConfig& other);
 
-    /// @brief Merges the DHCPv4 globals specified in the given configuration
+    /// @brief Merges the globals specified in the given configuration
     /// into this configuration.
     ///
     /// Configurable global values may be specified either via JSON
@@ -675,7 +701,7 @@ private:
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
-    void mergeGlobals4(SrvConfig& other);
+    void mergeGlobals(SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;

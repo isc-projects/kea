@@ -985,7 +985,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // Let's create the "existing" config we will merge into.
     SrvConfig cfg_to;
 
-    // Set some explicit values. 
+    // Set some explicit values.
     cfg_to.setDeclinePeriod(100);
     cfg_to.setEchoClientId(false);
     cfg_to.setDhcp4o6Port(777);
@@ -1025,7 +1025,73 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     //  server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
-    // Next we check the explicitly "configured" globals. 
+    // Next we check the explicitly "configured" globals.
+    // The list should be all of the "to" + "from", with the
+    // latter overwriting the former.
+    std::string exp_globals =
+        "{ \n"
+        "   \"decline-probation-period\": 300,  \n"
+        "   \"dhcp4o6port\": 999,  \n"
+        "   \"server-tag\": \"use_this_server\"  \n"
+        "} \n";
+
+    ConstElementPtr expected_globals;
+    ASSERT_NO_THROW(expected_globals = Element::fromJSON(exp_globals))
+                    << "exp_globals didn't parse, test is broken";
+
+    EXPECT_TRUE(isEquivalent(expected_globals, cfg_to.getConfiguredGlobals()));
+
+}
+
+// This test verifies that globals from one SrvConfig
+// can be merged into another. It verifies that values
+// in the from-config override those in to-config which
+// override those in GLOBAL4_DEFAULTS.
+TEST_F(SrvConfigTest, mergeGlobals6) {
+    // Set the family we're working with.
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    // Let's create the "existing" config we will merge into.
+    SrvConfig cfg_to;
+
+    // Set some explicit values.
+    cfg_to.setDeclinePeriod(100);
+    cfg_to.setEchoClientId(false);
+    cfg_to.setDhcp4o6Port(777);
+    cfg_to.setServerTag("not_this_server");
+
+    // Add some configured globals
+    cfg_to.addConfiguredGlobal("decline-probation-period", Element::create(300));
+    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(888));
+
+    // Now we'll create the config we'll merge from.
+    SrvConfig cfg_from;
+
+    // Set some explicit values. None of these should be preserved.
+    cfg_from.setDeclinePeriod(200);
+    cfg_from.setEchoClientId(true);
+    cfg_from.setDhcp4o6Port(888);
+    cfg_from.setServerTag("nor_this_server");
+
+    // Add some configured globals:
+    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(999));
+    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+
+    // Now let's merge.
+    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+
+    // Make sure the explicit values are set correctly.
+
+    // decline-probation-period should be the "to" configured value.
+    EXPECT_EQ(300, cfg_to.getDeclinePeriod());
+
+    //  dhcp4o6port should be the "from" configured value.
+    EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
+
+    //  server-tag port should be the "from" configured value.
+    EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
+
+    // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
     std::string exp_globals =

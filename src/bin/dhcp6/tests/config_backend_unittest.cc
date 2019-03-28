@@ -162,7 +162,7 @@ public:
 
 // This test verifies that externally configured globals are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeGlobals) {
+TEST_F(Dhcp6CBTest, mergeGlobals) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"

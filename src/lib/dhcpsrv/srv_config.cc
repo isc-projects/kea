@@ -164,7 +164,7 @@ SrvConfig::merge(ConfigBase& other) {
         if (CfgMgr::instance().getFamily() == AF_INET) {
             merge4(other_srv_config);
         } else {
-            /// @todo merge6();
+            merge6(other_srv_config);
         }
     } catch (const std::bad_cast&) {
         isc_throw(InvalidOperation, "internal server error: must use derivation"
@@ -178,7 +178,7 @@ SrvConfig::merge4(SrvConfig& other) {
     // We merge objects in order of dependency (real or theoretical).
 
     // Merge globals.
-    mergeGlobals4(other);
+    mergeGlobals(other);
 
     // Merge option defs. We need to do this next so we
     // pass these into subsequent merges so option instances
@@ -186,28 +186,56 @@ SrvConfig::merge4(SrvConfig& other) {
     // definitions.
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
-    // Merge options.  
+    // Merge options.
     cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
 
     // Merge shared networks.
     cfg_shared_networks4_->merge(cfg_option_def_, *(other.getCfgSharedNetworks4()));
 
     // Merge subnets.
-    cfg_subnets4_->merge(cfg_option_def_, getCfgSharedNetworks4(), 
+    cfg_subnets4_->merge(cfg_option_def_, getCfgSharedNetworks4(),
                          *(other.getCfgSubnets4()));
 
     /// @todo merge other parts of the configuration here.
 }
 
 void
-SrvConfig::mergeGlobals4(SrvConfig& other) {
+SrvConfig::merge6(SrvConfig& other) {
+    // We merge objects in order of dependency (real or theoretical).
+
+    // Merge globals.
+    mergeGlobals(other);
+
+#if 0
+    // Merge option defs. We need to do this next so we
+    // pass these into subsequent merges so option instances
+    // at each level can be created based on the merged
+    // definitions.
+    cfg_option_def_->merge((*other.getCfgOptionDef()));
+
+    // Merge options.
+    cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
+
+    // Merge shared networks.
+    cfg_shared_networks6_->merge(cfg_option_def_, *(other.getCfgSharedNetworks6()));
+
+    // Merge subnets.
+    cfg_subnets6_->merge(cfg_option_def_, getCfgSharedNetworks4(),
+                         *(other.getCfgSubnets6()));
+#endif
+
+    /// @todo merge other parts of the configuration here.
+}
+
+void
+SrvConfig::mergeGlobals(SrvConfig& other) {
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
     for (auto other_global : other.getConfiguredGlobals()->mapValue()) {
         addConfiguredGlobal(other_global.first, other_global.second);
     }
 
-    // A handful of values are stored as members in SrvConfig. So we'll 
+    // A handful of values are stored as members in SrvConfig. So we'll
     // iterate over the merged globals, setting approprate members.
     for (auto merged_global : getConfiguredGlobals()->mapValue()) {
         std::string name = merged_global.first;
@@ -217,6 +245,8 @@ SrvConfig::mergeGlobals4(SrvConfig& other) {
                 setDeclinePeriod(element->intValue());
             }
             else if (name == "echo-client-id") {
+                // echo-client-id is v4 only, but we'll let upstream
+                // worry about that.
                 setEchoClientId(element->boolValue());
             }
             else if (name == "dhcp4o6port") {
@@ -231,6 +261,7 @@ SrvConfig::mergeGlobals4(SrvConfig& other) {
         }
     }
 }
+
 
 void
 SrvConfig::removeStatistics() {
