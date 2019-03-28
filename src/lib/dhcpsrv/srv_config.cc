@@ -206,13 +206,13 @@ SrvConfig::merge6(SrvConfig& other) {
     // Merge globals.
     mergeGlobals(other);
 
-#if 0
     // Merge option defs. We need to do this next so we
     // pass these into subsequent merges so option instances
     // at each level can be created based on the merged
     // definitions.
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
+#if 0
     // Merge options.
     cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
 
