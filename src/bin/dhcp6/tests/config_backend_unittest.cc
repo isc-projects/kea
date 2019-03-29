@@ -364,7 +364,7 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
 
 // This test verifies that externally configured shared-networks are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeSharedNetworks) {
+TEST_F(Dhcp6CBTest, mergeSharedNetworks) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"

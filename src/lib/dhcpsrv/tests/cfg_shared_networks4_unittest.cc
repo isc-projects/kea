@@ -18,6 +18,11 @@ using namespace asiolink;
 
 namespace {
 
+/// Attempts to verify an expected network within a collection of networks
+/// @param networks set of networks in which to look
+/// @param name name of the expected network 
+/// @param exp_valid expected valid lifetime of the network
+/// @param exp_subnets list of subnet IDs the network is expected to own
 void checkMergedNetwork(const CfgSharedNetworks4& networks, const std::string& name,
                        const Triplet<uint32_t>& exp_valid,
                        const std::vector<SubnetID>& exp_subnets) {
@@ -288,9 +293,6 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     OptionPtr option(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(network1b->getCfgOption()->add(option, false, "isc"));
-    // Verify that our option is a generic option.
-    EXPECT_EQ("type=001, len=004: 59:61:79:21", option->toText());
-
     ASSERT_NO_THROW(network1b->add(subnet4));
 
     // Network2 we will not touch.
@@ -318,8 +320,9 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     // Make sure we have option 1 and that it has been replaced with a string option.
     auto network = cfg_to.getByName("network1");
     auto desc = network->getCfgOption()->get("isc", 1);
-    ASSERT_TRUE(desc.option_);
-    EXPECT_EQ("type=001, len=004: \"Yay!\" (string)", desc.option_->toText());
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Yay!", opstr->getValue());
 
     // No changes to network2.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),
