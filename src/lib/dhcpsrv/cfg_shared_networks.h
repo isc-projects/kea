@@ -33,6 +33,10 @@ namespace dhcp {
 template<typename SharedNetworkPtrType, typename SharedNetworkCollection>
 class CfgSharedNetworks : public data::CfgToElement {
 public:
+    /// @brief Returns pointer to all configured shared networks.
+    const SharedNetworkCollection* getAll() const {
+        return (&networks_);
+    }
 
     /// @brief Adds new shared network to the configuration.
     ///
@@ -126,30 +130,6 @@ public:
         return (list);
     }
 
-protected:
-
-    /// @brief Multi index container holding shared networks.
-    SharedNetworkCollection networks_;
-};
-
-/// @brief Represents configuration of IPv4 shared networks.
-class CfgSharedNetworks4 : public CfgSharedNetworks<SharedNetwork4Ptr,
-                                                    SharedNetwork4Collection> {
-public:
-
-    /// @brief Returns pointer to all configured shared networks.
-    const SharedNetwork4Collection* getAll() const {
-        return (&networks_);
-    }
-
-    /// @brief Checks if specified server identifier has been specified for
-    /// any network.
-    ///
-    /// @param server_id Server identifier.
-    ///
-    /// @return true if there is a network with a specified server identifier.
-    bool hasNetworkWithServerId(const asiolink::IOAddress& server_id) const;
-
     /// @brief Merges specified shared network configuration into this
     /// configuration.
     ///
@@ -179,7 +159,70 @@ public:
     /// when creating option instances.
     /// @param other the shared network configuration to be merged into this
     /// configuration.
-    void merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4& other);
+    void merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks& other) {
+        auto& index = networks_.template get<SharedNetworkNameIndexTag>();
+
+        // Iterate over the subnets to be merged. They will replace the existing
+        // subnets with the same id. All new subnets will be inserted into this
+        // configuration.
+        auto other_networks = other.getAll();
+        for (auto other_network = other_networks->begin();
+            other_network != other_networks->end(); ++other_network) {
+
+            // In theory we should drop subnet assignments from "other". The
+            // idea being  those that come from the CB should not have subnets_
+            // populated.  We will quietly throw them away, just in case.
+            (*other_network)->delAll();
+
+            // Check if the other network exists in this config.
+            auto existing_network = index.find((*other_network)->getName());
+            if (existing_network != index.end()) {
+
+                // Somehow the same instance is in both, skip it.
+                if (*existing_network == *other_network) {
+                    continue;
+                }
+
+                // Network exists, which means we're updating it.
+                // First we need to move its subnets to the new
+                // version of the network.
+                const auto subnets = (*existing_network)->getAllSubnets();
+
+                auto copy_subnets(*subnets);
+                for (auto subnet = copy_subnets.cbegin(); subnet != copy_subnets.cend(); ++subnet) {
+                    (*existing_network)->del((*subnet)->getID());
+                    (*other_network)->add(*subnet);
+                }
+
+                // Now we discard the existing copy of the network.
+                index.erase(existing_network);
+            }
+
+            // Create the network's options based on the given definitions.
+            (*other_network)->getCfgOption()->createOptions(cfg_def);
+
+            // Add the new/updated nework.
+            networks_.push_back(*other_network);
+        }
+    }
+
+protected:
+
+    /// @brief Multi index container holding shared networks.
+    SharedNetworkCollection networks_;
+};
+
+/// @brief Represents configuration of IPv4 shared networks.
+class CfgSharedNetworks4 : public CfgSharedNetworks<SharedNetwork4Ptr,
+                                                    SharedNetwork4Collection> {
+public:
+    /// @brief Checks if specified server identifier has been specified for
+    /// any network.
+    ///
+    /// @param server_id Server identifier.
+    ///
+    /// @return true if there is a network with a specified server identifier.
+    bool hasNetworkWithServerId(const asiolink::IOAddress& server_id) const;
 };
 
 /// @brief Pointer to the configuration of IPv4 shared networks.
@@ -188,12 +231,6 @@ typedef boost::shared_ptr<CfgSharedNetworks4> CfgSharedNetworks4Ptr;
 /// @brief Represents configuration of IPv6 shared networks.
 class CfgSharedNetworks6 : public CfgSharedNetworks<SharedNetwork6Ptr,
                                                     SharedNetwork6Collection> {
-public:
-
-    /// @brief Returns pointer to all configured shared networks.
-    const SharedNetwork6Collection* getAll() const {
-        return (&networks_);
-    }
 };
 
 /// @brief Pointer to the configuration of IPv6 shared networks.
