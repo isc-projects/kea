@@ -405,9 +405,18 @@ public:
             util::Optional<std::string> hr_mode_name;
             hr_mode_name = getGlobalProperty(hr_mode_name, "reservation-mode");
             if (!hr_mode_name.unspecified()) {
-                // If the HR mode is globally configured, let's convert it from
-                // a string to enum.
-                return (hrModeFromString(hr_mode_name.get()));
+                try {
+                    // If the HR mode is globally configured, let's convert it from
+                    // a string to enum.
+                    return (hrModeFromString(hr_mode_name.get()));
+
+                } catch (...) {
+                    // This should not really happen because the configuration
+                    // parser should have already verified the globally configured
+                    // reservation mode. However, we want to be 100% sure that this
+                    // method doesn't throw. Let's just return unspecified.
+                    return (hr_mode);
+                }
             }
         }
         return (hr_mode);
