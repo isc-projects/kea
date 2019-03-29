@@ -212,10 +212,10 @@ SrvConfig::merge6(SrvConfig& other) {
     // definitions.
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
-#if 0
     // Merge options.
     cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
 
+#if 0
     // Merge shared networks.
     cfg_shared_networks6_->merge(cfg_option_def_, *(other.getCfgSharedNetworks6()));
 

@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
@@ -547,10 +548,10 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint8"))), "isc");
     defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint8", true))), "isc");
 
-    // We'll try a standard option first.
+    // We'll try a standard V4 option first.
     std::string space = "dhcp4";
-    std::string value("example.org");
-    OptionPtr option(new Option(Option::V4, DHO_HOST_NAME));
+    std::string value = "v4.example.com";
+    OptionPtr option(new Option(Option::V6, DHO_HOST_NAME));
     option->setData(value.begin(), value.end());
     OptionDescriptorPtr desc(new OptionDescriptor(option, false));
 
@@ -559,7 +560,21 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(updated);
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc->option_);
     ASSERT_TRUE(opstr);
-    EXPECT_EQ("example.org", opstr->getValue());
+    EXPECT_EQ("v4.example.com", opstr->getValue());
+
+    // Next we'll try a standard V6 option.
+    space = "dhcp6";
+    std::vector<uint8_t> fqdn =
+        { 2, 'v', '6', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'c', 'o', 'm', 0 };
+    option.reset(new Option(Option::V6, D6O_AFTR_NAME));
+    option->setData(fqdn.begin(), fqdn.end());
+    desc.reset(new OptionDescriptor(option, false));
+
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_TRUE(updated);
+    OptionCustomPtr opcustom = boost::dynamic_pointer_cast<OptionCustom>(desc->option_);
+    ASSERT_TRUE(opcustom);
+    EXPECT_EQ("v6.example.com.", opcustom->readFqdn());
 
     // Next we'll try a vendor option with a formatted value
     space = "vendor-4491";
