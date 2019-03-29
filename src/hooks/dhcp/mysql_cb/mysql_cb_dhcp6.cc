@@ -104,6 +104,7 @@ public:
         DELETE_SUBNET6_ID,
         DELETE_SUBNET6_PREFIX,
         DELETE_ALL_SUBNETS6,
+        DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
         DELETE_POOLS6_SUBNET_ID,
         DELETE_PD_POOLS_SUBNET_ID,
         DELETE_SHARED_NETWORK6_NAME,
@@ -2462,6 +2463,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_SUBNET(dhcp6)
     },
 
+    // Delete all subnets for a shared network.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
+      MYSQL_DELETE_SUBNET(dhcp6, AND s.shared_network_name = ?)
+    },
+
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv6Impl::DELETE_POOLS6_SUBNET_ID,
       MYSQL_DELETE_POOLS(dhcp6)
@@ -2694,8 +2700,8 @@ getModifiedGlobalParameters6(const db::ServerSelector& server_selector,
 
 AuditEntryCollection
 MySqlConfigBackendDHCPv6::
-getRecentAuditEntries6(const db::ServerSelector& server_selector,
-                       const boost::posix_time::ptime& modification_time) const {
+getRecentAuditEntries(const db::ServerSelector& server_selector,
+                      const boost::posix_time::ptime& modification_time) const {
     AuditEntryCollection audit_entries;
     impl_->getRecentAuditEntries(MySqlConfigBackendDHCPv6Impl::GET_AUDIT_ENTRIES6_TIME,
                                  server_selector, modification_time, audit_entries);
@@ -2785,6 +2791,16 @@ MySqlConfigBackendDHCPv6::deleteAllSubnets6(const ServerSelector& server_selecto
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6,
                                        server_selector, "deleting all subnets",
                                        "deleted all subnets", true));
+}
+
+uint64_t
+MySqlConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& server_selector,
+                                                      const std::string& shared_network_name) {
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
+                                       server_selector,
+                                       "deleting all subnets for a shared network",
+                                       "deleted all subnets for a shared network",
+                                       true, shared_network_name));
 }
 
 uint64_t
