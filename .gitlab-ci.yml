@@ -1,5 +1,3 @@
-
-
 variables:
   # Not normally needed, but may be if some script uses `apt-get install`.
   DEBIAN_FRONTEND: noninteractive
@@ -11,6 +9,9 @@ variables:
 # Disabled warnings:
 # SC2039 - complains about local var: In POSIX sh, 'local' is undefined.
   SHELLCHECK_OPTS: "--exclude=SC2039"
+
+  MYSQL_DATABASE: hello_world_test
+  MYSQL_ROOT_PASSWORD: mysql
 
 stages:
   - test
@@ -27,3 +28,23 @@ shellcheck:
     - SCRIPTS+="tools/cql_config "
     - SCRIPTS+="tools/sysrepo_config "
     - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
+
+
+build:
+  image: registry.gitlab.isc.org/isc-projects/images/kea:kea-bld
+  cache:
+    paths:
+      - ccache/
+  script:
+    - ls -al
+    - CCACHE_DIR=./ccache ./hammer.py build -p local -x install unittest
+    - ls -al
+    - ls -al ./ccache
+
+
+unittest:
+  services:
+    - mysql
+  image: mysql
+  script:
+  - echo "SELECT 'OK';" | mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql "$MYSQL_DATABASE"
