@@ -99,6 +99,24 @@ Network::getRequiredClasses() const {
     return (required_classes_);
 }
 
+Network::HRMode
+Network::hrModeFromString(const std::string& hr_mode_name) {
+    if ( (hr_mode_name.compare("disabled") == 0) ||
+         (hr_mode_name.compare("off") == 0) )  {
+        return (Network::HR_DISABLED);
+    } else if (hr_mode_name.compare("out-of-pool") == 0) {
+        return (Network::HR_OUT_OF_POOL);
+    } else if (hr_mode_name.compare("global") == 0) {
+        return (Network::HR_GLOBAL);
+    } else if (hr_mode_name.compare("all") == 0) {
+        return (Network::HR_ALL);
+    } else {
+        // Should never happen...
+        isc_throw(BadValue, "Can't convert '" << hr_mode_name
+                  << "' into any valid reservation-mode values");
+    }
+}
+
 ElementPtr
 Network::toElement() const {
     ElementPtr map = Element::createMap();
