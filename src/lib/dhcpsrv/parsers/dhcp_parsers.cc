@@ -518,24 +518,6 @@ SubnetConfigParser::parse(ConstElementPtr subnet) {
     return (subnet_);
 }
 
-Network::HRMode
-SubnetConfigParser::hrModeFromText(const std::string& txt) {
-    if ( (txt.compare("disabled") == 0) ||
-         (txt.compare("off") == 0) )  {
-        return (Network::HR_DISABLED);
-    } else if (txt.compare("out-of-pool") == 0) {
-        return (Network::HR_OUT_OF_POOL);
-    } else if (txt.compare("global") == 0) {
-        return (Network::HR_GLOBAL);
-    } else if (txt.compare("all") == 0) {
-        return (Network::HR_ALL);
-    } else {
-        // Should never happen...
-        isc_throw(BadValue, "Can't convert '" << txt
-                  << "' into any valid reservation-mode values");
-    }
-}
-
 void
 SubnetConfigParser::createSubnet(ConstElementPtr params) {
     std::string subnet_txt;
@@ -793,7 +775,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     if (params->contains("reservation-mode")) {
         try {
             std::string hr_mode = getString(params, "reservation-mode");
-            subnet4->setHostReservationMode(hrModeFromText(hr_mode));
+            subnet4->setHostReservationMode(Network::hrModeFromString(hr_mode));
         } catch (const BadValue& ex) {
             isc_throw(DhcpConfigError, "Failed to process specified value "
                       " of reservation-mode parameter: " << ex.what()
@@ -1219,7 +1201,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     if (params->contains("reservation-mode")) {
         try {
             std::string hr_mode = getString(params, "reservation-mode");
-            subnet6->setHostReservationMode(hrModeFromText(hr_mode));
+            subnet6->setHostReservationMode(Network::hrModeFromString(hr_mode));
         } catch (const BadValue& ex) {
             isc_throw(DhcpConfigError, "Failed to process specified value "
                       " of reservation-mode parameter: " << ex.what()

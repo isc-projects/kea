@@ -134,6 +134,17 @@ public:
     ElementPtr globals_;
 };
 
+// This test verifies conversions of host reservation mode names to
+// appropriate enum values.
+TEST_F(NetworkTest, hrModeFromString) {
+    EXPECT_EQ(Network::HR_DISABLED, Network::hrModeFromString("off"));
+    EXPECT_EQ(Network::HR_DISABLED, Network::hrModeFromString("disabled"));
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, Network::hrModeFromString("out-of-pool"));
+    EXPECT_EQ(Network::HR_GLOBAL, Network::hrModeFromString("global"));
+    EXPECT_EQ(Network::HR_GLOBAL, Network::hrModeFromString("all"));
+    EXPECT_THROW(Network::hrModeFromString("bogus"), isc::BadValue);
+}
+
 // This test verifies that the inheritance is supported for certain
 // network parameters.
 TEST_F(NetworkTest, inheritanceSupport4) {
@@ -142,7 +153,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("valid-lifetime", Element::create(80));
     globals_->set("renew-timer", Element::create(80));
     globals_->set("rebind-timer", Element::create(80));
-    globals_->set("reservation-mode", Element::create(static_cast<int>(Network::HR_DISABLED)));
+    globals_->set("reservation-mode", Element::create("disabled"));
     globals_->set("calculate-tee-times", Element::create(false));
     globals_->set("t1-percent", Element::create(0.75));
     globals_->set("t2-percent", Element::create(0.6));

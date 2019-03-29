@@ -388,12 +388,29 @@ public:
     /// not in the dynamic pool). HR may also be completely disabled for
     /// performance reasons.
     ///
-    /// @return whether in-pool host reservations are allowed.
+    /// @return Host reservation mode enabled.
     util::Optional<HRMode>
     getHostReservationMode() const {
-        return (getProperty<Network>(&Network::getHostReservationMode,
-                                     host_reservation_mode_,
-                                     "reservation-mode"));
+        // Inheritance for host reservations is a little different than for other
+        // parameters. The reservation at the global level is given as a string.
+        // Thus we call getProperty here without a global name to check if the
+        // host reservation mode is specified on network level only.
+        const util::Optional<HRMode>& hr_mode = getProperty<Network>(&Network::getHostReservationMode,
+                                                                     host_reservation_mode_);
+        // If HR mode is not specified at network level we need this special
+        // case code to handle conversion of the globally configured HR
+        // mode to an enum.
+        if (hr_mode.unspecified()) {
+            // Get global reservation mode.
+            util::Optional<std::string> hr_mode_name;
+            hr_mode_name = getGlobalProperty(hr_mode_name, "reservation-mode");
+            if (!hr_mode_name.unspecified()) {
+                // If the HR mode is globally configured, let's convert it from
+                // a string to enum.
+                return (hrModeFromString(hr_mode_name.get()));
+            }
+        }
+        return (hr_mode);
     }
 
     /// @brief Sets host reservation mode.
@@ -404,6 +421,18 @@ public:
     void setHostReservationMode(const util::Optional<HRMode>& mode) {
         host_reservation_mode_ = mode;
     }
+
+    /// @brief Attempts to convert text representation to HRMode enum.
+    ///
+    /// Allowed values are "disabled", "off" (alias for disabled),
+    /// "out-of-pool" and "all". See @c Network::HRMode for their exact meaning.
+    ///
+    /// @param hr_mode_name Host Reservation mode in the textual form.
+    ///
+    /// @throw BadValue if the text cannot be converted.
+    ///
+    /// @return one of allowed HRMode values
+    static HRMode hrModeFromString(const std::string& hr_mode_name);
 
     /// @brief Returns pointer to the option data configuration for this network.
     CfgOptionPtr getCfgOption() {
@@ -465,6 +494,45 @@ public:
 
 protected:
 
+    /// @brief Returns a value of global configuration parameter with
+    /// a given name.
+    ///
+    /// If the @c ferch_globals_fn_ function is non-null, this method will
+    /// invoke this function to retrieve a global value having the given
+    /// name. Typically, this method is invoked by @c getProperty when
+    /// network specific value of the parameter is not found. In some cases
+    /// it may be called by other methods. One such example is the
+    /// @c getHostReservationMode which needs to call @c getGlobalProperty
+    /// explicitly to convert the global host reservation mode value from
+    /// a string to an enum.
+    ///
+    /// @tparam ReturnType Type of the returned value, e.g.
+    /// @c Optional<std::string>.
+    ///
+    /// @param property Value to be returned when it is specified or when
+    /// no global value is found.
+    /// @param global_name Name of the global parameter which value should
+    /// be returned
+    ///
+    /// @return Optional value fetched from the global level or the value
+    /// of @c property.
+    template<typename ReturnType>
+    ReturnType getGlobalProperty(ReturnType property,
+                                 const std::string& global_name) const {
+        if (!global_name.empty() && fetch_globals_fn_) {
+            data::ConstElementPtr globals = fetch_globals_fn_();
+            if (globals && (globals->getType() == data::Element::map)) {
+                data::ConstElementPtr global_param = globals->get(global_name);
+                if (global_param) {
+                    // If there is a global parameter, convert it to the
+                    // optional value of the given type and return.
+                    return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
+                }
+            }
+        }
+        return (property);
+    }
+
     /// @brief Returns a value associated with a network using inheritance.
     ///
     /// This template method provides a generic mechanism to retrieve a
@@ -480,6 +548,8 @@ protected:
     /// should be called on the parent network instance (typically on
     /// @c SharedNetwork4 or @c SharedNetwork6) to fetch the parent specific
     /// value if the value is unspecified for this instance.
+    /// @param property Value to be returned when it is specified or when
+    /// no explicit value is specified on upper inheritance levels.
     /// @param global_name Optional name of the global parameter which value
     /// should be returned if the given parameter is not specified on network
     /// level. This value is empty by default, which indicates that the
@@ -489,9 +559,8 @@ protected:
     /// @return Optional value fetched from this instance level, parent
     /// network level or global level
     template<typename BaseType, typename ReturnType>
-    ReturnType
-    getProperty(ReturnType(BaseType::*MethodPointer)() const,
-                ReturnType property,
+    ReturnType getProperty(ReturnType(BaseType::*MethodPointer)() const,
+                           ReturnType property,
                 const std::string& global_name = "") const {
         // If the value is specified on this level, let's simply return it.
         // The lower level value always takes precedence.
@@ -512,17 +581,7 @@ protected:
             // can be specified on global level and there is a callback
             // that returns the global values, try to find this parameter
             // at the global scope.
-            if (!global_name.empty() && fetch_globals_fn_) {
-                data::ConstElementPtr globals = fetch_globals_fn_();
-                if (globals && (globals->getType() == data::Element::map)) {
-                    data::ConstElementPtr global_param = globals->get(global_name);
-                    if (global_param) {
-                        // If there is a global parameter, convert it to the
-                        // optional value of the given type and return.
-                        return (data::ElementValue<typename ReturnType::ValueType>()(global_param));
-                    }
-                }
-            }
+            return (getGlobalProperty(property, global_name));
         }
 
         // We haven't found the value at any level, so return the unspecified.

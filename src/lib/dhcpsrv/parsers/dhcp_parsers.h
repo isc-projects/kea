@@ -482,18 +482,6 @@ protected:
     virtual void initSubnet(isc::data::ConstElementPtr params,
                             isc::asiolink::IOAddress addr, uint8_t len) = 0;
 
-    /// @brief Attempts to convert text representation to HRMode enum.
-    ///
-    /// Allowed values are "disabled", "off" (alias for disabled),
-    /// "out-of-pool" and "all". See Subnet::HRMode for their exact meaning.
-    ///
-    /// @param txt Host Reservation mode in the textual form.
-    ///
-    /// @throw BadValue if the text cannot be converted.
-    ///
-    /// @return one of allowed HRMode values
-    static Network::HRMode hrModeFromText(const std::string& txt);
-
 private:
 
     /// @brief Create a new subnet using a data from child parsers.
