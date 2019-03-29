@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <database/backend_selector.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -299,17 +300,15 @@ TEST_F(Dhcp6CBTest, mergeOptionDefs) {
 
 // This test verifies that externally configured options
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeOptions) {
+TEST_F(Dhcp6CBTest, mergeOptions) {
     string base_config =
         "{ \n"
         "    \"option-data\": [ { \n"
-        "        \"name\": \"dhcp-message\", \n"
-        "        \"data\": \"0A0B0C0D\", \n"
-        "        \"csv-format\": false \n"
+        "        \"name\": \"solmax-rt\", \n"
+        "        \"data\": \"500\" \n"
         "     },{ \n"
-        "        \"name\": \"host-name\", \n"
-        "        \"data\": \"old.example.com\", \n"
-        "        \"csv-format\": true \n"
+        "        \"name\": \"bootfile-url\", \n"
+        "        \"data\": \"orig-boot-file\" \n"
         "     } \n"
         "    ], \n"
         "    \"config-control\": { \n"
@@ -324,55 +323,43 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeOptions) {
         "   } \n"
         "} \n";
 
-    extractConfig(base_config);
 
     OptionDescriptorPtr opt;
-
-    // Add host-name to the first backend.
+    // Add solmax-rt to the first backend.
     opt.reset(new OptionDescriptor(
-              createOption<OptionString>(Option::V6, DHO_HOST_NAME,
-                                         true, false, "new.example.com")));
+              createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
+                                         true, false, "updated-boot-file")));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db1_->createUpdateOption6(ServerSelector::ALL(), opt);
 
-    // Add boot-file-name to the first backend.
+    // Add solmax-rt to the second backend.
     opt.reset(new OptionDescriptor(
-              createOption<OptionString>(Option::V6, DHO_BOOT_FILE_NAME,
-                                         true, false, "my-boot-file")));
-    opt->space_name_ = DHCP6_OPTION_SPACE;
-    db1_->createUpdateOption6(ServerSelector::ALL(), opt);
-
-    // Add boot-file-name to the second backend.
-    opt.reset(new OptionDescriptor(
-              createOption<OptionString>(Option::V6, DHO_BOOT_FILE_NAME,
-                                         true, false, "your-boot-file")));
+              createOption<OptionUint32>(Option::V6, D6O_SOL_MAX_RT,
+                                         false, true, 700)));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db2_->createUpdateOption6(ServerSelector::ALL(), opt);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
 
-    // Verify the composite staging is correct.
+    //  Now let's verify that composite staging options are correct.
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
-
-    // Option definition from JSON should be there.
     CfgOptionPtr options = staging_cfg->getCfgOption();
 
-    // dhcp-message should come from the original config.
-    OptionDescriptor found_opt = options->get("dhcp6", DHO_DHCP_MESSAGE);
-    ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("0x0A0B0C0D", found_opt.option_->toHexString());
-
-    // host-name should come from the first back end,
+    // bootfile-url should come from the first config back end.
     // (overwriting the original).
-    found_opt = options->get("dhcp6", DHO_HOST_NAME);
+    OptionDescriptor found_opt = options->get("dhcp6", D6O_BOOTFILE_URL);
     ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("new.example.com", found_opt.option_->toString());
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(found_opt.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("updated-boot-file", opstr->getValue());
 
-    // booth-file-name should come from the first back end.
-    found_opt = options->get("dhcp6", DHO_BOOT_FILE_NAME);
+    // sol-maxt-rt should come from the original config
+    found_opt = options->get("dhcp6", D6O_SOL_MAX_RT);
     ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("my-boot-file", found_opt.option_->toString());
+    OptionUint32Ptr opint = boost::dynamic_pointer_cast<OptionUint32>(found_opt.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(500, opint->getValue());
 }
 
 // This test verifies that externally configured shared-networks are
