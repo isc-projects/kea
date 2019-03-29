@@ -141,7 +141,7 @@ TEST_F(NetworkTest, hrModeFromString) {
     EXPECT_EQ(Network::HR_DISABLED, Network::hrModeFromString("disabled"));
     EXPECT_EQ(Network::HR_OUT_OF_POOL, Network::hrModeFromString("out-of-pool"));
     EXPECT_EQ(Network::HR_GLOBAL, Network::hrModeFromString("global"));
-    EXPECT_EQ(Network::HR_GLOBAL, Network::hrModeFromString("all"));
+    EXPECT_EQ(Network::HR_ALL, Network::hrModeFromString("all"));
     EXPECT_THROW(Network::hrModeFromString("bogus"), isc::BadValue);
 }
 
