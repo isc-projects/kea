@@ -366,15 +366,18 @@ public:
                 }
 
                 // interface
-                last_subnet->setIface(out_bindings[3]->getStringOrDefault(""));
+                if (!out_bindings[3]->amNull()) {
+                    last_subnet->setIface(out_bindings[3]->getString());
+                }
 
                 // modification_ts
                 last_subnet->setModificationTime(out_bindings[4]->getTimestamp());
                 // 5 is preferred_lifetime
 
                 // rapid_commit
-                last_subnet->setRapidCommit(static_cast<bool>
-                    (out_bindings[6]->getIntegerOrDefault<uint8_t>(0)));
+                if (!out_bindings[6]->amNull()) {
+                    last_subnet->setRapidCommit(out_bindings[6]->getBool());
+                }
 
                 // 7 is rebind_timer
 
@@ -414,11 +417,15 @@ public:
                 }
 
                 // reservation_mode
-                last_subnet->setHostReservationMode(static_cast<Subnet6::HRMode>
-                    (out_bindings[11]->getIntegerOrDefault<uint8_t>(Subnet6::HR_ALL)));
+                if (!out_bindings[11]->amNull()) {
+                    last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
+                        (out_bindings[11]->getInteger<uint8_t>()));
+                }
 
                 // shared_network_name
-                last_subnet->setSharedNetworkName(out_bindings[12]->getStringOrDefault(""));
+                if (!out_bindings[12]->amNull()) {
+                    last_subnet->setSharedNetworkName(out_bindings[12]->getString());
+                }
 
                 // user_context
                 ElementPtr user_context = out_bindings[13]->getJSON();
@@ -840,6 +847,16 @@ public:
             required_classes_element->add(Element::create(*required_class));
         }
 
+        // Create binding for host reservation mode.
+        MySqlBindingPtr hr_mode_binding;
+        auto hr_mode = subnet->getHostReservationMode();
+        if (!hr_mode.unspecified()) {
+            hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                                   (hr_mode.get()));
+        } else {
+            hr_mode_binding = MySqlBinding::createNull();
+        }
+
         // Create binding with shared network name if the subnet belongs to a
         // shared network.
         MySqlBindingPtr shared_network_binding;
@@ -874,13 +891,13 @@ public:
             MySqlBinding::condCreateString(subnet->getClientClass()),
             MySqlBinding::condCreateString(subnet->getIface()),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
-            MySqlBinding::createInteger<uint32_t>(subnet->getPreferred()),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getRapidCommit())),
+            createBinding(subnet->getPreferred()),
+            MySqlBinding::condCreateBool(subnet->getRapidCommit()),
             createBinding(subnet->getT2()),
             createInputRelayBinding(subnet),
             createBinding(subnet->getT1()),
             createInputRequiredClassesBinding(subnet),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getHostReservationMode())),
+            hr_mode_binding,
             shared_network_binding,
             createInputContextBinding(subnet),
             createBinding(subnet->getValid())
@@ -896,7 +913,7 @@ public:
 
         try {
 
-            // Try to insert subnet. If this duplicates primary key, i.e. this
+            // Try to insert subnet. If this duplicates unique key, i.e. this
             // subnet already exists it will throw DuplicateEntry exception in
             // which case we'll try an update.
             conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6,
@@ -920,8 +937,9 @@ public:
             deletePdPools6(subnet);
             deleteOptions6(server_selector, subnet);
 
-            // Need to add one more binding for WHERE clause.
+            // Need to add two more bindings for WHERE clause.
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet->getID()));
+            in_bindings.push_back(MySqlBinding::createString(subnet->toText()));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_SUBNET6,
                                     in_bindings);
         }
@@ -1171,7 +1189,9 @@ public:
                 }
 
                 // interface
-                last_network->setIface(out_bindings[3]->getStringOrDefault(""));
+                if (!out_bindings[3]->amNull()) {
+                    last_network->setIface(out_bindings[3]->getString());
+                }
 
                 // modification_ts
                 last_network->setModificationTime(out_bindings[4]->getTimestamp());
@@ -1182,8 +1202,9 @@ public:
                 }
 
                 // rapid_commit
-                last_network->setRapidCommit(static_cast<bool>
-                    (out_bindings[6]->getIntegerOrDefault<uint8_t>(0)));
+                if (!out_bindings[6]->amNull()) {
+                    last_network->setRapidCommit(out_bindings[6]->getBool());
+                }
 
                 // rebind_timer
                 if (!out_bindings[7]->amNull()) {
@@ -1229,8 +1250,10 @@ public:
                 }
 
                 // reservation_mode
-                last_network->setHostReservationMode(static_cast<Subnet6::HRMode>
-                    (out_bindings[11]->getIntegerOrDefault<uint8_t>(Subnet6::HR_ALL)));
+                if (!out_bindings[11]->amNull()) {
+                    last_network->setHostReservationMode(static_cast<Subnet4::HRMode>
+                        (out_bindings[11]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+                }
 
                 // user_context
                 ElementPtr user_context = out_bindings[12]->getJSON();
@@ -1341,19 +1364,28 @@ public:
 
         auto tag = getServerTag(server_selector, "creating or updating shared network");
 
+        // Create binding for host reservation mode.
+        MySqlBindingPtr hr_mode_binding;
+        auto hr_mode = shared_network->getHostReservationMode();
+        if (!hr_mode.unspecified()) {
+            hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                                   (hr_mode.get()));
+        } else {
+            hr_mode_binding = MySqlBinding::createNull();
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
             MySqlBinding::condCreateString(shared_network->getClientClass()),
             MySqlBinding::condCreateString(shared_network->getIface()),
             MySqlBinding::createTimestamp(shared_network->getModificationTime()),
-            MySqlBinding::createInteger<uint32_t>(shared_network->getPreferred()),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(shared_network->getRapidCommit())),
+            createBinding(shared_network->getPreferred()),
+            MySqlBinding::condCreateBool(shared_network->getRapidCommit()),
             createBinding(shared_network->getT2()),
             createInputRelayBinding(shared_network),
             createBinding(shared_network->getT1()),
             createInputRequiredClassesBinding(shared_network),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
-                                                 (shared_network->getHostReservationMode())),
+            hr_mode_binding,
             createInputContextBinding(shared_network),
             createBinding(shared_network->getValid())
         };
@@ -1459,7 +1491,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint8_t>(0),
@@ -1522,7 +1554,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(1),
@@ -1663,7 +1695,7 @@ public:
         // space
         in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
         // persistent
-        in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)));
+        in_bindings.push_back(MySqlBinding::createBool(option->persistent_));
         // dhcp_client_class
         in_bindings.push_back(MySqlBinding::createNull());
         // dhcp[46]_subnet_id
@@ -1758,7 +1790,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint8_t>(4),
@@ -1835,7 +1867,7 @@ public:
                                        "dhcp6" : option_def->getOptionSpaceName()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint16_t>(option_def->getType())),
             MySqlBinding::createTimestamp(option_def->getModificationTime()),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getArrayType())),
+            MySqlBinding::createBool(option_def->getArrayType()),
             MySqlBinding::createString(option_def->getEncapsulatedSpace()),
             record_types_binding,
             createInputContextBinding(option_def)
@@ -2388,7 +2420,7 @@ TaggedStatementArray tagged_statements = { {
       "  shared_network_name = ?,"
       "  user_context = ?,"
       "  valid_lifetime = ? "
-      "WHERE subnet_id = ?" },
+      "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_SHARED_NETWORK6,
