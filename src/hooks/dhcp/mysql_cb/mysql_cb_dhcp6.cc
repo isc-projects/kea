@@ -299,7 +299,10 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createInteger<uint64_t>() // option: pd_pool_id
+            MySqlBinding::createInteger<uint64_t>(), // option: pd_pool_id
+            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
+            MySqlBinding::createInteger<float>(), // t1_percent
+            MySqlBinding::createInteger<float>() // t2_percent
         };
 
         uint64_t last_pool_id = 0;
@@ -435,6 +438,21 @@ public:
 
                 // 14 is valid_lifetime
 
+                // calculate_tee_times
+                if (!out_bindings[65]->amNull()) {
+                    last_subnet->setCalculateTeeTimes(out_bindings[65]->getBool());
+                }
+
+                // t1_percent
+                if (!out_bindings[66]->amNull()) {
+                    last_subnet->setT1Percent(out_bindings[66]->getFloat());
+                }
+
+                // t2_percent
+                if (!out_bindings[67]->amNull()) {
+                    last_subnet->setT2Percent(out_bindings[67]->getFloat());
+                }
+
                 // Subnet ready. Add it to the list.
                 subnets.push_back(last_subnet);
             }
@@ -486,7 +504,7 @@ public:
                 }
             }
 
-            // Parse pd pool specific option between 39 and 52
+            // Parse pd pool specific option between 39 and 51
             if (last_pd_pool && !out_bindings[39]->amNull() &&
                 (last_pd_pool_option_id < out_bindings[39]->getInteger<uint64_t>())) {
                 last_pd_pool_option_id = out_bindings[39]->getInteger<uint64_t>();
@@ -497,7 +515,7 @@ public:
                 }
             }
 
-            // Parse subnet specific option between 53 and 66
+            // Parse subnet specific option between 52 and 64
             if (!out_bindings[52]->amNull() &&
                 (last_option_id < out_bindings[52]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[52]->getInteger<uint64_t>();
@@ -900,7 +918,10 @@ public:
             hr_mode_binding,
             shared_network_binding,
             createInputContextBinding(subnet),
-            createBinding(subnet->getValid())
+            createBinding(subnet->getValid()),
+            MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes()),
+            MySqlBinding::condCreateFloat(subnet->getT1Percent()),
+            MySqlBinding::condCreateFloat(subnet->getT2Percent())
         };
 
         MySqlTransaction transaction(conn_);
@@ -1161,7 +1182,10 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createInteger<uint64_t>() // option: pd_pool_id
+            MySqlBinding::createInteger<uint64_t>(), // option: pd_pool_id
+            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
+            MySqlBinding::createInteger<float>(), // t1_percent
+            MySqlBinding::createInteger<float>() // t2_percent
         };
 
         uint64_t last_network_id = 0;
@@ -1266,10 +1290,25 @@ public:
                     last_network->setValid(createTriplet(out_bindings[13]));
                 }
 
+                // calculate_tee_times
+                if (!out_bindings[27]->amNull()) {
+                    last_network->setCalculateTeeTimes(out_bindings[27]->getBool());
+                }
+
+                // t1_percent
+                if (!out_bindings[28]->amNull()) {
+                    last_network->setT1Percent(out_bindings[28]->getFloat());
+                }
+
+                // t2_percent
+                if (!out_bindings[29]->amNull()) {
+                    last_network->setT2Percent(out_bindings[29]->getFloat());
+                }
+
                 shared_networks.push_back(last_network);
             }
 
-            // Parse option from 14.
+            // Parse option from 14 to 26.
             if (!out_bindings[14]->amNull() &&
                 (last_option_id < out_bindings[14]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[14]->getInteger<uint64_t>();
@@ -1387,7 +1426,10 @@ public:
             createInputRequiredClassesBinding(shared_network),
             hr_mode_binding,
             createInputContextBinding(shared_network),
-            createBinding(shared_network->getValid())
+            createBinding(shared_network->getValid()),
+            MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes()),
+            MySqlBinding::condCreateFloat(shared_network->getT1Percent()),
+            MySqlBinding::condCreateFloat(shared_network->getT2Percent())
         };
 
         MySqlTransaction transaction(conn_);
@@ -2336,8 +2378,11 @@ TaggedStatementArray tagged_statements = { {
       "  reservation_mode,"
       "  shared_network_name,"
       "  user_context,"
-      "  valid_lifetime"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  valid_lifetime,"
+      "  calculate_tee_times,"
+      "  t1_percent,"
+      "  t2_percent "
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
@@ -2369,8 +2414,11 @@ TaggedStatementArray tagged_statements = { {
       "  require_client_classes,"
       "  reservation_mode,"
       "  user_context,"
-      "  valid_lifetime"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  valid_lifetime,"
+      "  calculate_tee_times,"
+      "  t1_percent,"
+      "  t2_percent "
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
@@ -2419,7 +2467,10 @@ TaggedStatementArray tagged_statements = { {
       "  reservation_mode = ?,"
       "  shared_network_name = ?,"
       "  user_context = ?,"
-      "  valid_lifetime = ? "
+      "  valid_lifetime = ?,"
+      "  calculate_tee_times = ?,"
+      "  t1_percent = ?,"
+      "  t2_percent = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -2437,7 +2488,10 @@ TaggedStatementArray tagged_statements = { {
       "  require_client_classes = ?,"
       "  reservation_mode = ?,"
       "  user_context = ?,"
-      "  valid_lifetime = ? "
+      "  valid_lifetime = ?,"
+      "  calculate_tee_times = ?,"
+      "  t1_percent = ?,"
+      "  t2_percent = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.
