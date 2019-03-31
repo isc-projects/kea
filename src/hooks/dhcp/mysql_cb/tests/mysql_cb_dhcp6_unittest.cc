@@ -1085,21 +1085,60 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
                   networks[i]->toElement()->str());
     }
 
+    // Add some subnets.
+    test_networks_[1]->add(test_subnets_[0]);
+    test_subnets_[2]->setSharedNetworkName("level2");
+    test_networks_[2]->add(test_subnets_[3]);
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[0]);
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[2]);
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[3]);
+
+    // Both ways to attach a subnet are equivalent.
+    Subnet6Ptr subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                           test_subnets_[0]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("level1", subnet->getSharedNetworkName());
+
+    {
+        SCOPED_TRACE("CREATE audit entry for subnets");
+        testNewAuditEntry("dhcp6_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "subnet set", 3);
+    }
+
     // Deleting non-existing shared network should return 0.
     EXPECT_EQ(0, cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
                                               "big-fish"));
     // All shared networks should be still there.
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
-    // Should not delete the subnet for explicit server tag because
-    // our shared network is for all servers.
+    // Should not delete the shared network for explicit server tag
+    // because our shared network is for all servers.
     EXPECT_EQ(0, cbptr_->deleteSharedNetwork6(ServerSelector::ONE("server1"),
                                               test_networks_[1]->getName()));
 
     // Same for all shared networks.
     EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks6(ServerSelector::ONE("server1")));
 
-    // Delete first shared network and verify it is gone.
+    // Delete first shared network with it subnets and verify it is gone.
+
+    // Begin by its subnet.
+    EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ALL(),
+                                                     test_networks_[1]->getName()));
+
+    {
+        SCOPED_TRACE("DELETE audit entry for subnets of the first shared network");
+        testNewAuditEntry("dhcp6_subnet",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleted all subnets for a shared network");
+    }
+
+    // Check that the subnet is gone..
+    subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                test_subnets_[0]->getID());
+    EXPECT_FALSE(subnet);
+
+    // And after the shared network itself.
     EXPECT_EQ(1, cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
     networks = cbptr_->getAllSharedNetworks6(ServerSelector::ALL());
@@ -1124,6 +1163,16 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
                           AuditEntry::ModificationType::DELETE,
                           "deleted all shared networks", 2);
     }
+
+    // Check that subnets are still there but detached.
+    subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                test_subnets_[2]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getSharedNetworkName().empty());
+    subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                test_subnets_[3]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getSharedNetworkName().empty());
 }
 
 // Test that shared networks modified after given time can be fetched.
@@ -1229,7 +1278,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
                               "option definition set");
 
         } else {
-            SCOPED_TRACE("CREATE audit entry for the option defnition " +
+            SCOPED_TRACE("CREATE audit entry for the option definition " +
                          option_def->getName());
             testNewAuditEntry("dhcp6_option_def",
                               AuditEntry::ModificationType::CREATE,
@@ -1353,7 +1402,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteOption6) {
                            opt_posix_timezone->option_->getType(),
                            opt_posix_timezone->space_name_);
     ASSERT_TRUE(returned_opt_posix_timezone);
-    EXPECT_TRUE(returned_opt_posix_timezone->equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify created option");
+        testOptionsEquivalent(*opt_posix_timezone,
+                              *returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("CREATE audit entry for an option");
@@ -1373,7 +1427,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteOption6) {
                                                      opt_posix_timezone->option_->getType(),
                                                      opt_posix_timezone->space_name_);
     ASSERT_TRUE(returned_opt_posix_timezone);
-    EXPECT_TRUE(returned_opt_posix_timezone->equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify updated option");
+        testOptionsEquivalent(*opt_posix_timezone,
+                              *returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an option");
@@ -1428,17 +1487,26 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
 
     // Verify that all options we put into the database were
     // returned.
-    auto option0 = index.find(test_options_[0]->option_->getType());
-    ASSERT_FALSE(option0 == index.end());
-    EXPECT_TRUE(option0->equals(*test_options_[0]));
+    {
+        SCOPED_TRACE("verify test_options_[0]");
+        auto option0 = index.find(test_options_[0]->option_->getType());
+        ASSERT_FALSE(option0 == index.end());
+        testOptionsEquivalent(*test_options_[0], *option0);
+    }
 
-    auto option1 = index.find(test_options_[1]->option_->getType());
-    ASSERT_FALSE(option1 == index.end());
-    EXPECT_TRUE(option1->equals(*test_options_[1]));
+    {
+        SCOPED_TRACE("verify test_options_[1]");
+        auto option1 = index.find(test_options_[1]->option_->getType());
+        ASSERT_FALSE(option1 == index.end());
+        testOptionsEquivalent(*test_options_[1], *option1);
+    }
 
-    auto option5 = index.find(test_options_[5]->option_->getType());
-    ASSERT_FALSE(option5 == index.end());
-    EXPECT_TRUE(option5->equals(*test_options_[5]));
+    {
+        SCOPED_TRACE("verify test_options_[5]");
+        auto option5 = index.find(test_options_[5]->option_->getType());
+        ASSERT_FALSE(option5 == index.end());
+        testOptionsEquivalent(*test_options_[5], *option5);
+    }
 }
 
 // This test verifies that modified global options can be retrieved.
@@ -1475,7 +1543,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedOptions6) {
     const OptionContainerTypeIndex& index = returned_options.get<1>();
     auto option0 = index.find(test_options_[0]->option_->getType());
     ASSERT_FALSE(option0 == index.end());
-    EXPECT_TRUE(option0->equals(*test_options_[0]));
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*test_options_[0], *option0);
+    }
 }
 
 // This test verifies that subnet level option can be added, updated and
@@ -1508,7 +1579,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
     OptionDescriptor returned_opt_posix_timezone =
         returned_subnet->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an added subnet option");
@@ -1531,7 +1606,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
     returned_opt_posix_timezone =
         returned_subnet->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify returned option with modified persistence");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an updated subnet option");
@@ -1603,7 +1682,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
     OptionDescriptor returned_opt_posix_timezone =
         returned_pool->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify returned pool option");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet after adding an option "
@@ -1633,7 +1716,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
     returned_opt_posix_timezone =
         returned_pool1->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet when updating "
@@ -1720,7 +1807,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
         returned_pd_pool->getCfgOption()->get(DHCP6_OPTION_SPACE,
                                               D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify returned pool option");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet after adding an option "
@@ -1751,7 +1842,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
         returned_pd_pool1->getCfgOption()->get(DHCP6_OPTION_SPACE,
                                                D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet when updating "
@@ -1830,7 +1925,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
     OptionDescriptor returned_opt_posix_timezone =
         returned_network->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for the added shared network option");
@@ -1854,7 +1953,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
     returned_opt_posix_timezone =
         returned_network->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NEW_POSIX_TIMEZONE);
     ASSERT_TRUE(returned_opt_posix_timezone.option_);
-    EXPECT_TRUE(returned_opt_posix_timezone.equals(*opt_posix_timezone));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for the updated shared network option");
