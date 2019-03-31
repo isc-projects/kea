@@ -182,7 +182,10 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
-    "  o.pd_pool_id " \
+    "  o.pd_pool_id, " \
+    "  s.calculate_tee_times," \
+    "  s.t1_percent," \
+    "  s.t2_percent " \
     "FROM dhcp6_subnet AS s " \
     "INNER JOIN dhcp6_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \
@@ -271,7 +274,10 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
-    "  o.pd_pool_id " \
+    "  o.pd_pool_id, " \
+    "  n.calculate_tee_times," \
+    "  n.t1_percent," \
+    "  n.t2_percent " \
     "FROM dhcp6_shared_network AS n " \
     "INNER JOIN dhcp6_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \
