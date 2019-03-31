@@ -190,6 +190,7 @@ public:
         subnet->setT1(null_timer);
         subnet->setT2(null_timer);
         subnet->setValid(null_timer);
+        subnet->setPreferred(null_timer);
         test_subnets_.push_back(subnet);
 
         // Add a subnet with all defaults.
@@ -250,6 +251,7 @@ public:
         shared_network->setT1(null_timer);
         shared_network->setT2(null_timer);
         shared_network->setValid(null_timer);
+        shared_network->setPreferred(null_timer);
         test_networks_.push_back(shared_network);
 
         shared_network.reset(new SharedNetwork6("level3"));
@@ -1042,6 +1044,53 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
                                                  shared_network2->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
               returned_network->toElement()->str());
+}
+
+// Test that the information about unspecified optional parameters gets
+// propagated to the database.
+TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6WithOptionalUnspecified) {
+    // Insert new shared network.
+    SharedNetwork6Ptr shared_network = test_networks_[2];
+    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network);
+
+    // Fetch this shared network by name.
+    SharedNetwork6Ptr
+        returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(),
+                                                     test_networks_[2]->getName());
+    ASSERT_TRUE(returned_network);
+
+    EXPECT_TRUE(returned_network->getIface().unspecified());
+    EXPECT_TRUE(returned_network->getIface().empty());
+
+    EXPECT_TRUE(returned_network->getClientClass().unspecified());
+    EXPECT_TRUE(returned_network->getClientClass().empty());
+
+    EXPECT_TRUE(returned_network->getValid().unspecified());
+    EXPECT_EQ(0, returned_network->getValid().get());
+
+    EXPECT_TRUE(returned_network->getPreferred().unspecified());
+    EXPECT_EQ(0, returned_network->getPreferred().get());
+
+    EXPECT_TRUE(returned_network->getT1().unspecified());
+    EXPECT_EQ(0, returned_network->getT1().get());
+
+    EXPECT_TRUE(returned_network->getT2().unspecified());
+    EXPECT_EQ(0, returned_network->getT2().get());
+
+    EXPECT_TRUE(returned_network->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, returned_network->getHostReservationMode().get());
+
+    EXPECT_TRUE(returned_network->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(returned_network->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(returned_network->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, returned_network->getT1Percent().get());
+
+    EXPECT_TRUE(returned_network->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, returned_network->getT2Percent().get());
+
+    EXPECT_TRUE(returned_network->getRapidCommit().unspecified());
+    EXPECT_FALSE(returned_network->getRapidCommit().get());
 }
 
 // Test that all shared networks can be fetched.
