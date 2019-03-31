@@ -7,6 +7,7 @@
 #include <config.h>
 #include <mysql_cb_dhcp6.h>
 #include <asiolink/addr_utilities.h>
+#include <database/db_exceptions.h>
 #include <database/testutils/schema.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
@@ -48,8 +49,7 @@ public:
     /// @brief Constructor.
     MySqlConfigBackendDHCPv6Test()
         : test_subnets_(), test_networks_(), timestamps_(), audit_entries_() {
-        // Recreate database schema.
-        destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
         try {
@@ -78,6 +78,7 @@ public:
     /// @brief Destructor.
     virtual ~MySqlConfigBackendDHCPv6Test() {
         cbptr_.reset();
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
     }
 
@@ -102,6 +103,10 @@ public:
         subnet->setHostReservationMode(Subnet4::HR_DISABLED);
         subnet->setContext(user_context);
         subnet->setValid(555555);
+        subnet->setPreferred(4444444);
+        subnet->setCalculateTeeTimes(true);
+        subnet->setT1Percent(0.345);
+        subnet->setT2Percent(0.444);
 
         Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
                                  IOAddress("2001:db8::10"),
@@ -187,8 +192,11 @@ public:
         subnet->setValid(null_timer);
         test_subnets_.push_back(subnet);
 
-        subnet.reset(new Subnet6(IOAddress("2001:db8:4::"),
-                                 64, 30, 40, 50, 60, 4096));
+        // Add a subnet with all defaults.
+        subnet.reset(new Subnet6(IOAddress("2001:db8:4::"), 64,
+                                 Triplet<uint32_t>(), Triplet<uint32_t>(),
+                                 Triplet<uint32_t>(), Triplet<uint32_t>(),
+                                 4096));
         test_subnets_.push_back(subnet);
     }
 
@@ -209,6 +217,10 @@ public:
         shared_network->setHostReservationMode(Subnet6::HR_DISABLED);
         shared_network->setContext(user_context);
         shared_network->setValid(5555);
+        shared_network->setPreferred(4444);
+        shared_network->setCalculateTeeTimes(true);
+        shared_network->setT1Percent(0.345);
+        shared_network->setT2Percent(0.444);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
@@ -308,7 +320,10 @@ public:
         desc.space_name_ = "isc";
         test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-        // Add definitions for DHCPv6 non-standard options.
+        // Add definitions for DHCPv6 non-standard options in case we need to
+        // compare subnets, networks and pools in JSON format. In that case,
+        // the @c toElement functions require option definitions to generate the
+        // proper output.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "vendor-encapsulated-1", 1, "uint32")),
                      "vendor-encapsulated-options");
@@ -641,7 +656,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6) {
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 
     // Fetching the subnet for an explicitly specified server tag should
-    // succeeed too.
+    // succeed too.
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ONE("server1"),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
@@ -652,6 +667,85 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6) {
                           AuditEntry::ModificationType::UPDATE,
                           "subnet set");
     }
+
+    // Insert another subnet.
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[2]);
+
+    // Fetch this subnet by prefix and verify it matches.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                         test_subnets_[2]->toText());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(test_subnets_[2]->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the subnet in the database (both use the same prefix).
+    subnet2.reset(new Subnet6(IOAddress("2001:db8:3::"),
+                              64, 30, 40, 50, 80, 8192));
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(),  subnet2);
+
+    // Fetch again and verify.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                         test_subnets_[2]->toText());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the subnet when it conflicts same id and same prefix both
+    // with different subnets. This should throw.
+    // Subnets are 2001:db8:1::/48 id 1024 and 2001:db8:3::/64 id 8192
+    subnet2.reset(new Subnet6(IOAddress("2001:db8:1::"),
+                              48, 30, 40, 50, 80, 8192));
+    EXPECT_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(),  subnet2),
+                 DuplicateEntry);
+}
+
+// Test that the information about unspecified optional parameters gets
+// propagated to the database.
+TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6WithOptionalUnspecified) {
+    // Insert new subnet.
+    Subnet6Ptr subnet = test_subnets_[2];
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    EXPECT_TRUE(returned_subnet->getIface().unspecified());
+    EXPECT_TRUE(returned_subnet->getIface().empty());
+
+    EXPECT_TRUE(returned_subnet->getClientClass().unspecified());
+    EXPECT_TRUE(returned_subnet->getClientClass().empty());
+
+    EXPECT_TRUE(returned_subnet->getValid().unspecified());
+    EXPECT_EQ(0, returned_subnet->getValid().get());
+
+    EXPECT_TRUE(returned_subnet->getPreferred().unspecified());
+    EXPECT_EQ(0, returned_subnet->getPreferred().get());
+
+    EXPECT_TRUE(returned_subnet->getT1().unspecified());
+    EXPECT_EQ(0, returned_subnet->getT1().get());
+
+    EXPECT_TRUE(returned_subnet->getT2().unspecified());
+    EXPECT_EQ(0, returned_subnet->getT2().get());
+
+    EXPECT_TRUE(returned_subnet->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, returned_subnet->getHostReservationMode().get());
+
+    EXPECT_TRUE(returned_subnet->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(returned_subnet->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(returned_subnet->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, returned_subnet->getT1Percent().get());
+
+    EXPECT_TRUE(returned_subnet->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, returned_subnet->getT2Percent().get());
+
+    EXPECT_TRUE(returned_subnet->getRapidCommit().unspecified());
+    EXPECT_FALSE(returned_subnet->getRapidCommit().get());
+
+    // The easiest way to verify whether the returned subnet matches the inserted
+    // subnet is to convert both to text.
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+
 }
 
 // Test that subnet can be associated with a shared network.

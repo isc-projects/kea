@@ -1890,13 +1890,13 @@ ALTER TABLE dhcp6_pool
     ADD CONSTRAINT fk_dhcp6_pool_subnet_id
     FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE CASCADE ON UPDATE NO ACTION;
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE dhcp6_pd_pool
     ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id
     FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE CASCADE ON UPDATE NO ACTION;
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- align dhcp6_shared_network_server indexes on dhcp4_shared_network_server
 
