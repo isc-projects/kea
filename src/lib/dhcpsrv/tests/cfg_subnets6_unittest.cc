@@ -8,6 +8,8 @@
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
+#include <dhcp/option_string.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
@@ -30,6 +32,39 @@ OptionPtr
 generateInterfaceId(const std::string& text) {
     OptionBuffer buffer(text.begin(), text.end());
     return OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID, buffer));
+}
+
+/// @brief Verifies that a set of subnets contains a given a subnet
+///
+/// @param cfg_subnets set of sunbets in which to look
+/// @param exp_subnet_id expected id of the target subnet
+/// @param prefix prefix of the target subnet
+/// @param exp_valid expected valid lifetime of the subnet
+/// @param exp_network  pointer to the subnet's shared-network (if one)
+void checkMergedSubnet(CfgSubnets6& cfg_subnets,
+                       const std::string& prefix,
+                       const SubnetID exp_subnet_id,
+                       int exp_valid,
+                       SharedNetwork6Ptr exp_network) {
+    // Look for the network by prefix.
+    auto subnet = cfg_subnets.getByPrefix(prefix);
+    ASSERT_TRUE(subnet) << "subnet: " << prefix << " not found";
+
+    // Make sure we have the one we expect.
+    ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
+    ASSERT_EQ(exp_valid, subnet->getValid()) << "subnetID:"
+              << subnet->getID() << ", subnet valid time is wrong";
+
+    SharedNetwork6Ptr shared_network;
+    subnet->getSharedNetwork(shared_network);
+    if (exp_network) {
+        ASSERT_TRUE(shared_network)
+            << " expected network: " << exp_network->getName() << " not found";
+        ASSERT_TRUE(shared_network == exp_network) << " networks do no match";
+    } else {
+        ASSERT_FALSE(shared_network) << " unexpected network assignment: "
+            << shared_network->getName();
+    }
 }
 
 // This test verifies that specific subnet can be retrieved by specifying
@@ -632,6 +667,173 @@ TEST(CfgSubnets6Test, getSubnet) {
     EXPECT_EQ(subnet2, cfg.getSubnet(200));
     EXPECT_EQ(subnet3, cfg.getSubnet(300));
     EXPECT_EQ(Subnet6Ptr(), cfg.getSubnet(400)); // no such subnet
+}
+
+// This test verifies that subnets configuration is properly merged.
+TEST(CfgSubnets6Test, mergeSubnets) {
+    // Create custom options dictionary for testing merge. We're keeping it
+    // simple because they are more rigorous tests elsewhere.
+    CfgOptionDefPtr cfg_def(new CfgOptionDef());
+    cfg_def->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "string"))), "isc");
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:1::"),
+                                   64, 1, 2, 100, 100, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:2::"),
+                                   64, 1, 2, 100, 100, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:3::"),
+                                   64, 1, 2, 100, 100, SubnetID(3)));
+    Subnet6Ptr subnet4(new Subnet6(IOAddress("2001:4::"),
+                                   64, 1, 2, 100, 100, SubnetID(4)));
+
+    // Create the "existing" list of shared networks
+    CfgSharedNetworks6Ptr networks(new CfgSharedNetworks6());
+    SharedNetwork6Ptr shared_network1(new SharedNetwork6("shared-network1"));
+    networks->add(shared_network1);
+    SharedNetwork6Ptr shared_network2(new SharedNetwork6("shared-network2"));
+    networks->add(shared_network2);
+
+    // Empty network pointer.
+    SharedNetwork6Ptr no_network;
+
+    // Add Subnets 1, 2 and 4 to shared networks.
+    ASSERT_NO_THROW(shared_network1->add(subnet1));
+    ASSERT_NO_THROW(shared_network2->add(subnet2));
+    ASSERT_NO_THROW(shared_network2->add(subnet4));
+
+    // Create our "existing" configured subnets.
+    CfgSubnets6 cfg_to;
+    ASSERT_NO_THROW(cfg_to.add(subnet1));
+    ASSERT_NO_THROW(cfg_to.add(subnet2));
+    ASSERT_NO_THROW(cfg_to.add(subnet3));
+    ASSERT_NO_THROW(cfg_to.add(subnet4));
+
+    // Merge in an "empty" config. Should have the original config,
+    // still intact.
+    CfgSubnets6 cfg_from;
+    ASSERT_NO_THROW(cfg_to.merge(cfg_def, networks, cfg_from));
+
+    // We should have all four subnets, with no changes.
+    ASSERT_EQ(4, cfg_to.getAll()->size());
+
+    // Should be no changes to the configuration.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:1::/64",
+                                              SubnetID(1), 100, shared_network1));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:2::/64",
+                                              SubnetID(2), 100, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:3::/64",
+                                              SubnetID(3), 100, no_network));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:4::/64",
+                                              SubnetID(4), 100, shared_network2));
+
+    // Fill cfg_from configuration with subnets.
+    // subnet 1b updates subnet 1 but leaves it in network 1
+    Subnet6Ptr subnet1b(new Subnet6(IOAddress("2001:1::"),
+                                   64, 2, 3, 100, 400, SubnetID(1)));
+    subnet1b->setSharedNetworkName("shared-network1");
+
+    // Add generic option 1 to subnet 1b.
+    std::string value("Yay!");
+    OptionPtr option(new Option(Option::V6, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+
+    // subnet 3b updates subnet 3 and removes it from network 2
+    Subnet6Ptr subnet3b(new Subnet6(IOAddress("2001:3::"),
+                                   64, 3, 4, 100, 500, SubnetID(3)));
+
+    // Now Add generic option 1 to subnet 3b.
+    value = "Team!";
+    option.reset(new Option(Option::V6, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
+
+    // subnet 4b updates subnet 4 and moves it from network2 to network 1
+    Subnet6Ptr subnet4b(new Subnet6(IOAddress("2001:4::"),
+                                   64, 3, 4, 100, 500, SubnetID(4)));
+    subnet4b->setSharedNetworkName("shared-network1");
+
+    // subnet 5 is new and belongs to network 2
+    // Has two pools both with an option 1
+    Subnet6Ptr subnet5(new Subnet6(IOAddress("2001:5::"),
+                                   64, 1, 2, 100, 300, SubnetID(5)));
+    subnet5->setSharedNetworkName("shared-network2");
+
+    // Add pool 1
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:5::10"), IOAddress("2001:5::20")));
+    value = "POOLS";
+    option.reset(new Option(Option::V6, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    subnet5->addPool(pool);
+
+    // Add pool 2
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("2001:6::"), 64));
+    value ="RULE!";
+    option.reset(new Option(Option::V6, 1));
+    option->setData(value.begin(), value.end());
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    subnet5->addPool(pool);
+
+    // Add subnets to the merge from config.
+    ASSERT_NO_THROW(cfg_from.add(subnet1b));
+    ASSERT_NO_THROW(cfg_from.add(subnet3b));
+    ASSERT_NO_THROW(cfg_from.add(subnet4b));
+    ASSERT_NO_THROW(cfg_from.add(subnet5));
+
+    // Merge again.
+    ASSERT_NO_THROW(cfg_to.merge(cfg_def, networks, cfg_from));
+    ASSERT_EQ(5, cfg_to.getAll()->size());
+
+    // The subnet1 should be replaced by subnet1b.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:1::/64",
+                                              SubnetID(1), 400, shared_network1));
+
+    // Let's verify that our option is there and populated correctly.
+    auto subnet = cfg_to.getByPrefix("2001:1::/64");
+    auto desc = subnet->getCfgOption()->get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Yay!", opstr->getValue());
+
+    // The subnet2 should not be affected because it was not present.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:2::/64",
+                                              SubnetID(2), 100, shared_network2));
+
+    // subnet3 should be replaced by subnet3b and no longer assigned to a network.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:3::/64",
+                                              SubnetID(3), 500, no_network));
+    // Let's verify that our option is there and populated correctly.
+    subnet = cfg_to.getByPrefix("2001:3::/64");
+    desc = subnet->getCfgOption()->get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("Team!", opstr->getValue());
+
+    // subnet4 should be replaced by subnet4b and moved to network1.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:4::/64",
+                                              SubnetID(4), 500, shared_network1));
+
+    // subnet5 should have been added to configuration.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:5::/64",
+                                              SubnetID(5), 300, shared_network2));
+
+    // Let's verify that both pools have the proper options.
+    subnet = cfg_to.getByPrefix("2001:5::/64");
+    const PoolPtr merged_pool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:5::10"));
+    ASSERT_TRUE(merged_pool);
+    desc = merged_pool->getCfgOption()->get("isc", 1);
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("POOLS", opstr->getValue());
+
+    const PoolPtr merged_pool2 = subnet->getPool(Lease::TYPE_PD, IOAddress("2001:1::"));
+    ASSERT_TRUE(merged_pool2);
+    desc = merged_pool2->getCfgOption()->get("isc", 1);
+    opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("RULE!", opstr->getValue());
 }
 
 } // end of anonymous namespace

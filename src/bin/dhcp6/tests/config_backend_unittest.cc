@@ -424,7 +424,7 @@ TEST_F(Dhcp6CBTest, mergeSharedNetworks) {
 
 // This test verifies that externally configured subnets are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeSubnets) {
+TEST_F(Dhcp6CBTest, mergeSubnets) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -444,15 +444,15 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeSubnets) {
         "   \"subnet6\": [ \n"
         "   { \n"
         "       \"id\": 2,\n"
-        "       \"subnet\": \"192.0.3.0/24\" \n"
+        "       \"subnet\": \"2001:2::/64\" \n"
         "   } ]\n"
         "} \n";
 
     extractConfig(base_config);
 
     // Make a few subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("192.0.2.0"), 26, 1, 2, 3, SubnetID(1)));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("192.0.4.0"), 26, 1, 2, 3, SubnetID(3)));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:1::"), 64, 1, 2, 100, 100, SubnetID(1)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:3::"), 64, 1, 2, 100, 100, SubnetID(3)));
 
     // Add subnet1 to db1 and subnet3 to db2
     db1_->createUpdateSubnet6(ServerSelector::ALL(), subnet1);

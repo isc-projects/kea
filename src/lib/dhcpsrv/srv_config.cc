@@ -205,11 +205,9 @@ SrvConfig::merge6(SrvConfig& other) {
     // Merge shared networks.
     cfg_shared_networks6_->merge(cfg_option_def_, *(other.getCfgSharedNetworks6()));
 
-#if 0
     // Merge subnets.
-    cfg_subnets6_->merge(cfg_option_def_, getCfgSharedNetworks4(),
+    cfg_subnets6_->merge(cfg_option_def_, getCfgSharedNetworks6(),
                          *(other.getCfgSubnets6()));
-#endif
 
     /// @todo merge other parts of the configuration here.
 }
