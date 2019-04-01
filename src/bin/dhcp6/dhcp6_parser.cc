@@ -43,7 +43,7 @@
 
 
 // Unqualified %code blocks.
-#line 34 "dhcp6_parser.yy"
+#line 34 "dhcp6_parser.yy" // lalr1.cc:435
 
 #include <dhcp6/parser_context.h>
 
@@ -1204,6 +1204,15 @@ namespace isc { namespace dhcp {
 
   case 135:
 #line 573 "dhcp6_parser.yy"
+    {
+    ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("enable-reconfiguration", b);
+}
+#line 1148 "dhcp6_parser.cc" // lalr1.cc:919
+    break;
+
+  case 120:
+#line 526 "dhcp6_parser.yy" // lalr1.cc:919
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces-config", i);
@@ -4344,6 +4353,13 @@ namespace isc { namespace dhcp {
        0,     0,     0,    59,     0,    61,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,   471,     0,   341,     0,     0,     0,     0,     0,
+       0,     0,   349,     0,     0,     0,     0,   386,     0,     0,
+       0,     0,   235,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,   570,
+       0,     0,   642,     0,     0,     0,   631,    52,    45,     0,
+       0,     0,     0,     0,     0,    63,     0,     0,     0,     0,
+       0,     0,   112,   113,   114,   115,   116,     0,   119,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,    73,
        0,     0,     0,   138,     0,     0,     0,     0,     0,     0,
@@ -4584,7 +4600,7 @@ namespace isc { namespace dhcp {
      208,   654,   210,   132,   697,   655,   656,   657,   667,   659,
      658,   660,   661,   668,   894,   211,   662,   663,   212,   664,
      666,   669,   670,   672,   713,   673,   213,     1,     2,     3,
-       4,     5,     6,     7,     8,     9,    10,    11,    12,    13,
+     852,   857,   861,   860,   863,   864,   866,   867,   870,   869,
       14,    15,   679,   712,   761,   795,   765,   769,   773,   777,
      674,   799,   802,   675,   676,   806,   850,   678,   854,   680,
      681,   682,   858,   875,   876,   877,   686,   687,   878,   704,
@@ -4956,13 +4972,11 @@ namespace isc { namespace dhcp {
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     0,
        4,     3,     3,     3,     3,     3,     3,     3,     3,     3,
        3,     3,     3,     0,     4,     0,     6,     0,     4,     1,
        3,     1,     1,     1,     1,     1,     0,     4,     3,     0,
        6,     0,     6,     0,     6,     0,     1,     1,     3,     0,
        4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     0,     4,     1,     1,     1,     1,
        0,     4,     0,     4,     0,     4,     3,     0,     4,     3,
        3,     3,     3,     3,     3,     3,     3,     3,     0,     4,
@@ -4975,19 +4989,19 @@ namespace isc { namespace dhcp {
        1,     1,     3,     3,     3,     3,     3,     3,     0,     6,
        0,     1,     1,     3,     0,     4,     0,     4,     1,     3,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       0,     1,     1,     3,     0,     4,     1,     3,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     1,
        1,     1,     1,     3,     3,     0,     6,     0,     1,     1,
        3,     0,     4,     1,     3,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     0,
        6,     0,     4,     0,     1,     1,     3,     0,     4,     0,
        4,     0,     1,     1,     3,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     3,     1,     0,     4,
        0,     4,     0,     4,     1,     0,     4,     3,     0,     6,
        0,     1,     1,     3,     0,     4,     0,     4,     0,     1,
-       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
+       0,     6,     1,     3,     1,     0,     4,     0,     6,     1,
        1,     1,     0,     4,     1,     1,     3,     3,     0,     6,
        0,     1,     1,     3,     0,     4,     0,     4,     1,     3,
        1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
@@ -5010,13 +5024,31 @@ namespace isc { namespace dhcp {
        1,     1,     3,     0,     4,     0,     4,     3,     0,     4,
        3,     3,     0,     4,     1,     1,     0,     4,     3,     3,
        0,     4,     1,     1,     1,     1,     1,     0,     4,     0,
-       4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
        6,     0,     4,     1,     3,     1,     1,     0,     6,     3,
        0,     6,     0,     4,     1,     3,     1,     0,     6,     1,
        3,     0,     4,     1,     3,     1,     1,     1,     1,     1,
        1,     1,     3,     0,     4,     0,     6,     1,     3,     0,
        4,     1,     3,     1,     1,     1,     1,     1,     0,     4,
        3,     3,     3,     0,     4
+       4,     0,     6,     1,     1,     0,     4,     0,     6,     1,
+       3,     0,     4,     0,     1,     1,     3,     1,     1,     1,
+       1,     1,     1,     1,     1,     0,     4,     3,     0,     6,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     0,     4,     1,     1,     1,     3,     0,     4,     3,
+       3,     3,     0,     6,     1,     3,     1,     1,     1,     1,
+       1,     0,     4,     0,     4,     0,     4,     0,     6,     0,
+       4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     3,     0,     4,     0,     4,     3,     0,     4,     3,
+       3,     0,     4,     1,     1,     0,     4,     3,     3,     0,
+       4,     1,     1,     1,     1,     1,     0,     4,     0,     4,
+       0,     4,     0,     4,     0,     4,     0,     4,     0,     6,
+       0,     4,     1,     3,     1,     1,     0,     6,     3,     0,
+       6,     0,     4,     1,     3,     1,     0,     6,     1,     3,
+       0,     4,     1,     3,     1,     1,     1,     1,     1,     1,
+       1,     3,     0,     4,     0,     6,     1,     3,     0,     4,
+       1,     3,     1,     1,     1,     1,     0,     4,     3,     3,
+       3
   };
 
 
@@ -5042,15 +5074,13 @@ namespace isc { namespace dhcp {
   "\"valid-lifetime\"", "\"min-valid-lifetime\"", "\"max-valid-lifetime\"",
   "\"renew-timer\"", "\"rebind-timer\"", "\"calculate-tee-times\"",
   "\"t1-percent\"", "\"t2-percent\"", "\"decline-probation-period\"",
-  "\"server-tag\"", "\"subnet6\"", "\"option-def\"", "\"option-data\"",
-  "\"name\"", "\"data\"", "\"code\"", "\"space\"", "\"csv-format\"",
-  "\"always-send\"", "\"record-types\"", "\"encapsulate\"", "\"array\"",
-  "\"pools\"", "\"pool\"", "\"pd-pools\"", "\"prefix\"", "\"prefix-len\"",
-  "\"excluded-prefix\"", "\"excluded-prefix-len\"", "\"delegated-len\"",
-  "\"user-context\"", "\"comment\"", "\"subnet\"", "\"interface\"",
-  "\"interface-id\"", "\"id\"", "\"rapid-commit\"", "\"reservation-mode\"",
-  "\"disabled\"", "\"out-of-pool\"", "\"global\"", "\"all\"",
-  "\"shared-networks\"", "\"mac-sources\"", "\"relay-supplied-options\"",
+  "\"encapsulate\"", "\"array\"", "\"pools\"", "\"pool\"", "\"pd-pools\"",
+  "\"prefix\"", "\"prefix-len\"", "\"excluded-prefix\"",
+  "\"excluded-prefix-len\"", "\"delegated-len\"", "\"user-context\"",
+  "\"comment\"", "\"subnet\"", "\"interface\"", "\"interface-id\"",
+  "\"id\"", "\"rapid-commit\"", "\"reservation-mode\"", "\"disabled\"",
+  "\"out-of-pool\"", "\"global\"", "\"all\"", "\"shared-networks\"",
+  "\"mac-sources\"", "\"relay-supplied-options\"",
   "\"host-reservation-identifiers\"", "\"sanity-checks\"",
   "\"lease-checks\"", "\"client-classes\"", "\"require-client-classes\"",
   "\"test\"", "\"only-if-required\"", "\"client-class\"",
