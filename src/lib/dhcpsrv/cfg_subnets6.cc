@@ -63,6 +63,79 @@ CfgSubnets6::del(const SubnetID& subnet_id) {
         .arg(subnet->toText());
 }
 
+void
+CfgSubnets6::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks6Ptr networks,
+                   CfgSubnets6& other) {
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+
+    // Iterate over the subnets to be merged. They will replace the existing
+    // subnets with the same id. All new subnets will be inserted into the
+    // configuration into which we're merging.
+    auto other_subnets = other.getAll();
+    for (auto other_subnet = other_subnets->begin();
+         other_subnet != other_subnets->end();
+         ++other_subnet) {
+
+        // Check if there is a subnet with the same ID.
+        auto subnet_it = index.find((*other_subnet)->getID());
+        if (subnet_it != index.end()) {
+
+            // Subnet found.
+            auto existing_subnet = *subnet_it;
+
+            // If the existing subnet and other subnet
+            // are the same instance skip it.
+            if (existing_subnet == *other_subnet) {
+                continue;
+            }
+
+            // We're going to replace the existing subnet with the other
+            // version. If it belongs to a shared network, we need
+            // remove it from that network.
+            SharedNetwork6Ptr network;
+            existing_subnet->getSharedNetwork(network);
+            if (network) {
+                network->del(existing_subnet->getID());
+            }
+
+            // Now we remove the existing subnet.
+            index.erase(subnet_it);
+        }
+
+        // Create the subnet's options based on the given definitions.
+        (*other_subnet)->getCfgOption()->createOptions(cfg_def);
+
+        // Create the options for pool based on the given definitions.
+        for (auto pool : (*other_subnet)->getPoolsWritable(Lease::TYPE_NA)) {
+            pool->getCfgOption()->createOptions(cfg_def);
+        }
+
+        for (auto pool : (*other_subnet)->getPoolsWritable(Lease::TYPE_PD)) {
+            pool->getCfgOption()->createOptions(cfg_def);
+        }
+
+        // Add the "other" subnet to the our collection of subnets.
+        subnets_.push_back(*other_subnet);
+
+        // If it belongs to a shared network, find the network and
+        // add the subnet to it
+        std::string network_name = (*other_subnet)->getSharedNetworkName();
+        if (!network_name.empty()) {
+            SharedNetwork6Ptr network = networks->getByName(network_name);
+            if (network) {
+                network->add(*other_subnet);
+            } else {
+                // This implies the shared-network collection we were given
+                // is out of sync with the subnets we were given.
+                isc_throw(InvalidOperation, "Cannot assign subnet ID of "
+                          << (*other_subnet)->getID()
+                          << " to shared network: " << network_name
+                          << ", network does not exist");
+            }
+        }
+    }
+}
+
 ConstSubnet6Ptr
 CfgSubnets6::getBySubnetId(const SubnetID& subnet_id) const {
     const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
