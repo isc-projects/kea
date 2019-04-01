@@ -482,7 +482,7 @@ public:
         Lease6Collection new_leases_;
 
         /// @brief Holds if client contains reconfigure accept option
-        bool support_reconfig;
+        bool support_reconfig_;
 
         //@}
 

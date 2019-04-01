@@ -7029,7 +7029,7 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
     EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
     
-    //check if reconfigure feature flag is true
+    // Check if reconfigure feature flag is true
     ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getReconfigurationFlag());
 }
 
@@ -7040,7 +7040,9 @@ TEST_F(Dhcp6ParserTest, comments) {
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
+    // Check reconfiguration feature flag en passant.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->getReconfigurationFlag());
+
     // Check global user context.
     ConstElementPtr ctx = CfgMgr::instance().getStagingCfg()->getContext();
     ASSERT_TRUE(ctx);

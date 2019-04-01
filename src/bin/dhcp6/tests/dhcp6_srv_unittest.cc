@@ -25,7 +25,6 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
@@ -36,6 +35,11 @@
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -47,6 +51,11 @@
 using namespace isc;
 using namespace isc::data;
 using namespace isc::asiolink;
+
+#ifdef HAVE_MYSQL
+using namespace isc::db::test;
+#endif
+
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -2788,113 +2797,116 @@ TEST_F(Dhcpv6SrvTest, truncatedVIVSO) {
     ASSERT_TRUE(adv);
 }
 
+#ifdef HAVE_MYSQL
+
 // Verifies various properties of the server when reconfigure accept
 // option is enabled
 TEST_F(Dhcpv6SrvTest, reconfigureAcceptOptionTest) {
-    
-    
-    //initialise the database
+
+    // Initialise the database
     destroyMySQLSchema();
     createMySQLSchema();
     HostMgr::create();
     HostMgr::addBackend(validMySQLConnectionString());
     NakedDhcpv6Srv srv(0);
 
-    //enable reconfigure feature in the config
+    // Enable reconfigure feature in the config
     CfgMgr::instance().getCurrentCfg()->setReconfigurationFlag(true);
-    
-    // Let's create basic a REQUEST with reconfigure 
-    // accept option enabled
+
+    // Let's create basic a REQUEST with reconfigure accept option enabled
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abba"));
     req->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1000, 2000);
 
     req->addOption(ia);
-    
+
     OptionPtr clientid = generateClientId(16);
     req->addOption(clientid);
 
     // Add server ID
     req->addOption(srv.getServerID());
 
-    // Add reconfigure accept option from the 
-    // client
+    // Add reconfigure accept option from the client
     OptionPtr prefix_opt(new Option(Option::V6, D6O_RECONF_ACCEPT));
     req->addOption(prefix_opt);
-    
+
     // Pass it to the server
-     AllocEngine::ClientContext6 ctx; 
-     bool drop = false;
-     srv.initContext(req, ctx, drop);
-     
-     ASSERT_FALSE(drop);
-     ASSERT_TRUE(ctx.support_reconfig);
- 
-     Pkt6Ptr reply =  srv.processRequest(ctx);
-	 ASSERT_EQ(DHCPV6_REPLY, reply->getType());
-     
-     //check if replies contains reconfig accept option
-     ASSERT_TRUE(reply->getOption(D6O_RECONF_ACCEPT));
-     
-     //first verify we have got host reservation.
-     srv.updateHostKey(ctx);
-     ASSERT_FALSE(ctx.hosts_.empty());	
-     //now ensure for all the host reservations
-     //we have key defined for it
-     string stored_key;
-     
-     for (auto& host : ctx.hosts_) {
-         ASSERT_FALSE(host.second->getKey().ToText().empty());
-         stored_key = host.second->getKey().ToText();
-     }
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(req, ctx, drop);
 
-     srv.storeClientIntfInfo(req, ctx);
-     //now ensure we lease context defined and strored 
-     //the interface ip and ip address of the client
-     Lease6Collection leases = LeaseMgrFactory::instance()
-                              .getLeases6(ctx.duid_->getDuid());
-     
-     ASSERT_FALSE(leases.empty());
-     
-     for (auto &lease: leases) {
-        ASSERT_TRUE(lease->getContext());    
-        EXPECT_EQ("{ \"client_address\": \"fe80::abba\", \"client_interface\": \"eth0\" }", lease->getContext()->str());
-     }
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.support_reconfig_);
 
-     // now ensure we dont generate new keys for already stored keys for the same host
-     Pkt6Ptr renew = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
-     renew->setRemoteAddr(IOAddress("fe80::abba"));
-     renew->setIface("eth0");
-     renew->addOption(ia);
+    Pkt6Ptr reply =  srv.processRequest(ctx);
+    ASSERT_EQ(DHCPV6_REPLY, reply->getType());
 
-     renew->addOption(clientid);
+    // Check if replies contains reconfig accept option
+    ASSERT_TRUE(reply->getOption(D6O_RECONF_ACCEPT));
 
-     // Add server ID
-     renew->addOption(srv.getServerID());
-    
-     // Add reconfigure accept option from the 
-     // client
-     renew->addOption(prefix_opt);
-    
+    // First verify we have got host reservation.
+    srv.updateHostKey(ctx);
+    ASSERT_FALSE(ctx.hosts_.empty());
+
+    // Now ensure for all the host reservations
+    // We have key defined for it
+    string stored_key;
+
+    for (auto& host : ctx.hosts_) {
+        ASSERT_FALSE(host.second->getKey().ToText().empty());
+        stored_key = host.second->getKey().ToText();
+    }
+
+    srv.storeClientIntfInfo(req, ctx);
+    // Now ensure we lease context defined and stored
+    // the interface ip and ip address of the client
+    Lease6Collection leases =
+        LeaseMgrFactory::instance().getLeases6(ctx.duid_->getDuid());
+
+    ASSERT_FALSE(leases.empty());
+
+    for (auto &lease: leases) {
+        ASSERT_TRUE(lease->getContext());
+        string expected = "{ \"client_address\": \"fe80::abba\", "
+            "\"client_interface\": \"eth0\" }";
+        EXPECT_EQ(expected, lease->getContext()->str());
+    }
+
+    // Now ensure we dont generate new keys for already stored keys for the same host
+    Pkt6Ptr renew = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    renew->setRemoteAddr(IOAddress("fe80::abba"));
+    renew->setIface("eth0");
+    renew->addOption(ia);
+    renew->addOption(clientid);
+
+    // Add server ID
+    renew->addOption(srv.getServerID());
+
+    // Add reconfigure accept option from the client
+    renew->addOption(prefix_opt);
+
     // Pass it to the server
-     AllocEngine::ClientContext6 ctx2; 
-     srv.initContext(req, ctx2, drop);
-     
-     ASSERT_FALSE(drop);
-     ASSERT_TRUE(ctx2.support_reconfig);
-     
-     reply =  srv.processRequest(ctx2);
-	 ASSERT_EQ(DHCPV6_REPLY, reply->getType());
-     
-     //ensure the hosts have keys stored for the client
-     for (auto& host : ctx2.hosts_) {
+    AllocEngine::ClientContext6 ctx2;
+    srv.initContext(req, ctx2, drop);
+
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx2.support_reconfig_);
+
+    reply =  srv.processRequest(ctx2);
+    ASSERT_EQ(DHCPV6_REPLY, reply->getType());
+
+    // Ensure the hosts have keys stored for the client
+    for (auto& host : ctx2.hosts_) {
         ASSERT_FALSE(host.second->getKey().ToText().empty());
         ASSERT_TRUE(stored_key == host.second->getKey().ToText());
-     }
-    
+    }
+
 }
-// @todo ensure we send all the replies default with the reconfigure accept option 
+
+#endif // HAVE_MYSQL
+
+/// @todo: Ensure we send all the replies default with the reconfigure accept option
 
 // Check that T1 and T2 values are set correctly.
 TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {

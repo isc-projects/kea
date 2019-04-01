@@ -589,7 +589,9 @@ public:
         return (dhcp4o6_port_);
     }
 
-    /// @brief set reconfigure feature flag
+    /// @brief Sets reconfigure feature flag
+    /// @todo: make it a generic global parameter
+    /// @param flag new value of the reconfigure feature flag.
     void setReconfigurationFlag(bool flag) {
         enable_reconfigure_ = flag;
     }
@@ -791,6 +793,7 @@ private:
 
     /// @brief enable reconfiguration support
     bool enable_reconfigure_;
+
     /// @brief Stores the global parameters specified via configuration
     isc::data::ElementPtr configured_globals_;
 

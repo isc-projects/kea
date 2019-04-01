@@ -71,6 +71,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "config-control",               Element::map },
     { "server-tag",                   Element::string },
     { "reservation-mode",             Element::string },
+    { "enable-reconfiguration",       Element::boolean },
     { "calculate-tee-times",          Element::boolean },
     { "t1-percent",                   Element::real },
     { "t2-percent",                   Element::real },

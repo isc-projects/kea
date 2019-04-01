@@ -184,7 +184,8 @@ We have received the following contributions:
    2018-07: Support for Authentication option in DHCPv6
    2018-07: Support storage of Authentication keys in host structure
    2018-08: Optimized query for host reservation from the backends
-   2018-08: Handle support for reconfig accept option and storing client info in leases.
+   2018-08: Handle support for reconfig accept option and
+            storing client info in leases.
 
  - Piotr Strzyżewski
    2018-07: YANG model for DHCPv4 Kea

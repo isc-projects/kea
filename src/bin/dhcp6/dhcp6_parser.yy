@@ -99,6 +99,7 @@ using namespace std;
   T2_PERCENT "t2-percent"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
+  ENABLE_RECONFIGURATION "enable-reconfiguration"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -212,8 +213,6 @@ using namespace std;
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
 
-  ENABLE_RECONFIGURATION "enable-reconfiguration"
-  
   LOGGING "Logging"
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
@@ -421,7 +420,6 @@ global_object: dhcp6_object
              | unknown_map_entry
              ;
 
-
 dhcp6_object: DHCP6 {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -446,7 +444,6 @@ sub_dhcp6: LCURLY_BRACKET {
     // parsing completed
 };
 
-
 global_params: global_param
              | global_params COMMA global_param
              ;
@@ -463,7 +460,6 @@ global_param: data_directory
             | renew_timer
             | rebind_timer
             | decline_probation_period
-            | enable_reconfiguration
             | subnet6_list
             | shared_networks
             | interfaces_config
@@ -489,6 +485,7 @@ global_param: data_directory
             | reservations
             | config_control
             | server_tag
+            | enable_reconfiguration
             | reservation_mode
             | calculate_tee_times
             | t1_percent
@@ -505,11 +502,6 @@ data_directory: DATA_DIRECTORY {
     ElementPtr datadir(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("data-directory", datadir);
     ctx.leave();
-};
-
-enable_reconfiguration: ENABLE_RECONFIGURATION COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("enable-reconfiguration", b);
 };
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -578,6 +570,11 @@ server_tag: SERVER_TAG {
     ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
+};
+
+enable_reconfiguration: ENABLE_RECONFIGURATION COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-reconfiguration", b);
 };
 
 interfaces_config: INTERFACES_CONFIG {
