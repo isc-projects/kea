@@ -1,3 +1,8 @@
+1554.	[func]		tmark
+	kea-dhcp6 now uses globals, option definitions, options,
+	share-networks, and subnets from configuration back ends.
+	(Gitlab #413,!288, git ff367e273ed8763b354db272c5955a78203d865e)
+
 1553.	[func]		marcin
 	DHCPv4 server automatically fetches incremental configuration updates
 	from the configuration backends.
