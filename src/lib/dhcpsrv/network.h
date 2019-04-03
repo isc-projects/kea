@@ -199,6 +199,24 @@ public:
         HR_ALL
     } HRMode;
 
+    /// @brief Inheritance "mode" used when fetching an optional @c Network
+    /// parameter.
+    ///
+    /// The following modes are currently supported:
+    /// - NONE: no inheritance is used, the network specific value is returned
+    ///   regardless if it is specified or not.
+    /// - PARENT_NETWORK: parent network specific value is returned or unspecified
+    ///   if the parent network doesn't exist.
+    /// - GLOBAL: global specific value is returned.
+    /// - ALL: inheritance is used on all levels: network specific value takes
+    ///   precedence over parent specific value over the global value.
+    enum class Inheritance {
+        NONE,
+        PARENT_NETWORK,
+        GLOBAL,
+        ALL
+    };
+
     /// Pointer to the RelayInfo structure
     typedef boost::shared_ptr<Network::RelayInfo> RelayInfoPtr;
 
@@ -245,9 +263,12 @@ public:
     /// @brief Returns name of the local interface for which this network is
     /// selected.
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return Interface name as text.
-    util::Optional<std::string> getIface() const {
-        return (getProperty(&Network::getIface, iface_name_, "interface"));
+    util::Optional<std::string>
+    getIface(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getIface, iface_name_,
+                                     inheritance, "interface"));
     };
 
     /// @brief Sets information about relay
@@ -340,14 +361,20 @@ public:
     /// @note The returned reference is only valid as long as the object
     /// returned it is valid.
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return client class @ref client_class_
-    util::Optional<ClientClass> getClientClass() const {
-        return (getProperty<Network>(&Network::getClientClass, client_class_));
+    util::Optional<ClientClass>
+    getClientClass(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getClientClass, client_class_,
+                                     inheritance));
     }
 
     /// @brief Return valid-lifetime for addresses in that prefix
-    Triplet<uint32_t> getValid() const {
-        return (getProperty<Network>(&Network::getValid, valid_, "valid-lifetime"));
+    ///
+    /// @param inheritance inheritance mode to be used.
+    Triplet<uint32_t> getValid(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getValid, valid_, inheritance,
+                                     "valid-lifetime"));
     }
 
     /// @brief Sets new valid lifetime for a network.
@@ -358,8 +385,10 @@ public:
     }
 
     /// @brief Returns T1 (renew timer), expressed in seconds
-    Triplet<uint32_t> getT1() const {
-        return (getProperty<Network>(&Network::getT1, t1_, "renew-timer"));
+    ///
+    /// @param inheritance inheritance mode to be used.
+    Triplet<uint32_t> getT1(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getT1, t1_, inheritance, "renew-timer"));
     }
 
     /// @brief Sets new renew timer for a network.
@@ -370,8 +399,10 @@ public:
     }
 
     /// @brief Returns T2 (rebind timer), expressed in seconds
-    Triplet<uint32_t> getT2() const {
-        return (getProperty<Network>(&Network::getT2, t2_, "rebind-timer"));
+    ///
+    /// @param inheritance inheritance mode to be used.
+    Triplet<uint32_t> getT2(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getT2, t2_, inheritance, "rebind-timer"));
     }
 
     /// @brief Sets new rebind timer for a network.
@@ -388,19 +419,22 @@ public:
     /// not in the dynamic pool). HR may also be completely disabled for
     /// performance reasons.
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return Host reservation mode enabled.
     util::Optional<HRMode>
-    getHostReservationMode() const {
+    getHostReservationMode(const Inheritance& inheritance = Inheritance::ALL) const {
         // Inheritance for host reservations is a little different than for other
         // parameters. The reservation at the global level is given as a string.
         // Thus we call getProperty here without a global name to check if the
         // host reservation mode is specified on network level only.
         const util::Optional<HRMode>& hr_mode = getProperty<Network>(&Network::getHostReservationMode,
-                                                                     host_reservation_mode_);
+                                                                     host_reservation_mode_,
+                                                                     inheritance);
         // If HR mode is not specified at network level we need this special
         // case code to handle conversion of the globally configured HR
         // mode to an enum.
-        if (hr_mode.unspecified()) {
+        if (hr_mode.unspecified() && (inheritance != Inheritance::NONE) &&
+            (inheritance != Inheritance::PARENT_NETWORK)) {
             // Get global reservation mode.
             util::Optional<std::string> hr_mode_name;
             hr_mode_name = getGlobalProperty(hr_mode_name, "reservation-mode");
@@ -455,9 +489,13 @@ public:
     }
 
     /// @brief Returns whether or not T1/T2 calculation is enabled.
-    util::Optional<bool> getCalculateTeeTimes() const {
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getCalculateTeeTimes(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getCalculateTeeTimes,
                                      calculate_tee_times_,
+                                     inheritance,
                                      "calculate-tee-times"));
     }
 
@@ -469,10 +507,12 @@ public:
     }
 
     /// @brief Returns percentage to use when calculating the T1 (renew timer).
-    util::Optional<double> getT1Percent() const {
-        return (getProperty<Network>(&Network::getT1Percent,
-                                     t1_percent_,
-                                     "t1-percent"));
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<double>
+    getT1Percent(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getT1Percent, t1_percent_,
+                                     inheritance, "t1-percent"));
     }
 
     /// @brief Sets new precentage for calculating T1 (renew timer).
@@ -483,10 +523,12 @@ public:
     }
 
     /// @brief Returns percentage to use when calculating the T2 (rebind timer).
-    util::Optional<double> getT2Percent() const {
-        return (getProperty<Network>(&Network::getT2Percent,
-                                     t2_percent_,
-                                     "t2-percent"));
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<double>
+    getT2Percent(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getT2Percent, t2_percent_,
+                                     inheritance, "t2-percent"));
     }
 
     /// @brief Sets new precentage for calculating T2 (rebind timer).
@@ -559,6 +601,7 @@ protected:
     /// value if the value is unspecified for this instance.
     /// @param property Value to be returned when it is specified or when
     /// no explicit value is specified on upper inheritance levels.
+    /// @param inheritance inheritance mode to be used.
     /// @param global_name Optional name of the global parameter which value
     /// should be returned if the given parameter is not specified on network
     /// level. This value is empty by default, which indicates that the
@@ -568,19 +611,42 @@ protected:
     /// @return Optional value fetched from this instance level, parent
     /// network level or global level
     template<typename BaseType, typename ReturnType>
-    ReturnType getProperty(ReturnType(BaseType::*MethodPointer)() const,
+    ReturnType getProperty(ReturnType(BaseType::*MethodPointer)(const Inheritance&) const,
                            ReturnType property,
-                const std::string& global_name = "") const {
-        // If the value is specified on this level, let's simply return it.
-        // The lower level value always takes precedence.
-        if (property.unspecified()) {
+                           const Inheritance& inheritance,
+                           const std::string& global_name = "") const {
+
+        // If no inheritance is not to be used, return the value for this
+        // network regardless if it is specified or not.
+        if (inheritance == Inheritance::NONE) {
+            return (property);
+
+        } else if (inheritance == Inheritance::PARENT_NETWORK) {
+            ReturnType parent_property;
+
             // Check if this instance has a parent network.
             auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
             if (parent) {
-                // Run the same method on the parent instance to fetch the
-                // parent level (typically shared network level) value.
-                auto parent_property = ((*parent).*MethodPointer)();
-                // If the value is found, return it.
+                parent_property = ((*parent).*MethodPointer)(Network::Inheritance::NONE);
+            }
+            return (parent_property);
+
+        // If global value requested, return it.
+        } else if (inheritance == Inheritance::GLOBAL) {
+            return (getGlobalProperty(ReturnType(), global_name));
+        }
+
+        // We use inheritance and the value is not specified on the network level.
+        // Hence, we need to get the parent network specific value or global value.
+        if (property.unspecified()) {
+            // Check if this instance has a parent network.
+            auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
+            // If the parent network exists, let's fetch the parent specific
+            // value.
+            if (parent) {
+                // We're using inheritance so ask for the parent specific network
+                // and return it only if it is specified.
+                auto parent_property = ((*parent).*MethodPointer)(inheritance);
                 if (!parent_property.unspecified()) {
                     return (parent_property);
                 }
@@ -610,23 +676,42 @@ protected:
     /// should be called on the parent network instance (typically on
     /// @c SharedNetwork4 or @c SharedNetwork6) to fetch the parent specific
     /// value if the value is unspecified for this instance.
+    /// @param inheritance inheritance mode to be used.
     ///
     /// @return Option pointer fetched from this instance level or parent
     /// network level.
     template<typename BaseType>
     OptionPtr
-    getOptionProperty(OptionPtr(BaseType::*MethodPointer)() const,
-                      OptionPtr property) const {
-        // If the value is specified on this level, let's simply return it.
-        // The lower level value always takes precedence.
+    getOptionProperty(OptionPtr(BaseType::*MethodPointer)(const Inheritance& inheritance) const,
+                      OptionPtr property,
+                      const Inheritance& inheritance) const {
+        if (inheritance == Network::Inheritance::NONE) {
+            return (property);
+
+        } else if (inheritance == Network::Inheritance::PARENT_NETWORK) {
+            OptionPtr parent_property;
+            // Check if this instance has a parent network.
+            auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
+            // If the parent network exists, let's fetch the parent specific
+            // value.
+            if (parent) {
+                parent_property = ((*parent).*MethodPointer)(Network::Inheritance::NONE);
+            }
+            return (parent_property);
+
+        } else if (inheritance == Network::Inheritance::GLOBAL) {
+            return (OptionPtr());
+        }
+
+        // We use inheritance and the value is not specified on the network level.
+        // Hence, we need to get the parent network specific value.
         if (!property) {
             // Check if this instance has a parent network.
             auto parent = boost::dynamic_pointer_cast<BaseType>(parent_network_.lock());
             if (parent) {
-                // Run the same method on the parent instance to fetch the
-                // parent level (typically shared network level) value.
-                auto parent_property = ((*parent).*MethodPointer)();
-                // If the value is found, return it.
+                // We're using inheritance so ask for the parent specific network
+                // and return it only if it is specified.
+                OptionPtr parent_property = (((*parent).*MethodPointer)(inheritance));
                 if (parent_property) {
                     return (parent_property);
                 }
@@ -710,10 +795,13 @@ public:
     /// @brief Returns the flag indicating if the client identifiers should
     /// be used to identify the client's lease.
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return true if client identifiers should be used, false otherwise.
-    util::Optional<bool> getMatchClientId() const {
+    util::Optional<bool>
+    getMatchClientId(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network4>(&Network4::getMatchClientId,
                                       match_client_id_,
+                                      inheritance,
                                       "match-client-id"));
     }
 
@@ -729,11 +817,13 @@ public:
     /// @brief Returns the flag indicating if requests for unknown IP addresses
     /// should be rejected with DHCPNAK instead of ignored.
     ///
+    /// @param inheritance inheritance mode to be used.w
     /// @return true if requests for unknown IP addresses should be rejected,
     /// false otherwise.
-    util::Optional<bool> getAuthoritative() const {
+    util::Optional<bool>
+    getAuthoritative(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network4>(&Network4::getAuthoritative, authoritative_,
-                                      "authoritative"));
+                                      inheritance, "authoritative"));
     }
 
     /// @brief Sets the flag indicating if requests for unknown IP addresses
@@ -755,9 +845,10 @@ public:
     /// @brief Returns siaddr for this network.
     ///
     /// @return siaddr value
-    util::Optional<asiolink::IOAddress> getSiaddr() const {
+    util::Optional<asiolink::IOAddress>
+    getSiaddr(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network4>(&Network4::getSiaddr, siaddr_,
-                                      "next-server"));
+                                      inheritance, "next-server"));
     }
 
     /// @brief Sets server hostname for the network.
@@ -767,10 +858,12 @@ public:
 
     /// @brief Returns server hostname for this network.
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return server hostname value
-    util::Optional<std::string> getSname() const {
+    util::Optional<std::string>
+    getSname(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network4>(&Network4::getSname, sname_,
-                                      "server-hostname"));
+                                      inheritance, "server-hostname"));
     }
 
     /// @brief Sets boot file name for the network.
@@ -780,10 +873,12 @@ public:
 
     /// @brief Returns boot file name for this subnet
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return boot file name value
-    util::Optional<std::string> getFilename() const {
+    util::Optional<std::string>
+    getFilename(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network4>(&Network4::getFilename, filename_,
-                                      "boot-file-name"));
+                                      inheritance, "boot-file-name"));
     }
 
     /// @brief Unparses network object.
@@ -827,10 +922,12 @@ public:
 
     /// @brief Returns preferred lifetime (in seconds)
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return a triplet with preferred lifetime
-    Triplet<uint32_t> getPreferred() const {
+    Triplet<uint32_t>
+    getPreferred(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network6>(&Network6::getPreferred, preferred_,
-                                      "preferred-lifetime"));
+                                      inheritance, "preferred-lifetime"));
     }
 
     /// @brief Sets new preferred lifetime for a network.
@@ -842,9 +939,11 @@ public:
 
     /// @brief Returns interface-id value (if specified)
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return interface-id option (if defined)
-    OptionPtr getInterfaceId() const {
-        return (getOptionProperty<Network6>(&Network6::getInterfaceId, interface_id_));
+    OptionPtr getInterfaceId(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getOptionProperty<Network6>(&Network6::getInterfaceId, interface_id_,
+                                            inheritance));
     }
 
     /// @brief sets interface-id option (if defined)
@@ -857,10 +956,13 @@ public:
     /// @brief Returns boolean value indicating that the Rapid Commit option
     /// is supported or unsupported for the subnet.
     ///
+    /// @param inheritance inheritance mode to be used.
     /// @return true if the Rapid Commit option is supported, false otherwise.
-    util::Optional<bool> getRapidCommit() const {
+    util::Optional<bool>
+    getRapidCommit(const Inheritance& inheritance = Inheritance::ALL) const {
+
         return (getProperty<Network6>(&Network6::getRapidCommit, rapid_commit_,
-                                      "rapid-commit"));
+                                      inheritance, "rapid-commit"));
     }
 
     /// @brief Enables or disables Rapid Commit option support for the subnet.
