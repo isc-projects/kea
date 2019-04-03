@@ -822,6 +822,13 @@ typedef boost::multi_index_container<
                 boost::posix_time::ptime,
                 &data::StampedElement::getModificationTime
             >
+        >,
+        // Start definition of index #4.
+        // Use StampedElement::getId as a key.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<OptionIdIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
+                                              &data::StampedElement::getId>
         >
     >
 > OptionDefContainer;

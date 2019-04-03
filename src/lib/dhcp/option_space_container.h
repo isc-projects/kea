@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,9 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief A tag for accessing DHCP options and definitions by id.
+struct OptionIdIndexTag { };
 
 /// @brief Simple container for option spaces holding various items.
 ///
