@@ -614,7 +614,7 @@ protected:
     /// @param lease lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound response for the client to which timers are added.
-    void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp);
+    static void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp);
 
     /// @brief Append basic options if they are not present.
     ///
