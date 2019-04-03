@@ -746,7 +746,7 @@ public:
 
         // Create binding for host reservation mode.
         MySqlBindingPtr hr_mode_binding;
-        auto hr_mode = subnet->getHostReservationMode();
+        auto hr_mode = subnet->getHostReservationMode(Network::Inheritance::NONE);
         if (!hr_mode.unspecified()) {
             hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
                                                                    (hr_mode.get()));
@@ -788,25 +788,25 @@ public:
             MySqlBinding::condCreateString(subnet->get4o6().getIface4o6()),
             dhcp4o6_interface_id_binding,
             MySqlBinding::condCreateString(dhcp4o6_subnet),
-            MySqlBinding::condCreateString(subnet->getFilename()),
-            MySqlBinding::condCreateString(subnet->getClientClass()),
-            MySqlBinding::condCreateString(subnet->getIface()),
-            MySqlBinding::condCreateBool(subnet->getMatchClientId()),
+            MySqlBinding::condCreateString(subnet->getFilename(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getClientClass(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getIface(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getMatchClientId(Network::Inheritance::NONE)),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
-            MySqlBinding::condCreateIPv4Address(subnet->getSiaddr()),
-            createBinding(subnet->getT2()),
+            MySqlBinding::condCreateIPv4Address(subnet->getSiaddr(Network::Inheritance::NONE)),
+            createBinding(subnet->getT2(Network::Inheritance::NONE)),
             createInputRelayBinding(subnet),
-            createBinding(subnet->getT1()),
+            createBinding(subnet->getT1(Network::Inheritance::NONE)),
             createInputRequiredClassesBinding(subnet),
             hr_mode_binding,
-            MySqlBinding::condCreateString(subnet->getSname()),
+            MySqlBinding::condCreateString(subnet->getSname(Network::Inheritance::NONE)),
             shared_network_binding,
             createInputContextBinding(subnet),
-            createBinding(subnet->getValid()),
-            MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes()),
-            MySqlBinding::condCreateFloat(subnet->getT1Percent()),
-            MySqlBinding::condCreateFloat(subnet->getT2Percent()),
-            MySqlBinding::condCreateBool(subnet->getAuthoritative())
+            createBinding(subnet->getValid(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getAuthoritative(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1251,7 +1251,7 @@ public:
 
         // Create binding for host reservation mode.
         MySqlBindingPtr hr_mode_binding;
-        auto hr_mode = shared_network->getHostReservationMode();
+        auto hr_mode = shared_network->getHostReservationMode(Network::Inheritance::NONE);
         if (!hr_mode.unspecified()) {
             hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
                                                                    (hr_mode.get()));
@@ -1261,24 +1261,24 @@ public:
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
-            MySqlBinding::condCreateString(shared_network->getClientClass()),
-            MySqlBinding::condCreateString(shared_network->getIface()),
-            MySqlBinding::condCreateBool(shared_network->getMatchClientId()),
+            MySqlBinding::condCreateString(shared_network->getClientClass(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getIface(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getMatchClientId(Network::Inheritance::NONE)),
             MySqlBinding::createTimestamp(shared_network->getModificationTime()),
-            createBinding(shared_network->getT2()),
+            createBinding(shared_network->getT2(Network::Inheritance::NONE)),
             createInputRelayBinding(shared_network),
-            createBinding(shared_network->getT1()),
+            createBinding(shared_network->getT1(Network::Inheritance::NONE)),
             createInputRequiredClassesBinding(shared_network),
             hr_mode_binding,
             createInputContextBinding(shared_network),
-            createBinding(shared_network->getValid()),
-            MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes()),
-            MySqlBinding::condCreateFloat(shared_network->getT1Percent()),
-            MySqlBinding::condCreateFloat(shared_network->getT2Percent()),
-            MySqlBinding::condCreateBool(shared_network->getAuthoritative()),
-            MySqlBinding::condCreateString(shared_network->getFilename()),
-            MySqlBinding::condCreateIPv4Address(shared_network->getSiaddr()),
-            MySqlBinding::condCreateString(shared_network->getSname())
+            createBinding(shared_network->getValid(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(shared_network->getT1Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(shared_network->getT2Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getAuthoritative(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getFilename(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateIPv4Address(shared_network->getSiaddr(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getSname(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
