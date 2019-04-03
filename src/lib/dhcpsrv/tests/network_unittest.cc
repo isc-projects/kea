@@ -94,7 +94,8 @@ public:
     /// of the global value should be tested.
     template<typename BaseType1, typename BaseType2, typename ParameterType1,
              typename ParameterType2>
-    void testNetworkInheritance(ParameterType1(BaseType2::*GetMethodPointer)() const,
+    void testNetworkInheritance(ParameterType1(BaseType2::*GetMethodPointer)
+                                (const Network::Inheritance&) const,
                                 void(BaseType2::*SetMethodPointer)(const ParameterType2&),
                                 typename ParameterType1::ValueType network_value,
                                 typename ParameterType1::ValueType global_value,
@@ -104,12 +105,13 @@ public:
         // object should be unspecified until we set the value for the
         // parent network or a global value.
         boost::shared_ptr<BaseType1> net_child(new BaseType1());
-        EXPECT_TRUE(((*net_child).*GetMethodPointer)().unspecified());
+        EXPECT_TRUE(((*net_child).*GetMethodPointer)(Network::Inheritance::ALL).unspecified());
 
         // Create parent network and set the value.
         boost::shared_ptr<BaseType1> net_parent(new BaseType1());
         ((*net_parent).*SetMethodPointer)(network_value);
-        EXPECT_EQ(network_value, ((*net_parent).*GetMethodPointer)().get());
+        EXPECT_EQ(network_value,
+                  ((*net_parent).*GetMethodPointer)(Network::Inheritance::ALL).get());
 
         // Assign callbacks that fetch global values to the networks.
         net_child->setFetchGlobalsFn(getFetchGlobalsFn());
@@ -118,16 +120,26 @@ public:
         // Not all parameters have the corresponding global values.
         if (test_global_value) {
             // If there is a global value it should now be returned.
-            EXPECT_FALSE(((*net_child).*GetMethodPointer)().unspecified());
-            EXPECT_EQ(global_value, ((*net_child).*GetMethodPointer)().get());
+            EXPECT_FALSE(((*net_child).*GetMethodPointer)(Network::Inheritance::ALL).unspecified());
+            EXPECT_EQ(global_value,
+                      ((*net_child).*GetMethodPointer)(Network::Inheritance::ALL).get());
+
+            EXPECT_FALSE(((*net_child).*GetMethodPointer)(Network::Inheritance::GLOBAL).unspecified());
+            EXPECT_EQ(global_value,
+                      ((*net_child).*GetMethodPointer)(Network::Inheritance::GLOBAL).get());
+
+
+            EXPECT_TRUE(((*net_child).*GetMethodPointer)(Network::Inheritance::NONE).unspecified());
+            EXPECT_TRUE(((*net_child).*GetMethodPointer)(Network::Inheritance::PARENT_NETWORK).unspecified());
         }
 
         // Associated the network with its parent.
         ASSERT_NO_THROW(net_child->setParent(net_parent));
 
         // This time the parent specific value should be returned.
-        EXPECT_FALSE(((*net_child).*GetMethodPointer)().unspecified());
-        EXPECT_EQ(network_value, ((*net_child).*GetMethodPointer)().get());
+        EXPECT_FALSE(((*net_child).*GetMethodPointer)(Network::Inheritance::ALL).unspecified());
+        EXPECT_EQ(network_value,
+                  ((*net_child).*GetMethodPointer)(Network::Inheritance::ALL).get());
     }
 
     /// @brief Holds the collection of configured globals.
@@ -275,7 +287,10 @@ TEST_F(NetworkTest, inheritanceSupport6) {
 
     // Interface-id requires special type of test.
     boost::shared_ptr<TestNetwork6> net_child(new TestNetwork6());
-    EXPECT_TRUE(net_child->getIface().unspecified());
+    EXPECT_FALSE(net_child->getInterfaceId());
+    EXPECT_FALSE(net_child->getInterfaceId(Network::Inheritance::NONE));
+    EXPECT_FALSE(net_child->getInterfaceId(Network::Inheritance::PARENT_NETWORK));
+    EXPECT_FALSE(net_child->getInterfaceId(Network::Inheritance::GLOBAL));
 
     OptionPtr interface_id(new Option(Option::V6, D6O_INTERFACE_ID,
                                       OptionBuffer(10, 0xFF)));
@@ -285,8 +300,29 @@ TEST_F(NetworkTest, inheritanceSupport6) {
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
+    // The interface-id belongs to the parent.
     EXPECT_TRUE(net_child->getInterfaceId());
+    EXPECT_FALSE(net_child->getInterfaceId(Network::Inheritance::NONE));
+    EXPECT_TRUE(net_child->getInterfaceId(Network::Inheritance::PARENT_NETWORK));
+    EXPECT_FALSE(net_child->getInterfaceId(Network::Inheritance::GLOBAL));
+
+    // Check the values are expected.
     EXPECT_EQ(interface_id, net_child->getInterfaceId());
+    EXPECT_EQ(interface_id, net_child->getInterfaceId(Network::Inheritance::PARENT_NETWORK));
+
+    // Assign different interface id to a child.
+    interface_id.reset(new Option(Option::V6, D6O_INTERFACE_ID,
+                                  OptionBuffer(10, 0xFE)));
+    net_child->setInterfaceId(interface_id);
+
+    // This time, the child specific value can be fetched.
+    EXPECT_TRUE(net_child->getInterfaceId());
+    EXPECT_TRUE(net_child->getInterfaceId(Network::Inheritance::NONE));
+    EXPECT_TRUE(net_child->getInterfaceId(Network::Inheritance::PARENT_NETWORK));
+    EXPECT_FALSE(net_child->getInterfaceId(Network::Inheritance::GLOBAL));
+
+    EXPECT_EQ(interface_id, net_child->getInterfaceId());
+    EXPECT_EQ(interface_id, net_child->getInterfaceId(Network::Inheritance::NONE));
 }
 
 // Test that child network returns unspecified value if neither
@@ -300,6 +336,13 @@ TEST_F(NetworkTest, getPropertyNoParentNoChild) {
 TEST_F(NetworkTest, getPropertyNoParentChild) {
     NetworkPtr net_child(new Network());
     net_child->setIface("child_iface");
+
+    EXPECT_FALSE(net_child->getIface().unspecified());
+    EXPECT_FALSE(net_child->getIface(Network::Inheritance::NONE).unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+
+    EXPECT_EQ("child_iface", net_child->getIface(Network::Inheritance::NONE).get());
     EXPECT_EQ("child_iface", net_child->getIface().get());
 }
 
@@ -316,6 +359,10 @@ TEST_F(NetworkTest, getPropertyParentNoChild) {
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
     EXPECT_FALSE(net_child->getIface().unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::NONE).unspecified());
+    EXPECT_FALSE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+
     EXPECT_EQ("parent_iface", net_child->getIface().get());
 }
 
@@ -333,6 +380,10 @@ TEST_F(NetworkTest, getPropertyParentChild) {
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
     EXPECT_FALSE(net_child->getIface().unspecified());
+    EXPECT_FALSE(net_child->getIface(Network::Inheritance::NONE).unspecified());
+    EXPECT_FALSE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+
     EXPECT_EQ("child_iface", net_child->getIface().get());
 }
 
@@ -346,6 +397,10 @@ TEST_F(NetworkTest, getPropertyGlobalNoParentNoChild) {
     net_child->setFetchGlobalsFn(getFetchGlobalsFn());
 
     EXPECT_FALSE(net_child->getIface().unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::NONE).unspecified());
+    EXPECT_TRUE(net_child->getIface(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_FALSE(net_child->getIface(Network::Inheritance::GLOBAL).unspecified());
+
     EXPECT_EQ("global_iface", net_child->getIface().get());
 }
 
