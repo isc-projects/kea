@@ -632,9 +632,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
-                            Lease4Collection& result) const {
-        getLeaseCollection(stindex, bind_array, exchange4_, result);
-    }
+                            Lease4Collection& result) const;
 
     /// @brief Get Lease6 Collection
     ///
@@ -652,9 +650,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
-                            Lease6Collection& result) const {
-        getLeaseCollection(stindex, bind_array, exchange6_, result);
-    }
+                            Lease6Collection& result) const;
 
     /// @brief Get Lease4 Common Code
     ///
@@ -746,13 +742,6 @@ private:
     /// @return Number of leases deleted.
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
-
-    /// The exchange objects are used for transfer of data to/from the database.
-    /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
-    /// declare them as "mutable".)
-    boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
-    boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
     /// PostgreSQL connection handle
     db::PgSqlConnection conn_;

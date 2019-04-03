@@ -242,9 +242,6 @@ public:
     void prepareStatements(const TaggedStatement* start_statement,
                            const TaggedStatement* end_statement);
 
-    /// @brief Clears prepared statements and text statements.
-    void clearStatements();
-
     /// @brief Open Database
     ///
     /// Opens the database using the information supplied in the parameters

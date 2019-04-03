@@ -63,11 +63,6 @@ public:
         try {
             // Open new connection.
             conn_.openDatabase();
-            my_bool result = mysql_autocommit(conn_.mysql_, 1);
-            if (result != 0) {
-                isc_throw(DbOperationError, "failed to set autocommit option "
-                          "for test MySQL connection");
-            }
 
             // Create mysql_connection_test table.
             createTestTable();

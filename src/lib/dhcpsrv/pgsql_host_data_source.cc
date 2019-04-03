@@ -1286,6 +1286,10 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
+        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
@@ -1293,10 +1297,6 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
-        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -1436,28 +1436,6 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
     std::pair<uint32_t, uint32_t> getVersion() const;
-
-    /// @brief Pointer to the object representing an exchange which
-    /// can be used to retrieve hosts and DHCPv4 options.
-    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
-    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to retrieve hosts, DHCPv4 and DHCPv6 options, and
-    /// IPv6 reservations using a single query.
-    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv46_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to insert new IPv6 reservation.
-    boost::shared_ptr<PgSqlIPv6ReservationExchange> host_ipv6_reservation_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to insert DHCPv4 or DHCPv6 option into dhcp4_options
-    /// or dhcp6_options table.
-    boost::shared_ptr<PgSqlOptionExchange> host_option_exchange_;
 
     /// @brief PgSQL connection
     PgSqlConnection conn_;
@@ -1826,13 +1804,7 @@ TaggedStatementArray tagged_statements = { {
 
 PgSqlHostDataSourceImpl::
 PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
-    : host_exchange_(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY)),
-      host_ipv6_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY)),
-      host_ipv46_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::
-                                                     DHCP4_AND_DHCP6)),
-      host_ipv6_reservation_exchange_(new PgSqlIPv6ReservationExchange()),
-      host_option_exchange_(new PgSqlOptionExchange()),
-      conn_(parameters),
+    : conn_(parameters),
       is_readonly_(false) {
 
     // Open the database.
@@ -1933,8 +1905,12 @@ PgSqlHostDataSourceImpl::delStatement(StatementIndex stindex,
 void
 PgSqlHostDataSourceImpl::addResv(const IPv6Resrv& resv,
                                  const HostID& id) {
+    boost::shared_ptr<PgSqlIPv6ReservationExchange> host_ipv6_reservation_exchange(
+            new PgSqlIPv6ReservationExchange());
+
     PsqlBindArrayPtr bind_array;
-    bind_array = host_ipv6_reservation_exchange_->createBindForSend(resv, id);
+    bind_array = host_ipv6_reservation_exchange->createBindForSend(resv, id);
+
     addStatement(INSERT_V6_RESRV, bind_array);
 }
 
@@ -1944,9 +1920,11 @@ PgSqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const std::string& opt_space,
                                    const Optional<SubnetID>&,
                                    const HostID& id) {
+    boost::shared_ptr<PgSqlOptionExchange> host_option_exchange(new PgSqlOptionExchange());
+
     PsqlBindArrayPtr bind_array;
-    bind_array = host_option_exchange_->createBindForSend(opt_desc, opt_space,
-                                                          id);
+    bind_array = host_option_exchange->createBindForSend(opt_desc, opt_space, id);
+
     addStatement(stindex, bind_array);
 }
 
@@ -2029,8 +2007,9 @@ getHost(const SubnetID& subnet_id,
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -2078,6 +2057,9 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
 
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+            new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Initiate PostgreSQL transaction as we will have to make multiple queries
     // to insert host information into multiple tables. If that fails on
     // any stage, the transaction will be rolled back by the destructor of
@@ -2085,7 +2067,7 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     PgSqlTransaction transaction(impl_->conn_);
 
     // Create the PgSQL Bind array for the host
-    PsqlBindArrayPtr bind_array = impl_->host_exchange_->createBindForSend(host);
+    PsqlBindArrayPtr bind_array = host_ipv4_exchange->createBindForSend(host);
 
     // ... and insert the host.
     uint32_t host_id = impl_->addStatement(PgSqlHostDataSourceImpl::INSERT_HOST,
@@ -2185,6 +2167,9 @@ ConstHostCollection
 PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                             const uint8_t* identifier_begin,
                             const size_t identifier_len) const {
+    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv46_exchange(
+            new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
@@ -2196,13 +2181,15 @@ PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_DHCPID,
-                             bind_array, impl_->host_ipv46_exchange_,
-                             result, false);
+                             bind_array, host_ipv46_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 PgSqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+            new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
@@ -2211,14 +2198,16 @@ PgSqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID4,
-                             bind_array, impl_->host_exchange_,
-                             result, false);
+                             bind_array, host_ipv4_exchange, result, false);
 
     return (result);
 }
 
 ConstHostCollection
 PgSqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+            new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
@@ -2227,8 +2216,7 @@ PgSqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6,
-                             bind_array, impl_->host_ipv6_exchange_,
-                             result, false);
+                             bind_array, host_ipv6_exchange, result, false);
 
     return (result);
 }
@@ -2238,6 +2226,9 @@ PgSqlHostDataSource::getPage4(const SubnetID& subnet_id,
                               size_t& /*source_index*/,
                               uint64_t lower_host_id,
                               const HostPageSize& page_size) const {
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+            new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
@@ -2254,8 +2245,7 @@ PgSqlHostDataSource::getPage4(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
-                             bind_array, impl_->host_exchange_,
-                             result, false);
+                             bind_array, host_ipv4_exchange, result, false);
 
     return (result);
 }
@@ -2265,6 +2255,9 @@ PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
                               size_t& /*source_index*/,
                               uint64_t lower_host_id,
                               const HostPageSize& page_size) const {
+    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+            new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
+
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
@@ -2281,14 +2274,15 @@ PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
-                             bind_array, impl_->host_ipv6_exchange_,
-                             result, false);
+                             bind_array, host_ipv6_exchange, result, false);
 
     return (result);
 }
 
 ConstHostCollection
 PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+            new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
@@ -2298,7 +2292,7 @@ PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_ADDR, bind_array,
-                             impl_->host_exchange_, result, false);
+                             host_ipv4_exchange, result, false);
 
     return (result);
 }
@@ -2308,20 +2302,25 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+            new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
                            identifier_len,
                            PgSqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-                           impl_->host_exchange_));
+                           host_ipv4_exchange));
 }
 
 ConstHostPtr
 PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
     if (!address.isV4()) {
-        isc_throw(BadValue, "PgSqlHostDataSource::get4(id, address) - "
-                  " wrong address type, address supplied is an IPv6 address");
+        isc_throw(BadValue, "PgSqlHostDataSource::get4(id, address): "
+                  "wrong address type, address supplied is an IPv6 address");
     }
+
+    boost::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+            new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
@@ -2334,13 +2333,13 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
-                             bind_array, impl_->host_exchange_, collection,
-                             true);
+                             bind_array, host_ipv4_exchange, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -2350,16 +2349,24 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
+    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+            new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
                    identifier_len, PgSqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID,
-                   impl_->host_ipv6_exchange_));
+                   host_ipv6_exchange));
 }
 
 ConstHostPtr
 PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
                           const uint8_t prefix_len) const {
-    /// @todo: Check that prefix is v6 address, not v4.
+    if (!prefix.isV6()) {
+        isc_throw(BadValue, "PgSqlHostDataSource::get6(prefix, prefix_len): "
+                  "wrong address type, address supplied is an IPv4 address");
+    }
+
+    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+            new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
@@ -2372,8 +2379,7 @@ PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 
     ConstHostCollection collection;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_PREFIX,
-                             bind_array, impl_->host_ipv6_exchange_,
-                             collection, true);
+                             bind_array, host_ipv6_exchange, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
@@ -2387,7 +2393,13 @@ PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 ConstHostPtr
 PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
-    /// @todo: Check that prefix is v6 address, not v4.
+    if (!address.isV6()) {
+        isc_throw(BadValue, "PgSqlHostDataSource::get6(id, address): "
+                  "wrong address type, address supplied is an IPv4 address");
+    }
+
+    boost::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+            new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
@@ -2400,8 +2412,7 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
-                             bind_array, impl_->host_ipv6_exchange_,
-                             collection, true);
+                             bind_array, host_ipv6_exchange, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
