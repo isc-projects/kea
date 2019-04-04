@@ -1,4 +1,9 @@
-1548.	[func]		razvan
+1552.	[bug]		marcin
+	Corrected inheritance of the subnet and shared network specific
+	parameters in the MySQL Configuration Backend.
+	(Gitlab #552,!295, git 4812e4227a57b29bfa3995e71588233424a3abb1)
+
+1551.	[func]		razvan
 	Added consistency and serial-consistency parameters to CQL
 	connection. Fixed all statements.
 	(Gitlab #16,!287, git 56a9b6a860899274f9cafe2366a6731a46490e92)
