@@ -95,6 +95,68 @@ TEST(CfgSharedNetworks6Test, deleteNetworkWithSubnets) {
     EXPECT_FALSE(test);
 }
 
+
+// This test verifies that it is possible to delete a shared network by
+// its database identifier.
+TEST(CfgSharedNetworks6Test, deleteNetworksById) {
+    // Create three shared networks.
+    CfgSharedNetworks6 cfg;
+    SharedNetwork6Ptr network1(new SharedNetwork6("frog"));
+    SharedNetwork6Ptr network2(new SharedNetwork6("whale"));
+    SharedNetwork6Ptr network3(new SharedNetwork6("fly"));
+
+    // Add one subnet to each shared network.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4, 1));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4, 2));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 64, 1, 2, 3, 4, 3));
+
+    network1->add(subnet1);
+    network2->add(subnet2);
+    network3->add(subnet3);
+
+    // Set unique identifier for the second shared network.
+    network2->setId(123);
+
+    // Verify that we have two networks with a default identifier and one
+    // with a unique identifier.
+    EXPECT_EQ(0, network1->getId());
+    EXPECT_EQ(123, network2->getId());
+    EXPECT_EQ(0, network3->getId());
+
+    // Add our networks to the configuration.
+    cfg.add(network1);
+    cfg.add(network2);
+    cfg.add(network3);
+
+    // Delete second network by id.
+    uint64_t deleted_num = 0;
+    ASSERT_NO_THROW(deleted_num = cfg.del(network2->getId()));
+    EXPECT_EQ(1, deleted_num);
+
+    // Make sure that the subnet no longer points to the deleted network.
+    SharedNetwork6Ptr returned_network;
+    subnet2->getSharedNetwork(returned_network);
+    EXPECT_FALSE(returned_network);
+    EXPECT_FALSE(cfg.getByName("whale"));
+
+    // Delete the remaining two shared network using id of 0.
+    ASSERT_NO_THROW(deleted_num = cfg.del(network1->getId()));
+    EXPECT_EQ(2, deleted_num);
+
+    // The subnets should no longer point to the deleted networks and
+    // the shared networks should no longer exist in the configuration.
+    subnet1->getSharedNetwork(returned_network);
+    EXPECT_FALSE(returned_network);
+    EXPECT_FALSE(cfg.getByName("frog"));
+
+    subnet3->getSharedNetwork(returned_network);
+    EXPECT_FALSE(returned_network);
+    EXPECT_FALSE(cfg.getByName("fly"));
+
+    // A second attempt to delete should result in an error.
+    EXPECT_THROW(cfg.del(network1->getId()), BadValue);
+}
+
 // This test verifies that shared networks must have unique names.
 TEST(CfgSharedNetworks6Test, duplicateName) {
     SharedNetwork6Ptr network1(new SharedNetwork6("frog"));

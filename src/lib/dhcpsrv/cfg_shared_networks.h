@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/shared_network.h>
 #include <boost/shared_ptr.hpp>
+#include <iterator>
 #include <string>
 
 namespace isc {
@@ -67,6 +68,42 @@ public:
             isc_throw(BadValue, "unable to delete non-existing network '"
                       << name << "' from shared networks configuration");
         }
+    }
+
+    /// @brief Deletes shared networks from the configuration by id.
+    ///
+    /// Note that there are cases when there will be multiple shared
+    /// networks having the same id (typically id of 0). When configuration
+    /// backend is in use it sets the unique ids from the database.
+    /// In cases when the configuration backend is not used, the ids
+    /// default to 0.
+    ///
+    /// @param id Identifier of the shared networks to be deleted.
+    ///
+    /// @return Number of deleted shared networks.
+    /// @throw isc::BadValue if the networks do not exist.
+    uint64_t del(const uint64_t id) {
+        auto& index = networks_.template get<SharedNetworkIdIndexTag>();
+        auto sn_range = index.equal_range(id);
+        uint64_t num = std::distance(sn_range.first, sn_range.second);
+
+        // No such shared networm found. Return an error.
+        if (num == 0) {
+            isc_throw(BadValue, "unable to delete non-existing networks "
+                      "with id of '" << id << "' from shared networks "
+                      "configuration");
+        }
+
+        // For each shared network found, dereference the subnets belonging
+        // to it.
+        for (auto it = sn_range.first; it != sn_range.second; ++it) {
+            (*it)->delAll();
+        }
+
+        // Remove the shared networks.
+        index.erase(sn_range.first, sn_range.second);
+
+        return (num);
     }
 
     /// @brief Retrieves shared network by name.
