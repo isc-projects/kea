@@ -113,6 +113,19 @@ public:
     OptionDefinitionPtr get(const std::string& option_space,
                             const std::string& option_name) const;
 
+    /// @brief Deletes all option definitions having a given database id.
+    ///
+    /// Note that there are cases when there will be multiple option
+    /// definitions having the same id (typically id of 0). When
+    /// configuration backend is in use it sets the unique ids from the
+    /// database. In cases when the configuration backend is not used,
+    /// the ids default to 0.
+    ///
+    /// @param id Identifier of the option definitions to be deleted.
+    ///
+    /// @return Number of deleted option definitions.
+    uint64_t del(const uint64_t id);
+
     /// @brief Returns reference to container holding option definitions.
     const OptionDefSpaceContainer& getContainer() const {
         return (option_definitions_);

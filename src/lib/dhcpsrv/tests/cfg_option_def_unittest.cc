@@ -50,8 +50,8 @@ TEST(CfgOptionDefTest, equal) {
 }
 
 // This test verifies that multiple option definitions can be added
-// under different option spaces.
-TEST(CfgOptionDefTest, getAll) {
+// under different option spaces and then removed.
+TEST(CfgOptionDefTest, getAllThenDelete) {
     CfgOptionDef cfg;
 
     // Create a set of option definitions with codes between 100 and 109.
@@ -61,6 +61,8 @@ TEST(CfgOptionDefTest, getAll) {
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
                                                      "uint16"));
+        def->setId(123);
+
         // Add option definition to "isc" option space.
         // Option codes are not duplicated so expect no error
         // when adding them.
@@ -74,6 +76,9 @@ TEST(CfgOptionDefTest, getAll) {
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
                                                      "uint16"));
+
+        def->setId(234);
+
         ASSERT_NO_THROW(cfg.add(def, "abcde"));
     }
 
@@ -112,6 +117,32 @@ TEST(CfgOptionDefTest, getAll) {
     OptionDefContainerPtr option_defs3 = cfg.getAll("non-existing");
     ASSERT_TRUE(option_defs3);
     EXPECT_TRUE(option_defs3->empty());
+
+    // Check that we can delete option definitions by id.
+    uint64_t num_deleted = 0;
+    ASSERT_NO_THROW(num_deleted = cfg.del(123));
+    EXPECT_EQ(10, num_deleted);
+
+    option_defs1 = cfg.getAll("isc");
+    ASSERT_TRUE(option_defs1);
+    ASSERT_EQ(0, option_defs1->size());
+
+    option_defs2 = cfg.getAll("abcde");
+    ASSERT_TRUE(option_defs2);
+    ASSERT_EQ(10, option_defs2->size());
+
+    // Second attempt to delete the same option definitions should
+    // result in 0 deletions.
+    ASSERT_NO_THROW(num_deleted = cfg.del(123));
+    EXPECT_EQ(0, num_deleted);
+
+    // Delete all other option definitions.
+    ASSERT_NO_THROW(num_deleted = cfg.del(234));
+    EXPECT_EQ(10, num_deleted);
+
+    option_defs2 = cfg.getAll("abcde");
+    ASSERT_TRUE(option_defs2);
+    ASSERT_EQ(0, option_defs2->size());
 }
 
 // This test verifies that single option definition is correctly

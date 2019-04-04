@@ -7,6 +7,7 @@
 #ifndef OPTION_SPACE_CONTAINER_H
 #define OPTION_SPACE_CONTAINER_H
 
+#include <exceptions/exceptions.h>
 #include <list>
 #include <string>
 
@@ -89,6 +90,29 @@ public:
     /// @brief Remove all items from the container.
     void clearItems() {
         option_space_map_.clear();
+    }
+
+    /// @brief Remove all options or option definitions with a given
+    /// database identifier.
+    ///
+    /// Note that there are cases when there will be multiple options
+    /// or option definitions having the same id (typically id of 0).
+    /// When configuration backend is in use it sets the unique ids
+    /// from the database. In cases when the configuration backend is
+    /// not used, the ids default to 0.
+
+    /// @param id Identifier of the items to be deleted.
+    ///
+    /// @return Number of deleted options or option definitions.
+    uint64_t deleteItems(const uint64_t id) {
+        uint64_t num_deleted = 0;
+        for (auto space : option_space_map_) {
+            auto container = space.second;
+            auto& index = container->template get<OptionIdIndexTag>();
+            num_deleted += index.erase(id);
+        }
+
+        return (num_deleted);
     }
 
     /// @brief Check if two containers are equal.
