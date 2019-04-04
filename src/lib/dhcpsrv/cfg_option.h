@@ -327,10 +327,12 @@ public:
     /// @param persistent Boolean value which specifies if the option should
     /// be sent to the client regardless if requested (true), or nor (false)
     /// @param option_space Option space name.
+    /// @param id Optional database id to be associated with the option.
     ///
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionPtr& option, const bool persistent,
-             const std::string& option_space);
+             const std::string& option_space,
+             const uint64_t id = 0);
 
     /// @brief A variant of the @ref CfgOption::add method which takes option
     /// descriptor as an argument.
@@ -525,13 +527,34 @@ public:
     /// @return Number of deleted options.
     size_t del(const std::string& option_space, const uint16_t option_code);
 
-    /// @brief Delets vendor option for the specified vendor id.
+    /// @brief Deletes vendor option for the specified vendor id.
     ///
     /// @param vendor_id Vendor identifier.
     /// @param option_code Option code.
     ///
     /// @return Number of deleted options.
     size_t del(const uint32_t vendor_id, const uint16_t option_code);
+
+    /// @brief Deletes all options having a given database id.
+    ///
+    /// Note that there are cases when there will be multiple options
+    /// having the same id (typically id of 0). When configuration backend
+    /// is in use it sets the unique ids from the database. In cases when
+    /// the configuration backend is not used, the ids default to 0.
+    ///
+    /// Both regular and vendor specific options are deleted with this
+    /// method.
+    ///
+    /// This method internally calls @c encapsulate() after deleting
+    /// options having the given id.
+    ///
+    /// @param id Identifier of the options to be deleted.
+    ///
+    /// @return Number of deleted options. Note that if a single option
+    /// instance is encapsulated by multiple options it adds 1 to the
+    /// number of deleted options even though the same instance is
+    /// deleted from multiple higher level options.
+    size_t del(const uint64_t id);
 
     /// @brief Returns a list of configured option space names.
     ///

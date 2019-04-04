@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,8 +46,13 @@ CfgOption::equals(const CfgOption& other) const {
 
 void
 CfgOption::add(const OptionPtr& option, const bool persistent,
-               const std::string& option_space) {
-    add(OptionDescriptor(option, persistent), option_space);
+               const std::string& option_space,
+               const uint64_t id) {
+    OptionDescriptor desc(option, persistent);
+    if (id > 0) {
+        desc.setId(id);
+    }
+    add(desc, option_space);
 }
 
 void
@@ -360,6 +365,42 @@ CfgOption::del(const uint32_t vendor_id, const uint16_t option_code) {
 
     auto& idx = vendor_options->get<1>();
     return (idx.erase(option_code));
+}
+
+size_t
+CfgOption::del(const uint64_t id) {
+    // Hierarchical nature of the options configuration requires that
+    // we go over all options and decapsulate them before removing
+    // any of them. Let's walk over the existing option spaces.
+    for (auto space_name : getOptionSpaceNames()) {
+        // Get all options for the option space.
+        auto options = getAll(space_name);
+        for (auto option_it = options->begin(); option_it != options->end();
+             ++option_it) {
+            if (!option_it->option_) {
+                continue;
+            }
+
+            // For each option within the option space we need to dereference
+            // any existing sub options.
+            auto sub_options = option_it->option_->getOptions();
+            for (auto sub = sub_options.begin(); sub != sub_options.end();
+                 ++sub) {
+                // Dereference sub option.
+                option_it->option_->delOption(sub->second->getType());
+            }
+        }
+    }
+
+    // Now that we got rid of dependencies between the instances of the options
+    // we can delete all options having a specified id.
+    size_t num_deleted = options_.deleteItems(id) + vendor_options_.deleteItems(id);
+
+    // Let's encapsulate those options that remain in the configuration.
+    encapsulate();
+
+    // Return the number of deleted options.
+    return (num_deleted);
 }
 
 ElementPtr

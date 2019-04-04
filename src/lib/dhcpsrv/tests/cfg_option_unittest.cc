@@ -48,7 +48,11 @@ public:
             OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
                                                                       code, 1234));
             option->setEncapsulatedSpace("foo");
-            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+
+            // In order to easier identify the options by id, let's use the option
+            // code as the id.
+            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE,
+                                    static_cast<uint64_t>(code)));
         }
 
         // Create top level options encapsulating "bar" option space.
@@ -56,7 +60,8 @@ public:
             OptionUint16Ptr option = OptionUint16Ptr(new OptionUint16(Option::V6,
                                                                       code, 2345));
             option->setEncapsulatedSpace("bar");
-            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE));
+            ASSERT_NO_THROW(cfg.add(option, false, DHCP6_OPTION_SPACE,
+                                    static_cast<uint64_t>(code)));
         }
 
         // Create sub-options belonging to "foo" option space and encapsulating
@@ -65,7 +70,7 @@ public:
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
                                                                    0x01));
             option->setEncapsulatedSpace("foo-subs");
-            ASSERT_NO_THROW(cfg.add(option, false, "foo"));
+            ASSERT_NO_THROW(cfg.add(option, false, "foo", static_cast<uint64_t>(code)));
         }
 
         // Create sub-options belonging to "bar" option space and encapsulating
@@ -74,21 +79,23 @@ public:
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
                                                                    code, 0x02));
             option->setEncapsulatedSpace("bar-subs");
-            ASSERT_NO_THROW(cfg.add(option, false, "bar"));
+            ASSERT_NO_THROW(cfg.add(option, false, "bar", static_cast<uint64_t>(code)));
         }
 
         // Create sub-options belonging to "foo-subs" option space.
         for (uint16_t code = 1; code < 10; ++code) {
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6, code,
                                                                    0x03));
-            ASSERT_NO_THROW(cfg.add(option, false, "foo-subs"));
+            ASSERT_NO_THROW(cfg.add(option, false, "foo-subs",
+                                    static_cast<uint64_t>(code)));
         }
 
         // Create sub-options belonging to "bar-subs" option space.
         for (uint16_t code = 501;  code < 510; ++code) {
             OptionUint8Ptr option = OptionUint8Ptr(new OptionUint8(Option::V6,
                                                                    code, 0x04));
-            ASSERT_NO_THROW(cfg.add(option, false, "bar-subs"));
+            ASSERT_NO_THROW(cfg.add(option, false, "bar-subs",
+                                    static_cast<uint64_t>(code)));
         }
     }
 };
@@ -672,7 +679,7 @@ TEST_F(CfgOptionTest, encapsulate) {
 }
 
 // This test verifies that an option can be deleted from the configuration.
-TEST_F(CfgOptionTest, delFromOptionSpace) {
+TEST_F(CfgOptionTest, deleteOptions) {
     CfgOption cfg;
 
     generateEncapsulatedOptions(cfg);
@@ -740,6 +747,52 @@ TEST_F(CfgOptionTest, delFromOptionSpace) {
             ASSERT_TRUE(sub_option->getOption(5));
         }
     }
+}
+
+// This test verifies that an option can be deleted from the configuration
+// by database id.
+TEST_F(CfgOptionTest, deleteOptionsById) {
+    CfgOption cfg;
+
+    generateEncapsulatedOptions(cfg);
+
+    // Append options from "foo" and "bar" space as sub-options and options
+    // from "foo-subs" and "bar-subs" as sub-options of "foo" and "bar"
+    // options.
+    ASSERT_NO_THROW(cfg.encapsulate());
+
+    // Create multiple vendor options for vendor id 123.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
+        ASSERT_NO_THROW(cfg.add(option, false, "vendor-123", static_cast<uint64_t>(code)));
+    }
+
+    // Delete options with id of 100. It includes both regular options and
+    // the vendor options. There are two options with id of 100.
+    EXPECT_EQ(2, cfg.del(100));
+
+    // Make sure that the option 100 was deleted but another option
+    // in the same option space was not.
+    EXPECT_FALSE(cfg.get("bar", 100).option_);
+    EXPECT_TRUE(cfg.get("bar", 101).option_);
+
+    // Make sure that the deleted option was dereferenced from the
+    // top level options but that does not affect encapsulation of
+    // other options.
+    for (uint16_t option_code = 1020; option_code < 1040; ++option_code) {
+        auto top_level_option = cfg.get(DHCP6_OPTION_SPACE, option_code);
+        ASSERT_TRUE(top_level_option.option_);
+        EXPECT_FALSE(top_level_option.option_->getOption(100));
+
+        // The second level encapsulation should have been preserved.
+        auto second_level_option = top_level_option.option_->getOption(101);
+        ASSERT_TRUE(second_level_option);
+        EXPECT_TRUE(second_level_option->getOption(501));
+    }
+
+    // Vendor option with id of 100 should have been deleted too.
+    EXPECT_FALSE(cfg.get(123, 100).option_);
+    EXPECT_TRUE(cfg.get(123, 101).option_);
 }
 
 // This test verifies that a vendor option can be deleted from the configuration.
