@@ -153,8 +153,7 @@ TEST(CfgSharedNetworks6Test, deleteNetworksById) {
     EXPECT_FALSE(returned_network);
     EXPECT_FALSE(cfg.getByName("fly"));
 
-    // A second attempt to delete should result in an error.
-    EXPECT_THROW(cfg.del(network1->getId()), BadValue);
+    EXPECT_EQ(0, cfg.del(network1->getId()));
 }
 
 // This test verifies that shared networks must have unique names.
