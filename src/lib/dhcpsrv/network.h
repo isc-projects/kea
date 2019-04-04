@@ -616,7 +616,7 @@ protected:
                            const Inheritance& inheritance,
                            const std::string& global_name = "") const {
 
-        // If no inheritance is not to be used, return the value for this
+        // If no inheritance is to be used, return the value for this
         // network regardless if it is specified or not.
         if (inheritance == Inheritance::NONE) {
             return (property);
