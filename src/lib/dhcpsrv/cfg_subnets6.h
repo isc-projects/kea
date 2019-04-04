@@ -48,6 +48,13 @@ public:
     /// @throw isc::BadValue if such subnet doesn't exist.
     void del(const ConstSubnet6Ptr& subnet);
 
+    /// @brief Removes subnet from the configuration.
+    ///
+    /// @param subnet_id Identifier of the subnet to be removed.
+    ///
+    /// @throw isc::BadValue if such subnet doesn't exist.
+    void del(const SubnetID& subnet_id);
+
     /// @brief Returns pointer to the collection of all IPv6 subnets.
     ///
     /// This is used in a hook (subnet6_select), where the hook is able
