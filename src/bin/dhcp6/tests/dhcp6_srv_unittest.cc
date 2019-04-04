@@ -2452,6 +2452,148 @@ TEST_F(Dhcpv6SrvTest, truncatedVIVSO) {
     ASSERT_TRUE(adv);
 }
 
+// Check that T1 and T2 values are set correctly.
+TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
+    NakedDhcpv6Srv srv(0);
+
+    // Struct for describing an individual timer test scenario
+    struct TimerTest {
+        // logged test description
+        std::string description_;
+        // configured value for subnet's T1
+        Triplet<uint32_t> cfg_t1_;
+        // configured value for subnet's T1
+        Triplet<uint32_t> cfg_t2_;
+        // whether or not calculation is enabled
+        bool calculate_tee_times;
+        // configured value for sunbet's t1_percent.
+        double t1_percent_;
+        // configured value for sunbet's t2_percent.
+        double t2_percent_;
+        // expected value for T1 in server response.
+        // A value of 0 means server should not have sent T1.
+        uint32_t t1_exp_value_;
+        // expected value for T2 in server response.
+        // A value of 0 means server should not have sent T2.
+        uint32_t t2_exp_value_;
+    };
+
+    // Handy constants
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(1000);
+    bool calculate_enabled = true;
+
+    // Test scenarios
+    std::vector<TimerTest> tests = {
+    // Tests with calculation disabled
+    {
+        "T1 and T2 calculated",
+        unspecified, unspecified,
+        calculate_enabled,
+        0.4, 0.8,
+        400, 800
+    },
+    {
+        "T1 and T2 specified insane",
+        valid_lft + 1,  valid_lft + 2,
+        calculate_enabled,
+        0.4, 0.8,
+        0, 0
+    },
+    {
+        "T1 should be calculated, T2 specified",
+        unspecified, valid_lft - 1,
+        calculate_enabled,
+        0.4, 0.8,
+        400, valid_lft - 1
+    },
+    {
+        "T1 specified, T2 should be calculated",
+        299, unspecified,
+        calculate_enabled,
+        0.4, 0.8,
+        299, 800
+    },
+    {
+        "T1 specified insane (> T2), T2 should be calculated",
+        valid_lft - 1, unspecified,
+        calculate_enabled,
+        0.4, 0.8,
+        0, 800
+    },
+    // Tests with calculation disabled
+    {
+        "T1 and T2 unspecified, (no calculation)",
+        unspecified, unspecified,
+        !calculate_enabled,
+        0.4, 0.8,
+        0, 0
+    },
+    {
+        "T1 specified, T2 unspecified (no calculation)",
+        valid_lft - 1, unspecified,
+        !calculate_enabled,
+        0.4, 0.8,
+        valid_lft - 1, 0
+    },
+    {
+        "both T1 and T2 specified (no calculation)",
+        valid_lft - 2, valid_lft - 1,
+        !calculate_enabled,
+        0.4, 0.8,
+        valid_lft - 2, valid_lft - 1
+    },
+    {
+        "T1 specified insane (>= lease T2), T2 specified (no calculation)",
+        valid_lft - 1, valid_lft - 1,
+        !calculate_enabled,
+        0.4, 0.8,
+        0, valid_lft - 1
+    },
+    {
+        "T1 specified insane (>= lease time), T2 not specified (no calculation)",
+        valid_lft, unspecified,
+        !calculate_enabled,
+        0.4, 0.8,
+        0, 0
+    }
+    };
+
+    // Calculation is enabled for all the scenarios.
+    subnet_->setValid(valid_lft);
+
+    // Create a discover packet to use
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+    sol->setIface("eth0");
+
+    // Iterate over the test scenarios.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE((*test).description_);
+            // Configure sunbet for the scenario
+            subnet_->setT1((*test).cfg_t1_);
+            subnet_->setT2((*test).cfg_t2_);
+            subnet_->setCalculateTeeTimes((*test).calculate_tee_times);
+            subnet_->setT1Percent((*test).t1_percent_);
+            subnet_->setT2Percent((*test).t2_percent_);
+            AllocEngine::ClientContext6 ctx;
+            bool drop = false;
+            srv.initContext(sol, ctx, drop);
+            ASSERT_FALSE(drop);
+            Pkt6Ptr reply = srv.processSolicit(ctx);
+
+            // check if we get response at all
+            checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+            // check that IA_NA was returned and T1 and T2 are correct.
+            checkIA_NA(reply, 234, (*test).t1_exp_value_, (*test).t2_exp_value_);
+        }
+    }
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.

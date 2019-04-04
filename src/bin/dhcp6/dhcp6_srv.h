@@ -679,6 +679,37 @@ protected:
     void extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
                       AllocEngine::ClientContext6& ctx);
 
+    /// @brief Sets the T1 and T2 timers in the outbound IA
+    ///
+    /// This method determines the values for both the T1 and T2
+    /// timers for the given IA. It is influenced by the
+    /// lease's subnet's values for renew-timer, rebind-timer,
+    /// calculate-tee-times, t1-percent, and t2-percent as follows:
+    ///
+    /// T2:
+    ///
+    /// The candidate value for T2 defaults to zero. If the rebind-timer value
+    /// is specified then use it.  If not and calculate-tee-times is true, then
+    /// use the value given by: valid lease time * t2-percent.
+    ///
+    /// If the T2 candidate is less than the valid lease time use it,
+    /// otherwise set T2 to zero.
+    ///
+    /// T1:
+    ///
+    /// The candidate value for T1 defaults to zero. If the renew-timer value
+    /// is specified then use it. If not and calculate-tee-times is true, then
+    /// use the value given by: valid lease time * t1-percent.
+    ///
+    /// The T1 candidate will be used provided it less than the T2 when T2 is
+    /// is greater than zero. When T2 is zero then the T1 candidate must be
+    /// less than the valid lease time, otherwise T1 will be set to zero.
+    ///
+    /// @param lease lease being assigned to the client
+    /// @param subnet the subnet to which the lease belongs
+    /// @param resp outbound IA option in which the timers are set.
+    void setTeeTimes(uint32_t valid_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp);
+
     /// @brief Attempts to release received addresses
     ///
     /// It iterates through received IA_NA options and attempts to release
