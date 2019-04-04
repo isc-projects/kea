@@ -13,7 +13,6 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/shared_network.h>
 #include <boost/shared_ptr.hpp>
-#include <iterator>
 #include <string>
 
 namespace isc {
@@ -81,18 +80,9 @@ public:
     /// @param id Identifier of the shared networks to be deleted.
     ///
     /// @return Number of deleted shared networks.
-    /// @throw isc::BadValue if the networks do not exist.
     uint64_t del(const uint64_t id) {
         auto& index = networks_.template get<SharedNetworkIdIndexTag>();
         auto sn_range = index.equal_range(id);
-        uint64_t num = std::distance(sn_range.first, sn_range.second);
-
-        // No such shared networm found. Return an error.
-        if (num == 0) {
-            isc_throw(BadValue, "unable to delete non-existing networks "
-                      "with id of '" << id << "' from shared networks "
-                      "configuration");
-        }
 
         // For each shared network found, dereference the subnets belonging
         // to it.
@@ -101,9 +91,7 @@ public:
         }
 
         // Remove the shared networks.
-        index.erase(sn_range.first, sn_range.second);
-
-        return (num);
+        return (static_cast<uint64_t>(index.erase(id)));
     }
 
     /// @brief Retrieves shared network by name.
