@@ -1,3 +1,8 @@
+1548.	[func]		razvan
+	Added consistency and serial-consistency parameters to CQL
+	connection. Fixed all statements.
+	(Gitlab #16,!287, git 56a9b6a860899274f9cafe2366a6731a46490e92)
+
 1550.	[func]		marcin
 	Implemented inheritance of the DHCPv4 global and shared network
 	specific configuration parameters when using configuration
