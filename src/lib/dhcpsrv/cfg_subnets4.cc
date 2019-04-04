@@ -43,12 +43,20 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
 
 void
 CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
+    del(subnet->getID());
+}
+
+void
+CfgSubnets4::del(const SubnetID& subnet_id) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
-    auto subnet_it = index.find(subnet->getID());
+    auto subnet_it = index.find(subnet_id);
     if (subnet_it == index.end()) {
-        isc_throw(BadValue, "no subnet with ID of '" << subnet->getID()
+        isc_throw(BadValue, "no subnet with ID of '" << subnet_id
                   << "' found");
     }
+
+    Subnet4Ptr subnet = *subnet_it;
+
     index.erase(subnet_it);
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DEL_SUBNET4)

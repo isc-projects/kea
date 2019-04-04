@@ -106,6 +106,11 @@ TEST(CfgSubnets6Test, deleteSubnet) {
     ASSERT_NO_THROW(cfg.del(subnet2));
     ASSERT_EQ(2, cfg.getAll()->size());
     EXPECT_FALSE(cfg.getByPrefix("2001:db8:2::/48"));
+
+    // Remove another subnet by ID.
+    ASSERT_NO_THROW(cfg.del(subnet1->getID()));
+    ASSERT_EQ(1, cfg.getAll()->size());
+    EXPECT_FALSE(cfg.getByPrefix("2001:db8:1::/48"));
 }
 
 // This test checks that the subnet can be selected using a relay agent's

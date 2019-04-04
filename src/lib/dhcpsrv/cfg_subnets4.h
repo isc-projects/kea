@@ -48,6 +48,13 @@ public:
     /// @throw isc::BadValue if such subnet doesn't exist.
     void del(const ConstSubnet4Ptr& subnet);
 
+    /// @brief Removes subnet from the configuration.
+    ///
+    /// @param subnet_id Identifier of the subnet to be removed.
+    ///
+    /// @throw isc::BadValue if such subnet doesn't exist.
+    void del(const SubnetID& subnet_id);
+
     /// @brief Merges specified subnet configuration into this configuration.
     ///
     /// This method merges subnets from the @c other configuration into this
