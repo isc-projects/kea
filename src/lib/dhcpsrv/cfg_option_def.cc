@@ -152,6 +152,11 @@ CfgOptionDef::get(const std::string& option_space,
     return (OptionDefinitionPtr());
 }
 
+uint64_t
+CfgOptionDef::del(const uint64_t id) {
+    return (option_definitions_.deleteItems(id));
+}
+
 ElementPtr
 CfgOptionDef::toElement() const {
     // option-defs value is a list of maps
