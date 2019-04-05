@@ -11,10 +11,13 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <testutils/test_to_element.h>
+#include <util/doubles.h>
+
 #include <gtest/gtest.h>
 #include <string>
 
@@ -537,6 +540,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     OptionPtr ifaceid = generateInterfaceId("relay.eth0");
     subnet1->setInterfaceId(ifaceid);
     subnet1->allowClientClass("foo");
+
+    subnet1->setT1Percent(0.45);
+    subnet1->setT2Percent(0.70);
+
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
@@ -544,6 +551,9 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet3->requireClientClass("bar");
     subnet3->setHostReservationMode(Network::HR_ALL);
     subnet3->setRapidCommit(false);
+    subnet3->setCalculateTeeTimes(true);
+    subnet3->setT1Percent(0.50);
+    subnet3->setT2Percent(0.65);
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -560,6 +570,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
+        "    \"t1-percent\": 0.45,"
+        "    \"t2-percent\": 0.7,"
         "    \"interface-id\": \"relay.eth0\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
@@ -597,7 +609,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"calculate-tee-times\": true,\n"
+        "    \"t1-percent\": 0.50,\n"
+        "    \"t2-percent\": 0.65\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
 }
@@ -896,6 +911,109 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("RULE!", opstr->getValue());
+}
+
+// This test verifies the Subnet6 parser's validation logic for
+// t1-percent and t2-percent parameters.
+TEST(CfgSubnets6Test, teeTimePercentValidation) {
+
+    // Describes a single test scenario.
+    struct Scenario {
+        std::string label;         // label used for logging test failures
+        bool calculate_tee_times;  // value of calculate-tee-times parameter
+        double t1_percent;         // value of t1-percent parameter
+        double t2_percent;         // value of t2-percent parameter
+        std::string error_message; // expected error message is parsing should fail
+    };
+
+    // Test Scenarios.
+    std::vector<Scenario> tests = {
+        {"off and valid", false, .5, .95, ""},
+        {"on and valid", true, .5, .95, ""},
+        {"t2_negative", true, .5, -.95,
+         "subnet configuration failed: t2-percent:"
+         "  -0.95 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"t2_too_big", true, .5, 1.95,
+         "subnet configuration failed: t2-percent:"
+         "  1.95 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_negative", true, -.5, .95,
+         "subnet configuration failed: t1-percent:"
+         "  -0.5 is invalid it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_too_big", true, 1.5, .95,
+         "subnet configuration failed: t1-percent:"
+         "  1.5 is invalid it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_bigger_than_t2", true, .85, .45,
+         "subnet configuration failed: t1-percent:"
+         "  0.85 is invalid, it must be less than t2-percent: 0.45"
+        }
+    };
+
+    // First we create a set of elements that provides all
+    // required for a Subnet6.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/64\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\", \n"
+        "            \"4o6-interface\": \"\", \n"
+        "            \"4o6-interface-id\": \"\", \n"
+        "            \"4o6-subnet\": \"\", \n"
+        "            \"dhcp4o6-port\": 0, \n"
+        "            \"decline-probation-period\": 86400 \n"
+        "        }";
+
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE("test: " + (*test).label);
+
+            // Set this scenario's configuration parameters
+            elems->set("calculate-tee-times", data::Element::create((*test).calculate_tee_times));
+            elems->set("t1-percent", data::Element::create((*test).t1_percent));
+            elems->set("t2-percent", data::Element::create((*test).t2_percent));
+
+            Subnet6Ptr subnet;
+            try {
+                // Attempt to parse the configuration.
+                Subnet6ConfigParser parser;
+                subnet = parser.parse(elems);
+            } catch (const std::exception& ex) {
+                if (!(*test).error_message.empty()) {
+                    // We expected a failure, did we fail the correct way?
+                    EXPECT_EQ((*test).error_message, ex.what());
+                } else {
+                    // Should not have failed.
+                    ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
+                }
+
+                // Either way we're done with this scenario.
+                continue;
+            }
+
+            // We parsed correctly, make sure the values are right.
+            EXPECT_EQ((*test).calculate_tee_times, subnet->getCalculateTeeTimes());
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).t1_percent, subnet->getT1Percent()))
+                << "expected:" << (*test).t1_percent << " actual: " << subnet->getT1Percent();
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()))
+                << "expected:" << (*test).t2_percent << " actual: " << subnet->getT2Percent();
+        }
+    }
 }
 
 } // end of anonymous namespace

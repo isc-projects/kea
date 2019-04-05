@@ -89,6 +89,9 @@ using namespace std;
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
+  CALCULATE_TEE_TIMES "calculate-tee-times"
+  T1_PERCENT "t1-percent"
+  T2_PERCENT "t2-percent"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
   SUBNET6 "subnet6"
@@ -472,6 +475,9 @@ global_param: data_directory
             | config_control
             | server_tag
             | reservation_mode
+            | calculate_tee_times
+            | t1_percent 
+            | t2_percent 
             | unknown_map_entry
             ;
 
@@ -501,6 +507,21 @@ renew_timer: RENEW_TIMER COLON INTEGER {
 rebind_timer: REBIND_TIMER COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rebind-timer", prf);
+};
+
+calculate_tee_times: CALCULATE_TEE_TIMES COLON BOOLEAN {
+    ElementPtr ctt(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("calculate-tee-times", ctt);
+};
+
+t1_percent: T1_PERCENT COLON FLOAT {
+    ElementPtr t1(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("t1-percent", t1);
+};
+
+t2_percent: T2_PERCENT COLON FLOAT {
+    ElementPtr t2(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("t2-percent", t2);
 };
 
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {

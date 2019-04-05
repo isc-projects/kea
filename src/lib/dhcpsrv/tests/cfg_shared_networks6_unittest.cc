@@ -196,6 +196,9 @@ TEST(CfgSharedNetworks6Test, unparse) {
     network1->setIface("eth0");
     network1->addRelayAddress(IOAddress("2001:db8:1::1"));
     network1->addRelayAddress(IOAddress("2001:db8:1::2"));
+    network1->setCalculateTeeTimes(true);
+    network1->setT1Percent(.35);
+    network1->setT2Percent(.655);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -219,11 +222,14 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"valid-lifetime\": 300\n"
         "  },\n"
         "  {\n"
+        "    \"calculate-tee-times\": true,\n"
         "    \"interface\": \"eth0\",\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
         "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\", \"2001:db8:1::2\" ] },\n"
-        "    \"subnet6\": [ ]\n"
+        "    \"subnet6\": [ ],\n"
+        "    \"t1-percent\": .35,\n"
+        "    \"t2-percent\": .655\n"
         "  }\n"
         "]\n";
 
