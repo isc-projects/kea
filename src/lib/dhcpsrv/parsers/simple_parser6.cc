@@ -66,7 +66,10 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "reservations",                 Element::list },
     { "config-control",               Element::map },
     { "server-tag",                   Element::string },
-    { "reservation-mode",             Element::string }
+    { "reservation-mode",             Element::string },
+    { "calculate-tee-times",          Element::boolean },
+    { "t1-percent",                   Element::real },
+    { "t2-percent",                   Element::real }
 };
 
 /// @brief This table defines default values for option definitions in DHCPv6.
@@ -97,14 +100,15 @@ const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
 /// in Dhcp6) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
-    { "renew-timer",              Element::integer, "900" },
-    { "rebind-timer",             Element::integer, "1800" },
     { "preferred-lifetime",       Element::integer, "3600" },
     { "valid-lifetime",           Element::integer, "7200" },
     { "decline-probation-period", Element::integer, "86400" }, // 24h
     { "dhcp4o6-port",             Element::integer, "0" },
     { "server-tag",               Element::string,  "" },
-    { "reservation-mode",         Element::string,  "all" }
+    { "reservation-mode",         Element::string,  "all" },
+    { "calculate-tee-times",      Element::boolean, "false" },
+    { "t1-percent",               Element::real,    ".50" },
+    { "t2-percent",               Element::real,    ".80" }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -154,7 +158,10 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "relay",
     "renew-timer",
     "reservation-mode",
-    "valid-lifetime"
+    "valid-lifetime",
+    "calculate-tee-times",
+    "t1-percent",
+    "t2-percent"
 };
 
 /// @brief This table defines default values for dhcp-queue-control in DHCPv4.

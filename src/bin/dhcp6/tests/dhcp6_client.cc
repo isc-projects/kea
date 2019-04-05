@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -870,6 +870,21 @@ Dhcp6Client::getStatusCode(const uint32_t iaid) const {
     return (0xFFFF);
 }
 
+bool
+Dhcp6Client::getTeeTimes(const uint32_t iaid, uint32_t& t1, uint32_t& t2) const {
+
+    auto leases = getLeasesByIAID(iaid);
+    if (leases.empty()) { 
+        // No aquired leases so punt.
+        return (false);
+    }
+
+    // All leases for a given iaid should have the same values for T1 
+    // and T2, so using them from the first one should be fine.
+    t1 = leases[0].t1_;
+    t2 = leases[0].t2_;
+    return (true);
+}
 
 void
 Dhcp6Client::setDUID(const std::string& str) {

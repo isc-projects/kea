@@ -904,6 +904,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // Copy options to the subnet configuration.
     options_->copyTo(*subnet4->getCfgOption());
 
+    // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
 }
 
@@ -1274,6 +1275,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Copy options to the subnet configuration.
     options_->copyTo(*subnet6->getCfgOption());
+
+    // Parse t1-percent and t2-percent
+    parseTeePercents(params, network);
 }
 
 //**************************** Subnet6ListConfigParser ********************

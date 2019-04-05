@@ -1171,6 +1171,39 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"calculate-tee-times\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_CALCULATE_TEE_TIMES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("calculate-tee-times", driver.loc_);
+    }
+}
+
+\"t1-percent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_T1_PERCENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("t1-percent", driver.loc_);
+    }
+}
+
+\"t2-percent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_T2_PERCENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("t2-percent", driver.loc_);
+    }
+}
+
 \"Logging\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:

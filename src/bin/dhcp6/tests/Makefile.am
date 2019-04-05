@@ -107,6 +107,7 @@ dhcp6_unittests_SOURCES += renew_unittest.cc
 dhcp6_unittests_SOURCES += sarr_unittest.cc
 dhcp6_unittests_SOURCES += simple_parser6_unittest.cc
 dhcp6_unittests_SOURCES += shared_network_unittest.cc
+dhcp6_unittests_SOURCES += tee_times_unittest.cc
 dhcp6_unittests_SOURCES += vendor_opts_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
