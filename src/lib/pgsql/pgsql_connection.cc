@@ -177,6 +177,7 @@ PgSqlConnection::prepareStatements(const PgSqlTaggedStatement* start_statement,
          tagged_statement != end_statement; ++tagged_statement) {
         prepareStatement(*tagged_statement);
     }
+    prepared_ = true;
 }
 
 void
