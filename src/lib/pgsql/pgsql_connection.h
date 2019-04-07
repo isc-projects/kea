@@ -7,6 +7,7 @@
 #define PGSQL_CONNECTION_H
 
 #include <database/database_connection.h>
+#include <dhcpsrv/thread_resource_mgr.h>
 
 #include <libpq-fe.h>
 #include <boost/scoped_ptr.hpp>
@@ -160,11 +161,13 @@ public:
     }
 
 private:
-    PGresult*     result_;     ///< Result set to be freed
-    int rows_;   ///< Number of rows in the result set
-    int cols_;   ///< Number of columns in the result set
+    PGresult* result_;     ///< Result set to be freed
+    int rows_;             ///< Number of rows in the result set
+    int cols_;             ///< Number of columns in the result set
 };
 
+/// @brief Forward declaration to @ref PgSqlConnection.
+class PgSqlConnection;
 
 /// @brief Postgresql connection handle Holder
 ///
@@ -179,22 +182,17 @@ private:
 /// For this reason, the class is declared noncopyable.
 class PgSqlHolder : public boost::noncopyable {
 public:
-
     /// @brief Constructor
     ///
     /// Sets the Postgresql API connector handle to NULL.
     ///
-    PgSqlHolder() : pgconn_(NULL) {
+    PgSqlHolder() : connected_(false), prepared_(false), pgconn_(NULL) {
     }
 
     /// @brief Destructor
     ///
     /// Frees up resources allocated by the connection.
-    ~PgSqlHolder() {
-        if (pgconn_ != NULL) {
-            PQfinish(pgconn_);
-        }
-    }
+    ~PgSqlHolder();
 
     /// @brief Sets the connection to the value given
     ///
@@ -209,6 +207,10 @@ public:
         pgconn_ = connection;
     }
 
+    void openDatabase(PgSqlConnection& connection);
+
+    void prepareStatements(PgSqlConnection& connection);
+
     /// @brief Conversion Operator
     ///
     /// Allows the PgSqlHolder object to be passed as the context argument to
@@ -217,19 +219,13 @@ public:
         return (pgconn_);
     }
 
-    /// @brief Boolean Operator
-    ///
-    /// Allows testing the connection for emptiness: "if (holder)"
-    operator bool() const {
-        return (pgconn_);
-    }
+    bool connected_;     ///< Flag to indicate openDatabase has been called
 
 private:
-    PGconn* pgconn_;      ///< Postgresql connection
-};
+    bool prepared_;      ///< Flag to indicate prepareStatements has been called
 
-/// @brief Forward declaration to @ref PgSqlConnection.
-class PgSqlConnection;
+    PGconn* pgconn_;     ///< Postgresql connection
+};
 
 /// @brief RAII object representing a PostgreSQL transaction.
 ///
@@ -305,7 +301,7 @@ public:
     ///
     /// Initialize PgSqlConnection object with parameters needed for connection.
     PgSqlConnection(const ParameterMap& parameters)
-        : DatabaseConnection(parameters) {
+        : DatabaseConnection(parameters), connected_(false), prepared_(false) {
     }
 
     /// @brief Destructor
@@ -400,27 +396,33 @@ public:
     void checkStatementError(const PgSqlResult& r,
                              PgSqlTaggedStatement& statement) const;
 
+    /// @brief Raw statements
+    ///
+    /// This field is public, because it is used heavily from PgSqlConnection
+    /// and will be from MySqlHostDataSource.
+    std::vector<const PgSqlTaggedStatement*> statements_;
+
     /// @brief PgSql connection handle
     ///
     /// This field is public, because it is used heavily from PgSqlLeaseMgr
     /// and from PgSqlHostDataSource.
-    PgSqlHolder conn_;
-
-    /// @brief Conversion Operator
-    ///
-    /// Allows the PgConnection object to be passed as the context argument to
-    /// PQxxxx functions.
-    operator PGconn*() const {
-        return (conn_);
+    PgSqlHolder& handle() const {
+        auto result = handles_.resource();
+        if (connected_) {
+            result->openDatabase(*(const_cast<PgSqlConnection*>(this)));
+        }
+        if (prepared_) {
+            result->prepareStatements(*(const_cast<PgSqlConnection*>(this)));
+        }
+        return *result;
     }
 
-    /// @brief Boolean Operator
-    ///
-    /// Allows testing the PgConnection for initialized connection
-    operator bool() const {
-        return (conn_);
-    }
+private:
+    bool connected_;     ///< Flag to indicate openDatabase has been called
 
+    bool prepared_;      ///< Flag to indicate prepareStatements has been called
+
+    mutable isc::dhcp::ThreadResourceMgr<PgSqlHolder> handles_;
 };
 
 }; // end of isc::db namespace

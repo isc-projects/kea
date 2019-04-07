@@ -120,12 +120,12 @@ public:
         MySqlConnection conn(params);
         conn.openDatabase();
 
-        int status = mysql_query(conn.mysql_, query.c_str());
+        int status = mysql_query(conn.handle(), query.c_str());
         if (status !=0) {
-            isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
+            isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.handle()));
         }
 
-        MYSQL_RES * res = mysql_store_result(conn.mysql_);
+        MYSQL_RES * res = mysql_store_result(conn.handle());
         int numrows = static_cast<int>(mysql_num_rows(res));
         mysql_free_result(res);
 
@@ -641,9 +641,9 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
 
-    int status = mysql_query(conn.mysql_,
+    int status = mysql_query(conn.handle(),
                              "DROP TABLE IF EXISTS ipv6_reservations");
-    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
+    ASSERT_EQ(0, status) << mysql_error(conn.handle());
 
     // Create a host with a reservation.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);

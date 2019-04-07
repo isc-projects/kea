@@ -192,7 +192,7 @@ public:
             // with the server tag.
 
             // Let's first get the primary key of the global parameter.
-            uint64_t id = mysql_insert_id(conn_.mysql_);
+            uint64_t id = mysql_insert_id(conn_.handle());
 
             // Create bindings for inserting the association into
             // dhcp4_global_parameter_server table.
@@ -887,7 +887,7 @@ public:
         // Run INSERT.
         conn_.insertQuery(INSERT_POOL4, in_bindings);
 
-        uint64_t pool_id = mysql_insert_id(conn_.mysql_);
+        uint64_t pool_id = mysql_insert_id(conn_.handle());
         auto option_spaces = pool->getCfgOption()->getOptionSpaceNames();
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
@@ -1350,7 +1350,7 @@ public:
                           in_bindings);
 
         // Fetch unique identifier of the inserted option.
-        uint64_t id = mysql_insert_id(conn_.mysql_);
+        uint64_t id = mysql_insert_id(conn_.handle());
 
         // Create bindings needed to insert association of that option with
         // a server into the dhcp4_options_server table.
@@ -1731,7 +1731,7 @@ public:
 
             // Fetch unique identifier of the inserted option definition and use it
             // as input to the next query.
-            uint64_t id = mysql_insert_id(conn_.mysql_);
+            uint64_t id = mysql_insert_id(conn_.handle());
 
             MySqlBindingCollection in_server_bindings = {
                 MySqlBinding::createInteger<uint64_t>(id), // option_def_id

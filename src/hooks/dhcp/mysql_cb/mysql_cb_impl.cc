@@ -63,10 +63,10 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
     // Free up the prepared statements, ignoring errors. (What would we do
     // about them? We're destroying this object and are not really concerned
     // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < conn_.statements_.size(); ++i) {
-        if (conn_.statements_[i] != NULL) {
-            (void) mysql_stmt_close(conn_.statements_[i]);
-            conn_.statements_[i] = NULL;
+    for (int i = 0; i < conn_.handle().statements_.size(); ++i) {
+        if (conn_.handle().statements_[i] != NULL) {
+            (void) mysql_stmt_close(conn_.handle().statements_[i]);
+            conn_.handle().statements_[i] = NULL;
         }
     }
 }

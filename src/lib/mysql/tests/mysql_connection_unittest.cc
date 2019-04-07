@@ -119,22 +119,22 @@ public:
     ///
     /// @param sql Query in the textual form.
     void runQuery(const std::string& sql) {
-        MYSQL_STMT *stmt = mysql_stmt_init(conn_.mysql_);
+        MYSQL_STMT *stmt = mysql_stmt_init(conn_.handle());
         if (stmt == NULL) {
             isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                  "statement structure, reason: " << mysql_error(conn_.mysql_));
+                  "statement structure, reason: " << mysql_error(conn_.handle()));
         }
 
         int status = mysql_stmt_prepare(stmt, sql.c_str(), sql.length());
         if (status != 0) {
             isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                      << sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                      << sql << ">, reason: " << mysql_errno(conn_.handle()));
         }
 
         // Execute the prepared statement.
         if (mysql_stmt_execute(stmt) != 0) {
             isc_throw(DbOperationError, "cannot execute MySQL query <"
-                  << sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << sql << ">, reason: " << mysql_errno(conn_.handle()));
         }
 
         // Discard the statement and its resources

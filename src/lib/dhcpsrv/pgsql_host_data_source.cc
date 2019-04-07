@@ -297,7 +297,7 @@ public:
         // most recently added host is different than the host id of the
         // currently processed host.
         if (hosts.empty() || row_host_id != hosts.back()->getHostId()) {
-            HostPtr host = retrieveHost(r, row, row_host_id);
+            HostPtr host(retrieveHost(r, row, row_host_id));
             hosts.push_back(host);
         }
     }
@@ -1263,7 +1263,7 @@ private:
     OptionPtr option_;
 };
 
-} // end of anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -1624,9 +1624,8 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::INSERT_HOST
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
     {13,
-     { OID_BYTEA, OID_INT2,
-       OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
-       OID_VARCHAR, OID_VARCHAR, OID_TEXT },
+     { OID_BYTEA, OID_INT2, OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR,
+       OID_TEXT, OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR},
      "insert_host",
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
      "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
@@ -1800,7 +1799,7 @@ TaggedStatementArray tagged_statements = { {
 }
 };
 
-}; // end anonymous namespace
+}  // namespace
 
 PgSqlHostDataSourceImpl::
 PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
@@ -1818,7 +1817,7 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
                       << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
+                      << " found version: " << db_version.first << "."
                       << db_version.second);
     }
 
@@ -1849,7 +1848,7 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
                                       PsqlBindArrayPtr& bind_array,
                                       const bool return_last_id) {
     uint64_t last_id = 0;
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(conn_.handle(), tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -1878,7 +1877,7 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 bool
 PgSqlHostDataSourceImpl::delStatement(StatementIndex stindex,
                                       PsqlBindArrayPtr& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(conn_.handle(), tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -1961,7 +1960,7 @@ getHostCollection(StatementIndex stindex, PsqlBindArrayPtr bind_array,
                   ConstHostCollection& result, bool single) const {
 
     exchange->clear();
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(conn_.handle(), tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -2018,10 +2017,10 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_, version_sql));
+    PgSqlResult r(PQexec(conn_.handle(), version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ">, reason: " << PQerrorMessage(conn_));
+                  << version_sql << ">, reason: " << PQerrorMessage(conn_.handle()));
     }
 
     uint32_t version;
@@ -2425,7 +2424,8 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
 
 // Miscellaneous database methods.
 
-std::string PgSqlHostDataSource::getName() const {
+std::string
+PgSqlHostDataSource::getName() const {
     std::string name = "";
     try {
         name = impl_->conn_.getParameter("name");
@@ -2435,7 +2435,8 @@ std::string PgSqlHostDataSource::getName() const {
     return (name);
 }
 
-std::string PgSqlHostDataSource::getDescription() const {
+std::string
+PgSqlHostDataSource::getDescription() const {
     return (std::string("Host data source that stores host information"
                         "in PostgreSQL database"));
 }
@@ -2458,5 +2459,5 @@ PgSqlHostDataSource::rollback() {
     impl_->conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
