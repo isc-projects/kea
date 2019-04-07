@@ -45,7 +45,7 @@
 
       // This parameter enables/disables Nagle's algorithm on connections.
       // The default is true.
-      "tcp-nodelay": true,
+      "tcp-nodelay": true /*,
 
       // This parameter configures consistency level. The default is "quorum".
       // Supported values:
@@ -78,7 +78,7 @@
       // - local-serial
       // - local-one
       // See https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html for more details.
-      "serial-consistency": "serial"
+      "serial-consistency": "serial" */
   },
 
 // Addresses will be assigned with preferred and valid lifetimes
