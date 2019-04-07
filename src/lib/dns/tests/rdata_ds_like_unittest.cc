@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,7 +129,7 @@ TYPED_TEST(Rdata_DS_LIKE_Test, assignment_DS_LIKE) {
     EXPECT_EQ(0, copy3.compare(this->rdata_ds_like));
 
     // Self assignment
-    copy = copy;
+    copy = *&copy;
     EXPECT_EQ(0, copy.compare(this->rdata_ds_like));
 }
 
