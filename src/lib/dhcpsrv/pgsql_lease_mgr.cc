@@ -1888,7 +1888,7 @@ PgSqlLeaseMgr::getVersion() const {
     PgSqlResult r(PQexec(conn_.handle(), version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ", reason: " << PQerrorMessage(conn_.handle()));
+                  << version_sql << ">, reason: " << PQerrorMessage(conn_.handle()));
     }
 
     uint32_t major;

@@ -2455,18 +2455,6 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
 }
 
 MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them? We're destroying this object and are not really concerned
-    // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < conn_.handle().statements_.size(); ++i) {
-        if (conn_.handle().statements_[i] != NULL) {
-            (void) mysql_stmt_close(conn_.handle().statements_[i]);
-            conn_.handle().statements_[i] = NULL;
-        }
-    }
-
-    // There is no need to close the database in this destructor: it is
-    // closed in the destructor of the mysql_ member variable.
 }
 
 std::pair<uint32_t, uint32_t>
@@ -2487,14 +2475,14 @@ MySqlHostDataSourceImpl::getVersion() const {
     if (status != 0) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2515,14 +2503,14 @@ MySqlHostDataSourceImpl::getVersion() const {
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         isc_throw(DbOperationError, "unable to bind result set for <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Fetch the data.
     if (mysql_stmt_fetch(stmt)) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to bind result set for <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Discard the statement and its resources
@@ -2530,7 +2518,6 @@ MySqlHostDataSourceImpl::getVersion() const {
 
     return (std::make_pair(major, minor));
 }
-
 
 void
 MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,

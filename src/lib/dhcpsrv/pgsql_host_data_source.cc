@@ -2013,9 +2013,11 @@ getHost(const SubnetID& subnet_id,
     return (result);
 }
 
-std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
+pair<uint32_t, uint32_t>
+PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
+
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
     PgSqlResult r(PQexec(conn_.handle(), version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
@@ -2023,13 +2025,13 @@ std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
                   << version_sql << ">, reason: " << PQerrorMessage(conn_.handle()));
     }
 
-    uint32_t version;
-    PgSqlExchange::getColumnValue(r, 0, 0, version);
+    uint32_t major;
+    PgSqlExchange::getColumnValue(r, 0, 0, major);
 
     uint32_t minor;
     PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
-    return (std::make_pair(version, minor));
+    return (make_pair(major, minor));
 }
 
 void

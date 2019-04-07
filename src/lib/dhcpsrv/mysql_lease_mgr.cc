@@ -2719,21 +2719,23 @@ MySqlLeaseMgr::getVersion() const {
     MYSQL_STMT *stmt = mysql_stmt_init(conn_.handle());
     if (stmt == NULL) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                "statement structure, reason: " << mysql_error(conn_.handle()));
+                  "statement structure, reason: " << mysql_error(conn_.handle()));
     }
 
     // Prepare the statement from SQL text.
     const char* version_sql = "SELECT version, minor FROM schema_version";
     int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
     if (status != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
                   << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2754,14 +2756,14 @@ MySqlLeaseMgr::getVersion() const {
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Fetch the data.
     if (mysql_stmt_fetch(stmt)) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
     }
 
     // Discard the statement and its resources
