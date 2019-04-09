@@ -605,6 +605,9 @@ public:
         return (isc::data::ConstElementPtr(configured_globals_));
     }
 
+    /// @brief Removes all configured global parameters.
+    void clearConfiguredGlobals();
+
     /// @brief Saves scalar elements from the global scope of a configuration
     void extractConfiguredGlobals(isc::data::ConstElementPtr config);
 
