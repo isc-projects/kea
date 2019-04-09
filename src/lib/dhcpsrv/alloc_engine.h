@@ -181,6 +181,9 @@ protected:
         static isc::asiolink::IOAddress
         increaseAddress(const isc::asiolink::IOAddress& address,
                         bool prefix, const uint8_t prefix_len);
+
+    private:
+        std::mutex mutex_;
     };
 
     /// @brief Address/prefix allocator that gets an address based on a hash
