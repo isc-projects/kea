@@ -23,7 +23,6 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <util/threads/lock_guard.h>
-#include <util/threads/reverse_lock.h>
 
 #include <signal.h>
 
