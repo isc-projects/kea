@@ -44,7 +44,8 @@ public:
     /// @param line line of the file, where exception occurred
     /// @param what text description of the issue that caused exception
     AllocFailed(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {
+    }
 };
 
 /// @brief DHCPv4 and DHCPv6 allocation engine
