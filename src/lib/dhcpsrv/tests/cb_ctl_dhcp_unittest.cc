@@ -285,6 +285,7 @@ public:
         // Insert subnets into the database.
         Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.3.0"), 26, 1, 2, 3, SubnetID(1)));
         subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
+        subnet->setSharedNetworkName("one");
         mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
                                            subnet);
 
@@ -577,6 +578,14 @@ public:
             if (deleteConfigElement("dhcp4_subnet", 1)) {
                 EXPECT_FALSE(found_subnet);
 
+                // If the subnet has been deleted, make sure that
+                // it was detached from the shared network it belonged
+                // to, if the shared network still exists.
+                auto found_network = srv_cfg->getCfgSharedNetworks4()->getByName("one");
+                if (found_network) {
+                    EXPECT_TRUE(found_network->getAllSubnets()->empty());
+                }
+
             } else {
                 EXPECT_TRUE(found_subnet);
             }
@@ -730,6 +739,7 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplySharedNetworkNotFetched) {
 // This test verifies that only a subnet is merged into the current
 // configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySubnet) {
+    addCreateAuditEntry("dhcp4_shared_network");
     addCreateAuditEntry("dhcp4_subnet");
     testDatabaseConfigApply(getTimestamp(-5));
 }

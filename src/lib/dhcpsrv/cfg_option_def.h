@@ -119,7 +119,9 @@ public:
     /// definitions having the same id (typically id of 0). When
     /// configuration backend is in use it sets the unique ids from the
     /// database. In cases when the configuration backend is not used,
-    /// the ids default to 0.
+    /// the ids default to 0. Passing the id of 0 would result in
+    /// deleting all option definitions that were not added via the
+    /// database.
     ///
     /// @param id Identifier of the option definitions to be deleted.
     ///
