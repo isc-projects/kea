@@ -1038,6 +1038,7 @@ public:
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
                 last_network.reset(new SharedNetwork4(out_bindings[1]->getString()));
+                last_network->setId(last_network_id);
 
                 // client_class
                 if (!out_bindings[2]->amNull()) {

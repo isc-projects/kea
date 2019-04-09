@@ -1002,6 +1002,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
                                                      test_networks_[0]->getName());
     ASSERT_TRUE(returned_network);
 
+    EXPECT_GT(returned_network->getId(), 0);
+
     // The easiest way to verify whether the returned shared network matches the
     // inserted shared network is to convert both to text.
     EXPECT_EQ(shared_network->toElement()->str(),
@@ -1267,6 +1269,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
                               test_option_defs_[0]->getCode(),
                               test_option_defs_[0]->getOptionSpaceName());
     ASSERT_TRUE(returned_option_def);
+    EXPECT_GT(returned_option_def->getId(), 0);
 
     EXPECT_TRUE(returned_option_def->equals(*option_def));
 
@@ -1532,6 +1535,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
         auto option0 = index.find(test_options_[0]->option_->getType());
         ASSERT_FALSE(option0 == index.end());
         testOptionsEquivalent(*test_options_[0], *option0);
+        EXPECT_GT(option0->getId(), 0);
     }
 
     {
@@ -1539,6 +1543,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
         auto option1 = index.find(test_options_[1]->option_->getType());
         ASSERT_FALSE(option1 == index.end());
         testOptionsEquivalent(*test_options_[1], *option1);
+        EXPECT_GT(option1->getId(), 0);
     }
 
     {
@@ -1546,6 +1551,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
         auto option5 = index.find(test_options_[5]->option_->getType());
         ASSERT_FALSE(option5 == index.end());
         testOptionsEquivalent(*test_options_[5], *option5);
+        EXPECT_GT(option5->getId(), 0);
     }
 }
 
@@ -1623,6 +1629,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     {
         SCOPED_TRACE("verify returned option");
         testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
     }
 
     {
@@ -1725,6 +1732,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     {
         SCOPED_TRACE("verify returned pool option");
         testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
     }
 
     {
@@ -1842,6 +1850,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     {
         SCOPED_TRACE("verify returned option");
         testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
     }
 
     {

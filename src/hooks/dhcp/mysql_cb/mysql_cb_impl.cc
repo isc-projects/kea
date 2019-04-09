@@ -334,6 +334,9 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             // space
             last_def->setOptionSpaceName(out_bindings[3]->getStringOrDefault(""));
 
+            // id
+            last_def->setId(last_def_id);
+
             // record_types
             ElementPtr record_types_element = out_bindings[8]->getJSON();
             if (record_types_element) {
@@ -627,6 +630,11 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
     desc->space_name_ = space;
     desc->setModificationTime((*(first_binding + 11))->getTimestamp());
+
+    // Set database id for the option.
+    if (!(*first_binding)->amNull()) {
+        desc->setId((*first_binding)->getInteger<uint64_t>());
+    }
 
     return (desc);
 }
