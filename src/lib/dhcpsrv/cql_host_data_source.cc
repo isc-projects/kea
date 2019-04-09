@@ -1373,7 +1373,7 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
         host_ipv4_boot_file_name_ = host->getBootFileName();
 
         // auth_key: varchar
-        auth_key_ = host->getKey().ToText();
+        auth_key_ = host->getKey().toText();
 
         // hostname: text
         hostname_ = host->getHostname();

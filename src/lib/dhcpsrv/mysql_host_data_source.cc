@@ -73,8 +73,8 @@ const size_t SERVER_HOSTNAME_MAX_LEN = 64;
 /// @brief Maximum length of the boot file name.
 const size_t BOOT_FILE_NAME_MAX_LEN = 128;
 
-/// @brief Maximum length of keys.
-const size_t KEY_LEN = 16;
+/// @brief Maximum length of keys (coded in hexadecimal).
+const size_t KEY_LEN = 16 * 2;
 
 /// @brief Numeric value representing last supported identifier.
 ///
@@ -406,7 +406,7 @@ public:
 
             // auth key
             bind_[13].buffer_type = MYSQL_TYPE_STRING;
-            std::string auth_key = host->getKey().ToText();
+            std::string auth_key = host->getKey().toText();
             std::strncpy(auth_key_, auth_key.c_str(), KEY_LEN);
             auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;

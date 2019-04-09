@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -875,6 +875,17 @@ UPDATE schema_version
    SET version = '5', minor = '0';
 
 -- Schema 5.0 specification ends here.
+
+-- Upgrade to schema 5.1 begins here:
+
+-- Put the auth key in hexadecimal (double size but far more user friendly).
+ALTER TABLE hosts ALTER COLUMN auth_key TYPE VARCHAR(32);
+
+-- Set schema 5.1 version
+UPDATE schema_version
+   SET version = '5', minor = '1';
+
+-- Schema 5.1 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

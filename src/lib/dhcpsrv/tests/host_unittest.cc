@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,8 +13,9 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdlib>
-#include <unordered_map>
+#include <unordered_set>
 #include <sstream>
+#include <boost/functional/hash.hpp>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -199,7 +200,7 @@ TEST_F(HostTest, createFromHWAddrString) {
                                         std::string(), std::string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
-                                        "bootfile.efi", AuthKey("key123"))));
+                                        "bootfile.efi", AuthKey("12345678"))));
     // The HW address should be set to non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
     ASSERT_TRUE(hwaddr);
@@ -215,7 +216,7 @@ TEST_F(HostTest, createFromHWAddrString) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
-    EXPECT_EQ("key123", host->getKey().ToText());
+    EXPECT_EQ("12345678", host->getKey().toText());
     EXPECT_FALSE(host->getContext());
 
     // Use invalid identifier name
@@ -281,7 +282,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
                                         std::string(), std::string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
-                                        "bootfile.efi", AuthKey("keyabc"))));
+                                        "bootfile.efi", AuthKey("0abc1234"))));
 
     // Hardware address should be non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
@@ -298,7 +299,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
-    EXPECT_EQ("keyabc", host->getKey().ToText());
+    EXPECT_EQ("0ABC1234", host->getKey().toText());
     EXPECT_FALSE(host->getContext());
 }
 
@@ -680,7 +681,8 @@ TEST_F(HostTest, setValues) {
     host->setNextServer(IOAddress("192.0.2.2"));
     host->setServerHostname("server-hostname.example.org");
     host->setBootFileName("bootfile.efi");
-    host->setKey(AuthKey("random-value"));
+    const std::vector<uint8_t>& random_value(AuthKey::getRandomKeyString());
+    host->setKey(AuthKey(random_value));
     std::string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
     host->setNegative(true);
@@ -692,7 +694,7 @@ TEST_F(HostTest, setValues) {
     EXPECT_EQ("192.0.2.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
-    EXPECT_EQ("random-value", host->getKey().ToText());
+    EXPECT_EQ(random_value, host->getKey().getAuthKey());
     ASSERT_TRUE(host->getContext());
     EXPECT_EQ(user_context, host->getContext()->str());
     EXPECT_TRUE(host->getNegative());
@@ -1047,7 +1049,7 @@ TEST_F(HostTest, toText) {
 
     // Create global host identified by DUID, with a very basic configuration.
     ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
-                                        SUBNET_ID_GLOBAL, SUBNET_ID_GLOBAL, 
+                                        SUBNET_ID_GLOBAL, SUBNET_ID_GLOBAL,
                                         IOAddress::IPV4_ZERO_ADDRESS(),
                                         "myhost")));
 
@@ -1141,7 +1143,7 @@ TEST_F(HostTest, unparse) {
     // Create host identified by DUID, instead of HWADDR, with a very
     // basic configuration.
     ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
-                                        SUBNET_ID_UNUSED, SUBNET_ID_UNUSED, 
+                                        SUBNET_ID_UNUSED, SUBNET_ID_UNUSED,
                                         IOAddress::IPV4_ZERO_ADDRESS(),
                                         "myhost")));
 
@@ -1240,65 +1242,67 @@ TEST_F(HostTest, keys) {
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
                                         "myhost.example.com")));
-//Key must be empty
-    EXPECT_EQ(0,host->getKey().ToText().length());
+    // Key must be empty
+    EXPECT_EQ(0, host->getKey().getAuthKey().size());
+    EXPECT_EQ("", host->getKey().toText());
 
-    //now set to random value 
-    host->setKey(AuthKey("random_key"));
-    EXPECT_EQ("random_key", host->getKey().ToText());
+    // now set to random value
+    const std::vector<uint8_t>& random_key(AuthKey::getRandomKeyString());
+    host->setKey(AuthKey(random_key));
+    EXPECT_EQ(random_key, host->getKey().getAuthKey());
 }
 
-// Test verifies if getRandomKeyString can generate  1000 keys which are random
+// Test verifies if getRandomKeyString can generate 1000 keys which are random
 TEST_F(HostTest, randomKeys) {
-    //use hashtable and set size to 1000
-    std::unordered_map<std::string, int> key_map;
-    
+    // use hashtable and set size to 1000
+    std::unordered_set<std::vector<uint8_t>,
+                       boost::hash<std::vector<uint8_t>>> keys;
+
     int dup_element = 0;
     const uint16_t max_iter = 1000;
     uint16_t iter_num = 0;
     size_t max_hash_size = 1000;
 
-    key_map.reserve(max_hash_size);
+    keys.reserve(max_hash_size);
 
     for (iter_num = 0; iter_num < max_iter; iter_num++) {
-        std::string key = AuthKey::getRandomKeyString();
-        if (key_map[key]) {
+        std::vector<uint8_t> key = AuthKey::getRandomKeyString();
+        if (keys.count(key)) {
             dup_element++;
             break;
         }
 
-        key_map[key] = 1;
+        keys.insert(key);
     }
 
     EXPECT_EQ(0, dup_element);
 }
 
-//Test performs basic functionality test of the AuthKey class
+// Test performs basic functionality test of the AuthKey class
 TEST(AuthKeyTest, basicTest) {
-    //call the constructor with default argument
+    // Call the constructor with default argument
     // Default constructor should generate random string of 16 bytes
     AuthKey defaultKey;
     ASSERT_EQ(16, defaultKey.getAuthKey().size());
-    
-    AuthKey longKey("someRandomStringGreaterThan16Bytes");
+
+    AuthKey longKey("0123456789abcdef1122334455667788");
     ASSERT_EQ(16, longKey.getAuthKey().size());
 
-    //check the setters for valid and invalid string
-    std::string key16ByteStr = "0123456789abcdef";
+    // Check the setters for valid and invalid string
+    std::string key16ByteStr = "000102030405060708090A0B0C0D0E0F";
+    std::vector<uint8_t> key16ByteBin = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
+    };
     std::string key18ByteStr = "0123456789abcdefgh";
-    
+
     AuthKey defaultTestKey;
 
     defaultTestKey.setAuthKey(key16ByteStr);
     ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
-    ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
-    ASSERT_EQ(key16ByteStr, defaultTestKey.ToText());
-    
-    defaultTestKey.setAuthKey(key18ByteStr);
-    ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
-    ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
-    ASSERT_EQ(key16ByteStr, defaultTestKey.ToText());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.toText());
+    ASSERT_EQ(key16ByteBin, defaultTestKey.getAuthKey());
 
+    ASSERT_THROW(defaultTestKey.setAuthKey(key18ByteStr), BadValue);
 }
 
 } // end of anonymous namespace
