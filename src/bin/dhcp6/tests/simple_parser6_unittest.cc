@@ -9,6 +9,7 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <cc/data.h>
+#include <util/doubles.h>
 
 using namespace isc;
 using namespace isc::data;
@@ -33,7 +34,7 @@ public:
 
         // Now try to get the element being checked
         ConstElementPtr elem = map->get(param_name);
-        ASSERT_TRUE(elem);
+        ASSERT_TRUE(elem) << "param not found: " << param_name;
 
         // Now check if it's indeed integer
         ASSERT_EQ(Element::integer, elem->getType());
@@ -55,7 +56,7 @@ public:
 
         // Now try to get the element being checked
         ConstElementPtr elem = map->get(param_name);
-        ASSERT_TRUE(elem);
+        ASSERT_TRUE(elem) << "param not found: " << param_name;
 
         // Now check if it's indeed integer
         ASSERT_EQ(Element::string, elem->getType());
@@ -77,13 +78,50 @@ public:
 
         // Now try to get the element being checked
         ConstElementPtr elem = map->get(param_name);
-        ASSERT_TRUE(elem);
+        ASSERT_TRUE(elem) << "param not found: " << param_name;
 
         // Now check if it's indeed integer
         ASSERT_EQ(Element::boolean, elem->getType());
 
         // Finally, check if its value meets expectation.
         EXPECT_EQ(exp_value, elem->boolValue());
+    }
+
+    /// @brief Checks if specified map has a double parameter with expected value
+    ///
+    /// @param map map to be checked
+    /// @param param_name name of the parameter to be checked
+    /// @param exp_value expected value of the parameter.
+    void checkDoubleValue(const ConstElementPtr& map, const std::string& param_name,
+                        double exp_value) {
+
+        // First check if the passed element is a map.
+        ASSERT_EQ(Element::map, map->getType());
+
+        // Now try to get the element being checked
+        ConstElementPtr elem = map->get(param_name);
+        ASSERT_TRUE(elem) << "param not found: " << param_name;
+
+        // Now check if it's indeed integer
+        ASSERT_EQ(Element::real, elem->getType());
+
+        // Finally, check if its value meets expectation.
+        EXPECT_TRUE(util::areDoublesEquivalent(exp_value, elem->doubleValue()))
+                    << "exp_value: " << std::fixed << ", actual: "
+                    << std::fixed << elem->doubleValue();
+    }
+
+    /// @brief Checks if specified map does not contain the given parameter
+    ///
+    /// @param map map to be checked
+    /// @param param_name name of the parameter to be checked
+    void checkNoValue(const ConstElementPtr& map, const std::string& param_name) {
+        // First check if the passed element is a map.
+        ASSERT_EQ(Element::map, map->getType());
+
+        // Now try to get the element being checked
+        ConstElementPtr elem = map->get(param_name);
+        ASSERT_FALSE(elem) << "param was found found: " << param_name;
     }
 
 };
@@ -96,13 +134,18 @@ TEST_F(SimpleParser6Test, globalDefaults6) {
 
     EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(empty));
 
-    // We expect at least 4 parameters to be inserted.
-    EXPECT_TRUE(num >= 4);
+    // We expect at least 5 parameters to be inserted.
+    EXPECT_TRUE(num >= 5);
 
     checkIntegerValue(empty, "valid-lifetime", 7200);
     checkIntegerValue(empty, "preferred-lifetime", 3600);
-    checkIntegerValue(empty, "rebind-timer", 1800);
-    checkIntegerValue(empty, "renew-timer", 900);
+    checkBoolValue(empty, "calculate-tee-times", false);
+    checkDoubleValue(empty, "t1-percent", 0.5);
+    checkDoubleValue(empty, "t2-percent", 0.8);
+
+    // Timers should not be specified by default.
+    checkNoValue(empty, "rebind-timer");
+    checkNoValue(empty, "renew-timer");
 }
 
 // This test checks if the parameters can be inherited from the global
