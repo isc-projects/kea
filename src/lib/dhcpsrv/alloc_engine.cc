@@ -25,7 +25,6 @@
 #include <dhcpsrv/callout_handle_store.h>
 #include <stats/stats_mgr.h>
 #include <util/stopwatch.h>
-#include <util/threads/lock_guard.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 
