@@ -1,3 +1,9 @@
+1566.	[func]		tmark
+	kea-dhcp6 can now be configured to calculate values to
+	send to clients for for T1 and T2 times. Prior to this
+	it was only possibly to specify explicit values.
+	(Gitlab #365,!296, git TBD)
+
 1565.	[func]		marcin
 	MySQL Config Backend returns server tags associated with the
 	configuration elements.

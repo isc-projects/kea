@@ -1096,6 +1096,9 @@ subnet6_param: preferred_lifetime
              | relay
              | user_context
              | comment
+             | calculate_tee_times
+             | t1_percent 
+             | t2_percent 
              | unknown_map_entry
              ;
 
@@ -1215,6 +1218,9 @@ shared_network_param: name
                     | valid_lifetime
                     | user_context
                     | comment
+                    | calculate_tee_times
+                    | t1_percent 
+                    | t2_percent 
                     | unknown_map_entry
                     ;
 

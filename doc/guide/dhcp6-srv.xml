@@ -2044,6 +2044,72 @@ should include options from the new option space:
 
     </section>
 
+    <section xml:id="dhcp6-t1-t2-times">
+      <title>Controlling the Values Sent for T1 and T2 Times</title>
+      According to <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>,
+      servers should send values for T1 and T2 that are 50% and 80%
+      of the lease life time, repsectively.  By default, kea-dhcp6 will
+      send zero for both values.  It can be configured to send values that
+      are specified explicitly or that are calculated as percentages of
+      the valid lease time.  The server's behavior is governed by combination of
+      configuration parameters, two of which have already been mentioned.
+      <para>
+      To send specific, fixed values use the following two parameters:
+      <itemizedlist>
+        <listitem>
+          <simpara><command>renew-timer</command> - specifies the value of T1 in
+          seconds.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara><command>rebind-timer</command> - specifies the value of T2 in
+          seconds.
+          </simpara>
+        </listitem>
+      </itemizedlist>
+      The server will only send T2 if it is less than valid lease time.  T1 will
+      only be sent if a: T2 is being sent and T1 is less than T2 or b: T2 is not being
+      sent and T1 is less than the valid lease time.
+      </para>
+      <para>
+      Calculating the values is controlled by the following three parameters.
+      <itemizedlist>
+        <listitem>
+          <simpara>
+            <command>calculate-tee-times</command> - when true, T1 and T2 will be
+            calculated as percentages of the valid lease time. It defaults to false.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            <command>t1-percent</command> - the percentage of the valid lease time to
+            use for T1. It is expressed as a real number between 0.0 and 1.0 and must
+            be less than t2-percent. The default value is 0.5 per RFC 3315.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            <command>t2-percent</command> - the percentage of the valid lease time to
+            use for T2. It is expressed as a real number between 0.0 and 1.0 and must
+            be greater than t1-percent. The default value is 0.8 per RFC 3315.
+          </simpara>
+        </listitem>
+        </itemizedlist>
+      </para>
+      <note>
+      In the event that both explicit values are specified and
+      calculate-tee-times is true, the server will use the explicit
+      values.  If you plan on having a mixture where some subnets or
+      share-networks will use explicit values and some will use
+      calculated values you must not define the explicit values at any
+      level higher than where they will be used.  Inheriting them from
+      too high of a scope, such as global, will cause them to have
+      values at every level underneath (shared-networks and subnets),
+      effectively disabling calculated values.
+      </note>
+    </section>
+
     <section xml:id="dhcp6-config-subnets">
       <title>IPv6 Subnet Selection</title>
       <para>
