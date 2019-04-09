@@ -18,6 +18,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <hooks/callout_handle.h>
+#include <util/threads/lock_guard.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -90,23 +91,35 @@ protected:
         pickAddress(const SubnetPtr& subnet,
                     const ClientClasses& client_classes,
                     const DuidPtr& duid,
-                    const isc::asiolink::IOAddress& hint) = 0;
+                    const isc::asiolink::IOAddress& hint) {
+            isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+            return pickAddressInternal(subnet, client_classes, duid, hint);
+        }
 
         /// @brief Default constructor.
         ///
         /// Specifies which type of leases this allocator will assign
         /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
-        Allocator(Lease::Type pool_type)
-            :pool_type_(pool_type) {
+        Allocator(Lease::Type pool_type) : pool_type_(pool_type) {
         }
 
         /// @brief virtual destructor
         virtual ~Allocator() {
         }
 
+    private:
+        virtual isc::asiolink::IOAddress
+        pickAddressInternal(const SubnetPtr& subnet,
+                            const ClientClasses& client_classes,
+                            const DuidPtr& duid,
+                            const isc::asiolink::IOAddress& hint) = 0;
+
     protected:
         /// @brief defines pool type allocation
         Lease::Type pool_type_;
+
+    private:
+        std::mutex mutex_;
     };
 
     /// defines a pointer to allocator
@@ -126,6 +139,7 @@ protected:
         /// @param type - specifies allocation type
         IterativeAllocator(Lease::Type type);
 
+    private:
         /// @brief returns the next address from pools in a subnet
         ///
         /// @param subnet next address will be returned from pool of that subnet
@@ -134,10 +148,10 @@ protected:
         /// @param hint client's hint (ignored)
         /// @return the next address
         virtual isc::asiolink::IOAddress
-            pickAddress(const SubnetPtr& subnet,
-                        const ClientClasses& client_classes,
-                        const DuidPtr& duid,
-                        const isc::asiolink::IOAddress& hint);
+        pickAddressInternal(const SubnetPtr& subnet,
+                            const ClientClasses& client_classes,
+                            const DuidPtr& duid,
+                            const isc::asiolink::IOAddress& hint);
 
     protected:
         /// @brief Returns the next prefix
@@ -166,9 +180,6 @@ protected:
         static isc::asiolink::IOAddress
         increaseAddress(const isc::asiolink::IOAddress& address,
                         bool prefix, const uint8_t prefix_len);
-
-    private:
-        std::mutex mutex_;
     };
 
     /// @brief Address/prefix allocator that gets an address based on a hash
@@ -180,6 +191,7 @@ protected:
         /// @param type - specifies allocation type
         HashedAllocator(Lease::Type type);
 
+    private:
         /// @brief returns an address based on hash calculated from client's DUID.
         ///
         /// @todo: Implement this method
@@ -190,10 +202,10 @@ protected:
         /// @param hint a hint (last address that was picked)
         /// @return selected address
         virtual isc::asiolink::IOAddress
-            pickAddress(const SubnetPtr& subnet,
-                        const ClientClasses& client_classes,
-                        const DuidPtr& duid,
-                        const isc::asiolink::IOAddress& hint);
+        pickAddressInternal(const SubnetPtr& subnet,
+                            const ClientClasses& client_classes,
+                            const DuidPtr& duid,
+                            const isc::asiolink::IOAddress& hint);
     };
 
     /// @brief Random allocator that picks address randomly
@@ -205,6 +217,7 @@ protected:
         /// @param type - specifies allocation type
         RandomAllocator(Lease::Type type);
 
+    private:
         /// @brief returns a random address from pool of specified subnet
         ///
         /// @todo: Implement this method
@@ -215,10 +228,10 @@ protected:
         /// @param hint the last address that was picked (ignored)
         /// @return a random address from the pool
         virtual isc::asiolink::IOAddress
-        pickAddress(const SubnetPtr& subnet,
-                    const ClientClasses& client_classes,
-                    const DuidPtr& duid,
-                    const isc::asiolink::IOAddress& hint);
+        pickAddressInternal(const SubnetPtr& subnet,
+                            const ClientClasses& client_classes,
+                            const DuidPtr& duid,
+                            const isc::asiolink::IOAddress& hint);
     };
 
 public:

@@ -25,7 +25,6 @@
 #include <dhcpsrv/callout_handle_store.h>
 #include <stats/stats_mgr.h>
 #include <util/stopwatch.h>
-#include <util/threads/lock_guard.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
 
@@ -157,12 +156,10 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 }
 
 isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
-                                             const ClientClasses& client_classes,
-                                             const DuidPtr&,
-                                             const IOAddress&) {
-    LockGuard<std::mutex> lock(&mutex_);
-
+AllocEngine::IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
+                                                     const ClientClasses& client_classes,
+                                                     const DuidPtr&,
+                                                     const IOAddress&) {
     // Is this prefix allocation?
     bool prefix = pool_type_ == Lease::TYPE_PD;
     uint8_t prefix_len = 0;
@@ -292,10 +289,10 @@ AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type) :
 }
 
 isc::asiolink::IOAddress
-AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
-                                          const ClientClasses&,
-                                          const DuidPtr&,
-                                          const IOAddress&) {
+AllocEngine::HashedAllocator::pickAddressInternal(const SubnetPtr&,
+                                                  const ClientClasses&,
+                                                  const DuidPtr&,
+                                                  const IOAddress&) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
@@ -305,10 +302,10 @@ AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type) :
 }
 
 isc::asiolink::IOAddress
-AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
-                                          const ClientClasses&,
-                                          const DuidPtr&,
-                                          const IOAddress&) {
+AllocEngine::RandomAllocator::pickAddressInternal(const SubnetPtr&,
+                                                  const ClientClasses&,
+                                                  const DuidPtr&,
+                                                  const IOAddress&) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
 
