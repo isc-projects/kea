@@ -85,7 +85,21 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
             range = index.equal_range(boost::make_tuple("dhcp4_subnet",
                                                         AuditEntry::ModificationType::DELETE));
             for (auto entry = range.first; entry != range.second; ++entry) {
-                cfg->getCfgSubnets4()->del((*entry)->getObjectId());
+                // If the deleted subnet belongs to a shared network and the
+                // shared network is not being removed, we need to detach the
+                // subnet from the shared network.
+                auto subnet = cfg->getCfgSubnets4()->getBySubnetId((*entry)->getObjectId());
+                if (subnet) {
+                    // Check if the subnet belongs to a shared network.
+                    SharedNetwork4Ptr network;
+                    subnet->getSharedNetwork(network);
+                    if (network) {
+                        // Detach the subnet from the shared network.
+                        network->del(subnet->getID());
+                    }
+                    // Actually delete the subnet from the configuration.
+                    cfg->getCfgSubnets4()->del((*entry)->getObjectId());
+                }
             }
 
         } catch (...) {

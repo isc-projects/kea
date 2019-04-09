@@ -61,6 +61,8 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
                                                      "uint16"));
+        // We're setting id of 123 for all option definitions in this
+        // code range.
         def->setId(123);
 
         // Add option definition to "isc" option space.
@@ -76,7 +78,8 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
         option_name << "option-" << code;
         OptionDefinitionPtr def(new OptionDefinition(option_name.str(), code,
                                                      "uint16"));
-
+        // We're setting id of 234 for all option definitions in this
+        // code range.
         def->setId(234);
 
         ASSERT_NO_THROW(cfg.add(def, "abcde"));
