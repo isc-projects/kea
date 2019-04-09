@@ -257,6 +257,11 @@ SrvConfig::updateStatistics() {
 }
 
 void
+SrvConfig::clearConfiguredGlobals() {
+    configured_globals_ = isc::data::Element::createMap();
+}
+
+void
 SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     if (config->getType() != Element::map) {
         isc_throw(BadValue, "extractConfiguredGlobals must be given a map element");

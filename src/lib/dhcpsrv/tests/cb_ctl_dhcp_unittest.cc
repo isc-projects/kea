@@ -138,6 +138,26 @@ public:
         return (true);
     }
 
+    /// @brief Check if @c databaseConfigApply should delete a given object from the
+    /// local configuration.
+    ///
+    /// @param object_type Object type.
+    /// @param object_id Object identifier.
+    bool deleteConfigElement(const std::string& object_type,
+                             const uint64_t object_id) const {
+        if (!audit_entries_.empty()) {
+            const auto& index = audit_entries_.get<AuditEntryObjectTypeTag>();
+            auto range = index.equal_range(boost::make_tuple(object_type,
+                                                             AuditEntry::ModificationType::DELETE));
+            for (auto it = range.first; it != range.second; ++it) {
+                if ((*it)->getObjectId() == object_id) {
+                    return (true);
+                }
+            }
+        }
+        return (false);
+    }
+
     /// @brief Holds test timestamps.
     std::map<int, boost::posix_time::ptime> timestamp_;
 
@@ -186,6 +206,180 @@ public:
         setTimestamp("dhcp4_subnet", timestamp_index);
     }
 
+    /// @brief Creates test server configuration and stores it in a test
+    /// configuration backend.
+    ///
+    /// There are pairs of configuration elements stored in the database.
+    /// For example: two global parameters, two option definitions etc.
+    /// Having two elements of each type in the database is useful in tests
+    /// which verify that an element is deleted from the local configuration
+    /// as a result of being deleted from the configuration backend. In that
+    /// case the test verifies that one of the elements of the given type
+    /// is deleted and one is left.
+    void remoteStoreTestConfiguration() {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+        // Insert global parameters into a database.
+        StampedValuePtr global_parameter = StampedValue::create("foo", "bar");
+        global_parameter->setModificationTime(getTimestamp("dhcp4_global_parameter"));
+        ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(BackendSelector::UNSPEC(),
+                                                                    ServerSelector::ALL(),
+                                                                    global_parameter));
+
+        global_parameter = StampedValue::create("bar", "teta");
+        global_parameter->setModificationTime(getTimestamp("dhcp4_global_parameter"));
+        ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(BackendSelector::UNSPEC(),
+                                                                    ServerSelector::ALL(),
+                                                                    global_parameter));
+
+        // Insert option definitions into the database.
+        OptionDefinitionPtr def(new OptionDefinition("one", 101, "uint16"));
+        def->setId(1);
+        def->setOptionSpaceName("isc");
+        def->setModificationTime(getTimestamp("dhcp4_option_def"));
+        ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef4(BackendSelector::UNSPEC(),
+                                                              ServerSelector::ALL(),
+                                                              def));
+        def.reset(new OptionDefinition("two", 102, "uint16"));
+        def->setId(2);
+        def->setOptionSpaceName("isc");
+        def->setModificationTime(getTimestamp("dhcp4_option_def"));
+        ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef4(BackendSelector::UNSPEC(),
+                                                              ServerSelector::ALL(),
+                                                              def));
+
+        // Insert global options into the database.
+        OptionDescriptorPtr opt(new OptionDescriptor(createOption<OptionString>
+                                                     (Option::V4, DHO_HOST_NAME,
+                                                      true, false, "new.example.com")));
+        opt->setId(1);
+        opt->space_name_ = DHCP4_OPTION_SPACE;
+        opt->setModificationTime(getTimestamp("dhcp4_options"));
+        mgr.getPool()->createUpdateOption4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                           opt);
+
+        opt.reset(new OptionDescriptor(createOption<OptionString>
+                                       (Option::V4, DHO_TFTP_SERVER_NAME,
+                                        true, false, "tftp-my")));
+        opt->setId(2);
+        opt->space_name_ = DHCP4_OPTION_SPACE;
+        opt->setModificationTime(getTimestamp("dhcp4_options"));
+        mgr.getPool()->createUpdateOption4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                           opt);
+
+        // Insert shared networks into the database.
+        SharedNetwork4Ptr network(new SharedNetwork4("one"));
+        network->setId(1);
+        network->setModificationTime(getTimestamp("dhcp4_shared_network"));
+        mgr.getPool()->createUpdateSharedNetwork4(BackendSelector::UNSPEC(),
+                                                  ServerSelector::ALL(),
+                                                  network);
+
+        network.reset(new SharedNetwork4("two"));
+        network->setId(2);
+        network->setModificationTime(getTimestamp("dhcp4_shared_network"));
+        mgr.getPool()->createUpdateSharedNetwork4(BackendSelector::UNSPEC(),
+                                                  ServerSelector::ALL(),
+                                                  network);
+
+        // Insert subnets into the database.
+        Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.3.0"), 26, 1, 2, 3, SubnetID(1)));
+        subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
+        mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                           subnet);
+
+        subnet.reset(new Subnet4(IOAddress("192.0.4.0"), 26, 1, 2, 3, SubnetID(2)));
+        subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
+        mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                           subnet);
+    }
+
+    /// @brief Deletes specified global parameter from the configuration
+    /// backend and generates audit entry.
+    ///
+    /// Note that the current Kea implementation does not track database
+    /// identifiers of the global parameters. Therefore, the identifier to
+    /// be used to create the audit entry for the deleted parameter must
+    /// be explicitly specified.
+    ///
+    /// @param parameter_name Parameter name.
+    /// @param id Parameter id.
+    void remoteDeleteGlobalParameter(const std::string& parameter_name,
+                                     const uint64_t id) {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+        mgr.getPool()->deleteGlobalParameter4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                             parameter_name);
+        addDeleteAuditEntry("dhcp4_global_parameter", id);
+    }
+
+    /// @brief Deletes specified option definition from the configuration
+    /// backend and generates audit entry.
+    ///
+    /// @param code Option code.
+    /// @param space Option space.
+    void remoteDeleteOptionDef(const uint16_t code, const std::string& space) {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+        auto option_def = mgr.getPool()->getOptionDef4(BackendSelector::UNSPEC(),
+                                                       ServerSelector::ALL(),
+                                                       code, space);
+
+        if (option_def) {
+            mgr.getPool()->deleteOptionDef4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                            code, space);
+            addDeleteAuditEntry("dhcp4_option_def", option_def->getId());
+        }
+    }
+
+    /// @brief Deletes specified global option from the configuration backend
+    /// and generates audit entry.
+    ///
+    /// @param code Option code.
+    /// @param space Option space.
+    void remoteDeleteOption(const uint16_t code, const std::string& space) {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+        auto option = mgr.getPool()->getOption4(BackendSelector::UNSPEC(),
+                                                ServerSelector::ALL(),
+                                                code, space);
+
+        if (option) {
+            mgr.getPool()->deleteOptionDef4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                            code, space);
+            addDeleteAuditEntry("dhcp4_option_def", option->getId());
+        }
+    }
+
+    /// @brief Deletes specified shared network from the configuration backend
+    /// and generates audit entry.
+    ///
+    /// @param name Name of the shared network to be deleted.
+    void remoteDeleteSharedNetwork(const std::string& name) {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+        auto network = mgr.getPool()->getSharedNetwork4(BackendSelector::UNSPEC(),
+                                                        ServerSelector::ALL(),
+                                                        name);
+
+        if (network) {
+            mgr.getPool()->deleteSharedNetwork4(BackendSelector::UNSPEC(),
+                                                ServerSelector::ALL(),
+                                                name);
+            addDeleteAuditEntry("dhcp4_shared_network", network->getId());
+        }
+    }
+
+    /// @brief Deletes specified subnet from the configuration backend and
+    /// generates audit entry.
+    void remoteDeleteSubnet(const SubnetID& id) {
+        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+        mgr.getPool()->deleteSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                     id);
+        addDeleteAuditEntry("dhcp4_subnet", id);
+    }
+
+
     /// @brief Tests the @c CBControlDHCPv4::databaseConfigApply method.
     ///
     /// This test inserts configuration elements of each type into the
@@ -197,46 +391,7 @@ public:
     /// @param lb_modification_time Lower bound modification time to be
     /// passed to the @c databaseConfigApply.
     void testDatabaseConfigApply(const boost::posix_time::ptime& lb_modification_time) {
-        auto& mgr = ConfigBackendDHCPv4Mgr::instance();
-
-        // Insert global parameter into a database.
-        StampedValuePtr global_parameter = StampedValue::create("foo", "bar");
-        global_parameter->setModificationTime(getTimestamp("dhcp4_global_parameter"));
-        ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(BackendSelector::UNSPEC(),
-                                                                    ServerSelector::ALL(),
-                                                                    global_parameter));
-
-        // Insert option definition into the database.
-        OptionDefinitionPtr def(new OptionDefinition("one", 101, "uint16"));
-        def->setOptionSpaceName("isc");
-        def->setModificationTime(getTimestamp("dhcp4_option_def"));
-        ASSERT_NO_THROW(mgr.getPool()->createUpdateOptionDef4(BackendSelector::UNSPEC(),
-                                                              ServerSelector::ALL(),
-                                                              def));
-
-        // Insert global option into the database.
-        OptionDescriptorPtr opt(new OptionDescriptor(createOption<OptionString>
-                                                     (Option::V4, DHO_HOST_NAME,
-                                                      true, false, "new.example.com")));
-        opt->space_name_ = DHCP4_OPTION_SPACE;
-        opt->setModificationTime(getTimestamp("dhcp4_options"));
-        mgr.getPool()->createUpdateOption4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                           opt);
-
-        // Insert shared network into the database.
-        SharedNetwork4Ptr network(new SharedNetwork4("one"));
-        network->setModificationTime(getTimestamp("dhcp4_shared_network"));
-
-        mgr.getPool()->createUpdateSharedNetwork4(BackendSelector::UNSPEC(),
-                                                  ServerSelector::ALL(),
-                                                  network);
-
-        // Insert subnet into the database.
-        Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, SubnetID(1)));
-        subnet->setModificationTime(getTimestamp("dhcp4_subnet"));
-
-        mgr.getPool()->createUpdateSubnet4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                           subnet);
+        remoteStoreTestConfiguration();
 
         ASSERT_FALSE(audit_entries_.empty())
             << "Require at least one audit entry. The test is broken!";
@@ -251,7 +406,7 @@ public:
         // modification time is later than last audit entry time it should
         // be merged.
         if (fetchConfigElement("dhcp4_global_parameter") &&
-            (global_parameter->getModificationTime() > lb_modification_time)) {
+            (getTimestamp("dhcp4_global_parameter") > lb_modification_time)) {
             checkConfiguredGlobal(srv_cfg, "foo", Element::create("bar"));
 
         } else {
@@ -264,7 +419,7 @@ public:
         // be merged.
         auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
         if (fetchConfigElement("dhcp4_option_def") &&
-            def->getModificationTime() > lb_modification_time) {
+            getTimestamp("dhcp4_option_def") > lb_modification_time) {
             ASSERT_TRUE(found_def);
             EXPECT_EQ(101, found_def->getCode());
             EXPECT_EQ(OptionDataType::OPT_UINT16_TYPE, found_def->getType());
@@ -279,7 +434,7 @@ public:
         auto options = srv_cfg->getCfgOption();
         auto found_opt = options->get("dhcp4", DHO_HOST_NAME);
         if (fetchConfigElement("dhcp4_options") &&
-            (opt->getModificationTime() > lb_modification_time)) {
+            (getTimestamp("dhcp4_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
             EXPECT_EQ("new.example.com", found_opt.option_->toString());
 
@@ -293,7 +448,7 @@ public:
         auto networks = srv_cfg->getCfgSharedNetworks4();
         auto found_network = networks->getByName("one");
         if (fetchConfigElement("dhcp4_shared_network") &&
-            (network->getModificationTime() > lb_modification_time)) {
+            (getTimestamp("dhcp4_shared_network") > lb_modification_time)) {
             EXPECT_TRUE(found_network);
             EXPECT_TRUE(found_network->hasFetchGlobalsFn());
 
@@ -306,7 +461,7 @@ public:
         auto subnets = srv_cfg->getCfgSubnets4();
         auto found_subnet = subnets->getSubnet(1);
         if (fetchConfigElement("dhcp4_subnet") &&
-            (subnet->getModificationTime() > lb_modification_time)) {
+            (getTimestamp("dhcp4_subnet") > lb_modification_time)) {
             ASSERT_TRUE(found_subnet);
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
 
@@ -315,6 +470,120 @@ public:
         }
     }
 
+    /// @brief Tests deletion of the configuration elements by the
+    /// @c CBControlDHCPv4::databaseConfigApply method.
+    ///
+    /// This test inserts configuration elements of each type into the
+    /// configuration database and calls the @c databaseConfigApply
+    /// to fetch this configuration and merge into the local server
+    /// configuration.
+    ///
+    /// Next, the test calls the specified callback function, i.e.
+    /// @c db_modifications, which deletes selected configuration
+    /// elements from the database and generates appropriate audit
+    /// entries. Finally, it calls the @c databaseConfigApply again
+    /// to process the audit entries and checks if the appropriate
+    /// configuration elements are deleted from the local configuration
+    ///
+    /// @param lb_modification_time Lower bound modification time to be
+    /// passed to the @c databaseConfigApply.
+    /// @param db_modifications Pointer to the callback function which
+    /// applies test specific modifications into the database.
+    void testDatabaseConfigApplyDelete(const boost::posix_time::ptime& lb_modification_time,
+                                       std::function<void()> db_modifications) {
+        // Store initial configuration into the database.
+        remoteStoreTestConfiguration();
+
+        // Since we pass an empty audit collection the server treats this
+        // as if the server is starting up and fetches the entire
+        // configuration from the database.
+        ctl_.databaseConfigApply(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                 ctl_.getInitialAuditEntryTime(),
+                                 AuditEntryCollection());
+        // Commit the configuration so as it is moved from the staging
+        // to current.
+        CfgMgr::instance().commit();
+
+        // Run user defined callback which should delete selected configuration
+        // elements from the configuration backend. The appropriate DELETE
+        // audit entries should now be stored in the audit_entries_ collection.
+        if (db_modifications) {
+            db_modifications();
+        }
+
+        // Process the DELETE audit entries.
+        ctl_.databaseConfigApply(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                 lb_modification_time, audit_entries_);
+
+        // All changes should have been applied in the current configuration.
+        auto srv_cfg = CfgMgr::instance().getCurrentCfg();
+
+        {
+            SCOPED_TRACE("global parameters");
+            // One of the global parameters should still be there.
+            EXPECT_TRUE(srv_cfg->getConfiguredGlobals()->get("bar"));
+            if (deleteConfigElement("dhcp4_global_parameter", 1)) {
+                EXPECT_FALSE(srv_cfg->getConfiguredGlobals()->get("foo"));
+
+            } else {
+                EXPECT_TRUE(srv_cfg->getConfiguredGlobals()->get("foo"));
+            }
+        }
+
+        {
+            SCOPED_TRACE("option definitions");
+            // One of the option definitions should still be there.
+            EXPECT_TRUE(srv_cfg->getCfgOptionDef()->get("isc", "two"));
+            auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
+            if (deleteConfigElement("dhcp4_option_def", 1)) {
+                EXPECT_FALSE(found_def);
+
+            } else {
+                EXPECT_TRUE(found_def);
+            }
+        }
+
+        {
+            SCOPED_TRACE("global options");
+            // One of the options should still be there.
+            EXPECT_TRUE(srv_cfg->getCfgOption()->get("dhcp4", DHO_TFTP_SERVER_NAME).option_);
+            auto found_opt = srv_cfg->getCfgOption()->get("dhcp4", DHO_HOST_NAME);
+            if (deleteConfigElement("dhcp4_options", 1)) {
+                EXPECT_FALSE(found_opt.option_);
+
+            } else {
+                EXPECT_TRUE(found_opt.option_);
+            }
+        }
+
+        {
+            SCOPED_TRACE("shared networks");
+            // One of the shared networks should still be there.
+            EXPECT_TRUE(srv_cfg->getCfgSharedNetworks4()->getByName("two"));
+            auto found_network = srv_cfg->getCfgSharedNetworks4()->getByName("one");
+            if (deleteConfigElement("dhcp4_shared_network", 1)) {
+                EXPECT_FALSE(found_network);
+
+            } else {
+                EXPECT_TRUE(found_network);
+            }
+        }
+
+        {
+            SCOPED_TRACE("subnets");
+            // One of the subnets should still be there.
+            EXPECT_TRUE(srv_cfg->getCfgSubnets4()->getSubnet(2));
+            auto found_subnet = srv_cfg->getCfgSubnets4()->getSubnet(1);
+            if (deleteConfigElement("dhcp4_subnet", 1)) {
+                EXPECT_FALSE(found_subnet);
+
+            } else {
+                EXPECT_TRUE(found_subnet);
+            }
+        }
+    }
+
+    /// @brief Instance of the @c CBControlDHCPv4 used for testing.
     TestCBControlDHCPv4 ctl_;
 };
 
@@ -332,11 +601,49 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyAll) {
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
+// This test verifies that multiple configuration elements are
+// deleted from the local configuration as a result of being
+// deleted from the database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteAll) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteGlobalParameter("foo", 1);
+        remoteDeleteOptionDef(101, "isc");
+        remoteDeleteOption(DHO_HOST_NAME, DHCP4_OPTION_SPACE);
+        remoteDeleteSharedNetwork("one");
+        remoteDeleteSubnet(SubnetID(1));
+    });
+}
+
+// This test verifies that an attempt to delete non-existing
+// configuration element does not cause an error.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteNonExisting) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        // Add several audit entries instructing to delete the
+        // non-existing configuration elements. The ids are set
+        // to 3, but the only existing elements have ids of 1
+        // and 2.
+        addDeleteAuditEntry("dhcp4_global_parameter", 3);
+        addDeleteAuditEntry("dhcp4_option_def", 3);
+        addDeleteAuditEntry("dhcp4_options", 3);
+        addDeleteAuditEntry("dhcp4_shared_network", 3);
+        addDeleteAuditEntry("dhcp4_subnet", 3);
+    });
+}
+
 // This test verifies that only a global parameter is merged into
 // the current configuration.
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyGlobal) {
     addCreateAuditEntry("dhcp4_global_parameter");
     testDatabaseConfigApply(getTimestamp(-5));
+}
+
+// This test verifies that the global parameter is deleted from
+// the local configuration as a result of being deleted from the
+// database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteGlobal) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteGlobalParameter("foo", 1);
+    });
 }
 
 // This test verifies that global parameter is not fetched from the
@@ -354,6 +661,16 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyOptionDef) {
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
+// This test verifies that the option definition is deleted from
+// the local configuration as a result of being deleted from the
+// database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteOptionDef) {
+    addDeleteAuditEntry("dhcp4_option_def", 1);
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteOptionDef(101, "isc");
+    });
+}
+
 // This test verifies that option definition is not fetched from the
 // database when the modification time is earlier than the last
 // fetched audit entry.
@@ -367,6 +684,15 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyOptionDefNotFetched) {
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyOption) {
     addCreateAuditEntry("dhcp4_options");
     testDatabaseConfigApply(getTimestamp(-5));
+}
+
+// This test verifies that the global option is deleted from
+// the local configuration as a result of being deleted from the
+// database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteOption) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteOption(DHO_HOST_NAME, DHCP4_OPTION_SPACE);
+    });
 }
 
 // This test verifies that DHCPv4 option is not fetched from the
@@ -384,6 +710,15 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplySharedNetwork) {
     testDatabaseConfigApply(getTimestamp(-5));
 }
 
+// This test verifies that the shared network is deleted from
+// the local configuration as a result of being deleted from the
+// database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteSharedNetwork) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteSharedNetwork("one");
+    });
+}
+
 // This test verifies that shared network is not fetched from the
 // database when the modification time is earlier than the last
 // fetched audit entry.
@@ -397,6 +732,14 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplySharedNetworkNotFetched) {
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySubnet) {
     addCreateAuditEntry("dhcp4_subnet");
     testDatabaseConfigApply(getTimestamp(-5));
+}
+
+// This test verifies that the subnet is deleted from the local
+// configuration as a result of being deleted from the database.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteSubnet) {
+    testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
+        remoteDeleteSubnet(SubnetID(1));
+    });
 }
 
 // This test verifies that subnet is not fetched from the database

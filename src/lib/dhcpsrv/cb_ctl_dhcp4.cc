@@ -9,6 +9,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
+using namespace isc::db;
 using namespace isc::data;
 using namespace isc::process;
 
@@ -16,15 +17,90 @@ namespace isc {
 namespace dhcp {
 
 void
-CBControlDHCPv4::databaseConfigApply(const db::BackendSelector& backend_selector,
-                                     const db::ServerSelector& server_selector,
+CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
+                                     const ServerSelector& server_selector,
                                      const boost::posix_time::ptime& lb_modification_time,
-                                     const db::AuditEntryCollection& audit_entries) {
+                                     const AuditEntryCollection& audit_entries) {
+
+    bool globals_fetched = false;
+
+    // Let's first delete all the configuration elements for which DELETE audit
+    // entries are found. Although, this may break chronology of the audit in
+    // some cases it should not affect the end result of the data fetch. If the
+    // object was created and then subsequently deleted, we will first try to
+    // delete this object from the local configuration (which will fail because
+    // the object does not exist) and then we will try to fetch it from the
+    // database which will return no result.
+    if (!audit_entries.empty()) {
+
+        auto cfg = CfgMgr::instance().getCurrentCfg();
+        auto external_cfg = CfgMgr::instance().createExternalCfg();
+
+        // Get audit entries for deleted global parameters.
+        const auto& index = audit_entries.get<AuditEntryObjectTypeTag>();
+        auto range = index.equal_range(boost::make_tuple("dhcp4_global_parameter",
+                                                         AuditEntry::ModificationType::DELETE));
+        if (range.first != range.second) {
+            // Some globals have been deleted. Since we currently don't track database
+            // identifiers of the global parameters we have to fetch all global
+            // parameters for this server. Next, we simply replace existing
+            // global parameters with the new parameters. This is slightly
+            // inefficient but only slightly. Note that this is a single
+            // database query and the number of global parameters is small.
+            data::StampedValueCollection globals;
+            globals = getMgr().getPool()->getAllGlobalParameters4(backend_selector, server_selector);
+            addGlobalsToConfig(external_cfg, globals);
+
+            // Now that we successfully fetched the new global parameters, let's
+            // remove existing ones and merge them into the current configuration.
+            cfg->clearConfiguredGlobals();
+            CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
+            globals_fetched = true;
+        }
+
+        try {
+            // Get audit entries for deleted option definitions and delete each
+            // option definition from the current configuration for which the
+            // audit entry is found.
+            range = index.equal_range(boost::make_tuple("dhcp4_option_def",
+                                                        AuditEntry::ModificationType::DELETE));
+            for (auto entry = range.first; entry != range.second; ++entry) {
+                cfg->getCfgOptionDef()->del((*entry)->getObjectId());
+            }
+
+            // Repeat the same for other configuration elements.
+
+            range = index.equal_range(boost::make_tuple("dhcp4_options",
+                                                        AuditEntry::ModificationType::DELETE));
+            for (auto entry = range.first; entry != range.second; ++entry) {
+                cfg->getCfgOption()->del((*entry)->getObjectId());
+            }
+
+            range = index.equal_range(boost::make_tuple("dhcp4_shared_network",
+                                                        AuditEntry::ModificationType::DELETE));
+            for (auto entry = range.first; entry != range.second; ++entry) {
+                cfg->getCfgSharedNetworks4()->del((*entry)->getObjectId());
+            }
+
+            range = index.equal_range(boost::make_tuple("dhcp4_subnet",
+                                                        AuditEntry::ModificationType::DELETE));
+            for (auto entry = range.first; entry != range.second; ++entry) {
+                cfg->getCfgSubnets4()->del((*entry)->getObjectId());
+            }
+
+        } catch (...) {
+            // Ignore errors thrown when attempting to delete a non-existing
+            // configuration entry. There is no guarantee that the deleted
+            // entry is actually there as we're not processing the audit
+            // chronologically.
+        }
+    }
+
     // Create the external config into which we'll fetch backend config data.
     SrvConfigPtr external_cfg = CfgMgr::instance().createExternalCfg();
 
     // First let's fetch the globals and add them to external config.
-    if (fetchConfigElement(audit_entries, "dhcp4_global_parameter")) {
+    if (!globals_fetched && fetchConfigElement(audit_entries, "dhcp4_global_parameter")) {
         data::StampedValueCollection globals;
         globals = getMgr().getPool()->getModifiedGlobalParameters4(backend_selector, server_selector,
                                                                    lb_modification_time);
