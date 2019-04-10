@@ -83,6 +83,7 @@ TESTS += dhcp6_unittests
 # this order.
 dhcp6_unittests_SOURCES  = classify_unittests.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
+dhcp6_unittests_SOURCES += config_backend_unittest.cc
 dhcp6_unittests_SOURCES += confirm_unittest.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h

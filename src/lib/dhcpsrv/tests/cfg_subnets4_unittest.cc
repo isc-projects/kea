@@ -34,9 +34,16 @@ using namespace isc::test;
 
 namespace {
 
+/// @brief Verifies that a set of subnets contains a given a subnet
+///
+/// @param cfg_subnets set of sunbets in which to look
+/// @param prefix prefix of the target subnet
+/// @param exp_subnet_id expected id of the target subnet
+/// @param exp_valid expected valid lifetime of the subnet
+/// @param exp_network  pointer to the subnet's shared-network (if one)
 void checkMergedSubnet(CfgSubnets4& cfg_subnets,
-                       const SubnetID exp_subnet_id,
                        const std::string& prefix,
+                       const SubnetID exp_subnet_id,
                        int exp_valid,
                        SharedNetwork4Ptr exp_network) {
     // Look for the network by prefix.
@@ -190,14 +197,14 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     ASSERT_EQ(4, cfg_to.getAll()->size());
 
     // Should be no changes to the configuration.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
-                                              "192.0.1.0/26", 100, shared_network1));
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
-                                              "192.0.2.0/26", 100, shared_network2));
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
-                                              "192.0.3.0/26", 100, no_network));
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
-                                              "192.0.4.0/26", 100, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.1.0/26",
+                                              SubnetID(1), 100, shared_network1));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.2.0/26",
+                                              SubnetID(2), 100, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.3.0/26",
+                                              SubnetID(3), 100, no_network));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.4.0/26",
+                                              SubnetID(4), 100, shared_network2));
 
     // Fill cfg_from configuration with subnets.
     // subnet 1b updates subnet 1 but leaves it in network 1
@@ -259,8 +266,8 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     ASSERT_EQ(5, cfg_to.getAll()->size());
 
     // The subnet1 should be replaced by subnet1b.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
-                                              "192.0.1.0/26", 400, shared_network1));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.1.0/26",
+                                              SubnetID(1), 400, shared_network1));
 
     // Let's verify that our option is there and populated correctly.
     auto subnet = cfg_to.getByPrefix("192.0.1.0/26");
@@ -271,12 +278,12 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     EXPECT_EQ("Yay!", opstr->getValue());
 
     // The subnet2 should not be affected because it was not present.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
-                                              "192.0.2.0/26", 100, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.2.0/26",
+                                              SubnetID(2), 100, shared_network2));
 
     // subnet3 should be replaced by subnet3b and no longer assigned to a network.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
-                                              "192.0.3.0/26", 500, no_network));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.3.0/26",
+                                              SubnetID(3), 500, no_network));
     // Let's verify that our option is there and populated correctly.
     subnet = cfg_to.getByPrefix("192.0.3.0/26");
     desc = subnet->getCfgOption()->get("isc", 1);
@@ -286,12 +293,12 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     EXPECT_EQ("Team!", opstr->getValue());
 
     // subnet4 should be replaced by subnet4b and moved to network1.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
-                                              "192.0.4.0/26", 500, shared_network1));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.4.0/26",
+                                              SubnetID(4), 500, shared_network1));
 
     // subnet5 should have been added to configuration.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(5),
-                                              "192.0.5.0/26", 300, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.5.0/26",
+                                              SubnetID(5), 300, shared_network2));
 
     // Let's verify that both pools have the proper options.
     subnet = cfg_to.getByPrefix("192.0.5.0/26");

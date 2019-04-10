@@ -10,6 +10,8 @@
 #include <gtest/gtest.h>
 
 #include <database/backend_selector.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_string.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -97,6 +99,7 @@ public:
 
         // Create fresh context.
         resetConfiguration();
+        CfgMgr::instance().setFamily(AF_INET6);
     }
 
     /// Destructor
@@ -162,17 +165,16 @@ public:
 
 // This test verifies that externally configured globals are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeGlobals) {
+TEST_F(Dhcp6CBTest, mergeGlobals) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
         "        \"interfaces\": [\"*\" ] \n"
         "    }, \n"
-        "    \"echo-client-id\": false, \n"
         "    \"decline-probation-period\": 7000, \n"
         "    \"valid-lifetime\": 1000, \n"
         "    \"rebind-timer\": 800, \n"
-        "    \"server-hostname\": \"overwrite.me.com\", \n"
+        "    \"server-tag\": \"first-server\", \n"
         "    \"config-control\": { \n"
         "       \"config-databases\": [ { \n"
         "               \"type\": \"memfile\", \n"
@@ -188,18 +190,14 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeGlobals) {
     extractConfig(base_config);
 
     // Make some globals:
-    StampedValuePtr server_hostname(new StampedValue("server-hostname", "isc.example.org"));
+    StampedValuePtr server_tag(new StampedValue("server-tag", "second-server"));
     StampedValuePtr decline_period(new StampedValue("decline-probation-period", Element::create(86400)));
-    StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
-    StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
-    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), server_hostname);
+    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), server_tag);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), decline_period);
-    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), calc_tee_times);
-    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), t2_percent);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), renew_timer);
 
     // Should parse and merge without error.
@@ -208,10 +206,6 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeGlobals) {
     // Verify the composite staging is correct.  (Remember that
     // CfgMgr::instance().commit() hasn't been called)
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
-
-    // echo-client-id is set explicitly in the original config, meanwhile
-    // the backend config does not set it, so the explicit value wins.
-    EXPECT_FALSE(staging_cfg->getEchoClientId());
 
     // decline-probation-period is an explicit member that should come
     // from the backend.
@@ -224,15 +218,13 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeGlobals) {
                                                   Element::create(800)));
 
     // Verify that the implicit globals from the backend are there.
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, server_hostname));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, calc_tee_times));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, t2_percent));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, server_tag));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
 }
 
 // This test verifies that externally configured option definitions
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeOptionDefs) {
+TEST_F(Dhcp6CBTest, mergeOptionDefs) {
     string base_config =
         "{ \n"
         "    \"option-def\": [ { \n"
@@ -308,17 +300,15 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeOptionDefs) {
 
 // This test verifies that externally configured options
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeOptions) {
+TEST_F(Dhcp6CBTest, mergeOptions) {
     string base_config =
         "{ \n"
         "    \"option-data\": [ { \n"
-        "        \"name\": \"dhcp-message\", \n"
-        "        \"data\": \"0A0B0C0D\", \n"
-        "        \"csv-format\": false \n"
-        "     },{ \n" 
-        "        \"name\": \"host-name\", \n"
-        "        \"data\": \"old.example.com\", \n"
-        "        \"csv-format\": true \n"
+        "        \"name\": \"solmax-rt\", \n"
+        "        \"data\": \"500\" \n"
+        "     },{ \n"
+        "        \"name\": \"bootfile-url\", \n"
+        "        \"data\": \"orig-boot-file\" \n"
         "     } \n"
         "    ], \n"
         "    \"config-control\": { \n"
@@ -333,60 +323,48 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeOptions) {
         "   } \n"
         "} \n";
 
-    extractConfig(base_config);
 
     OptionDescriptorPtr opt;
-
-    // Add host-name to the first backend.
+    // Add solmax-rt to the first backend.
     opt.reset(new OptionDescriptor(
-              createOption<OptionString>(Option::V6, DHO_HOST_NAME,
-                                         true, false, "new.example.com")));
+              createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
+                                         true, false, "updated-boot-file")));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db1_->createUpdateOption6(ServerSelector::ALL(), opt);
 
-    // Add boot-file-name to the first backend.
+    // Add solmax-rt to the second backend.
     opt.reset(new OptionDescriptor(
-              createOption<OptionString>(Option::V6, DHO_BOOT_FILE_NAME,
-                                         true, false, "my-boot-file")));
-    opt->space_name_ = DHCP6_OPTION_SPACE;
-    db1_->createUpdateOption6(ServerSelector::ALL(), opt);
-
-    // Add boot-file-name to the second backend.
-    opt.reset(new OptionDescriptor(
-              createOption<OptionString>(Option::V6, DHO_BOOT_FILE_NAME,
-                                         true, false, "your-boot-file")));
+              createOption<OptionUint32>(Option::V6, D6O_SOL_MAX_RT,
+                                         false, true, 700)));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db2_->createUpdateOption6(ServerSelector::ALL(), opt);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
 
-    // Verify the composite staging is correct.
+    //  Now let's verify that composite staging options are correct.
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
-
-    // Option definition from JSON should be there.
     CfgOptionPtr options = staging_cfg->getCfgOption();
 
-    // dhcp-message should come from the original config.
-    OptionDescriptor found_opt = options->get("dhcp6", DHO_DHCP_MESSAGE);
-    ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("0x0A0B0C0D", found_opt.option_->toHexString());
-
-    // host-name should come from the first back end, 
+    // bootfile-url should come from the first config back end.
     // (overwriting the original).
-    found_opt = options->get("dhcp6", DHO_HOST_NAME);
+    OptionDescriptor found_opt = options->get("dhcp6", D6O_BOOTFILE_URL);
     ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("new.example.com", found_opt.option_->toString());
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(found_opt.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("updated-boot-file", opstr->getValue());
 
-    // booth-file-name should come from the first back end.
-    found_opt = options->get("dhcp6", DHO_BOOT_FILE_NAME);
+    // sol-maxt-rt should come from the original config
+    found_opt = options->get("dhcp6", D6O_SOL_MAX_RT);
     ASSERT_TRUE(found_opt.option_);
-    EXPECT_EQ("my-boot-file", found_opt.option_->toString());
+    OptionUint32Ptr opint = boost::dynamic_pointer_cast<OptionUint32>(found_opt.option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ(500, opint->getValue());
 }
 
 // This test verifies that externally configured shared-networks are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeSharedNetworks) {
+TEST_F(Dhcp6CBTest, mergeSharedNetworks) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -425,7 +403,7 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeSharedNetworks) {
     // CfgMgr::instance().commit() hasn't been called)
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
 
-    CfgSharedNetworks4Ptr networks = staging_cfg->getCfgSharedNetworks4();
+    CfgSharedNetworks6Ptr networks = staging_cfg->getCfgSharedNetworks6();
     SharedNetwork6Ptr staged_network;
 
     // SharedNetwork One should have been added from db1 config
@@ -446,7 +424,7 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeSharedNetworks) {
 
 // This test verifies that externally configured subnets are
 // merged correctly into staging configuration.
-TEST_F(Dhcp6CBTest, DISABLED_mergeSubnets) {
+TEST_F(Dhcp6CBTest, mergeSubnets) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -466,15 +444,15 @@ TEST_F(Dhcp6CBTest, DISABLED_mergeSubnets) {
         "   \"subnet6\": [ \n"
         "   { \n"
         "       \"id\": 2,\n"
-        "       \"subnet\": \"192.0.3.0/24\" \n"
+        "       \"subnet\": \"2001:2::/64\" \n"
         "   } ]\n"
         "} \n";
 
     extractConfig(base_config);
 
     // Make a few subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("192.0.2.0"), 26, 1, 2, 3, SubnetID(1)));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("192.0.4.0"), 26, 1, 2, 3, SubnetID(3)));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:1::"), 64, 1, 2, 100, 100, SubnetID(1)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:3::"), 64, 1, 2, 100, 100, SubnetID(3)));
 
     // Add subnet1 to db1 and subnet3 to db2
     db1_->createUpdateSubnet6(ServerSelector::ALL(), subnet1);

@@ -507,10 +507,14 @@ public:
     /// The @c other parameter must be a @c SrvConfig or its derivation.
     ///
     /// This method calls either @c merge4 or @c merge6 based on
-    /// @c CfgMgr::family_.
     ///
     /// Currently, the following parts of the configuration are merged:
-    /// - IPv4 subnets
+    /// - globals
+    /// - option definitions
+    /// - options
+    /// - via @c merge4 or @c merge6 depending on @c CfgMgr::family_:
+    ///     - shared networks
+    ///     - subnets
     ///
     /// @todo Add support for merging other configuration elements.
     ///
@@ -628,32 +632,24 @@ private:
     /// @brief Merges the DHCPv4 configuration specified as a parameter into
     /// this configuration.
     ///
-    /// The general rule is that the configuration data from the @c other
-    /// object replaces configuration data held in this object instance.
-    /// The data that do not overlap between the two objects is simply
-    /// inserted into this configuration.
-    ///
-    /// @warning The call to @c merge may modify the data in the @c other
-    /// object. Therefore, the caller must not rely on the data held
-    /// in the @c other object after the call to @c merge. Also, the
-    /// data held in @c other must not be modified after the call to
-    /// @c merge because it may affect the merged configuration.
-    ///
-    /// The @c other parameter must be a @c SrvConfig or its derivation.
-    ///
-    /// Currently, the following parts of the v4 configuration are merged:
-    /// - globals
-    /// - shared-networks
-    /// - subnets
-    ///
-    /// @todo Add support for merging other configuration elements.
+    /// This is called by @c merge() to handle v4 specifics, such as
+    /// networks and subnets.
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
     void merge4(SrvConfig& other);
 
+    /// @brief Merges the DHCPv6 configuration specified as a parameter into
+    /// this configuration.
+    ///
+    /// This is called by @c merge() to handle v4 specifics, such as
+    /// networks and subnets.
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void merge6(SrvConfig& other);
 
-    /// @brief Merges the DHCPv4 globals specified in the given configuration
+    /// @brief Merges the globals specified in the given configuration
     /// into this configuration.
     ///
     /// Configurable global values may be specified either via JSON
@@ -675,7 +671,7 @@ private:
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
-    void mergeGlobals4(SrvConfig& other);
+    void mergeGlobals(SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
