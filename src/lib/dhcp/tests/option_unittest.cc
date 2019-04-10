@@ -71,6 +71,10 @@ TEST_F(OptionTest, v4_basic) {
 
     // V4 options have type 0...255
     EXPECT_THROW(opt.reset(new Option(Option::V4, 256)), OutOfRange);
+
+    // 0 / PAD and 255 / END are no longer forbidden
+    EXPECT_NO_THROW(opt.reset(new Option(Option::V4, 0)));
+    EXPECT_NO_THROW(opt.reset(new Option(Option::V4, 255)));
 }
 
 const uint8_t dummyPayload[] =
