@@ -19,7 +19,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
-#include <dhcp/option_definition.h>
+#include <util/threads/lock_guard.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
@@ -27,6 +27,7 @@
 
 #include <limits>
 #include <list>
+#include <mutex>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -88,6 +89,8 @@ void initOptionSpace(OptionDefContainerPtr& defs,
 
 const OptionDefContainerPtr&
 LibDHCP::getOptionDefs(const std::string& space) {
+    static mutex local_mutex;
+    isc::util::thread::LockGuard<mutex> lock(&local_mutex);
     // If any of the containers is not initialized, it means that we haven't
     // initialized option definitions at all.
     if (option_defs_.end() == option_defs_.find(space)) {
@@ -837,11 +840,10 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
             isc_throw(BadValue, "There is already DHCPv6 factory registered "
                      << "for option type "  << opt_type);
         }
-        v6factories_[opt_type]=factory;
+        v6factories_[opt_type] = factory;
         return;
     }
-    case Option::V4:
-    {
+    case Option::V4: {
         // Option 0 is special (a one octet-long, equal 0) PAD option. It is never
         // instantiated as an Option object, but rather consumed during packet parsing.
         if (opt_type == 0) {
@@ -853,11 +855,11 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
         if (opt_type > 254) {
             isc_throw(BadValue, "Too big option type for DHCPv4, only 0-254 allowed.");
         }
-        if (v4factories_.find(opt_type)!=v4factories_.end()) {
+        if (v4factories_.find(opt_type) != v4factories_.end()) {
             isc_throw(BadValue, "There is already DHCPv4 factory registered "
                      << "for option type "  << opt_type);
         }
-        v4factories_[opt_type]=factory;
+        v4factories_[opt_type] = factory;
         return;
     }
     default:
@@ -892,7 +894,6 @@ LibDHCP::optionSpaceToVendorId(const std::string& option_space) {
         std::string x = option_space.substr(7);
 
         check = boost::lexical_cast<int64_t>(x);
-
     } catch (const boost::bad_lexical_cast &) {
         return (0);
     }
@@ -913,7 +914,6 @@ void initOptionSpace(OptionDefContainerPtr& defs,
     // case.
     if (!defs) {
         defs.reset(new OptionDefContainer());
-
     } else {
         defs->clear();
     }

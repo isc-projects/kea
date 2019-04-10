@@ -27,7 +27,7 @@ class LibDHCP {
 public:
 
     /// Map of factory functions.
-    typedef std::map<unsigned short, Option::Factory*>  FactoryMap;
+    typedef std::map<unsigned short, Option::Factory*> FactoryMap;
 
     /// @brief Returns collection of option definitions.
     ///
@@ -366,7 +366,6 @@ public:
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 private:
-
     /// Initialize DHCP option definitions.
     ///
     /// The method creates option definitions for all DHCP options.
