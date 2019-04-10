@@ -135,9 +135,6 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     if (code64 < 0) {
         isc_throw(DhcpConfigError, "option code must not be negative "
                   "(" << getPosition("code", option_def) << ")");
-    } else if (code64 == 0) {
-        isc_throw(DhcpConfigError, "option code must not be zero "
-                  "(" << getPosition("code", option_def) << ")");
     } else if (address_family_ == AF_INET &&
                code64 > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code64

@@ -737,21 +737,6 @@ TEST_F(ParseConfigTest, badCodeOptionDefTest) {
     }
 
     {
-        SCOPED_TRACE("zero code");
-        std::string config =
-            "{ \"option-def\": [ {"
-            "      \"name\": \"zero\","
-            "      \"code\": 0,"
-            "      \"type\": \"ipv6-address\","
-            "      \"space\": \"isc\""
-            "  } ]"
-            "}";
-
-        int rcode = parseConfiguration(config, true);
-        ASSERT_NE(0, rcode);
-    }
-
-    {
         SCOPED_TRACE("out of range code (v6)");
         std::string config =
             "{ \"option-def\": [ {"
