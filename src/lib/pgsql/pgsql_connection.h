@@ -425,7 +425,7 @@ private:
     mutable isc::dhcp::ThreadResourceMgr<PgSqlHolder> handles_;
 };
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+}  // namespace db
+}  // namespace isc
 
 #endif // PGSQL_CONNECTION_H

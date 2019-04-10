@@ -166,6 +166,7 @@ PgSqlConnection::~PgSqlConnection() {
 void
 PgSqlConnection::prepareStatement(const PgSqlTaggedStatement& statement) {
     statements_.push_back(&statement);
+    prepared_ = true;
 }
 
 void
@@ -393,5 +394,6 @@ PgSqlConnection::rollback() {
     }
 }
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+}  // namespace db
+}  // namespace isc
+
