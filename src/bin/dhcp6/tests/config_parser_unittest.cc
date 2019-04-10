@@ -3555,7 +3555,7 @@ TEST_F(Dhcp6ParserTest, optionCodeHighNonUint16) {
 }
 
 // Verify that zero option code is rejected in the configuration.
-TEST_F(Dhcp6ParserTest, DISABLED_optionCodeZero) {
+TEST_F(Dhcp6ParserTest, optionCodeZero) {
     // Option code 0 is reserved and should not be accepted
     // by configuration parser.
     testInvalidOptionParam("0", "code");
