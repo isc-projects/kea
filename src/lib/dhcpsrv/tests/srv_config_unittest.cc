@@ -1046,7 +1046,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
 // This test verifies that globals from one SrvConfig
 // can be merged into another. It verifies that values
 // in the from-config override those in to-config which
-// override those in GLOBAL4_DEFAULTS.
+// override those in GLOBAL6_DEFAULTS.
 TEST_F(SrvConfigTest, mergeGlobals6) {
     // Set the family we're working with.
     CfgMgr::instance().setFamily(AF_INET6);
