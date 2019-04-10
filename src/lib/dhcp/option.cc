@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,12 +35,7 @@ Option::factory(Option::Universe u,
 
 Option::Option(Universe u, uint16_t type)
     :universe_(u), type_(type) {
-
-    // END option (type 255 is forbidden as well)
-    if ((u == V4) && ((type == 0) || (type > 254))) {
-        isc_throw(BadValue, "Can't create V4 option of type "
-                  << type << ", V4 options are in range 1..254");
-    }
+    check();
 }
 
 Option::Option(Universe u, uint16_t type, const OptionBuffer& data)

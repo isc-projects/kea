@@ -59,14 +59,10 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
         return (Optional<uint32_t>());
     }
 
-    if (code == 0) {
-        isc_throw(DhcpConfigError, "option code must not be zero "
-                  "(" << getPosition("code", parent) << ")");
-
-    } else if (address_family_ == AF_INET &&
-               code > std::numeric_limits<uint8_t>::max()) {
+    if (address_family_ == AF_INET &&
+        code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
-                << "', it must not be greater than '"
+                  << "', it must not be greater than '"
                   << static_cast<int>(std::numeric_limits<uint8_t>::max())
                   << "' (" << getPosition("code", parent)
                   << ")");
@@ -74,7 +70,7 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
     } else if (address_family_ == AF_INET6 &&
                code > std::numeric_limits<uint16_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
-                << "', it must not exceed '"
+                  << "', it must not exceed '"
                   << std::numeric_limits<uint16_t>::max()
                   << "' (" << getPosition("code", parent)
                   << ")");
