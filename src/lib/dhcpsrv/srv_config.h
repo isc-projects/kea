@@ -507,10 +507,14 @@ public:
     /// The @c other parameter must be a @c SrvConfig or its derivation.
     ///
     /// This method calls either @c merge4 or @c merge6 based on
-    /// @c CfgMgr::family_.
     ///
     /// Currently, the following parts of the configuration are merged:
-    /// - IPv4 subnets
+    /// - globals
+    /// - option definitions
+    /// - options
+    /// - via @c merge4 or @c merge6 depending on @c CfgMgr::family_:
+    ///     - shared networks
+    ///     - subnets
     ///
     /// @todo Add support for merging other configuration elements.
     ///
