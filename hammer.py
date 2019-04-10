@@ -27,13 +27,15 @@ try:
     import urllib.request
 except:
     pass
+try:
+    from urllib.parse import urljoin
+except:
+    from urlparse import urljoin
 import xml.etree.ElementTree as ET
 
 # TODO:
 # - add docker provider
 #   https://developer.fedoraproject.org/tools/docker/docker-installation.html
-# - improve building from tarball
-# - improve native-pkg builds
 # - avoid using network if possible (e.g. check first if pkgs are installed)
 
 
@@ -215,7 +217,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
             while p.poll() is None and (timeout is None or t1 - t0 < timeout):
                 line = p.stdout.readline()
                 if line:
-                    line_decoded = line.decode(errors='ignore').rstrip() + '\r'
+                    line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip() + '\r'
                     if not quiet:
                         print(line_decoded)
                     if capture:
@@ -312,7 +314,8 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
         elif system in ['debian', 'ubuntu']:
             pkg_cache.update(_prepare_installed_packages_cache_for_debs())
 
-        # check if packages actually need to be installed
+    # check if packages actually need to be installed
+    if pkg_cache:
         pkgs_to_install = []
         for pkg in pkgs:
             if pkg not in pkg_cache or pkg_cache[pkg]['status'] != 'ii':
@@ -343,6 +346,15 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
     pkgs = ' '.join(pkgs)
     cmd += ' ' + pkgs
     execute(cmd, timeout=timeout, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+
+
+def _get_full_repo_url(repository_url, system, revision, pkg_version):
+    if not repository_url:
+        return None
+    repo_name = 'kea-%s-%s-%s' % (pkg_version.rsplit('.', 1)[0], system, revision)
+    repo_url = urljoin(repository_url, 'repository')
+    repo_url += '/%s-ci/' % repo_name
+    return repo_url
 
 
 class VagrantEnv(object):
@@ -573,14 +585,14 @@ class VagrantEnv(object):
             log.error(msg)
             raise ExecutionError(msg)
 
-    def run_build_and_test(self, tarball_path, jobs):
+    def run_build_and_test(self, tarball_path, jobs, pkg_version, pkg_isc_version, upload, repository_url):
         """Run build and unit tests inside Vagrant system."""
         if self.dry_run:
             return 0, 0
 
         # prepare tarball if needed and upload it to vagrant system
         if not tarball_path:
-            name_ver = 'kea-1.5.0'
+            name_ver = 'kea-%s' % pkg_version
             cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
             cmd += ' --exclude "*~" --exclude .git --exclude .libs '
             cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
@@ -595,22 +607,60 @@ class VagrantEnv(object):
         t0 = time.time()
 
         # run build command
-        bld_cmd = "%s hammer.py build -p local -t %s.tar.gz -j %d" % (self.python, name_ver, jobs)
-        if self.features_arg:
-            bld_cmd += ' ' + self.features_arg
-        if self.nofeatures_arg:
-            bld_cmd += ' ' + self.nofeatures_arg
-        if self.check_times:
-            bld_cmd += ' -i'
-        if self.ccache_enabled:
-            bld_cmd += ' --ccache-dir /ccache'
+        bld_cmd = "{python} hammer.py build -p local {features} {nofeatures} {check_times} {ccache}"
+        bld_cmd += " {tarball} {jobs} {pkg_version} {pkg_isc_version} {repository_url}"
+        bld_cmd = bld_cmd.format(python=self.python,
+                                 features=self.features_arg,
+                                 nofeatures=self.nofeatures_arg,
+                                 check_times='-i' if self.check_times else '',
+                                 ccache='--ccache-dir /ccache' if self.ccache_enabled else '',
+                                 tarball='-t %s.tar.gz' % name_ver,
+                                 jobs='-j %d' % jobs,
+                                 pkg_version='--pkg-version %s' % pkg_version,
+                                 pkg_isc_version='--pkg-isc-version %s' % pkg_isc_version,
+                                 repository_url=('--repository-url %s' % repository_url) if repository_url else '')
+
         timeout = _calculate_build_timeout(self.features) + 5 * 60
         self.execute(bld_cmd, timeout=timeout, log_file_path=log_file_path, quiet=self.quiet)  # timeout: 40 minutes
 
         ssh_cfg_path = self.dump_ssh_config()
 
         if 'native-pkg' in self.features:
-            execute('scp -F %s -r default:/home/vagrant/rpm-root/RPMS/x86_64/ .' % ssh_cfg_path)
+            pkgs_dir = os.path.join(self.vagrant_dir, 'pkgs')
+            if os.path.exists(pkgs_dir):
+                execute('rm -rf %s' % pkgs_dir)
+            os.makedirs(pkgs_dir)
+
+            if self.system in ['ubuntu', 'debian']:
+                # TODO: change to pkgs folder
+                execute('scp -F %s -r default:/home/vagrant/kea-src/isc-kea_* .' % ssh_cfg_path, cwd=pkgs_dir)
+                execute('scp -F %s -r default:/home/vagrant/kea-src/*deb .' % ssh_cfg_path, cwd=pkgs_dir)
+            elif self.system in ['fedora', 'centos', 'rhel']:
+                execute('scp -F %s -r default:/home/vagrant/pkgs/* .' % ssh_cfg_path, cwd=pkgs_dir)
+            else:
+                raise NotImplementedError
+
+            if upload:
+                repo_url = _get_full_repo_url(repository_url, self.system, self.revision, pkg_version)
+                assert repo_url is not None
+                upload_cmd = 'curl -v --netrc -f'
+
+                if self.system in ['ubuntu', 'debian']:
+                    upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
+                    file_ext = '.deb'
+
+                elif self.system in ['fedora', 'centos', 'rhel']:
+                    upload_cmd += ' --upload-file %s '
+                    file_ext = '.rpm'
+
+                upload_cmd += ' ' + repo_url
+
+                for fn in os.listdir(pkgs_dir):
+                    if not fn.endswith(file_ext):
+                        continue
+                    fp = os.path.join(pkgs_dir, fn)
+                    cmd = upload_cmd % fp
+                    execute(cmd)
 
         t1 = time.time()
         dt = int(t1 - t0)
@@ -715,9 +765,9 @@ class VagrantEnv(object):
 
         # run prepare-system inside Vagrant system
         cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times} {ccache}"
-        cmd = cmd.format(features=self.features_arg,
+        cmd = cmd.format(python=self.python,
+                         features=self.features_arg,
                          nofeatures=self.nofeatures_arg,
-                         python=self.python,
                          check_times='-i' if self.check_times else '',
                          ccache='--ccache-dir /ccache' if self.ccache_enabled else '')
         self.execute(cmd, timeout=40 * 60, log_file_path=log_file_path, quiet=self.quiet)
@@ -886,16 +936,27 @@ def _install_cassandra_rpm(system, env, check_times):
         execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
 
 
-def _install_freeradius_client(env, check_times):
+def _install_freeradius_client(system, revision, features, env, check_times):
     """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
+    # check if it is already installed
     if (os.path.exists('/usr/local/lib/libfreeradius-client.so.2.0.0') and
         os.path.exists('/usr/local/include/freeradius-client.h')):
         log.info('freeradius is already installed')
         return
+
+    # install freeradius dependencies
+    if system in ['centos', 'rhel', 'fedora']:
+        install_pkgs('nettle-devel', env=env, check_times=check_times)
+    elif system in ['debian', 'ubuntu']:
+        install_pkgs('nettle-dev', env=env, check_times=check_times)
+    else:
+        raise NotImplementedError
+
+    # checkout sources, build them and install
     execute('rm -rf freeradius-client')
     execute('git clone https://github.com/fxdupont/freeradius-client.git', env=env, check_times=check_times)
     execute('git checkout iscdev', cwd='freeradius-client', env=env, check_times=check_times)
-    execute('./configure', cwd='freeradius-client', env=env, check_times=check_times)
+    execute('./configure --with-nettle', cwd='freeradius-client', env=env, check_times=check_times)
     execute('make', cwd='freeradius-client', env=env, check_times=check_times)
     execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
     execute('sudo ldconfig', env=env, check_times=check_times)
@@ -917,13 +978,13 @@ def prepare_system_local(features, check_times):
                     'log4cplus-devel', 'boost-devel']
 
         if 'native-pkg' in features:
-            packages.extend(['rpm-build', 'mariadb-connector-c-devel'])
+            packages.extend(['rpm-build', 'python2-devel', 'python3-devel'])
 
         if 'docs' in features:
             packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
 
         if 'mysql' in features:
-            packages.extend(['mariadb', 'mariadb-server', 'community-mysql-devel'])
+            packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
             packages.extend(['postgresql-devel', 'postgresql-server'])
@@ -950,6 +1011,9 @@ def prepare_system_local(features, check_times):
 
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
                     'log4cplus-devel', 'boost-devel', 'mariadb-devel', 'postgresql-devel']
+
+        if 'native-pkg' in features:
+            packages.extend(['rpm-build', 'python2-devel'])
 
         if 'docs' in features:
             packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
@@ -1038,9 +1102,7 @@ def prepare_system_local(features, check_times):
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['bison', 'debhelper', 'default-libmysqlclient-dev', 'libmysqlclient-dev',
-                             'docbook', 'docbook-xsl', 'flex', 'libboost-dev', 'libpq-dev',
-                             'postgresql-server-dev-all', 'python3-dev'])
+            packages.extend(['bison', 'debhelper', 'docbook', 'flex', 'libboost-dev', 'python3-dev'])
 
         if 'mysql' in features:
             if revision == '16.04':
@@ -1072,15 +1134,19 @@ def prepare_system_local(features, check_times):
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
                     'liblog4cplus-dev', 'libboost-system-dev']
 
-        if 'docs' in features:
-            packages.extend(['dblatex', 'xsltproc', 'elinks', 'docbook-xsl'])
-
         if 'unittest' in features:
             if revision == '8':
                 # libgtest-dev does not work and googletest is not available
                 _install_gtest_sources()
             else:
                 packages.append('googletest')
+
+        if 'docs' in features:
+            packages.extend(['dblatex', 'xsltproc', 'elinks', 'docbook-xsl'])
+
+        if 'native-pkg' in features:
+            packages.extend(['build-essential', 'fakeroot', 'devscripts'])
+            packages.extend(['bison', 'debhelper', 'docbook', 'flex', 'libboost-dev', 'python3-dev'])
 
         if 'mysql' in features:
             if revision == '8':
@@ -1136,7 +1202,7 @@ def prepare_system_local(features, check_times):
         _configure_pgsql(system, features)
 
     if 'radius' in features:
-        _install_freeradius_client(env, check_times)
+        _install_freeradius_client(system, revision, features, env, check_times)
 
     #execute('sudo rm -rf /usr/share/doc')
 
@@ -1161,6 +1227,19 @@ def _calculate_build_timeout(features):
         timeout += 60
     timeout *= 60
     return timeout
+
+
+def _prepare_ccache_if_needed(system, features, ccache_dir, env):
+    if 'ccache' in features or ccache_dir is not None:
+        if system in ['debian', 'ubuntu']:
+            ccache_bin_path = '/usr/lib/ccache/'
+        elif system in ['centos', 'rhel', 'fedora']:
+            ccache_bin_path = '/usr/lib64/ccache'
+            env['CC'] = 'ccache gcc'
+            env['CXX'] = 'ccache g++'
+        env['PATH'] = ccache_bin_path + ':' + env['PATH']
+        env['CCACHE_DIR'] = ccache_dir
+    return env
 
 
 def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs, dry_run,
@@ -1223,13 +1302,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cpus = jobs
 
     # enable ccache if requested
-    if 'ccache' in features or ccache_dir is not None:
-        if system in ['debian', 'ubuntu']:
-            ccache_bin_path = '/usr/lib/ccache/'
-        else:
-            ccache_bin_path = '/usr/lib64/ccache'
-        env['PATH'] = ccache_bin_path + ':' + env['PATH']
-        env['CCACHE_DIR'] = ccache_dir
+    env = _prepare_ccache_if_needed(system, features, ccache_dir, env)
 
     # do build
     timeout = _calculate_build_timeout(features)
@@ -1311,11 +1384,52 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
                 execute('kea-admin lease-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
 
 
-def _build_native_pkg(system, features, tarball_path, env, check_times, dry_run):
+def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
+                      pkg_version, pkg_isc_version, repository_url):
     """Build native (RPM or DEB) packages."""
+
+    # enable ccache if requested
+    env = _prepare_ccache_if_needed(system, features, ccache_dir, env)
+
+    repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
+    assert repo_url is not None
+
     if system in ['fedora', 'centos', 'rhel']:
+        # install our freeradius-client but now from rpm
+        cmd = 'bash -c "cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
+        cmd += '[nexus]\n'
+        cmd += 'name=ISC Repo\n'
+        cmd += 'baseurl=%s\n' % repo_url
+        cmd += 'enabled=1\n'
+        cmd += 'gpgcheck=0\n'
+        cmd += "EOF\n\""
+        execute(cmd)
+        frc = []
+        if system == 'fedora' and revision == '28':
+            frc.append('freeradius-client-1.1.7-isc20190408125858.fc28')
+            frc.append('freeradius-client-devel-1.1.7-isc20190408125858.fc28')
+        elif system == 'fedora' and revision == '29':
+            frc.append('freeradius-client-1.1.7-isc20190408101030.fc29')
+            frc.append('freeradius-client-devel-1.1.7-isc20190408101030.fc29')
+        elif system == 'centos':
+            frc.append('freeradius-client-1.1.7-isc20190408140511.el7')
+            frc.append('freeradius-client-devel-1.1.7-isc20190408140511.el7')
+        if frc:
+            install_pkgs(frc, env=env, check_times=check_times)
+
+        # unpack kea sources tarball
+        execute('sudo rm -rf kea-src', dry_run=dry_run)
+        os.mkdir('kea-src')
+        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
+        src_path = glob.glob('kea-src/*')[0]
+
+        # prepare folder for all pkgs
+        if os.path.exists('pkgs'):
+            execute('rm -rf pkgs')
+        os.mkdir('pkgs')
+
         # prepare RPM environment
-        execute('rm -rf rpm-root', dry_run=dry_run)
+        execute('rm -rf rpm-root')
         os.mkdir('rpm-root')
         os.mkdir('rpm-root/BUILD')
         os.mkdir('rpm-root/BUILDROOT')
@@ -1325,10 +1439,6 @@ def _build_native_pkg(system, features, tarball_path, env, check_times, dry_run)
         os.mkdir('rpm-root/SRPMS')
 
         # get rpm.spec from tarball
-        execute('sudo rm -rf kea-src', dry_run=dry_run)
-        os.mkdir('kea-src')
-        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
-        src_path = glob.glob('kea-src/*')[0]
         rpm_dir = os.path.join(src_path, 'rpm')
         for f in os.listdir(rpm_dir):
             if f == 'kea.spec':
@@ -1338,22 +1448,38 @@ def _build_native_pkg(system, features, tarball_path, env, check_times, dry_run)
         execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
 
         # do rpm build
-        cmd = "rpmbuild -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
+        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
+        cmd = cmd % (pkg_version, pkg_isc_version)
         execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
         if 'install' in features:
+            execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
             execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
 
+        execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
+
     elif system in ['ubuntu', 'debian']:
+        # install our freeradius-client but now from deb
+        execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
+        execute("sudo apt-key adv --fetch-keys %s/repository/repo-keys/repo-key.gpg" % repository_url)
+        execute('sudo apt update')
+        install_pkgs('libfreeradius-client libfreeradius-client-dev', env=env, check_times=check_times)
+
         # unpack tarball
         execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
         os.mkdir('kea-src')
         execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
         src_path = glob.glob('kea-src/*')[0]
 
+        # update version, etc
+        execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+        execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+
         # do deb build
-        execute('debuild -i -us -uc -b', env=env, cwd=src_path,
-                timeout=60 * 40, check_times=check_times, dry_run=dry_run)
+        env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
+        env['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
+        cmd = 'debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR --prepend-path=/usr/lib/ccache -i -us -uc -b'
+        execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
         if 'install' in features:
             execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
@@ -1362,7 +1488,8 @@ def _build_native_pkg(system, features, tarball_path, env, check_times, dry_run)
         raise NotImplementedError
 
 
-def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir):
+def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, pkg_version, pkg_isc_version,
+                repository_url):
     """Prepare local system for Kea development based on requested features.
 
     If tarball_path is provided then instead of Kea sources from current directory
@@ -1379,7 +1506,8 @@ def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir):
         tarball_path = os.path.abspath(tarball_path)
 
     if 'native-pkg' in features:
-        _build_native_pkg(system, features, tarball_path, env, check_times, dry_run)
+        _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
+                          pkg_version, pkg_isc_version, repository_url)
     else:
         _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs,
                                    dry_run, ccache_dir)
@@ -1388,7 +1516,8 @@ def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir):
 
 
 def build_in_vagrant(provider, system, revision, features, leave_system, tarball_path,
-                     dry_run, quiet, clean_start, check_times, jobs, ccache_dir):
+                     dry_run, quiet, clean_start, check_times, jobs, ccache_dir,
+                     pkg_version, pkg_isc_version, upload, repository_url):
     """Build Kea via Vagrant in specified system with specified features."""
     log.info('')
     log.info(">>> Building %s, %s, %s", provider, system, revision)
@@ -1407,7 +1536,7 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
             ve.destroy()
         ve.bring_up_latest_box()
         ve.prepare_system()
-        total, passed = ve.run_build_and_test(tarball_path, jobs)
+        total, passed = ve.run_build_and_test(tarball_path, jobs, pkg_version, pkg_isc_version, upload, repository_url)
         msg = ' - ' + green('all ok')
     except KeyboardInterrupt as e:
         error = e
@@ -1611,6 +1740,14 @@ def parse_args():
                         'package (e.g. tar.gz).')
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
+    parser.add_argument('--pkg-version', default='0.0.1',
+                        help='Kea version.')
+    parser.add_argument('--pkg-isc-version', default='isc0',
+                        help='ISC build version of Kea.')
+    parser.add_argument('--upload', action='store_true',
+                        help='Request uploading native packages to repository indicated by --repository-url.')
+    parser.add_argument('--repository-url', default=None,
+                        help='Repository for 3rd party dependencies and for uploading built packages.')
     parser = subparsers.add_parser('prepare-system',
                                    help="Prepare system for doing Kea development i.e. install all required "
                                    "dependencies and pre-configure the system. build command always first calls "
@@ -1618,6 +1755,8 @@ def parse_args():
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
+    parser.add_argument('--repository-url', default=None,
+                        help='Repository for 3rd party dependencies and for uploading built packages.')
     parser = subparsers.add_parser('ssh', help="SSH to indicated system.",
                                    formatter_class=argparse.RawDescriptionHelpFormatter,
                                    description="Allows getting into the system using SSH. If the system is "
@@ -1636,6 +1775,8 @@ def parse_args():
                                    help="Package currently running system into Vagrant Box. Prepared box can be "
                                    "later deployed to Vagrant Cloud.",
                                    parents=[parent_parser1, parent_parser2])
+    parser.add_argument('--repository-url', default=None,
+                        help='Repository for 3rd party dependencies and for uploading built packages.')
 
     args = main_parser.parse_args()
 
@@ -1658,7 +1799,7 @@ def list_supported_systems():
 
 def list_created_systems():
     """List VMs that are created on this host by Hammer."""
-    _, output = execute('vagrant global-status', quiet=True, capture=True)
+    _, output = execute('vagrant global-status --prune', quiet=True, capture=True)
     systems = []
     for line in output.splitlines():
         if 'hammer' not in line:
@@ -1692,6 +1833,14 @@ def _get_features(args):
     features = features.difference(nofeatures)
     if hasattr(args, 'ccache_dir') and args.ccache_dir:
         features.add('ccache')
+    if 'native-pkg' in features:
+        features.add('docs')
+        features.add('perfdhcp')
+        features.add('shell')
+        features.add('mysql')
+        features.add('pgsql')
+        features.add('radius')
+        features.discard('unittest')
     return features
 
 
@@ -1785,7 +1934,7 @@ def build_cmd(args):
     log.info('Enabled features: %s', ' '.join(features))
     if args.provider == 'local':
         build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run,
-                    args.ccache_dir)
+                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url)
         return
 
     _check_system_revision(args.system, args.revision)
@@ -1824,7 +1973,7 @@ def build_cmd(args):
         ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
         result = build_in_vagrant(provider, system, revision, features, args.leave_system, args.from_tarball,
                                   args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs),
-                                  ccache_dir)
+                                  ccache_dir, args.pkg_version, args.pkg_isc_version, args.upload, args.repository_url)
         results[(provider, system, revision)] = result
 
         error = result[1]
@@ -1844,10 +1993,12 @@ def main():
     args, parser = parse_args()
 
     # prepare logging
-    level = logging.INFO
     if args.verbose:
         level = logging.DEBUG
-    fmt = '[HAMMER]  %(asctime)-15s  %(message)s'
+        fmt = '[HAMMER]  %(asctime)-15s L%(lineno)04d %(message)s'
+    else:
+        level = logging.INFO
+        fmt = '[HAMMER]  %(asctime)-15s %(message)s'
     logging.basicConfig(format=fmt, level=level)
 
     # dispatch command
