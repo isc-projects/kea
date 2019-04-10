@@ -70,13 +70,7 @@ TEST_F(OptionTest, v4_basic) {
     EXPECT_NO_THROW(opt.reset());
 
     // V4 options have type 0...255
-    EXPECT_THROW(opt.reset(new Option(Option::V4, 256)), BadValue);
-
-    // 0 is a special PAD option
-    EXPECT_THROW(opt.reset(new Option(Option::V4, 0)), BadValue);
-
-    // 255 is a special END option
-    EXPECT_THROW(opt.reset(new Option(Option::V4, 255)), BadValue);
+    EXPECT_THROW(opt.reset(new Option(Option::V4, 256)), OutOfRange);
 }
 
 const uint8_t dummyPayload[] =
