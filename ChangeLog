@@ -1,3 +1,8 @@
+1555.	[bug]		fdupont
+	Corrected parsers for option definitions to prevent setting out of
+	range option code values.
+	(Gitlab #500,!247, git 5c139602d7656df74060fee63461ffba4f290547)
+
 1554.	[func]		tmark
 	kea-dhcp6 now uses globals, option definitions, options,
 	share-networks, and subnets from configuration back ends.
