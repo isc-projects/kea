@@ -1,3 +1,9 @@
+1553.	[func]		marcin
+	DHCPv4 server automatically fetches incremental configuration updates
+	from the configuration backends.
+	(Gitlab #103,!277, git 319f7709edb40d6c01390a34942b9d4a200b333e)
+	(Gitlab #103,!289, git 80087e2d0f90f9ba6623860fed4f4d33ee935ad0)
+
 1552.	[bug]		marcin
 	Corrected inheritance of the subnet and shared network specific
 	parameters in the MySQL Configuration Backend.
