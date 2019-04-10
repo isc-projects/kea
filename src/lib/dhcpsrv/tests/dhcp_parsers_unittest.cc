@@ -833,6 +833,84 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
+/// @brief Check parsing of options with code 0.
+TEST_F(ParseConfigTest, optionDataTest0) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 0,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 0,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 0);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify that the option data is correct.
+    std::string val = "type=00000, len=00004: 192.0.2.0 (ipv4-address)";
+
+    EXPECT_EQ(val, opt_ptr->toText());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
+
+/// @brief Check parsing of options with code 255.
+TEST_F(ParseConfigTest, optionDataTest255) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 255,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 255,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 255);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify that the option data is correct.
+    std::string val = "type=00255, len=00004: 192.0.2.0 (ipv4-address)";
+
+    EXPECT_EQ(val, opt_ptr->toText());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
+
 /// @brief Check minimal parsing of options.
 ///
 /// Same than basic but without optional parameters set to their default.
