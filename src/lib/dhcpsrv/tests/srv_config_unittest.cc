@@ -1056,7 +1056,6 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     // Set some explicit values.
     cfg_to.setDeclinePeriod(100);
-    cfg_to.setEchoClientId(false);
     cfg_to.setDhcp4o6Port(777);
     cfg_to.setServerTag("not_this_server");
 

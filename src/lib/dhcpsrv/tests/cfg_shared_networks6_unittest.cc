@@ -18,9 +18,11 @@ using namespace asiolink;
 
 namespace {
 
-/// Attempts to verify an expected network within a collection of networks
+/// @brief Attempts to verify an expected network within a collection
+/// of networks
+///
 /// @param networks set of networks in which to look
-/// @param name name of the expected network 
+/// @param name name of the expected network
 /// @param exp_valid expected valid lifetime of the network
 /// @param exp_subnets list of subnet IDs the network is expected to own
 void checkMergedNetwork(const CfgSharedNetworks6& networks, const std::string& name,
