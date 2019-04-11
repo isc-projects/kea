@@ -702,8 +702,17 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6) {
 // Test that the information about unspecified optional parameters gets
 // propagated to the database.
 TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6WithOptionalUnspecified) {
-    // Insert new subnet.
+    // Create a subnet and wrap it within a shared network. It is important
+    // to have the shared network to verify that the subnet doesn't inherit
+    // the values of the shared network but stores the NULL values in the
+    // for those parameters that are unspecified on the subnet level.
     Subnet6Ptr subnet = test_subnets_[2];
+    SharedNetwork6Ptr shared_network = test_networks_[0];
+    shared_network->add(subnet);
+
+    // Need to add the shared network to the database because otherwise
+    // the subnet foreign key would fail.
+    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network);
     cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
 
     // Fetch this subnet by subnet identifier.
@@ -1009,6 +1018,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
                                                      test_networks_[0]->getName());
     ASSERT_TRUE(returned_network);
 
+    EXPECT_GT(returned_network->getId(), 0);
+
     // The easiest way to verify whether the returned shared network matches the
     // inserted shared network is to convert both to text.
     EXPECT_EQ(shared_network->toElement()->str(),
@@ -1274,6 +1285,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getOptionDef6) {
                               test_option_defs_[0]->getCode(),
                               test_option_defs_[0]->getOptionSpaceName());
     ASSERT_TRUE(returned_option_def);
+    EXPECT_GT(returned_option_def->getId(), 0);
 
     EXPECT_TRUE(returned_option_def->equals(*option_def));
 
@@ -1541,6 +1553,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
         auto option0 = index.find(test_options_[0]->option_->getType());
         ASSERT_FALSE(option0 == index.end());
         testOptionsEquivalent(*test_options_[0], *option0);
+        EXPECT_GT(option0->getId(), 0);
     }
 
     {
@@ -1548,6 +1561,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
         auto option1 = index.find(test_options_[1]->option_->getType());
         ASSERT_FALSE(option1 == index.end());
         testOptionsEquivalent(*test_options_[1], *option1);
+        EXPECT_GT(option1->getId(), 0);
     }
 
     {
@@ -1555,6 +1569,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
         auto option5 = index.find(test_options_[5]->option_->getType());
         ASSERT_FALSE(option5 == index.end());
         testOptionsEquivalent(*test_options_[5], *option5);
+        EXPECT_GT(option5->getId(), 0);
     }
 }
 
@@ -1632,6 +1647,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
     {
         SCOPED_TRACE("verify returned option");
         testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+        EXPECT_GT(returned_opt_posix_timezone.getId(), 0);
     }
 
     {
@@ -1735,6 +1751,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
     {
         SCOPED_TRACE("verify returned pool option");
         testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+        EXPECT_GT(returned_opt_posix_timezone.getId(), 0);
     }
 
     {
@@ -1860,6 +1877,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
     {
         SCOPED_TRACE("verify returned pool option");
         testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+        EXPECT_GT(returned_opt_posix_timezone.getId(), 0);
     }
 
     {
@@ -1978,6 +1996,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
     {
         SCOPED_TRACE("verify returned option");
         testOptionsEquivalent(*opt_posix_timezone, returned_opt_posix_timezone);
+        EXPECT_GT(returned_opt_posix_timezone.getId(), 0);
     }
 
     {
