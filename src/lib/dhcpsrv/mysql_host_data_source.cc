@@ -1940,6 +1940,8 @@ public:
     /// It is assumed that the order is such that the indices of statements
     /// reading the database are less than those of statements modifying the
     /// database.
+    /// @note: please add new statements doing read only operations before
+    /// the WRITE_STMTS_BEGIN position.
     enum StatementIndex {
         GET_HOST_DHCPID,        // Gets hosts by host identifier
         GET_HOST_ADDR,          // Gets hosts by IPv4 address
@@ -1948,6 +1950,10 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
+        GET_HOST_SUBID4,        // Get hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Get hosts by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Get hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Get hosts by IPv6 SubnetID beginning by HID
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_OPTION,       // Insert DHCPv4 option
@@ -1955,10 +1961,6 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
-        GET_HOST_SUBID4,        // Get hosts by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Get hosts by IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Get hosts by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Get hosts by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -2302,49 +2304,6 @@ TaggedStatementArray tagged_statements = { {
             "WHERE h.dhcp6_subnet_id = ? AND r.address = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
-    // Inserts a host into the 'hosts' table.
-    {MySqlHostDataSourceImpl::INSERT_HOST,
-         "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
-            "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-            "dhcp4_client_classes, dhcp6_client_classes, "
-            "user_context, dhcp4_next_server, "
-            "dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
-         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
-
-    // Inserts a single IPv6 reservation into 'reservations' table.
-    {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
-         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-            "dhcp6_iaid, host_id) "
-         "VALUES (?,?,?,?,?)"},
-
-    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {MySqlHostDataSourceImpl::INSERT_V4_OPTION,
-         "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
-            "persistent, user_context, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
-
-    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
-         "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
-            "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
-
-    // Delete a single IPv4 reservation by subnet id and reserved address.
-    {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
-     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
-
-    // Delete a single IPv4 reservation by subnet id and identifier.
-    {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
-     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
-     "AND dhcp_identifier = ?"},
-
-    // Delete a single IPv6 reservation by subnet id and identifier.
-    {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
-     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
-     "AND dhcp_identifier = ?"},
-
     // Retrieves host information along with the DHCPv4 options associated with
     // it. Left joining the dhcp4_options table results in multiple rows being
     // returned for the same host. Hosts are retrieved by IPv4 subnet id.
@@ -2432,7 +2391,50 @@ TaggedStatementArray tagged_statements = { {
                 "ON h.host_id = o.host_id "
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
-            "ORDER BY h.host_id, o.option_id, r.reservation_id"}
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
+
+    // Inserts a host into the 'hosts' table.
+    {MySqlHostDataSourceImpl::INSERT_HOST,
+         "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
+            "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+            "dhcp4_client_classes, dhcp6_client_classes, "
+            "user_context, dhcp4_next_server, "
+            "dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
+         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+
+    // Inserts a single IPv6 reservation into 'reservations' table.
+    {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
+         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+            "dhcp6_iaid, host_id) "
+         "VALUES (?,?,?,?,?)"},
+
+    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {MySqlHostDataSourceImpl::INSERT_V4_OPTION,
+         "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
+            "persistent, user_context, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+
+    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
+         "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
+            "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+
+    // Delete a single IPv4 reservation by subnet id and reserved address.
+    {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
+
+    // Delete a single IPv4 reservation by subnet id and identifier.
+    {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
+     "AND dhcp_identifier = ?"},
+
+    // Delete a single IPv6 reservation by subnet id and identifier.
+    {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
+     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
+     "AND dhcp_identifier = ?"}
     }
 };
 
