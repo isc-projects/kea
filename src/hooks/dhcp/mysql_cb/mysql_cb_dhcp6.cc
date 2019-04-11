@@ -867,7 +867,7 @@ public:
 
         // Create binding for host reservation mode.
         MySqlBindingPtr hr_mode_binding;
-        auto hr_mode = subnet->getHostReservationMode();
+        auto hr_mode = subnet->getHostReservationMode(Network::Inheritance::NONE);
         if (!hr_mode.unspecified()) {
             hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
                                                                    (hr_mode.get()));
@@ -906,22 +906,22 @@ public:
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(subnet->getID()),
             MySqlBinding::createString(subnet->toText()),
-            MySqlBinding::condCreateString(subnet->getClientClass()),
-            MySqlBinding::condCreateString(subnet->getIface()),
+            MySqlBinding::condCreateString(subnet->getClientClass(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getIface(Network::Inheritance::NONE)),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
-            createBinding(subnet->getPreferred()),
-            MySqlBinding::condCreateBool(subnet->getRapidCommit()),
-            createBinding(subnet->getT2()),
+            createBinding(subnet->getPreferred(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getRapidCommit(Network::Inheritance::NONE)),
+            createBinding(subnet->getT2(Network::Inheritance::NONE)),
             createInputRelayBinding(subnet),
-            createBinding(subnet->getT1()),
+            createBinding(subnet->getT1(Network::Inheritance::NONE)),
             createInputRequiredClassesBinding(subnet),
             hr_mode_binding,
             shared_network_binding,
             createInputContextBinding(subnet),
-            createBinding(subnet->getValid()),
-            MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes()),
-            MySqlBinding::condCreateFloat(subnet->getT1Percent()),
-            MySqlBinding::condCreateFloat(subnet->getT2Percent())
+            createBinding(subnet->getValid(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1206,6 +1206,7 @@ public:
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
                 last_network.reset(new SharedNetwork6(out_bindings[1]->getString()));
+		last_network->setId(last_network_id);
 
                 // client_class
                 if (!out_bindings[2]->amNull()) {
@@ -1405,7 +1406,7 @@ public:
 
         // Create binding for host reservation mode.
         MySqlBindingPtr hr_mode_binding;
-        auto hr_mode = shared_network->getHostReservationMode();
+        auto hr_mode = shared_network->getHostReservationMode(Network::Inheritance::NONE);
         if (!hr_mode.unspecified()) {
             hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
                                                                    (hr_mode.get()));
@@ -1415,21 +1416,21 @@ public:
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
-            MySqlBinding::condCreateString(shared_network->getClientClass()),
-            MySqlBinding::condCreateString(shared_network->getIface()),
+            MySqlBinding::condCreateString(shared_network->getClientClass(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getIface(Network::Inheritance::NONE)),
             MySqlBinding::createTimestamp(shared_network->getModificationTime()),
-            createBinding(shared_network->getPreferred()),
-            MySqlBinding::condCreateBool(shared_network->getRapidCommit()),
-            createBinding(shared_network->getT2()),
+            createBinding(shared_network->getPreferred(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getRapidCommit(Network::Inheritance::NONE)),
+            createBinding(shared_network->getT2(Network::Inheritance::NONE)),
             createInputRelayBinding(shared_network),
-            createBinding(shared_network->getT1()),
+            createBinding(shared_network->getT1(Network::Inheritance::NONE)),
             createInputRequiredClassesBinding(shared_network),
             hr_mode_binding,
             createInputContextBinding(shared_network),
-            createBinding(shared_network->getValid()),
-            MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes()),
-            MySqlBinding::condCreateFloat(shared_network->getT1Percent()),
-            MySqlBinding::condCreateFloat(shared_network->getT2Percent())
+            createBinding(shared_network->getValid(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(shared_network->getT1Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(shared_network->getT2Percent(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
