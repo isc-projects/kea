@@ -723,7 +723,6 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
 TEST_F(ParseConfigTest, badCodeOptionDefTest) {
 
     {
-
         SCOPED_TRACE("negative code");
         std::string config =
             "{ \"option-def\": [ {"
@@ -763,6 +762,56 @@ TEST_F(ParseConfigTest, badCodeOptionDefTest) {
             "      \"code\": 1000,"
             "      \"type\": \"ip-address\","
             "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with PAD");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"zero\","
+            "      \"code\": 0,"
+            "      \"type\": \"ip-address\","
+            "      \"space\": \"dhcp4\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with END");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"max\","
+            "      \"code\": 255,"
+            "      \"type\": \"ip-address\","
+            "      \"space\": \"dhcp4\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with reserved");
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"zero\","
+            "      \"code\": 0,"
+            "      \"type\": \"ipv6-address\","
+            "      \"space\": \"dhcp6\""
             "  } ]"
             "}";
 
@@ -966,6 +1015,105 @@ TEST_F(ParseConfigTest, unknownOptionDataTest) {
     // Verify that the configuration string does not parse.
     int rcode = parseConfiguration(config, true);
     ASSERT_NE(0, rcode);
+}
+
+/// @brief Check parsing of option data using invalid code fails.
+TEST_F(ParseConfigTest, badCodeOptionDataTest) {
+
+    {
+        SCOPED_TRACE("negative code");
+        std::string config =
+            "{ \"option-data\": [ {"
+            "      \"code\": -1,"
+            "      \"data\": \"01\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, true);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("out of range code (v6)");
+        std::string config =
+            "{ \"option-data\": [ {"
+            "      \"code\": 100000,"
+            "      \"data\": \"01\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, true);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("out of range code (v4)");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-data\": [ {"
+            "      \"code\": 1000,"
+            "      \"data\": \"01\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with PAD");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-data\": [ {"
+            "      \"code\": 0,"
+            "      \"data\": \"01\","
+            "      \"csv-format\": false,"
+            "      \"space\": \"dhcp4\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with END");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-data\": [ {"
+            "      \"code\": 255,"
+            "      \"data\": \"01\","
+            "      \"csv-format\": false,"
+            "      \"space\": \"dhcp4\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with reserved");
+        family_ = AF_INET6;    // Switch to DHCPv6.
+
+        std::string config =
+            "{ \"option-data\": [ {"
+            "      \"code\": 0,"
+            "      \"data\": \"01\","
+            "      \"csv-format\": false,"
+            "      \"space\": \"dhcp6\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
 }
 
 /// @brief Check parsing of options with invalid space fails.
