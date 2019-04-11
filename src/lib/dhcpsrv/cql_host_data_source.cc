@@ -429,9 +429,9 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_HOST_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_PREFIX;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS;
-constexpr StatementTag CqlHostExchange::DELETE_HOST;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID;
+constexpr StatementTag CqlHostExchange::DELETE_HOST;
 
 StatementMap CqlHostExchange::tagged_statements_ = {
     {INSERT_HOST,
@@ -770,12 +770,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "ALLOW FILTERING "
      }},
 
-    {DELETE_HOST,
-     {DELETE_HOST,
-      "DELETE FROM host_reservations WHERE id = ? "
-      "IF EXISTS "
-     }},
-
     {GET_HOST_BY_IPV4_SUBNET_ID,
      {GET_HOST_BY_IPV4_SUBNET_ID,
       "SELECT "
@@ -846,6 +840,12 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "FROM host_reservations "
       "WHERE host_ipv6_subnet_id = ? "
       "ALLOW FILTERING "
+     }},
+
+    {DELETE_HOST,
+     {DELETE_HOST,
+      "DELETE FROM host_reservations WHERE id = ? "
+      "IF EXISTS "
      }}
 };
 
