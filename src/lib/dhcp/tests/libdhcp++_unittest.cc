@@ -1055,7 +1055,9 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
         // Suboption 1.
         0x01, 0x03, 0x66, 0x6f, 0x6f, // code = 1, length = 2, content = "foo"
         // END
-        0xff
+        0xff,
+        // Extra bytes at tail.
+        0x01, 0x02, 0x03, 0x04
     };
     size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
     OptionBuffer buf(raw_data, raw_data + raw_data_len);
@@ -1063,8 +1065,12 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
     // Parse options.
     OptionCollection options;
     list<uint16_t> deferred;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                            options, deferred));
+    size_t offset = 0;
+    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
+                                                     options, deferred));
+
+    // Returned offset should point to the END.
+    EXPECT_EQ(0xff, raw_data[offset]);
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());
