@@ -285,12 +285,13 @@ PgSqlTaggedStatement tagged_statements[] = {
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
         "state = $16, user_context = $17 "
-      "WHERE address = $18" },
+      "WHERE address = $18"},
+
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
       "all_lease4_stats",
       "SELECT subnet_id, state, leases as state_count"
-      "  FROM lease4_stat ORDER BY subnet_id, state" },
+      "  FROM lease4_stat ORDER BY subnet_id, state"},
 
     // SUBNET_LEASE4_STATS
     { 1, { OID_INT8 },
@@ -298,7 +299,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY state" },
+      "  ORDER BY state"},
 
     // SUBNET_RANGE_LEASE4_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -306,13 +307,13 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, state" },
+      "  ORDER BY subnet_id, state"},
 
     // ALL_LEASE6_STATS,
     { 0, { OID_NONE },
      "all_lease6_stats",
      "SELECT subnet_id, lease_type, state, leases as state_count"
-     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state"},
 
     // SUBNET_LEASE6_STATS
     { 1, { OID_INT8 },
@@ -320,7 +321,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, lease_type, state, leases as state_count"
       "  FROM lease6_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY lease_type, state" },
+      "  ORDER BY lease_type, state"},
 
     // SUBNET_RANGE_LEASE6_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -328,7 +329,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, lease_type, state, leases as state_count"
       "  FROM lease6_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, lease_type, state" },
+      "  ORDER BY subnet_id, lease_type, state"},
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
 };
