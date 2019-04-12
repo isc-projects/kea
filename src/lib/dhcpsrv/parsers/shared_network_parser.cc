@@ -162,6 +162,9 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        // reservation-mode
+        parseHostReservationMode(shared_network_data, network);
+
         parseTeePercents(shared_network_data, network);
 
     } catch (const DhcpConfigError&) {
@@ -270,6 +273,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
                 shared_network->setRelayInfo(*relay_info);
             }
         }
+
+        // reservation-mode
+        parseHostReservationMode(shared_network_data, network);
 
         parseTeePercents(shared_network_data, network);
 

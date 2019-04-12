@@ -801,16 +801,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     // Let's set host reservation mode.
-    if (params->contains("reservation-mode")) {
-        try {
-            std::string hr_mode = getString(params, "reservation-mode");
-            subnet4->setHostReservationMode(Network::hrModeFromString(hr_mode));
-        } catch (const BadValue& ex) {
-            isc_throw(DhcpConfigError, "Failed to process specified value "
-                      " of reservation-mode parameter: " << ex.what()
-                      << "(" << getPosition("reservation-mode", params) << ")");
-        }
-    }
+    parseHostReservationMode(params, network);
 
     // Try setting up client class.
     if (params->contains("client-class")) {
@@ -1227,16 +1218,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Let's set host reservation mode. If not specified, the default value of
     // all will be used.
-    if (params->contains("reservation-mode")) {
-        try {
-            std::string hr_mode = getString(params, "reservation-mode");
-            subnet6->setHostReservationMode(Network::hrModeFromString(hr_mode));
-        } catch (const BadValue& ex) {
-            isc_throw(DhcpConfigError, "Failed to process specified value "
-                      " of reservation-mode parameter: " << ex.what()
-                      << "(" << getPosition("reservation-mode", params) << ")");
-        }
-    }
+    parseHostReservationMode(params, network);
 
     // Try setting up client class.
     if (params->contains("client-class")) {
