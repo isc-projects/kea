@@ -8,14 +8,14 @@
 #define DHCPV6_SRV_H
 
 #include <asiolink/io_service.h>
-#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/pkt6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
-#include <dhcp/option_definition.h>
-#include <dhcp/pkt6.h>
+#include <dhcp/option_custom.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/thread_pool.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/callout_handle_store.h>
@@ -26,6 +26,8 @@
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <process/daemon.h>
+
+#include <boost/noncopyable.hpp>
 
 #include <functional>
 #include <iostream>
@@ -60,6 +62,10 @@ public:
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
+///
+/// This class does not support any controlling mechanisms directly.
+/// See the derived \ref ControlledDhcpv6Srv class for support for
+/// command and configuration updates over msgq.
 class Dhcpv6Srv : public process::Daemon {
 private:
 
@@ -82,10 +88,13 @@ public:
     /// Instantiates necessary services, required to run DHCPv6 server.
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
-    /// old or create new DUID.
+    /// old or create new DUID. It is possible to specify alternate
+    /// port on which DHCPv6 server will listen on and alternate port
+    /// where DHCPv6 server sends all responses to. Those are mostly useful
+    /// for testing purposes.
     ///
-    /// @param server_port port on which all sockets will listen
-    /// @param client_port port to which all responses will be sent
+    /// @param server_port specifies port number to listen on
+    /// @param client_port specifies port number to send to
     /// @param run_multithreaded enables or disables multithreaded mode
     Dhcpv6Srv(uint16_t server_port = DHCP6_SERVER_PORT,
               uint16_t client_port = 0,
@@ -181,6 +190,11 @@ public:
     /// @brief Instructs the server to shut down.
     void shutdown();
 
+    ///
+    /// @name Public accessors returning values required to (re)open sockets.
+    ///
+    //@{
+    ///
     /// @brief Get UDP port on which server should listen.
     ///
     /// Typically, server listens on UDP port 547. Other ports are only
@@ -190,6 +204,7 @@ public:
     uint16_t getServerPort() const {
         return (server_port_);
     }
+    //@}
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
     ///
@@ -753,6 +768,7 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt6Ptr& pkt);
 
+public:
     /// @brief Evaluate classes.
     ///
     /// @note Second part of the classification.
@@ -763,7 +779,7 @@ protected:
     /// @param pkt packet to be classified.
     /// @param depend_on_known if false classes depending on the KNOWN or
     /// UNKNOWN classes are skipped, if true only these classes are evaluated.
-    void evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known);
+    static void evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known);
 
     /// @brief Assigns classes retrieved from host reservation database.
     ///

@@ -20,6 +20,7 @@
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
@@ -202,7 +203,6 @@ private:
     asiolink::IOServicePtr io_service_;
 
 public:
-
     /// @brief defines if certain option may, must or must not appear
     typedef enum {
         FORBIDDEN,
@@ -380,7 +380,9 @@ public:
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 
-    /// @brief Discard all in-progress packets
+    /// @brief Discards cached and parked packets
+    /// Clears the call_handle store and packet parking lots
+    /// of all packets.  Called during reconfigure and shutdown.
     void discardPackets();
 
 protected:
@@ -929,7 +931,6 @@ protected:
     void classifyPacket(const Pkt4Ptr& pkt);
 
 public:
-
     /// @brief Evaluate classes.
     ///
     /// @note Second part of the classification.
@@ -982,11 +983,6 @@ protected:
     void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
                                  Pkt4Ptr& rsp);
 
-    /// @brief Allocation Engine.
-    /// Pointer to the allocation engine that we are currently using
-    /// It must be a pointer, because we will support changing engines
-    /// during normal operation (e.g. to use different allocators)
-    boost::shared_ptr<AllocEngine> alloc_engine_;
 
 private:
 
@@ -1016,6 +1012,11 @@ protected:
     /// UDP port number to which server sends responses.
     uint16_t client_port_;
 
+    /// @brief Allocation Engine.
+    /// Pointer to the allocation engine that we are currently using
+    /// It must be a pointer, because we will support changing engines
+    /// during normal operation (e.g. to use different allocators)
+    boost::shared_ptr<AllocEngine> alloc_engine_;
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
     NetworkStatePtr network_state_;

@@ -123,7 +123,6 @@ public:
         return (server_);
     }
 
-
 private:
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
