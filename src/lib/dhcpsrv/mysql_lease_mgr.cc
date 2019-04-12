@@ -291,19 +291,19 @@ tagged_statements = { {
 
     {MySqlLeaseMgr::ALL_LEASE6_STATS,
      "SELECT subnet_id, lease_type, state, leases as state_count"
-     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state"},
 
     {MySqlLeaseMgr::SUBNET_LEASE6_STATS,
      "SELECT subnet_id, lease_type, state, leases as state_count"
      "  FROM lease6_stat "
      "  WHERE subnet_id = ? "
-     "  ORDER BY lease_type, state" },
+     "  ORDER BY lease_type, state"},
 
     {MySqlLeaseMgr::SUBNET_RANGE_LEASE6_STATS,
      "SELECT subnet_id, lease_type, state, leases as state_count"
      "  FROM lease6_stat "
      "  WHERE subnet_id >= ? and subnet_id <= ? "
-     "  ORDER BY subnet_id, lease_type, state" }
+     "  ORDER BY subnet_id, lease_type, state"}
     }
 };
 
