@@ -1194,7 +1194,7 @@ $
             "library": "/path/libdhcp_flex_id.so",
             "parameters": {
                 "identifier-expression": "<userinput>expression</userinput>",
-                "replace-client-id": "<userinput>false</userinput>"
+                "replace-client-id": <userinput>false</userinput>
             }
         },
         ...
@@ -1325,7 +1325,7 @@ $
             "library": "/path/libdhcp_flex_id.so",
             "parameters": {
                 "identifier-expression": "<userinput>expression</userinput>",
-                "replace-client-id": "<userinput>true</userinput>"
+                "replace-client-id": <userinput>true</userinput>
             }
         },
         ...
