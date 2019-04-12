@@ -77,6 +77,22 @@ BaseNetworkParser::parseTeePercents(const ConstElementPtr& network_data,
     network->setT1Percent(t1_percent);
 }
 
+void
+BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network_data,
+                                            NetworkPtr& network) {
+    if (network_data->contains("reservation-mode")) {
+        try {
+            std::string hr_mode = getString(network_data, "reservation-mode");
+            network->setHostReservationMode(Network::hrModeFromString(hr_mode));
+        } catch (const BadValue& ex) {
+            isc_throw(DhcpConfigError, "invalid reservation-mode parameter: "
+                      << ex.what() << " (" << getPosition("reservation-mode",
+                                                          network_data) << ")");
+        }
+    }
+}
+
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

@@ -243,6 +243,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("/dev/null", network->getFilename().get());
     EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
     EXPECT_EQ("example.org", network->getSname().get());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, network->getHostReservationMode());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
