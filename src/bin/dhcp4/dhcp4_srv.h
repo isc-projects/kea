@@ -17,9 +17,8 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/thread_pool.h>
 #include <dhcpsrv/alloc_engine.h>
-#include <dhcpsrv/cb_ctl_dhcp4.h>
-#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>

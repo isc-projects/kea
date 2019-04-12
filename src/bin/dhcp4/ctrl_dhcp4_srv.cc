@@ -707,6 +707,10 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         }
     }
 
+    // Finally, we can commit runtime option definitions in libdhcp++. This is
+    // exception free.
+    LibDHCP::commitRuntimeOptionDefs();
+
     // This hook point notifies hooks libraries that the configuration of the
     // DHCPv4 server has completed. It provides the hook library with the pointer
     // to the common IO service object, new server configuration in the JSON
