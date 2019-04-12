@@ -1,3 +1,8 @@
+1556.	[bug]		fdupont
+	Corrected parser for option definitions to refuse definitions with
+	duplicate code or name.
+	(Gitlab #503,!246, git 0befb653277463cd8f88740119fe90a93dbb1466)
+
 1555.	[bug]		fdupont
 	Corrected parsers for option definitions to prevent setting out of
 	range option code values.
