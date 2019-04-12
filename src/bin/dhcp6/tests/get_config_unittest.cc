@@ -7615,6 +7615,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                    \"ip-addresses\": [ ]\n"
 "                },\n"
 "                \"renew-timer\": 900,\n"
+"                \"reservation-mode\": \"all\",\n"
 "                \"subnet6\": [\n"
 "                    {\n"
 "                        \"comment\": \"A subnet\",\n"
