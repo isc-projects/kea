@@ -35,7 +35,6 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
-    /// @throw NotImplemented if server selector is "unassigned".
     virtual Subnet6Ptr
     getSubnet6(const db::ServerSelector& server_selector,
                const std::string& subnet_prefix) const;
@@ -45,7 +44,6 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of a subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
-    /// @throw NotImplemented if server selector is "unassigned".
     virtual Subnet6Ptr
     getSubnet6(const db::ServerSelector& server_selector, const SubnetID& subnet_id) const;
 
@@ -269,13 +267,13 @@ public:
                         const asiolink::IOAddress& pool_end_address,
                         const OptionDescriptorPtr& option);
 
-    /// @brief Creates or updates pd pool level option.
+    /// @brief Creates or updates prefix delegation pool level option.
     ///
     /// @param server_selector Server selector.
-    /// @param pd_pool_prefix Address part of the prefix of the pd pool
-    /// to which the option belongs.
-    /// @param pd_pool_prefix_length Prefix length of the pd pool to which
-    /// the option belongs.
+    /// @param pd_pool_prefix Address part of the prefix of the prefix
+    /// delegation pool to which the option belongs.
+    /// @param pd_pool_prefix_length Prefix length of the prefix
+    /// delegation pool to which the option belongs.
     /// @param option Option to be added or updated.
     /// @throw NotImplemented if server selector is "unassigned".
     virtual void
@@ -423,13 +421,13 @@ public:
                   const uint16_t code,
                   const std::string& space);
 
-    /// @brief Deletes pd pool level option.
+    /// @brief Deletes prefix delegation pool level option.
     ///
     /// @param server_selector Server selector.
-    /// @param pool_start_address Lower bound address of the pool to which
-    /// deleted option belongs.
-    /// @param pool_end_address Upper bound address of the pool to which the
-    /// deleted option belongs.
+    /// @param pool_start_address Lower bound address of the prefix
+    /// delegationpool to which deleted option belongs.
+    /// @param pool_end_address Upper bound address of the prefix
+    /// delegation pool to which the deleted option belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
