@@ -35,7 +35,6 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
-    /// @throw NotImplemented if server selector is "unassigned".
     virtual Subnet4Ptr
     getSubnet4(const db::ServerSelector& server_selector,
                const std::string& subnet_prefix) const;
@@ -45,7 +44,6 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of a subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
-    /// @throw NotImplemented if server selector is "unassigned".
     virtual Subnet4Ptr
     getSubnet4(const db::ServerSelector& server_selector, const SubnetID& subnet_id) const;
 
