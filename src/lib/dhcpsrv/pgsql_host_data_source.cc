@@ -1750,7 +1750,8 @@ TaggedStatementArray tagged_statements = { {
     {13,
      { OID_BYTEA, OID_INT2,
        OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
-       OID_VARCHAR, OID_VARCHAR, OID_TEXT },
+       OID_VARCHAR, OID_VARCHAR, OID_TEXT,
+       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR },
      "insert_host",
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
      "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
