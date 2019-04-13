@@ -365,6 +365,97 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
     });
 }
 
+void MySqlConfigBackendImpl::createUpdateOptionDef
+    (const db::ServerSelector& server_selector,
+     const OptionDefinitionPtr& option_def,
+     const std::string& space,
+     const int& get_option_def_code_space,
+     const int& insert_option_def,
+     const int& update_option_def,
+     const int& create_audit_revision,
+     const int& insert_option_def_server)
+{
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
+    auto tag = getServerTag(server_selector, "creating or updating option definition");
+
+    ElementPtr record_types = Element::createList();
+    for (auto field : option_def->getRecordFields()) {
+        record_types->add(Element::create(static_cast<int>(field)));
+    }
+    MySqlBindingPtr record_types_binding = record_types->empty() ?
+        MySqlBinding::createNull() : MySqlBinding::createString(record_types->str());
+
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createInteger<uint16_t>(option_def->getCode()),
+        MySqlBinding::createString(option_def->getName()),
+        MySqlBinding::createString(option_def->getOptionSpaceName().empty() ?
+                                   space : option_def->getOptionSpaceName()),
+        MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getType())),
+        MySqlBinding::createTimestamp(option_def->getModificationTime()),
+        MySqlBinding::createBool(option_def->getArrayType()),
+        MySqlBinding::createString(option_def->getEncapsulatedSpace()),
+        record_types_binding,
+        createInputContextBinding(option_def)
+    };
+
+    MySqlTransaction transaction(conn_);
+
+    // Need to check if this definition already exists. We can't follow
+    // the same pattern as for shared networks and subnets, to try to insert
+    // the definition first and fall back to update if the DuplicateEntry
+    // exception is thrown, because the option code/space is not unique
+    // within the dhcpX_option_def table. Inserting another option definition
+    // with existing option code/name would not violate the key and the
+    // option definition instance would be inserted successfully. Therefore,
+    // we first fetch the option definition for the given server, code and
+    // space name. If it exists, we simply update it.
+    OptionDefinitionPtr existing_definition =
+        getOptionDef(get_option_def_code_space,
+                     server_selector,
+                     option_def->getCode(),
+                     option_def->getOptionSpaceName());
+
+    // Create scoped audit revision. As long as this instance exists
+    // no new audit revisions are created in any subsequent calls.
+    ScopedAuditRevision audit_revision(this,
+                                       create_audit_revision,
+                                       server_selector,
+                                       "option definition set",
+                                       true);
+
+    if (existing_definition) {
+        // Need to add three more bindings for WHERE clause.
+        in_bindings.push_back(MySqlBinding::createString(tag));
+        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(existing_definition->getCode()));
+        in_bindings.push_back(MySqlBinding::createString(existing_definition->getOptionSpaceName()));
+        conn_.updateDeleteQuery(update_option_def, in_bindings);
+
+    } else {
+        // If the option definition doesn't exist, let's insert it.
+        conn_.insertQuery(insert_option_def, in_bindings);
+
+        // Fetch unique identifier of the inserted option definition and use it
+        // as input to the next query.
+        uint64_t id = mysql_insert_id(conn_.mysql_);
+
+        MySqlBindingCollection in_server_bindings = {
+            MySqlBinding::createInteger<uint64_t>(id), // option_def_id
+            MySqlBinding::createString(tag), // tag used to obtain server_id
+            MySqlBinding::createTimestamp(option_def->getModificationTime()), // modification_ts
+        };
+
+        // Insert association.
+        conn_.insertQuery(insert_option_def_server, in_server_bindings);
+    }
+
+    transaction.commit();
+}
+
 OptionDescriptorPtr
 MySqlConfigBackendImpl::getOption(const int index,
                                   const Option::Universe& universe,
