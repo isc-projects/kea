@@ -366,6 +366,28 @@ public:
                        const db::MySqlBindingCollection& in_bindings,
                        OptionDefContainer& option_defs);
 
+    /// @brief Creates or updates an option definition.
+    ///
+    /// @param server_selector Server selector.
+    /// @param option_def Option definition to be added or updated.
+    /// @param space Default option space
+    /// @param get_option_def_code_space Statement getting option
+    /// definition by code and space.
+    /// @param insert_option_def Statement inserting option definition.
+    /// @param update_option_def Statement updating option definition.
+    /// @param create_audit_revision Statement creating audit revision.
+    /// @param insert_option_def_server Statement inserting option
+    /// definition in the server table.
+    /// @throw NotImplemented if server selector is "unassigned".
+    void createUpdateOptionDef(const db::ServerSelector& server_selector,
+                               const OptionDefinitionPtr& option_def,
+                               const std::string& space,
+                               const int& get_option_def_code_space,
+                               const int& insert_option_def,
+                               const int& update_option_def,
+                               const int& create_audit_revision,
+                               const int& insert_option_def_server);
+
     /// @brief Sends query to retrieve single global option by code and
     /// option space.
     ///
