@@ -52,7 +52,7 @@ SYSTEMS = {
 IMAGE_TEMPLATES = {
     'fedora-27-lxc':           {'bare': 'lxc-fedora-27',               'kea': 'godfryd/kea-fedora-27'},
     'fedora-27-virtualbox':    {'bare': 'generic/fedora27',            'kea': 'godfryd/kea-fedora-27'},
-    'fedora-28-lxc':           {'bare': 'lxc-fedora-28',               'kea': 'godfryd/kea-fedora-28'},
+    'fedora-28-lxc':           {'bare': 'godfryd/lxc-fedora-28',       'kea': 'godfryd/kea-fedora-28'},
     'fedora-28-virtualbox':    {'bare': 'generic/fedora28',            'kea': 'godfryd/kea-fedora-28'},
     'fedora-29-lxc':           {'bare': 'godfryd/lxc-fedora-29',       'kea': 'godfryd/kea-fedora-29'},
     'fedora-29-virtualbox':    {'bare': 'generic/fedora29',            'kea': 'godfryd/kea-fedora-29'},
@@ -446,8 +446,23 @@ class VagrantEnv(object):
 
     def up(self):
         """Do Vagrant up."""
-        execute("vagrant up --no-provision --provider %s" % self.provider,
-                cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
+        exitcode, out = execute("vagrant up --no-provision --provider %s" % self.provider,
+                                cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run,
+                                capture=True, raise_error=False)
+        if exitcode != 0:
+            if 'There is container on your system' in out and 'lxc-destroy' in out:
+                m = re.search('`lxc-destroy.*?`', out)
+                if m:
+                    # destroy some old container
+                    cmd = m.group(0)[1:-1]
+                    cmd = 'sudo ' + cmd + ' -f'
+                    execute(cmd, timeout=60)
+
+                    # try again spinning up new
+                    execute("vagrant up --no-provision --provider %s" % self.provider,
+                            cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
+                    return
+            raise ExecutionError('There is a problem with putting up a system')
 
     def _get_cloud_meta(self, image_tpl=None):
         if '/' not in self.image_tpl:
