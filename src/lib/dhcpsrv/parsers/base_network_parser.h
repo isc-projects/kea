@@ -52,7 +52,7 @@ protected:
 
     /// @brief Parses host reservation mode.
     //
-    /// @param shared_network_data Data element holding shared network
+    /// @param network_data Data element holding shared network
     /// configuration to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
