@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -219,17 +219,32 @@ tokenToNum(const std::string& num_token) {
 std::vector<uint8_t>
 quotedStringToBinary(const std::string& quoted_string);
 
-/// \brief Converts a string of hexadecimal digits with colons into
-///  a vector.
+/// \brief Converts a string of separated hexadecimal digits.
+/// into a vector.
 ///
-/// This function supports the following formats:
-/// - yy:yy:yy:yy:yy
-/// - y:y:y:y:y
-/// - y:yy:yy:y:y
+/// Octets may contain 1 or 2 digits:
+///
+/// - yy<s>yy<s>yy<s>yy<s>yy
+/// - y<s>y<s>y<s>y<s>y
+/// - y<s>yy<s>yy<s>y<s>y
 ///
 /// If the decoded string doesn't match any of the supported formats,
 /// an exception is thrown.
 ///
+/// \param hex_string Input string.
+/// \param binary Vector receiving converted string into binary.
+/// \throw isc::BadValue if the format of the input string is invalid.
+void
+decodeSeparatedHexString(const std::string& hex_string,
+                         const std::string& sep,
+                         std::vector<uint8_t>& binary);
+
+/// \brief Converts a string of hexadecimal digits with colons into
+///  a vector.
+///
+/// Convenience method which calls @c decodeSeparatedHexString() passing
+/// in a colon for the separator.
+
 /// \param hex_string Input string.
 /// \param binary Vector receiving converted string into binary.
 /// \throw isc::BadValue if the format of the input string is invalid.
@@ -240,9 +255,11 @@ decodeColonSeparatedHexString(const std::string& hex_string,
 /// \brief Converts a formatted string of hexadecimal digits into
 /// a vector.
 ///
-/// This function supports formats supported by
-/// @ref decodeColonSeparatedHexString and the following additional
-/// formats:
+/// This function supports the following formats:
+///
+/// - yy<s>yy<s>yy<s>yy   where <s> is either a colon or space, see
+/// @c decodeSeparatedHexString
+///
 /// - yyyyyyyyyy
 /// - 0xyyyyyyyyyy
 ///

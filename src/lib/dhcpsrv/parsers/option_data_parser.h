@@ -84,12 +84,26 @@ private:
     template<typename SearchKey>
     OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
                                              const SearchKey& search_key) const;
-
     /// @brief Create option instance.
     ///
     /// Creates an instance of an option and adds it to the provided
     /// options storage. If the option data parsed by \ref build function
     /// are invalid or insufficient this function emits an exception.
+    ///
+    /// If the option data is given as a string containing a hexadecimal
+    /// literal, then it is converted into binary format.  These literals
+    /// may contain upper and lower case digits.  They may be octets
+    /// delimited by colons or spaces (octets may be 1 or 2 digits)
+    /// If not delimited octets then they must be a continous string of
+    /// digits with or without a "0x" prefix.  Examples:
+    ///
+    /// -# ab:cd:ef   - colon delimited
+    /// -# ab cd ef   - space delimited
+    /// -# 0xabcdef   - 0x prefixed (no delimiters)
+    /// -# abcdef     - no prefix or delimeters
+    ///
+    /// A leading zero is assumed for odd number of digits
+    /// in an octet or continuous string.
     ///
     /// @param option_data An element holding data for a single option being
     /// created.

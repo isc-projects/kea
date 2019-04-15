@@ -3357,55 +3357,60 @@ TEST_F(Dhcp4ParserTest, optionCodeZero) {
     testInvalidOptionParam("0", "code");
 }
 
-// Verify that option data which contains non hexadecimal characters
-// is rejected by the configuration.
-TEST_F(Dhcp4ParserTest, optionDataInvalidChar) {
-    // Option code 0 is reserved and should not be accepted
-    // by configuration parser.
-    testInvalidOptionParam("01020R", "data");
+// Verify that invalid hex literals for option data are detected.
+TEST_F(Dhcp4ParserTest, optionDataInvalidHexLiterals) {
+    testInvalidOptionParam("01020R", "data");   // non hex digit
+    testInvalidOptionParam("0x01:02", "data");  // 0x prefix with colon separator
+    testInvalidOptionParam("0x01 02", "data");  // 0x prefix with space separator
+    testInvalidOptionParam("0X0102", "data");   // 0X upper case X in prefix
+    testInvalidOptionParam("01.02", "data");    // invalid separator
 }
 
-// Verify that option data containing '0x' prefix is rejected
-// by the configuration.
-TEST_F(Dhcp4ParserTest, optionDataUnexpectedPrefix) {
-    // Option code 0 is reserved and should not be accepted
-    // by configuration parser.
-    testInvalidOptionParam("0x0102", "data");
-}
+// Verify the valid forms hex literals in option data are supported.
+TEST_F(Dhcp4ParserTest, optionDataValidHexLiterals) {
 
-// Verify that either lower or upper case characters are allowed
-// to specify the option data.
-TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
-    ConstElementPtr x;
-    std::string config = createConfigWithOption("0a0b0C0D", "data");
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config));
-
-    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    checkResult(x, 0);
-
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
-    ASSERT_TRUE(subnet);
-    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
-    ASSERT_EQ(1, options->size());
-
-    // Get the search index. Index #1 is to search using option code.
-    const OptionContainerTypeIndex& idx = options->get<1>();
-
-    // Get the options for specified index. Expecting one option to be
-    // returned but in theory we may have multiple options with the same
-    // code so we get the range.
-    std::pair<OptionContainerTypeIndex::const_iterator,
-              OptionContainerTypeIndex::const_iterator> range =
-        idx.equal_range(56);
-    // Expect single option with the code equal to 100.
-    ASSERT_EQ(1, std::distance(range.first, range.second));
-    const uint8_t foo_expected[] = {
-        0x0A, 0x0B, 0x0C, 0x0D
+    std::vector<std::string> valid_hexes =
+    {
+        "0a0b0C0D",     // upper and lower case
+        "0A:0B:0C:0D",  // colon seperator
+        "0A 0B 0C 0D",  // space seperator
+        "A0B0C0D",      // odd number of digits
+        "0xA0B0C0D"     // 0x prefix
     };
-    // Check if option is valid in terms of code and carried data.
-    testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
+
+    for (auto valid_hex : valid_hexes) {
+        ConstElementPtr x;
+        std::string config = createConfigWithOption(valid_hex, "data");
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = parseDHCP4(config));
+
+        EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+        checkResult(x, 0);
+
+        Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+            getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
+        ASSERT_TRUE(subnet);
+        OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
+        ASSERT_EQ(1, options->size());
+
+        // Get the search index. Index #1 is to search using option code.
+        const OptionContainerTypeIndex& idx = options->get<1>();
+
+        // Get the options for specified index. Expecting one option to be
+        // returned but in theory we may have multiple options with the same
+        // code so we get the range.
+        std::pair<OptionContainerTypeIndex::const_iterator,
+                OptionContainerTypeIndex::const_iterator> range = idx.equal_range(56);
+        // Expect single option with the code equal to 100.
+        ASSERT_EQ(1, std::distance(range.first, range.second));
+        const uint8_t foo_expected[] = { 0x0A, 0x0B, 0x0C, 0x0D };
+
+        // Check if option is valid in terms of code and carried data.
+        testOption(*range.first, 56, foo_expected, sizeof(foo_expected));
+
+        // Clear configuration for the next pass.
+        resetConfiguration();
+    }
 }
 
 // Verify that specific option object is returned for standard
