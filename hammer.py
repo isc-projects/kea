@@ -868,7 +868,7 @@ def _install_cassandra_rpm(system, env, check_times):
     if not os.path.exists('/usr/bin/cassandra'):
         if system == 'centos':
             install_pkgs('yum-utils', env=env, check_times=check_times)
-            execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
+            execute('sudo yum-config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/', raise_error=False)
             execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
             pkgs = 'cassandra cassandra-tools libuv libuv-devel openssl'
         else:
