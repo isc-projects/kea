@@ -12,6 +12,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -165,7 +166,6 @@ public:
     ParseConfigTest()
         :family_(AF_INET6) {
         reset_context();
-        CfgMgr::instance().clear();
     }
 
     ~ParseConfigTest() {
@@ -452,10 +452,11 @@ public:
 
     /// @brief Wipes the contents of the context to allowing another parsing
     /// during a given test if needed.
-    void reset_context(){
+    /// @param family protocol family to use durin the test, defaults to AF_INET6
+    void reset_context(uint16_t family = AF_INET6){
         // Note set context universe to V6 as it has to be something.
         CfgMgr::instance().clear();
-        family_ = AF_INET6;
+        family_ = family;
 
         // Ensure no hooks libraries are loaded.
         HooksManager::unloadLibraries();
@@ -1442,6 +1443,49 @@ TEST_F(ParseConfigTest, commaCSVFormatOptionData) {
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
     cfg.runCfgOptionsTest(family_, expected);
 }
+
+// Verifies that hex literals can support a variety of formats.
+TEST_F(ParseConfigTest, hexOptionData) {
+
+    // All of the following variants should parse correctly
+    // into the same two IPv4 addresses: 12.0.3.1 and 192.0.3.2
+    std::vector<std::string> valid_hexes = {
+        "0C000301C0000302", // even number
+        "C000301C0000302",  // odd number
+        "0C 00 03 01 C0 00 03 02", // spaces
+        "0C:00:03:01:C0:00:03:02", // colons
+        "0x0C000301C0000302",  // 0x
+        "C 0 3 1 C0 0 3 02",  // odd or or even octets
+        "0x0c000301C0000302"   // upper or lower case digits 
+    };
+
+    for (auto hex_str : valid_hexes) {
+        ostringstream os; 
+        os <<
+            "{ \n" 
+            "  \"option-data\": [ { \n"
+            "    \"name\": \"domain-name-servers\", \n"
+            "    \"code \": 6, \n"
+            "    \"space\": \"dhcp4\", \n"
+            "    \"csv-format\": false, \n"
+            "    \"data\": \"" << hex_str << "\" \n"
+            " } ] \n"
+            "} \n";
+
+        reset_context(AF_INET);
+        int rcode = 0;
+        ASSERT_NO_THROW(rcode = parseConfiguration(os.str(), true));
+        EXPECT_EQ(0, rcode);
+
+        Option4AddrLstPtr opt = boost::dynamic_pointer_cast<Option4AddrLst>
+                                (getOptionPtr(DHCP4_OPTION_SPACE, 6));
+        ASSERT_TRUE(opt);
+        ASSERT_EQ(2, opt->getAddresses().size());
+        EXPECT_EQ("12.0.3.1", opt->getAddresses()[0].toText());
+        EXPECT_EQ("192.0.3.2", opt->getAddresses()[1].toText());
+    }
+}
+
 
 /// The next set of tests check basic operation of the HooksLibrariesParser.
 //
@@ -2637,6 +2681,8 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_TRUE(network->getRapidCommit().unspecified());
     EXPECT_FALSE(network->getRapidCommit().get());
 }
+
+
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in

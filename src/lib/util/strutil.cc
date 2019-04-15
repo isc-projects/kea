@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -214,8 +214,14 @@ quotedStringToBinary(const std::string& quoted_string) {
 void
 decodeColonSeparatedHexString(const std::string& hex_string,
                               std::vector<uint8_t>& binary) {
+    decodeSeparatedHexString(hex_string, ":", binary);
+}
+
+void
+decodeSeparatedHexString(const std::string& hex_string, const std::string& sep,
+                         std::vector<uint8_t>& binary) {
     std::vector<std::string> split_text;
-    boost::split(split_text, hex_string, boost::is_any_of(":"),
+    boost::split(split_text, hex_string, boost::is_any_of(sep),
                  boost::algorithm::token_compress_off);
 
     std::vector<uint8_t> binary_vec;
@@ -225,7 +231,7 @@ decodeColonSeparatedHexString(const std::string& hex_string,
         // means that two consecutive colons were specified. This is not
         // allowed.
         if ((split_text.size() > 1) && split_text[i].empty()) {
-            isc_throw(isc::BadValue, "two consecutive colons specified in"
+            isc_throw(isc::BadValue, "two consecutive separators ('" << sep << "') specified in"
                       " a decoded string '" << hex_string << "'");
 
         // Between a colon we expect at most two characters.
@@ -262,14 +268,16 @@ decodeColonSeparatedHexString(const std::string& hex_string,
     binary.swap(binary_vec);
 }
 
+
 void
 decodeFormattedHexString(const std::string& hex_string,
                          std::vector<uint8_t>& binary) {
     // If there is at least one colon we assume that the string
     // comprises octets separated by colons (e.g. MAC address notation).
     if (hex_string.find(':') != std::string::npos) {
-        decodeColonSeparatedHexString(hex_string, binary);
-
+        decodeSeparatedHexString(hex_string, ":", binary);
+    } else if (hex_string.find(' ') != std::string::npos) {
+        decodeSeparatedHexString(hex_string, " ", binary);
     } else {
         std::ostringstream s;
 

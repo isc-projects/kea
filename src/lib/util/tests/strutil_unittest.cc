@@ -431,6 +431,8 @@ void testFormatted(const std::string& input,
 TEST(StringUtilTest, decodeFormattedHexString) {
     // Colon separated.
     testFormatted("1:A7:B5:4:23", "01A7B50423");
+    // Space separated.
+    testFormatted("1 A7 B5 4 23", "01A7B50423");
     // No colons, even number of digits.
     testFormatted("17a534", "17A534");
     // Odd number of digits.
@@ -443,17 +445,26 @@ TEST(StringUtilTest, decodeFormattedHexString) {
     testFormatted("", "");
 
     std::vector<uint8_t> decoded;
-    // Whitespace.
+    // Dangling colon.
+    EXPECT_THROW(decodeFormattedHexString("0a:", decoded),
+                 isc::BadValue);
+    // Dangling space.
     EXPECT_THROW(decodeFormattedHexString("0a ", decoded),
                  isc::BadValue);
-    // Whitespace within a string.
-    EXPECT_THROW(decodeFormattedHexString("01 02", decoded),
+    // '0x' prefix and spaces.
+    EXPECT_THROW(decodeFormattedHexString("x01 02", decoded),
                  isc::BadValue);
     // '0x' prefix and colons.
     EXPECT_THROW(decodeFormattedHexString("0x01:02", decoded),
                  isc::BadValue);
+    // colon and spaces mixed
+    EXPECT_THROW(decodeFormattedHexString("01:02 03", decoded),
+                 isc::BadValue);
     // Missing colon.
     EXPECT_THROW(decodeFormattedHexString("01:0203", decoded),
+                 isc::BadValue);
+    // Missing space.
+    EXPECT_THROW(decodeFormattedHexString("01 0203", decoded),
                  isc::BadValue);
     // Invalid prefix.
     EXPECT_THROW(decodeFormattedHexString("x0102", decoded),
