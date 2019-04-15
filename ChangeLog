@@ -1,3 +1,9 @@
+1558.	[func]		tmark
+	In addition to a continuous string of digits, hexadecimal
+	literals may now be a series of one or more octets separated
+	by either colons or spaces.
+	(Gitlab #484, git 251efcd5f518a215173845b22555276df0e0ffc6)
+
 1557.	[bug]		marcin
 	Added support for "reservation-mode" parameter in the shared network
 	configuration parsers. It corrects a bug in Configuration Backend

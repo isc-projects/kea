@@ -1376,19 +1376,32 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
     </para>
-
        <para>
-       Care should be taken
-       to use proper encoding when using hexadecimal format, as Kea's ability
-       to validate data correctness in hexadecimal is limited.
-      </para>
-
+       Kea supports the following formats when specifying hexadecimal data:
+       <itemizedlist>
+       <listitem>
+       <simpara><command>Delimited octets</command> One or more octets
+       separated by either colons or spaces (':' or ' '). While each octet
+       may contain one or two digits, we strongly recommend always using two
+       digits. Valid examples are "ab:cd:ef" and "ab cd ef".
+       </simpara>
+       </listitem>
+       <listitem>
+       <simpara><command>String of digits</command> A continuous string of
+       hexadecimal digits with or without a "0x" prefix.  Valid examples
+       are "0xabcdef" and "abcdef".
+       </simpara>
+       </listitem>
+       </itemizedlist>
+       Care should be taken to use proper encoding when using hexadecimal
+       format.  Kea's ability to validate data correctness in hexadecimal
+       is limited.
+       </para>
       <para>
         Most of the parameters in the "option-data" structure are optional and
         can be omitted in some circumstances as discussed in
         <xref linkend="dhcp4-option-data-defaults"/>.
       </para>
-
       <para>
         It is possible to specify or override options on a per-subnet basis. If
         clients connected to most of your subnets are expected to get the
@@ -2518,9 +2531,9 @@ It is merely echoed by the server.
           should receive packets with specific values in certain fixed fields.
           In particular, three fixed fields are supported:
           <command>next-server</command> (conveys an IPv4 address, which is
-          set in the siaddr field), <command>server-hostname</command> 
+          set in the siaddr field), <command>server-hostname</command>
           (conveys a server hostname, can be up to 64 bytes long, and is sent
-          in the sname field) and <command>boot-file-name</command> 
+          in the sname field) and <command>boot-file-name</command>
           (conveys the configuration file, can be up to 128 bytes long, and is
           sent using the file field).
         </para>
@@ -3671,12 +3684,12 @@ It is merely echoed by the server.
     get resolved automatically over time as described in subsequent sections.
     Once the conflict is resolved, the client will keep receiving the reserved
     configuration when it renews.</para>
-    
+
     <para>Another example when host reservations are applicable is when a host
     has specific requirements, e.g. a printer that needs additional DHCP options.
     Yet another possible use case is to define unique names for hosts.
     </para>
-    
+
     <para>Host reservations are defined as parameters for each subnet. Each host
     must be identified by an identifier, for example the hardware/MAC address. There is an optional
     <command>reservations</command> array in the <command>subnet4</command>
@@ -3764,7 +3777,7 @@ It is merely echoed by the server.
       "out-of-pool reservations." There is no formal difference
       in the reservation syntax and both reservation types are
       handled uniformly.</para>
-      
+
       <para>Kea supports global
       host reservations. These are reservations that are specified at the
       global level within the configuration and that do not belong to any
