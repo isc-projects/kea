@@ -1026,7 +1026,7 @@ temporarily override a list of interface names and listen on all interfaces.
         <title>Prefix Exclude Option</title>
         <para>
           For each delegated prefix, the delegating router may choose to exclude
-          a single prefix out of the delegated prefix as specified in 
+          a single prefix out of the delegated prefix as specified in
           <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6603">RFC 6603</link>.
           The requesting router must not assign the excluded prefix to any
           of its downstream interfaces, and it is intended to be used on a
@@ -1115,8 +1115,8 @@ temporarily override a list of interface names and listen on all interfaces.
            "code": 23,
            "space": "dhcp6",
            "csv-format": false,
-           "data": "2001 0DB8 0001 0000 0000 0000 0000 CAFE
-                    2001 0DB8 0001 0000 0000 0000 0000 BABE"</userinput>
+           "data": "20 01 0D B8 00 01 00 00 00 00 00 00 00 00 CA FE
+                    20 01 0D B8 00 01 00 00 00 00 00 00 00 00 BA BE"</userinput>
         },
         ...
     ]
@@ -1129,11 +1129,26 @@ temporarily override a list of interface names and listen on all interfaces.
        whole string should be entered on the same line.
        </para></note>
        <para>
-       Care should be taken
-       to use proper encoding when using hexadecimal format as Kea's ability
-       to validate data correctness in hexadecimal is limited.
-      </para>
-
+       Kea supports the following formats when specifying hexadecimal data:
+       <itemizedlist>
+       <listitem>
+       <simpara><command>Delimited octets</command> One or more octets
+       separated by either colons or spaces (':' or ' '). While each octet
+       may contain one or two digits, we strongly recommend always using two
+       digits. Valid examples are "ab:cd:ef" and "ab cd ef".
+       </simpara>
+       </listitem>
+       <listitem>
+       <simpara><command>String of digits</command> A continuous string of
+       hexadecimal digits with or without a "0x" prefix.  Valid examples
+       are "0xabcdef" and "abcdef".
+       </simpara>
+       </listitem>
+       </itemizedlist>
+       Care should be taken to use proper encoding when using hexadecimal
+       format.  Kea's ability to validate data correctness in hexadecimal
+       is limited.
+       </para>
       <para>
         Most of the parameters in the "option-data" structure are
         optional and can be omitted in some circumstances as discussed
@@ -2038,7 +2053,7 @@ should include options from the new option space:
         an appropriate subnet for a given request.
       </para>
       <para>
-        In IPv4, the server can determine which of the configured subnets are local, 
+        In IPv4, the server can determine which of the configured subnets are local,
         as there is a reasonable expectation that the
         server will have a (global) IPv4 address configured on the interface,
         and it can use that information to detect whether a subnet is local.
@@ -2868,7 +2883,7 @@ should include options from the new option space:
         values. The most typical use case is ensuring that only
         characters that are permitted by RFC 1035 be included:
         A-Z,a-z,0-9, and '-'.
-        
+
         This may be accomplished with the following two parameters:
         <itemizedlist>
         <listitem><simpara>
