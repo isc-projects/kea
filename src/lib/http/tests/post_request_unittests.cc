@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,14 +37,14 @@ TEST_F(PostHttpRequestTest, requirePost) {
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
-    ASSERT_THROW(request_.create(), HttpRequestError);
+    ASSERT_THROW(request_->create(), HttpRequestError);
 
     // Now use POST. It should be accepted.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
-    EXPECT_NO_THROW(request_.create());
+    EXPECT_NO_THROW(request_->create());
 }
 
 // This test verifies that PostHttpRequest requires "Content-Length"
@@ -54,14 +54,14 @@ TEST_F(PostHttpRequestTest, requireContentType) {
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
 
-    ASSERT_THROW(request_.create(), HttpRequestError);
+    ASSERT_THROW(request_->create(), HttpRequestError);
 
     // There is "Content-Type". It should pass.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "text/html");
 
-    EXPECT_NO_THROW(request_.create());
+    EXPECT_NO_THROW(request_->create());
 
 }
 
@@ -72,7 +72,7 @@ TEST_F(PostHttpRequestTest, requireContentLength) {
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "text/html");
 
-    ASSERT_THROW(request_.create(), HttpRequestError);
+    ASSERT_THROW(request_->create(), HttpRequestError);
 
     // There is "Content-Length". It should pass.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
