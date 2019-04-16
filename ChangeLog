@@ -1,3 +1,10 @@
+1557.	[bug]		marcin
+	Added support for "reservation-mode" parameter in the shared network
+	configuration parsers. It corrects a bug in Configuration Backend
+	whereby host reservation mode was not stored in the database when
+	specified via remote-network4-set command.
+	(Gitlab #517,!301, git e6533001e9d850432254d3cfe995a4f7abcee6e2)
+
 1556.	[bug]		fdupont
 	Corrected parser for option definitions to refuse definitions with
 	duplicate code or name.
