@@ -316,10 +316,10 @@ SharedNetwork4::replace(const Subnet4Ptr& subnet) {
     bool ret = Impl::replace(subnets_, subnet);
     if (ret) {
         // Associate the subnet with this network.
-        setSharedNetwork(subnet);
+        subnet->setSharedNetwork(shared_from_this());
         subnet->setSharedNetworkName(name_);
         // Deassociate the previous subnet.
-        clearSharedNetwork(old);
+        old->setSharedNetwork(NetworkPtr());
         old->setSharedNetworkName("");
     }
     return (ret);
@@ -401,10 +401,10 @@ SharedNetwork6::replace(const Subnet6Ptr& subnet) {
     bool ret = Impl::replace(subnets_, subnet);
     if (ret) {
         // Associate the subnet with this network.
-        setSharedNetwork(subnet);
+        subnet->setSharedNetwork(shared_from_this());
         subnet->setSharedNetworkName(name_);
         // Deassociate the previous subnet.
-        clearSharedNetwork(old);
+        old->setSharedNetwork(NetworkPtr());
         old->setSharedNetworkName("");
     }
     return (ret);
