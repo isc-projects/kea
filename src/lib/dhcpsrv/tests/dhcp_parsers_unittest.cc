@@ -452,7 +452,8 @@ public:
 
     /// @brief Wipes the contents of the context to allowing another parsing
     /// during a given test if needed.
-    /// @param family protocol family to use durin the test, defaults to AF_INET6
+    /// @param family protocol family to use during the test, defaults
+    /// to AF_INET6
     void reset_context(uint16_t family = AF_INET6){
         // Note set context universe to V6 as it has to be something.
         CfgMgr::instance().clear();
@@ -1455,7 +1456,7 @@ TEST_F(ParseConfigTest, hexOptionData) {
         "0C 00 03 01 C0 00 03 02", // spaces
         "0C:00:03:01:C0:00:03:02", // colons
         "0x0C000301C0000302",  // 0x
-        "C 0 3 1 C0 0 3 02",  // odd or or even octets
+        "C 0 3 1 C0 0 3 02",  // one or two digit octets
         "0x0c000301C0000302"   // upper or lower case digits 
     };
 
