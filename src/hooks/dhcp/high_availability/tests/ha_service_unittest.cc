@@ -336,6 +336,24 @@ private:
         // Remember the request received.
         requests_.push_back(request_json);
 
+        // The request must always contain non-empty Host header.
+        bool invalid_host = false;
+        try {
+            auto host_hdr = request_json->getHeader("Host");
+            if (host_hdr->getValue().empty()) {
+                invalid_host = true;
+            }
+
+        } catch (...) {
+            // Host header does not exist.
+            invalid_host = true;
+        }
+
+        // If invalid host then return Bad Request.
+        if (invalid_host) {
+            return (createStockHttpResponse(request, HttpStatusCode::BAD_REQUEST));
+        }
+
         int control_result = -1;
         ElementPtr arguments;
 
