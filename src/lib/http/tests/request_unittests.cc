@@ -67,6 +67,7 @@ public:
 
 };
 
+// This test verifies that a minimal request can be created.
 TEST_F(HttpRequestTest, minimal) {
     setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
     ASSERT_NO_THROW(request_.create());
@@ -121,6 +122,7 @@ TEST_F(HttpRequestTest, hostHeaderCustom) {
     EXPECT_EQ("www.example.org", host_hdr);
 }
 
+// This test verifies that headers can be included in a request.
 TEST_F(HttpRequestTest, includeHeaders) {
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", "1024");
@@ -143,6 +145,9 @@ TEST_F(HttpRequestTest, includeHeaders) {
     EXPECT_EQ(1024, content_length);
 }
 
+// This test verifies that it is possible to specify required
+// methods for the request and that an error is thrown if the
+// selected method doesn't match.
 TEST_F(HttpRequestTest, requiredMethods) {
     request_.requireHttpMethod(HttpRequest::Method::HTTP_GET);
     request_.requireHttpMethod(HttpRequest::Method::HTTP_POST);
@@ -158,6 +163,9 @@ TEST_F(HttpRequestTest, requiredMethods) {
     EXPECT_THROW(request_.create(), HttpRequestError);
 }
 
+// This test verifies that it is possible to specify required
+// HTTP version for the request and that an error is thrown if
+// the selected HTTP version doesn't match.
 TEST_F(HttpRequestTest, requiredHttpVersion) {
     request_.requireHttpVersion(HttpVersion(1, 0));
     request_.requireHttpVersion(HttpVersion(1, 1));
@@ -172,6 +180,9 @@ TEST_F(HttpRequestTest, requiredHttpVersion) {
     EXPECT_THROW(request_.create(), HttpRequestError);
 }
 
+// This test verifies that it is possible to specify required
+// HTTP headers for the request and that an error is thrown if
+// the required header is not included.
 TEST_F(HttpRequestTest, requiredHeader) {
     request_.requireHeader("Content-Length");
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
@@ -185,6 +196,9 @@ TEST_F(HttpRequestTest, requiredHeader) {
     EXPECT_NO_THROW(request_.create());
 }
 
+// This test verifies that it is possible to specify required
+// HTTP header value for the request and that an error is thrown
+// if the value doesn't match.
 TEST_F(HttpRequestTest, requiredHeaderValue) {
     request_.requireHeaderValue("Content-Type", "application/json");
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
@@ -197,6 +211,8 @@ TEST_F(HttpRequestTest, requiredHeaderValue) {
     EXPECT_NO_THROW(request_.create());
 }
 
+// This test verifies that an error is thrown upon an attempt to
+// fetch request properties before the request is finalized.
 TEST_F(HttpRequestTest, notCreated) {
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "text/html");
@@ -224,6 +240,8 @@ TEST_F(HttpRequestTest, notCreated) {
     EXPECT_NO_THROW(static_cast<void>(request_.getBody()));
 }
 
+// This test verifies that it is possible to fetch the request
+// body.
 TEST_F(HttpRequestTest, getBody) {
     std::string json_body = "{ \"param1\": \"foo\" }";
 
@@ -237,22 +255,29 @@ TEST_F(HttpRequestTest, getBody) {
     EXPECT_EQ(json_body, request_.getBody());
 }
 
+// This test verifies the behavior of the requiresBody function.
 TEST_F(HttpRequestTest, requiresBody) {
     ASSERT_FALSE(request_.requiresBody());
     request_.requireHeader("Content-Length");
     EXPECT_TRUE(request_.requiresBody());
 }
 
+// This test verifies that HTTP/1.0 connections are not persistent
+// by default.
 TEST_F(HttpRequestTest, isPersistentHttp10) {
     // In HTTP 1.0 the connection is by default non-persistent.
     EXPECT_FALSE(isPersistent(HttpVersion(1, 0)));
 }
 
+// This test verifies that HTTP/1.1 connections are persistent
+// by default.
 TEST_F(HttpRequestTest, isPersistentHttp11) {
     // In HTTP 1.1 the connection is by default persistent.
     EXPECT_TRUE(isPersistent(HttpVersion(1, 1)));
 }
 
+// This test verifies that HTTP/1.0 connection becomes persistent
+// when keep-alive value of the Connection header is included.
 TEST_F(HttpRequestTest, isPersistentHttp10KeepAlive) {
     // In HTTP 1.0 the client indicates that the connection is desired to be
     // persistent by including "Connection: keep-alive" header.
@@ -261,6 +286,8 @@ TEST_F(HttpRequestTest, isPersistentHttp10KeepAlive) {
     );
 }
 
+// This test verifies that HTTP/1.1 connection is closed when the
+// close value of the Connection header is included.
 TEST_F(HttpRequestTest, isPersistentHttp11Close) {
     // In HTTP 1.1 the client would include "Connection: close" header if it
     // desires to close the connection.
@@ -269,6 +296,7 @@ TEST_F(HttpRequestTest, isPersistentHttp11Close) {
     );
 }
 
+// This test verifies the contents of the HTTP outbound request.
 TEST_F(HttpRequestTest, clientRequest) {
     request_.setDirection(HttpMessage::OUTBOUND);
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
@@ -298,6 +326,8 @@ TEST_F(HttpRequestTest, clientRequest) {
               request_.toString());
 }
 
+// This test verifies the contents of the HTTP outbound request
+// which lacks body.
 TEST_F(HttpRequestTest, clientRequestNoBody) {
     setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
     // Add headers.
@@ -313,6 +343,7 @@ TEST_F(HttpRequestTest, clientRequestNoBody) {
               request_.toString());
 }
 
+// This test verifies the first line of the HTTP request.
 TEST_F(HttpRequestTest, toBriefString) {
     // Create the request.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 1));
