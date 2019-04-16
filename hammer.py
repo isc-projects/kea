@@ -1477,7 +1477,10 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         # install our freeradius-client but now from deb
         execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
         execute("sudo apt-key adv --fetch-keys %s/repository/repo-keys/repo-key.gpg" % repository_url)
-        execute('sudo apt update')
+        _, out = execute('sudo apt update', capture=True)
+        if 'Bad header data' in out:
+            time.sleep(4)
+            execute('sudo apt update')
         install_pkgs('libfreeradius-client libfreeradius-client-dev', env=env, check_times=check_times)
 
         # unpack tarball
