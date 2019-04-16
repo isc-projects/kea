@@ -84,6 +84,7 @@ private:
     template<typename SearchKey>
     OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
                                              const SearchKey& search_key) const;
+
     /// @brief Create option instance.
     ///
     /// Creates an instance of an option and adds it to the provided

@@ -219,19 +219,21 @@ tokenToNum(const std::string& num_token) {
 std::vector<uint8_t>
 quotedStringToBinary(const std::string& quoted_string);
 
-/// \brief Converts a string of separated hexadecimal digits.
+/// \brief Converts a string of separated hexadecimal digits
 /// into a vector.
 ///
-/// Octets may contain 1 or 2 digits:
+/// Octets may contain 1 or 2 digits. For example, using a colon
+/// for a separator all of the following are valid:
 ///
-/// - yy<s>yy<s>yy<s>yy<s>yy
-/// - y<s>y<s>y<s>y<s>y
-/// - y<s>yy<s>yy<s>y<s>y
+/// - yy:yy:yy:yy:yy
+/// - y:y:y:y:y
+/// - y:yy:yy:y:y
 ///
 /// If the decoded string doesn't match any of the supported formats,
 /// an exception is thrown.
 ///
 /// \param hex_string Input string.
+/// \param sep character to use a a separator. 
 /// \param binary Vector receiving converted string into binary.
 /// \throw isc::BadValue if the format of the input string is invalid.
 void
