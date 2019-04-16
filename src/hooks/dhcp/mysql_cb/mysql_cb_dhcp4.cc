@@ -1664,13 +1664,12 @@ public:
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
 
-        createUpdateOptionDef
-            (server_selector, option_def, "dhcp4",
-             MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
-             MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
-             MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
-             MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
-             MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER);
+        createUpdateOptionDef(server_selector, option_def, "dhcp4",
+                              MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
+                              MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
+                              MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
+                              MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                              MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER);
     }
 
     /// @brief Sends query to delete option definition by code and
