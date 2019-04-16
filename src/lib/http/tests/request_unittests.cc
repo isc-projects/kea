@@ -296,8 +296,12 @@ TEST_F(HttpRequestTest, isPersistentHttp11Close) {
 
 // This test verifies the contents of the HTTP outbound request.
 TEST_F(HttpRequestTest, clientRequest) {
-    request_->setDirection(HttpMessage::OUTBOUND);
-    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
+    ASSERT_NO_THROW(
+        request_.reset(new HttpRequest(HttpRequest::Method::HTTP_POST,
+                                       "/isc/org",
+                                       HttpVersion(1, 0),
+                                       HostHttpHeader("www.example.org")));
+    );
 
     // Capture current date and time.
     HttpDateTime date_time;
@@ -315,6 +319,7 @@ TEST_F(HttpRequestTest, clientRequest) {
     // it should include "Content-Length", even though we haven't explicitly set
     // this header. It is dynamically computed from the body size.
     EXPECT_EQ("POST /isc/org HTTP/1.0\r\n"
+              "Host: www.example.org\r\n"
               "Accept: text/html\r\n"
               "Content-Length: 13\r\n"
               "Content-Type: text/html\r\n"

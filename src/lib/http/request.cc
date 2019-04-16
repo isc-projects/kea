@@ -173,10 +173,25 @@ HttpRequest::toString() const {
     // HTTP method, URI and version number.
     s << toBriefString() << crlf;
 
+    // Host header must go first.
+    HttpHeaderPtr host_header;
+    try {
+        host_header = getHeader("Host");
+        if (host_header) {
+            s << host_header->getName() << ": " << host_header->getValue() << crlf;
+        }
+
+    } catch (...) {
+        // impossible condition
+    }
+
+    // Add all other headers.
     for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
          ++header_it) {
-        s << header_it->second->getName() << ": " << header_it->second->getValue()
-          << crlf;
+        if (header_it->second->getName() != "Host") {
+            s << header_it->second->getName() << ": " << header_it->second->getValue()
+              << crlf;
+        }
     }
 
     s << crlf;
