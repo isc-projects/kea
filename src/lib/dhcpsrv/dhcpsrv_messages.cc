@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Mar 27 2019 10:16
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Apr 16 2019 17:21
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -38,6 +38,8 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_SUBNET6_IFACE = "DHCPSRV_CFGMGR_
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SUBNET6_IFACE_ID = "DHCPSRV_CFGMGR_SUBNET6_IFACE_ID";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SUBNET6_RELAY = "DHCPSRV_CFGMGR_SUBNET6_RELAY";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL = "DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET4 = "DHCPSRV_CFGMGR_UPDATE_SUBNET4";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET6 = "DHCPSRV_CFGMGR_UPDATE_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS = "DHCPSRV_CFGMGR_USE_ADDRESS";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_USE_UNICAST";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
@@ -270,6 +272,8 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_SUBNET6_IFACE_ID", "selected subnet %1 (interface-id match) for incoming packet",
     "DHCPSRV_CFGMGR_SUBNET6_RELAY", "selected subnet %1, because of matching relay addr %2",
     "DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL", "specified link local address %1 for unicast traffic on interface %2",
+    "DHCPSRV_CFGMGR_UPDATE_SUBNET4", "updating subnet %1 (result %2)",
+    "DHCPSRV_CFGMGR_UPDATE_SUBNET6", "updating subnet %1 (result %2)",
     "DHCPSRV_CFGMGR_USE_ADDRESS", "listening on address %1, on interface %2",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Mar 27 2019 10:16
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Apr 16 2019 17:21
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -39,6 +39,8 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_SUBNET6_IFACE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SUBNET6_IFACE_ID;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SUBNET6_RELAY;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET4;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST;
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB;
