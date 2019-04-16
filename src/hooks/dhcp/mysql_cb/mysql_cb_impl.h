@@ -376,8 +376,8 @@ public:
     /// @param insert_option_def Statement inserting option definition.
     /// @param update_option_def Statement updating option definition.
     /// @param create_audit_revision Statement creating audit revision.
-    /// @param insert_option_def_server Statement inserting option
-    /// definition in the server table.
+    /// @param insert_option_def_server Statement associating option
+    /// definition with a server.
     /// @throw NotImplemented if server selector is "unassigned".
     void createUpdateOptionDef(const db::ServerSelector& server_selector,
                                const OptionDefinitionPtr& option_def,
