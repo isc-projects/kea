@@ -1,3 +1,8 @@
+1560.	[func]		tmark
+	kea-dhcp6 now automatically deletes configuration elements
+	that have been deleted from configuration backends.
+	(Gitlab #566,!304, git TBD)
+
 1559.	[func]		fdupont
 	Added DHCPv6 support to the MySQL Config Backend hook.
 	(Gitlab #397,!244, git 980091ecd717e41a61f0d7f6808213e450647d8e)
