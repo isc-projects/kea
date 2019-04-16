@@ -312,7 +312,7 @@ public:
                         const asiolink::IOAddress& pool_end_address,
                         const OptionDescriptorPtr& option);
 
-    /// @brief Creates or updates pd pool level option.
+    /// @brief Creates or updates prefix delegation pool level option.
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
@@ -485,7 +485,7 @@ public:
                   const uint16_t code,
                   const std::string& space);
 
-    /// @brief Deletes pool level option.
+    /// @brief Deletes prefix delegation pool level option.
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.

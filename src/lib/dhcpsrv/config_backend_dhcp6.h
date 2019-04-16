@@ -264,7 +264,7 @@ public:
                         const asiolink::IOAddress& pool_end_address,
                         const OptionDescriptorPtr& option) = 0;
 
-    /// @brief Creates or updates pd pool level option.
+    /// @brief Creates or updates prefix delegation pool level option.
     ///
     /// @param server_selector Server selector.
     /// @param pd_pool_prefix Address part of the prefix of the pd pool
@@ -405,7 +405,7 @@ public:
                   const uint16_t code,
                   const std::string& space) = 0;
 
-    /// @brief Deletes pd pool level option.
+    /// @brief Deletes prefix delegation pool level option.
     ///
     /// @param server_selector Server selector.
     /// @param pd_pool_prefix Address part of the prefix of the pd pool
