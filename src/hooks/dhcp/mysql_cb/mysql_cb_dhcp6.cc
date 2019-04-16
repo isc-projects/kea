@@ -1889,13 +1889,12 @@ public:
     void createUpdateOptionDef6(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
 
-        createUpdateOptionDef
-            (server_selector, option_def, "dhcp6",
-             MySqlConfigBackendDHCPv6Impl::GET_OPTION_DEF6_CODE_SPACE,
-             MySqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6,
-             MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION_DEF6,
-             MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
-             MySqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6_SERVER);
+        createUpdateOptionDef(server_selector, option_def, "dhcp6",
+                              MySqlConfigBackendDHCPv6Impl::GET_OPTION_DEF6_CODE_SPACE,
+                              MySqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6,
+                              MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION_DEF6,
+                              MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                              MySqlConfigBackendDHCPv6Impl::INSERT_OPTION_DEF6_SERVER);
     }
 
     /// @brief Sends query to delete option definition by code and

@@ -365,16 +365,15 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
     });
 }
 
-void MySqlConfigBackendImpl::createUpdateOptionDef
-    (const db::ServerSelector& server_selector,
-     const OptionDefinitionPtr& option_def,
-     const std::string& space,
-     const int& get_option_def_code_space,
-     const int& insert_option_def,
-     const int& update_option_def,
-     const int& create_audit_revision,
-     const int& insert_option_def_server)
-{
+void
+MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_selector,
+                                              const OptionDefinitionPtr& option_def,
+                                              const std::string& space,
+                                              const int& get_option_def_code_space,
+                                              const int& insert_option_def,
+                                              const int& update_option_def,
+                                              const int& create_audit_revision,
+                                              const int& insert_option_def_server) {
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
