@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,6 +63,22 @@ private:
 
 /// @brief Pointer to the @c HttpHeader class.
 typedef boost::shared_ptr<HttpHeader> HttpHeaderPtr;
+
+/// @brief Represents HTTP Host header.
+class HostHttpHeader : public HttpHeader {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param header_value Host header value. The default is empty
+    /// string.
+    explicit HostHttpHeader(const std::string& header_value = "")
+        : HttpHeader("Host", header_value) {
+    }
+};
+
+/// @brief Pointer to the HTTP host header.
+typedef boost::shared_ptr<HostHttpHeader> HostHttpHeaderPtr;
 
 } // end of namespace isc::http
 } // end of namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,6 +78,47 @@ TEST_F(HttpRequestTest, minimal) {
 
     EXPECT_THROW(request_.getHeaderValue("Content-Length"),
                  HttpMessageNonExistingHeader);
+}
+
+// This test verifies that empty Host header is included in the
+// request if it is not explicitly specified.
+TEST_F(HttpRequestTest, hostHeaderDefault) {
+    HttpRequestPtr request;
+    ASSERT_NO_THROW(request.reset(new HttpRequest(HttpRequest::Method::HTTP_GET,
+                                                  "/isc/org",
+                                                  HttpVersion(1, 0))));
+
+    ASSERT_NO_THROW(request->finalize());
+
+    EXPECT_EQ(HttpRequest::Method::HTTP_GET, request->getMethod());
+    EXPECT_EQ("/isc/org", request->getUri());
+    EXPECT_EQ(1, request->getHttpVersion().major_);
+    EXPECT_EQ(0, request->getHttpVersion().minor_);
+
+    std::string host_hdr;
+    ASSERT_NO_THROW(host_hdr = request->getHeaderValue("Host"));
+    EXPECT_TRUE(host_hdr.empty());
+}
+
+// This test verifies that it is possible to explicitly specify a
+// Host header value while creating a request.
+TEST_F(HttpRequestTest, hostHeaderCustom) {
+    HttpRequestPtr request;
+    ASSERT_NO_THROW(request.reset(new HttpRequest(HttpRequest::Method::HTTP_GET,
+                                                  "/isc/org",
+                                                  HttpVersion(1, 1),
+                                                  HostHttpHeader("www.example.org"))));
+
+    ASSERT_NO_THROW(request->finalize());
+
+    EXPECT_EQ(HttpRequest::Method::HTTP_GET, request->getMethod());
+    EXPECT_EQ("/isc/org", request->getUri());
+    EXPECT_EQ(1, request->getHttpVersion().major_);
+    EXPECT_EQ(1, request->getHttpVersion().minor_);
+
+    std::string host_hdr;
+    ASSERT_NO_THROW(host_hdr = request->getHeaderValue("Host"));
+    EXPECT_EQ("www.example.org", host_hdr);
 }
 
 TEST_F(HttpRequestTest, includeHeaders) {
