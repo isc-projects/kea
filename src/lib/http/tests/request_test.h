@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <http/http_types.h>
 #include <http/request.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <string>
 #include <utility>
@@ -30,7 +31,7 @@ public:
     ///
     /// Creates HTTP request to be used in unit tests.
     HttpRequestTestBase()
-        : request_() {
+        : request_(new HttpRequestType()) {
     }
 
     /// @brief Destructor.
@@ -52,10 +53,10 @@ public:
     /// version and the second is the minor HTTP version.
     void setContextBasics(const std::string& method, const std::string& uri,
                           const HttpVersion& version) {
-        request_.context()->method_ = method;
-        request_.context()->uri_ = uri;
-        request_.context()->http_version_major_ = version.major_;
-        request_.context()->http_version_minor_ = version.minor_;
+        request_->context()->method_ = method;
+        request_->context()->uri_ = uri;
+        request_->context()->http_version_major_ = version.major_;
+        request_->context()->http_version_minor_ = version.minor_;
     }
 
     /// @brief Adds HTTP header to the context.
@@ -67,11 +68,11 @@ public:
     template<typename ValueType>
     void addHeaderToContext(const std::string& header_name,
                             const ValueType& header_value) {
-        request_.context()->headers_.push_back(HttpHeaderContext(header_name, header_value));
+        request_->context()->headers_.push_back(HttpHeaderContext(header_name, header_value));
     }
 
     /// @brief Instance of the @ref HttpRequest or its derivation.
-    HttpRequestType request_;
+    boost::shared_ptr<HttpRequestType> request_;
 };
 
 } // namespace test

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,7 @@ public:
     ///
     /// @param body new body value.
     void setBody(const std::string& body = "") {
-        request_.context()->body_ = body.empty() ? json_body_ : body;
+        request_->context()->body_ = body.empty() ? json_body_ : body;
     }
 
     /// @brief Default value of the JSON body.
@@ -54,14 +54,14 @@ TEST_F(PostHttpRequestJsonTest, requiredPost) {
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
-    ASSERT_THROW(request_.create(), HttpRequestError);
+    ASSERT_THROW(request_->create(), HttpRequestError);
 
     // Now use POST. It should be accepted.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
-    EXPECT_NO_THROW(request_.create());
+    EXPECT_NO_THROW(request_->create());
 }
 
 // This test verifies that PostHttpRequest requires "Content-Length"
@@ -72,14 +72,14 @@ TEST_F(PostHttpRequestJsonTest, requireContentTypeJson) {
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "text/html");
 
-    ASSERT_THROW(request_.create(), HttpRequestError);
+    ASSERT_THROW(request_->create(), HttpRequestError);
 
     // This time specify correct "Content-Type". It should pass.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
-    EXPECT_NO_THROW(request_.create());
+    EXPECT_NO_THROW(request_->create());
 }
 
 // This test verifies that PostHttpRequest requires "Content-Length"
@@ -89,7 +89,7 @@ TEST_F(PostHttpRequestJsonTest, requireContentLength) {
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "text/html");
 
-    ASSERT_THROW(request_.create(), HttpRequestError);
+    ASSERT_THROW(request_->create(), HttpRequestError);
 
     // Specify "Content-Length". It should pass.
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
@@ -106,10 +106,10 @@ TEST_F(PostHttpRequestJsonTest, getBodyAsJson) {
     addHeaderToContext("Content-Type", "application/json");
     setBody();
 
-    ASSERT_NO_THROW(request_.finalize());
+    ASSERT_NO_THROW(request_->finalize());
 
     // Try to retrieve pointer to the root element of the JSON body.
-    ConstElementPtr json = request_.getBodyAsJson();
+    ConstElementPtr json = request_->getBodyAsJson();
     ASSERT_TRUE(json);
 
     // Iterate over JSON values and store them in a simple map.
@@ -136,7 +136,7 @@ TEST_F(PostHttpRequestJsonTest, getBodyAsJsonMalformed) {
     // No colon before 123.
     setBody("{ \"command\" 123 }" );
 
-    EXPECT_THROW(request_.finalize(), HttpRequestJsonError);
+    EXPECT_THROW(request_->finalize(), HttpRequestJsonError);
 }
 
 // This test verifies that NULL pointer is returned when trying to
@@ -146,9 +146,9 @@ TEST_F(PostHttpRequestJsonTest, getEmptyJsonBody) {
     addHeaderToContext("Content-Length", json_body_.length());
     addHeaderToContext("Content-Type", "application/json");
 
-    ASSERT_NO_THROW(request_.finalize());
+    ASSERT_NO_THROW(request_->finalize());
 
-    ConstElementPtr json = request_.getBodyAsJson();
+    ConstElementPtr json = request_->getBodyAsJson();
     EXPECT_FALSE(json);
 }
 
@@ -159,30 +159,30 @@ TEST_F(PostHttpRequestJsonTest, getJsonElement) {
     addHeaderToContext("Content-Type", "application/json");
     setBody();
 
-    ASSERT_NO_THROW(request_.finalize());
+    ASSERT_NO_THROW(request_->finalize());
 
     ConstElementPtr element;
-    ASSERT_NO_THROW(element = request_.getJsonElement("service"));
+    ASSERT_NO_THROW(element = request_->getJsonElement("service"));
     ASSERT_TRUE(element);
     EXPECT_EQ("dhcp4", element->stringValue());
 
     // An attempt to retrieve non-existing element should return NULL.
-    EXPECT_FALSE(request_.getJsonElement("bar"));
+    EXPECT_FALSE(request_->getJsonElement("bar"));
 }
 
 // This test verifies that it is possible to create client side request
 // containing JSON body.
 TEST_F(PostHttpRequestJsonTest, clientRequest) {
-    request_.setDirection(HttpMessage::OUTBOUND);
+    request_->setDirection(HttpMessage::OUTBOUND);
 
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "application/json");
 
     ElementPtr json = Element::fromJSON(json_body_);
-    request_.setBodyAsJson(json);
+    request_->setBodyAsJson(json);
 
     // Commit and validate the data.
-    ASSERT_NO_THROW(request_.finalize());
+    ASSERT_NO_THROW(request_->finalize());
 
     std::ostringstream expected_request_text;
     expected_request_text << "POST /isc/org HTTP/1.0\r\n"
@@ -191,7 +191,7 @@ TEST_F(PostHttpRequestJsonTest, clientRequest) {
         "\r\n"
         << json->str();
 
-    EXPECT_EQ(expected_request_text.str(), request_.toString());
+    EXPECT_EQ(expected_request_text.str(), request_->toString());
 }
 
 }
