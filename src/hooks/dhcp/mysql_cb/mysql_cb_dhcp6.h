@@ -425,7 +425,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound address of the prefix
-    /// delegationpool to which deleted option belongs.
+    /// delegation pool to which deleted option belongs.
     /// @param pool_end_address Upper bound address of the prefix
     /// delegation pool to which the deleted option belongs.
     /// @param code Code of the deleted option.

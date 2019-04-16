@@ -316,10 +316,10 @@ public:
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
-    /// @param pd_pool_prefix Address part of the prefix of the pd pool
-    /// to which the option belongs.
-    /// @param pd_pool_prefix_length Prefix length of the pd pool to which
-    /// the option belongs.
+    /// @param pd_pool_prefix Address part of the prefix of the prefix
+    /// delegation pool to which the option belongs.
+    /// @param pd_pool_prefix_length Prefix length of the prefix
+    /// delegation pool to which the option belongs.
     /// @param option Option to be added or updated.
     virtual void
     createUpdateOption6(const db::BackendSelector& backend_selector,
@@ -489,10 +489,10 @@ public:
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
-    /// @param pd_pool_prefix Address part of the prefix of the pd pool
-    /// to which the deleted option belongs.
-    /// @param pd_pool_prefix_length Prefix length of the pd pool to which
-    /// the deleted option belongs.
+    /// @param pd_pool_prefix Address part of the prefix of the prefix
+    /// delegation pool to which the deleted option belongs.
+    /// @param pd_pool_prefix_length Prefix length of the prefix delegation
+    /// pool to which the deleted option belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
