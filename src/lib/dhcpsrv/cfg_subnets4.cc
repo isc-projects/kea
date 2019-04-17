@@ -48,8 +48,7 @@ CfgSubnets4::replace(const Subnet4Ptr& subnet) {
     auto& index = subnets_.template get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     if (subnet_it == index.end()) {
-        isc_throw(BadValue, "ID of the IPv4 subnet '" << subnet_id
-                  << "' is not in use");
+        isc_throw(BadValue, "There is no IPv4 subnet with ID " <<subnet_id);
     }
     Subnet4Ptr old = *subnet_it;
     bool ret = index.replace(subnet_it, subnet);

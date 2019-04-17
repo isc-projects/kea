@@ -48,8 +48,7 @@ CfgSubnets6::replace(const Subnet6Ptr& subnet) {
     auto& index = subnets_.template get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     if (subnet_it == index.end()) {
-        isc_throw(BadValue, "ID of the IPv6 subnet '" << subnet_id
-                  << "' is not in use");
+        isc_throw(BadValue, "There is no IPv6 subnet with ID " << subnet_id);
     }
     Subnet6Ptr old = *subnet_it;
     bool ret = index.replace(subnet_it, subnet);

@@ -93,7 +93,7 @@ public:
     static bool replace(SubnetCollectionType& subnets,
                         const SubnetPtrType& subnet) {
 
-        // Check if the subnet is already associated with some network.
+        // Check if the new subnet is already associated with some network.
         NetworkPtr network;
         subnet->getSharedNetwork(network);
         if (network) {
