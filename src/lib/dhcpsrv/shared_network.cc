@@ -8,6 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/shared_network.h>
+#include <boost/make_shared.hpp>
 
 using namespace isc;
 using namespace isc::data;
@@ -244,6 +245,11 @@ public:
 namespace isc {
 namespace dhcp {
 
+SharedNetwork4Ptr
+SharedNetwork4::create(const std::string& name) {
+    return (boost::make_shared<SharedNetwork4>(name));
+}
+
 void
 SharedNetwork4::add(const Subnet4Ptr& subnet) {
     Impl::add(subnets_, subnet);
@@ -302,6 +308,11 @@ SharedNetwork4::toElement() const {
     map->set("subnet4", subnet4);
 
     return (map);
+}
+
+SharedNetwork6Ptr
+SharedNetwork6::create(const std::string& name) {
+    return (boost::make_shared<SharedNetwork6>(name));
 }
 
 void

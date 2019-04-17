@@ -616,4 +616,23 @@ TEST_F(OptionTest, cloneInternal) {
     EXPECT_FALSE(clone);
 }
 
+// This test verifies that empty option factory function creates
+// a valid option instance.
+TEST_F(OptionTest, create) {
+    auto option = Option::create(Option::V4, 123);
+    ASSERT_TRUE(option);
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(123, option->getType());
+}
+
+// This test verifies that option factory function creates a
+// valid option instance.
+TEST_F(OptionTest, createPayload) {
+    auto option = Option::create(Option::V4, 123, buf_);
+    ASSERT_TRUE(option);
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(123, option->getType());
+    EXPECT_EQ(buf_, option->getData());
+}
+
 }

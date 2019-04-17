@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -236,6 +236,11 @@ protected:
     bool last_allocated_valid_;
 };
 
+class Pool4;
+
+/// @brief a pointer an IPv4 Pool
+typedef boost::shared_ptr<Pool4> Pool4Ptr;
+
 /// @brief Pool information for IPv4 addresses
 ///
 /// It holds information about pool4, i.e. a range of IPv4 address space that
@@ -256,14 +261,44 @@ public:
     Pool4(const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len);
 
+    /// @brief Factory function for creating an instance of the @c Pool4.
+    ///
+    /// This function should be used to create an instance of the pool
+    /// within a hooks library in cases when the library may be unloaded
+    /// before the object is destroyed. This ensures that the ownership
+    /// of the object by the Kea process is retained.
+    ///
+    /// @param first the first address in a pool
+    /// @param last the last address in a pool
+    ///
+    /// @return Pointer to the @c Pool4 instance.
+    static Pool4Ptr create(const isc::asiolink::IOAddress& first,
+                           const isc::asiolink::IOAddress& last);
+
+    /// @brief Factory function for creating an instance of the @c Pool4.
+    ///
+    /// This function should be used to create an instance of the pool
+    /// within a hooks library in cases when the library may be unloaded
+    /// before the object is destroyed. This ensures that the ownership
+    /// of the object by the Kea process is retained.
+    ///
+    /// @param prefix specifies prefix of the pool.
+    /// @param prefix_len specifies length of the prefix of the pool.
+    ///
+    /// @return Pointer to the @c Pool4 instance.
+    static Pool4Ptr create(const isc::asiolink::IOAddress& prefix,
+                           uint8_t prefix_len);
+
     /// @brief Unparse a Pool4 object.
     ///
     /// @return A pointer to unparsed Pool4 configuration.
     virtual data::ElementPtr toElement() const;
 };
 
-/// @brief a pointer an IPv4 Pool
-typedef boost::shared_ptr<Pool4> Pool4Ptr;
+class Pool6;
+
+/// @brief a pointer an IPv6 Pool
+typedef boost::shared_ptr<Pool6> Pool6Ptr;
 
 /// @brief Pool information for IPv6 addresses and prefixes
 ///
@@ -328,6 +363,60 @@ public:
           const uint8_t delegated_len,
           const asiolink::IOAddress& excluded_prefix,
           const uint8_t excluded_prefix_len);
+
+    /// @brief Factory function for creating an instance of the @c Pool6.
+    ///
+    /// This function should be used to create an instance of the pool
+    /// within a hooks library in cases when the library may be unloaded
+    /// before the object is destroyed. This ensures that the ownership
+    /// of the object by the Kea process is retained.
+    ///
+    /// @param type type of the pool (IA or TA)
+    /// @param first the first address in a pool
+    /// @param last the last address in a pool
+    ///
+    /// @return Pointer to the @c Pool6 instance.
+    static Pool6Ptr create(Lease::Type type,
+                           const isc::asiolink::IOAddress& first,
+                           const isc::asiolink::IOAddress& last);
+
+    /// @brief Factory function for creating an instance of the @c Pool6.
+    ///
+    /// This function should be used to create an instance of the pool
+    /// within a hooks library in cases when the library may be unloaded
+    /// before the object is destroyed. This ensures that the ownership
+    /// of the object by the Kea process is retained.
+    ///
+    /// @param type type of the pool (IA, TA or PD)
+    /// @param prefix specifies prefix of the pool
+    /// @param prefix_len specifies prefix length of the pool
+    /// @param delegated_len specifies length of the delegated prefixes
+    ///
+    /// @return Pointer to the @c Pool6 instance.
+    static Pool6Ptr create(Lease::Type type,
+                           const isc::asiolink::IOAddress& prefix,
+                           uint8_t prefix_len,
+                           uint8_t delegated_len = 128);
+
+    /// @brief Factory function for creating an instance of the @c Pool6.
+    ///
+    /// If @c excluded_prefix is equal to '::' and the @c excluded_prefix_len
+    /// is equal to 0, the excluded prefix is assumed to be unspecified for
+    /// the pool. In this case, the server will not send the Prefix Exclude
+    /// option to a client.
+    ///
+    /// @param prefix specifies a prefix of the pool.
+    /// @param prefix_len specifies prefix length of the pool.
+    /// @param delegated_len specifies length of the delegated prefixes.
+    /// @param excluded_prefix specifies an excluded prefix as per RFC6603.
+    /// @param excluded_prefix_len specifies length of an excluded prefix.
+    ///
+    /// @return Pointer to the @c Pool6 instance.
+    static Pool6Ptr create(const asiolink::IOAddress& prefix,
+                           const uint8_t prefix_len,
+                           const uint8_t delegated_len,
+                           const asiolink::IOAddress& excluded_prefix,
+                           const uint8_t excluded_prefix_len);
 
     /// @brief returns pool type
     ///
@@ -397,9 +486,6 @@ private:
     Option6PDExcludePtr pd_exclude_option_;
 
 };
-
-/// @brief a pointer an IPv6 Pool
-typedef boost::shared_ptr<Pool6> Pool6Ptr;
 
 /// @brief a pointer to either IPv4 or IPv6 Pool
 typedef boost::shared_ptr<Pool> PoolPtr;

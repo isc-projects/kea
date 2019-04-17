@@ -22,6 +22,14 @@ using namespace isc::dhcp;
 
 namespace {
 
+// This test verifies that the SharedNetwork4 factory function creates a
+// valid shared network instance.
+TEST(SharedNetwork4Test, create) {
+    auto network = SharedNetwork4::create("frog");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("frog", network->getName());
+}
+
 // This test verifies the default values set for the shared
 // networks and verifies that the optional values are unspecified.
 TEST(SharedNetwork4Test, defaults) {
@@ -453,6 +461,14 @@ TEST(SharedNetwork4Test, delAll) {
 
     // Now check that there are no subnets.
     ASSERT_EQ(0, network->getAllSubnets()->size());
+}
+
+// This test verifies that the SharedNetwork6 factory function creates a
+// valid shared network instance.
+TEST(SharedNetwork6Test, create) {
+    auto network = SharedNetwork6::create("frog");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("frog", network->getName());
 }
 
 // This test verifies the default values set for the shared

@@ -19,6 +19,11 @@
 namespace isc {
 namespace db {
 
+class AuditEntry;
+
+/// @brief Pointer to the @c AuditEntry object.
+typedef boost::shared_ptr<AuditEntry> AuditEntryPtr;
+
 /// @brief Represents a single entry in the audit table.
 ///
 /// The audit tables are used in the databases to track incremental
@@ -93,6 +98,46 @@ public:
                const ModificationType& modification_type,
                const std::string& log_message);
 
+    /// @brief Factory function creating an instance of @c AuditEntry.
+    ///
+    /// This function should be used to create an instance of the shared
+    /// network within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param object_type name of the table where data was modified.
+    /// @param object_id identifier of the modified record in this table.
+    /// @param modification_type type of the modification, e.g. DELETE.
+    /// @param modification_time time of modification for that record.
+    /// @param log_message optional log message associated with the
+    /// modification.
+    ///
+    /// @return Pointer to the @c AuditEntry instance.
+    static AuditEntryPtr create(const std::string& object_type,
+                                const uint64_t object_id,
+                                const ModificationType& modification_type,
+                                const boost::posix_time::ptime& modification_time,
+                                const std::string& log_message);
+
+    /// @brief Factory function creating an instance of @c AuditEntry.
+    ///
+    /// This function should be used to create an instance of the shared
+    /// network within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param object_type name of the table where data was modified.
+    /// @param object_id identifier of the modified record in this table.
+    /// @param modification_type type of the modification, e.g. DELETE.
+    /// @param log_message optional log message associated with the
+    /// modification.
+    ///
+    /// @return Pointer to the @c AuditEntry instance.
+    static AuditEntryPtr create(const std::string& object_type,
+                                const uint64_t object_id,
+                                const ModificationType& modification_type,
+                                const std::string& log_message);
+
     /// @brief Returns object type.
     ///
     /// @return Name of the table in which the modification is present.
@@ -151,9 +196,6 @@ private:
     /// @brief Log message.
     std::string log_message_;
 };
-
-/// @brief Pointer to the @c AuditEntry object.
-typedef boost::shared_ptr<AuditEntry> AuditEntryPtr;
 
 /// @brief Tag used to access index by object type.
 struct AuditEntryObjectTypeTag { };

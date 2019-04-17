@@ -13,6 +13,7 @@
 #include <util/encode/hex.h>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/make_shared.hpp>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -21,6 +22,24 @@ using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
+
+OptionDescriptorPtr
+OptionDescriptor::create(const OptionPtr& opt, bool persist,
+                         const std::string& formatted_value,
+                         ConstElementPtr user_context) {
+    return (boost::make_shared<OptionDescriptor>(opt, persist, formatted_value,
+                                                 user_context));
+}
+
+OptionDescriptorPtr
+OptionDescriptor::create(bool persist) {
+    return (boost::make_shared<OptionDescriptor>(persist));
+}
+
+OptionDescriptorPtr
+OptionDescriptor::create(const OptionDescriptor& desc) {
+    return (boost::make_shared<OptionDescriptor>(desc));
+}
 
 bool
 OptionDescriptor::equals(const OptionDescriptor& other) const {

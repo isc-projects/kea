@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <dhcpsrv/pool.h>
+#include <boost/make_shared.hpp>
 #include <sstream>
 
 using namespace isc::asiolink;
@@ -84,6 +85,16 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
     // possible IPv4 addresses, we'll be able to accurately store that
     // info.
     capacity_ = addrsInRange(prefix, last_);
+}
+
+Pool4Ptr
+Pool4::create(const IOAddress& first, const IOAddress& last) {
+    return (boost::make_shared<Pool4>(first, last));
+}
+
+Pool4Ptr
+Pool4::create(const IOAddress& prefix, uint8_t prefix_len) {
+    return (boost::make_shared<Pool4>(prefix, prefix_len));
 }
 
 data::ElementPtr
@@ -242,6 +253,26 @@ Pool6::Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
         /// should be considered a part of the IOAddress class, perhaps and
         /// requires a bit of work (mainly in terms of testing).
     }
+}
+
+Pool6Ptr
+Pool6::create(Lease::Type type, const IOAddress& first, const IOAddress& last) {
+    return (boost::make_shared<Pool6>(type, first, last));
+}
+
+Pool6Ptr
+Pool6::create(Lease::Type type, const IOAddress& prefix,
+              uint8_t prefix_len, uint8_t delegated_len) {
+    return (boost::make_shared<Pool6>(type, prefix, prefix_len, delegated_len));
+}
+
+Pool6Ptr
+Pool6::create(const IOAddress& prefix, const uint8_t prefix_len,
+              const uint8_t delegated_len, const IOAddress& excluded_prefix,
+              const uint8_t excluded_prefix_len) {
+    return (boost::make_shared<Pool6>(prefix, prefix_len,
+                                      delegated_len, excluded_prefix,
+                                      excluded_prefix_len));
 }
 
 void

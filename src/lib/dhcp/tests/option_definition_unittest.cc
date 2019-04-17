@@ -138,6 +138,58 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
     EXPECT_EQ("isc", opt_def_copy2.getEncapsulatedSpace());
 }
 
+// This test checks that the factory function taking string option
+// data type as argument creates a valid instance.
+TEST_F(OptionDefinitionTest, createStringType) {
+    auto def = OptionDefinition::create("option-foo", 123, "uint16", "isc");
+    ASSERT_TRUE(def);
+
+    EXPECT_EQ("option-foo", def->getName());
+    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ("isc", def->getEncapsulatedSpace());
+}
+
+// This test checks that the factory function taking enum option
+// data type as argument creates a valid instance.
+TEST_F(OptionDefinitionTest, createEnumType) {
+    auto def = OptionDefinition::create("option-foo", 123, OPT_UINT16_TYPE, "isc");
+    ASSERT_TRUE(def);
+
+    EXPECT_EQ("option-foo", def->getName());
+    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ("isc", def->getEncapsulatedSpace());
+}
+
+// This test checks that the factory function creating an array and
+// taking string option data type as argument creates a valid instance.
+TEST_F(OptionDefinitionTest, createStringTypeArray) {
+    auto def = OptionDefinition::create("option-foo", 123, "uint16", true);
+    ASSERT_TRUE(def);
+
+    EXPECT_EQ("option-foo", def->getName());
+    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
+    EXPECT_TRUE(def->getArrayType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+}
+
+// This test checks that the factory function creating an array and
+// taking enum option data type as argument creates a valid instance.
+TEST_F(OptionDefinitionTest, createEnumTypeArray) {
+    auto def = OptionDefinition::create("option-foo", 123, OPT_UINT16_TYPE, true);
+    ASSERT_TRUE(def);
+
+    EXPECT_EQ("option-foo", def->getName());
+    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
+    EXPECT_TRUE(def->getArrayType());
+    EXPECT_TRUE(def->getEncapsulatedSpace().empty());
+}
+
 // This test checks that two option definitions may be compared for equality.
 TEST_F(OptionDefinitionTest, equality) {
     // Equal definitions.

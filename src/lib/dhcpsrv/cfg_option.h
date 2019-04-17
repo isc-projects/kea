@@ -28,6 +28,11 @@
 namespace isc {
 namespace dhcp {
 
+class OptionDescriptor;
+
+/// A pointer to option descriptor.
+typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
+
 /// @brief Option descriptor.
 ///
 /// Option descriptor holds instance of an option and additional information
@@ -73,11 +78,10 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param opt option
-    /// @param persist if true option is always sent.
-    /// @param formatted_value option value in the textual format. Default
+    /// @param opt option instance.
+    /// @param persist if true, option is always sent.
+    /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
-    /// value is empty indicating that the value is not set.
     OptionDescriptor(const OptionPtr& opt, bool persist,
                      const std::string& formatted_value = "",
                      data::ConstElementPtr user_context = data::ConstElementPtr())
@@ -87,7 +91,7 @@ public:
         setContext(user_context);
     };
 
-    /// @brief Constructor
+    /// @brief Constructor.
     ///
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
@@ -96,7 +100,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param desc descriptor
+    /// @param desc option descriptor to be copied.
     OptionDescriptor(const OptionDescriptor& desc)
         : data::StampedElement(desc),
           option_(desc.option_),
@@ -105,6 +109,34 @@ public:
           space_name_(desc.space_name_) {
         setContext(desc.getContext());
     };
+
+    /// @brief Factory function creating an instance of the @c OptionDescriptor.
+    ///
+    /// @param opt option instance.
+    /// @param persist if true, option is always sent.
+    /// @param formatted_value option value in the textual format (optional).
+    /// @param user_context user context (optional).
+    ///
+    /// @return Pointer to the @c OptionDescriptor instance.
+    static OptionDescriptorPtr create(const OptionPtr& opt,
+                                      bool persist,
+                                      const std::string& formatted_value = "",
+                                      data::ConstElementPtr user_context =
+                                      data::ConstElementPtr());
+
+    /// @brief Factory function creating an instance of the @c OptionDescriptor.
+    ///
+    /// @param persist if true option is always sent.
+    ///
+    /// @return Pointer to the @c OptionDescriptor instance.
+    static OptionDescriptorPtr create(bool persist);
+
+    /// @brief Factory function creating an instance of the @c OptionDescriptor.
+    ///
+    /// @param desc option descriptor to be copied.
+    ///
+    /// @return Pointer to the @c OptionDescriptor instance.
+    static OptionDescriptorPtr create(const OptionDescriptor& desc);
 
     /// @brief Checks if the one descriptor is equal to another.
     ///
@@ -131,9 +163,6 @@ public:
         return (!equals(other));
     }
 };
-
-/// A pointer to option descriptor.
-typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
 
 /// @brief Multi index container for DHCP option descriptors.
 ///

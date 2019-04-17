@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/make_shared.hpp>
 #include <sstream>
 
 using namespace std;
@@ -98,6 +99,38 @@ OptionDefinition::OptionDefinition(const std::string& name,
       record_fields_(),
       user_context_(),
       option_space_name_() {
+}
+
+OptionDefinitionPtr
+OptionDefinition::create(const std::string& name,
+                         const uint16_t code,
+                         const std::string& type,
+                         const bool array_type) {
+    return (boost::make_shared<OptionDefinition>(name, code, type, array_type));
+}
+
+OptionDefinitionPtr
+OptionDefinition::create(const std::string& name,
+                         const uint16_t code,
+                         const OptionDataType type,
+                         const bool array_type) {
+    return (boost::make_shared<OptionDefinition>(name, code, type, array_type));
+}
+
+OptionDefinitionPtr
+OptionDefinition::create(const std::string& name,
+                         const uint16_t code,
+                         const std::string& type,
+                         const char* encapsulated_space) {
+    return (boost::make_shared<OptionDefinition>(name, code, type, encapsulated_space));
+}
+
+OptionDefinitionPtr
+OptionDefinition::create(const std::string& name,
+                         const uint16_t code,
+                         const OptionDataType type,
+                         const char* encapsulated_space) {
+    return (boost::make_shared<OptionDefinition>(name, code, type, encapsulated_space));
 }
 
 bool

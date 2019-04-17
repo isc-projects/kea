@@ -476,6 +476,29 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
+    /// @brief Factory function creating an instance of the @c Subnet4.
+    ///
+    /// This function should be used to create an instance of the subnet
+    /// object within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param prefix Subnet4 prefix
+    /// @param length prefix length
+    /// @param t1 renewal timer (in seconds)
+    /// @param t2 rebind timer (in seconds)
+    /// @param valid_lifetime preferred lifetime of leases (in seconds)
+    /// @param id arbitrary subnet id, default value of 0 triggers
+    /// autogeneration of subnet id
+    ///
+    /// @return Pointer to the @c Subnet4 instance.
+    static Subnet4Ptr
+    create(const isc::asiolink::IOAddress& prefix, uint8_t length,
+           const Triplet<uint32_t>& t1,
+           const Triplet<uint32_t>& t2,
+           const Triplet<uint32_t>& valid_lifetime,
+           const SubnetID id = 0);
+
     /// @brief Returns next subnet within shared network.
     ///
     /// If the current subnet doesn't belong to any shared network or if
@@ -601,6 +624,31 @@ public:
             const Triplet<uint32_t>& preferred_lifetime,
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
+
+    /// @brief Factory function creating an instance of the @c Subnet4.
+    ///
+    /// This function should be used to create an instance of the subnet
+    /// object within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param prefix Subnet6 prefix
+    /// @param length prefix length
+    /// @param t1 renewal timer (in seconds)
+    /// @param t2 rebind timer (in seconds)
+    /// @param preferred_lifetime preferred lifetime of leases (in seconds)
+    /// @param valid_lifetime preferred lifetime of leases (in seconds)
+    /// @param id arbitrary subnet id, default value of 0 triggers
+    /// autogeneration of subnet id
+    ///
+    /// @return Pointer to the @c Subnet6 instance.
+    static Subnet6Ptr
+    create(const isc::asiolink::IOAddress& prefix, uint8_t length,
+           const Triplet<uint32_t>& t1,
+           const Triplet<uint32_t>& t2,
+           const Triplet<uint32_t>& preferred_lifetime,
+           const Triplet<uint32_t>& valid_lifetime,
+           const SubnetID id = 0);
 
     /// @brief Returns next subnet within shared network.
     ///
