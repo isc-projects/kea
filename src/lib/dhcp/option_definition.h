@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -205,6 +205,81 @@ public:
                               const OptionDataType type,
                               const char* encapsulated_space);
 
+    /// @brief Factory function creating an instance of the @c OptionDefinition.
+    ///
+    /// This function should be used to create an instance of the option
+    /// definition within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type as string.
+    /// @param array_type array indicator, if true it indicates that the
+    /// option fields are the array.
+    ///
+    /// @return Pointer to the @c OptionDefinition instance.
+    static OptionDefinitionPtr create(const std::string& name,
+                                      const uint16_t code,
+                                      const std::string& type,
+                                      const bool array_type = false);
+
+    /// @brief Factory function creating an instance of the @c OptionDefinition.
+    ///
+    /// This function should be used to create an instance of the option
+    /// definition within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type.
+    /// @param array_type array indicator, if true it indicates that the
+    /// option fields are the array.
+    ///
+    /// @return Pointer to the @c OptionDefinition instance.
+    static OptionDefinitionPtr create(const std::string& name,
+                                      const uint16_t code,
+                                      const OptionDataType type,
+                                      const bool array_type = false);
+
+    /// @brief Factory function creating an instance of the @c OptionDefinition.
+    ///
+    /// This function should be used to create an instance of the option
+    /// definition within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type given as string.
+    /// @param encapsulated_space name of the option space being
+    /// encapsulated by this option.
+    ///
+    /// @return Pointer to the @c OptionDefinition instance.
+    static OptionDefinitionPtr create(const std::string& name,
+                                      const uint16_t code,
+                                      const std::string& type,
+                                      const char* encapsulated_space);
+
+    /// @brief Factory function creating an instance of the @c OptionDefinition.
+    ///
+    /// This function should be used to create an instance of the option
+    /// definition within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param name option name.
+    /// @param code option code.
+    /// @param type option data type.
+    /// @param encapsulated_space name of the option space being
+    /// encapsulated by this option.
+    ///
+    /// @return Pointer to the @c OptionDefinition instance.
+    static OptionDefinitionPtr create(const std::string& name,
+                                      const uint16_t code,
+                                      const OptionDataType type,
+                                      const char* encapsulated_space);
 
     /// @name Comparison functions and operators.
     ///

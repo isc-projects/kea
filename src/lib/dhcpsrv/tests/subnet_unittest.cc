@@ -43,6 +43,20 @@ TEST(Subnet4Test, constructor) {
                 BadValue); // IPv6 addresses are not allowed in Subnet4
 }
 
+// This test verifies that the Subnet4 factory function creates a
+// valid subnet instance.
+TEST(Subnet4Test, create) {
+    auto subnet = Subnet4::create(IOAddress("192.0.2.2"), 16,
+                                  1, 2, 3, 10);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("192.0.2.2/16", subnet->toText());
+    EXPECT_EQ(1, subnet->getT1().get());
+    EXPECT_EQ(2, subnet->getT2().get());
+    EXPECT_EQ(3, subnet->getValid().get());
+    EXPECT_EQ(10, subnet->getID());
+}
+
 // This test verifies the default values set for the subnets and verifies
 // that the optional values are unspecified.
 TEST(Subnet4Test, defaults) {
@@ -746,6 +760,21 @@ TEST(Subnet6Test, constructor) {
                 BadValue); // invalid prefix length
     EXPECT_THROW(Subnet6 subnet3(IOAddress("192.168.0.0"), 32, 1, 2, 3, 4),
                 BadValue); // IPv4 addresses are not allowed in Subnet6
+}
+
+// This test verifies that the Subnet6 factory function creates a
+// valid subnet instance.
+TEST(Subnet6Test, create) {
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"), 64,
+                                  1, 2, 3, 4, 10);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("2001:db8:1::/64", subnet->toText());
+    EXPECT_EQ(1, subnet->getT1().get());
+    EXPECT_EQ(2, subnet->getT2().get());
+    EXPECT_EQ(3, subnet->getPreferred().get());
+    EXPECT_EQ(4, subnet->getValid().get());
+    EXPECT_EQ(10, subnet->getID());
 }
 
 // This test verifies the default values set for the shared

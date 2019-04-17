@@ -6,6 +6,7 @@
 
 #include <database/audit_entry.h>
 #include <exceptions/exceptions.h>
+#include <boost/make_shared.hpp>
 
 namespace isc {
 namespace db {
@@ -35,6 +36,28 @@ AuditEntry::AuditEntry(const std::string& object_type,
       log_message_(log_message) {
     // Check if the provided values are sane.
     validate();
+}
+
+AuditEntryPtr
+AuditEntry::create(const std::string& object_type,
+                   const uint64_t object_id,
+                   const ModificationType& modification_type,
+                   const boost::posix_time::ptime& modification_time,
+                   const std::string& log_message) {
+    return (boost::make_shared<AuditEntry>(object_type, object_id,
+                                           modification_type,
+                                           modification_time,
+                                           log_message));
+}
+
+AuditEntryPtr
+AuditEntry::create(const std::string& object_type,
+                   const uint64_t object_id,
+                   const ModificationType& modification_type,
+                   const std::string& log_message) {
+    return (boost::make_shared<AuditEntry>(object_type, object_id,
+                                           modification_type,
+                                           log_message));
 }
 
 void

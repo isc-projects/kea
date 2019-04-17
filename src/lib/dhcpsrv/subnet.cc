@@ -12,6 +12,7 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #include <algorithm>
 #include <sstream>
 
@@ -244,7 +245,7 @@ void Subnet4::checkType(Lease::Type type) const {
     }
 }
 
-Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
+Subnet4::Subnet4(const IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
@@ -259,6 +260,17 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     setT1(t1);
     setT2(t2);
     setValid(valid_lifetime);
+}
+
+Subnet4Ptr
+Subnet4::create(const IOAddress& prefix, uint8_t length,
+                const Triplet<uint32_t>& t1,
+                const Triplet<uint32_t>& t2,
+                const Triplet<uint32_t>& valid_lifetime,
+                const SubnetID id) {
+    Subnet4Ptr subnet = boost::make_shared<Subnet4>
+        (prefix, length, t1, t2, valid_lifetime, id);
+    return (subnet);
 }
 
 Subnet4Ptr
@@ -585,7 +597,7 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
 }
 
 
-Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
+Subnet6::Subnet6(const IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& preferred_lifetime,
@@ -602,6 +614,18 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     setT2(t2);
     setPreferred(preferred_lifetime);
     setValid(valid_lifetime);
+}
+
+Subnet6Ptr
+Subnet6::create(const IOAddress& prefix, uint8_t length,
+                const Triplet<uint32_t>& t1,
+                const Triplet<uint32_t>& t2,
+                const Triplet<uint32_t>& preferred_lifetime,
+                const Triplet<uint32_t>& valid_lifetime,
+                const SubnetID id) {
+    Subnet6Ptr subnet = boost::make_shared<Subnet6>
+        (prefix, length, t1, t2, preferred_lifetime, valid_lifetime, id);
+    return (subnet);
 }
 
 void Subnet6::checkType(Lease::Type type) const {

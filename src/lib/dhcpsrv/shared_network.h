@@ -40,6 +40,11 @@ struct SharedNetworkServerIdIndexTag { };
 /// time.
 struct SharedNetworkModificationTimeIndexTag { };
 
+class SharedNetwork4;
+
+/// @brief Pointer to @ref SharedNetwork4 object.
+typedef boost::shared_ptr<SharedNetwork4> SharedNetwork4Ptr;
+
 /// @brief Shared network holding IPv4 subnets.
 ///
 /// Specialization of the @ref Network4 class for IPv4 shared networks.
@@ -50,9 +55,23 @@ public:
     /// @brief Constructor.
     ///
     /// Sets name of the shared network.
+    ///
+    /// @param name Name of the shared network.
     explicit SharedNetwork4(const std::string& name)
         : name_(name), subnets_() {
     }
+
+    /// @brief Factory function creating an instance of the @c SharedNetwork4.
+    ///
+    /// This function should be used to create an instance of the shared
+    /// network within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param name Name of the shared network.
+    ///
+    /// @return Pointer to the @c SharedNetwork4 instance.
+    static SharedNetwork4Ptr create(const std::string& name);
 
     /// @brief Returns a name of the shared network.
     std::string getName() const {
@@ -157,9 +176,6 @@ private:
     Subnet4Collection subnets_;
 };
 
-/// @brief Pointer to @ref SharedNetwork4 object.
-typedef boost::shared_ptr<SharedNetwork4> SharedNetwork4Ptr;
-
 /// @brief Multi index container holding shared networks.
 ///
 /// This is multi index container can hold pointers to @ref SharedNetwork4
@@ -203,6 +219,11 @@ typedef boost::multi_index_container<
     >
 > SharedNetwork4Collection;
 
+class SharedNetwork6;
+
+/// @brief Pointer to @ref SharedNetwork6 object.
+typedef boost::shared_ptr<SharedNetwork6> SharedNetwork6Ptr;
+
 /// @brief Shared network holding IPv6 subnets.
 ///
 /// Specialization of the @ref Network6 class for IPv6 shared networks.
@@ -216,6 +237,18 @@ public:
     explicit SharedNetwork6(const std::string& name)
         : name_(name), subnets_() {
     }
+
+    /// @brief Factory function creating an instance of the @c SharedNetwork6.
+    ///
+    /// This function should be used to create an instance of the shared
+    /// network within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param name Name of the shared network.
+    ///
+    /// @return Pointer to the @c SharedNetwork6 instance.
+    static SharedNetwork6Ptr create(const std::string& name);
 
     /// @brief Returns a name of the shared network.
     std::string getName() const {
@@ -319,9 +352,6 @@ private:
     /// @brief Collection of IPv6 subnets within shared network.
     Subnet6Collection subnets_;
 };
-
-/// @brief Pointer to @ref SharedNetwork6 object.
-typedef boost::shared_ptr<SharedNetwork6> SharedNetwork6Ptr;
 
 /// @brief Multi index container holding shared networks.
 ///

@@ -165,6 +165,33 @@ public:
     /// @param source Option to be copied.
     Option(const Option& source);
 
+    /// @brief Factory function creating an instance of the @c Option.
+    ///
+    /// This function should be used to create an instance of the shared
+    /// network within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    ///
+    /// @return Pointer to the @c Option instance.
+    static OptionPtr create(Universe u, uint16_t type);
+
+    /// @brief Factory function creating an instance of the @c Option.
+    ///
+    /// This function should be used to create an instance of the shared
+    /// network within a hooks library in cases when the library may be
+    /// unloaded before the object is destroyed. This ensures that the
+    /// ownership of the object by the Kea process is retained.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @param type option type (0-255 for V4 and 0-65535 for V6)
+    /// @param data content of the option
+    ///
+    /// @return Pointer to the @c Option instance.
+    static OptionPtr create(Universe u, uint16_t type, const OptionBuffer& data);
+
     /// @brief Assignment operator.
     ///
     /// The assignment operator performs a deep copy of the option and

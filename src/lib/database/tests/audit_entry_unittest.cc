@@ -89,7 +89,7 @@ TEST_F(AuditEntryTest, create) {
     {
         SCOPED_TRACE("create with modification time");
 
-        ASSERT_NO_THROW(audit_entry = boost::make_shared<AuditEntry>
+        ASSERT_NO_THROW(audit_entry = AuditEntry::create
                         ("dhcp4_subnet", 10, AuditEntry::ModificationType::DELETE,
                          fixedTime(), "deleted subnet 10"));
         EXPECT_EQ("dhcp4_subnet", audit_entry->getObjectType());
@@ -102,7 +102,7 @@ TEST_F(AuditEntryTest, create) {
     {
         SCOPED_TRACE("create with default modification time");
 
-        ASSERT_NO_THROW(audit_entry = boost::make_shared<AuditEntry>
+        ASSERT_NO_THROW(audit_entry = AuditEntry::create
                         ("dhcp4_option", 123, AuditEntry::ModificationType::CREATE,
                          ""));
         EXPECT_EQ("dhcp4_option", audit_entry->getObjectType());

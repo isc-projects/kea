@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <cc/data.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
@@ -25,9 +26,55 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace {
+
+// This test verifies that the OptionDescriptor factory function creates a
+// valid instance.
+TEST(OptionDescriptorTest, create) {
+    OptionPtr option = Option::create(Option::V4, 234);
+    ElementPtr context = Element::createMap();
+    context->set("name", Element::create("value"));
+    auto desc = OptionDescriptor::create(option, true, "value", context);
+
+    ASSERT_TRUE(desc);
+    EXPECT_EQ(option, desc->option_);
+    EXPECT_TRUE(desc->persistent_);
+    EXPECT_EQ("value", desc->formatted_value_);
+    EXPECT_EQ(context, desc->getContext());
+}
+
+// This test verifies that the OptionDescriptor factory function variant
+// taking persistent flag as an argument creates valid instance.
+TEST(OptionDescriptorTest, createPersistent) {
+    auto desc = OptionDescriptor::create(true);
+    ASSERT_TRUE(desc);
+
+    EXPECT_FALSE(desc->option_);
+    EXPECT_TRUE(desc->persistent_);
+    EXPECT_TRUE(desc->formatted_value_.empty());
+    EXPECT_FALSE(desc->getContext());
+}
+
+// This test verifies that the OptionDescriptor factory function variant
+// copying a descriptor provided as an argument creates valid instance.
+TEST(OptionDescriptorTest, createCopy) {
+    OptionPtr option = Option::create(Option::V4, 234);
+    ElementPtr context = Element::createMap();
+    context->set("name", Element::create("value"));
+    auto desc = OptionDescriptor::create(option, true, "value", context);
+
+    auto desc_copy = OptionDescriptor::create(*desc);
+    ASSERT_TRUE(desc_copy);
+
+    ASSERT_TRUE(desc_copy);
+    EXPECT_EQ(option, desc_copy->option_);
+    EXPECT_TRUE(desc_copy->persistent_);
+    EXPECT_EQ("value", desc_copy->formatted_value_);
+    EXPECT_EQ(context, desc_copy->getContext());
+}
 
 /// This class fixture for testing @c CfgOption class, holding option
 /// configuration.

@@ -11,6 +11,8 @@
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 
+#include <boost/make_shared.hpp>
+
 #include <iomanip>
 #include <list>
 #include <sstream>
@@ -54,6 +56,16 @@ Option::Option(const Option& option)
       data_(option.data_), options_(),
       encapsulated_space_(option.encapsulated_space_) {
     option.getOptionsCopy(options_);
+}
+
+OptionPtr
+Option::create(Universe u, uint16_t type) {
+    return (boost::make_shared<Option>(u, type));
+}
+
+OptionPtr
+Option::create(Universe u, uint16_t type, const OptionBuffer& data) {
+    return (boost::make_shared<Option>(u, type, data));
 }
 
 Option&
