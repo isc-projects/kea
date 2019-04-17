@@ -233,7 +233,7 @@ quotedStringToBinary(const std::string& quoted_string);
 /// an exception is thrown.
 ///
 /// \param hex_string Input string.
-/// \param sep character to use a a separator. 
+/// \param sep character to use a a separator.
 /// \param binary Vector receiving converted string into binary.
 /// \throw isc::BadValue if the format of the input string is invalid.
 void
@@ -259,8 +259,8 @@ decodeColonSeparatedHexString(const std::string& hex_string,
 ///
 /// This function supports the following formats:
 ///
-/// - yy<s>yy<s>yy<s>yy   where <s> is either a colon or space, see
-/// @c decodeSeparatedHexString
+/// - yy:yy:yy:yy or yy yy yy yy - octets delimited by colons or
+/// spaces, see @c decodeSeparatedHexString
 ///
 /// - yyyyyyyyyy
 /// - 0xyyyyyyyyyy
