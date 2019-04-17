@@ -323,9 +323,9 @@ public:
                 auto valid_lifetime = createTriplet(out_bindings[19]);
 
                 // Create subnet with basic settings.
-                last_subnet.reset(new Subnet4(prefix_pair.first, prefix_pair.second,
+                last_subnet = Subnet4::create(prefix_pair.first, prefix_pair.second,
                                               renew_timer, rebind_timer,
-                                              valid_lifetime, subnet_id));
+                                              valid_lifetime, subnet_id);
 
                 // 4o6_interface
                 if (!out_bindings[2]->amNull()) {
@@ -336,8 +336,8 @@ public:
                     std::string dhcp4o6_interface_id = out_bindings[3]->getString();
                     OptionBuffer dhcp4o6_interface_id_buf(dhcp4o6_interface_id.begin(),
                                                           dhcp4o6_interface_id.end());
-                    OptionPtr option_dhcp4o6_interface_id(new Option(Option::V6, D6O_INTERFACE_ID,
-                                                                     dhcp4o6_interface_id_buf));
+                    OptionPtr option_dhcp4o6_interface_id =
+                        Option::create(Option::V6, D6O_INTERFACE_ID, dhcp4o6_interface_id_buf);
                     last_subnet->get4o6().setInterfaceId(option_dhcp4o6_interface_id);
                 }
                 // 4o6_subnet
@@ -459,8 +459,8 @@ public:
                 (out_bindings[22]->getInteger<uint32_t>() != 0) &&
                 (out_bindings[20]->getInteger<uint64_t>() > last_pool_id)) {
                 last_pool_id = out_bindings[20]->getInteger<uint64_t>();
-                last_pool.reset(new Pool4(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
-                                          IOAddress(out_bindings[22]->getInteger<uint32_t>())));
+                last_pool = Pool4::create(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
+                                          IOAddress(out_bindings[22]->getInteger<uint32_t>()));
                 last_subnet->addPool(last_pool);
             }
 
@@ -649,8 +649,8 @@ public:
 
                 last_pool_id = out_bindings[0]->getInteger<uint64_t>();
 
-                last_pool.reset(new Pool4(IOAddress(out_bindings[1]->getInteger<uint32_t>()),
-                                          IOAddress(out_bindings[2]->getInteger<uint32_t>())));
+                last_pool = Pool4::create(IOAddress(out_bindings[1]->getInteger<uint32_t>()),
+                                          IOAddress(out_bindings[2]->getInteger<uint32_t>()));
                 pools.push_back(last_pool);
                 pool_ids.push_back(last_pool_id);
             }
@@ -860,7 +860,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = subnet->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, subnet->getID(), desc_copy,
                                     true);
@@ -892,7 +892,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, pool_id, desc_copy, true);
             }
@@ -1037,7 +1037,7 @@ public:
             if (last_network_id != out_bindings[0]->getInteger<uint64_t>()) {
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
-                last_network.reset(new SharedNetwork4(out_bindings[1]->getString()));
+                last_network = SharedNetwork4::create(out_bindings[1]->getString());
                 last_network->setId(last_network_id);
 
                 // client_class
@@ -1326,7 +1326,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = shared_network->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, shared_network->getName(),
                                     desc_copy, true);

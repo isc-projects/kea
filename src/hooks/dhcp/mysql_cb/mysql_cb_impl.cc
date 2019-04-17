@@ -168,11 +168,12 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
 
             // Create new audit entry and add it to the collection of received
             // entries.
-            AuditEntryPtr audit_entry(new AuditEntry(out_bindings[1]->getString(),
-                                                     out_bindings[2]->getInteger<uint64_t>(),
-                                                     mod_type,
-                                                     out_bindings[4]->getTimestamp(),
-                                                     out_bindings[5]->getStringOrDefault("")));
+            AuditEntryPtr audit_entry =
+                AuditEntry::create(out_bindings[1]->getString(),
+                                   out_bindings[2]->getInteger<uint64_t>(),
+                                   mod_type,
+                                   out_bindings[4]->getTimestamp(),
+                                   out_bindings[5]->getStringOrDefault(""));
             audit_entries.insert(audit_entry);
         });
     }
@@ -317,18 +318,18 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             bool array_type = static_cast<bool>(out_bindings[6]->getInteger<uint8_t>());
             if (array_type) {
                 // Create array option.
-                last_def.reset(new OptionDefinition(out_bindings[2]->getString(),
+                last_def = OptionDefinition::create(out_bindings[2]->getString(),
                                                     out_bindings[1]->getInteger<uint16_t>(),
                                                     static_cast<OptionDataType>
                                                     (out_bindings[4]->getInteger<uint8_t>()),
-                                                    array_type));
+                                                    array_type);
             } else {
                 // Create non-array option.
-                last_def.reset(new OptionDefinition(out_bindings[2]->getString(),
+                last_def = OptionDefinition::create(out_bindings[2]->getString(),
                                                     out_bindings[1]->getInteger<uint16_t>(),
                                                     static_cast<OptionDataType>
                                                     (out_bindings[4]->getInteger<uint8_t>()),
-                                                    out_bindings[7]->getStringOrDefault("").c_str()));
+                                                    out_bindings[7]->getStringOrDefault("").c_str());
             }
 
             // space
@@ -480,7 +481,7 @@ MySqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(MySqlBinding::createString(space));
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+            OptionDescriptor::create(*options.begin()));
 }
 
 OptionContainer
@@ -547,7 +548,7 @@ MySqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(MySqlBinding::createString(space));
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+            OptionDescriptor::create(*options.begin()));
 }
 
 OptionDescriptorPtr
@@ -586,7 +587,7 @@ MySqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(MySqlBinding::createString(space));
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+            OptionDescriptor::create(*options.begin()));
 }
 
 OptionDescriptorPtr
@@ -616,7 +617,7 @@ MySqlConfigBackendImpl::getOption(const int index,
     in_bindings.push_back(MySqlBinding::createString(space));
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
-            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+            OptionDescriptor::create(*options.begin()));
 }
 
 void
@@ -699,7 +700,7 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // Get formatted value if available.
     std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
 
-    OptionPtr option(new Option(universe, code));
+    OptionPtr option = Option::create(universe, code);
 
     // If we don't have a formatted value, check for a blob. Add it to the
     // option if it exists.
@@ -717,7 +718,7 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // Create option descriptor which encapsulates our option and adds
     // additional information, i.e. whether the option is persistent,
     // its option space and timestamp.
-    OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
+    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
     desc->space_name_ = space;
     desc->setModificationTime((*(first_binding + 11))->getTimestamp());
 
