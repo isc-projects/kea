@@ -133,7 +133,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
         .includes(CommandOptions::LeaseType::ADDRESS)) {
         OptionPtr option = pkt_from->getOption(D6O_IA_NA);
         if (!option) {
-            isc_throw(OptionNotFound, "IA_NA option not found in the"
+            isc_throw(NotFound, "IA_NA option not found in the"
                       " server's response");
         }
         pkt_to->addOption(option);
@@ -143,7 +143,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
         .includes(CommandOptions::LeaseType::PREFIX)) {
         OptionPtr option = pkt_from->getOption(D6O_IA_PD);
         if (!option) {
-            isc_throw(OptionNotFound, "IA_PD option not found in the"
+            isc_throw(NotFound, "IA_PD option not found in the"
                       " server's response");
         }
         pkt_to->addOption(option);

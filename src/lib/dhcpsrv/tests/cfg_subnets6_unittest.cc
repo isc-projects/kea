@@ -181,7 +181,7 @@ TEST(CfgSubnets6Test, replaceSubnet) {
     ASSERT_TRUE(returned);
     EXPECT_TRUE(returned == subnet);
 
-    // Rollback.
+    // Restore.
     replaced = cfg.replace(replaced);
     ASSERT_TRUE(replaced);
     EXPECT_TRUE(replaced == subnet);

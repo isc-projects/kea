@@ -54,14 +54,6 @@ static const size_t DHCPV6_SERVERID_OFFSET = 22;
 /// Default DHCPV6 IA_NA offset in the packet template.
 static const size_t DHCPV6_IA_NA_OFFSET = 40;
 
-/// @brief Exception thrown when the required option is not found in a packet.
-class OptionNotFound : public Exception {
-public:
-    OptionNotFound(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
-
 /// \brief Test Control class.
 ///
 /// This class is used to run the performance test with
@@ -822,8 +814,8 @@ protected:
     /// \param [in] pkt_from A packet from which options should be copied.
     /// \param [out] pkt_to A packet to which options should be copied.
     ///
-    /// \throw isc::perfdhcp::OptionNotFound if a required option is not
-    /// found in the packet from which options should be copied.
+    /// \throw isc::NotFound if a required option is not found in the
+    /// packet from which options should be copied.
     /// \throw isc::BadValue if any of the specified pointers to packets
     /// is NULL.
     void copyIaOptions(const dhcp::Pkt6Ptr& pkt_from, dhcp::Pkt6Ptr& pkt_to);
