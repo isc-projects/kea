@@ -65,7 +65,7 @@ public:
         }
         LeaseMgrFactory::destroy();
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        destroyCqlSchema();
+        destroyCqlSchema(false, true);
     }
 
     void TearDown(::benchmark::State& s) override {
