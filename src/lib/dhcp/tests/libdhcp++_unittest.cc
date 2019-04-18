@@ -551,12 +551,10 @@ TEST_F(LibDhcpTest, unpackEmptyOption6) {
     LibDHCP::commitRuntimeOptionDefs();
 
     // Create the buffer holding the structure of the empty option.
-    const uint8_t raw_data[] = {
+    OptionBuffer buf = {
       0x04, 0x00,                // option code = 1024
       0x00, 0x00                 // option length = 0
     };
-    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
-    OptionBuffer buf(raw_data, raw_data + raw_data_len);
 
     // Parse options.
     OptionCollection options;
@@ -599,7 +597,7 @@ TEST_F(LibDhcpTest, unpackSubOptions6) {
     LibDHCP::commitRuntimeOptionDefs();
 
     // Create the buffer holding the structure of options.
-    const char raw_data[] = {
+    OptionBuffer buf = {
         // First option starts here.
         0x00, 0x01,   // option code = 1
         0x00, 0x0F,   // option length = 15
@@ -613,7 +611,6 @@ TEST_F(LibDhcpTest, unpackSubOptions6) {
         0x00, 0x01,  // option length = 1
         0x00 // This option carries a single uint8 value and has no sub options.
     };
-    OptionBuffer buf(raw_data, raw_data + sizeof(raw_data));
 
     // Parse options.
     OptionCollection options;
@@ -919,12 +916,10 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
     LibDHCP::commitRuntimeOptionDefs();
 
     // Create the buffer holding the structure of the empty option.
-    const uint8_t raw_data[] = {
+    OptionBuffer buf = {
       0xFE,                     // option code = 254
       0x00                      // option length = 0
     };
-    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
-    OptionBuffer buf(raw_data, raw_data + raw_data_len);
 
     // Parse options.
     OptionCollection options;
@@ -969,7 +964,7 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
     LibDHCP::commitRuntimeOptionDefs();
 
     // Create the buffer holding the structure of options.
-    const uint8_t raw_data[] = {
+    OptionBuffer buf = {
         // First option starts here.
         0x01,                   // option code = 1
         0x0B,                   // option length = 11
@@ -984,8 +979,6 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
         0x00                    // This option carries a single uint8
                                 // value and has no sub options.
     };
-    size_t raw_data_len = sizeof(raw_data) / sizeof(uint8_t);
-    OptionBuffer buf(raw_data, raw_data + raw_data_len);
 
     // Parse options.
     OptionCollection options;
@@ -1014,6 +1007,95 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
     ASSERT_TRUE(option_bar);
     EXPECT_EQ(1, option_bar->getType());
     EXPECT_EQ(0x0, option_bar->getValue());
+}
+
+// Verifies that options 0 (PAD) and 255 (END) are handled as PAD and END
+// in and only in the dhcp4 space.
+TEST_F(LibDhcpTest, unpackPadEnd) {
+    // Create option definition for the container.
+    OptionDefinitionPtr opt_def(new OptionDefinition("container", 200,
+                                                     "empty", "my-space"));
+    // Create option definition for option 0.
+    OptionDefinitionPtr opt_def0(new OptionDefinition("zero", 0, "uint8"));
+
+    // Create option definition for option 255.
+    OptionDefinitionPtr opt_def255(new OptionDefinition("max", 255, "uint8"));
+
+    // Create option definition for another option.
+    OptionDefinitionPtr opt_def2(new OptionDefinition("my-option", 1,
+                                                      "string"));
+
+    // Register created option definitions as runtime option definitions.
+    OptionDefSpaceContainer defs;
+    ASSERT_NO_THROW(defs.addItem(opt_def, DHCP4_OPTION_SPACE));
+    ASSERT_NO_THROW(defs.addItem(opt_def0, "my-space"));
+    ASSERT_NO_THROW(defs.addItem(opt_def255, "my-space"));
+    ASSERT_NO_THROW(defs.addItem(opt_def2, "my-space"));
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding the structure of options.
+    OptionBuffer buf = {
+        // Add a PAD
+        0x00,                         // option code = 0 (PAD)
+        // Container option starts here.
+        0xc8,                         // option code = 200 (container)
+        0x0b,                         // option length = 11
+        // Suboption 0.
+        0x00, 0x01, 0x00,             // code = 0, length = 1, content = 0
+        // Suboption 255.
+        0xff, 0x01, 0xff,             // code = 255, length = 1, content = 255
+        // Suboption 1.
+        0x01, 0x03, 0x66, 0x6f, 0x6f, // code = 1, length = 2, content = "foo"
+        // END
+        0xff,
+        // Extra bytes at tail.
+        0x01, 0x02, 0x03, 0x04
+    };
+
+    // Parse options.
+    OptionCollection options;
+    list<uint16_t> deferred;
+    size_t offset = 0;
+    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
+                                                     options, deferred));
+
+    // Returned offset should point to the END.
+    EXPECT_EQ(0xff, buf[offset]);
+
+    // There should be one top level option.
+    ASSERT_EQ(1, options.size());
+
+    // Get it.
+    OptionPtr option = options.begin()->second;
+    ASSERT_TRUE(option);
+    EXPECT_EQ(200, option->getType());
+
+    // There should be 3 suboptions.
+    ASSERT_EQ(3, option->getOptions().size());
+
+    // Get suboption 0.
+    boost::shared_ptr<OptionInt<uint8_t> > sub0 =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >
+            (option->getOption(0));
+    ASSERT_TRUE(sub0);
+    EXPECT_EQ(0, sub0->getType());
+    EXPECT_EQ(0, sub0->getValue());
+
+    // Get suboption 255.
+    boost::shared_ptr<OptionInt<uint8_t> > sub255 =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >
+            (option->getOption(255));
+    ASSERT_TRUE(sub255);
+    EXPECT_EQ(255, sub255->getType());
+    EXPECT_EQ(255, sub255->getValue());
+
+    // Get suboption 1.
+    boost::shared_ptr<OptionString> sub =
+        boost::dynamic_pointer_cast<OptionString>(option->getOption(1));
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ("foo", sub->getValue());
 }
 
 // Verifies that an Host Name (option 12), will be dropped when empty,
