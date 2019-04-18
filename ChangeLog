@@ -1,3 +1,8 @@
+1560.	[bug]		fdupont
+	kea-dhcp4 now permits option code values of 0 and 255 for
+	options defined in option spaces other than the "dhcp4" space.
+	(Gitlab #564,!300, git 7a0a0b84d91893f08c0ee6f236daa05bede65166)
+
 1559.	[func]		fdupont
 	Added DHCPv6 support to the MySQL Config Backend hook.
 	(Gitlab #397,!244, git 980091ecd717e41a61f0d7f6808213e450647d8e)
