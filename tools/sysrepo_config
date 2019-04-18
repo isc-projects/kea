@@ -61,16 +61,14 @@ elif [ "$2" != "libsysrepo" ] && [ "$2" != "libSysrepo-cpp" ]; then
     echo "run: \`$0 --help\` for more help"
     exit 0
 fi
-if [ $1 == "--cflags-only-I" ]
-then
-	echo "-I${SYSREPO_PATH}/include/"
-	exit 0
+
+if [ "$1" = "--cflags-only-other" ]; then
+    exit 0
 fi
-if [ $1 == "--libs" ]
-then
-# Earlier versions also required -lprotobuf, but it is no longer needed.
-	echo "-L${SYSREPO_PATH}/lib/ -L${YANG_LIBRARY_PATH} -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
-	exit 0
+
+if [ "$1" = "--cflags-only-I" ]; then
+    echo "-I${SYSREPO_PATH}/include/"
+    exit 0
 fi
 
 if [ "$1" = "--libs" ]; then
@@ -89,6 +87,7 @@ fi
 
 if [ "$1" = "--variable=SR_REPOSITORY_LOC" ]; then
     echo "${SYSREPO_PATH}/build/repository"
+    exit 0
 fi
 
 echo "wrong parameter"
