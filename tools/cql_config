@@ -88,7 +88,7 @@ if [ "$1" = "--modversion" ]; then
 fi
 
 if [ "$1" = "--print-errors" ]; then
-	exit 0
+    exit 0
 fi
 
 echo "wrong parameter"
