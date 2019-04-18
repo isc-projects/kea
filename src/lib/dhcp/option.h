@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,8 +167,8 @@ public:
 
     /// @brief Factory function creating an instance of the @c Option.
     ///
-    /// This function should be used to create an instance of the shared
-    /// network within a hooks library in cases when the library may be
+    /// This function should be used to create an instance of the DHCP
+    /// option within a hooks library in cases when the library may be
     /// unloaded before the object is destroyed. This ensures that the
     /// ownership of the object by the Kea process is retained.
     ///
@@ -180,8 +180,8 @@ public:
 
     /// @brief Factory function creating an instance of the @c Option.
     ///
-    /// This function should be used to create an instance of the shared
-    /// network within a hooks library in cases when the library may be
+    /// This function should be used to create an instance of the DHCP
+    /// option within a hooks library in cases when the library may be
     /// unloaded before the object is destroyed. This ensures that the
     /// ownership of the object by the Kea process is retained.
     ///
