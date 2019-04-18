@@ -100,8 +100,8 @@ public:
 
     /// @brief Factory function creating an instance of @c AuditEntry.
     ///
-    /// This function should be used to create an instance of the shared
-    /// network within a hooks library in cases when the library may be
+    /// This function should be used to create an instance of the audit
+    /// entry within a hooks library in cases when the library may be
     /// unloaded before the object is destroyed. This ensures that the
     /// ownership of the object by the Kea process is retained.
     ///
@@ -121,8 +121,8 @@ public:
 
     /// @brief Factory function creating an instance of @c AuditEntry.
     ///
-    /// This function should be used to create an instance of the shared
-    /// network within a hooks library in cases when the library may be
+    /// This function should be used to create an instance of the audit
+    /// entry within a hooks library in cases when the library may be
     /// unloaded before the object is destroyed. This ensures that the
     /// ownership of the object by the Kea process is retained.
     ///
