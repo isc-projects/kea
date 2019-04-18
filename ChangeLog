@@ -1,3 +1,8 @@
+1562.	[bug]		marcin
+	Corrected a bug whereby the DHCP server would trigger a segfault
+	upon termination when MySQL configuration backend was in use.
+	(Gitlab #571,!306, git 705e7bb6dd27ec90dd2807d4aac0905e3cb13de4)
+
 1561.	[func]		tmark
 	kea-dhcp6 now automatically deletes configuration elements
 	that have been deleted from configuration backends.
