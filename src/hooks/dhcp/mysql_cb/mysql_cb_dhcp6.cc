@@ -358,10 +358,10 @@ public:
                 auto valid_lifetime = createTriplet(out_bindings[14]);
 
                 // Create subnet with basic settings.
-                last_subnet.reset(new Subnet6(prefix_pair.first, prefix_pair.second,
+                last_subnet = Subnet6::create(prefix_pair.first, prefix_pair.second,
                                               renew_timer, rebind_timer,
                                               preferred_lifetime,
-                                              valid_lifetime, subnet_id));
+                                              valid_lifetime, subnet_id);
 
                 // client_class
                 if (!out_bindings[2]->amNull()) {
@@ -468,9 +468,9 @@ public:
                 !out_bindings[17]->getString().empty() &&
                 (out_bindings[15]->getInteger<uint64_t>() > last_pool_id)) {
                 last_pool_id = out_bindings[15]->getInteger<uint64_t>();
-                last_pool.reset(new Pool6(Lease::TYPE_NA,
+                last_pool = Pool6::create(Lease::TYPE_NA,
                                           IOAddress(out_bindings[16]->getString()),
-                                          IOAddress(out_bindings[17]->getString())));
+                                          IOAddress(out_bindings[17]->getString()));
                 last_subnet->addPool(last_pool);
             }
 
@@ -486,10 +486,10 @@ public:
                 (out_bindings[23]->getInteger<uint8_t>() != 0) &&
                 (out_bindings[20]->getInteger<uint64_t>() > last_pd_pool_id)) {
                 last_pd_pool_id = out_bindings[20]->getInteger<uint64_t>();
-                last_pd_pool.reset(new Pool6(Lease::TYPE_PD,
+                last_pd_pool = Pool6::create(Lease::TYPE_PD,
                                              IOAddress(out_bindings[21]->getString()),
                                              out_bindings[22]->getInteger<uint8_t>(),
-                                             out_bindings[23]->getInteger<uint8_t>()));
+                                             out_bindings[23]->getInteger<uint8_t>());
                 last_subnet->addPool(last_pd_pool);
             }
 
@@ -690,9 +690,9 @@ public:
 
                 last_pool_id = out_bindings[0]->getInteger<uint64_t>();
 
-                last_pool.reset(new Pool6(Lease::TYPE_NA,
+                last_pool = Pool6::create(Lease::TYPE_NA,
                                           IOAddress(out_bindings[1]->getString()),
-                                          IOAddress(out_bindings[2]->getString())));
+                                          IOAddress(out_bindings[2]->getString()));
                 pools.push_back(last_pool);
                 pool_ids.push_back(last_pool_id);
             }
@@ -761,10 +761,10 @@ public:
 
                 last_pd_pool_id = out_bindings[0]->getInteger<uint64_t>();
 
-                last_pd_pool.reset(new Pool6(Lease::TYPE_PD,
+                last_pd_pool = Pool6::create(Lease::TYPE_PD,
                                              IOAddress(out_bindings[1]->getString()),
                                              out_bindings[2]->getInteger<uint8_t>(),
-                                             out_bindings[3]->getInteger<uint8_t>()));
+                                             out_bindings[3]->getInteger<uint8_t>());
                 pd_pools.push_back(last_pd_pool);
                 pd_pool_ids.push_back(last_pd_pool_id);
             }
@@ -982,7 +982,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = subnet->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, subnet->getID(), desc_copy,
                                     true);
@@ -1014,7 +1014,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, Lease::TYPE_NA,
                                     pool_id, desc_copy, true);
@@ -1048,7 +1048,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = pd_pool->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, Lease::TYPE_PD,
                                     pd_pool_id, desc_copy, true);
@@ -1205,7 +1205,7 @@ public:
             if (last_network_id != out_bindings[0]->getInteger<uint64_t>()) {
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
-                last_network.reset(new SharedNetwork6(out_bindings[1]->getString()));
+                last_network = SharedNetwork6::create(out_bindings[1]->getString());
                 last_network->setId(last_network_id);
 
                 // client_class
@@ -1477,7 +1477,7 @@ public:
         for (auto option_space : option_spaces) {
             OptionContainerPtr options = shared_network->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, shared_network->getName(),
                                     desc_copy, true);
