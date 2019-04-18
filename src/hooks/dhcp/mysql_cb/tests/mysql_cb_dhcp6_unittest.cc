@@ -263,22 +263,22 @@ public:
         ElementPtr user_context = Element::createMap();
         user_context->set("foo", Element::create("bar"));
 
-        OptionDefinitionPtr option_def(new OptionDefinition("foo", 234, "string",
+        OptionDefinitionPtr option_def(new OptionDefinition("foo", 1234, "string",
                                                             "espace"));
         option_def->setOptionSpaceName("dhcp6");
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("bar", 234, "uint32", true));
+        option_def.reset(new OptionDefinition("bar", 1234, "uint32", true));
         option_def->setOptionSpaceName("dhcp6");
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("fish", 235, "record", true));
+        option_def.reset(new OptionDefinition("fish", 5235, "record", true));
         option_def->setOptionSpaceName("dhcp6");
         option_def->addRecordField("uint32");
         option_def->addRecordField("string");
         test_option_defs_.push_back(option_def);
 
-        option_def.reset(new OptionDefinition("whale", 2236, "string"));
+        option_def.reset(new OptionDefinition("whale", 20236, "string"));
         option_def->setOptionSpaceName("xyz");
         test_option_defs_.push_back(option_def);
     }
