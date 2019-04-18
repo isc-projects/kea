@@ -1,7 +1,12 @@
-1560.	[func]		tmark
+1561.	[func]		tmark
 	kea-dhcp6 now automatically deletes configuration elements
 	that have been deleted from configuration backends.
 	(Gitlab #566,!304, git 2e85376f1b57187b822c662144380e04372cffff)
+
+1560.	[bug]		fdupont
+	kea-dhcp4 now permits option code values of 0 and 255 for
+	options defined in option spaces other than the "dhcp4" space.
+	(Gitlab #564,!300, git 7a0a0b84d91893f08c0ee6f236daa05bede65166)
 
 1559.	[func]		fdupont
 	Added DHCPv6 support to the MySQL Config Backend hook.

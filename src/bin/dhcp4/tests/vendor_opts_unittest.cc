@@ -1499,3 +1499,129 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     Pkt4Ptr offer = srv.fake_sent_.front();
     ASSERT_TRUE(offer);
 }
+
+/// Checks that it's possible to define and use a suboption 0.
+TEST_F(VendorOptsTest, vendorOpsSubOption0) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Zero Touch provisioning
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"vendor-encapsulated-options\","
+        "            \"code\": 43,"
+        "            \"type\": \"empty\","
+        "            \"encapsulate\": \"ZTP\""
+        "        },"
+        "        {"
+        "            \"name\": \"config-file-name\","
+        "            \"code\": 1,"
+        "            \"space\": \"ZTP\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"image-file-name\","
+        "            \"code\": 0,"
+        "            \"space\": \"ZTP\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"image-file-type\","
+        "            \"code\": 2,"
+        "            \"space\": \"ZTP\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"transfer-mode\","
+        "            \"code\": 3,"
+        "            \"space\": \"ZTP\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"all-image-file-name\","
+        "            \"code\": 4,"
+        "            \"space\": \"ZTP\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"http-port\","
+        "            \"code\": 5,"
+        "            \"space\": \"ZTP\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"option-data\": ["
+        "        {"
+        "            \"name\": \"vendor-encapsulated-options\""
+        "        },"
+        "        {"
+        "            \"name\": \"image-file-name\","
+        "            \"data\": \"/dist/images/jinstall-ex.tgz\","
+        "            \"space\": \"ZTP\""
+        "        }"
+        "    ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+        // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Processing should add a vendor-encapsulated-options (code 43)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    const OptionCollection& opts = opt->getOptions();
+    ASSERT_EQ(1, opts.size());
+    OptionPtr sopt = opts.begin()->second;
+    ASSERT_TRUE(sopt);
+    EXPECT_EQ(0, sopt->getType());
+
+    // Check suboption 0 content.
+    OptionStringPtr sopt0 =
+        boost::dynamic_pointer_cast<OptionString>(sopt);
+    ASSERT_TRUE(sopt0);
+    EXPECT_EQ("/dist/images/jinstall-ex.tgz", sopt0->getValue());
+}
