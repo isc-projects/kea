@@ -26,6 +26,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
+#include <sstream>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -636,6 +637,54 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     if (commit) {
         CfgMgr::instance().commit();
     }
+ }
+
+std::pair<int, std::string>
+Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& srv,
+                                   const bool commit, const int exp_rcode) {
+    ConstElementPtr json;
+    try {
+        json = parseJSON(config);
+    } catch (const std::exception& ex){
+        // Fatal falure on parsing error
+
+        std::stringstream tmp;
+        tmp << "parsing failure:"
+            << "config:" << config << std::endl
+            << "error: " << ex.what();
+        ADD_FAILURE() << tmp.str();
+        return (std::make_pair(-1, tmp.str()));
+    }
+
+    ConstElementPtr status;
+
+    // Disable the re-detect flag
+    disableIfacesReDetect(json);
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_TRUE(status);
+    if (!status) {
+        return (make_pair(-1, "configureDhcp4Server didn't return anythin"));
+    }
+
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    EXPECT_EQ(exp_rcode, rcode) << comment->stringValue();
+
+    // Use specified lease database backend.
+    if (rcode == 0) {
+        EXPECT_NO_THROW( {
+            CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+            cfg_db->setAppendedParameters("universe=4");
+            cfg_db->createManagers();
+            } );
+        if (commit) {
+            CfgMgr::instance().commit();
+        }
+    }
+
+    return (std::make_pair(rcode, comment->stringValue()));
  }
 
 Dhcpv4Exchange

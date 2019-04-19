@@ -446,6 +446,18 @@ public:
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
 
+    /// @brief Configure specified DHCP server using JSON string.
+    ///
+    /// @param config String holding server configuration in JSON format.
+    /// @param srv Instance of the server to be configured.
+    /// @param commit A boolean flag indicating if the new configuration
+    /// should be committed (if true), or not (if false).
+    /// @param exp_rcode expected status code (default = 0 (success))
+    /// @return (a pair of status code and a string with result)
+    std::pair<int, std::string>
+    configureWithStatus(const std::string& config, NakedDhcpv4Srv& srv,
+                        const bool commit = true, const int exp_rcode = 0);
+
     /// @brief Pretends a packet of specified type was received.
     ///
     /// Instantiates fake network interfaces, configures passed Dhcpv4Srv,

@@ -1029,6 +1029,15 @@ public:
         StatsMgr::instance().removeAll();
     }
 
+    /// @brief Specifies authoritative flag value
+    ///
+    /// Used to generate authoritative configs
+    typedef enum AuthoritativeFlag {
+        AUTH_DEFAULT, // explicit value not specified (use default)
+        AUTH_YES,     // defined explicitly as yes
+        AUTH_NO       // defined explciitly as no
+    } AuthoritativeFlag;
+
     /// @brief Returns subnet having specified address in range.
     ///
     /// @param address Address for which subnet is being searched.
@@ -1240,6 +1249,76 @@ public:
         auto addrs = servers->getAddresses();
         ASSERT_EQ(1, addrs.size());
         EXPECT_EQ(ns_address, addrs[0].toText());
+    }
+
+    /// @brief returns authoritative flag as JSON string
+    /// @param f value to be specified (default, true or false)
+    string auth(AuthoritativeFlag f) {
+        switch (f) {
+        case AUTH_DEFAULT:
+            return ("");
+        case AUTH_YES:
+            return ("            \"authoritative\": true,");
+            break;
+        case AUTH_NO:
+            return ("            \"authoritative\": false,");
+        }
+        return ("");
+    }
+
+    /// @brief generates Config file with specified authoritative flag values
+    ///
+    /// The config file has the same structure:
+    /// - 1 shared network with 2 subnets (global authoritative flag)
+    ///   - first subnet: authoritative (subnet1 flag here)
+    ///   - second subnet: authoritative (subnet2 flag here)
+    ///
+    /// @param global coverns presence/value of global authoritative flag
+    /// @param subnet1 coverns presence/value of authoritative flag in subnet1
+    /// @param subnet2 coverns presence/value of authoritative flag in subnet2
+    string generateAuthConfig(AuthoritativeFlag global, AuthoritativeFlag subnet1,
+                              AuthoritativeFlag subnet2) {
+        string cfg = "{"
+            "    \"interfaces-config\": {"
+            "        \"interfaces\": [ \"*\" ]"
+            "    },"
+            "    \"valid-lifetime\": 600,"
+            "    \"shared-networks\": ["
+            "        {"
+            "            \"name\": \"frog\","
+            "            \"comment\": \"example\",";
+        cfg += auth(global);
+        cfg +=
+            "            \"subnet4\": ["
+            "                {"
+            "                    \"subnet\": \"192.0.2.0/26\","
+            "                    \"id\": 10,";
+        cfg += auth(subnet1);
+
+        cfg +=
+            "                    \"pools\": ["
+            "                        {"
+            "                            \"pool\": \"192.0.2.63 - 192.0.2.63\""
+            "                        }"
+            "                    ]"
+            "                },"
+            "                {"
+            "                    \"subnet\": \"10.0.0.0/24\","
+            "                    \"id\": 100,";
+        cfg += auth(subnet2);
+        cfg +=
+            "                    \"pools\": ["
+            "                        {"
+            "                            \"pool\": \"10.0.0.16 - 10.0.0.16\""
+            "                        }"
+            "                    ]"
+            "                }"
+            "            ]"
+            "        }"
+            "    ]"
+            "}";
+
+        return (cfg);
     }
 
     /// @brief Destructor.
@@ -2562,6 +2641,68 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceReservation) {
         "}";
 
     testPrecedence(config, "192.0.2.6");
+}
+
+// Verify authoritative sanitization.
+// This test generates many similar configs. They all have similar
+// structure:
+// - 1 shared-network (with possibly authoritative flag in it)
+//   2 subnets (with each possibly having its own authoritative flag)
+//
+// If the flag is specified on subnet-level, the value must match those
+// specified on subnet level.
+TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
+
+    // Each scenario will be defined using those parameters.
+    typedef struct scenario {
+        bool exp_success;
+        AuthoritativeFlag global;
+        AuthoritativeFlag subnet1;
+        AuthoritativeFlag subnet2;
+    } scenario;
+
+    // We have the following scenarios. The default is no.
+    // The only allowed combinations are those that end up with
+    // having all three values (global, subnet1, subnet2) agree.
+    scenario scenarios[] = {
+        //result, global,      subnet1,      subnet2
+        { true, AUTH_DEFAULT,  AUTH_DEFAULT, AUTH_DEFAULT },
+        { true, AUTH_YES,      AUTH_DEFAULT, AUTH_DEFAULT },
+        { true, AUTH_YES,      AUTH_YES,     AUTH_YES },
+        { true, AUTH_NO,       AUTH_DEFAULT, AUTH_DEFAULT },
+        { true, AUTH_NO,       AUTH_NO,      AUTH_NO },
+        { false, AUTH_DEFAULT, AUTH_YES,     AUTH_NO },
+        { false, AUTH_DEFAULT, AUTH_NO,      AUTH_YES },
+        { false, AUTH_DEFAULT, AUTH_YES,     AUTH_YES },
+        { false, AUTH_YES,     AUTH_NO,      AUTH_NO },
+        { false, AUTH_YES,     AUTH_DEFAULT, AUTH_NO },
+        { false, AUTH_YES,     AUTH_NO,      AUTH_DEFAULT },
+        { false, AUTH_YES,     AUTH_NO,      AUTH_NO },
+        { false, AUTH_YES,     AUTH_NO,      AUTH_YES },
+        { false, AUTH_YES,     AUTH_YES,     AUTH_NO }
+    };
+
+    // Let's test them one by one
+    int cnt = 0;
+    for ( auto s : scenarios) {
+        cnt++;
+
+        string cfg = generateAuthConfig(s.global, s.subnet1, s.subnet2);
+
+        // Create client and set MAC address to the one that has a reservation.
+        Dhcp4Client client(Dhcp4Client::SELECTING);
+
+        stringstream tmp;
+        tmp << "Testing scenario " << cnt;
+        SCOPED_TRACE(tmp.str());
+        // Create server configuration.
+        auto result = configureWithStatus(cfg, *client.getServer(), true, s.exp_success? 0 : 1);
+        if (s.exp_success) {
+            EXPECT_EQ(result.first, 0) << result.second;
+        } else {
+            EXPECT_EQ(result.first, 1) << "Configuration expected to fail, but succeeded";
+        }
+    }
 }
 
 } // end of anonymous namespace
