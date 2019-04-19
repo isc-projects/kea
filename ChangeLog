@@ -1,11 +1,11 @@
-1563.	[func]		fdupont
+1564.	[func]		fdupont
 	Implemented two new commands to manage subnets:	subnet4-update and
 	subnet6-update. They allow an update of existing subnets
 	configuration.
 	(Gitlab #465,!265, git 71eb9188033f81dab56fc5a847a39f5497398b62)
 
-1562.	[bug]		razvan
-        Fixed compilation of google benchmarks.
+1563.	[bug]		razvan
+	Fixed compilation of google benchmarks.
 	(Gitlab #520,!260, git 11aa890d30ecce5518b9f0bad389feea6be78167)
 
 1562.	[bug]		marcin
