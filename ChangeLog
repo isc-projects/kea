@@ -131,7 +131,7 @@
 	responses. Thanks to Geoffrey Huang from Qingdao Agricultural
 	University, and Jiaqi Liu from Qingdao WuKeSong Company
 	Communication Limited, Shandong, PRC for reporting this issue.
-	(Gitlab #519,#510,!271, git f3563396d2227e48e96a5d65587406d8d1868db5)
+	(Gitlab #519, #510,!271, git f3563396d2227e48e96a5d65587406d8d1868db5)
 
 1542.	[func]		fdupont
 	Added a new method deleteSharedNetworkSubnets4 in the config
@@ -294,7 +294,7 @@
 	testing. Previously it was always about 20% lower than expected.
 	(Gitlab #283,!135, git 329f54bb151ec35888e9a8070cc5fa368d6f1f5e)
 
-1514.   [func]      tmark
+1514.	[func]		tmark
 	kea-dhcp4 will now ignore empty Host Name (option code 12) values
 	received from clients.  While an empty value for this option is
 	not RFC-compliant, some clients do send them.  Prior to the this
@@ -713,7 +713,7 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	MySQL,PostgreSQL,and Cassandra host data sources.
 	(Trac #5705, git f991cffd06add941f8bf2937232f51d597623e21)
 
-1443.   [func]		MayyaSunil
+1443.	[func]		MayyaSunil
 	Implemented new queries for IPv6 leases by DUID.
 	(Github #99, git c20b5248da1283e596e35ad057ae242f4d613965)
 
@@ -754,7 +754,7 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	added.
 	(Trac #5682, git 609bfa0a67caa91fac6834eb39260acfd19e3be4)
 
-1437.   [func]      tmark
+1437.	[func]		tmark
 	Added two new configuration parameters to kea-dhcp4 and kea-dhcp6
 	DhcpDdns sections: 'hostname-char-set' and 'hostname-char-replacment'.
 	These values (when not empty) are used by the server to sanitize
@@ -768,7 +768,7 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	pause and resume the HA state machine.
 	(Trac #5675, git 98a9bd4f6766ff2f53681d84d55c56988be4d501)
 
-1435.   [func]      MayyaSunil
+1435.	[func]		MayyaSunil
 	Code added to support storage of Authentication key host reservation.
 	There is no way to use the code yet.
 	(Github #88, git 66602af46b1a7d9f4197b1f285c928bd9f80ba2b)
@@ -979,7 +979,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	message following a dynamic reconfigure.
 	(Trac #5564, git 5111f569bd251c2a98a2e6d958e8f6b640a1802d)
 
-1401.   [func]		tmark
+1401.	[func]		tmark
 	A new hooks library, Stat Cmds, has been added to the open source
 	distribution.  This library provides commands for fetching lease
 	allocation statistics using lease backend as the source for
@@ -1303,7 +1303,7 @@ Kea 1.4.0-beta released on May 18, 2018
 
 1348.	[build]		fdupont
 	Added support of boost 1.66.0 ASIO.
-	(Github #60/Trac #5496, git bc2947de4296bd99b74e50e65f272c7ad5312429)
+	(Trac #5496, Github #60, git bc2947de4296bd99b74e50e65f272c7ad5312429)
 
 1347.	[func]		marcin
 	Implemented lease4-get-all command in lease_cmds hooks library.
@@ -1424,7 +1424,7 @@ Kea 1.3.0 released on October 27, 2017
 	this address.
 	(Trac #5393, git 0964c66d44516a04ec62c8e70be92f216fe3df5a)
 
-1325.   [doc]           wlodek
+1325.	[doc]		wlodek
 	Added examples of configuration for iPXE boot with DHCPv6 Kea server
 	(Trac #5356, git c68b9b381930d1e44fd5daa1b9d033035e32cff2)
 
@@ -2049,7 +2049,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	"contact-points" (was "contact_points" previously).
 	(Trac #5061, git d12b6f4a6d80d6bc854f2a8a086e412dc37867bc)
 
-1220.   [func]		marcin
+1220.	[func]		marcin
 	Control Agent uses libkea-http to process commands over
 	the RESTful interface.
         (Trac #5107, git 88ce715926a46b6b3832630116fc7782adc46c7b)
@@ -2131,12 +2131,12 @@ Kea 1.2.0-beta released on April 7, 2017
 	Removed obsolete 'version' parameter in Dhcp6.
 	(Trac #5020, #5038, git 3d8e48c640e302670c04907468d11faafbe9fe7b)
 
-1205.   [func]         marcin
+1205.	[func]		marcin
 	Added 'control_command_receive' hook point to Kea Command
 	Manager.
 	(Trac #5100, git d0c7cb29a7df3588c540afb4ca56de55f26142e0)
 
-1204.   [func]         marcin
+1204.	[func]		marcin
 	Implemented TCPAcceptor class in libkea-asiolink. This class
 	provides means to listen and asynchronously accept new TCP
 	connections.
@@ -2171,7 +2171,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	- removed obsolete 'version' parameter
 	(Trac #5017, git 1cf853c595a100c86f9b2b3353f1b5964d902147)
 
-1199.   [func]         marcin
+1199.	[func]		marcin
 	Created kea-ctrl-agent. This application currently doesn't
 	do anything. Future tickets will add REST API to allow for
 	managing Kea services.
@@ -2195,7 +2195,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	instances of the deprecated std::auto_ptr with std::unique_ptr.
 	(Trac #5066, git a060d4a983860bf3056d50d9bf7ee4355c8372f2)
 
-1195.   [build]     	marcin
+1195.	[build]		marcin
 	Moved StateModel class from D2 to libkea-util.
 	(Trac #3175, git 270ec379aec2894104a299cdd1080e24007e25fb)
 
@@ -2204,7 +2204,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	the Kea include files and libraries are located.
 	(Trac #5069, git 14a78caaf3af9fe9a0ffe2c8af784eab78e813e0)
 
-1193.   [build]     marcin
+1193.	[build]		marcin
 	Created libkea-process library and moved the Controllable
 	Process Layer (CPL) from D2 to this new library.
 	(Trac #5074, git 4563925f7966e9da2132eb427e742cc3d3feee5d)
@@ -2238,7 +2238,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	Support for DHCPv6 options defined in RFC6603 and RFC7598. Thanks
 	to Andrei Pavel and Cristian Secareanu of Qualitance for submitting
 	initial implementation.
-	(Trac #Github24, git 59b62eb3ddd9db62c04bd47cd8fbdc1af62fbc1b)
+	(Github #24, git 59b62eb3ddd9db62c04bd47cd8fbdc1af62fbc1b)
 
 1186.	[build]		marcin
 	Install Kea headers to be used for building external libraries.
@@ -2280,7 +2280,7 @@ Kea 1.1.0 released on September 30, 2016
 	Manual pages updated.
 	(Trac #3515, git 4cf0395e11e724786c4d2a1d48805f1c770f4c99)
 
-1179.	[doc]           tomek
+1179.	[doc]		tomek
 	user_chk hook library is now documented in the User's Guide.
 	(Trac #3209, git 4a8534d968a21cff3851619fb22d0032a1202c87)
 
@@ -2622,7 +2622,7 @@ Kea 1.1.0-beta released on August 31, 2016
 	DHCPv4-over-DHCPv6.
 	(Trac #4112, git 3352685981ec8ca9a90f7405ff56cd31af6fb0d9)
 
-1115.   [bug]		tmark
+1115.	[bug]		tmark
 	An explicit call to unload the hook libraries prior to server
 	exit was added to both kea-dhcp6 and kea-dhcp4.  This corrects
 	an issue where logging components were being destroyed prior
@@ -2713,7 +2713,7 @@ Kea 1.1.0-beta released on August 31, 2016
 	Reorganized the DHCPv4 and DHCPv6 services into run() (service
 	loop), run_one() (receive, call next routine and send) and
 	processPacket() (internal core processing of an incoming packet).
-	(Trac #4108,#4266,#4267, git ba24bd770d1a1791f8fdc3df7f2e41f9f0c851ec)
+	(Trac #4108, #4266, #4267, git ba24bd770d1a1791f8fdc3df7f2e41f9f0c851ec)
 
 1099.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6, now log the primary lease events (e.g.
@@ -2855,7 +2855,7 @@ Kea 1.0.0 released on December 29, 2015
 	contains an entry for HWADDR_SOURCE_UNKNOWN (i.e. source = 0). Our thanks
 	to Sebastien Couture at Ubity Inc. for reporting the InnoDB engine issue
 	and submitting a fix for it.
-	(Github #16, Trac #4237,#4238, git f0fb9f35a394785215573a591c2bcc68ab481436)
+	(Trac #4237, #4238, Github #16, git f0fb9f35a394785215573a591c2bcc68ab481436)
 
 1075.	[doc]		marcin
 	Changed Kea license from ISC to Mozilla Public License,
@@ -3166,7 +3166,7 @@ Kea 1.0.0-beta released on December 8, 2015
 	expired leases in the DHCPv4 and DHCPv6 server.
 	(Trac #3974, git c998d36c40cc46ffe9f888e615bbcfa0a311d40d)
 
-1018.   [func]		sar
+1018.	[func]		sar
 	Added support for several options for use by PXE.
 	From RFC4578 (for DHCPv4) these are: 93 - client-system,
 	94 - client-ndi, 97 - uuid-guid.
@@ -3437,7 +3437,7 @@ Kea 0.9.2 released on July 28, 2015
 	options for both DHCPv4 and DHCPv6.
 	(Trac #3846, git 6aebe0867ca9cf6fb09a289d80051125db7fa34b)
 
-971.	[func]          fdupont
+971.	[func]		fdupont
 	Changed all occurrences of unlink() to the more portable remove()
 	to avoid problems on operating systems where the former is not
 	available.
@@ -3456,7 +3456,7 @@ Kea 0.9.2-beta released on June 30, 2015
 	in deeply nested directories.
 	(Trac #3918, git 9cfd502e8d4605eaf34f8744f90272dc3e8a3e34)
 
-968.	[bug]           marcin
+968.	[bug]		marcin
 	DHCPv6 server extends the lifetime of the client's lease
 	in the database when the client sends the Request message.
 	This prevents premature lease expiration before the client
@@ -3484,7 +3484,7 @@ Kea 0.9.2-beta released on June 30, 2015
 	control channel description.
 	(Trac #3800, git 7ce8ca560370ec5f9bd4d5199a177b441f08a47e)
 
-963.    [func]		tmark
+963.	[func]		tmark
 	DHCPv6 server now supports a control channel, implemented over
 	a UNIX socket. Currently supported commands are: statistic-get,
 	statistic-reset, statistic-remove, statistic-get-all,
@@ -3593,7 +3593,7 @@ Kea 0.9.2-beta released on June 30, 2015
 	code, e.g. packet transmission, lease allocation, DDNS etc.
 	(Trac #3807, git c95ebdaf39c3d8d78d83d53db15824c60078f566)
 
-944.    [func]      tmark
+944.	[func]		tmark
 	kea-admin commands lease-init, lease-version, and lease-upgrade
 	now support PostgreSQL. Note that at this time the PostgreSQL
 	backend only supports Kea schema version 1.0, so there are no
@@ -3991,26 +3991,26 @@ Kea 0.9.1beta released on February 18, 2015
 	be implemented shortly.
 	(Trac #3668, git 2ce54eeb607d2caa0901125b5d86a373e9e3f165)
 
-877.	[func]           marcin
+877.	[func]		marcin
 	DHCPv4 server drops unicast packets sent to the IPv4 address
 	on which the server is not configured to listen.
 	(Trac #3547, git 803f1f0f145b0f252ffc3637f758a47e0061de85)
 
-876.	[func]          tomek
+876.	[func]		tomek
 	Two new MAC acquisition methods implemented for DHCPv6:
 	docsis-modem (which extracts MAC address from an option inserted
 	by a cable modem) and docsis-ctms (which extracts MAC address from
 	an option inserted by CMTS which acts as a DHCPv6 relay agent).
 	(Trac #3553, git ad0a3772774bc5f9831a5ba16725a5a22887b8cb)
 
-875.    [bug]           afidalgo, marcin
+875.	[bug]		afidalgo, marcin
 	The DHCPv4 server no longer appends the trailing dot to the
 	hostnames sent to the clients in the Hostname option (12).
 	Appending trailing dot confused some DHCPv4 clients.
 	Credits to Alexis Fidalgo for submitting a patch.
 	(Trac #3636, git 450867e6987f4c786ad6c2cc95cabcff601c1b48)
 
-874.    [func]           marcin
+874.	[func]		marcin
 	Changes to the Memfile lease database backend to load
 	leases from multiple files during startup or server
 	reconfiguration. This change is required by the Lease File
@@ -4018,12 +4018,12 @@ Kea 0.9.1beta released on February 18, 2015
 	files holding cleaned up lease information.
 	(Trac #3671, git 667de2ef9044e97c76b15cacc7285132cdffdfcf)
 
-873.    [bug]           wlodek
+873.	[bug]		wlodek
 	Removed references to non-existing pgsql_test.sh script
 	from Makefile.
 	(Trac #3662, git ab69f38dd82cf3c3736588e03c1dc568de3ae6d6)
 
-872.    [func]          wlodek
+872.	[func]		wlodek
 	Check for required header file errcode.h for PostgreSQL
 	backend added to configure process.
 	(Trac #3663, git d666dd9263ba1aaf88bec5b8e5ae3f0cb8e5c1db)
@@ -4043,7 +4043,7 @@ Kea 0.9.1beta released on February 18, 2015
 	sources.
 	(Trac #3554, git 2e7c32e7c19372f0c97968ef7c8256509d80fdfc)
 
-868.    [func]          marcin
+868.	[func]		marcin
 	DHCPv4 server configuration allows for selection of the
 	address on the interface that server should listen on.
 	This is specifically useful in the environments with
@@ -5933,8 +5933,7 @@ bind10-1.1.0beta1 released on April 4, 2013
 	Added statistics items in b10-auth based on
 	http://bind10.isc.org/wiki/StatisticsItems. Qtype counters are
 	dropped as it requires further spec design discussion.
-	(Trac #2154, Trac #2155,
-	             git 61d7c3959eb991b22bc1c0ef8f4ecb96b65d9325)
+	(Trac #2154, Trac #2155, git 61d7c3959eb991b22bc1c0ef8f4ecb96b65d9325)
 	(Trac #2157, git e653adac032f871cbd66cd500c37407a56d14589)
 
 bind10-1.0.0-rc released on February 14, 2013
@@ -8939,7 +8938,7 @@ bind10-devel-20110120 released on January 20, 2011
 	2nd argument of type bool (true or false). This flag, if
 	set, will cause the message to be printed whether or not
 	-v is chosen.
-        (Trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+	(Trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
 
 150.	[bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
@@ -8952,7 +8951,7 @@ bind10-devel-20110120 released on January 20, 2011
 	bindctl: Check if the user session has disappeared (either by a
 	timeout or by a server restart), and reauthenticate if so. This
 	fixes the 'cmdctl not running' problem.
-        (Trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
+	(Trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
 
 148.	[func]		jelte
 	bindctl: Command results are now pretty-printed (i.e. printed in
