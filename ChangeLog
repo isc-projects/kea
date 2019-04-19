@@ -443,7 +443,7 @@ Kea 1.5.0-beta2 released on Nov 30, 2018
 
 1490.	[doc]		fdupont
 	Added examples of global host reservations.
-	(Gitlab #136, !143, git bee8b8620f849f6bcaf2b31c3b130bb371c6312c)
+	(Gitlab #136,!143, git bee8b8620f849f6bcaf2b31c3b130bb371c6312c)
 
 1489.	[doc]		marcin
 	Added stat_cmds to the list of available hooks libraries.
@@ -465,7 +465,7 @@ Kea 1.5.0-beta2 released on Nov 30, 2018
 	Simplified and updated Kea YANG models. For instance the list of
 	loggers was moved from the removed logging container to global
 	config parameters.
-	(Gitlab #204, !97, git 1de6c2987ec9067b7c1baa577c6dcd6ddd1b30fb)
+	(Gitlab #204,!97, git 1de6c2987ec9067b7c1baa577c6dcd6ddd1b30fb)
 
 1485.	[bug]		marcin
 	Resolved issues with MySQL backend failing to insert a lease
@@ -480,7 +480,7 @@ Kea 1.5.0-beta2 released on Nov 30, 2018
 	When disabled Kea's DHCPv4 and DHCPv6 servers will consume packets
 	directly from interface sockets in the main thread (i.e. employs
 	pre Kea 1.5 technique).
-	(Gitlab #260, !120, git 9e304fae48d0d0658fd39a21aba9da528b4cc6f4)
+	(Gitlab #260,!120, git 9e304fae48d0d0658fd39a21aba9da528b4cc6f4)
 
 1483.	[func]		fdupont
 	The configuration parameter "reservation-mode" can be specified
@@ -500,7 +500,7 @@ Kea 1.5.0-beta2 released on Nov 30, 2018
 1480.	[build]		fdupont
 	Support for sysrepo 0.7.6 (and libyang 0.16-r2) was added.
 	Previous versions of sysrepo (and libyang) are still supported.
-	(Gitlab #176, !107, git 4304a10b21708afb2a7599c77bc7508a600333cb)
+	(Gitlab #176,!107, git 4304a10b21708afb2a7599c77bc7508a600333cb)
 
 1479.	[bug]		marcin
 	Performance improvements in the HTTP client code used in the
@@ -520,22 +520,22 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	read client packets from interface sockets in a separate thread
 	queueing them for server level processing.  For Kea 1.5-Beta
 	this feature is always on.
-	(Gitlab #42, !103, git 09d5ffebc8f9bfab2ab99c384eec9c3a3c915f39)
+	(Gitlab #42,!103, git 09d5ffebc8f9bfab2ab99c384eec9c3a3c915f39)
 
 1476.	[func]		sebschrader
 	Add authoritative feature for DHCPv4 from ISC DHCP: requests from
 	unknown clients are dropped (default/previous behavior) or
 	answered with DHCPNAK (new behevior with new authoritative flag
 	set to true for the subnet). Patch proposed by Sebastian Schrader.
-	(Gitlab #66, !115, git 0fc1b767826f214475025d8631227970de368de5)
+	(Gitlab #66,!115, git 0fc1b767826f214475025d8631227970de368de5)
 
 1475.	[doc]		godfryd
 	Updated list of supported operating systems.
-	(Gitlab #205, !109, git 73253af554cf48434798282f8440a99b1494fd04)
+	(Gitlab #205,!109, git 73253af554cf48434798282f8440a99b1494fd04)
 
 1474.	[doc]		tomek
 	Outdated FAQ section removed from the User's Guide.
-	(Gitlab #118, !113, git 7d079384bd5f49e0e36a571ee964bfd7d6ebd25d)
+	(Gitlab #118,!113, git 7d079384bd5f49e0e36a571ee964bfd7d6ebd25d)
 
 1473.	[bug]		marcin
 	Timeout is now reported by the HTTP client when connecting to the server
@@ -548,7 +548,7 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	Fixed a bug in kea-admin that ignored specified remote hostname.
 	Thank you to lmasarati and Thorsten Krohn for reporting it and
 	proposing a patch!
-	(Gitlab #61, #138, !114, git 901cac7dc85ad8dacf631bf3a5c266eefeb3e6a1)
+	(Gitlab #61, #138,!114, git 901cac7dc85ad8dacf631bf3a5c266eefeb3e6a1)
 
 1471.	[func]		marcin
 	Improved lease database synchronization mechanisms in High
@@ -567,7 +567,7 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 
 1469.	[build]		wlodek
 	make distcheck fix.
-	(Gitlab #202, !111, git 5d8fb5f7af5fa36f4cb2b89f10631683b2e230d5)
+	(Gitlab #202,!111, git 5d8fb5f7af5fa36f4cb2b89f10631683b2e230d5)
 
 1468.	[doc]		fdupont, tomek
 	Doxygen errors fixed.
@@ -700,7 +700,7 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	Currently it can't do anything, but the build system is now
 	capable of detecting sysrepo (use --with-sysrepo in configure),
 	there's a very basic documentation and unit-tests.
-	(gitlab !1, git 89ff2093811d65220d99dc2a6516375c4ec953dc)
+	(Gitlab !1, git 89ff2093811d65220d99dc2a6516375c4ec953dc)
 
 1445.	[bug]		tomek
 	keactrl version tests now work properly on macOS.
@@ -2949,7 +2949,7 @@ Kea 1.0.0-beta released on December 8, 2015
 	The client packet is now passed as a new parameter "query4"
 	to the pkt4_send hook point. Thanks to Nicolas Chaigneau from
 	Capgemini for providing this patch.
-	(Github #8, git )
+	(Github #8)
 
 1058.	[func]		tomek
 	Two new hook points lease4_recover and lease6_recover have been
