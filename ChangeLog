@@ -686,14 +686,14 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 1448.	[doc]		tmark
 	Updated Kea Administrators's Guide with discussions of the
 	use of subnet ID parameters in hook library commands.
-	(Gitlab #14,!15	git# 4a7da8069feab1e21132689a9368f8ccb4174683)
+	(Gitlab #14,!15, git 4a7da8069feab1e21132689a9368f8ccb4174683)
 
 1447.	[func]		tmark
 	kea-dhcp6 now supports global host reservations and a new
 	global reservations-mode .  Prior to this reservations could
 	only be specified per subnet.  This is supported by by Memfile,
 	MySQL, PostgreSQL, and Cassandra host data sources.
-	(Gitlab #13,!6, git# a5484c4d8852662be7da1e6e8b1d4c1a19e6502f)
+	(Gitlab #13,!6, git a5484c4d8852662be7da1e6e8b1d4c1a19e6502f)
 
 1446.	[func]		tomek
 	Implemented initial skeleton version of the kea-netconf tool.
@@ -1396,7 +1396,7 @@ Kea 1.3.0 released on October 27, 2017
 	The option length checks were relaxed for the V-I Vendor Class
 	option.
 	(Trac #5391, Github #57,
-	 git 8c1ea6684a808e8d3af9ea7eccecd93adc801e8a)
+	git 8c1ea6684a808e8d3af9ea7eccecd93adc801e8a)
 
 1330.	[func]		marcin
 	Added support for "client-id" identifier when querying for
@@ -1942,7 +1942,7 @@ Kea 1.2.0-beta released on April 7, 2017
 
 1239.	[build]		tmark, tomek
 	Library version numbers bumped for release.
-	(Trac #5201	git 58c9c5b705d72031c1589c30c542384a9d43e0f3)
+	(Trac #5201, git 58c9c5b705d72031c1589c30c542384a9d43e0f3)
 
 1238.	[bug]		marcin
 	Fixed hanging Control Agent unit tests.
@@ -2403,12 +2403,12 @@ Kea 1.1.0-beta released on August 31, 2016
 	after each successful reconfiguration for Memfile, MySQL, and PostgreSQL
 	back ends.  This addresses issues caused by accumulated values being lost
 	across restarts and reconfigurations making rendering values incorrect.
-	(Trac #4294 git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
+	(Trac #4294, git 0abdcf15f85861ffcb67d50fa4ce3965d25e4a9f)
 
 1156.	[func]		marcin
 	Kea can be configured to operate using read-only host database.
 	This is only supported for MySQL and PostgreSQL databases.
-	(Trac #4489 git 0d8dc7affb67ad8066b44c6f81532b79a641d50b)
+	(Trac #4489, git 0d8dc7affb67ad8066b44c6f81532b79a641d50b)
 
 1155.	[bug]		stephen
 	Changes to logging to avoid premature destruction of some
@@ -2428,7 +2428,7 @@ Kea 1.1.0-beta released on August 31, 2016
 1152.	[func]		tmark
 	Support for assigning client classes to host reservations has
 	been added to both the PostgreSQL and MySQL backends.
-	(Trac #4277, #4213 git 6990ab9d542e984c59ce5a11ff926c3c732a75fc)
+	(Trac #4277, #4213, git 6990ab9d542e984c59ce5a11ff926c3c732a75fc)
 
 1151.	[bug]		tomek
 	Extended gcc bug workaround to work on all versions of gcc
@@ -2466,7 +2466,7 @@ Kea 1.1.0-beta released on August 31, 2016
 1145.	[func]		tmark
 	The Postgresql backend now supports host reservations for both
 	DHCPv4 and DHCPv6, with options and IPv6 reservations.
-	(Trac #4277 git ac1eaa1026987c2d86d57b4aa0dc9a4d093787f0)
+	(Trac #4277, git ac1eaa1026987c2d86d57b4aa0dc9a4d093787f0)
 
 1144.	[bug]		mihu
 	Response to DHCPINFORM is generally sent to port 68, rather
@@ -2934,7 +2934,7 @@ Kea 1.0.0-beta released on December 8, 2015
 1062.	[func]		marcin
 	libeval: options may be referenced by their names in
 	expressions used for client classification.
-	(Trac #4204 git 38aebe9566e09daa30796df686cfdd6d0c43fa4d)
+	(Trac #4204, git 38aebe9566e09daa30796df686cfdd6d0c43fa4d)
 
 1061.	[func]		kalmus
 	MySqlHostDataSource class implementation. It provides methods
@@ -3705,7 +3705,7 @@ Kea 0.9.2-beta released on June 30, 2015
 	libkea-hooks logs when the callouts execution begins or ends
 	for the particular hook. It also logs the execution time of
 	individual callouts and the total time for all callouts.
-	(Trac #3804 git dd1432d7807e7d3b54c87dd4b3155d3110619fbd)
+	(Trac #3804, git dd1432d7807e7d3b54c87dd4b3155d3110619fbd)
 
 924.	[bug]		marcin
 	Removed shell warning about the "missing format character"
@@ -4531,7 +4531,7 @@ Kea 0.9beta1 released on August 13, 2014
 	"interface" was deleted.  Three new parameters, "ncr_protocol",
 	"ncr_format", and "dns_server_timeout" were added.  Please refer to
 	Kea Guide for details.
-	(Trac #3268,    git bd60252e679f19b062f61926647f661ab169f21c)
+	(Trac #3268, git bd60252e679f19b062f61926647f661ab169f21c)
 
 783.	[func]*		tomek
 	DHCPv6 server: New parameter added to configure: --with-kea-config.
@@ -4543,7 +4543,7 @@ Kea 0.9beta1 released on August 13, 2014
 782.	[func]		tmark
 	Added sender-ip, sender-port, and max-queue-size parameters to
 	the dhcp-ddns configuration section of both b10-dhcp4 and b10-dhcp6.
-	(Trac #3328,    git 8d8d0b5eedaab20bf1008dfb3a6913eb006a6e73)
+	(Trac #3328, git 8d8d0b5eedaab20bf1008dfb3a6913eb006a6e73)
 
 781.	[func]		marcin
 	libkea-dhcpsrv: the Memfile lease storage backend returns leases
@@ -4563,7 +4563,7 @@ Kea 0.9beta1 released on August 13, 2014
 779.	[doc]		tmark
 	Added a section to the developer's guide for Kea's DHCP-DDNS
 	component, D2.
-	(Trac #3158,    git  7be263c7372b1401a8b4288742854f96b5bec0d6)
+	(Trac #3158, git 7be263c7372b1401a8b4288742854f96b5bec0d6)
 
 bind10-1.2.0 (kea 0.8) released on April 17, 2014
 
@@ -4582,7 +4582,7 @@ bind10-1.2.0rc1 released on April 8, 2014
 	If b10-dhcp-ddns is configured to listen on an address other than
 	loopback, it will issue a log message warning the user that this is
 	insecure and is supported for testing purposes only.
-	(Trac #3383,    git  652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
+	(Trac #3383, git 652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
 
 776.	[func]		tomek
 	b10-dhcp4 and b10-dhcp6 now support using PostgreSQL as the backend
@@ -4591,7 +4591,7 @@ bind10-1.2.0rc1 released on April 8, 2014
 	switch the PostgreSQL backend is not compiled leaving BIND 10 able to
 	be built on systems without PostgreSQL installed.  Thanks to David
 	Carlier who contributed the initial patches for this work.
-	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
+	(Trac #3080, git 1aae8b1fab3008e62c4f085948b1abadad512447)
 
 775.	[func]		marcin
 	b10-dhcp4, b10-dhcp6: added a new parameter to subnet configuration.
@@ -4685,7 +4685,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 762.	[func]		tmark
 	If configured to do so, b10-dhcp6 will now create DHCP-DDNS update
 	requests and send them to b10-dhcp-ddns for processing.
-	(Trac# 3329, git 239956696465a13196a2b6bc0f3a61aed21a5de8)
+	(Trac #3329, git 239956696465a13196a2b6bc0f3a61aed21a5de8)
 
 761.	[doc]		stephen, jreed
 	Added "man" page for perfdhcp.
@@ -4697,7 +4697,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	corrects a defect which caused a configuration commit error to
 	occur when using bindctl to modify a single a parameter in
 	dhcp-ddns portion of b10-dhcp4 configuration.
-	(Trac# 3339, git 3ae0d93d89f3277a566eeb045191a43b2dd9d9b1)
+	(Trac #3339, git 3ae0d93d89f3277a566eeb045191a43b2dd9d9b1)
 
 759.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: IP address of the relay agent can now be
@@ -4722,7 +4722,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	requests are created but communicating them to b10-dhcp-ddns is
 	not yet supported.  That will be provided under separate ticket,
 	Trac #3222.
-	(Trac# 3034, git 22c667a66536ff3e3741bc67025d824644ed4e7d)
+	(Trac #3034, git 22c667a66536ff3e3741bc67025d824644ed4e7d)
 
 756.	[bug]		marcin
 	b10-dhcp6: server parses DHCPv6 Vendor Class option. Previously
@@ -4750,7 +4750,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 752.	[func]		tmark
 	If configured to do so, b10-dhcp4 will now create DHCP-DDNS update
 	requests and send them to b10-dhcp-ddns for processing.
-	(Trac# 3329, git 4546dd186782eec5cfcb4ddb61b0a3aa5c700751)
+	(Trac #3329, git 4546dd186782eec5cfcb4ddb61b0a3aa5c700751)
 
 751.	[func]		muks
 	The BIND 10 zone loader now supports the $GENERATE directive (a
@@ -4769,7 +4769,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	PTR DNS entries to the lease length provided in instigating
 	NameChangeRequest.  This corrected a bug in which the TTL was
 	always set to 0.
-	(Trac# 3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
+	(Trac #3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
 
 748.	[bug]		marcin
 	b10-dhcp4 server picks a subnet, to assign address for a directly
@@ -4785,7 +4785,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	for standard options for which Kea doesn't provide a definition yet.
 	Without this, the server administrator couldn't configure options for
 	which a definition didn't exist.
-	(Trac# 3309, git 16a6ed6e48a6a950670c4874a2e81b1faf287d99)
+	(Trac #3309, git 16a6ed6e48a6a950670c4874a2e81b1faf287d99)
 
 746.	[func]		tomek
 	IOAddress no longer exposes underlying asio objects. The getAddress()
@@ -4806,7 +4806,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	acquired by a client. Also, the server generates fully qualified
 	domain name from acquired IPv6 address, if the client sends an
 	empty name in Client FQDN option.
-	(Trac# 3295, git aa1c94a54114e848c64771fde308fc9ac0c00fd0)
+	(Trac #3295, git aa1c94a54114e848c64771fde308fc9ac0c00fd0)
 
 743.	[func]		tmark
 	b10-dhcp4 now responds with changes in DDNS behavior based upon
@@ -4814,7 +4814,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	element. The parameters now supported are override-no-update,
 	override-client-update, replace-client-name, generated-prefix, and
 	qualifying-suffix.
-	(Trac# 3282, git 42b1f1e4c4f5aa48b7588233402876f5012c043c)
+	(Trac #3282, git 42b1f1e4c4f5aa48b7588233402876f5012c043c)
 
 742.	[func]		muks
 	The authoritative server now includes the datasource configuration
@@ -4866,7 +4866,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	libdhcp++: fixed a bug which caused an error when setting boolean
 	values for an option. Also, bind10-guide has been updated with the
 	examples how to set the boolean values for an option.
-	(Trac# 3292, git 7c4c0514ede3cffc52d8c2874cdbdb74ced5f4ac)
+	(Trac #3292, git 7c4c0514ede3cffc52d8c2874cdbdb74ced5f4ac)
 
 733.	[bug]		marcin
 	libdhcp++: a function which opens IPv6/UDPv6 sockets for the
@@ -4891,7 +4891,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	part of new configuration element, dhcp-ddns, defined in
 	dhcp4.spec.  The parameters parse, store and retrieve but do not
 	yet govern behavior.  That will be provided under separate ticket.
-	(Trac# 3033, git 0ba859834503f2b9b908cd7bc572e0286ca9201f)
+	(Trac #3033, git 0ba859834503f2b9b908cd7bc572e0286ca9201f)
 
 730.	[bug]		tomek
 	b10-dhcp4, b10-dhcp6: Both servers used to unnecessarily increase
@@ -4927,7 +4927,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	NameAddTransaction and NameRemoveTransaction classes.  This allows
 	it to conduct actual DNS update exchanges based upon queued
 	NameChangeRequests.
-	(Trac# 3089, git 9ff948a169e1c1f3ad9e1bad1568375590a3ef42)
+	(Trac #3089, git 9ff948a169e1c1f3ad9e1bad1568375590a3ef42)
 
 724.	[bug]		marcin
 	b10-dhcp4: Different server identifiers are used for the packets
@@ -4965,7 +4965,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	implements the logic required to remove forward and reverse DNS
 	entries as described in RFC 4703, section 5.5. This includes the
 	ability to construct the necessary DNS requests.
-	(Trac# 3088, git ca58ac00fce4cb5f46e534d7ffadb2db4e4ffaf3)
+	(Trac #3088, git ca58ac00fce4cb5f46e534d7ffadb2db4e4ffaf3)
 
 719.	[func]		tomek
 	b10-dhcp4: Support for sending back client-id (RFC6842) has been
@@ -5008,7 +5008,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	in b10-dhcp-ddns.  The class now generates all DNS update
 	request variations needed to fulfill its state machine in
 	compliance with RFC 4703, sections 5.3 and 5.4.
-	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
+	(Trac #3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
 
 712.	[func]		marcin, dclink
 	b10-dhcp4: If server fails to open a socket on one interface it
@@ -5025,7 +5025,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	reverse DNS entries for a given FQDN.  It does not yet construct
 	the actual DNS update requests, this will be added under Trac#
 	3241.
-	(Trac# 3087, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
+	(Trac #3087, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
 
 710.	[build]		jinmei
 	Fixed various build time issues for MacOS X 10.9.  Those include
@@ -5217,7 +5217,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 681.	[func]		tmark
 	Added support for prefix delegation configuration to b10-dhcp6
 	subnets.
-	(Trac# 3151, git 79a22be33825bafa1a0cdfa24d5cb751ab1ae2d3)
+	(Trac #3151, git 79a22be33825bafa1a0cdfa24d5cb751ab1ae2d3)
 
 680.	[func]		marcin
 	perfdhcp: Added support for requesting IPv6 prefixes using IA_PD
@@ -5227,12 +5227,12 @@ bind10-1.2.0beta1 released on March 6, 2014
 679.	[func]		tmark
 	b10-dhcp-ddns: Finite state machine logic was refactored
 	into its own class, StateModel.
-	(Trac# 3156, git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
+	(Trac #3156, git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
 
 678.	[func]		tmark
 	MySQL backend used by b10-dhcp6 now uses lease type as a
 	filtering parameter in all IPv6 lease queries.
-	(Trac# 3147, git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
+	(Trac #3147, git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
 
 677.	[func]		tomek
 	libdhcpsrv: CfgMgr is now able to store IA, TA and PD pools in
@@ -5286,7 +5286,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	application object in b10-dhcp-ddns. This allows DHCP-DDNS
 	to queue requests received from clients for processing while
 	listening for command control events.
-	(Trac #3075 git e2f9d2e4c1b36f01eb5bfa2c4f8d55cf139c7e02)
+	(Trac #3075, git e2f9d2e4c1b36f01eb5bfa2c4f8d55cf139c7e02)
 
 668.	[func]		marcin
 	libdhcpsrv: Implemented changes to lease allocation engine to
@@ -5331,7 +5331,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	DHCPv4 Client FQDN Option (code 81) defined in RFC4702. This class
 	supports the domain name encoding in canonical FQDN format as well
 	as in deprecated ASCII format.
-	(Trac# 3082, git 1b434debfbf4a43070eb480fa0975a6eff6429d4)
+	(Trac #3082, git 1b434debfbf4a43070eb480fa0975a6eff6429d4)
 
 661.	[func]		stephen
 	Copy additional header files to the BIND 10 installation directory
@@ -5343,7 +5343,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	src/lib/cc: Integer size of C++ CC library is changed to int64_t.
 	b10-auth: The size of statistics counters is changed to uint64_t.
 	b10-auth sends lower 63 bit of counter values to b10-stats.
-	(Trac #3015,  git e5b3471d579937f19e446f8a380464e0fc059567
+	(Trac #3015, git e5b3471d579937f19e446f8a380464e0fc059567
 	 and Trac #3016, git ffbcf9833ebd2f1952664cc0498608b988628d53)
 
 659.	[func]		stephen
@@ -5377,40 +5377,40 @@ bind10-1.2.0beta1 released on March 6, 2014
 	transactions that carry out the DNS updates needed to
 	fulfill the requests (NameChangeRequests) received from
 	b10-dhcp-ddns clients (e.g. DHCP servers).
-	(Trac #3059 git d72675617d6b60e3eb6160305738771f015849ba)
+	(Trac #3059, git d72675617d6b60e3eb6160305738771f015849ba)
 
 654.	[bug]		stephen
 	Always clear "skip" flag before calling any callouts on a hook.
-	(Trac# 3050, git ff0b9b45869b1d9a4b99e785fbce421e184c2e93)
+	(Trac #3050, git ff0b9b45869b1d9a4b99e785fbce421e184c2e93)
 
 653.	[func]		tmark
 	Added initial implementation of D2QueueMgr to
 	b10-dhcp-ddns.  This class manages the receipt and
 	queuing of requests received by b10-dhcp-ddns from
 	its clients (e.g. DHCP servers)
-	(Trac# 3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
+	(Trac #3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
 
 652.	[doc]		stephen
 	Added the "Hook Developer's Guide" to the BIND 10 developer
 	documentation.
-	(Trac# 2982, git 26a805c7e49a9ec85ee825f179cda41a2358f4c6)
+	(Trac #2982, git 26a805c7e49a9ec85ee825f179cda41a2358f4c6)
 
 651.	[bug]		muks
 	A race condition when creating cmdctl certificates caused corruption
 	of these certificates in rare cases. This has now been fixed.
-	(Trac# 2962, git 09f557d871faef090ed444ebeee7f13e142184a0)
+	(Trac #2962, git 09f557d871faef090ed444ebeee7f13e142184a0)
 
 650.	[func]		muks
 	The DomainTree rebalancing code has been updated to be more
 	understandable. This ChangeLog entry is made just to make a note
 	of this change. The change should not cause any observable
 	difference whatsoever.
-	(Trac# 2811, git 7c0bad1643af13dedf9356e9fb3a51264b7481de)
+	(Trac #2811, git 7c0bad1643af13dedf9356e9fb3a51264b7481de)
 
 649.	[func]		muks
 	The default b10-xfrout also_notify port has been changed from
 	0 to 53.
-	(Trac# 2925, git 8acbf043daf590a9f2ad003e715cd4ffb0b3f979)
+	(Trac #2925, git 8acbf043daf590a9f2ad003e715cd4ffb0b3f979)
 
 648.	[func]		tmark
 	Moved classes pertaining to sending and receiving
@@ -5418,7 +5418,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	libdhcp_ddns, in src/lib/dhcp_ddns.  This allows the
 	classes to be shared between DHDCP-DDNS and its clients,
 	such as the DHCP servers.
-	(Trac# 3065, git 3d39bccaf3f0565152ef73ec3e2cd03e77572c56)
+	(Trac #3065, git 3d39bccaf3f0565152ef73ec3e2cd03e77572c56)
 
 647.	[func]		tmark
 	Added initial implementation of classes for sending
@@ -5489,7 +5489,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 	Added initial implementation of NameChangeRequest,
 	which embodies DNS update requests sent to DHCP-DDNS
 	by its clients.
-	(trac3007 git f33bdd59c6a8c8ea883f11578b463277d01c2b70)
+	(Trac #3007, git f33bdd59c6a8c8ea883f11578b463277d01c2b70)
 
 636.	[func]		tmark
 	Added the initial implementation of configuration parsing for
@@ -8698,7 +8698,7 @@ bind10-devel-20110322 released on March 22, 2011
 	Make the rrset trust level ranking algorithm used by
 	isc::cache::MessageEntry::getRRsetTrustLevel() follow RFC2181
 	section 5.4.1.
-	(Trac #595 git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
+	(Trac #595, git 19197b5bc9f2955bd6a8ca48a2d04472ed696e81)
 
 187.	[bug]		zhanglikun
 	Fix the assert error in class isc::cache::RRsetCache by adding the
@@ -8907,7 +8907,8 @@ bind10-devel-20110120 released on January 20, 2011
 155.	[doc]		jreed
 	Miscellaneous documentation improvements for man pages and
 	the guide, including auth, resolver, stats, xfrout, and
-	zonemgr.  (git c14c4741b754a1eb226d3bdc3a7abbc4c5d727c0)
+	zonemgr.
+	(git c14c4741b754a1eb226d3bdc3a7abbc4c5d727c0)
 
 154.	[bug]		jinmei
 	b10-xfrin/b10-zonemgr: Fixed a bug where these programs didn't
@@ -8978,7 +8979,7 @@ bind10-devel-20110120 released on January 20, 2011
 	only feasible for class IN in memory data source.  To reload a
 	zone "example.com" via bindctl, execute the command as follows:
 	> Auth loadzone origin = example.com
-	(Trac #467 git 4f7e1f46da1046de527ab129a88f6aad3dba7562
+	(Trac #467, git 4f7e1f46da1046de527ab129a88f6aad3dba7562
 	from 1d7d3918661ba1c6a8b1e40d8fcbc5640a84df12)
 
 144.	[build]		jinmei
@@ -9067,12 +9068,12 @@ bind10-devel-20110120 released on January 20, 2011
 133.	[func]		vorner
 	New temporary logging function available in isc::log. It is used by
 	b10-resolver.
-	(Trac #393, r3602)
+	(Trac #393, svn r3602)
 
 132.	[func]		vorner
 	The b10-resolver is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
-	(Trac #389, r3448)
+	(Trac #389, svn r3448)
 
 131.	[func]		jerry
 	src/lib/datasrc: Introduced two template classes RBTree and RBNode
@@ -9160,7 +9161,7 @@ bind10-devel-20101201 released on December 01, 2010
 	AbstractRRset::getRdataIterator() so that the internal
 	cursor would point to the first RDATA automatically.  This
 	will be a more intuitive and less error prone behavior.
-	This is a backward compatible change. (Trac #410, r3595)
+	This is a backward compatible change. (Trac #410, svn r3595)
 
 117.	[func]		jinmei
 	src/lib/datasrc: added new zone and zone table classes for the
@@ -9179,7 +9180,7 @@ bind10-devel-20101201 released on December 01, 2010
 	separate classes to simpler enums, considering the balance between
 	type safety and usability.  API has been changed accordingly.
 	More documentation and tests were provided with these changes.
-	(Trac #358, r3439)
+	(Trac #358, svn r3439)
 
 114.	[build]		jinmei
 	Supported clang++.  Note: Boost >= 1.44 is required.
@@ -9190,7 +9191,7 @@ bind10-devel-20101201 released on December 01, 2010
 	renamed	to 'util'. Programs that used 'import isc.utils.process'
 	now need to use 'import isc.util.process'. The folder
 	/src/lib/python/isc/Util is removed since it isn't used by any
-	program. (Trac #364, r3382)
+	program. (Trac #364, svn r3382)
 
 112.	[func]		zhanglikun
 	Add one mixin class to override the naive serve_forever() provided
@@ -9214,24 +9215,24 @@ bind10-devel-20101201 released on December 01, 2010
 109.	[func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
-	items and reports via bindctl command. (Trac #191, r3218)
+	items and reports via bindctl command. (Trac #191, svn r3218)
 	Added the document of the stats module, which is about how stats
 	module collects the data (Trac #170, [wiki:StatsModule])
 
 108.	[func]		jerry
 	src/bin/zonemgr: Provide customizable configurations for
 	lowerbound_refresh, lowerbound_retry, max_transfer_timeout and
-	jitter_scope. (Trac #340, r3205)
+	jitter_scope. (Trac #340, svn r3205)
 
 107.	[func]		likun
 	Remove the parameter 'db_file' for command 'retransfer' of
 	xfrin module. xfrin.spec will not be generated by script.
-	(Trac #329, r3171)
+	(Trac #329, svn r3171)
 
 106.	[bug]		likun
 	When xfrin can't connect with one zone's master, it should tell
 	the bad news to zonemgr, so that zonemgr can reset the timer for
-	that zone. (Trac #329, r3170)
+	that zone. (Trac #329, svn r3170)
 
 105.	[bug]		Vaner
 	Python processes: they no longer take 100% CPU while idle
@@ -9240,15 +9241,15 @@ bind10-devel-20101201 released on December 01, 2010
 
 104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
-	(Trac #336, r3139)
+	(Trac #336, svn r3139)
 
 103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
-	python log shouldn't die with OSError. (Trac #267, r3137)
+	python log shouldn't die with OSError. (Trac #267, svn r3137)
 
 102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
-	(Trac #345, r3100)
+	(Trac #345, svn r3100)
 
 101.	[func]		jinmei
 	src/lib/dns: Completed Opcode and Rcode implementation with more
@@ -9278,7 +9279,7 @@ bind10-devel-20101201 released on December 01, 2010
 96.	[bug]		jinmei
 	Fixed two small issues with configure: Do not set CXXFLAGS so that
 	it can be customized; Make sure --disable-static works.
-	(Trac #325, r2976)
+	(Trac #325, svn r2976)
 
 bind10-devel-20100917 released on September 17, 2010
 
@@ -9292,7 +9293,7 @@ bind10-devel-20100917 released on September 17, 2010
 94.	[bug]		jelte
 	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
 	were used per DNS message in the xfrout stream.
-	(Trac #334, r2931)
+	(Trac #334, svn r2931)
 
 93.	[bug]		jinmei
 	lib/datasrc: A DS query could crash the library (and therefore,
@@ -9303,7 +9304,7 @@ bind10-devel-20100917 released on September 17, 2010
 	libdns_python (the python wrappers for libdns++) has been renamed
 	to pydnspp (Python DNS++). Programs and libraries that used
 	'import libdns_python' now need to use 'import pydnspp'.
-	(Trac #314, r2902)
+	(Trac #314, svn r2902)
 
 91.	[func]*		jinmei
 	lib/cc: Use const pointers and const member functions for the API
@@ -9311,25 +9312,25 @@ bind10-devel-20100917 released on September 17, 2010
 	change the observable behavior, but some of the API were changed
 	in a backward incompatible manner.  This change also involves more
 	copies, but at this moment the overhead is deemed acceptable.
-	(Trac #310, r2803)
+	(Trac #310, svn r2803)
 
 90.	[build]		jinmei
 	(Darwin/Mac OS X specific) Specify DYLD_LIBRARY_PATH for tests and
 	experimental run under the source tree.  Without this loadable
 	python modules refer to installation paths, which may confuse the
 	operation due to version mismatch or even trigger run time errors
-	due to missing libraries. (Trac #313, r2782)
+	due to missing libraries. (Trac #313, svn r2782)
 
 89.	[build]		jinmei
 	Generate b10-config.db for tests at build time so that the source
-	tree does not have to be writable. (Trac #315, r2776)
+	tree does not have to be writable. (Trac #315, svn r2776)
 
 88.	[func]		jelte
 	Blocking reads on the msgq command channel now have a timeout
 	(defaults to 4 seconds, modifiable as needed by modules).
 	Because of this, modules will no longer block indefinitely
 	if they are waiting for a message that is not sent for whatever
-	reason. (Trac #296, r2761)
+	reason. (Trac #296, svn r2761)
 
 87.	[func]		zhanglikun
 	lib/python/isc/notifyout: Add the feature of notify-out, when
@@ -9376,7 +9377,7 @@ bind10-devel-20100812 released on August 12, 2010
 	non-running modules (for the latter, this is until we have a
 	way to verify those options, at which point it'll be allowed
 	again).
-	(Trac #99, r2657)
+	(Trac #99, svn r2657)
 
 79.	[func]		feng, jinmei
 	Refactored the ASIO link interfaces to move incoming XFR and
@@ -9388,7 +9389,7 @@ bind10-devel-20100812 released on August 12, 2010
 	validation and protocol conformance.  Detailed tests were provided
 	to confirm the behavior.
 	Note: Right now, NOTIFY doesn't actually trigger subsequent zone
-	transfer due to security reasons. (Trac #221, r2565)
+	transfer due to security reasons. (Trac #221, svn r2565)
 
 78.	[bug]		jinmei
 	lib/dns: Fixed miscellaneous bugs in the base32 (hex) and hex
@@ -9399,29 +9400,29 @@ bind10-devel-20100812 released on August 12, 2010
 	renamed the incorrect term of "base32" to "base32hex".  This
 	changed the API, but they are not intended to be used outside
 	libdns++, so we don't consider it a backward incompatible change.
-	(Trac #256, r2549)
+	(Trac #256, svn r2549)
 
 77.	[func]		zhanglikun
 	Make error message be more friendly when running cmdctl and it's
-	already running (listening on same port)(Trac #277, r2540)
+	already running (listening on same port)(Trac #277, svn r2540)
 
 76.	[bug]		jelte
 	Fixed a bug in the handling of 'remote' config modules (i.e.
 	modules that peek at the configuration of other modules), where
 	they answered 'unknown command' to commands for those other
-	modules. (Trac #278, r2506)
+	modules. (Trac #278, svn r2506)
 
 75.	[bug]		jinmei
 	Fixed a bug in the sqlite3 data source where temporary strings
 	could be referenced after destruction.  It caused various lookup
-	failures with SunStudio build. (Trac #288, r2494)
+	failures with SunStudio build. (Trac #288, svn r2494)
 
 74.	[func]*		jinmei
 	Refactored the cc::Session class by introducing an abstract base
 	class.  Test code can use their own derived mock class so that
 	tests can be done without establishing a real CC session.  This
 	change also modified some public APIs, mainly in the config
-	module. (Trac #275, r2459)
+	module. (Trac #275, svn r2459)
 
 73.	[bug]		jelte
 	Fixed a bug where in bindctl, locally changed settings were
@@ -9432,7 +9433,7 @@ bind10-devel-20100812 released on August 12, 2010
 	Added -R when linking python wrapper modules to libpython when
 	possible.  This helps build BIND 10 on platforms that install
 	libpython whose path is unknown to run-time loader.  NetBSD is a
-	known such platform. (Trac #148, r2427)
+	known such platform. (Trac #148, svn r2427)
 
 71.	[func]		each
 	Add "-a" (address) option to bind10 to specify an address for
@@ -9521,13 +9522,13 @@ bind10-devel-20100701 released on July 1, 2010
 	SERVFAIL with a partial answer if it finds a data source broken
 	while looking for an answer.  This can happen, for example, if a
 	zone that doesn't have an NS RR is configured and loaded as a
-	sqlite3 data source. (Trac #249, r2286)
+	sqlite3 data source. (Trac #249, svn r2286)
 
 58.	[bug]		jinmei
 	Worked around an interaction issue between ASIO and standard C++
 	library headers.  Without this ASIO didn't work: sometimes the
 	application crashes, sometimes it blocked in the ASIO module.
-	(Trac #248, svn r2187, r2190)
+	(Trac #248, svn r2187, svn r2190)
 
 57.	[func]		jinmei
 	lib/datasrc: used a simpler version of Name::split (change 31) for
@@ -9681,7 +9682,7 @@ bind10-devel-20100421 released on April 21, 2010
 	#114, svn r1749)
 
 25.	[func]*		jreed
-	Renamed msgq to b10-msgq. (Trac #25, svn r1747, r1748)
+	Renamed msgq to b10-msgq. (Trac #25, svn r1747, svn r1748)
 
 24.	[func]		jinmei
 	Support case-sensitive name compression in MessageRenderer.
@@ -9691,7 +9692,7 @@ bind10-devel-20100421 released on April 21, 2010
 	Support a simple name with possible compression. (svn r1701)
 
 22.	[func]		zhanglikun
-	b10-xfrout for AXFR-out support added. (svn r1629, r1630)
+	b10-xfrout for AXFR-out support added. (svn r1629, svn r1630)
 
 21.	[bug]		zhanglikun
 	Make log message more readable when xfrin failed. (svn
@@ -9699,7 +9700,7 @@ bind10-devel-20100421 released on April 21, 2010
 
 20.	[bug]		jinmei
 	Keep stderr for child processes if -v is specified. (svn
-	r1690, r1698)
+	r1690, svn r1698)
 
 19.	[bug]		jinmei
 	Allow bind10 boss to pass environment variables from parent.
