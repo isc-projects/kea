@@ -3920,7 +3920,7 @@ uint32_t Dhcpv6Srv::threadCount() {
         return sys_threads;
     }
     sys_threads = std::thread::hardware_concurrency();
-    return sys_threads * 4;
+    return sys_threads * 1;
 }
 
 uint32_t Dhcpv6Srv::maxThreadQueueSize() {
