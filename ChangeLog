@@ -1,3 +1,7 @@
+1562.	[bug]		razvan
+        Fixed compilation of google benchmarks.
+	(Gitlab #520,!260, git 11aa890d30ecce5518b9f0bad389feea6be78167)
+
 1562.	[bug]		marcin
 	Corrected a bug whereby the DHCP server would trigger a segfault
 	upon termination when MySQL configuration backend was in use.
