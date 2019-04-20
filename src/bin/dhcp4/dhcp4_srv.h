@@ -901,10 +901,6 @@ protected:
                                           bool& drop,
                                           bool sanity_only = false) const;
 
-    /// indicates if shutdown is in progress. Setting it to true will
-    /// initiate server shutdown procedure.
-    volatile bool shutdown_;
-
     /// @brief dummy wrapper around IfaceMgr::receive4
     ///
     /// This method is useful for testing purposes, where its replacement
@@ -1003,13 +999,17 @@ private:
     /// UDP port number on which server listens.
     uint16_t server_port_;
 
-    /// Should broadcast be enabled on sockets (if true).
-    bool use_bcast_;
-
 protected:
 
     /// UDP port number to which server sends responses.
     uint16_t client_port_;
+
+    /// Should broadcast be enabled on sockets (if true).
+    bool use_bcast_;
+
+    /// indicates if shutdown is in progress. Setting it to true will
+    /// initiate server shutdown procedure.
+    volatile bool shutdown_;
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

@@ -447,9 +447,9 @@ const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
                      bool run_multithreaded /* = false */,
                      const bool use_bcast, const bool direct_response_desired)
-    : io_service_(new IOService()), shutdown_(true), alloc_engine_(),
-      server_port_(server_port), use_bcast_(use_bcast),
-      client_port_(client_port),
+    : io_service_(new IOService()), server_port_(server_port),
+      client_port_(client_port), use_bcast_(use_bcast),
+      shutdown_(true), alloc_engine_(),
       network_state_(new NetworkState(NetworkState::DHCPv4)),
       cb_control_(new CBControlDHCPv4()),
       run_multithreaded_(run_multithreaded) {
