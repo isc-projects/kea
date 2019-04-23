@@ -1,8 +1,9 @@
 // Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this // file, You can obtain one at http://mozilla.org/MPL/2.0/.  #include <config.h> 
+// License, v. 2.0. If a copy of the MPL was not distributed with this // file, You can obtain one at http://mozilla.org/MPL/2.0/.  #include <config.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
@@ -128,6 +129,29 @@ OptionDefParser::parse(ConstElementPtr option_def) {
         isc_throw(DhcpConfigError, "invalid option space name '"
                   << space << "' ("
                   << getPosition("space", option_def) << ")");
+    }
+
+    // Protect against definition of options 0 (PAD) or 255 (END)
+    // in (and only in) the dhcp4 space.
+    if (space == DHCP4_OPTION_SPACE) {
+        if (code == DHO_PAD) {
+            isc_throw(DhcpConfigError, "invalid option code '0': "
+                      << "reserved for PAD ("
+                      << getPosition("code", option_def) << ")");
+        } else if (code == DHO_END) {
+            isc_throw(DhcpConfigError, "invalid option code '255': "
+                      << "reserved for END ("
+                      << getPosition("code", option_def) << ")");
+        }
+    }
+
+    // For dhcp6 space the value 0 is reserved.
+    if (space == DHCP6_OPTION_SPACE) {
+        if (code == 0) {
+            isc_throw(DhcpConfigError, "invalid option code '0': "
+                      << "reserved value ("
+                      << getPosition("code", option_def) << ")");
+        }
     }
 
     // Create option definition.

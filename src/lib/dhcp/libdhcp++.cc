@@ -472,6 +472,9 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
     size_t offset = 0;
     size_t last_offset = 0;
 
+    // Special case when option_space is dhcp4.
+    bool space_is_dhcp4 = (option_space == DHCP4_OPTION_SPACE);
+
     // Get the list of standard option definitions.
     const OptionDefContainerPtr& option_defs = LibDHCP::getOptionDefs(option_space);
     // Runtime option definitions for non standard option space and if
@@ -493,7 +496,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         uint8_t opt_type = buf[offset++];
 
         // DHO_END is a special, one octet long option
-        if (opt_type == DHO_END) {
+        if (space_is_dhcp4 && (opt_type == DHO_END)) {
             // just return. Don't need to add DHO_END option
             // Don't return offset because it makes this condition
             // and partial parsing impossible to recognize.
@@ -502,8 +505,9 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
 
         // DHO_PAD is just a padding after DHO_END. Let's continue parsing
         // in case we receive a message without DHO_END.
-        if (opt_type == DHO_PAD)
+        if (space_is_dhcp4 && (opt_type == DHO_PAD)) {
             continue;
+        }
 
         if (offset + 1 > buf.size()) {
             // We peeked at the option header of the next option, but

@@ -677,6 +677,60 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
+/// @brief Check parsing of option definitions using invalid code fails.
+TEST_F(ParseConfigTest, badCodeOptionDefTest) {
+
+    {
+        SCOPED_TRACE("conflict with PAD");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"zero\","
+            "      \"code\": 0,"
+            "      \"type\": \"ip-address\","
+            "      \"space\": \"dhcp4\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with END");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"max\","
+            "      \"code\": 255,"
+            "      \"type\": \"ip-address\","
+            "      \"space\": \"dhcp4\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("conflict with reserved");
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"zero\","
+            "      \"code\": 0,"
+            "      \"type\": \"ipv6-address\","
+            "      \"space\": \"dhcp6\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+}
+
 /// @brief Check parsing of option definitions using invalid space fails.
 TEST_F(ParseConfigTest, badSpaceOptionDefTest) {
 
@@ -777,6 +831,84 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     opt_data->set("code", Element::create(100));
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
     cfg.runCfgOptionsTest(family_, expected);
+}
+
+/// @brief Check parsing of options with code 0.
+TEST_F(ParseConfigTest, optionDataTest0) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 0,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 0,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 0);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify that the option data is correct.
+    std::string val = "type=00000, len=00004: 192.0.2.0 (ipv4-address)";
+
+    EXPECT_EQ(val, opt_ptr->toText());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
+
+/// @brief Check parsing of options with code 255.
+TEST_F(ParseConfigTest, optionDataTest255) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 255,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 255,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 255);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify that the option data is correct.
+    std::string val = "type=00255, len=00004: 192.0.2.0 (ipv4-address)";
+
+    EXPECT_EQ(val, opt_ptr->toText());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
 }
 
 /// @brief Check parsing of unknown options fails.

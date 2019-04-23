@@ -103,6 +103,7 @@ dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
 dhcp4_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
 dhcp4_unittests_SOURCES += shared_network_unittest.cc
 dhcp4_unittests_SOURCES += host_unittest.cc
+dhcp4_unittests_SOURCES += vendor_opts_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 

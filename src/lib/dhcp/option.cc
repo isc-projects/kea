@@ -35,12 +35,7 @@ Option::factory(Option::Universe u,
 
 Option::Option(Universe u, uint16_t type)
     :universe_(u), type_(type) {
-
-    // END option (type 255 is forbidden as well)
-    if ((u == V4) && ((type == 0) || (type > 254))) {
-        isc_throw(BadValue, "Can't create V4 option of type "
-                  << type << ", V4 options are in range 1..254");
-    }
+    check();
 }
 
 Option::Option(Universe u, uint16_t type, const OptionBuffer& data)

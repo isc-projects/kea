@@ -8,6 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -59,14 +60,10 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
         return (OptionalValue<uint32_t>());
     }
 
-    if (code == 0) {
-        isc_throw(DhcpConfigError, "option code must not be zero "
-                  "(" << getPosition("code", parent) << ")");
-
-    } else if (address_family_ == AF_INET &&
-               code > std::numeric_limits<uint8_t>::max()) {
+    if (address_family_ == AF_INET &&
+        code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
-                << "', it must not be greater than '"
+                  << "', it must not be greater than '"
                   << static_cast<int>(std::numeric_limits<uint8_t>::max())
                   << "' (" << getPosition("code", parent)
                   << ")");
@@ -74,7 +71,7 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
     } else if (address_family_ == AF_INET6 &&
                code > std::numeric_limits<uint16_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << code
-                << "', it must not exceed '"
+                  << "', it must not exceed '"
                   << std::numeric_limits<uint16_t>::max()
                   << "' (" << getPosition("code", parent)
                   << ")");
@@ -312,7 +309,6 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         }
     }
 
-    OptionPtr option;
     OptionDescriptor desc(false);
 
     if (!def) {
@@ -357,6 +353,28 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                       << ex.what() << " ("
                       << getPosition("data", option_data)
                       << ")");
+        }
+    }
+
+    // Check PAD and END in (and only in) dhcp4 space.
+    if (space_param == DHCP4_OPTION_SPACE) {
+        if (desc.option_->getType() == DHO_PAD) {
+            isc_throw(DhcpConfigError, "invalid option code '0': "
+                      << "reserved for PAD ("
+                      << option_data->getPosition() << ")");
+        } else if (desc.option_->getType() == DHO_END) {
+            isc_throw(DhcpConfigError, "invalid option code '255': "
+                      << "reserved for END ("
+                      << option_data->getPosition() << ")");
+        }
+    }
+
+    // For dhcp6 space the value 0 is reserved.
+    if (space_param == DHCP6_OPTION_SPACE) {
+        if (desc.option_->getType() == 0) {
+            isc_throw(DhcpConfigError, "invalid option code '0': "
+                      << "reserved value ("
+                      << option_data->getPosition() << ")");
         }
     }
 
