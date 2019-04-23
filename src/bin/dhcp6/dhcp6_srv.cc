@@ -1926,7 +1926,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
              l != leases.end(); ++l) {
 
             // Check for new minimum lease time
-            if (min_valid_lft > (*l)->valid_lft_) {
+            if (((*l)->valid_lft_ > 0) && (min_valid_lft > (*l)->valid_lft_)) {
                 min_valid_lft = (*l)->valid_lft_;
             }
 
@@ -2077,7 +2077,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ia_rsp->addOption(iaaddr);
 
         // Check for new minimum lease time
-        if ((*l)->valid_lft_ < min_valid_lft) {
+        if (((*l)->valid_lft_ > 0) && (min_valid_lft > (*l)->valid_lft_)) {
             min_valid_lft = (*l)->valid_lft_;
         }
 

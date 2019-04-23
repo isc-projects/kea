@@ -2047,13 +2047,13 @@ should include options from the new option space:
     <section xml:id="dhcp6-t1-t2-times">
       <title>Controlling the Values Sent for T1 and T2 Times</title>
       According to <link xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>,
+      xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415, section 21.4</link>,
       servers should send values for T1 and T2 that are 50% and 80%
-      of the lease life time, repsectively.  By default, kea-dhcp6 will
-      send zero for both values.  It can be configured to send values that
-      are specified explicitly or that are calculated as percentages of
-      the valid lease time.  The server's behavior is governed by combination of
-      configuration parameters, two of which have already been mentioned.
+      of the preferred lease time, repsectively.  Kea can be configured
+      to send values that are specified explicitly or that are calculated as
+      percentages of the valid lease time.  The server's behavior is governed
+      by combination of configuration parameters, two of which have already been
+      mentioned.
       <para>
       To send specific, fixed values use the following two parameters:
       <itemizedlist>
@@ -2068,9 +2068,9 @@ should include options from the new option space:
           </simpara>
         </listitem>
       </itemizedlist>
-      The server will only send T2 if it is less than valid lease time.  T1 will
-      only be sent if a: T2 is being sent and T1 is less than T2 or b: T2 is not being
-      sent and T1 is less than the valid lease time.
+      The server will only use T2 if it is less than valid lease time, otherwise it will
+      be set to 0.  T1 will only be use if it is less than T2, otherwise it will be
+      set to 0.
       </para>
       <para>
       Calculating the values is controlled by the following three parameters.
@@ -2078,7 +2078,7 @@ should include options from the new option space:
         <listitem>
           <simpara>
             <command>calculate-tee-times</command> - when true, T1 and T2 will be
-            calculated as percentages of the valid lease time. It defaults to false.
+            calculated as percentages of the valid lease time. It defaults to true.
           </simpara>
         </listitem>
         <listitem>

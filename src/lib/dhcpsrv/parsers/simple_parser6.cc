@@ -106,7 +106,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "dhcp4o6-port",             Element::integer, "0" },
     { "server-tag",               Element::string,  "" },
     { "reservation-mode",         Element::string,  "all" },
-    { "calculate-tee-times",      Element::boolean, "false" },
+    { "calculate-tee-times",      Element::boolean, "true" },
     { "t1-percent",               Element::real,    ".50" },
     { "t2-percent",               Element::real,    ".80" }
 };

@@ -1836,7 +1836,7 @@ const char* EXTRACTED_CONFIGS[] = {
 const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -1906,7 +1906,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 1
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -1971,7 +1971,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2002,7 +2002,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 2
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2067,7 +2067,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2092,7 +2092,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2117,7 +2117,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 3,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2142,7 +2142,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 4,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2173,7 +2173,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 3
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2238,7 +2238,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1024,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2263,7 +2263,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 100,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2288,7 +2288,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2313,7 +2313,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 34,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2344,7 +2344,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 4
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2409,7 +2409,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2434,7 +2434,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2459,7 +2459,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 3,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2484,7 +2484,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 4,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2515,7 +2515,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 5
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2580,7 +2580,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2611,7 +2611,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 6
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2676,7 +2676,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"interface\": \"eth0\",\n"
 "                \"option-data\": [ ],\n"
@@ -2708,7 +2708,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 7
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2773,7 +2773,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"interface-id\": \"foobar\",\n"
 "                \"option-data\": [ ],\n"
@@ -2805,7 +2805,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 8
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2870,7 +2870,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2899,7 +2899,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -2934,7 +2934,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 9
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -2999,7 +2999,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -3030,7 +3030,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 10
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3095,7 +3095,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -3128,7 +3128,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 11
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3193,7 +3193,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -3228,7 +3228,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 12
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3293,7 +3293,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -3343,7 +3343,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 13
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3408,7 +3408,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -3441,7 +3441,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 14
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3519,7 +3519,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 15
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3597,7 +3597,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 16
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3684,7 +3684,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 17
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3762,7 +3762,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 18
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3840,7 +3840,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 19
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -3922,7 +3922,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -3953,7 +3953,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 20
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4018,7 +4018,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [\n"
 "                    {\n"
@@ -4066,7 +4066,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 21
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4158,7 +4158,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -4189,7 +4189,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 22
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4295,7 +4295,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 23
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4413,7 +4413,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -4444,7 +4444,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 24
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4509,7 +4509,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [\n"
 "                    {\n"
@@ -4543,7 +4543,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [\n"
 "                    {\n"
@@ -4583,7 +4583,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 25
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4648,7 +4648,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -4732,7 +4732,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 26
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4812,7 +4812,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -4843,7 +4843,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 27
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -4927,7 +4927,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -4958,7 +4958,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 28
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5028,7 +5028,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 29
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5098,7 +5098,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 30
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5163,7 +5163,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5194,7 +5194,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 31
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5259,7 +5259,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5290,7 +5290,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 32
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5355,7 +5355,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"client-class\": \"alpha\",\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
@@ -5381,7 +5381,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"client-class\": \"beta\",\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [ ],\n"
@@ -5407,7 +5407,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"client-class\": \"gamma\",\n"
 "                \"id\": 3,\n"
 "                \"option-data\": [ ],\n"
@@ -5433,7 +5433,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 4,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5464,7 +5464,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 33
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5529,7 +5529,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5575,7 +5575,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 34
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5640,7 +5640,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -5694,7 +5694,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 35
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -5759,7 +5759,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5790,7 +5790,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 36
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -5855,7 +5855,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 123,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5880,7 +5880,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 234,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -5951,7 +5951,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 542,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6011,7 +6011,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 37
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6086,7 +6086,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 234,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6130,7 +6130,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 38
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6200,7 +6200,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 39
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6270,7 +6270,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 40
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6335,7 +6335,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6360,7 +6360,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6385,7 +6385,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 3,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6410,7 +6410,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 4,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6435,7 +6435,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 5,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6466,7 +6466,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 41
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6531,7 +6531,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6556,7 +6556,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 2,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -6587,7 +6587,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 42
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6657,7 +6657,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 43
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6725,7 +6725,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 44
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6793,7 +6793,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 45
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 12345,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6861,7 +6861,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 46
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -6929,7 +6929,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 47
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
 "            {\n"
 "                \"name\": \"one\",\n"
@@ -7008,7 +7008,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -7039,7 +7039,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 48
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7104,7 +7104,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -7135,7 +7135,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 49
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7200,7 +7200,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -7232,7 +7232,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 50
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7297,7 +7297,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -7334,7 +7334,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 51
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7399,7 +7399,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -7436,7 +7436,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 52
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7501,7 +7501,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -7534,7 +7534,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 53
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7599,7 +7599,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -7633,7 +7633,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 54
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7698,7 +7698,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 1,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [\n"
@@ -7737,7 +7737,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 55
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -7822,7 +7822,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 56
 "{\n"
 "        \"comment\": \"A DHCPv6 server\",\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
 "            {\n"
 "                \"comment\": \"match all\",\n"
@@ -7934,7 +7934,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [\n"
 "            {\n"
 "                \"comment\": \"A shared network\",\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"interface\": \"\",\n"
 "                \"name\": \"foo\",\n"
 "                \"option-data\": [ ],\n"
@@ -7947,7 +7947,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"subnet6\": [\n"
 "                    {\n"
 "                        \"comment\": \"A subnet\",\n"
-"                        \"calculate-tee-times\": false,\n"
+"                        \"calculate-tee-times\": true,\n"
 "                        \"id\": 100,\n"
 "                        \"option-data\": [ ],\n"
 "                        \"pd-pools\": [\n"
@@ -8011,7 +8011,7 @@ const char* UNPARSED_CONFIGS[] = {
 "    }\n",
     // CONFIGURATION 57
 "{\n"
-"        \"calculate-tee-times\": false,\n"
+"        \"calculate-tee-times\": true,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -8128,7 +8128,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"shared-networks\": [ ],\n"
 "        \"subnet6\": [\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 123,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -8153,7 +8153,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 234,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"
@@ -8173,7 +8173,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            },\n"
 "            {\n"
-"                \"calculate-tee-times\": false,\n"
+"                \"calculate-tee-times\": true,\n"
 "                \"id\": 542,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-pools\": [ ],\n"

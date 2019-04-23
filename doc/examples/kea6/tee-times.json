@@ -1,0 +1,72 @@
+// This is an example configuration file for DHCPv6 server in Kea.
+// It's a basic scenario with three IPv6 subnets use different
+// methods for determining T1 and T2 values.
+
+{ "Dhcp6":
+
+{
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+// Addresses will be assigned with preferred and valid lifetimes
+// being 3000 and 4000, respectively.  By default calculate-tee-times
+// is true with values of .5 and .8 for t1-percent and t2-percent
+// respectively.  Since some of our subnets will use calculated values and
+// we must NOT specify global values for renew-timer and rebind-timer.
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+
+// The following list defines subnets. Each subnet consists of at
+// least subnet and pool entries.
+  "subnet6": [
+  {    
+        //  This subnet use default calculation
+        "subnet": "2001:db8:1::/64",
+        "pools": [ { "pool": "2001:db8:1::/80" } ]
+  },
+  {    
+        // This subnet will use explicit values. Explict
+        // values override calculation.
+       "subnet": "2001:db8:2::/64",
+       "pools": [ { "pool": "2001:db8:2::/80" } ],
+       "renew-timer":  1000,
+       "rebind-timer": 2000
+  },
+  {    
+        // This subnet will use custom percents
+       "subnet": "2001:db8:3::/64",
+       "pools": [ { "pool": "2001:db8:3::/80" } ],
+       "t1-percent": .45,
+       "t2-percent": .7
+  }]
+},
+
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "debuglevel": 0,
+            "severity": "INFO"
+        }
+    ]
+}
+
+}
