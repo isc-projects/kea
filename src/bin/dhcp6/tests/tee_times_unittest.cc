@@ -30,10 +30,7 @@ namespace {
 ///
 const char* TEE_CONFIGS[] = {
     // Configuration 0, Timers explicitly set
-    "{ \n" 
-    "   \"interfaces-config\": { \n"
-    "       \"interfaces\": [ \"*\" ] \n"
-    "   }, \n"
+    "{ \n"
     "   \"renew-timer\": 1000, \n"
     "   \"rebind-timer\": 2000, \n"
     "   \"preferred-lifetime\": 3000, \n"
@@ -51,13 +48,27 @@ const char* TEE_CONFIGS[] = {
     "   }] \n"
     "} \n"
     , // Configuration 1, Calculate default timers
-    "{ \n" 
-    "   \"interfaces-config\": { \n"
-    "       \"interfaces\": [ \"*\" ] \n"
-    "   }, \n"
-    "   \"calculate-tee-times\": true, \n"
+    "{ \n"
     "   \"preferred-lifetime\": 3000, \n"
     "   \"valid-lifetime\": 4000, \n"
+    "   \"subnet6\": [ { \n"
+    "       \"interface\": \"eth0\", \n"
+    "       \"subnet\": \"2001:db8:1::/48\", \n"
+    "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
+    "       \"pd-pools\": [ \n"
+    "       { \n"
+    "           \"prefix\": \"3000::\", \n "
+    "           \"prefix-len\": 72, \n"
+    "           \"delegated-len\": 80 \n"
+    "       }] \n"
+    "   }] \n"
+    "} \n"
+    , // Configuration 2, Calculate custom timers
+    "{ \n"
+    "   \"preferred-lifetime\": 3000, \n"
+    "   \"valid-lifetime\": 4000, \n"
+    "   \"t1-percent\": .45, \n"
+    "   \"t2-percent\": .70, \n"
     "   \"subnet6\": [ { \n"
     "       \"interface\": \"eth0\", \n"
     "       \"subnet\": \"2001:db8:1::/48\", \n"
@@ -83,7 +94,7 @@ public:
         : Dhcpv6MessageTest() {
     }
 
-    void genRequest(const std::string& config, Dhcp6Client& client, 
+    void genRequest(const std::string& config, Dhcp6Client& client,
                     uint32_t exp_leases) {
         // Configure the server.
         ASSERT_NO_THROW(configure(config, *client.getServer()));
@@ -99,6 +110,8 @@ public:
     }
 };
 
+// This test verifies that explict values for renew-timer and
+// rebind-timer are used when given.
 TEST_F(TeeTest, explicitTimers) {
     Dhcp6Client client;
 
@@ -139,7 +152,10 @@ TEST_F(TeeTest, explicitTimers) {
     EXPECT_EQ(2000, actual_t2);
 }
 
-TEST_F(TeeTest, calculateTimers) {
+// This test verifies that T1 and T2 are calculated by
+// default when explicit values for renew-timer
+// and rebind-timer are not present.
+TEST_F(TeeTest, defaultTimers) {
     Dhcp6Client client;
 
     uint32_t na_iaid = 2222;
@@ -178,6 +194,49 @@ TEST_F(TeeTest, calculateTimers) {
     EXPECT_EQ(2000, actual_t1);
     EXPECT_EQ(3200, actual_t2);
 }
+
+// This test verifies that custom percentags for T1 and T2
+// can be used for calculation.
+TEST_F(TeeTest, calculateTimers) {
+    Dhcp6Client client;
+
+    uint32_t na_iaid = 2222;
+    client.requestAddress(na_iaid);
+
+    uint32_t pd_iaid = 3333;
+    client.requestPrefix(pd_iaid);
+
+    uint32_t exp_leases = 2;
+
+    // Configure client to request IA_NA.
+    // Make 4-way exchange to get the lease.
+    ASSERT_NO_FATAL_FAILURE(genRequest(TEE_CONFIGS[2], client, exp_leases));
+
+    // Make sure the timers are right for both IAs
+    uint32_t actual_t1;
+    uint32_t actual_t2;
+
+    ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
+    EXPECT_EQ(1800, actual_t1);
+    EXPECT_EQ(2800, actual_t2);
+
+    ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
+    EXPECT_EQ(1800, actual_t1);
+    EXPECT_EQ(2800, actual_t2);
+
+    // Let's renew the leases.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Now check the timers again.
+    ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
+    EXPECT_EQ(1800, actual_t1);
+    EXPECT_EQ(2800, actual_t2);
+
+    ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
+    EXPECT_EQ(1800, actual_t1);
+    EXPECT_EQ(2800, actual_t2);
+}
+
 
 
 } // end of anonymous namespace

@@ -1176,9 +1176,8 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     std::ostringstream output;
     output << addr << "/" << static_cast<int>(len)
-           << " with params t1=" << subnet6->getT1().get()
-           << ", t2=" << subnet6->getT2().get()
-           << ", preferred-lifetime=" << pref.get()
+           << " with params "
+           << " preferred-lifetime=" << pref.get()
            << ", valid-lifetime=" << subnet6->getValid().get()
            << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
 

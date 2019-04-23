@@ -121,7 +121,7 @@ public:
 
         // Now try to get the element being checked
         ConstElementPtr elem = map->get(param_name);
-        ASSERT_FALSE(elem) << "param was found found: " << param_name;
+        ASSERT_FALSE(elem) << "param was found but not expected: " << param_name;
     }
 
 };
@@ -139,7 +139,7 @@ TEST_F(SimpleParser6Test, globalDefaults6) {
 
     checkIntegerValue(empty, "valid-lifetime", 7200);
     checkIntegerValue(empty, "preferred-lifetime", 3600);
-    checkBoolValue(empty, "calculate-tee-times", false);
+    checkBoolValue(empty, "calculate-tee-times", true);
     checkDoubleValue(empty, "t1-percent", 0.5);
     checkDoubleValue(empty, "t2-percent", 0.8);
 
