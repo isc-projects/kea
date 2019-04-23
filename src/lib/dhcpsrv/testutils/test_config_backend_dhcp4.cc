@@ -367,23 +367,32 @@ uint64_t
 TestConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& /* server_selector */,
                                                      const std::string& shared_network_name) {
     uint64_t cnt = 0;
-    auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
-    auto network_it = index.find(shared_network_name);
-    if (network_it == index.end()) {
-        return (cnt);
+    auto& index = subnets_.get<SubnetRandomAccessIndexTag>();
+    for (auto subnet = index.begin(); subnet != index.end(); ++subnet) {
+        SharedNetwork4Ptr network;
+        (*subnet)->getSharedNetwork(network);
+        if (network && (network->getName() == shared_network_name)) {
+            network->del((*subnet)->getID());
+        }
+
+        if ((network && (network->getName() == shared_network_name)) ||
+            ((*subnet)->getSharedNetworkName() == shared_network_name)) {
+            subnet = index.erase(subnet);
+            ++cnt;
+        }
     }
-    for (auto subnet : *(*network_it)->getAllSubnets()) {
-        const SubnetID& subnet_id = subnet->getID();
-        auto& subnet_index = subnets_.get<SubnetSubnetIdIndexTag>();
-        cnt += subnet_index.erase(subnet_id);
-    }
-    (*network_it)->delAll();
     return (cnt);
 }
 
 uint64_t
 TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& /* server_selector */,
                                               const std::string& name) {
+    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
+        if ((*subnet)->getSharedNetworkName() == name) {
+            (*subnet)->setSharedNetworkName("");
+        }
+    }
+
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(name);
     if (network_it != index.end()) {
