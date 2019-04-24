@@ -1833,7 +1833,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             .arg(lease->toText());
 
         // Set the values for T1 and T2.
-        setTeeTimes(lease->valid_lft_, subnet, ia_rsp);
+        setTeeTimes(lease->preferred_lft_, subnet, ia_rsp);
 
         Option6IAAddrPtr addr(new Option6IAAddr(D6O_IAADDR, lease->addr_,
                                                 lease->preferred_lft_,
@@ -1917,17 +1917,17 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
 
     if (!leases.empty()) {
 
-        // Need to retain the shortest valid lease time to use
+        // Need to retain the shortest preferred lease time to use
         // for calculating T1 and T2.
-        uint32_t min_valid_lft = (*leases.begin())->valid_lft_;
+        uint32_t min_preferred_lft = (*leases.begin())->preferred_lft_;
 
         const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
         for (Lease6Collection::iterator l = leases.begin();
              l != leases.end(); ++l) {
 
             // Check for new minimum lease time
-            if (((*l)->valid_lft_ > 0) && (min_valid_lft > (*l)->valid_lft_)) {
-                min_valid_lft = (*l)->valid_lft_;
+            if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
+                min_preferred_lft = (*l)->preferred_lft_;
             }
 
             // We have a lease! Let's wrap its content into IA_PD option
@@ -1959,8 +1959,8 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
             }
         }
 
-        // Set T1 and T2, using the shortest valid lifetime among the leases.
-        setTeeTimes(min_valid_lft, subnet, ia_rsp);
+        // Set T1 and T2, using the shortest preferred lifetime among the leases.
+        setTeeTimes(min_preferred_lft, subnet, ia_rsp);
 
         // It would be possible to insert status code=0(success) as well,
         // but this is considered waste of bandwidth as absence of status
@@ -2068,7 +2068,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     // Retains the shortest valid lease time to use
     // for calculating T1 and T2.
-    uint32_t min_valid_lft = std::numeric_limits<uint32_t>::max();
+    uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
@@ -2077,8 +2077,8 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         ia_rsp->addOption(iaaddr);
 
         // Check for new minimum lease time
-        if (((*l)->valid_lft_ > 0) && (min_valid_lft > (*l)->valid_lft_)) {
-            min_valid_lft = (*l)->valid_lft_;
+        if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
+            min_preferred_lft = (*l)->preferred_lft_;
         }
 
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
@@ -2137,7 +2137,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 
     if (!leases.empty()) {
         // We allocated leases so we need to update T1 and T2.
-        setTeeTimes(min_valid_lft, subnet, ia_rsp);
+        setTeeTimes(min_preferred_lft, subnet, ia_rsp);
     } else {
         // The server wasn't able allocate new lease and renew an existing
         // lease. In that case, the server sends NoAddrsAvail per RFC 8415.
@@ -2248,7 +2248,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     // Retains the shortest valid lease time to use
     // for calculating T1 and T2.
-    uint32_t min_valid_lft = std::numeric_limits<uint32_t>::max();
+    uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
     for (Lease6Collection::const_iterator l = leases.begin(); l != leases.end(); ++l) {
 
@@ -2273,8 +2273,8 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         }
 
         // Check for new minimum lease time
-        if ((*l)->valid_lft_ < min_valid_lft) {
-            min_valid_lft = (*l)->valid_lft_;
+        if (((*l)->preferred_lft_ > 0) && ((*l)->preferred_lft_ < min_preferred_lft)) {
+            min_preferred_lft = (*l)->preferred_lft_;
         }
 
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
@@ -2324,7 +2324,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     if (!leases.empty()) {
         // We allocated leases so we need to update T1 and T2.
-        setTeeTimes(min_valid_lft, subnet, ia_rsp);
+        setTeeTimes(min_preferred_lft, subnet, ia_rsp);
     } else {
         // All is left is to insert the status code.
         // The server wasn't able allocate new lease and renew an existing
@@ -3891,22 +3891,23 @@ void Dhcpv6Srv::discardPackets() {
 }
 
 void
-Dhcpv6Srv::setTeeTimes(uint32_t valid_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp) {
+Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp) {
     uint32_t t2_time = 0;
     // If T2 is explicitly configured we'll use try value.
     if (!subnet->getT2().unspecified()) {
         t2_time = subnet->getT2();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculated it.
-        t2_time = static_cast<uint32_t>(subnet->getT2Percent() * valid_lft);
+        t2_time = static_cast<uint32_t>(subnet->getT2Percent() * preferred_lft);
     }
 
-    // Send the T2 candidate value only if it's sane: to be sane it must be less than
-    // the valid life time.
-    uint32_t timer_ceiling = valid_lft;
-    if (t2_time > 0 && t2_time < timer_ceiling) {
+    // The T2 candidate value is sane if it less than or equal to preferred lease time.
+    // If not, we set it to 0.  We allow it to be equal to support the use case that 
+    // clients can be told not to rebind.
+    uint32_t timer_ceiling = preferred_lft;
+    if (t2_time > 0 && t2_time <= timer_ceiling) {
         resp->setT2(t2_time);
-        // When we send T2, timer ceiling for T1 becomes T2.
+        // When we use T2, the timer ceiling for T1 becomes T2.
         timer_ceiling = t2_time;
     } else {
         // It's either explicitly 0 or insane, leave it to the client
@@ -3919,12 +3920,13 @@ Dhcpv6Srv::setTeeTimes(uint32_t valid_lft, const Subnet6Ptr& subnet, Option6IAPt
         t1_time = subnet->getT1();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.
-        t1_time = static_cast<uint32_t>(subnet->getT1Percent() * valid_lft);
+        t1_time = static_cast<uint32_t>(subnet->getT1Percent() * preferred_lft);
     }
 
-    // Send T1 if it's sane: If we sent T2, T1 must be less than that.  If not it must be
-    // less than the valid life time.
-    if (t1_time > 0 && t1_time < timer_ceiling) {
+    // T1 is sane if it is less than or equal to T2 if T2 is > 0, otherwise
+    // it must be less than of equal to preferred lease time.  We let it
+    // equal to the ceiling to support the use case of client not renewing.
+    if (t1_time > 0 && t1_time <= timer_ceiling) {
         resp->setT1(t1_time);
     } else {
         // It's either explicitly 0 or insane, leave it to the client

@@ -2051,7 +2051,7 @@ should include options from the new option space:
       servers should send values for T1 and T2 that are 50% and 80%
       of the preferred lease time, repsectively.  Kea can be configured
       to send values that are specified explicitly or that are calculated as
-      percentages of the valid lease time.  The server's behavior is governed
+      percentages of the preferred lease time.  The server's behavior is governed
       by combination of configuration parameters, two of which have already been
       mentioned.
       <para>
@@ -2068,9 +2068,11 @@ should include options from the new option space:
           </simpara>
         </listitem>
       </itemizedlist>
-      The server will only use T2 if it is less than valid lease time, otherwise it will
-      be set to 0.  T1 will only be use if it is less than T2, otherwise it will be
-      set to 0.
+      The server will only use T2 if it is less than or equal preferred lease time,
+      otherwise it will be set to 0.  If T2 is not zero then T1 must be less than or
+      equalt to T2, otherwise T1 will be set to zero.  If T2 is zero, then T1 must
+      be less than or equal to the preferred lease time, otherwise T1 will be set
+      to zero.
       </para>
       <para>
       Calculating the values is controlled by the following three parameters.
@@ -2085,14 +2087,14 @@ should include options from the new option space:
           <simpara>
             <command>t1-percent</command> - the percentage of the valid lease time to
             use for T1. It is expressed as a real number between 0.0 and 1.0 and must
-            be less than t2-percent. The default value is 0.5 per RFC 3315.
+            be less than t2-percent. The default value is 0.5 per RFC 8415.
           </simpara>
         </listitem>
         <listitem>
           <simpara>
             <command>t2-percent</command> - the percentage of the valid lease time to
             use for T2. It is expressed as a real number between 0.0 and 1.0 and must
-            be greater than t1-percent. The default value is 0.8 per RFC 3315.
+            be greater than t1-percent. The default value is 0.8 per RFC 8415.
           </simpara>
         </listitem>
         </itemizedlist>

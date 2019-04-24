@@ -2480,7 +2480,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
 
     // Handy constants
     Triplet<uint32_t> unspecified;
-    Triplet<uint32_t> valid_lft(1000);
+    Triplet<uint32_t> preferred_lft(1000);
     bool calculate_enabled = true;
 
     // Test scenarios
@@ -2495,17 +2495,17 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     },
     {
         "T1 and T2 specified insane",
-        valid_lft + 1,  valid_lft + 2,
+        preferred_lft + 1,  preferred_lft + 2,
         calculate_enabled,
         0.4, 0.8,
         0, 0
     },
     {
         "T1 should be calculated, T2 specified",
-        unspecified, valid_lft - 1,
+        unspecified, preferred_lft - 1,
         calculate_enabled,
         0.4, 0.8,
-        400, valid_lft - 1
+        400, preferred_lft - 1
     },
     {
         "T1 specified, T2 should be calculated",
@@ -2516,7 +2516,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     },
     {
         "T1 specified insane (> T2), T2 should be calculated",
-        valid_lft - 1, unspecified,
+        preferred_lft - 1, unspecified,
         calculate_enabled,
         0.4, 0.8,
         0, 800
@@ -2531,28 +2531,35 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     },
     {
         "T1 specified, T2 unspecified (no calculation)",
-        valid_lft - 1, unspecified,
+        preferred_lft - 1, unspecified,
         !calculate_enabled,
         0.4, 0.8,
-        valid_lft - 1, 0
+        preferred_lft - 1, 0
     },
     {
         "both T1 and T2 specified (no calculation)",
-        valid_lft - 2, valid_lft - 1,
+        preferred_lft - 2, preferred_lft - 1,
         !calculate_enabled,
         0.4, 0.8,
-        valid_lft - 2, valid_lft - 1
+        preferred_lft - 2, preferred_lft - 1
     },
     {
-        "T1 specified insane (>= lease T2), T2 specified (no calculation)",
-        valid_lft - 1, valid_lft - 1,
+        "both T1 and T2 specified equal to preferred",
+        preferred_lft, preferred_lft,
         !calculate_enabled,
         0.4, 0.8,
-        0, valid_lft - 1
+        preferred_lft, preferred_lft
     },
     {
-        "T1 specified insane (>= lease time), T2 not specified (no calculation)",
-        valid_lft, unspecified,
+        "T1 specified insane (> lease T2), T2 specified (no calculation)",
+        preferred_lft - 1, preferred_lft - 2,
+        !calculate_enabled,
+        0.4, 0.8,
+        0, preferred_lft - 2
+    },
+    {
+        "T1 specified insane (> lease time), T2 not specified (no calculation)",
+        preferred_lft + 1, unspecified,
         !calculate_enabled,
         0.4, 0.8,
         0, 0
@@ -2560,7 +2567,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     };
 
     // Calculation is enabled for all the scenarios.
-    subnet_->setValid(valid_lft);
+    subnet_->setPreferred(preferred_lft);
 
     // Create a discover packet to use
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
