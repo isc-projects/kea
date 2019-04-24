@@ -175,24 +175,24 @@ TEST_F(TeeTest, defaultTimers) {
     uint32_t actual_t2;
 
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(2000, actual_t1);
-    EXPECT_EQ(3200, actual_t2);
+    EXPECT_EQ(1500, actual_t1);
+    EXPECT_EQ(2400, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(2000, actual_t1);
-    EXPECT_EQ(3200, actual_t2);
+    EXPECT_EQ(1500, actual_t1);
+    EXPECT_EQ(2400, actual_t2);
 
     // Let's renew the leases.
     ASSERT_NO_THROW(client.doRenew());
 
     // Now check the timers again.
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(2000, actual_t1);
-    EXPECT_EQ(3200, actual_t2);
+    EXPECT_EQ(1500, actual_t1);
+    EXPECT_EQ(2400, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(2000, actual_t1);
-    EXPECT_EQ(3200, actual_t2);
+    EXPECT_EQ(1500, actual_t1);
+    EXPECT_EQ(2400, actual_t2);
 }
 
 // This test verifies that custom percentags for T1 and T2
@@ -217,24 +217,24 @@ TEST_F(TeeTest, calculateTimers) {
     uint32_t actual_t2;
 
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1800, actual_t1);
-    EXPECT_EQ(2800, actual_t2);
+    EXPECT_EQ(1350, actual_t1);
+    EXPECT_EQ(2100, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1800, actual_t1);
-    EXPECT_EQ(2800, actual_t2);
+    EXPECT_EQ(1350, actual_t1);
+    EXPECT_EQ(2100, actual_t2);
 
     // Let's renew the leases.
     ASSERT_NO_THROW(client.doRenew());
 
     // Now check the timers again.
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1800, actual_t1);
-    EXPECT_EQ(2800, actual_t2);
+    EXPECT_EQ(1350, actual_t1);
+    EXPECT_EQ(2100, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1800, actual_t1);
-    EXPECT_EQ(2800, actual_t2);
+    EXPECT_EQ(1350, actual_t1);
+    EXPECT_EQ(2100, actual_t2);
 }
 
 

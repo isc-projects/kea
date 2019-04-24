@@ -692,7 +692,7 @@ protected:
     /// is specified then use it.  If not and calculate-tee-times is true, then
     /// use the value given by: valid lease time * t2-percent.
     ///
-    /// If the T2 candidate is less than the valid lease time use it,
+    /// If the T2 candidate is less or equal than the preferred lease time use it,
     /// otherwise set T2 to zero.
     ///
     /// T1:
@@ -701,14 +701,15 @@ protected:
     /// is specified then use it. If not and calculate-tee-times is true, then
     /// use the value given by: valid lease time * t1-percent.
     ///
-    /// The T1 candidate will be used provided it less than the T2 when T2 is
-    /// is greater than zero. When T2 is zero then the T1 candidate must be
-    /// less than the valid lease time, otherwise T1 will be set to zero.
+    /// The T1 candidate will be used provided it less than or equal to T2
+    /// when T2 is greater than zero,  otherwise it must be less than or equal to
+    /// the preferred lease time.  If the candiate value cannot be used the we
+    /// set T1 to zero.
     ///
-    /// @param lease lease being assigned to the client
+    /// @param preferred_lft preferred lease time of the lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound IA option in which the timers are set.
-    void setTeeTimes(uint32_t valid_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp);
+    void setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp);
 
     /// @brief Attempts to release received addresses
     ///

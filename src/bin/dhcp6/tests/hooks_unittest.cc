@@ -2834,7 +2834,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     ASSERT_TRUE(tmp);
 
     // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 602, 803);
+    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 601, 802);
 
     ASSERT_TRUE(addr_opt);
     // Check that the lease is really in the database
@@ -3951,7 +3951,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
 
     // Check that IA_NA was returned and that there's an address included
     // Note we also verify that T1 and T2 were calculated correctly.
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 602, 803);
+    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 601, 802);
 
     ASSERT_TRUE(addr_opt);
     // Check that the lease is really in the database
