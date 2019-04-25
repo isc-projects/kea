@@ -202,7 +202,8 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
         MySqlBinding::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
         MySqlBinding::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
         MySqlBinding::createInteger<uint8_t>(), // parameter_type
-        MySqlBinding::createTimestamp() // modification_ts
+        MySqlBinding::createTimestamp(), // modification_ts
+        MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
     };
 
     conn_.selectQuery(index, in_bindings, out_bindings,
@@ -218,6 +219,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
                                      (out_bindings[3]->getInteger<uint8_t>()));
 
             stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
+            stamped_value->setServerTag(out_bindings[5]->getString());
             parameters.insert(stamped_value);
         }
     });
@@ -290,7 +292,8 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
         MySqlBinding::createInteger<uint8_t>(), // array
         MySqlBinding::createString(OPTION_ENCAPSULATE_BUF_LENGTH), // encapsulate
         MySqlBinding::createString(OPTION_RECORD_TYPES_BUF_LENGTH), // record_types
-        MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH) // user_context
+        MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
+        MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
     };
 
     uint64_t last_def_id = 0;
@@ -359,6 +362,9 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
 
             // Update modification time.
             last_def->setModificationTime(out_bindings[5]->getTimestamp());
+
+            // server_tag
+            last_def->setServerTag(out_bindings[10]->getString());
 
             // Store created option definition.
             option_defs.push_back(last_def);
@@ -656,6 +662,8 @@ MySqlConfigBackendImpl::getOptions(const int index,
     out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     // modification_ts
     out_bindings.push_back(MySqlBinding::createTimestamp());
+    // server_tag
+    out_bindings.push_back(MySqlBinding::createString(SERVER_TAG_BUF_LENGTH));
     // pd_pool_id
     if (universe == Option::V6) {
         out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
@@ -674,6 +682,8 @@ MySqlConfigBackendImpl::getOptions(const int index,
 
             OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
             if (desc) {
+                // server_tag for the global option
+                desc->setServerTag(out_bindings[12]->getString());
                 options.push_back(*desc);
             }
         }

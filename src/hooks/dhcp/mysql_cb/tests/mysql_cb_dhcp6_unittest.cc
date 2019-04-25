@@ -494,6 +494,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteGlobalParameter6) {
     EXPECT_EQ("whale", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
+    EXPECT_EQ("all", returned_global_parameter->getServerTag());
 
     // Because we have added the global parameter for all servers, it
     // should be also returned for the explicitly specified server.
@@ -504,6 +505,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteGlobalParameter6) {
     EXPECT_EQ("whale", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
+    EXPECT_EQ("all", returned_global_parameter->getServerTag());
 
     // Check that the parameter is udpated when selector is specified correctly.
     global_parameter = StampedValue::create("global", "fish");
@@ -562,6 +564,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllGlobalParameters6) {
     ASSERT_EQ(5, parameters.size());
 
     const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+
+    for (auto param = parameters_index.begin(); param != parameters_index.end();
+         ++param) {
+        EXPECT_EQ("all", (*param)->getServerTag());
+    }
 
     // Verify their values.
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
@@ -636,6 +643,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6) {
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ("all", returned_subnet->getServerTag());
 
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
@@ -778,6 +786,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6SharedNetwork) {
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ("all", returned_subnet->getServerTag());
 
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
@@ -798,6 +807,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6ByPrefix) {
     Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
                                                     "2001:db8::/64");
     ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ("all", returned_subnet->getServerTag());
 
     // Verify subnet contents.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
@@ -844,6 +854,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSubnets6) {
     for (auto i = 0; i < subnets.size(); ++i) {
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
                   subnets[i]->toElement()->str());
+        EXPECT_EQ("all", subnets[i]->getServerTag());
     }
 
     // Attempt to remove the non existing subnet should  return 0.
@@ -1019,6 +1030,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
     ASSERT_TRUE(returned_network);
 
     EXPECT_GT(returned_network->getId(), 0);
+    EXPECT_EQ("all", returned_network->getServerTag());
 
     // The easiest way to verify whether the returned shared network matches the
     // inserted shared network is to convert both to text.
@@ -1143,6 +1155,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
     for (auto i = 0; i < networks.size(); ++i) {
         EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
                   networks[i]->toElement()->str());
+        EXPECT_EQ("all", networks[i]->getServerTag());
     }
 
     // Add some subnets.
@@ -1286,6 +1299,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getOptionDef6) {
                               test_option_defs_[0]->getOptionSpaceName());
     ASSERT_TRUE(returned_option_def);
     EXPECT_GT(returned_option_def->getId(), 0);
+    EXPECT_EQ("all", returned_option_def->getServerTag());
 
     EXPECT_TRUE(returned_option_def->equals(*option_def));
 
@@ -1358,6 +1372,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
 
     // See if option definitions are returned ok.
     for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
+        EXPECT_EQ("all", (*def)->getServerTag());
         bool success = false;
         for (auto i = 1; i < test_option_defs_.size(); ++i) {
             if ((*def)->equals(*test_option_defs_[i])) {
@@ -1554,6 +1569,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
         ASSERT_FALSE(option0 == index.end());
         testOptionsEquivalent(*test_options_[0], *option0);
         EXPECT_GT(option0->getId(), 0);
+        EXPECT_EQ("all", option0->getServerTag());
     }
 
     {
@@ -1562,6 +1578,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
         ASSERT_FALSE(option1 == index.end());
         testOptionsEquivalent(*test_options_[1], *option1);
         EXPECT_GT(option1->getId(), 0);
+        EXPECT_EQ("all", option1->getServerTag());
     }
 
     {
@@ -1570,6 +1587,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6) {
         ASSERT_FALSE(option5 == index.end());
         testOptionsEquivalent(*test_options_[5], *option5);
         EXPECT_GT(option5->getId(), 0);
+        EXPECT_EQ("all", option5->getServerTag());
     }
 }
 

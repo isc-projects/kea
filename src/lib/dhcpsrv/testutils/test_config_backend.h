@@ -71,6 +71,21 @@ public:
         return (port_);
     }
 
+    /// @brief Returns server tag to be associated with the stored configuration.
+    ///
+    /// @param server_selector Server selector.
+    std::string getServerTag(const db::ServerSelector& server_selector) const {
+        if (server_selector.getType() == db::ServerSelector::Type::ALL) {
+            return ("all");
+        }
+        // Return first tag found.
+        std::set<std::string> tags = server_selector.getTags();
+        if (!tags.empty()) {
+            return (*tags.begin());
+        }
+        return ("");
+    }
+
     /// @brief Fake database connection
     db::DatabaseConnection connection_;
 

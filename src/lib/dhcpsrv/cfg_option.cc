@@ -424,6 +424,11 @@ CfgOption::del(const uint64_t id) {
 
 ElementPtr
 CfgOption::toElement() const {
+    return (toElementWithMetadata(false));
+}
+
+ElementPtr
+CfgOption::toElementWithMetadata(const bool include_metadata) const {
     // option-data value is a list of maps
     ElementPtr result = Element::createList();
     // Iterate first on options using space names
@@ -465,6 +470,12 @@ CfgOption::toElement() const {
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt->persistent_));
+
+            // Include metadata if requested.
+            if (include_metadata) {
+                map->set("metadata", opt->getMetadata());
+            }
+
             // Push on the list
             result->add(map);
         }
@@ -516,6 +527,7 @@ CfgOption::toElement() const {
     }
     return (result);
 }
+
 
 }  // namespace dhcp
 }  // namespace isc
