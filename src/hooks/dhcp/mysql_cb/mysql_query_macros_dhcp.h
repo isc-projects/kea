@@ -36,7 +36,8 @@ namespace {
     "  g.name," \
     "  g.value," \
     "  g.parameter_type," \
-    "  g.modification_ts " \
+    "  g.modification_ts," \
+    "  s.tag " \
     "FROM " #table_prefix "_global_parameter AS g " \
     "INNER JOIN " #table_prefix "_global_parameter_server AS a " \
     "  ON g.id = a.parameter_id " \
@@ -102,7 +103,8 @@ namespace {
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
     "  s.t2_percent," \
-    "  s.authoritative " \
+    "  s.authoritative," \
+    "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     "INNER JOIN dhcp4_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \
@@ -185,7 +187,8 @@ namespace {
     "  o.pd_pool_id, " \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
-    "  s.t2_percent " \
+    "  s.t2_percent," \
+    "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     "INNER JOIN dhcp6_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \
@@ -234,7 +237,8 @@ namespace {
     "  n.authoritative," \
     "  n.boot_file_name," \
     "  n.next_server," \
-    "  n.server_hostname " \
+    "  n.server_hostname," \
+    "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     "INNER JOIN dhcp4_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \
@@ -277,7 +281,8 @@ namespace {
     "  o.pd_pool_id, " \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
-    "  n.t2_percent " \
+    "  n.t2_percent," \
+    "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     "INNER JOIN dhcp6_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \
@@ -300,7 +305,8 @@ namespace {
     "  d.array," \
     "  d.encapsulate," \
     "  d.record_types," \
-    "  d.user_context " \
+    "  d.user_context," \
+    "  s.tag " \
     "FROM " #table_prefix "_option_def AS d " \
     "INNER JOIN " #table_prefix "_option_def_server AS a" \
     "  ON d.id = a.option_def_id " \
@@ -324,7 +330,8 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  o.modification_ts " \
+    "  o.modification_ts," \
+    "  s.tag " \
     pd_pool_id \
     "FROM " #table_prefix "_options AS o " \
     "INNER JOIN " #table_prefix "_options_server AS a" \

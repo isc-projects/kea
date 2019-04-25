@@ -167,6 +167,11 @@ CfgOptionDef::del(const uint64_t id) {
 
 ElementPtr
 CfgOptionDef::toElement() const {
+    return (toElementWithMetadata(false));
+}
+
+ElementPtr
+CfgOptionDef::toElementWithMetadata(const bool include_metadata) const {
     // option-defs value is a list of maps
     ElementPtr result = Element::createList();
     // Iterate through the container by names and definitions
@@ -212,6 +217,12 @@ CfgOptionDef::toElement() const {
             } else {
                 map->set("record-types", Element::create(std::string()));
             }
+
+            // Include metadata if requested.
+            if (include_metadata) {
+                map->set("metadata", (*def)->getMetadata());
+            }
+
             // Push on the list
             result->add(map);
         }

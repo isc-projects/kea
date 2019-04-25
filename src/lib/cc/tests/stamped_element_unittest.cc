@@ -23,6 +23,9 @@ TEST(StampedElementTest, create) {
     // Default identifier is 0.
     EXPECT_EQ(0, element.getId());
 
+    // Default server tag is empty.
+    EXPECT_TRUE(element.getServerTag().empty());
+
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.
     boost::posix_time::time_duration delta =
@@ -65,6 +68,27 @@ TEST(StampedElementTest, update) {
         boost::posix_time::second_clock::local_time() -
         element.getModificationTime();
     EXPECT_LT(delta.seconds(), 5);
+}
+
+// Tests that server tag can be overriden by a new value.
+TEST(StampedElementTest, setServerTag) {
+    StampedElement element;
+    element.setServerTag("foo");
+    EXPECT_EQ("foo", element.getServerTag());
+}
+
+// Test that metadata can be created from the StampedElement.
+TEST(StampedElementTest, getMetadata) {
+    StampedElement element;
+    element.setServerTag("world");
+    auto metadata = element.getMetadata();
+    ASSERT_TRUE(metadata);
+    ASSERT_EQ(Element::map, metadata->getType());
+
+    auto server_tag_element = metadata->get("server-tag");
+    ASSERT_TRUE(server_tag_element);
+    EXPECT_EQ(Element::string, server_tag_element->getType());
+    EXPECT_EQ("world", server_tag_element->stringValue());
 }
 
 }

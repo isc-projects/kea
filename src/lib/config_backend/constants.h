@@ -64,6 +64,8 @@ constexpr unsigned long AUDIT_ENTRY_OBJECT_TYPE_BUF_LENGTH = 256;
 
 constexpr unsigned long AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH = 65536;
 
+constexpr unsigned long SERVER_TAG_BUF_LENGTH = 256;
+
 //*}
 
 } // end of namespace isc::cb

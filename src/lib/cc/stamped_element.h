@@ -7,8 +7,10 @@
 #ifndef STAMPED_ELEMENT_H
 #define STAMPED_ELEMENT_H
 
+#include <cc/data.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <cstdint>
+#include <string>
 
 namespace isc {
 namespace data {
@@ -65,6 +67,24 @@ public:
         return (timestamp_);
     }
 
+    /// @brief Sets new server tag.
+    ///
+    /// @param server_tag
+    void setServerTag(const std::string& server_tag) {
+        server_tag_ = server_tag;
+    }
+
+    /// @brief Returns server tag.
+    std::string getServerTag() const {
+        return (server_tag_);
+    }
+
+    /// @brief Returns an object representing metadata to be returned
+    /// with objects from the configuration backend.
+    ///
+    /// @return Pointer to the metadata element.
+    isc::data::ElementPtr getMetadata() const;
+
 private:
 
     /// @brief Database identifier of the configuration element.
@@ -76,6 +96,8 @@ private:
     /// @brief Holds timestamp value.
     boost::posix_time::ptime timestamp_;
 
+    /// @brief Holds server tag.
+    std::string server_tag_;
 };
 
 } // end of namespace isc::data

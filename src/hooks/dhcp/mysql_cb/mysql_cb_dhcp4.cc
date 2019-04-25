@@ -280,7 +280,8 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
-            MySqlBinding::createInteger<uint8_t>() // authoritative
+            MySqlBinding::createInteger<uint8_t>(), // authoritative
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
         uint64_t last_pool_id = 0;
@@ -446,6 +447,9 @@ public:
                 if (!out_bindings[52]->amNull()) {
                     last_subnet->setAuthoritative(out_bindings[52]->getBool());
                 }
+
+                // server_tag
+                last_subnet->setServerTag(out_bindings[53]->getString());
 
                 // Subnet ready. Add it to the list.
                 subnets.push_back(last_subnet);
@@ -1017,7 +1021,8 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // authoritative
             MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name
             MySqlBinding::createInteger<uint32_t>(), // next_server
-            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH) // server_hostname
+            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
         uint64_t last_network_id = 0;
@@ -1151,6 +1156,9 @@ public:
                 if (!out_bindings[31]->amNull()) {
                     last_network->setSname(out_bindings[31]->getString());
                 }
+
+                // server_tag
+                last_network->setServerTag(out_bindings[32]->getString());
 
                 shared_networks.push_back(last_network);
             }

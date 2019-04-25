@@ -218,8 +218,10 @@ TestConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector&,
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& server_selector,
                                              const Subnet4Ptr& subnet) {
+    subnet->setServerTag(getServerTag(server_selector));
+
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet->getID());
 
@@ -232,8 +234,10 @@ TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& /* server
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateSharedNetwork4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateSharedNetwork4(const db::ServerSelector& server_selector,
                                                     const SharedNetwork4Ptr& shared_network) {
+    shared_network->setServerTag(getServerTag(server_selector));
+
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network->getName());
 
@@ -246,8 +250,10 @@ TestConfigBackendDHCPv4::createUpdateSharedNetwork4(const db::ServerSelector& /*
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateOptionDef4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateOptionDef4(const db::ServerSelector& server_selector,
                                                 const OptionDefinitionPtr& option_def) {
+    option_def->setServerTag(getServerTag(server_selector));
+
     auto& index = option_defs_.get<1>();
     auto option_def_it = index.find(option_def->getCode());
 
@@ -260,8 +266,10 @@ TestConfigBackendDHCPv4::createUpdateOptionDef4(const db::ServerSelector& /* ser
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                              const OptionDescriptorPtr& option) {
+    option->setServerTag(getServerTag(server_selector));
+
     auto& index = options_.get<1>();
     auto option_it = index.find(option->option_->getType());
 
@@ -329,8 +337,10 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& /* server
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateGlobalParameter4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                                       const data::StampedValuePtr& value) {
+    value->setServerTag(getServerTag(server_selector));
+
     auto& index = globals_.get<StampedValueNameIndexTag>();
     auto global_it = index.find(value->getName());
 

@@ -217,8 +217,10 @@ TestConfigBackendDHCPv6::getRecentAuditEntries(const db::ServerSelector&,
 }
 
 void
-TestConfigBackendDHCPv6::createUpdateSubnet6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::createUpdateSubnet6(const db::ServerSelector& server_selector,
                                              const Subnet6Ptr& subnet) {
+    subnet->setServerTag(getServerTag(server_selector));
+
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet->getID());
 
@@ -231,8 +233,10 @@ TestConfigBackendDHCPv6::createUpdateSubnet6(const db::ServerSelector& /* server
 }
 
 void
-TestConfigBackendDHCPv6::createUpdateSharedNetwork6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::createUpdateSharedNetwork6(const db::ServerSelector& server_selector,
                                                     const SharedNetwork6Ptr& shared_network) {
+
+    shared_network->setServerTag(getServerTag(server_selector));
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network->getName());
 
@@ -245,8 +249,10 @@ TestConfigBackendDHCPv6::createUpdateSharedNetwork6(const db::ServerSelector& /*
 }
 
 void
-TestConfigBackendDHCPv6::createUpdateOptionDef6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::createUpdateOptionDef6(const db::ServerSelector& server_selector,
                                                 const OptionDefinitionPtr& option_def) {
+    option_def->setServerTag(getServerTag(server_selector));
+
     auto& index = option_defs_.get<1>();
     auto option_def_it = index.find(option_def->getCode());
 
@@ -259,8 +265,10 @@ TestConfigBackendDHCPv6::createUpdateOptionDef6(const db::ServerSelector& /* ser
 }
 
 void
-TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_selector,
                                              const OptionDescriptorPtr& option) {
+    option->setServerTag(getServerTag(server_selector));
+
     auto& index = options_.get<1>();
     auto option_it = index.find(option->option_->getType());
 
@@ -348,8 +356,10 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& /* server
 }
 
 void
-TestConfigBackendDHCPv6::createUpdateGlobalParameter6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::createUpdateGlobalParameter6(const db::ServerSelector& server_selector,
                                                       const data::StampedValuePtr& value) {
+    value->setServerTag(getServerTag(server_selector));
+
     auto& index = globals_.get<StampedValueNameIndexTag>();
     auto global_it = index.find(value->getName());
 
