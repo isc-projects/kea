@@ -2494,11 +2494,11 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
         400, 800
     },
     {
-        "T1 and T2 specified insane",
+        "preferred < T1 specified < T2 specified",
         preferred_lft + 1,  preferred_lft + 2,
         calculate_enabled,
         0.4, 0.8,
-        0, 0
+        preferred_lft + 1, preferred_lft + 2
     },
     {
         "T1 should be calculated, T2 specified",
@@ -2530,14 +2530,16 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
         0, 0
     },
     {
+        // cannot set T1 > 0 when T2 is 0
         "T1 specified, T2 unspecified (no calculation)",
         preferred_lft - 1, unspecified,
         !calculate_enabled,
         0.4, 0.8,
-        preferred_lft - 1, 0
+        //preferred_lft - 1, 0
+        0, 0
     },
     {
-        "both T1 and T2 specified (no calculation)",
+        "both T1 and T2 specified sane (no calculation)",
         preferred_lft - 2, preferred_lft - 1,
         !calculate_enabled,
         0.4, 0.8,
@@ -2548,7 +2550,8 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
         preferred_lft, preferred_lft,
         !calculate_enabled,
         0.4, 0.8,
-        preferred_lft, preferred_lft
+        // T1 must be less than T2
+        0, preferred_lft
     },
     {
         "T1 specified insane (> lease T2), T2 specified (no calculation)",

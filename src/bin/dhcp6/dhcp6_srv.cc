@@ -3892,29 +3892,23 @@ void Dhcpv6Srv::discardPackets() {
 
 void
 Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp) {
+    // Default T2 time to zero.
     uint32_t t2_time = 0;
-    // If T2 is explicitly configured we'll use try value.
+
+    // If T2 is explicitly configured we'll use that value.
     if (!subnet->getT2().unspecified()) {
         t2_time = subnet->getT2();
     } else if (subnet->getCalculateTeeTimes()) {
-        // Calculating tee times is enabled, so calculated it.
+        // Calculating tee times is enabled, so calculate it.
         t2_time = static_cast<uint32_t>(subnet->getT2Percent() * preferred_lft);
     }
 
-    // The T2 candidate value is sane if it less than or equal to preferred lease time.
-    // If not, we set it to 0.  We allow it to be equal to support the use case that 
-    // clients can be told not to rebind.
-    uint32_t timer_ceiling = preferred_lft;
-    if (t2_time > 0 && t2_time <= timer_ceiling) {
-        resp->setT2(t2_time);
-        // When we use T2, the timer ceiling for T1 becomes T2.
-        timer_ceiling = t2_time;
-    } else {
-        // It's either explicitly 0 or insane, leave it to the client
-        resp->setT2(0);
-    }
+    // We allow T2 to be any value.
+    resp->setT2(t2_time);
 
+    // Default T1 time to zero.
     uint32_t t1_time = 0;
+
     // If T1 is explicitly configured we'll use try value.
     if (!subnet->getT1().unspecified()) {
         t1_time = subnet->getT1();
@@ -3923,10 +3917,8 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
         t1_time = static_cast<uint32_t>(subnet->getT1Percent() * preferred_lft);
     }
 
-    // T1 is sane if it is less than or equal to T2 if T2 is > 0, otherwise
-    // it must be less than of equal to preferred lease time.  We let it
-    // equal to the ceiling to support the use case of client not renewing.
-    if (t1_time > 0 && t1_time <= timer_ceiling) {
+    // T1 is sane if it is less than or equal to T2.
+    if (t1_time < t2_time) {
         resp->setT1(t1_time);
     } else {
         // It's either explicitly 0 or insane, leave it to the client

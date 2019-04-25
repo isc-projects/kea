@@ -2068,11 +2068,12 @@ should include options from the new option space:
           </simpara>
         </listitem>
       </itemizedlist>
-      The server will only use T2 if it is less than or equal preferred lease time,
-      otherwise it will be set to 0.  If T2 is not zero then T1 must be less than or
-      equalt to T2, otherwise T1 will be set to zero.  If T2 is zero, then T1 must
-      be less than or equal to the preferred lease time, otherwise T1 will be set
-      to zero.
+      You may specify any value for T2 greater than or equal to zero.  When specifying
+      T1 it must be less than T2.  This flexibility is allowed to support a use case
+      where admins want to suppress client renewals and rebinds by deferring them beyond
+      the life span of the lease.  This should cause the lease to expire, rather than
+      get renewed by clients.  If T1 is specified as larger than T2, it will be set to
+      zero in the outbound IA.
       </para>
       <para>
       Calculating the values is controlled by the following three parameters.
