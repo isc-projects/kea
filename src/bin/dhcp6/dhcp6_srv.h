@@ -688,23 +688,18 @@ protected:
     ///
     /// T2:
     ///
-    /// The candidate value for T2 defaults to zero. If the rebind-timer value
-    /// is specified then use it.  If not and calculate-tee-times is true, then
-    /// use the value given by: valid lease time * t2-percent.
-    ///
-    /// If the T2 candidate is less or equal than the preferred lease time use it,
-    /// otherwise set T2 to zero.
+    /// The value for T2 defaults to zero. If the rebind-timer value is
+    /// specified then use it.  If not and calculate-tee-times is true, then
+    /// use the value given by: preferred lease time * t2-percent.
     ///
     /// T1:
     ///
     /// The candidate value for T1 defaults to zero. If the renew-timer value
     /// is specified then use it. If not and calculate-tee-times is true, then
-    /// use the value given by: valid lease time * t1-percent.
+    /// use the value given by: preferred lease time * t1-percent.
     ///
-    /// The T1 candidate will be used provided it less than or equal to T2
-    /// when T2 is greater than zero,  otherwise it must be less than or equal to
-    /// the preferred lease time.  If the candiate value cannot be used the we
-    /// set T1 to zero.
+    /// The T1 candidate will be used provided it less than to T2,
+    /// otherwise it will be set T1 to zero.
     ///
     /// @param preferred_lft preferred lease time of the lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
