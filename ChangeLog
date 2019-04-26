@@ -1,3 +1,8 @@
+1565.	[func]		marcin
+	MySQL Config Backend returns server tags associated with the
+	configuration elements.
+	(Gitlab #579,!309, git 1e2648df047fe964e8ad3e9deb1c85eea32b1219)
+
 1564.	[func]		fdupont
 	Implemented two new commands to manage subnets:	subnet4-update and
 	subnet6-update. They allow an update of existing subnets
