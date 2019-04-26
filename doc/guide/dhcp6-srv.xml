@@ -2048,7 +2048,7 @@ should include options from the new option space:
       <title>Controlling the Values Sent for T1 and T2 Times</title>
       According to <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415, section 21.4</link>,
-      servers should send values for T1 and T2 that are 50% and 80%
+      the recommended T1 and T2 values are 50% and 80%
       of the preferred lease time, repsectively.  Kea can be configured
       to send values that are specified explicitly or that are calculated as
       percentages of the preferred lease time.  The server's behavior is governed
@@ -2074,6 +2074,27 @@ should include options from the new option space:
       the life span of the lease.  This should cause the lease to expire, rather than
       get renewed by clients.  If T1 is specified as larger than T2, it will be set to
       zero in the outbound IA.
+      </para>
+
+      <para>
+        In great majority of cases the values should follow this rule: T1 &lt;
+        T2 &lt; preferred lifetime &lt; valid lifetime. Alternatively, both T1
+        and T2 values can be configured to 0, which is a signal to DHCPv6
+        clients that they may renew at their own discretion. However, there are
+        known broken client implementations out there that will start renewing
+        immediately. If you plan to use T1=T2=0 values, please test first and
+        make sure your clients behave rationally.
+      </para>
+
+      <para>
+        In some rare cases there may be a need to disable client's
+        ability to renew addresses. This is undesired from protocol perspective
+        and should be avoided if possible. However, if you want to do this, you
+        can configure your T1 and T2 values to be equal or greater to your valid
+        lifetime. Be advised that this will cause your clients to ocasionally
+        lose their addresses, which is generally perceived as poor
+        service. However, there may be some rare business cases when this is
+        desired (e.g. when you want to break long lasting connections on purpose).
       </para>
       <para>
       Calculating the values is controlled by the following three parameters.
