@@ -2,7 +2,7 @@
 	kea-dhcp6 can now be configured to calculate values to
 	send to clients for T1 and T2 times. Prior to this
 	it was only possibly to specify explicit values.
-	(Gitlab #365,!296, git TBD)
+	(Gitlab #365,!296, git 144b83a84c836d6ff17620b35cb74f830b13c2eb)
 
 1565.	[func]		marcin
 	MySQL Config Backend returns server tags associated with the
