@@ -1,3 +1,11 @@
+1567.	[bug]		marcin
+	Kea HTTP client now always includes Host header in all HTTP requests.
+	The Host header is required in all HTTP/1.1 requests. This corrects
+	the problem whereby HA peers were unable to communicate via reverse
+	HTTP proxy because the proxy was responding with Bad Request status
+	when no Host header was included.
+	(Gitlab #360,!305, git ddb6dbf4cf63e98d3954c5d46e0311abc4fd6cfc)
+
 1566.	[func]		tmark
 	kea-dhcp6 can now be configured to calculate values to
 	send to clients for T1 and T2 times. Prior to this
