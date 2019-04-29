@@ -69,7 +69,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "reservation-mode",             Element::string },
     { "calculate-tee-times",          Element::boolean },
     { "t1-percent",                   Element::real },
-    { "t2-percent",                   Element::real }
+    { "t2-percent",                   Element::real },
     { "loggers",                      Element::list }
 };
 
