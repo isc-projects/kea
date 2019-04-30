@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,6 +60,13 @@ CfgDbAccess::createManagers() const {
 
     // Recreate host data source.
     HostMgr::create();
+
+    // Restore the host cache.
+    if (HostDataSourceFactory::registeredFactory("cache")) {
+        HostMgr::addBackend("type=cache");
+    }
+
+    // Add database backends.
     std::list<std::string> host_db_access_list = getHostDbAccessStringList();
     for (std::string& hds : host_db_access_list) {
         HostMgr::addBackend(hds);
