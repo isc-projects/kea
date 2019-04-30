@@ -238,7 +238,7 @@ MySqlBinding::convertToDatabaseTime(const time_t cltt,
         isc_throw(BadValue, "Time value is too large: " << expire_time_64);
     }
 
-    const time_t expire_time = static_cast<const time_t>(expire_time_64);
+    const time_t expire_time = static_cast<time_t>(expire_time_64);
 
     // Convert to broken-out time
     struct tm expire_tm;

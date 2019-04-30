@@ -381,7 +381,7 @@ TEST_F(MySqlConnectionTest, deleteByValue) {
 
     ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
                                       in_bindings, out_bindings,
-                                      [&deleted](MySqlBindingCollection& out_bindings) {
+                                      [&deleted](MySqlBindingCollection&) {
         // This will be executed if the row is returned as a result of
         // select query. We expect that this is not executed.
         deleted = false;
