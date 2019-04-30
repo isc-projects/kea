@@ -1,3 +1,8 @@
+1572.	[bug]		tmark
+	Corrected an issue where kea-dhcp6 was incorrectly scheduling DNS
+	entry removals when renewing leases with generated FQDNs.
+	(Gitlab #577,!310, git TBD)
+
 1571.	[bug]		marcin
 	The mysql_cb hooks library registers the MySQL backend for the
 	DHCPv6 server.
