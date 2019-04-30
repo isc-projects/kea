@@ -2017,12 +2017,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                                        "assigned-nas" : "assigned-pds"),
                     static_cast<int64_t>(1));
             }
-        } else {
-            if (!lease->hasIdenticalFqdn(*old_data)) {
-                // We're not reclaiming the lease but since the FQDN has changed
-                // we have to at least send NCR.
-                queueNCR(CHG_REMOVE, old_data);
-            }
         }
 
         // Now that the lease has been reclaimed, we can go ahead and update it
@@ -2046,7 +2040,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 Lease6Collection
 AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases) {
     Lease6Collection updated_leases;
-    bool remove_queued = false;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
         Lease6Ptr lease(new Lease6(**lease_it));
@@ -2077,13 +2070,6 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             if (conditionalExtendLifetime(*lease) || fqdn_changed) {
                 ctx.currentIA().changed_leases_.push_back(*lease_it);
                 LeaseMgrFactory::instance().updateLease6(lease);
-
-                // If the FQDN differs, remove existing DNS entries.
-                // We only need one remove.
-                if (fqdn_changed && !remove_queued) {
-                    queueNCR(CHG_REMOVE, *lease_it);
-                    remove_queued = true;
-                }
             }
         }
 

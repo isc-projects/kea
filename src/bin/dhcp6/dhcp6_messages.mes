@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -180,13 +180,14 @@ This debug message is issued when the server did not receive a FQDN option
 from the client and client name replacement is enabled.  This provides a means
 to create DNS entries for unsophisticated clients.
 
-% DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN %1: FQDN for the renewed lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5
-This debug message is logged when FQDN mapping for a particular lease has been
-changed by the recent Renew message. This mapping will be changed in DNS.
-The first argument includes the client and the transaction identification
-information. The second argument holds the details about the lease for which
-the FQDN information and/or mappings have changed. The remaining arguments
-hold the new FQDN information and flags for mappings.
+% DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN %1: FQDN for a lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5
+This debug message is logged during lease renewal when an old lease that is
+no longer being offered has a different FQDN than the renewing lesae. Thus
+the old DNS entries need to be removed.  The first argument includes the client
+and the transaction identification information. The second argument holds the
+details about the lease for which the FQDN information and/or mappings have
+changed. The remaining arguments hold the new FQDN information and flags for
+mappings.
 
 % DHCP6_DDNS_RECEIVE_FQDN %1: received DHCPv6 Client FQDN option: %2
 This debug message is logged when server has found the DHCPv6 Client FQDN Option

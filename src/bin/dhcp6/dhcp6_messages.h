@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Mar 26 2019 13:41
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Apr 30 2019 10:41
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -38,8 +38,8 @@ extern const isc::log::MessageID DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST;
 extern const isc::log::MessageID DHCP6_DDNS_FQDN_GENERATED;
 extern const isc::log::MessageID DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL;
 extern const isc::log::MessageID DHCP6_DDNS_GENERATE_FQDN;
-extern const isc::log::MessageID DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE;
 extern const isc::log::MessageID DHCP6_DDNS_RECEIVE_FQDN;
+extern const isc::log::MessageID DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN;
 extern const isc::log::MessageID DHCP6_DDNS_REQUEST_SEND_FAILED;
 extern const isc::log::MessageID DHCP6_DDNS_RESPONSE_FQDN_DATA;
 extern const isc::log::MessageID DHCP6_DDNS_SEND_FQDN;

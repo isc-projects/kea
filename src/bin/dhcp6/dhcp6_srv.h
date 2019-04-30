@@ -653,9 +653,11 @@ protected:
     /// The FQDN option carries response to the client about DNS updates that
     /// server intends to perform for the DNS client. Based on this, the
     /// function will create zero or more @c isc::dhcp_ddns::NameChangeRequest
-    /// objects and store them in the internal queue. Requests created by this
-    /// function are only for adding or updating DNS records. If DNS updates are
-    /// disabled, this method returns immediately.
+    /// objects and store them in the internal queue.  To catch lease renewals
+    /// that alter the FQDN, the function first looks at the context's changed
+    /// list of leases (if any) to determine if DNS entries need to be removed.
+    /// It then looks at the valid leases to determine if any DNS entries need
+    /// to be added. If DNS updates are disabled, this method returns immediately.
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
@@ -969,10 +971,12 @@ private:
     ///
     /// @param answer Message being sent to a client, which may hold IA_NA
     /// and Client FQDN options to be used to generate name for a client.
+    /// @param ctx Client context.
     ///
     /// @throw isc::Unexpected if specified message is NULL. This is treated
     /// as a programmatic error.
-    void generateFqdn(const Pkt6Ptr& answer);
+    void generateFqdn(const Pkt6Ptr& answer,
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Updates statistics for received packets
     /// @param query packet received

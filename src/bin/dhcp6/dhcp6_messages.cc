@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Mar 26 2019 13:41
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Apr 30 2019 10:41
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -37,8 +37,8 @@ extern const isc::log::MessageID DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST = "DH
 extern const isc::log::MessageID DHCP6_DDNS_FQDN_GENERATED = "DHCP6_DDNS_FQDN_GENERATED";
 extern const isc::log::MessageID DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL = "DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL";
 extern const isc::log::MessageID DHCP6_DDNS_GENERATE_FQDN = "DHCP6_DDNS_GENERATE_FQDN";
-extern const isc::log::MessageID DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE = "DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE";
 extern const isc::log::MessageID DHCP6_DDNS_RECEIVE_FQDN = "DHCP6_DDNS_RECEIVE_FQDN";
+extern const isc::log::MessageID DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN = "DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN";
 extern const isc::log::MessageID DHCP6_DDNS_REQUEST_SEND_FAILED = "DHCP6_DDNS_REQUEST_SEND_FAILED";
 extern const isc::log::MessageID DHCP6_DDNS_RESPONSE_FQDN_DATA = "DHCP6_DDNS_RESPONSE_FQDN_DATA";
 extern const isc::log::MessageID DHCP6_DDNS_SEND_FQDN = "DHCP6_DDNS_SEND_FQDN";
@@ -177,8 +177,8 @@ const char* values[] = {
     "DHCP6_DDNS_FQDN_GENERATED", "%1: generated FQDN for the client: %2",
     "DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL", "%1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3",
     "DHCP6_DDNS_GENERATE_FQDN", "%1: client did not send a FQDN option; FQDN will be",
-    "DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE", "FQDN %1: FQDN for the renewed lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5",
     "DHCP6_DDNS_RECEIVE_FQDN", "%1: received DHCPv6 Client FQDN option: %2",
+    "DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN", "%1: FQDN for a lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5",
     "DHCP6_DDNS_REQUEST_SEND_FAILED", "failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2",
     "DHCP6_DDNS_RESPONSE_FQDN_DATA", "%1: including FQDN option in the server's response: %2",
     "DHCP6_DDNS_SEND_FQDN", "sending DHCPv6 Client FQDN Option to the client: %1",

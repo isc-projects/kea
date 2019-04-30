@@ -1637,12 +1637,6 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     bool do_rev = false;
     CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*opt_fqdn,
                                                              do_fwd, do_rev);
-    if (!do_fwd && !do_rev) {
-        // Flags indicate there is Nothing to do, get out now.
-        // The Most likely scenario is that we are honoring the client's
-        // request that no updates be done.
-        return;
-    }
 
     // Get the Client Id. It is mandatory and a function creating a response
     // would have thrown an exception if it was missing. Thus throwing
@@ -1668,13 +1662,12 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 
     // Get all IAs from the answer. For each IA, holding an address we will
     // create a corresponding NameChangeRequest.
-    OptionCollection answer_ias = answer->getOptions(D6O_IA_NA);
-    for (OptionCollection::const_iterator answer_ia =
-             answer_ias.begin(); answer_ia != answer_ias.end(); ++answer_ia) {
+    for (auto answer_ia : answer->getOptions(D6O_IA_NA)) {
         /// @todo IA_NA may contain multiple addresses. We should process
         /// each address individually. Currently we get only one.
         Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
-            Option6IAAddr>(answer_ia->second->getOption(D6O_IAADDR));
+            Option6IAAddr>(answer_ia.second->getOption(D6O_IAADDR));
+
         // We need an address to create a name-to-address mapping.
         // If address is missing for any reason, go to the next IA.
         if (!iaaddr) {
@@ -1682,22 +1675,36 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         }
 
         // If the lease for iaaddr is in the list of changed leases, we need
-        // to determine if the changes included changes to the FQDN. If there
-        // were  changes to the FQDN then we need to update DNS, otherwise
-        // we do not.
+        // to determine if the changes included changes to the FQDN. If so
+        // then we may need to do a CHG_REMOVE.
         bool extended_only = false;
         for (Lease6Collection::const_iterator l = ctx.currentIA().changed_leases_.begin();
              l != ctx.currentIA().changed_leases_.end(); ++l) {
+
             if ((*l)->addr_ == iaaddr->getAddress()) {
+                // The address is the same so this must be renewal?
                 if ((*l)->hostname_ == opt_fqdn->getDomainName() &&
                     (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev) {
+                    // The FQDN is the same, it must be an extension only.
+                    // @todo - If we decide to allow updates on renews, we
+                    // will need to bypass this.
                     extended_only = true;
-                    break;
+                } else {
+                    // The FQDN has changed, queue a CHG_REMOVE of the old data.
+                    // NCR will only be created if the lease hostname is not
+                    // empty and at least one of the direction flags is true
+                    queueNCR(CHG_REMOVE, *l);
                 }
+
+                break;
             }
         }
 
-        if (extended_only) {
+        if (!(do_fwd || do_rev) || (extended_only)) {
+            // Flags indicate no updates needed  or it was an extension of
+            // an existing lease with no FQDN changes.  In the case of the
+            // former, the most likely scenario is that we are honoring the
+            // client's request that no updates be done.
             continue;
         }
 
@@ -2115,7 +2122,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         if (((*l)->hostname_ != ctx.hostname_) || ((*l)->fqdn_fwd_ != do_fwd) ||
             ((*l)->fqdn_rev_ != do_rev)) {
             LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
-                      DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
+                      DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN)
                 .arg(query->getLabel())
                 .arg((*l)->toText())
                 .arg(ctx.hostname_)
@@ -2850,7 +2857,7 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
     updateReservedFqdn(ctx, reply);
-    generateFqdn(reply);
+    generateFqdn(reply, ctx);
     createNameChangeRequests(reply, ctx);
 
     return (reply);
@@ -2876,7 +2883,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
     updateReservedFqdn(ctx, reply);
-    generateFqdn(reply);
+    generateFqdn(reply, ctx);
     createNameChangeRequests(reply, ctx);
 
     return (reply);
@@ -2902,7 +2909,7 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
     updateReservedFqdn(ctx, reply);
-    generateFqdn(reply);
+    generateFqdn(reply, ctx);
     createNameChangeRequests(reply, ctx);
 
     return (reply);
@@ -3599,7 +3606,8 @@ Dhcpv6Srv::updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
 }
 
 void
-Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
+Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
+                        AllocEngine::ClientContext6& ctx) {
     if (!answer) {
         isc_throw(isc::Unexpected, "an instance of the object encapsulating"
                   " a message must not be NULL when generating FQDN");
@@ -3664,7 +3672,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
 
        answer->delOption(D6O_CLIENT_FQDN);
        answer->addOption(fqdn);
-
+       ctx.hostname_ = generated_name;
     } catch (const Exception& ex) {
         LOG_ERROR(ddns6_logger, DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL)
             .arg(answer->getLabel())
