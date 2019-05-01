@@ -410,6 +410,73 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     EXPECT_EQ(subnet3->getID(), preferred->getID());
 }
 
+// This test verifies that subnetsIncludeMatchClientId() works as expected.
+TEST(SharedNetwork4Test, subnetsIncludeMatchClientId) {
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+    ClientClasses classes;
+
+    // Create a subnet and add it to the shared network.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                                   SubnetID(1)));
+    subnet1->setMatchClientId(false);
+    ASSERT_NO_THROW(network->add(subnet1));
+
+    // The subnet does not match client id.
+    EXPECT_FALSE(SharedNetwork4::subnetsIncludeMatchClientId(subnet1, classes));
+
+    // Create a second subnet and add it.
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
+                                   SubnetID(2)));
+    ASSERT_NO_THROW(network->add(subnet2));
+
+    // Default is to match client id.
+    EXPECT_TRUE(SharedNetwork4::subnetsIncludeMatchClientId(subnet1, classes));
+
+    // Add a class.
+    classes.insert("class1");
+
+    //The second subnet is not guarded so matches.
+    EXPECT_TRUE(SharedNetwork4::subnetsIncludeMatchClientId(subnet1, classes));
+
+    // Put the second subnet in another class
+    subnet2->allowClientClass("class2");
+    EXPECT_FALSE(SharedNetwork4::subnetsIncludeMatchClientId(subnet1, classes));
+
+    // Put the second subnet in the class.
+    subnet2->allowClientClass("class1");
+    EXPECT_TRUE(SharedNetwork4::subnetsIncludeMatchClientId(subnet1, classes));
+}
+
+// This test verifies that subnetsAllHRGlobal() works as expected.
+TEST(SharedNetwork4Test, subnetsAllHRGlobal) {
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+    Subnet4Ptr bad;
+
+    // Empty shared network is right.
+    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    EXPECT_FALSE(bad);
+
+    // Create a subnet and add it to the shared network.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                                  SubnetID(1)));
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // Default host reservation mode is ALL.
+    bad.reset();
+    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_TRUE(bad);
+    EXPECT_EQ(1, bad->getID());
+    EXPECT_EQ("10.0.0.0/8", bad->toText());
+
+    // Set the HR mode to global.
+    subnet->setHostReservationMode(Network::HR_GLOBAL);
+
+    // Now the shared network is all global.
+    bad.reset();
+    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    EXPECT_FALSE(bad);
+}
+
 // This test verifies operations on the network's relay list
 TEST(SharedNetwork4Test, relayInfoList) {
     SharedNetwork4Ptr network(new SharedNetwork4("frog"));
@@ -966,6 +1033,36 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
     // Repeat the test for subnet3 being a selected subnet.
     preferred = network->getPreferredSubnet(subnet3, Lease::TYPE_NA);
     EXPECT_EQ(subnet3->getID(), preferred->getID());
+}
+
+// This test verifies that subnetsAllHRGlobal() works as expected.
+TEST(SharedNetwork6Test, subnetsAllHRGlobal) {
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    Subnet6Ptr bad;
+
+    // Empty shared network is right.
+    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    EXPECT_FALSE(bad);
+
+    // Create a subnet and add it to the shared network.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
+                                  40, SubnetID(1)));
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // Default host reservation mode is ALL.
+    bad.reset();
+    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_TRUE(bad);
+    EXPECT_EQ(1, bad->getID());
+    EXPECT_EQ("2001:db8:1::/64", bad->toText());
+
+    // Set the HR mode to global.
+    subnet->setHostReservationMode(Network::HR_GLOBAL);
+
+    // Now the shared network is all global.
+    bad.reset();
+    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    EXPECT_FALSE(bad);
 }
 
 // This test verifies operations on the network's relay list

@@ -2844,17 +2844,9 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 
     // Client identifier is optional. First check if we can try to lookup
     // by client-id.
-    bool try_clientid_lookup = false;
-    if (ctx.clientid_) {
-        for (Subnet4Ptr subnet = original_subnet; subnet;
-             subnet = subnet->getNextSubnet(original_subnet,
-                                            ctx.query_->getClasses())) {
-            if (subnet->getMatchClientId()) {
-                try_clientid_lookup = true;
-                break;
-            }
-        }
-    }
+    bool try_clientid_lookup = (ctx.clientid_ &&
+        SharedNetwork4::subnetsIncludeMatchClientId(original_subnet,
+                                                    ctx.query_->getClasses()));
 
     // If it is possible to use client identifier to try to find client's lease.
     if (try_clientid_lookup) {

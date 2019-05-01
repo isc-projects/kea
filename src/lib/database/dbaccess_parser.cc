@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/dbaccess_parser.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 
 #include <boost/lexical_cast.hpp>
 
