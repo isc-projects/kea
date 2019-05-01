@@ -175,6 +175,25 @@ public:
     /// if no better subnet was found.
     Subnet4Ptr getPreferredSubnet(const Subnet4Ptr& selected_subnet) const;
 
+    /// @brief Checks if the shared network includes a subnet with
+    /// the match client ID flag set to true.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iteration starts.
+    /// @param client_classes List of classes that the client belongs to.
+    /// @return true if the shared network includes at least a subnet
+    /// guarded by a given class with the match client ID flag set to true.
+    /// False otherwise.
+    static
+    bool subnetsIncludeMatchClientId(const Subnet4Ptr& first_subnet,
+                                     const ClientClasses& client_classes);
+
+    /// @brief Check if the shared network includes a subnet with
+    /// not global host reservation mode.
+    ///
+    /// @param [out] bad_subnet First subnet which has not a global host
+    /// reservation mode.
+    void subnetsAllHRGlobal(Subnet4Ptr& bad_subnet) const;
+
     /// @brief Unparses shared network object.
     ///
     /// @return A pointer to unparsed shared network configuration.
@@ -364,6 +383,13 @@ public:
     /// if no better subnet was found.
     Subnet6Ptr getPreferredSubnet(const Subnet6Ptr& selected_subnet,
                                   const Lease::Type& lease_type) const;
+
+    /// @brief Check if the shared network includes a subnet with
+    /// not global host reservation mode.
+    ///
+    /// @param [out] bad_subnet First subnet which has not a global host
+    /// reservation mode.
+    void subnetsAllHRGlobal(Subnet6Ptr& bad_subnet) const;
 
     /// @brief Unparses shared network object.
     ///
