@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,11 @@ void SanityChecker::checkLease(Lease4Ptr& lease, bool current) {
 }
 
 void SanityChecker::checkLease(Lease6Ptr& lease, bool current) {
+    // We only check IA_NAs currently.
+    if (lease->type_ != Lease::TYPE_NA) {
+        return;
+    }
+
     SrvConfigPtr cfg;
     if (current) {
         cfg = CfgMgr::instance().getCurrentCfg();

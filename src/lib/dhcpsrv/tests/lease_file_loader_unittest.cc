@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -235,7 +235,7 @@ public:
         }
     }
 
-    /// @brief Checks if IPv4 lease loaded from file is sanity checked.
+    /// @brief Checks if IPv6 lease loaded from file is sanity checked.
     ///
     /// This method writes a simple lease file with one lease in it,
     /// then sets sanity checks to tested level, then tries to load
@@ -249,10 +249,13 @@ public:
     /// @param sanity level of sanity checks
     /// @param exp_present is the lease expected to be loaded (true = yes)
     /// @param exp_id expected subnet-id of the loaded lease
+    /// @param prefix_len length of the prefix if the lease created should be
+    /// a PD lease. Defaults to 0.
     void sanityChecks6(std::string lease, SubnetID lease_id,
                        std::string subnet_txt, SubnetID subnet_id,
                        CfgConsistency::LeaseSanity sanity,
-                       bool exp_present, SubnetID exp_id) {
+                       bool exp_present, SubnetID exp_id,
+                       unsigned int prefix_len=0) {
 
         // Create the subnet and add it to configuration.
         if (!subnet_txt.empty()) {
@@ -263,8 +266,9 @@ public:
         std::stringstream file_content;
 
         file_content << v6_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
-                     << "300,300," << static_cast<int>(lease_id)
-                     << ",150,0,8,0,0,0,,,1,\n";
+                     << "300,300," << static_cast<int>(lease_id) << ",150,"
+                     << static_cast<int>(prefix_len > 0 ? Lease::TYPE_PD : Lease::TYPE_NA)
+                     << ",8," << prefix_len << ",0,0,,,1,\n";
 
         ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getConsistency()
                     ->setLeaseSanityCheck(sanity));
@@ -818,6 +822,20 @@ TEST_F(LeaseFileLoaderTest, sanityChecker6FixDel2) {
 // expected outcome: the lease is not loaded
 TEST_F(LeaseFileLoaderTest, sanityChecker6Del) {
     sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks to make sure PD leases are not sanity checked,
+// and thus not discarded.
+TEST_F(LeaseFileLoaderTest, sanityChecker6PD) {
+    int prefix_len = 64;
+
+    // We check a prefix lease whose subnet-id does not exist and
+    // is clearly outside the only known subnet.
+    sanityChecks6("2001:1::", 2,   // create prefix lease in subnet 2
+                  "3001::/64", 1,  // create subnet 1
+                  CfgConsistency::LEASE_CHECK_DEL,
+                  true, 2,         // lease should still exist with subnet id of 2
+                  prefix_len);
 }
 
 } // end of anonymous namespace

@@ -1,3 +1,10 @@
+15xx.	[bug]		tmark
+	kea-dhcp6 now properly skips sanity checking prefix
+	leases.  Prior to this it was incorrectly subjecting
+	them to sanity checks during memfile lease file reloads
+	and then flagging the leases as incorrect.
+	(Gitlab #591,!#313, git TBD)
+
 1567.	[bug]		marcin
 	Kea HTTP client now always includes Host header in all HTTP requests.
 	The Host header is required in all HTTP/1.1 requests. This corrects
