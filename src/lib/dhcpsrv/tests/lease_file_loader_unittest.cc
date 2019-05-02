@@ -255,7 +255,7 @@ public:
                        std::string subnet_txt, SubnetID subnet_id,
                        CfgConsistency::LeaseSanity sanity,
                        bool exp_present, SubnetID exp_id,
-                       unsigned int prefix_len=0) {
+                       unsigned int prefix_len = 0) {
 
         // Create the subnet and add it to configuration.
         if (!subnet_txt.empty()) {
@@ -267,7 +267,7 @@ public:
 
         file_content << v6_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
                      << "300,300," << static_cast<int>(lease_id) << ",150,"
-                     << static_cast<int>(prefix_len > 0 ? Lease::TYPE_PD : Lease::TYPE_NA)
+                     << (prefix_len > 0 ? Lease::TYPE_PD : Lease::TYPE_NA)
                      << ",8," << prefix_len << ",0,0,,,1,\n";
 
         ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getConsistency()
