@@ -200,18 +200,20 @@ MySqlConnection::openDatabase() {
     // connection after a reconnect as among other things, it drops all our
     // pre-compiled statements.
     my_bool auto_reconnect = MLM_FALSE;
-    int result = mysql_options(handle(), MYSQL_OPT_RECONNECT, &auto_reconnect);
+    MySqlHolder& holderHandle = handle();
+
+    int result = mysql_options(holderHandle, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
-                  mysql_error(handle()));
+                  mysql_error(holderHandle));
     }
 
     // Make sure we have a large idle time window ... say 30 days...
     const char *wait_time = "SET SESSION wait_timeout = 30 * 86400";
-    result = mysql_options(handle(), MYSQL_INIT_COMMAND, wait_time);
+    result = mysql_options(holderHandle, MYSQL_INIT_COMMAND, wait_time);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set wait_timeout " <<
-                  mysql_error(handle()));
+                  mysql_error(holderHandle));
     }
 
     // Set SQL mode options for the connection:  SQL mode governs how what
@@ -219,18 +221,18 @@ MySqlConnection::openDatabase() {
     // invalid data.  We want to ensure we get the strictest behavior and
     // to reject invalid data with an error.
     const char *sql_mode = "SET SESSION sql_mode ='STRICT_ALL_TABLES'";
-    result = mysql_options(handle(), MYSQL_INIT_COMMAND, sql_mode);
+    result = mysql_options(holderHandle, MYSQL_INIT_COMMAND, sql_mode);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set SQL mode options: " <<
-                  mysql_error(handle()));
+                  mysql_error(holderHandle));
     }
 
     // Connection timeout, the amount of time taken for the client to drop
     // the connection if the server is not responding.
-    result = mysql_options(handle(), MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
+    result = mysql_options(holderHandle, MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set database connection timeout: " <<
-                  mysql_error(handle()));
+                  mysql_error(holderHandle));
     }
 
     // Open the database.
@@ -243,10 +245,10 @@ MySqlConnection::openDatabase() {
     // This makes it hard to distinguish whether the UPDATE changed no rows
     // because no row matching the WHERE clause was found, or because a
     // row was found but no data was altered.
-    MYSQL* status = mysql_real_connect(handle(), host, user, password, name,
+    MYSQL* status = mysql_real_connect(holderHandle, host, user, password, name,
                                        port, NULL, CLIENT_FOUND_ROWS);
-    if (status != handle()) {
-        isc_throw(DbOpenError, mysql_error(handle()));
+    if (status != holderHandle) {
+        isc_throw(DbOpenError, mysql_error(holderHandle));
     }
 
     // Enable autocommit. In case transaction is explicitly used, this
@@ -256,11 +258,11 @@ MySqlConnection::openDatabase() {
     // caused issues for some unit tests which were unable to cleanup
     // the database after the test because of pending transactions.
     // Use of autocommit will eliminate this problem.
-    my_bool auto_commit = mysql_autocommit(handle(), 1);
+    my_bool auto_commit = mysql_autocommit(holderHandle, 1);
     if (auto_commit != MLM_FALSE) {
-        isc_throw(DbOperationError, mysql_error(handle()));
+        isc_throw(DbOperationError, mysql_error(holderHandle));
     }
-    handle().connected_ = true;
+    holderHandle.connected_ = true;
     connected_ = true;
 }
 
@@ -340,28 +342,37 @@ MySqlConnection::startTransaction() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_START_TRANSACTION);
     // We create prepared statements for all other queries, but MySQL
     // don't support prepared statements for START TRANSACTION.
-    int status = mysql_query(handle(), "START TRANSACTION");
+
+    MySqlHolder& holderHandle = handle();
+
+    int status = mysql_query(holderHandle, "START TRANSACTION");
     if (status != 0) {
         isc_throw(DbOperationError, "unable to start transaction, "
-                  "reason: " << mysql_error(handle()));
+                  "reason: " << mysql_error(holderHandle));
     }
 }
 
 void
 MySqlConnection::commit() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_COMMIT);
-    if (mysql_commit(handle()) != 0) {
+
+    MySqlHolder& holderHandle = handle();
+
+    if (mysql_commit(holderHandle) != 0) {
         isc_throw(DbOperationError, "commit failed: "
-                  << mysql_error(handle()));
+                  << mysql_error(holderHandle));
     }
 }
 
 void
 MySqlConnection::rollback() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_ROLLBACK);
-    if (mysql_rollback(handle()) != 0) {
+
+    MySqlHolder& holderHandle = handle();
+
+    if (mysql_rollback(holderHandle) != 0) {
         isc_throw(DbOperationError, "rollback failed: "
-                  << mysql_error(handle()));
+                  << mysql_error(holderHandle));
     }
 }
 

@@ -1847,8 +1847,10 @@ uint64_t
 PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
                                       PsqlBindArrayPtr& bind_array,
                                       const bool return_last_id) {
+    PgSqlHolder& holderHandle = conn_.handle();
     uint64_t last_id = 0;
-    PgSqlResult r(PQexecPrepared(conn_.handle(), tagged_statements[stindex].name,
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -1877,7 +1879,9 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 bool
 PgSqlHostDataSourceImpl::delStatement(StatementIndex stindex,
                                       PsqlBindArrayPtr& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_.handle(), tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -1958,9 +1962,10 @@ PgSqlHostDataSourceImpl::
 getHostCollection(StatementIndex stindex, PsqlBindArrayPtr bind_array,
                   boost::shared_ptr<PgSqlHostExchange> exchange,
                   ConstHostCollection& result, bool single) const {
+    PgSqlHolder& holderHandle = conn_.handle();
 
     exchange->clear();
-    PgSqlResult r(PQexecPrepared(conn_.handle(), tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -2018,11 +2023,13 @@ PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
 
+    PgSqlHolder& holderHandle = conn_.handle();
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_.handle(), version_sql));
+
+    PgSqlResult r(PQexec(holderHandle, version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ">, reason: " << PQerrorMessage(conn_.handle()));
+                  << version_sql << ">, reason: " << PQerrorMessage(holderHandle));
     }
 
     uint32_t major;

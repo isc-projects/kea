@@ -198,18 +198,22 @@ public:
             "    varchar_col VARCHAR(255) "
             "); ";
 
-        PgSqlResult r(PQexec(conn_->handle(), sql));
+        PgSqlHolder& holderHandle = conn_->handle();
+
+        PgSqlResult r(PQexec(holderHandle, sql));
         ASSERT_EQ(PQresultStatus(r), PGRES_COMMAND_OK)
-                 << " create basics table failed: " << PQerrorMessage(conn_->handle());
+                 << " create basics table failed: " << PQerrorMessage(holderHandle);
     }
 
     /// @brief Destroys the basics table
     /// Asserts if the destruction fails
     void destroySchema() {
         if (conn_) {
-            PgSqlResult r(PQexec(conn_->handle(), "DROP TABLE IF EXISTS basics;"));
+            PgSqlHolder& holderHandle = conn_->handle();
+
+            PgSqlResult r(PQexec(holderHandle, "DROP TABLE IF EXISTS basics;"));
             ASSERT_EQ(PQresultStatus(r), PGRES_COMMAND_OK)
-                 << " drop basics table failed: " << PQerrorMessage(conn_->handle());
+                 << " drop basics table failed: " << PQerrorMessage(holderHandle);
         }
     }
 
@@ -227,10 +231,12 @@ public:
     /// Asserts if the result set status does not equal the expected outcome.
     void runSql(PgSqlResultPtr& r, const std::string& sql, int exp_outcome,
                 int lineno) {
-        r.reset(new PgSqlResult(PQexec(conn_->handle(), sql.c_str())));
+        PgSqlHolder& holderHandle = conn_->handle();
+
+        r.reset(new PgSqlResult(PQexec(holderHandle, sql.c_str())));
         ASSERT_EQ(PQresultStatus(*r), exp_outcome)
                   << " runSql at line: " << lineno << " failed, sql:[" << sql
-                  << "]\n reason: " << PQerrorMessage(conn_->handle());
+                  << "]\n reason: " << PQerrorMessage(holderHandle);
     }
 
     /// @brief Executes a SQL statement and tests for an expected outcome
@@ -250,7 +256,9 @@ public:
                               PgSqlTaggedStatement& statement,
                               PsqlBindArrayPtr bind_array, int exp_outcome,
                               int lineno) {
-        r.reset(new PgSqlResult(PQexecPrepared(conn_->handle(), statement.name,
+        PgSqlHolder& holderHandle = conn_->handle();
+
+        r.reset(new PgSqlResult(PQexecPrepared(holderHandle, statement.name,
                                 statement.nbparams,
                                 &bind_array->values_[0],
                                 &bind_array->lengths_[0],
@@ -258,7 +266,7 @@ public:
         ASSERT_EQ(PQresultStatus(*r), exp_outcome)
                   << " runPreparedStatement at line: " << lineno
                   << " statement name:[" << statement.name
-                  << "]\n reason: " << PQerrorMessage(conn_->handle());
+                  << "]\n reason: " << PQerrorMessage(holderHandle);
     }
 
     /// @brief Fetches all of the rows currently in the table

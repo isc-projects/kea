@@ -2462,11 +2462,13 @@ MySqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
 
+    MySqlHolder& holderHandle = conn_.handle();
+
     // Allocate a new statement.
-    MYSQL_STMT *stmt = mysql_stmt_init(conn_.handle());
+    MYSQL_STMT *stmt = mysql_stmt_init(holderHandle);
     if (stmt == NULL) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                  "statement structure, reason: " << mysql_error(conn_.handle()));
+                  "statement structure, reason: " << mysql_error(holderHandle));
     }
 
     // Prepare the statement from SQL text.
@@ -2475,14 +2477,14 @@ MySqlHostDataSourceImpl::getVersion() const {
     if (status != 0) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2503,14 +2505,14 @@ MySqlHostDataSourceImpl::getVersion() const {
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         isc_throw(DbOperationError, "unable to bind result set for <"
-                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Fetch the data.
     if (mysql_stmt_fetch(stmt)) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to bind result set for <"
-                  << version_sql << ">, reason: " << mysql_error(conn_.handle()));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Discard the statement and its resources
@@ -2522,17 +2524,18 @@ MySqlHostDataSourceImpl::getVersion() const {
 void
 MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
                                       std::vector<MYSQL_BIND>& bind) {
+    MySqlHolder& holderHandle = conn_.handle();
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.handle().statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(holderHandle.statements_[stindex], &bind[0]);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.handle().statements_[stindex]);
+    status = mysql_stmt_execute(holderHandle.statements_[stindex]);
 
     if (status != 0) {
         // Failure: check for the special case of duplicate entry.
-        if (mysql_errno(conn_.handle()) == ER_DUP_ENTRY) {
+        if (mysql_errno(holderHandle) == ER_DUP_ENTRY) {
             isc_throw(DuplicateEntry, "Database duplicate entry error");
         }
         checkError(status, stindex, "unable to execute");
@@ -2542,19 +2545,21 @@ MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 bool
 MySqlHostDataSourceImpl::delStatement(StatementIndex stindex,
                                       MYSQL_BIND* bind) {
+    MySqlHolder& holderHandle = conn_.handle();
+
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.handle().statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(holderHandle.statements_[stindex], &bind[0]);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.handle().statements_[stindex]);
+    status = mysql_stmt_execute(holderHandle.statements_[stindex]);
 
     if (status != 0) {
         checkError(status, stindex, "unable to execute");
     }
 
     // Let's check how many hosts were deleted.
-    my_ulonglong numrows = mysql_stmt_affected_rows(conn_.handle().statements_[stindex]);
+    my_ulonglong numrows = mysql_stmt_affected_rows(holderHandle.statements_[stindex]);
     return (numrows != 0);
 }
 
@@ -2623,32 +2628,33 @@ MySqlHostDataSourceImpl::
 getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
                   boost::shared_ptr<MySqlHostExchange> exchange,
                   ConstHostCollection& result, bool single) const {
+    MySqlHolder& holderHandle = conn_.handle();
 
     // Bind the selection parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.handle().statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(holderHandle.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(conn_.handle().statements_[stindex], &outbind[0]);
+    status = mysql_stmt_bind_result(holderHandle.statements_[stindex], &outbind[0]);
     checkError(status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.handle().statements_[stindex]);
+    status = mysql_stmt_execute(holderHandle.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(conn_.handle().statements_[stindex]);
+    status = mysql_stmt_store_result(holderHandle.statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
     // successful data fetch.
-    MySqlFreeResult fetch_release(conn_.handle().statements_[stindex]);
-    while ((status = mysql_stmt_fetch(conn_.handle().statements_[stindex])) ==
+    MySqlFreeResult fetch_release(holderHandle.statements_[stindex]);
+    while ((status = mysql_stmt_fetch(holderHandle.statements_[stindex])) ==
            MLM_MYSQL_FETCH_SUCCESS) {
         try {
             exchange->processFetchedData(result);
@@ -2744,6 +2750,8 @@ MySqlHostDataSource::~MySqlHostDataSource() {
 
 void
 MySqlHostDataSource::add(const HostPtr& host) {
+    MySqlHolder& holderHandle = impl_->conn_.handle();
+
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
 
@@ -2763,7 +2771,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
     impl_->addStatement(MySqlHostDataSourceImpl::INSERT_HOST, bind);
 
     // Gets the last inserted hosts id
-    uint64_t host_id = mysql_insert_id(impl_->conn_.handle());
+    uint64_t host_id = mysql_insert_id(holderHandle);
 
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();

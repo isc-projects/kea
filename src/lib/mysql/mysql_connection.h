@@ -367,6 +367,8 @@ public:
                      const MySqlBindingCollection& in_bindings,
                      MySqlBindingCollection& out_bindings,
                      ConsumeResultFun process_result) {
+        MySqlHolder& holderHandle = handle();
+
         // Extract native input bindings.
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
@@ -376,7 +378,7 @@ public:
         int status = 0;
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
-            status = mysql_stmt_bind_param(handle().statements_[index], &in_bind_vec[0]);
+            status = mysql_stmt_bind_param(holderHandle.statements_[index], &in_bind_vec[0]);
             checkError(status, index, "unable to bind parameters for select");
         }
 
@@ -386,20 +388,20 @@ public:
             out_bind_vec.push_back(out_binding->getMySqlBinding());
         }
         if (!out_bind_vec.empty()) {
-            status = mysql_stmt_bind_result(handle().statements_[index], &out_bind_vec[0]);
+            status = mysql_stmt_bind_result(holderHandle.statements_[index], &out_bind_vec[0]);
             checkError(status, index, "unable to bind result parameters for select");
         }
 
         // Execute query.
-        status = mysql_stmt_execute(handle().statements_[index]);
+        status = mysql_stmt_execute(holderHandle.statements_[index]);
         checkError(status, index, "unable to execute");
 
-        status = mysql_stmt_store_result(handle().statements_[index]);
+        status = mysql_stmt_store_result(holderHandle.statements_[index]);
         checkError(status, index, "unable to set up for storing all results");
 
         // Fetch results.
-        MySqlFreeResult fetch_release(handle().statements_[index]);
-        while ((status = mysql_stmt_fetch(handle().statements_[index])) ==
+        MySqlFreeResult fetch_release(holderHandle.statements_[index]);
+        while ((status = mysql_stmt_fetch(holderHandle.statements_[index])) ==
                MLM_MYSQL_FETCH_SUCCESS) {
             try {
                 // For each returned row call user function which should
@@ -443,21 +445,23 @@ public:
     template<typename StatementIndex>
     void insertQuery(const StatementIndex& index,
                      const MySqlBindingCollection& in_bindings) {
+        MySqlHolder& holderHandle = handle();
         std::vector<MYSQL_BIND> in_bind_vec;
+
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(handle().statements_[index], &in_bind_vec[0]);
+        int status = mysql_stmt_bind_param(holderHandle.statements_[index], &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = mysql_stmt_execute(handle().statements_[index]);
+        status = mysql_stmt_execute(holderHandle.statements_[index]);
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
-            if (mysql_errno(handle()) == ER_DUP_ENTRY) {
+            if (mysql_errno(holderHandle) == ER_DUP_ENTRY) {
                 isc_throw(DuplicateEntry, "Database duplicate entry error");
             }
             checkError(status, index, "unable to execute");
@@ -481,29 +485,31 @@ public:
     template<typename StatementIndex>
     uint64_t updateDeleteQuery(const StatementIndex& index,
                                const MySqlBindingCollection& in_bindings) {
+        MySqlHolder& holderHandle = handle();
         std::vector<MYSQL_BIND> in_bind_vec;
+
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(handle().statements_[index], &in_bind_vec[0]);
+        int status = mysql_stmt_bind_param(holderHandle.statements_[index], &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = mysql_stmt_execute(handle().statements_[index]);
+        status = mysql_stmt_execute(holderHandle.statements_[index]);
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
-            if ((mysql_errno(handle()) == ER_DUP_ENTRY)
+            if ((mysql_errno(holderHandle) == ER_DUP_ENTRY)
 #ifdef ER_FOREIGN_DUPLICATE_KEY
-                || (mysql_errno(handle()) == ER_FOREIGN_DUPLICATE_KEY)
+                || (mysql_errno(holderHandle) == ER_FOREIGN_DUPLICATE_KEY)
 #endif
 #ifdef ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO
-                || (mysql_errno(handle()) == ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO)
+                || (mysql_errno(holderHandle) == ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO)
 #endif
 #ifdef ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO
-                || (mysql_errno(handle()) == ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO)
+                || (mysql_errno(holderHandle) == ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO)
 #endif
                 ) {
                 isc_throw(DuplicateEntry, "Database duplicate entry error");
@@ -512,7 +518,7 @@ public:
         }
 
         // Let's return how many rows were affected.
-        return (static_cast<uint64_t>(mysql_stmt_affected_rows(handle().statements_[index])));
+        return (static_cast<uint64_t>(mysql_stmt_affected_rows(holderHandle.statements_[index])));
     }
 
 
@@ -565,8 +571,10 @@ public:
     template <typename StatementIndex>
     void checkError(const int status, const StatementIndex& index,
                     const char* what) const {
+        MySqlHolder& holderHandle = handle();
+
         if (status != 0) {
-            switch(mysql_errno(handle())) {
+            switch(mysql_errno(holderHandle)) {
                 // These are the ones we consider fatal. Remember this method is
                 // used to check errors of API calls made subsequent to successfully
                 // connecting.  Errors occurring while attempting to connect are
@@ -580,8 +588,8 @@ public:
                 DB_LOG_ERROR(db::MYSQL_FATAL_ERROR)
                     .arg(what)
                     .arg(text_statements_[static_cast<int>(index)])
-                    .arg(mysql_error(handle()))
-                    .arg(mysql_errno(handle()));
+                    .arg(mysql_error(holderHandle))
+                    .arg(mysql_errno(holderHandle));
 
                 // If there's no lost db callback or it returns false,
                 // then we're not attempting to recover so we're done
@@ -598,8 +606,8 @@ public:
                 isc_throw(db::DbOperationError, what << " for <"
                           << text_statements_[static_cast<int>(index)]
                           << ">, reason: "
-                          << mysql_error(handle()) << " (error code "
-                          << mysql_errno(handle()) << ")");
+                          << mysql_error(holderHandle) << " (error code "
+                          << mysql_errno(holderHandle) << ")");
             }
         }
     }
