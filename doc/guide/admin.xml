@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,15 +14,11 @@
     <title>Databases and Database Version Numbers</title>
 
     <para>
-      Kea supports the storage of leases and host reservations (i.e. static
-      assignments of addresses, prefixes, and options) in one of
-      the several supported backend databases. As future versions of Kea
-      are released, the structure of those backends will change.
-      For example, Kea currently only stores lease information
-      and host reservations. Future versions of Kea will store
-      additional data such as subnet definitions, so the backend
-      structure will need to be updated to accommodate the extra
-      information.
+      Kea may be configured to use a database as a storage for leases,
+      a source of servers' configurations and host reservations (i.e. static
+      assignments of addresses, prefixes, options etc.). Subsequent Kea
+      releases introduce changes to the database schemas to faciliate new
+      features and correct discovered issues with the existing schemas.
     </para>
 
     <para>
@@ -75,7 +71,7 @@
         <listitem>
           <simpara>
             <command>lease-init</command> —
-            Initializes a new lease database. This is useful during a new
+            Initializes a new database schema. This is useful during a new
             Kea installation. The database is initialized to the
             latest version supported by the version of the software being
             installed.
@@ -85,7 +81,7 @@
         <listitem>
           <simpara>
             <command>lease-version</command> —
-            Reports the lease backend version number. This is
+            Reports the database backend version number. This is
             not necessarily equal to the Kea version number as
             each backend has its own versioning scheme.
           </simpara>
@@ -94,7 +90,7 @@
         <listitem>
           <simpara>
             <command>lease-upgrade</command> —
-            Conducts a lease backend upgrade. This is useful when
+            Conducts a database schema upgrade. This is useful when
             upgrading Kea.
           </simpara>
         </listitem>
@@ -125,21 +121,21 @@
         <listitem>
           <simpara>
             <command>mysql</command> —
-            Lease information is stored in a MySQL relational database.
+            Information is stored in a MySQL relational database.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
             <command>pgsql</command> —
-            Lease information is stored in a PostgreSQL relational database.
+            Information is stored in a PostgreSQL relational database.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
             <command>cql</command> —
-            Lease information is stored in an Apache Cassandra database.
+            Information is stored in an Apache Cassandra database.
           </simpara>
         </listitem>
 
@@ -220,6 +216,14 @@
               <entry>yes</entry>
             </row>
 
+            <row>
+              <entry>Configuration Backend</entry>
+              <entry>no</entry>
+              <entry>yes</entry>
+              <entry>no</entry>
+              <entry>no</entry>
+            </row>
+
           </tbody>
           </tgroup>
        </table>
@@ -271,8 +275,9 @@
       <title>MySQL</title>
 
       <para>
-        MySQL is able to store leases, host reservations, and options defined on
-        a per-host basis. This section can be safely ignored
+        MySQL is able to store leases, host reservations, options defined on
+        a per-host basis and a subset of the server configuration parameters
+        (serving as a configuration backend). This section can be safely ignored
         if you choose to store the data in other backends.
       </para>
 
