@@ -152,7 +152,7 @@
   </section>
 
   <section xml:id="cb">
-    <title>Configuration Backend</title>
+    <title>Database as a Configuration Source</title>
     <para>As of Kea 1.6.0 release, the parts of the DHCP servers'
     configurations can be sourced from a database. The server using
     the database as a configuration repository combines the configuration
