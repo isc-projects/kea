@@ -18,6 +18,7 @@ libmysqlcb_la_SOURCES += mysql_cb_dhcp4.cc mysql_cb_dhcp4.h
 libmysqlcb_la_SOURCES += mysql_cb_dhcp6.cc mysql_cb_dhcp6.h
 libmysqlcb_la_SOURCES += mysql_cb_impl.cc mysql_cb_impl.h
 libmysqlcb_la_SOURCES += mysql_cb_messages.cc mysql_cb_messages.h
+libmysqlcb_la_SOURCES += mysql_cb_log.cc mysql_cb_log.h
 libmysqlcb_la_SOURCES += mysql_query_macros_dhcp.h
 libmysqlcb_la_SOURCES += version.cc
 
