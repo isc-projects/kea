@@ -180,7 +180,7 @@ public:
     ///
     /// @param first_subnet Pointer to the subnet from which iteration starts.
     /// @param client_classes List of classes that the client belongs to.
-    /// @return true if the shared network includes at least a subnet
+    /// @return true if the shared network includes at least one subnet
     /// guarded by a given class with the match client ID flag set to true.
     /// False otherwise.
     static
