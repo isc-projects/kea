@@ -453,7 +453,7 @@ TEST(SharedNetwork4Test, subnetsAllHRGlobal) {
     Subnet4Ptr bad;
 
     // Empty shared network is right.
-    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_NO_THROW(bad = network->subnetsAllHRGlobal());
     EXPECT_FALSE(bad);
 
     // Create a subnet and add it to the shared network.
@@ -463,7 +463,7 @@ TEST(SharedNetwork4Test, subnetsAllHRGlobal) {
 
     // Default host reservation mode is ALL.
     bad.reset();
-    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_NO_THROW(bad = network->subnetsAllHRGlobal());
     ASSERT_TRUE(bad);
     EXPECT_EQ(1, bad->getID());
     EXPECT_EQ("10.0.0.0/8", bad->toText());
@@ -473,7 +473,7 @@ TEST(SharedNetwork4Test, subnetsAllHRGlobal) {
 
     // Now the shared network is all global.
     bad.reset();
-    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_NO_THROW(bad = network->subnetsAllHRGlobal());
     EXPECT_FALSE(bad);
 }
 
@@ -1041,7 +1041,7 @@ TEST(SharedNetwork6Test, subnetsAllHRGlobal) {
     Subnet6Ptr bad;
 
     // Empty shared network is right.
-    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_NO_THROW(bad = network->subnetsAllHRGlobal());
     EXPECT_FALSE(bad);
 
     // Create a subnet and add it to the shared network.
@@ -1051,7 +1051,7 @@ TEST(SharedNetwork6Test, subnetsAllHRGlobal) {
 
     // Default host reservation mode is ALL.
     bad.reset();
-    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_NO_THROW(bad = network->subnetsAllHRGlobal());
     ASSERT_TRUE(bad);
     EXPECT_EQ(1, bad->getID());
     EXPECT_EQ("2001:db8:1::/64", bad->toText());
@@ -1061,7 +1061,7 @@ TEST(SharedNetwork6Test, subnetsAllHRGlobal) {
 
     // Now the shared network is all global.
     bad.reset();
-    ASSERT_NO_THROW(network->subnetsAllHRGlobal(bad));
+    ASSERT_NO_THROW(bad = network->subnetsAllHRGlobal());
     EXPECT_FALSE(bad);
 }
 
