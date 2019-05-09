@@ -740,7 +740,7 @@ The code has issued a begin transaction call.
 % DHCPSRV_MYSQL_COMMIT committing to MySQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
-the committal may not include a write to disk.
+the commit may not include a write to disk.
 
 % DHCPSRV_MYSQL_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
@@ -772,7 +772,7 @@ lease expires before considering its removal.
 % DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
 An error message indicating that communication with the MySQL database server
 has been lost.  If automatic recovery has been enabled,  then the server will
-attempt to recover connectivity.  If not the server wil exit with a
+attempt to recover the connectivity.  If not the server will exit with a
 non-zero exit code.  The cause of such an error is most likely a network issue
 or the MySQL server has gone down.
 
@@ -922,7 +922,7 @@ The code has issued a begin transaction call.
 % DHCPSRV_PGSQL_COMMIT committing to PostgreSQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
-the committal may not include a write to disk.
+the commit may not include a write to disk.
 
 % DHCPSRV_PGSQL_DB opening PostgreSQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
@@ -956,7 +956,7 @@ lease expires before considering its removal.
 % DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
 An error message indicating that communication with the PostgreSQL database server
 has been lost.  If automatic recovery has been enabled,  then the server will
-attempt to recover the connectivity.  If not the server wil exit with a
+attempt to recover the connectivity.  If not the server will exit with a
 non-zero exit code.  The cause of such an error is most likely a network issue
 or the PostgreSQL server has gone down.
 

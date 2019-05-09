@@ -1,3 +1,287 @@
 # Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 
 $NAMESPACE isc::cb
+
+% MYSQL_CB_INIT_OK loading MYSQL CB hooks library successful
+This informational message indicates that the MySQL Configuration Backend hooks
+library has been loaded successfully.
+
+% MYSQL_CB_DEINIT_OK unloading MYSQAL CB hooks library successful
+This informational message indicates that the MySQL Configuration Backend hooks
+library has been unloaded successfully.
+
+% MYSQL_CB_GET_SUBNET4_BY_PREFIX retrieving MySQL CB subnet4 by prefix %1
+Retrieve MySQL CB subnet4 by prefix
+
+% MYSQL_CB_GET_SUBNET4_BY_SUBNET_ID retrieving MySQL CB subnet4 by subnet id %1
+Retrieve MySQL CB subnet4 by subnet id
+
+% MYSQL_CB_GET_ALL_SUBNETS4 retrieving all MySQL CB subnets4
+Retrieve MySQL CB all subnets4
+
+% MYSQL_CB_GET_MODIFIED_SUBNETS4 retrieving modified MySQL CB subnets4
+Retrieve MySQL CB modified subnets4
+
+% MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4 retrieving MySQL CB shared network %1 subnets4
+Retrieve MySQL CB shared network subnets4
+
+% MYSQL_CB_GET_SHARED_NETWORK4 retrieving MySQL CB shared network4 %1
+Retrieve MySQL CB shared network4
+
+% MYSQL_CB_GET_ALL_SHARED_NETWORKS4 retrieving MySQL CB all shared networks4
+Retrieve MySQL CB all shared networks4
+
+% MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4 retrieving MySQL CB modified shared networks4
+Retrieve MySQL CB modified shared networks4
+
+% MYSQL_CB_GET_OPTION_DEF4 retrieving MySQL CB option definition4 code %1 space %2
+Retrieve MySQL CB option definition4
+
+% MYSQL_CB_GET_ALL_OPTION_DEFS4 retrieving MySQL CB all option definitions4
+Retrieve MySQL CB all option definitions4
+
+% MYSQL_CB_GET_MODIFIED_OPTION_DEFS4 retrieving MySQL CB modified option definitions4
+Retrieve MySQL CB modified option definitions4
+
+% MYSQL_CB_GET_OPTION4 retrieving MySQL CB option4 code %1 space %2
+Retrieve MySQL CB option4
+
+% MYSQL_CB_GET_ALL_OPTIONS4 retrieving MySQL CB all options4
+Retrieve MySQL CB all options4
+
+% MYSQL_CB_GET_MODIFIED_OPTIONS4 retrieving MySQL CB modified options4
+Retrieve MySQL CB modified options4
+
+% MYSQL_CB_GET_GLOBAL_PARAMETER4 retrieving MySQL CB global parameter4 %1
+Retrieve MySQL CB global parameter4
+
+% MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4 retrieving MySQL CB all global parameters4
+Retrieve MySQL CB all global parameters4
+
+% MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4 retrieving MySQL CB modified global parameters4
+Retrieve MySQL CB modified global parameters4
+
+% MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4 retrieving MySQL CB audit entries4
+Retrieve MySQL CB audit entries4
+
+% MYSQL_CB_CREATE_UPDATE_SUBNET4 create or update MySQL CB subnet4 %1
+Create or update MySQL CB subnet4
+
+% MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4 create or update MySQL CB shared network4 %1
+Create or update MySQL CB shared network4
+
+% MYSQL_CB_CREATE_UPDATE_OPTION_DEF4 create or update MySQL CB option definition4 %1 code %2
+Create or update MySQL CB option definition4
+
+% MYSQL_CB_CREATE_UPDATE_OPTION4 create or update MySQL CB option4
+Create or update MySQL CB option4
+
+% MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4 create or update MySQL CB shared network %1 option4
+Create or update MySQL CB shared network option4
+
+% MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4 create or update MySQL CB option4 by subnet id %1
+Create or update MySQL CB option4 by subnet id
+
+% MYSQL_CB_CREATE_UPDATE_BY_POOL_OPTION4 create or update MySQL CB option4 pool start %1 pool end %2
+Create or update MySQL CB option4 by pool
+
+% MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4 create or update MySQL CB global parameter4 %1
+Create or update MySQL CB global parameter4
+
+% MYSQL_CB_DELETE_BY_PREFIX_SUBNET4 delete MySQL CB subnet4 by prefix %1
+Delete MySQL CB subnet4 by prefix
+
+% MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4 delete MySQL CB subnet4 by subnet id %1
+Delete MySQL CB subnet4 by subnet id
+
+% MYSQL_CB_DELETE_ALL_SUBNETS4 delete MySQL CB all subnets4
+Delete MySQL CB all subnets4
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4 delete MySQL CB shared network %1 subnets4
+Delete MySQL CB shared network subnets4
+
+% MYSQL_CB_DELETE_SHARED_NETWORK4 delete MySQL CB shared network4 %1
+Delete MySQL CB shared network4
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4 delete MySQL CB all shared networks4
+Delete MySQL CB all shared networks4
+
+% MYSQL_CB_DELETE_OPTION_DEF4 delete MySQL CB option definition4 code %1 space %2
+Delete MySQL CB option definition4
+
+% MYSQL_CB_DELETE_ALL_OPTION_DEFS4 delete MySQL CB all option definitions4
+Delete MySQL CB all option definitions4
+
+% MYSQL_CB_DELETE_OPTION4 delete MySQL CB option4 code %1 space %2
+Delete MySQL CB option4
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_OPTION4 delete MySQL CB shared network %1 option4 code %2 space %3
+Delete MySQL CB shared network option4
+
+% MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION4 delete MySQL CB by subnet id %1 option4 code %2 space %3
+Delete MySQL CB option4 by subnet id
+
+% MYSQL_CB_DELETE_BY_POOL_OPTION4 delete MySQL CB pool start %1 pool end %2 option4 code %3 space %4
+Delete MySQL CB option4 by pool
+
+% MYSQL_CB_DELETE_GLOBAL_PARAMETER4 delete MySQL CB global parameter4 %1
+Delete MySQL CB global parameter4
+
+% MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4 delete MySQL CB all global parameters4
+Delete MySQL CB all global parameters4
+
+% MYSQL_CB_GET_TYPE4 get MySQL CB type4
+Retrieve MySQL CB type4
+
+% MYSQL_CB_GET_HOST4 get MySQL CB host4
+Retrieve MySQL CB host4
+
+% MYSQL_CB_GET_PORT4 get MySQL CB port4
+Retrieve MySQL CB port4
+
+% MYSQL_CB_REGISTER_BACKEND_TYPE4 register MySQL CB backend4
+Register MySQL CB backend4
+
+% MYSQL_CB_UNREGISTER_BACKEND_TYPE4 unregister MySQL CB backend4
+Unregister MySQL CB backend4
+
+% MYSQL_CB_GET_SUBNET6_BY_PREFIX retrieving MySQL CB subnet6 by prefix %1
+Retrieve MySQL CB subnet6 by prefix
+
+% MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID retrieving MySQL CB subnet6 by subnet id %1
+Retrieve MySQL CB subnet6 by subnet id
+
+% MYSQL_CB_GET_ALL_SUBNETS6 retrieving all MySQL CB subnets6
+Retrieve MySQL CB all subnets6
+
+% MYSQL_CB_GET_MODIFIED_SUBNETS6 retrieving modified MySQL CB subnets6
+Retrieve MySQL CB modified subnets6
+
+% MYSQL_CB_GET_SHARED_NETWORK_SUBNETS6 retrieving MySQL CB shared network %1 subnets6
+Retrieve MySQL CB shared network subnets6
+
+% MYSQL_CB_GET_SHARED_NETWORK6 retrieving MySQL CB shared network6 %1
+Retrieve MySQL CB shared network6
+
+% MYSQL_CB_GET_ALL_SHARED_NETWORKS6 retrieving MySQL CB all shared networks6
+Retrieve MySQL CB all shared networks6
+
+% MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS6 retrieving MySQL CB modified shared networks6
+Retrieve MySQL CB modified shared networks6
+
+% MYSQL_CB_GET_OPTION_DEF6 retrieving MySQL CB option definition6 code %1 space %2
+Retrieve MySQL CB option definition6
+
+% MYSQL_CB_GET_ALL_OPTION_DEFS6 retrieving MySQL CB all option definitions6
+Retrieve MySQL CB all option definitions6
+
+% MYSQL_CB_GET_MODIFIED_OPTION_DEFS6 retrieving MySQL CB modified option definitions6
+Retrieve MySQL CB modified option definitions6
+
+% MYSQL_CB_GET_OPTION6 retrieving MySQL CB option6 code %1 space %2
+Retrieve MySQL CB option6
+
+% MYSQL_CB_GET_ALL_OPTIONS6 retrieving MySQL CB all options6
+Retrieve MySQL CB all options6
+
+% MYSQL_CB_GET_MODIFIED_OPTIONS6 retrieving MySQL CB modified options6
+Retrieve MySQL CB modified options6
+
+% MYSQL_CB_GET_GLOBAL_PARAMETER6 retrieving MySQL CB global parameter6 %1
+Retrieve MySQL CB global parameter6
+
+% MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6 retrieving MySQL CB all global parameters6
+Retrieve MySQL CB all global parameters6
+
+% MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6 retrieving MySQL CB modified global parameters6
+Retrieve MySQL CB modified global parameters6
+
+% MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6 retrieving MySQL CB audit entries6
+Retrieve MySQL CB audit entries6
+
+% MYSQL_CB_CREATE_UPDATE_SUBNET6 create or update MySQL CB subnet6 %1
+Create or update MySQL CB subnet6
+
+% MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK6 create or update MySQL CB shared network6 %1
+Create or update MySQL CB shared network6
+
+% MYSQL_CB_CREATE_UPDATE_OPTION_DEF6 create or update MySQL CB option definition6 %1 code %2
+Create or update MySQL CB option definition6
+
+% MYSQL_CB_CREATE_UPDATE_OPTION6 create or update MySQL CB option6
+Create or update MySQL CB option6
+
+% MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6 create or update MySQL CB shared network %1 option6
+Create or update MySQL CB shared network option6
+
+% MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION6 create or update MySQL CB option6 by subnet id %1
+Create or update MySQL CB option6 by subnet id
+
+% MYSQL_CB_CREATE_UPDATE_BY_POOL_OPTION6 create or update MySQL CB option6 pool start %1 pool end %2
+Create or update MySQL CB option6 by pool
+
+% MYSQL_CB_CREATE_UPDATE_BY_PREFIX_OPTION6 create or update MySQL CB option6 prefix %1 prefix len %2
+Create or update MySQL CB option6 by prefix
+
+% MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6 create or update MySQL CB global parameter6 %1
+Create or update MySQL CB global parameter6
+
+% MYSQL_CB_DELETE_BY_PREFIX_SUBNET6 delete MySQL CB subnet6 by prefix %1
+Delete MySQL CB subnet6 by prefix
+
+% MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6 delete MySQL CB subnet6 by subnet id %1
+Delete MySQL CB subnet6 by subnet id
+
+% MYSQL_CB_DELETE_ALL_SUBNETS6 delete MySQL CB all subnets6
+Delete MySQL CB all subnets6
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6 delete MySQL CB shared network %1 subnets6
+Delete MySQL CB shared network subnets6
+
+% MYSQL_CB_DELETE_SHARED_NETWORK6 delete MySQL CB shared network6 %1
+Delete MySQL CB shared network6
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6 delete MySQL CB all shared networks6
+Delete MySQL CB all shared networks6
+
+% MYSQL_CB_DELETE_OPTION_DEF6 delete MySQL CB option definition6 code %1 space %2
+Delete MySQL CB option definition6
+
+% MYSQL_CB_DELETE_ALL_OPTION_DEFS6 delete MySQL CB all option definitions6
+Delete MySQL CB all option definitions6
+
+% MYSQL_CB_DELETE_OPTION6 delete MySQL CB option6 code %1 space %2
+Delete MySQL CB option6
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6 delete MySQL CB shared network %1 option6 code %2 space %3
+Delete MySQL CB shared network option6
+
+% MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6 delete MySQL CB by subnet id %1 option6 code %2 space %3
+Delete MySQL CB option6 by subnet id
+
+% MYSQL_CB_DELETE_BY_POOL_OPTION6 delete MySQL CB pool start %1 pool end %2 option6 code %3 space %4
+Delete MySQL CB option6 by pool
+
+% MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6 delete MySQL CB prefix %1 prefix len %2 option6 code %3 space %4
+Delete MySQL CB option6 by prefix
+
+% MYSQL_CB_DELETE_GLOBAL_PARAMETER6 delete MySQL CB global parameter6 %1
+Delete MySQL CB global parameter6
+
+% MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6 delete MySQL CB all global parameters6
+Delete MySQL CB all global parameters6
+
+% MYSQL_CB_GET_TYPE6 get MySQL CB type6
+Retrieve MySQL CB type6
+
+% MYSQL_CB_GET_HOST6 get MySQL CB host6
+Retrieve MySQL CB host6
+
+% MYSQL_CB_GET_PORT6 get MySQL CB port6
+Retrieve MySQL CB port6
+
+% MYSQL_CB_REGISTER_BACKEND_TYPE6 register MySQL CB backend6
+Register MySQL CB backend6
+
+% MYSQL_CB_UNREGISTER_BACKEND_TYPE6 unregister MySQL CB backend6
+Unregister MySQL CB backend6

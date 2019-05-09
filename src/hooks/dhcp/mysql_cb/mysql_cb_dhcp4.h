@@ -9,6 +9,7 @@
 
 #include <database/database_connection.h>
 #include <dhcpsrv/config_backend_dhcp4.h>
+#include <mysql_cb_log.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {

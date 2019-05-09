@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <mysql_cb_dhcp4.h>
 #include <mysql_cb_impl.h>
 #include <mysql_query_macros_dhcp.h>
@@ -36,6 +38,7 @@ using namespace isc::cb;
 using namespace isc::db;
 using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::log;
 using namespace isc::util;
 
 namespace isc {
@@ -1463,7 +1466,6 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
-
         boost::scoped_ptr<MySqlTransaction> transaction;
         // Only start new transaction if specified to do so. This function may
         // be called from within an existing transaction in which case we
@@ -2270,8 +2272,7 @@ TaggedStatementArray tagged_statements = { {
 
 }; // end anonymous namespace
 
-MySqlConfigBackendDHCPv4Impl::
-MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
+MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
     : MySqlConfigBackendImpl(parameters) {
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
@@ -2281,25 +2282,29 @@ MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
 //                            tagged_statements.begin() + WRITE_STMTS_BEGIN);
 }
 
-MySqlConfigBackendDHCPv4::
-MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
+MySqlConfigBackendDHCPv4::MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
     : impl_(new MySqlConfigBackendDHCPv4Impl(parameters)) {
 }
 
 Subnet4Ptr
 MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
                                      const std::string& subnet_prefix) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SUBNET4_BY_PREFIX)
+        .arg(subnet_prefix);
     return (impl_->getSubnet4(server_selector, subnet_prefix));
 }
 
 Subnet4Ptr
 MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
                                      const SubnetID& subnet_id) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SUBNET4_BY_SUBNET_ID)
+        .arg(subnet_id);
     return (impl_->getSubnet4(server_selector, subnet_id));
 }
 
 Subnet4Collection
 MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& server_selector) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SUBNETS4);
     Subnet4Collection subnets;
     impl_->getAllSubnets4(server_selector, subnets);
     return (subnets);
@@ -2308,6 +2313,7 @@ MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& server_selector) 
 Subnet4Collection
 MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SUBNETS4);
     Subnet4Collection subnets;
     impl_->getModifiedSubnets4(server_selector, modification_time, subnets);
     return (subnets);
@@ -2316,6 +2322,8 @@ MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& server_selec
 Subnet4Collection
 MySqlConfigBackendDHCPv4::getSharedNetworkSubnets4(const ServerSelector& server_selector,
                                                    const std::string& shared_network_name) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4)
+        .arg(shared_network_name);
     Subnet4Collection subnets;
     impl_->getSharedNetworkSubnets4(server_selector, shared_network_name, subnets);
     return (subnets);
@@ -2324,20 +2332,23 @@ MySqlConfigBackendDHCPv4::getSharedNetworkSubnets4(const ServerSelector& server_
 SharedNetwork4Ptr
 MySqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& server_selector,
                                             const std::string& name) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SHARED_NETWORK4)
+        .arg(name);
     return (impl_->getSharedNetwork4(server_selector, name));
 }
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& server_selector) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SHARED_NETWORKS4);
     SharedNetwork4Collection shared_networks;
     impl_->getAllSharedNetworks4(server_selector, shared_networks);
     return (shared_networks);
 }
 
 SharedNetwork4Collection
-MySqlConfigBackendDHCPv4::
-getModifiedSharedNetworks4(const ServerSelector& server_selector,
-                           const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::getModifiedSharedNetworks4(const ServerSelector& server_selector,
+        const boost::posix_time::ptime& modification_time) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4);
     SharedNetwork4Collection shared_networks;
     impl_->getModifiedSharedNetworks4(server_selector, modification_time, shared_networks);
     return (shared_networks);
@@ -2347,12 +2358,15 @@ OptionDefinitionPtr
 MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_OPTION_DEF4)
+        .arg(code).arg(space);
     return (impl_->getOptionDef(MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
                                 server_selector, code, space));
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selector) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_OPTION_DEFS4);
     OptionDefContainer option_defs;
     impl_->getAllOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
                             server_selector, option_defs);
@@ -2360,9 +2374,9 @@ MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selecto
 }
 
 OptionDefContainer
-MySqlConfigBackendDHCPv4::
-getModifiedOptionDefs4(const ServerSelector& server_selector,
-                       const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::getModifiedOptionDefs4(const ServerSelector& server_selector,
+        const boost::posix_time::ptime& modification_time) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTION_DEFS4);
     OptionDefContainer option_defs;
     impl_->getModifiedOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
                                  server_selector, modification_time, option_defs);
@@ -2373,20 +2387,23 @@ OptionDescriptorPtr
 MySqlConfigBackendDHCPv4::getOption4(const ServerSelector& server_selector,
                                      const uint16_t code,
                                      const std::string& space) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_OPTION4)
+        .arg(code).arg(space);
     return (impl_->getOption(MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
                              Option::V4, server_selector, code, space));
 }
 
 OptionContainer
 MySqlConfigBackendDHCPv4::getAllOptions4(const ServerSelector& server_selector) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_OPTIONS4);
     return (impl_->getAllOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
                                  Option::V4, server_selector));
 }
 
 OptionContainer
-MySqlConfigBackendDHCPv4::
-getModifiedOptions4(const ServerSelector& server_selector,
-                    const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::getModifiedOptions4(const ServerSelector& server_selector,
+        const boost::posix_time::ptime& modification_time) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTIONS4);
     return (impl_->getModifiedOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
                                       Option::V4, server_selector, modification_time));
 }
@@ -2394,13 +2411,15 @@ getModifiedOptions4(const ServerSelector& server_selector,
 StampedValuePtr
 MySqlConfigBackendDHCPv4::getGlobalParameter4(const ServerSelector& server_selector,
                                               const std::string& name) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_GLOBAL_PARAMETER4)
+        .arg(name);
     return (impl_->getGlobalParameter4(server_selector, name));
 }
 
 StampedValueCollection
 MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_selector) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4);
     StampedValueCollection parameters;
-
     auto tags = impl_->getServerTags(server_selector);
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag) };
@@ -2411,11 +2430,10 @@ MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_s
 }
 
 StampedValueCollection
-MySqlConfigBackendDHCPv4::
-getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
-                             const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
+        const boost::posix_time::ptime& modification_time) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4);
     StampedValueCollection parameters;
-
     auto tags = impl_->getServerTags(server_selector);
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
@@ -2425,42 +2443,47 @@ getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
                                    in_bindings, parameters);
     }
-
     return (parameters);
 }
 
 AuditEntryCollection
-MySqlConfigBackendDHCPv4::
-getRecentAuditEntries(const db::ServerSelector& server_selector,
-                      const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector& server_selector,
+        const boost::posix_time::ptime& modification_time) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4);
     AuditEntryCollection audit_entries;
     impl_->getRecentAuditEntries(MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
                                  server_selector, modification_time, audit_entries);
-
     return (audit_entries);
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateSubnet4(const ServerSelector& server_selector,
                                               const Subnet4Ptr& subnet) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SUBNET4)
+        .arg(subnet);
     impl_->createUpdateSubnet4(server_selector, subnet);
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                                      const SharedNetwork4Ptr& shared_network) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4)
+        .arg(shared_network->getName());
     impl_->createUpdateSharedNetwork4(server_selector, shared_network);
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateOptionDef4(const ServerSelector& server_selector,
                                                  const OptionDefinitionPtr& option_def) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_OPTION_DEF4)
+        .arg(option_def->getName()).arg(option_def->getCode());
     impl_->createUpdateOptionDef4(server_selector, option_def);
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selector,
                                               const OptionDescriptorPtr& option) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_OPTION4);
     impl_->createUpdateOption4(server_selector, option);
 }
 
@@ -2468,6 +2491,8 @@ void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                               const std::string& shared_network_name,
                                               const OptionDescriptorPtr& option) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4)
+        .arg(shared_network_name);
     impl_->createUpdateOption4(server_selector, shared_network_name, option, false);
 }
 
@@ -2475,6 +2500,8 @@ void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selector,
                                               const SubnetID& subnet_id,
                                               const OptionDescriptorPtr& option) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4)
+        .arg(subnet_id);
     impl_->createUpdateOption4(server_selector, subnet_id, option, false);
 }
 
@@ -2483,6 +2510,8 @@ MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selec
                                               const asiolink::IOAddress& pool_start_address,
                                               const asiolink::IOAddress& pool_end_address,
                                               const OptionDescriptorPtr& option) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_BY_POOL_OPTION4)
+        .arg(pool_start_address.toText()).arg(pool_end_address.toText());
     impl_->createUpdateOption4(server_selector, pool_start_address, pool_end_address,
                                option);
 }
@@ -2490,12 +2519,16 @@ MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selec
 void
 MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& server_selector,
                                                        const StampedValuePtr& value) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4)
+        .arg(value->getName());
     impl_->createUpdateGlobalParameter4(server_selector, value);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const std::string& subnet_prefix) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_PREFIX_SUBNET4)
+        .arg(subnet_prefix);
     return(impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
                                       server_selector, "deleting a subnet by prefix",
                                       "subnet deleted", true,
@@ -2505,11 +2538,14 @@ MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const SubnetID& subnet_id) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4)
+        .arg(subnet_id);
     return (impl_->deleteSubnet4(server_selector, subnet_id));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selector) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SUBNETS4);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
                                        server_selector, "deleting all subnets",
                                        "deleted all subnets", true));
@@ -2518,6 +2554,8 @@ MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selecto
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& server_selector,
                                                       const std::string& shared_network_name) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4)
+        .arg(shared_network_name);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
                                        server_selector,
                                        "deleting all subnets for a shared network",
@@ -2528,6 +2566,8 @@ MySqlConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_selector,
                                                const std::string& name) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK4)
+        .arg(name);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
                                        server_selector, "deleting a shared network",
                                        "shared network deleted", true,
@@ -2536,6 +2576,7 @@ MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_sele
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& server_selector) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
                                        server_selector, "deleting all shared networks",
                                        "deleted all shared networks", true));
@@ -2545,11 +2586,14 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector,
                                            const uint16_t code,
                                            const std::string& space) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION_DEF4)
+        .arg(code).arg(space);
     return (impl_->deleteOptionDef4(server_selector, code, space));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& server_selector) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_OPTION_DEFS4);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
                                        server_selector, "deleting all option definitions",
                                        "deleted all option definitions", true));
@@ -2559,6 +2603,8 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION4)
+        .arg(code).arg(space);
     return (impl_->deleteOption4(server_selector, code, space));
 }
 
@@ -2567,6 +2613,8 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const std::string& shared_network_name,
                                         const uint16_t code,
                                         const std::string& space) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION4)
+        .arg(shared_network_name).arg(code).arg(space);
     return (impl_->deleteOption4(server_selector, shared_network_name,
                                  code, space));
 }
@@ -2576,6 +2624,8 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
                                         const std::string& space) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION4)
+        .arg(subnet_id).arg(code).arg(space);
     return (impl_->deleteOption4(server_selector, subnet_id, code, space));
 }
 
@@ -2585,6 +2635,8 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
                                         const std::string& space) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION4)
+        .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
     return (impl_->deleteOption4(server_selector, pool_start_address, pool_end_address,
                                  code, space));
 }
@@ -2592,6 +2644,8 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
 uint64_t
 MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
                                                  const std::string& name) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_GLOBAL_PARAMETER4)
+        .arg(name);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
                                        server_selector, "deleting global parameter",
                                        "global parameter deleted", false,
@@ -2600,6 +2654,7 @@ MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_se
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& server_selector) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4);
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
                                        server_selector, "deleting all global parameters",
                                        "all global parameters deleted", true));
@@ -2607,21 +2662,25 @@ MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
 
 std::string
 MySqlConfigBackendDHCPv4::getType() const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_TYPE4);
     return (impl_->getType());
 }
 
 std::string
 MySqlConfigBackendDHCPv4::getHost() const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_HOST4);
     return (impl_->getHost());
 }
 
 uint16_t
 MySqlConfigBackendDHCPv4::getPort() const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_PORT4);
     return (impl_->getPort());
 }
 
 bool
 MySqlConfigBackendDHCPv4::registerBackendType() {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_REGISTER_BACKEND_TYPE4);
     return (
         dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
             [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
@@ -2632,6 +2691,7 @@ MySqlConfigBackendDHCPv4::registerBackendType() {
 
 void
 MySqlConfigBackendDHCPv4::unregisterBackendType() {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_UNREGISTER_BACKEND_TYPE4);
     dhcp::ConfigBackendDHCPv4Mgr::instance().unregisterBackendFactory("mysql");
 }
 
