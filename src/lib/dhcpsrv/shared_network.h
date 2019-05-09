@@ -190,9 +190,8 @@ public:
     /// @brief Check if the shared network includes a subnet with
     /// not global host reservation mode.
     ///
-    /// @param [out] bad_subnet First subnet which has not a global host
-    /// reservation mode.
-    void subnetsAllHRGlobal(Subnet4Ptr& bad_subnet) const;
+    /// @return First subnet which has not a global host reservation mode.
+    Subnet4Ptr subnetsAllHRGlobal() const;
 
     /// @brief Unparses shared network object.
     ///
@@ -387,9 +386,8 @@ public:
     /// @brief Check if the shared network includes a subnet with
     /// not global host reservation mode.
     ///
-    /// @param [out] bad_subnet First subnet which has not a global host
-    /// reservation mode.
-    void subnetsAllHRGlobal(Subnet6Ptr& bad_subnet) const;
+    /// @return First subnet which has not a global host reservation mode.
+    Subnet6Ptr subnetsAllHRGlobal() const;
 
     /// @brief Unparses shared network object.
     ///
