@@ -1,0 +1,12 @@
+{
+    "name": "remote-option6-global-get-all",
+    "brief": "a sentence or two explaining what this command does",
+    "description": "See <xref linkend=\"cmd-\"/>",
+    "support": [ "undocumented" ],
+    "avail": "0.0.0",
+    "hook": "undocumented",
+    "cmd-syntax": "Syntax of the command",
+    "cmd-comment": "Possibly some extra comments after the syntax.",
+    "resp-syntax": "Syntax of the response",
+    "resp-comment": "Optional extra comments after the resposne syntax."
+}

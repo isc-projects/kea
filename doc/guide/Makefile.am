@@ -7,10 +7,10 @@ dist_html_DATA = $(HTMLDOCS) kea-guide.css kea-logo-100x70.png
 
 DOCBOOK = kea-guide.xml intro.xml quickstart.xml install.xml admin.xml config.xml
 DOCBOOK += config-backend.xml keactrl.xml dhcp4-srv.xml dhcp6-srv.xml lease-expiration.xml
-DOCBOOK += logging.xml ddns.xml hooks.xml hooks-class-cmds.xml hooks-ha.xml
-DOCBOOK += hooks-host-cache.xml hooks-lease-cmds.xml hooks-radius.xml hooks-stat-cmds.xml
-DOCBOOK += lfc.xml stats.xml ctrl-channel.xml classify.xml shell.xml agent.xml
-DOCBOOK += netconf.xml api.xml congestion-handling.xml hammer.xml
+DOCBOOK += logging.xml ddns.xml hooks.xml hooks-class-cmds.xml hooks-cb-cmds.xml
+DOCBOOK += hooks-ha.xml hooks-host-cache.xml hooks-lease-cmds.xml hooks-radius.xml
+DOCBOOK += hooks-stat-cmds.xml lfc.xml stats.xml ctrl-channel.xml classify.xml shell.xml
+DOCBOOK += agent.xml netconf.xml api.xml congestion-handling.xml hammer.xml
 
 EXTRA_DIST = $(DOCBOOK)
 

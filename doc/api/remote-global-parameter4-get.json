@@ -1,0 +1,34 @@
+{
+    "name": "remote-global-parameter4-get",
+    "brief": "This command is used to fetch selected global parameter for the server from the specified database.",
+    "description": "See <xref linkend=\"cmd-remote-global-parameter4-get\"/>",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-global-parameter4-get\"
+    \"arguments\": {
+        \"parameters\": [ <parameter name> ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}
+
+",
+    "cmd-comment": "The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains \"type\": \"mysql\".",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv4 global parameter found.\",
+    \"arguments\": {
+        \"parameters\": {
+            <parameter name>: <parameter value>,
+            \"metadata\": {
+                \"server-tag\": <server tag>
+            }
+        },
+        \"count\": 1
+    }
+}",
+    "resp-comment": "The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is included and it provides database specific information associated with the returned object."
+}

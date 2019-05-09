@@ -1,0 +1,25 @@
+{
+    "name": "remote-global-parameter4-set",
+    "brief": "This command is used to create or update one more global parameters for a server.",
+    "description": "See <xref linkend=\"cmd-remote-global-parameter4-set\"/>",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-global-parameter4-set\"
+    \"arguments\": {
+        \"parameters\": {
+            <first parameter name>: <first parameter value>,
+            <second parameter name>: <second parameter value>
+        },
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "The <command>remote</command> map contains specification of the backend where global parameter should be set. Typically it contains \"type\": \"mysql\".",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv4 global parameter(s) successfully set.\"
+}"
+}

@@ -1,0 +1,37 @@
+{
+    "name": "remote-subnet4-get-by-id",
+    "brief": "This command is used to fetch selected IPv4 subnet by ID for the server from the specified database.",
+    "description": "See <xref linkend=\"cmd-remote-subnet4-get-by-id\"/>",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-subnet4-get-by-id\"
+    \"arguments\": {
+        \"subnets\": [ {
+            \"id\": <subnet identifier>
+        } ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command includes a list with exactly one id of the subnet to be returned. The <command>remote</command> map contains specification of the backend from which the subnet should be fetched. Typically it contains \"type\": \"mysql\".",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"IPv4 subnet 123 found.\",
+    \"arguments\": {
+        \"subnets\": [ {
+            \"id\": <subnet identifier>
+            \"subnet\": <subnet prefix>,
+            \"shared-network-name\": <shared network name> | null,
+            \"metadata\": {
+                \"server-tag\": <server tag>
+            },
+            <the rest of the subnet specification here>
+        } ],
+        \"count\": 1
+    }
+}",
+    "resp-comment": "The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object."
+}

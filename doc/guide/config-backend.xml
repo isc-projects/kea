@@ -145,6 +145,12 @@
       such as MySQL Workbench or command line MySQL client by directly working
       with the database.
     </para>
+
+    <para>
+      Refer to the <xref linkend="cb-cmds-library"/> for the details regarding
+      the <command>cb_cmds</command> hooks library.
+    </para>
+
   </section>
 
 </chapter>

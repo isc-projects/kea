@@ -2880,6 +2880,9 @@ both the command and the response.
     <!-- section class-cmds-library -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-class-cmds.xml"/>
 
+    <!-- section cb-cmds-library -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-cb-cmds.xml"/>
+
     <!-- section high-availability-library -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-ha.xml"/>
 

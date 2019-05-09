@@ -1,0 +1,39 @@
+{
+    "name": "remote-option-def4-get-all",
+    "brief": "This command is used to fetch all option definitions for the server from the specified database.",
+    "description": "See <xref linkend=\"cmd-remote-option-def4-get-all\"/>",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-option-def4-get-all\"
+    \"arguments\": {
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains \"type\": \"mysql\".",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"2 DHCPv4 option definition(s) found.\",
+    \"arguments\": {
+        \"option-defs\": [
+            {
+                <first option definition>,
+                \"metadata\": {
+                    \"server-tag\": <server tag>
+                }
+            },
+            {
+                <second option definition>,
+                \"metadata\": {
+                    \"server-tag\": <server tag>
+                }
+            }
+        ],
+        \"count\": <count of the objects returned>
+    }
+}",
+    "resp-comment": "The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects."
+}

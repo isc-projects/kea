@@ -1,0 +1,36 @@
+{
+    "name": "remote-option-def4-get",
+    "brief": "This command is used to fetch DHCPv4 option definition for the server from the specified database.",
+    "description": "See <xref linkend=\"cmd-remote-option-def4-get\"/>",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-option-def4-get\"
+    \"service\": [ \"dhcp4\" ],
+    \"arguments\": {
+        \"option-defs\": [ {
+            \"code\": <option code>,
+            \"space\": <option space>
+        } ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "The desired option definition is identified by the pair of option code/space values. The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains \"type\": \"mysql\".",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv4 option definition 222 in 'dhcp4' found.\",
+    \"arguments\": {
+        \"option-defs\": [ {
+            <option definition>,
+            \"metadata\": {
+                \"server-tag\": <server tag>
+            }
+        } ],
+        \"count\": 1
+    }
+}",
+    "resp-comment": "The metadata is included and it provides database specific information associated with the returned object."
+}
