@@ -43,7 +43,7 @@ SYSTEMS = {
     'fedora': ['27', '28', '29', '30'],
     'centos': ['7'],
     'rhel': ['8'],
-    'ubuntu': ['16.04', '18.04', '18.10'],
+    'ubuntu': ['16.04', '18.04', '18.10', '19.04'],
     'debian': ['8', '9'],
     'freebsd': ['11.2', '12.0'],
 }
@@ -67,6 +67,8 @@ IMAGE_TEMPLATES = {
     'ubuntu-18.04-virtualbox': {'bare': 'ubuntu/bionic64',             'kea': 'godfryd/kea-ubuntu-18.04'},
     'ubuntu-18.10-lxc':        {'bare': 'godfryd/lxc-ubuntu-18.10',    'kea': 'godfryd/kea-ubuntu-18.10'},
     'ubuntu-18.10-virtualbox': {'bare': 'ubuntu/cosmic64',             'kea': 'godfryd/kea-ubuntu-18.10'},
+    'ubuntu-19.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-19.04',    'kea': 'godfryd/kea-ubuntu-19.04'},
+    'ubuntu-19.04-virtualbox': {'bare': 'ubuntu/disco64',              'kea': 'godfryd/kea-ubuntu-19.04'},
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
     'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
@@ -536,6 +538,10 @@ class VagrantEnv(object):
 
         if self.provider == 'virtualbox':
             box_path = "kea-%s-%s.box" % (self.system, self.revision)
+            full_box_path = os.path.join(self.vagrant_dir, box_path)
+            if os.path.exists(full_box_path):
+                os.unlink(full_box_path)
+
             cmd = "vagrant package --output %s" % box_path
             execute(cmd, cwd=self.vagrant_dir, timeout=4 * 60, dry_run=self.dry_run)
 
@@ -1808,7 +1814,7 @@ def parse_args():
                                    "To get the list of created systems run: ./hammer.py created-systems.")
     parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
     parser = subparsers.add_parser('package-box',
-                                   help="Package currently running system into Vagrant Box. Prepared box can be "
+                                   help="Prepare system from scratch and package it into Vagrant Box. Prepared box can be "
                                    "later deployed to Vagrant Cloud.",
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('--repository-url', default=None,
