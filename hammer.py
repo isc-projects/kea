@@ -1084,6 +1084,8 @@ def prepare_system_local(features, check_times):
 
         if 'radius' in features:
             packages.extend(['git'])
+            if 'forge' in features:
+                packages.extend(['freeradius'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
