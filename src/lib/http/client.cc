@@ -535,6 +535,8 @@ Connection::isTransactionOngoing() const {
 bool
 Connection::checkPrematureTimeout() const {
     if (!isTransactionOngoing()) {
+        // The transaction state is was reset, so we need to log a warning message.
+        LOG_WARN(http_logger, HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED);
         return (true);
     }
     return (false);

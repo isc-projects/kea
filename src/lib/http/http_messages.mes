@@ -83,6 +83,12 @@ produced the data.
 This debug message is issued when the persistent HTTP connection is being
 closed as a result of being idle.
 
+% HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred, possibly caused by system clock change
+This warning message is issued when unexpected timeout occurred during the
+transaction. This is proven to occur when the system clock is moved manually
+or as a result of synchronization with a time server. Any ongoing transactions
+will be interrupted. New transactions should be conducted normally.
+
 % HTTP_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address

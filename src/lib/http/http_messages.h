@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes on Fri Feb 08 2019 20:32
+// File created from ../../../src/lib/http/http_messages.mes on Mon May 13 2019 17:08
 
 #ifndef HTTP_MESSAGES_H
 #define HTTP_MESSAGES_H
@@ -21,6 +21,7 @@ extern const isc::log::MessageID HTTP_CONNECTION_STOP;
 extern const isc::log::MessageID HTTP_CONNECTION_STOP_FAILED;
 extern const isc::log::MessageID HTTP_DATA_RECEIVED;
 extern const isc::log::MessageID HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED;
+extern const isc::log::MessageID HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED;
 extern const isc::log::MessageID HTTP_REQUEST_RECEIVE_START;
 extern const isc::log::MessageID HTTP_SERVER_RESPONSE_RECEIVED;
 extern const isc::log::MessageID HTTP_SERVER_RESPONSE_RECEIVED_DETAILS;

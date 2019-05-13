@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes on Fri Feb 08 2019 20:32
+// File created from ../../../src/lib/http/http_messages.mes on Mon May 13 2019 17:08
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -20,6 +20,7 @@ extern const isc::log::MessageID HTTP_CONNECTION_STOP = "HTTP_CONNECTION_STOP";
 extern const isc::log::MessageID HTTP_CONNECTION_STOP_FAILED = "HTTP_CONNECTION_STOP_FAILED";
 extern const isc::log::MessageID HTTP_DATA_RECEIVED = "HTTP_DATA_RECEIVED";
 extern const isc::log::MessageID HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED = "HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED";
+extern const isc::log::MessageID HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED = "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED";
 extern const isc::log::MessageID HTTP_REQUEST_RECEIVE_START = "HTTP_REQUEST_RECEIVE_START";
 extern const isc::log::MessageID HTTP_SERVER_RESPONSE_RECEIVED = "HTTP_SERVER_RESPONSE_RECEIVED";
 extern const isc::log::MessageID HTTP_SERVER_RESPONSE_RECEIVED_DETAILS = "HTTP_SERVER_RESPONSE_RECEIVED_DETAILS";
@@ -45,6 +46,7 @@ const char* values[] = {
     "HTTP_CONNECTION_STOP_FAILED", "stopping HTTP connection failed",
     "HTTP_DATA_RECEIVED", "received %1 bytes from %2",
     "HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED", "closing persistent connection with %1 as a result of a timeout",
+    "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred, possibly caused by system clock change",
     "HTTP_REQUEST_RECEIVE_START", "start receiving request from %1 with timeout %2",
     "HTTP_SERVER_RESPONSE_RECEIVED", "received HTTP response from %1",
     "HTTP_SERVER_RESPONSE_RECEIVED_DETAILS", "detailed information about well formed response received from %1:\n%2",
