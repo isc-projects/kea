@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1243,6 +1243,67 @@ TEST_F(HttpClientTest, clientRequestTimeout) {
         if (++cb_num > 1) {
             io_service_.stop();
         }
+    }));
+
+    // Actually trigger the requests.
+    ASSERT_NO_THROW(runIOService());
+}
+
+// This test verifies the behavior of the HTTP client when the premature
+// (and unexpected) timeout occurs. The premature timeout may be caused
+// by the system clock move.
+TEST_F(HttpClientTest, clientRequestLateStart) {
+    // Start the server.
+    ASSERT_NO_THROW(listener_.start());
+
+    // Create the client.
+    HttpClient client(io_service_);
+
+    // Specify the URL of the server.
+    Url url("http://127.0.0.1:18123");
+
+    unsigned cb_num = 0;
+
+    // Generate first request.
+    PostHttpRequestJsonPtr request1 = createRequest("partial-response", true);
+    HttpResponseJsonPtr response1(new HttpResponseJson());
+
+    // Use very short timeout to make sure that it occurs before we actually
+    // run the transaction.
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
+        [](const boost::system::error_code& ec,
+           const HttpResponsePtr& response,
+           const std::string&) {
+        // In this particular case we know exactly the type of the
+        // IO error returned, because the client explicitly sets this
+        // error code.
+        EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
+        // There should be no response returned.
+        EXPECT_FALSE(response);
+    }, HttpClient::RequestTimeout(1)));
+
+    // This waits for 3ms to make sure that the timeout occurs before we
+    // run the transaction. This leads to an unusual situation that the
+    // transaction state is reset as a result of the timeout but the
+    // transaction is alive. We want to make sure that the client can
+    // gracefully deal with this situation.
+    usleep(3000);
+
+    // Run the transaction and hope it will gracefully tear down.
+    ASSERT_NO_THROW(runIOService(100));
+
+    // Now try to send another request to make sure that the client
+    // is healthy.
+    PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);
+    HttpResponseJsonPtr response2(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
+                    [this](const boost::system::error_code& ec,
+                           const HttpResponsePtr&,
+                           const std::string&) {
+        io_service_.stop();
+
+        // Everything should be ok.
+        EXPECT_TRUE(ec.value() == 0);
     }));
 
     // Actually trigger the requests.
