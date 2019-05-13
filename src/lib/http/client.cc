@@ -535,10 +535,18 @@ Connection::terminate(const boost::system::error_code& ec,
                   HTTP_SERVER_RESPONSE_RECEIVED)
             .arg(url_.toText());
 
+        // It's unlikely, but possible that we got here due to a timeout and that
+        // we actually received data that was not processed yet. We don't understand
+        // the exact nature of the problem yet, but this is one suspected place
+        // where we process the timeout callback first (that sets parser_ to null),
+        // and then we attempt to process receiveCallback that attempts to
+        // call terminate(), but the parser_ is already null. So this code
+        // below used to assert.
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                   HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
             .arg(url_.toText())
-            .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+            .arg(parser_ ? parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE)
+                 : "[HttpResponseParser is null]");
 
     } else {
         std::string err = parsing_error.empty() ? ec.message() : parsing_error;
@@ -550,7 +558,7 @@ Connection::terminate(const boost::system::error_code& ec,
 
         // Only log the details if we have received anything and tried
         // to parse it.
-        if (!parsing_error.empty()) {
+        if (parser_ && !parsing_error.empty()) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
                 .arg(url_.toText())
@@ -703,6 +711,14 @@ Connection::receiveCallback(const boost::system::error_code& ec, size_t length) 
 
     // Receiving is in progress, so push back the timeout.
     scheduleTimer(timer_.getInterval());
+
+    // This should never happen. However, if we got here and somehow the parser_
+    // is null, we need to terminate. If this happens, it's a programming error.
+    // Nevertheless, this allows us to recover and continue server operation.
+    if (!parser_) {
+        terminate(boost::asio::error::fault, "Logic error: HttpResponseParserPtr is null");
+        return;
+    }
 
     // If we have received any data, let's feed the parser with it.
     if (length != 0) {
