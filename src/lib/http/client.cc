@@ -136,6 +136,19 @@ public:
     /// @return true if transaction has been initiated, false otherwise.
     bool isTransactionOngoing() const;
 
+    /// @brief Checks and logs if premature transaction timeout is suspected.
+    ///
+    /// There are cases when the premature timeout occurs, e.g. as a result of
+    /// moving system clock, during the transaction. In such case, the
+    /// @c terminate function is called which resets the transaction state but
+    /// the transaction handlers may be already waiting for the execution.
+    /// Each such handler should call this function to check if the transaction
+    /// it is participating in is still alive. If it is not, it should simply
+    /// return. This method also logs such situation.
+    ///
+    /// @return true if the premature timeout is suspected, false otherwise.
+    bool checkPrematureTimeout() const;
+
 private:
 
     /// @brief Resets the state of the object.
@@ -519,61 +532,71 @@ Connection::isTransactionOngoing() const {
     return (static_cast<bool>(current_request_));
 }
 
+bool
+Connection::checkPrematureTimeout() const {
+    if (!isTransactionOngoing()) {
+        return (true);
+    }
+    return (false);
+}
+
 void
 Connection::terminate(const boost::system::error_code& ec,
                       const std::string& parsing_error) {
 
-    timer_.cancel();
-    socket_.cancel();
-
     HttpResponsePtr response;
 
-    if (!ec && current_response_->isFinalized()) {
-        response = current_response_;
+    if (isTransactionOngoing()) {
 
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
-                  HTTP_SERVER_RESPONSE_RECEIVED)
-            .arg(url_.toText());
+        timer_.cancel();
+        socket_.cancel();
 
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                  HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
-            .arg(url_.toText())
-            .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+        if (!ec && current_response_->isFinalized()) {
+            response = current_response_;
 
-    } else {
-        std::string err = parsing_error.empty() ? ec.message() : parsing_error;
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                      HTTP_SERVER_RESPONSE_RECEIVED)
+                .arg(url_.toText());
 
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
-                  HTTP_BAD_SERVER_RESPONSE_RECEIVED)
-            .arg(url_.toText())
-            .arg(err);
-
-        // Only log the details if we have received anything and tried
-        // to parse it.
-        if (!parsing_error.empty()) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                      HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
+                      HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
                 .arg(url_.toText())
-                .arg(parser_->getBufferAsString());
+                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+
+        } else {
+            std::string err = parsing_error.empty() ? ec.message() : parsing_error;
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                      HTTP_BAD_SERVER_RESPONSE_RECEIVED)
+                .arg(url_.toText())
+                .arg(err);
+
+            // Only log the details if we have received anything and tried
+            // to parse it.
+            if (!parsing_error.empty()) {
+                LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                          HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
+                    .arg(url_.toText())
+                    .arg(parser_->getBufferAsString());
+            }
         }
 
+        try {
+            // The callback should take care of its own exceptions but one
+            // never knows.
+            current_callback_(ec, response, parsing_error);
+
+        } catch (...) {
+        }
+
+        // If we're not requesting connection persistence, we should close the socket.
+        // We're going to reconnect for the next transaction.
+        if (!current_request_->isPersistent()) {
+            close();
+        }
+
+        resetState();
     }
-
-    try {
-        // The callback should take care of its own exceptions but one
-        // never knows.
-        current_callback_(ec, response, parsing_error);
-
-    } catch (...) {
-    }
-
-    // If we're not requesting connection persistence, we should close the socket.
-    // We're going to reconnect for the next transaction.
-    if (!current_request_->isPersistent()) {
-        close();
-    }
-
-    resetState();
 
     // Check if there are any requests queued for this connection and start
     // another transaction if there is at least one.
@@ -625,6 +648,10 @@ Connection::doReceive() {
 void
 Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
                             const boost::system::error_code& ec) {
+    if (checkPrematureTimeout()) {
+        return;
+    }
+
     // Run user defined connect callback if specified.
     if (connect_callback) {
         // If the user defined callback indicates that the connection
@@ -634,11 +661,14 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
         }
     }
 
+    if (ec && (ec.value() == boost::asio::error::operation_aborted)) {
+        return;
+
     // In some cases the "in progress" status code may be returned. It doesn't
     // indicate an error. Sending the request over the socket is expected to
     // be successful. Getting such status appears to be highly dependent on
     // the operating system.
-    if (ec &&
+    } else if (ec &&
         (ec.value() != boost::asio::error::in_progress) &&
         (ec.value() != boost::asio::error::already_connected)) {
         terminate(ec);
@@ -651,10 +681,17 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
 
 void
 Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
+    if (checkPrematureTimeout()) {
+        return;
+    }
+
     if (ec) {
+        if (ec.value() == boost::asio::error::operation_aborted) {
+            return;
+
         // EAGAIN and EWOULDBLOCK don't really indicate an error. The length
         // should be 0 in this case but let's be sure.
-        if ((ec.value() == boost::asio::error::would_block) ||
+        } else if ((ec.value() == boost::asio::error::would_block) ||
             (ec.value() == boost::asio::error::try_again)) {
             length = 0;
 
@@ -686,11 +723,18 @@ Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
 
 void
 Connection::receiveCallback(const boost::system::error_code& ec, size_t length) {
+    if (checkPrematureTimeout()) {
+        return;
+    }
+
     if (ec) {
+        if (ec.value() == boost::asio::error::operation_aborted) {
+            return;
+
         // EAGAIN and EWOULDBLOCK don't indicate an error in this case. All
         // other errors should terminate the transaction.
-        if ((ec.value() != boost::asio::error::try_again) &&
-            (ec.value() != boost::asio::error::would_block)) {
+        } if ((ec.value() != boost::asio::error::try_again) &&
+              (ec.value() != boost::asio::error::would_block)) {
             terminate(ec);
             return;
 
