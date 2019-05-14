@@ -3908,7 +3908,7 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
         t2_time = subnet->getT2();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.
-        t2_time = static_cast<uint32_t>(subnet->getT2Percent() * preferred_lft);
+        t2_time = static_cast<uint32_t>(round(subnet->getT2Percent() * preferred_lft));
     }
 
     // We allow T2 to be any value.
@@ -3922,7 +3922,7 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
         t1_time = subnet->getT1();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.
-        t1_time = static_cast<uint32_t>(subnet->getT1Percent() * preferred_lft);
+        t1_time = static_cast<uint32_t>(round(subnet->getT1Percent() * preferred_lft));
     }
 
     // T1 is sane if it is less than or equal to T2.

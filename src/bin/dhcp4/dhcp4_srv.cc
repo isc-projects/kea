@@ -2269,7 +2269,7 @@ Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr
         t2_time = subnet->getT2();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculated it.
-        t2_time = static_cast<uint32_t>(subnet->getT2Percent() * (lease->valid_lft_));
+        t2_time = static_cast<uint32_t>(round(subnet->getT2Percent() * (lease->valid_lft_)));
     }
 
     // Send the T2 candidate value only if it's sane: to be sane it must be less than
@@ -2288,7 +2288,7 @@ Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr
         t1_time = subnet->getT1();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.
-        t1_time = static_cast<uint32_t>(subnet->getT1Percent() * (lease->valid_lft_));
+        t1_time = static_cast<uint32_t>(round(subnet->getT1Percent() * (lease->valid_lft_)));
     }
 
     // Send T1 if it's sane: If we sent T2, T1 must be less than that.  If not it must be

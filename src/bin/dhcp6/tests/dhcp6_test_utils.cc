@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,9 +96,23 @@ Dhcpv6SrvTest::checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
         return (boost::shared_ptr<Option6IAAddr>());
     }
 
-    EXPECT_EQ(expected_iaid, ia->getIAID());
-    EXPECT_EQ(expected_t1, ia->getT1());
-    EXPECT_EQ(expected_t2, ia->getT2());
+    if (expected_iaid != ia->getIAID()) {
+        ADD_FAILURE() << "ia->iaid: " << ia->getIAID()
+                      << " is not expected value: " << expected_iaid;
+        return (boost::shared_ptr<Option6IAAddr>());
+    }
+
+    if (expected_t1 != ia->getT1()) {
+        ADD_FAILURE() << "ia->t1: " << ia->getT1()
+                      << " is not expected value: " << expected_t1;
+        return (boost::shared_ptr<Option6IAAddr>());
+    }
+
+    if (expected_t2 != ia->getT2()) {
+        ADD_FAILURE() << "ia->t2: " << ia->getT2()
+                      << " is not expected value: " << expected_t2;
+        return (boost::shared_ptr<Option6IAAddr>());
+    }
 
     tmp = ia->getOption(D6O_IAADDR);
     boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);

@@ -2741,8 +2741,9 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     ASSERT_TRUE(tmp);
 
     // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
-                                                           subnet_->getT2());
+    boost::shared_ptr<Option6IAAddr> addr_opt;
+    ASSERT_NO_FATAL_FAILURE(addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                  subnet_->getT2()));
 
     ASSERT_TRUE(addr_opt);
     // Check that the lease is really in the database
@@ -2834,7 +2835,8 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     ASSERT_TRUE(tmp);
 
     // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 601, 802);
+    boost::shared_ptr<Option6IAAddr> addr_opt;
+    ASSERT_NO_FATAL_FAILURE(addr_opt = checkIA_NA(reply, 1000, 602, 802));
 
     ASSERT_TRUE(addr_opt);
     // Check that the lease is really in the database
@@ -3863,8 +3865,9 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Rebind) {
     ASSERT_TRUE(tmp);
 
     // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
-                                                           subnet_->getT2());
+    boost::shared_ptr<Option6IAAddr> addr_opt;
+    ASSERT_NO_FATAL_FAILURE(addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                  subnet_->getT2()));
 
     ASSERT_TRUE(addr_opt);
     // Check that the lease is really in the database
@@ -3951,7 +3954,8 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
 
     // Check that IA_NA was returned and that there's an address included
     // Note we also verify that T1 and T2 were calculated correctly.
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 1000, 601, 802);
+    boost::shared_ptr<Option6IAAddr> addr_opt;
+    ASSERT_NO_FATAL_FAILURE(addr_opt = checkIA_NA(reply, 1000, 602, 802));
 
     ASSERT_TRUE(addr_opt);
     // Check that the lease is really in the database
@@ -4757,7 +4761,8 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
     ASSERT_TRUE(tmp);
 
     // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(adv, 234, 1000, 2000);
+    boost::shared_ptr<Option6IAAddr> addr_opt;
+    ASSERT_NO_FATAL_FAILURE(addr_opt = checkIA_NA(adv, 234, 1000, 2000));
 
     ASSERT_TRUE(addr_opt);
     ASSERT_EQ("2001:db8::f00", addr_opt->getAddress().toText());
@@ -4837,7 +4842,8 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier_hwaddr) {
     ASSERT_TRUE(tmp);
 
     // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(adv, 234, 1000, 2000);
+    boost::shared_ptr<Option6IAAddr> addr_opt;
+    ASSERT_NO_FATAL_FAILURE(addr_opt = checkIA_NA(adv, 234, 1000, 2000));
 
     ASSERT_TRUE(addr_opt);
     ASSERT_EQ("2001:db8::f00", addr_opt->getAddress().toText());
