@@ -158,13 +158,13 @@ fill() {
     count=$1;shift
     fill_char=$1;shift
     length=`echo $string | wc -c`
-    length=$(($length - 1))
+    length=$((length - 1))
     if [ $length -gt $count ]; then
         value=`echo "$string" | cut -c 1-$count`
         return
     fi
     result=""
-    count=$(($count - $length))
+    count=$((count - length))
     i=1
     while [ $i -le $count ]; do
         result="$fill_char$result"
@@ -176,21 +176,21 @@ fill() {
 identifier_text() {
     string=$1;shift
     length=`echo $string | wc -c`
-    length=$(($length - 1))
+    length=$((length - 1))
     # skip 0x from 0xabcdef
     string=`echo "$string" | cut -c 3-$length`
     identifier=""
     # add starting 0: 0xabc->0x0abc
-    mod=$(($length % 2))
+    mod=$((length % 2))
     if [ $mod -ne 0 ]; then
         string="0"$string
     fi
     length=`echo $string | wc -c`
-    length=$(($length - 1))
+    length=$((length - 1))
     i=1
     while [ $i -le $length ]; do
         char=`echo "$string" | cut -c $i-$i`
-        mod=$(($i % 2))
+        mod=$((i % 2))
         if [ $mod -ne 0 -a $i -ne 1 ]; then
             char=":"$char
         fi
@@ -202,18 +202,16 @@ identifier_text() {
 key_hash() {
     string=$1;shift
     length=`echo $string | wc -c`
-    length=$(($length - 1))
+    length=$((length - 1))
     FNV_prime=1099511628211
     FNV_offset_basis=-3750763034362895579 # signed value for 14695981039346656037
-    MAX_UINT64=18446744073709551615
     hash=$FNV_offset_basis
     i=1
     while [ $i -le $length ]; do
         char=`echo "$string" | cut -c $i-$i`
         data=`echo "$char" | tr -d "\n" | od -An -t uC | tr -d ' '`
-        hash=$(($hash ^ $data))
-        hash=$(($hash * $FNV_prime))
-        hash=$(($hash % $MAX_UINT64))
+        hash=$((hash ^ data))
+        hash=$((hash * FNV_prime))
         i=$((i+1))
     done
 }
