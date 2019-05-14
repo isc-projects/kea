@@ -1,3 +1,8 @@
+1570.	[bug]		marcin
+	Corrected the bug in the Kea HTTP library which could cause a server
+	to assert when system clock was modified during the transaction.
+	(Gitlab #599,!320, git 958abe5063b6e602c0070e336524e313c3a87671)
+
 1569.	[perf]		fdupont
 	Improved performance of the DHCPv4 server in cases when
 	match-client-id set disabled by removing unnecessary query to the
