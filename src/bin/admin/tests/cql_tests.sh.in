@@ -354,7 +354,7 @@ cql_unused_subnet_id_test() {
     assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
 
     # sort data so we can compare
-    cat $export_file | grep "|" | sort -V > $sorted_file
+    cat $export_file | grep "|" | sort -V | tr -d " " | sed 's/|/,/g' > $sorted_file
 
     # Compare the dump output to reference file, they should be identical.
     cmp -s $sorted_file $ref_file
