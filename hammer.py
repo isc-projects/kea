@@ -40,7 +40,7 @@ import xml.etree.ElementTree as ET
 
 
 SYSTEMS = {
-    'fedora': ['27', '28', '29'],
+    'fedora': ['27', '28', '29', '30'],
     'centos': ['7'],
     'rhel': ['8'],
     'ubuntu': ['16.04', '18.04', '18.10'],
@@ -56,6 +56,8 @@ IMAGE_TEMPLATES = {
     'fedora-28-virtualbox':    {'bare': 'generic/fedora28',            'kea': 'godfryd/kea-fedora-28'},
     'fedora-29-lxc':           {'bare': 'godfryd/lxc-fedora-29',       'kea': 'godfryd/kea-fedora-29'},
     'fedora-29-virtualbox':    {'bare': 'generic/fedora29',            'kea': 'godfryd/kea-fedora-29'},
+    'fedora-30-lxc':           {'bare': 'godfryd/lxc-fedora-30',       'kea': 'godfryd/kea-fedora-30'},
+    'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
@@ -498,7 +500,10 @@ class VagrantEnv(object):
                     provider_found = True
                     break
             if provider_found:
-                v = int(ver['number'])
+                try:
+                    v = int(ver['number'])
+                except:
+                    return ver['number']
                 if v > latest_version:
                     latest_version = v
         return latest_version
@@ -928,7 +933,7 @@ def _install_cassandra_deb(system, revision, env, check_times):
                 env=env, check_times=check_times)
 
 
-def _install_cassandra_rpm(system, env, check_times):
+def _install_cassandra_rpm(system, revision, env, check_times):
     """Install Cassandra and cpp-driver using RPM package."""
     if not os.path.exists('/usr/bin/cassandra'):
         if system == 'centos':
@@ -942,12 +947,18 @@ def _install_cassandra_rpm(system, env, check_times):
 
     if system == 'centos':
         execute('sudo systemctl daemon-reload')
+
+    if system == 'fedora' and revision == '30':
+        execute("echo '-Xms1G -Xmx1G' | sudo tee -a /etc/cassandra/jvm.options")
     execute('sudo systemctl start cassandra')
 
     if not os.path.exists('/usr/include/cassandra.h'):
         execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm')
         execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+        if system == 'centos':
+            execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+        else:
+            execute('sudo dnf install -y cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
         execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
 
 
@@ -1003,6 +1014,8 @@ def prepare_system_local(features, check_times):
 
         if 'pgsql' in features:
             packages.extend(['postgresql-devel', 'postgresql-server'])
+            if revision in ['30']:
+                packages.extend(['postgresql-server-devel'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1018,7 +1031,7 @@ def prepare_system_local(features, check_times):
         execute('sudo dnf clean packages', env=env, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_rpm(system, env, check_times)
+            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare centos
     elif system == 'centos':
@@ -1244,8 +1257,8 @@ def _calculate_build_timeout(features):
     return timeout
 
 
-def _prepare_ccache_if_needed(system, features, ccache_dir, env):
-    if 'ccache' in features or ccache_dir is not None:
+def _prepare_ccache_if_needed(system, ccache_dir, env):
+    if ccache_dir is not None:
         if system in ['debian', 'ubuntu']:
             ccache_bin_path = '/usr/lib/ccache/'
         elif system in ['centos', 'rhel', 'fedora']:
@@ -1317,7 +1330,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cpus = jobs
 
     # enable ccache if requested
-    env = _prepare_ccache_if_needed(system, features, ccache_dir, env)
+    env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     # do build
     timeout = _calculate_build_timeout(features)
@@ -1404,7 +1417,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     """Build native (RPM or DEB) packages."""
 
     # enable ccache if requested
-    env = _prepare_ccache_if_needed(system, features, ccache_dir, env)
+    env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
     assert repo_url is not None
@@ -1582,10 +1595,11 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
     return dt, error, total, passed
 
 
-def package_box(provider, system, revision, features, dry_run, check_times):
+def package_box(provider, system, revision, features, dry_run, check_times, reuse):
     """Prepare Vagrant box of specified system."""
     ve = VagrantEnv(provider, system, revision, features, 'bare', dry_run, check_times=check_times)
-    ve.destroy()
+    if not reuse:
+        ve.destroy()
     ve.bring_up_latest_box()
     ve.prepare_system()
     # TODO cleanup
@@ -1797,6 +1811,8 @@ def parse_args():
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('--repository-url', default=None,
                         help='Repository for 3rd party dependencies and for uploading built packages.')
+    parser.add_argument('-u', '--reuse', action='store_true',
+                        help='Reuse existing system image, otherwise (default case) if there is any exising then destroy it first.')
 
     args = main_parser.parse_args()
 
@@ -2037,7 +2053,7 @@ def main():
         _check_system_revision(args.system, args.revision)
         features = _get_features(args)
         log.info('Enabled features: %s', ' '.join(features))
-        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
+        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse)
 
     elif args.command == "prepare-system":
         prepare_system_cmd(args)
