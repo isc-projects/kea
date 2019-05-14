@@ -120,8 +120,7 @@ cql_lease4_dump_test() {
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
 
     output_file="$output_dir/data/cql.lease4_dump_test.output.csv"
-    tmp_file="$output_file.tmp"
-
+    sorted_file="$output_dir/data/cql.lease4_dump_test.output.sorted.csv"
     ref_file="$test_dir/data/cql.lease4_dump_test.reference.csv"
 
     # Wipe out any residuals from prior failed runs.
@@ -130,9 +129,9 @@ cql_lease4_dump_test() {
         rm $output_file
     fi
 
-    if [ -e $tmp_file ]
+    if [ -e $sorted_file ]
     then
-        rm $tmp_file
+        rm $sorted_file
     fi
 
     # Wipe the database.
@@ -167,12 +166,18 @@ cql_lease4_dump_test() {
     $keaadmin lease-dump cql -4 -u $db_user -p $db_password -n $db_name -d $db_scripts_dir -o $output_file
     assert_eq 0 $? "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
+    # sort data so we can compare
+    cat $output_file | sort -g > $sorted_file
+
     # Compare the dump output to reference file, they should be identical.
-    cmp -s $output_file  $ref_file
+    cmp -s $sorted_file $ref_file
     assert_eq 0 $? "dump file does not match reference file, expected exit code %d, actual %d"
 
     # remove the output file.
     rm $output_file
+
+    # remove the sorted file.
+    rm $sorted_file
 
     # Wipe the database.
     cql_wipe
@@ -188,8 +193,7 @@ cql_lease6_dump_test() {
     script_dir="@abs_top_srcdir@/src/bin/admin/scripts"
 
     output_file="$output_dir/data/cql.lease6_dump_test.output.csv"
-    tmp_file="$output_file.tmp"
-
+    sorted_file="$output_dir/data/cql.lease6_dump_test.output.sorted.csv"
     ref_file="$test_dir/data/cql.lease6_dump_test.reference.csv"
 
     # Wipe out any residuals from prior failed runs.
@@ -198,9 +202,9 @@ cql_lease6_dump_test() {
         rm $output_file
     fi
 
-    if [ -e $tmp_file ]
+    if [ -e $sorted_file ]
     then
-        rm $tmp_file
+        rm $sorted_file
     fi
 
     # Wipe the database.
@@ -238,12 +242,18 @@ cql_lease6_dump_test() {
     $keaadmin lease-dump cql -6 -u $db_user -p $db_password -n $db_name -d $db_scripts_dir -o $output_file
     assert_eq 0 $? "kea-admin lease-dump -6 failed, status code %d"
 
+    # sort data so we can compare
+    cat $output_file | sort -g > $sorted_file
+
     # Compare the dump output to reference file, they should be identical.
-    cmp -s $output_file  $ref_file
+    cmp -s $sorted_file $ref_file
     assert_eq 0 $? "dump file does not match reference file, expected exit code %d, actual %d"
 
     # remove the output file.
     rm $output_file
+
+    # remove the sorted file.
+    rm $sorted_file
 
     # Wipe the database.
     cql_wipe
@@ -331,6 +341,7 @@ cql_unused_subnet_id_test() {
 
     output_dir="@abs_top_builddir@/src/bin/admin/tests"
     export_file="$output_dir/data/cql.subnet_id_test.csv"
+    sorted_file="$output_dir/data/cql.subnet_id_test.sorted.csv"
 
     # Fetch host_reservation data for comparison
     echo "Exporting host_reservation data to $export_file ..."
@@ -341,12 +352,19 @@ cql_unused_subnet_id_test() {
 
     cql_execute "$qry" > $export_file
     assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
+
+    # sort data so we can compare
+    cat $export_file | grep "|" | sort -V > $sorted_file
+
     # Compare the dump output to reference file, they should be identical.
-    cmp -s $export_file $ref_file
+    cmp -s $sorted_file $ref_file
     assert_eq 0 $? "export file does not match reference file, expected exit code %d, actual %d"
 
     # remove the output file.
     rm $export_file
+
+    # remove the sorted file.
+    rm $sorted_file
 
     # Wipe the database.
     cql_wipe
