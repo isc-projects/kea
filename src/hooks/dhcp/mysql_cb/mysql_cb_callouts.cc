@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <config.h>
 #include <hooks/hooks.h>
 #include <mysql_cb_dhcp4.h>
+#include <mysql_cb_dhcp6.h>
 
 using namespace isc::hooks;
 
@@ -23,8 +24,9 @@ extern "C" {
 
 int load(LibraryHandle& /* handle */) {
 
-    // Register MySQL CB factory with CB Manager
+    // Register MySQL CB factories with CB Managers
     isc::dhcp::MySqlConfigBackendDHCPv4::registerBackendType();
+    isc::dhcp::MySqlConfigBackendDHCPv6::registerBackendType();
 
     return (0);
 }
@@ -34,8 +36,9 @@ int load(LibraryHandle& /* handle */) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
 
-    // Unregister the factory and remove MySQL backends
+    // Unregister the factories and remove MySQL backends
     isc::dhcp::MySqlConfigBackendDHCPv4::unregisterBackendType();
+    isc::dhcp::MySqlConfigBackendDHCPv6::unregisterBackendType();
     return (0);
 }
 
