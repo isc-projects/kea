@@ -587,7 +587,8 @@ Connection::terminate(const boost::system::error_code& ec,
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
                 .arg(url_.toText())
-                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+                .arg((parser_ ? parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE)
+                      : "[HttpResponseParser is null]"));
 
         } else {
             std::string err = parsing_error.empty() ? ec.message() : parsing_error;
@@ -603,7 +604,8 @@ Connection::terminate(const boost::system::error_code& ec,
                 LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                           HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
                     .arg(url_.toText())
-                    .arg(parser_->getBufferAsString());
+                    .arg((parser_ ? parser_->getBufferAsString()
+                          : "[HttpResponseParser is null]"));
             }
         }
 
