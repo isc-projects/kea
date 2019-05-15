@@ -19,6 +19,17 @@ namespace dhcp {
 class BaseNetworkParser : public data::SimpleParser {
 protected:
 
+    /// @brief Parses DHCP lifetime.
+    ///
+    /// Used here for valid-lifetime but reused for preferred-lifetime.
+    ///
+    /// @param scope Data element holding e.g.  shared network configuration
+    /// to be parsed.
+    /// @param name Base name of the lifetime parameter.
+    /// @return A triplet with the parsed lifetime value.
+    const Triplet<uint32_t> parseLifetime(const data::ConstElementPtr& scope,
+                                          const std::string& name);
+
     /// @brief Parses common DHCP timers.
     ///
     /// The parsed parameters are:

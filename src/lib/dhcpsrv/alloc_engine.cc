@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/option_int.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
@@ -3437,6 +3438,17 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         isc_throw(BadValue, "Can't create a lease without a subnet");
     }
 
+    // Use the dhcp-lease-time content or the default for lease length.
+    uint32_t valid_lft = ctx.subnet_->getValid();
+    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
+    OptionUint32Ptr opt_lft;
+    if (opt) {
+        opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
+    }
+    if (opt_lft) {
+        valid_lft = ctx.subnet_->getValid().get(opt_lft->getValue());
+    }
+
     time_t now = time(NULL);
 
     // @todo: remove this kludge?
@@ -3447,8 +3459,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     const uint8_t* local_copy0 = local_copy.empty() ? 0 : &local_copy[0];
 
     Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, local_copy0, local_copy.size(),
-                               ctx.subnet_->getValid(),
-                               now, ctx.subnet_->getID()));
+                               valid_lft, now, ctx.subnet_->getID()));
 
     // Set FQDN specific lease parameters.
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
@@ -3852,7 +3863,17 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->hwaddr_ = ctx.hwaddr_;
     lease->client_id_ = ctx.subnet_->getMatchClientId() ? ctx.clientid_ : ClientIdPtr();
     lease->cltt_ = time(NULL);
-    lease->valid_lft_ = ctx.subnet_->getValid();
+    // Use the dhcp-lease-time content or the default for lease length.
+    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
+    OptionUint32Ptr opt_lft;
+    if (opt) {
+        opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
+    }
+    if (opt_lft) {
+        lease->valid_lft_ = ctx.subnet_->getValid().get(opt_lft->getValue());
+    } else {
+        lease->valid_lft_ = ctx.subnet_->getValid();
+    }
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;

@@ -171,8 +171,22 @@ Network::toElement() const {
 
     // Set valid-lifetime
     if (!valid_.unspecified()) {
-        map->set("valid-lifetime",
-                 Element::create(static_cast<long long>(valid_.get())));
+        if ((valid_.get() == valid_.getMin()) &&
+            (valid_.get() == valid_.getMax())) {
+            map->set("valid-lifetime",
+                     Element::create(static_cast<long long>(valid_.get())));
+        } else {
+            map->set("default-valid-lifetime",
+                     Element::create(static_cast<long long>(valid_.get())));
+            if (valid_.get() != valid_.getMin()) {
+                map->set("min-valid-lifetime",
+                         Element::create(static_cast<long long>(valid_.getMin())));
+            }
+            if (valid_.get() != valid_.getMax()) {
+                map->set("max-valid-lifetime",
+                         Element::create(static_cast<long long>(valid_.getMax())));
+            }
+        }
     }
 
     // Set reservation mode
@@ -291,8 +305,22 @@ Network6::toElement() const {
 
     // Set preferred-lifetime
     if (!preferred_.unspecified()) {
-        map->set("preferred-lifetime",
-                 Element::create(static_cast<long long>(preferred_.get())));
+        if ((preferred_.get() == preferred_.getMin()) &&
+            (preferred_.get() == preferred_.getMax())) {
+            map->set("preferred-lifetime",
+                     Element::create(static_cast<long long>(preferred_.get())));
+        } else {
+            map->set("default-preferred-lifetime",
+                     Element::create(static_cast<long long>(preferred_.get())));
+            if (preferred_.get() != preferred_.getMin()) {
+                map->set("min-preferred-lifetime",
+                         Element::create(static_cast<long long>(preferred_.getMin())));
+            }
+            if (preferred_.get() != preferred_.getMax()) {
+                map->set("max-preferred-lifetime",
+                         Element::create(static_cast<long long>(preferred_.getMax())));
+            }
+        }
     }
 
     // Set interface-id
