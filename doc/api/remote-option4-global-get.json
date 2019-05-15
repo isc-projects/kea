@@ -1,12 +1,37 @@
 {
     "name": "remote-option4-global-get",
-    "brief": "a sentence or two explaining what this command does",
-    "description": "See <xref linkend=\"cmd-\"/>",
-    "support": [ "undocumented" ],
-    "avail": "0.0.0",
-    "hook": "undocumented",
-    "cmd-syntax": "Syntax of the command",
-    "cmd-comment": "Possibly some extra comments after the syntax.",
-    "resp-syntax": "Syntax of the response",
-    "resp-comment": "Optional extra comments after the resposne syntax."
+    "brief": "This command is used to fetch a global DHCPv4 option for the server from the specified database.",
+    "description": "See <xref linkend=\"cmd-remote-option4-global-get\"/>",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-option4-global-get\",
+    \"arguments\": {
+        \"options\": [
+            {
+                \"code\": <option code>,
+                \"space\": <option space>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+}",
+    "cmd-comment": "The option is identified by the pair of option code/space values. The <command>remote</command> map contains specification of the backend from which the option should be fetched. Typically it contains \"type\": \"mysql\".",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv4 option <option code> in <option space> found.\",
+    \"arguments\": {
+        \"options\": [
+            {
+                <option information>,
+                \"metadata\": {
+                    \"server-tag\": <server tag>
+                }
+            }
+        ]
+    }
+}",
+    "resp-comment": "The metadata is included and it provides database specific information associated with the returned object."
 }

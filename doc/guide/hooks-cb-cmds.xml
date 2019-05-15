@@ -318,7 +318,7 @@
 
         <section xml:id="command-remote-network4-set">
           <title>remote-network4-set</title>
-          <para>This command creates a new IPv4 shared network or updates an existing
+          <para>This command creates a new IPv4 shared network or replaces an existing
           shared network in the database. The structure of the shared network information
           is the same as in the Kea configuration file (see <xref linkend="shared-network4"/>),
           with the exception that the <command>subnet4</command> parameter is not allowed
@@ -371,6 +371,202 @@
             </para>
           </note>
         </section>
+
+        <section xml:id="command-remote-option-def4-del">
+          <title>remote-option-def4-del</title>
+          <para>This command is used to delete DHCPv4 option definition from the
+          database. The option definition is identified by an option code and
+          option space. For example:
+          <screen>
+{
+    "command": "remote-option-def4-del",
+    "arguments": {
+        "option-defs": [ {
+            "code": 1,
+            "space": "isc"
+        } ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+             deletes the definition of the option having the code of 1 and
+             belonging to the option space "isc". The top level option space
+             where standard DHCPv4 options belong is called "dhcp4".
+          </para>
+        </section>
+
+        <section xml:id="command-remote-option-def4-get">
+          <title>remote-option-def4-get</title>
+          <para>This comamnd is used to fetch a specified DHCPv4 option
+          definition from the database. The option definition is identified
+          by option code and option space. The top level option space
+          where DHCPv4 standard options belong is called "dhcp4".
+          </para>
+          <para>The following command retrieves an option definition
+          having the code of 1 and belonging to option space "isc":
+          <screen>
+{
+    "command": "remote-option-def4-get"
+    "arguments": {
+        "option-defs": [ {
+            "code": 1,
+            "space": "isc"
+        } ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+        </section>
+
+        <section xml:id="command-remote-option-def4-get-all">
+          <title>remote-option-def4-get-all</title>
+          <para>This command is used to fetch all DHCPv4 option definitions
+          from the database. It takes no arguments except an optional
+          <command>remote</command> map.</para>
+        </section>
+
+        <section xml:id="command-remote-option-def4-set">
+          <title>remote-option-def4-set</title>
+          <para>This command creates a new DHCPv4 option definition or
+          replaces an existing option definition in the database. The structure
+          of the option definition information is the same as in the Kea
+          configuration file (see <xref linkend="dhcp4-custom-options"/>).
+          For example:
+          <screen>
+{
+    "command": "remote-option-def4-set",
+    "arguments": {
+        "option-defs": [
+            {
+                "name": "foo",
+                "code": 222,
+                "type": "uint32",
+                "array": false,
+                "record-types": "",
+                "space": "dhcp4",
+                "encapsulate": ""
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+        </section>
+
+        <section xml:id="command-remote-option4-global-del">
+          <title>remote-option4-global-del</title>
+          <para>This command is used to delete global DHCPv4 option from the database.
+          The option is identified by an option code and option space. For example:
+          <screen>
+{
+    "command": "remote-option4-global-del",
+    "arguments": {
+        "options": [
+            {
+                "code": 5
+                "space": "dhcp4"
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+          <para>
+            The "dhcp4" is the top level option space where the standard DHCPv4
+            options belong.
+          </para>
+        </section>
+
+        <section xml:id="command-remote-option4-global-get">
+          <title>remote-option4-global-get</title>
+          <para>This command is used to fetch a global DHCPv4 option from the
+          database. The option is identified by code and option space. The top
+          level option space where DHCPv4 standard options belong is called
+          "dhcp4".
+          </para>
+          <para>
+            The following command retrieves the "Domain Name" (code 5) option:
+{
+    "command": remote-option4-global-get",
+    "arguments": {
+        "options": [
+            {
+                "code": 5,
+                "space": "dhcp4"
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </para>
+        </section>
+
+        <section xml:id="command-remote-option4-global-get-all">
+          <title>remote-option4-global-get-all</title>
+          <para>This command is used to fetch all global DHCPv4 options from the
+          database. It takes no arguments except the optional <command>remote</command>
+          map.</para>
+        </section>
+
+        <section xml:id="command-remote-option4-global-set">
+          <title>remote-option4-global-set</title>
+          <para>This command creates a new global DHCPv4 option or replaces
+          an existing option in the database. The structure of the option
+          information is the same as in the Kea configuration file
+          (see <xref linkend="dhcp4-std-options"/>). For example:
+          <screen>
+{
+    "command": "remote-option4-global-set",
+    "arguments": {
+        "options": [
+            {
+                "name": "dns-servers",
+                "data": "2001:db8:1::1"
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+          <para>
+            Note that specifying an option name rather than option code only works
+            reliably for the standard DHCP options. When specifying a value for the
+            user defined DHCP option, the option code should be specified instead of
+            the name. For example:
+            <screen>
+{
+    "command": "remote-option4-global-set",
+    "arguments": {
+        "options": [
+            {
+                "code": 1,
+                "space": "isc",
+                "data": "2001:db8:1::1"
+            }
+        ]
+    }
+
+}
+            </screen>
+          </para>
+        </section>
+
 
       </section>
 

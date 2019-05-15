@@ -205,6 +205,7 @@
 , <command><link linkend="ref-remote-option-def4-get-all">remote-option-def4-get-all</link></command>
 , <command><link linkend="ref-remote-option-def4-set">remote-option-def4-set</link></command>
 , <command><link linkend="ref-remote-option4-global-del">remote-option4-global-del</link></command>
+, <command><link linkend="ref-remote-option4-global-get">remote-option4-global-get</link></command>
 , <command><link linkend="ref-remote-option4-global-get-all">remote-option4-global-get-all</link></command>
 , <command><link linkend="ref-remote-option4-global-set">remote-option4-global-set</link></command>
 , <command><link linkend="ref-remote-subnet4-del-by-id">remote-subnet4-del-by-id</link></command>
@@ -305,7 +306,6 @@
 , <command><link linkend="ref-remote-option-def6-get">remote-option-def6-get</link></command>
 , <command><link linkend="ref-remote-option-def6-get-all">remote-option-def6-get-all</link></command>
 , <command><link linkend="ref-remote-option-def6-set">remote-option-def6-set</link></command>
-, <command><link linkend="ref-remote-option4-global-get">remote-option4-global-get</link></command>
 , <command><link linkend="ref-remote-option6-global-del">remote-option6-global-del</link></command>
 , <command><link linkend="ref-remote-option6-global-get">remote-option6-global-get</link></command>
 , <command><link linkend="ref-remote-option6-global-get-all">remote-option6-global-get-all</link></command>
@@ -330,6 +330,7 @@
 , <command><link linkend="ref-remote-option-def4-get-all">remote-option-def4-get-all</link></command>
 , <command><link linkend="ref-remote-option-def4-set">remote-option-def4-set</link></command>
 , <command><link linkend="ref-remote-option4-global-del">remote-option4-global-del</link></command>
+, <command><link linkend="ref-remote-option4-global-get">remote-option4-global-get</link></command>
 , <command><link linkend="ref-remote-option4-global-get-all">remote-option4-global-get-all</link></command>
 , <command><link linkend="ref-remote-option4-global-set">remote-option4-global-set</link></command>
 , <command><link linkend="ref-remote-subnet4-del-by-id">remote-subnet4-del-by-id</link></command>
@@ -416,7 +417,6 @@
 , <command><link linkend="ref-remote-option-def6-get">remote-option-def6-get</link></command>
 , <command><link linkend="ref-remote-option-def6-get-all">remote-option-def6-get-all</link></command>
 , <command><link linkend="ref-remote-option-def6-set">remote-option-def6-set</link></command>
-, <command><link linkend="ref-remote-option4-global-get">remote-option4-global-get</link></command>
 , <command><link linkend="ref-remote-option6-global-del">remote-option6-global-del</link></command>
 , <command><link linkend="ref-remote-option6-global-get">remote-option6-global-get</link></command>
 , <command><link linkend="ref-remote-option6-global-get-all">remote-option6-global-get-all</link></command>
@@ -3177,8 +3177,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Command syntax:
   <screen>{
-    "command": "remote-option-def4-get"
-    "service": [ "dhcp4" ],
+    "command": "remote-option-def4-get",
     "arguments": {
         "option-defs": [ {
             "code": &lt;option code&gt;,
@@ -3438,21 +3437,46 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-option4-global-get -->
 <section xml:id="reference-remote-option4-global-get">
 <title>remote-option4-global-get reference</title>
-<para xml:id="ref-remote-option4-global-get"><command>remote-option4-global-get</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option4-global-get"><command>remote-option4-global-get</command> - This command is used to fetch a global DHCPv4 option for the server from the specified database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option4-global-get"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option4-global-get",
+    "arguments": {
+        "options": [
+            {
+                "code": &lt;option code&gt;,
+                "space": &lt;option space&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+}</screen>
+The option is identified by the pair of option code/space values. The <command>remote</command> map contains specification of the backend from which the option should be fetched. Typically it contains "type": "mysql".</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv4 option &lt;option code&gt; in &lt;option space&gt; found.",
+    "arguments": {
+        "options": [
+            {
+                &lt;option information&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ]
+    }
+}</screen>
+The metadata is included and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-option4-global-get -->
