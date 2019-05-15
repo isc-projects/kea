@@ -45,7 +45,7 @@
       "parameters": {
 
           // Tells Kea to never cache more than 1000 hosts.
-          "maximum: "1000"
+          "maximum": 1000
 
       }
   } ]</screen>
@@ -86,6 +86,17 @@ in FIFO order, so the oldest entries are always removed.
 }</screen>
 This command will remove all hosts. If you want to delete only a
 certain number of cached hosts, please use cache-flush instead.
+    </para>
+  </section>
+
+  <section id="command-cache-size">
+    <title>cache-size Command</title>
+    <para>This command returns the number of host entries.
+    An example usage looks as follows:
+<screen>
+{
+    "command": "cache-size"
+}</screen>
     </para>
   </section>
 
@@ -154,6 +165,24 @@ any other tool that is able to understand JSON format.
 }</screen>
 This command will return all the cached hosts. Note that the response
 may be large.
+    </para>
+  </section>
+
+  <section id="command-cache-get-by-id">
+    <title>cache-get-by-id Command</title>
+    <para>This command is similar to cache-get, but instead of
+    returning the whole content it returns only the entries matching
+    the given identifier.</para>
+    <para>It takes one parameter, which defines the identifier of
+    wanted cached host reservations. An example usage looks as follows:
+<screen>
+{
+    "command": "cache-get-by-id",
+    "arguments": {
+        "hw-address": "01:02:03:04:05:06"
+    }
+}</screen>
+This command will return all the cached hosts with the given hardware address.
     </para>
   </section>
 

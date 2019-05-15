@@ -13,9 +13,11 @@
 <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-cache-clear">cache-clear</link></command>
 , <command><link linkend="ref-cache-get">cache-get</link></command>
+, <command><link linkend="ref-cache-get-by-id">cache-get-by-id</link></command>
 , <command><link linkend="ref-cache-insert">cache-insert</link></command>
 , <command><link linkend="ref-cache-load">cache-load</link></command>
 , <command><link linkend="ref-cache-remove">cache-remove</link></command>
+, <command><link linkend="ref-cache-size">cache-size</link></command>
 , <command><link linkend="ref-cache-write">cache-write</link></command>
 , <command><link linkend="ref-class-add">class-add</link></command>
 , <command><link linkend="ref-class-del">class-del</link></command>
@@ -109,9 +111,11 @@
 <para xml:id="commands-kea-dhcp4">Commands supported by kea-dhcp4 daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-cache-clear">cache-clear</link></command>
 , <command><link linkend="ref-cache-get">cache-get</link></command>
+, <command><link linkend="ref-cache-get-by-id">cache-get-by-id</link></command>
 , <command><link linkend="ref-cache-insert">cache-insert</link></command>
 , <command><link linkend="ref-cache-load">cache-load</link></command>
 , <command><link linkend="ref-cache-remove">cache-remove</link></command>
+, <command><link linkend="ref-cache-size">cache-size</link></command>
 , <command><link linkend="ref-cache-write">cache-write</link></command>
 , <command><link linkend="ref-class-add">class-add</link></command>
 , <command><link linkend="ref-class-del">class-del</link></command>
@@ -167,9 +171,11 @@
 <para xml:id="commands-kea-dhcp6">Commands supported by kea-dhcp6 daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-cache-clear">cache-clear</link></command>
 , <command><link linkend="ref-cache-get">cache-get</link></command>
+, <command><link linkend="ref-cache-get-by-id">cache-get-by-id</link></command>
 , <command><link linkend="ref-cache-insert">cache-insert</link></command>
 , <command><link linkend="ref-cache-load">cache-load</link></command>
 , <command><link linkend="ref-cache-remove">cache-remove</link></command>
+, <command><link linkend="ref-cache-size">cache-size</link></command>
 , <command><link linkend="ref-cache-write">cache-write</link></command>
 , <command><link linkend="ref-class-add">class-add</link></command>
 , <command><link linkend="ref-class-del">class-del</link></command>
@@ -235,9 +241,11 @@
 .</para>
 <para xml:id="commands-host_cache-lib">Commands supported by host_cache hook library: <command><link linkend="ref-cache-clear">cache-clear</link></command>
 , <command><link linkend="ref-cache-get">cache-get</link></command>
+, <command><link linkend="ref-cache-get-by-id">cache-get-by-id</link></command>
 , <command><link linkend="ref-cache-insert">cache-insert</link></command>
 , <command><link linkend="ref-cache-load">cache-load</link></command>
 , <command><link linkend="ref-cache-remove">cache-remove</link></command>
+, <command><link linkend="ref-cache-size">cache-size</link></command>
 , <command><link linkend="ref-cache-write">cache-write</link></command>
 .</para>
 <para xml:id="commands-host_cmds-lib">Commands supported by host_cmds hook library: <command><link linkend="ref-reservation-add">reservation-add</link></command>
@@ -381,6 +389,44 @@ Result is an integer representation of the status. Currently supported statuses 
 
 </section>
 <!-- end of cache-get -->
+
+<!-- start of cache-get-by-id -->
+<section xml:id="reference-cache-get-by-id">
+<title>cache-get-by-id reference</title>
+<para xml:id="ref-cache-get-by-id"><command>cache-get-by-id</command> - Returns entries matching the given identifier from the host cache.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+
+<para>Availability: 1.6.0 (<link linkend="commands-host_cache-lib">host_cache</link>  hook)</para>
+
+<para>Description and examples: See <xref linkend="command-cache-get-by-id"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "cache-get-by-id",
+    "arguments": {
+        "hw-address": "01:02:03:04:05:06"
+    }
+}</screen>
+</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": 0
+    "text": "2 entries returned."
+    "arguments": &lt;list of cashed host&gt;
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
+
+</section>
+<!-- end of cache-get-by-id -->
 
 <!-- start of cache-insert -->
 <section xml:id="reference-cache-insert">
@@ -534,6 +580,42 @@ Result is an integer representation of the status. Currently supported statuses 
 
 </section>
 <!-- end of cache-remove -->
+
+<!-- start of cache-size -->
+<section xml:id="reference-cache-size">
+<title>cache-size reference</title>
+<para xml:id="ref-cache-size"><command>cache-size</command> - This command returns the number of cached host reservations.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+
+<para>Availability: 1.6.0 (<link linkend="commands-host_cache-lib">host_cache</link>  hook)</para>
+
+<para>Description and examples: See <xref linkend="command-cache-size"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "cache-size"
+}</screen>
+</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": 0,
+    "text": "123 entries.",
+    "arguments": { "size": 123 }
+}
+</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
+
+</section>
+<!-- end of cache-size -->
 
 <!-- start of cache-write -->
 <section xml:id="reference-cache-write">
@@ -1161,8 +1243,8 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of ha-sync -->
 <section xml:id="reference-ha-sync">
 <title>ha-sync reference</title>
-<para xml:id="ref-ha-sync"><command>ha-sync</command> - The command is issued to instruct the server running in HA mode to 
-              synchronize its local lease database with the selected peer.</para>
+<para xml:id="ref-ha-sync"><command>ha-sync</command> - The command is issued to instruct the server running in HA mode to
+synchronize its local lease database with the selected peer.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -1459,7 +1541,7 @@ lease6-add can be also used to add leases for IPv6 prefixes..</para>
 
 <para>Response syntax:
   <screen>{ "result": 0,
-	    "text": "Lease added." }
+            "text": "Lease added." }
 
           { "result": 1,
             "text": "missing parameter 'ip-address' (&lt;string&gt;:3:19)" }</screen>

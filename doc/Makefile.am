@@ -83,8 +83,9 @@ nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
 # want to document the API.
 EXTRA_DIST += api/build-report.json
 EXTRA_DIST += api/cache-clear.json api/cache-get.json
-EXTRA_DIST += api/cache-insert.json api/cache-load.json
-EXTRA_DIST += api/cache-remove.json api/cache-write.json
+EXTRA_DIST += api/cache-get-by-id.json api/cache-insert.json
+EXTRA_DIST += api/cache-load.json api/cache-remove.json
+EXTRA_DIST += api/cache-size.json  api/cache-write.json
 EXTRA_DIST += api/class-add.json api/class-del.json
 EXTRA_DIST += api/class-get.json api/class-list.json
 EXTRA_DIST += api/class-update.json

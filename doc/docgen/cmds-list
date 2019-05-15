@@ -1,9 +1,11 @@
 build-report
 cache-clear
 cache-get
+cache-get-by-id
 cache-insert
 cache-load
 cache-remove
+cache-size
 cache-write
 class-add
 class-del
