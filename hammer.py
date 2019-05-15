@@ -1959,6 +1959,11 @@ def build_cmd(args):
 
     _check_system_revision(args.system, args.revision)
 
+    if 'native-pkg' in features and not args.repository_url:
+        msg = "Enabling 'native-pkg' requires passing --repository-url."
+        print(msg)
+        sys.exit(1)
+
     if args.provider == 'all':
         providers = ['lxc', 'virtualbox']
     else:
