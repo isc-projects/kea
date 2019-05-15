@@ -561,12 +561,190 @@
             }
         ]
     }
-
 }
             </screen>
           </para>
         </section>
 
+        <section xml:id="command-remote-subnet4-del-by-id">
+          <title>remote-subnet4-del-by-id</title>
+          <para>This is the first variant of the command used to delete an IPv4 subnet
+          from the database. It uses subnet ID to identify the subnet.
+          For example, in order to delete the subnet with ID of 5:
+          <screen>
+{
+    "command": "remote-subnet4-del-by-id",
+    "arguments": {
+        "subnets": [ {
+            "id": 5
+        } ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+        </section>
+
+        <section xml:id="command-remote-subnet4-del-by-prefix">
+          <title>remote-subnet4-del-by-prefix</title>
+          <para>This is the second variant of the command used to delete an IPv4 subnet
+          from the database. It uses the subnet prefix to identify the subnet.
+          For example:
+          <screen>
+{
+    "command": "remote-subnet4-del-by-prefix",
+    "arguments": {
+        "subnets": [ {
+            "subnet": "192.0.2.0/24"
+        } ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+        </section>
+
+        <section xml:id="command-remote-subnet4-get-by-id">
+          <title>remote-subnet4-get-by-id</title>
+          <para>This command is used to fetch a subnet with the specified ID from the
+          database. For example:
+          <screen>
+{
+    "command": "remote-subnet4-get-by-id",
+    "arguments": {
+        "subnets": [
+            {
+                "id": 5
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+        </section>
+
+        <section xml:id="command-remote-subnet4-get-by-prefix">
+          <title>remote-subnet4-get-by-prefix</title>
+          <para>This command is used to fetch a subnet with the specified prefix from
+          the database. For example:
+          <screen>
+{
+    "command": "remote-subnet4-get-by-prefix",
+    "arguments": {
+        "subnets": [
+            {
+                "subnet": "192.0.2.0/24"
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+        </section>
+
+        <section xml:id="command-remote-subnet4-list">
+          <title>remote-subnet4-list</title>
+          <para>This command is used to list all IPv4 subnets from the database.
+          It takes no parameters except the optional <command>remote</command> map.
+          The returned information about each subnet is limited to subnet identifier,
+          prefix and associated shared network name. In order to retrieve full
+          information about the selected subnet use the
+          <command>remote-subnet4-get-by-id</command> or
+          <command>remote-subnet4-get-by-prefix</command>.
+          </para>
+        </section>
+
+        <section xml:id="command-remote-subnet4-set">
+          <title>remote-subnet4-set</title>
+          <para>This command is used to create a new subnet or replace an existing
+          subnet in the database. Setting the subnet also associates or disassociates
+          the subnet with/from a shared network.</para>
+
+          <para>The structure of the subnet information is similar to the structure
+          used in the configuration file (see <xref linkend="dhcp4-configuration"/>).
+          The subnet information conveyed in the <command>remote-subnet4-set</command>
+          must include additional parameter <command>shared-network-name</command>
+          which indicates whether the subnet belongs to a shared network or not.
+          </para>
+
+          <para>Consider the following example:
+          <screen>
+{
+    "command": "remote-subnet4-set",
+    "arguments": {
+        "subnets": [ {
+            "id": 5,
+            "subnet": "192.0.2.0/24",
+            "shared-network-name": "level3",
+            "pools": [ { "pool": "192.0.2.100-192.0.2.200" } ],
+            "option-data": [ {
+                "name": "routers",
+                "data": "192.0.2.1"
+            } ]
+        } ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+          </screen>
+          </para>
+
+          <para>It creates the subnet and associates the subnet with the "level3"
+          shared network. The "level3" must be created with the
+          <command>remote-network4-set</command> prior to creating the subnet.
+          </para>
+
+          <para>If the created subnet must be global (not associated with any
+          shared network), the <command>shared-network-name</command> must be
+          explicitly set to <command>null</command>:
+          <screen>
+{
+    "command": "remote-subnet4-set",
+    "arguments": {
+        "subnets": [ {
+            "id": 5,
+            "subnet": "192.0.2.0/24",
+            "shared-network-name": null,
+            "pools": [ { "pool": "192.0.2.100-192.0.2.200" } ],
+            "option-data": [ {
+                "name": "routers",
+                "data": "192.0.2.1"
+            } ]
+        } ]
+    }
+}
+          </screen>
+          </para>
+
+          <para>The subnet created in the previous example is replaced with the
+          new subnet having the same parameters but becomes global.</para>
+
+          <para>The <command>shared-network-name</command> parameter is mandatory
+          for the <command>remote-subnet4-set</command> command.</para>
+
+          <note>
+            <para>
+              Same as for other "set" commands, this command replaces the entire
+              information about the particular subnet in the database, if the subnet
+              information is already present. Therefore, when sending this command,
+              make sure to always include all parameters that must be specified for
+              the updated subnet instance. Any unspecified parameter will be marked
+              as unspecified in the database, even if its value was present prior to
+              sending the command.
+            </para>
+          </note>
+        </section>
 
       </section>
 
