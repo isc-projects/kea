@@ -788,6 +788,39 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"default-preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_DEFAULT_PREFERRED_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("default-preferred-lifetime", driver.loc_);
+    }
+}
+
+\"min-preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MIN_PREFERRED_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("min-preferred-lifetime", driver.loc_);
+    }
+}
+
+\"max-preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MAX_PREFERRED_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-preferred-lifetime", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -796,6 +829,39 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("valid-lifetime", driver.loc_);
+    }
+}
+
+\"default-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_DEFAULT_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("default-valid-lifetime", driver.loc_);
+    }
+}
+
+\"min-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MIN_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("min-valid-lifetime", driver.loc_);
+    }
+}
+
+\"max-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MAX_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-valid-lifetime", driver.loc_);
     }
 }
 
