@@ -727,12 +727,32 @@
                         "subnet": "192.0.0.0/8",
 
                         // Subnet level valid lifetime.
-                        "valid-lifetime": 6000
+                        "valid-lifetime": 6000,
+
+                        // Subnet level default valid lifetime.
+                        // (in fact only an alias of valid lifetime)
+                        "default-valid-lifetime": 6000,
+
+                        // Subnet level min valid lifetime.
+                        "min-valid-lifetime": 4000,
+
+                        // Subnet level max valid lifetime.
+                        "max-valid-lifetime": 8000
                     }
                 ],
 
                 // Shared network level valid lifetime.
-                "valid-lifetime": 6001
+                "valid-lifetime": 6001,
+
+                // Shared network level default valid lifetime.
+                // (in fact only an alias of valid lifetime)
+                "default-valid-lifetime": 6001,
+
+                // Subnet level min valid lifetime.
+                "min-valid-lifetime": 4001,
+
+                // Subnet level max valid lifetime.
+                "max-valid-lifetime": 8001
             }
         ],
 
@@ -744,6 +764,16 @@
 
         // Global valid lifetime value.
         "valid-lifetime": 6000,
+
+        // Global default valid lifetime value.
+        // (in fact only an alias of valid lifetime)
+        "default-valid-lifetime": 6000,
+
+        // Global min valid lifetime value.
+        "min-valid-lifetime": 4000,
+
+        // Global max valid lifetime value.
+        "max-valid-lifetime": 8000,
 
         // Reservations (examples are in other files).
         "reservations": [],

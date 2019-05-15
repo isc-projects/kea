@@ -511,7 +511,7 @@ preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
 
 default_preferred_lifetime: DEFAULT_PREFERRED_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("preferred-lifetime", prf);
+    ctx.stack_.back()->set("default-preferred-lifetime", prf);
 };
 
 min_preferred_lifetime: MIN_PREFERRED_LIFETIME COLON INTEGER {
@@ -531,7 +531,7 @@ valid_lifetime: VALID_LIFETIME COLON INTEGER {
 
 default_valid_lifetime: DEFAULT_VALID_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("valid-lifetime", prf);
+    ctx.stack_.back()->set("default-valid-lifetime", prf);
 };
 
 min_valid_lifetime: MIN_VALID_LIFETIME COLON INTEGER {
