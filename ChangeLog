@@ -1,3 +1,8 @@
+1571.	[bug]		marcin
+	The mysql_cb hooks library registers the MySQL backend for the
+	DHCPv6 server.
+	(Gitlab #603,!322, git 1ede298fcdc7a9b7018b6e300e2d759e33f73645)
+
 1570.	[bug]		marcin
 	Corrected the bug in the Kea HTTP library which could cause a server
 	to assert when system clock was modified during the transaction.
