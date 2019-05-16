@@ -127,44 +127,86 @@ Debug message issued when triggered an action to create or update MySQL CB globa
 % MYSQL_CB_DELETE_BY_PREFIX_SUBNET4 delete MySQL CB subnet by prefix: %1
 Debug message issued when triggered an action to delete MySQL CB subnet by prefix
 
+% MYSQL_CB_DELETE_BY_PREFIX_SUBNET4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB subnet by prefix
+
 % MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4 delete MySQL CB subnet by subnet id: %1
 Debug message issued when triggered an action to delete MySQL CB subnet by subnet id
+
+% MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB subnet by subnet id
 
 % MYSQL_CB_DELETE_ALL_SUBNETS4 delete MySQL CB all subnets
 Debug message issued when triggered an action to delete MySQL CB all subnets
 
+% MYSQL_CB_DELETE_ALL_SUBNETS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all subnets
+
 % MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4 delete MySQL CB shared network: %1 subnets
 Debug message issued when triggered an action to delete MySQL CB shared network subnets
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB shared network subnets
 
 % MYSQL_CB_DELETE_SHARED_NETWORK4 delete MySQL CB shared network: %1
 Debug message issued when triggered an action to delete MySQL CB shared network
 
+% MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB shared network
+
 % MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4 delete MySQL CB all shared networks
 Debug message issued when triggered an action to delete MySQL CB all shared networks
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all shared networks
 
 % MYSQL_CB_DELETE_OPTION_DEF4 delete MySQL CB option definition code: %1 space: %2
 Debug message issued when triggered an action to delete MySQL CB option definition
 
+% MYSQL_CB_DELETE_OPTION_DEF4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option definition
+
 % MYSQL_CB_DELETE_ALL_OPTION_DEFS4 delete MySQL CB all option definitions
 Debug message issued when triggered an action to delete MySQL CB all option definitions
+
+% MYSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all option definitions
 
 % MYSQL_CB_DELETE_OPTION4 delete MySQL CB option code: %1 space: %2
 Debug message issued when triggered an action to delete MySQL CB option
 
+% MYSQL_CB_DELETE_OPTION4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option
+
 % MYSQL_CB_DELETE_SHARED_NETWORK_OPTION4 delete MySQL CB shared network: %1 option code: %2 space: %3
 Debug message issued when triggered an action to delete MySQL CB shared network option
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_OPTION4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB shared network option
 
 % MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION4 delete MySQL CB by subnet id: %1 option code: %2 space: %3
 Debug message issued when triggered an action to delete MySQL CB option by subnet id
 
+% MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option by subnet id
+
 % MYSQL_CB_DELETE_BY_POOL_OPTION4 delete MySQL CB pool start: %1 pool end: %2 option code: %3 space: %4
 Debug message issued when triggered an action to delete MySQL CB option by pool
+
+% MYSQL_CB_DELETE_BY_POOL_OPTION4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option by pool
 
 % MYSQL_CB_DELETE_GLOBAL_PARAMETER4 delete MySQL CB global parameter: %1
 Debug message issued when triggered an action to delete MySQL CB global parameter
 
+% MYSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB global parameter
+
 % MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4 delete MySQL CB all global parameters
 Debug message issued when triggered an action to delete MySQL CB all global parameters
+
+% MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all global parameters
 
 % MYSQL_CB_GET_TYPE4 get MySQL CB type
 Debug message issued when triggered an action to retrieve MySQL CB type
@@ -301,47 +343,92 @@ Debug message issued when triggered an action to create or update MySQL CB globa
 % MYSQL_CB_DELETE_BY_PREFIX_SUBNET6 delete MySQL CB subnet by prefix: %1
 Debug message issued when triggered an action to delete MySQL CB subnet by prefix
 
+% MYSQL_CB_DELETE_BY_PREFIX_SUBNET6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB subnet by prefix
+
 % MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6 delete MySQL CB subnet by subnet id: %1
 Debug message issued when triggered an action to delete MySQL CB subnet by subnet id
+
+% MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB subnet by subnet id
 
 % MYSQL_CB_DELETE_ALL_SUBNETS6 delete MySQL CB all subnets
 Debug message issued when triggered an action to delete MySQL CB all subnets
 
+% MYSQL_CB_DELETE_ALL_SUBNETS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all subnets
+
 % MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6 delete MySQL CB shared network: %1 subnets
 Debug message issued when triggered an action to delete MySQL CB shared network subnets
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB shared network subnets
 
 % MYSQL_CB_DELETE_SHARED_NETWORK6 delete MySQL CB shared network: %1
 Debug message issued when triggered an action to delete MySQL CB shared network
 
+% MYSQL_CB_DELETE_SHARED_NETWORK6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB shared network
+
 % MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6 delete MySQL CB all shared networks
 Debug message issued when triggered an action to delete MySQL CB all shared networks
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all shared networks
 
 % MYSQL_CB_DELETE_OPTION_DEF6 delete MySQL CB option definition code: %1 space: %2
 Debug message issued when triggered an action to delete MySQL CB option definition
 
+% MYSQL_CB_DELETE_OPTION_DEF6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option definition
+
 % MYSQL_CB_DELETE_ALL_OPTION_DEFS6 delete MySQL CB all option definitions
 Debug message issued when triggered an action to delete MySQL CB all option definitions
+
+% MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all option definitions
 
 % MYSQL_CB_DELETE_OPTION6 delete MySQL CB option code: %1 space: %2
 Debug message issued when triggered an action to delete MySQL CB option
 
+% MYSQL_CB_DELETE_OPTION6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option
+
 % MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6 delete MySQL CB shared network: %1 option code: %2 space: %3
 Debug message issued when triggered an action to delete MySQL CB shared network option
+
+% MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB shared network option
 
 % MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6 delete MySQL CB by subnet id: %1 option code: %2 space: %3
 Debug message issued when triggered an action to delete MySQL CB option by subnet id
 
+% MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option by subnet id
+
 % MYSQL_CB_DELETE_BY_POOL_OPTION6 delete MySQL CB pool start: %1 pool end: %2 option code: %3 space: %4
 Debug message issued when triggered an action to delete MySQL CB option by pool
+
+% MYSQL_CB_DELETE_BY_POOL_OPTION6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option by pool
 
 % MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6 delete MySQL CB prefix: %1 prefix len: %2 option code: %3 space: %4
 Debug message issued when triggered an action to delete MySQL CB option by prefix
 
+% MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB option by prefix
+
 % MYSQL_CB_DELETE_GLOBAL_PARAMETER6 delete MySQL CB global parameter: %1
 Debug message issued when triggered an action to delete MySQL CB global parameter
 
+% MYSQL_CB_DELETE_GLOBAL_PARAMETER6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB global parameter
+
 % MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6 delete MySQL CB all global parameters
 Debug message issued when triggered an action to delete MySQL CB all global parameters
+
+% MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete MySQL CB all global parameters
 
 % MYSQL_CB_GET_TYPE6 get MySQL CB type
 Debug message issued when triggered an action to retrieve MySQL CB type

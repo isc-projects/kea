@@ -2861,10 +2861,12 @@ MySqlConfigBackendDHCPv6::deleteSubnet6(const ServerSelector& server_selector,
                                         const std::string& subnet_prefix) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_PREFIX_SUBNET6)
         .arg(subnet_prefix);
-    return(impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_PREFIX,
-                                      server_selector, "deleting a subnet by prefix",
-                                      "subnet deleted", true,
-                                      subnet_prefix));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_PREFIX,
+                                                 server_selector, "deleting a subnet by prefix",
+                                                 "subnet deleted", true, subnet_prefix);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_PREFIX_SUBNET6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2872,15 +2874,21 @@ MySqlConfigBackendDHCPv6::deleteSubnet6(const ServerSelector& server_selector,
                                         const SubnetID& subnet_id) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6)
         .arg(subnet_id);
-    return (impl_->deleteSubnet6(server_selector, subnet_id));
+    uint64_t result = impl_->deleteSubnet6(server_selector, subnet_id);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteAllSubnets6(const ServerSelector& server_selector) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SUBNETS6);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6,
-                                       server_selector, "deleting all subnets",
-                                       "deleted all subnets", true));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6,
+                                                 server_selector, "deleting all subnets",
+                                                 "deleted all subnets", true);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SUBNETS6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2888,11 +2896,14 @@ MySqlConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& 
                                                       const std::string& shared_network_name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6)
         .arg(shared_network_name);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
-                                       server_selector,
-                                       "deleting all subnets for a shared network",
-                                       "deleted all subnets for a shared network",
-                                       true, shared_network_name));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
+                                                 server_selector,
+                                                 "deleting all subnets for a shared network",
+                                                 "deleted all subnets for a shared network",
+                                                 true, shared_network_name);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2900,18 +2911,23 @@ MySqlConfigBackendDHCPv6::deleteSharedNetwork6(const ServerSelector& server_sele
                                                const std::string& name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK6)
         .arg(name);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME,
-                                       server_selector, "deleting a shared network",
-                                       "shared network deleted", true,
-                                       name));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME,
+                                                 server_selector, "deleting a shared network",
+                                                 "shared network deleted", true, name);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteAllSharedNetworks6(const ServerSelector& server_selector) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6,
-                                       server_selector, "deleting all shared networks",
-                                       "deleted all shared networks", true));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6,
+                                                 server_selector, "deleting all shared networks",
+                                                 "deleted all shared networks", true);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2920,15 +2936,21 @@ MySqlConfigBackendDHCPv6::deleteOptionDef6(const ServerSelector& server_selector
                                            const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION_DEF6)
         .arg(code).arg(space);
-    return (impl_->deleteOptionDef6(server_selector, code, space));
+    uint64_t result = impl_->deleteOptionDef6(server_selector, code, space);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION_DEF6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteAllOptionDefs6(const ServerSelector& server_selector) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_OPTION_DEFS6);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTION_DEFS6,
-                                       server_selector, "deleting all option definitions",
-                                       "deleted all option definitions", true));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTION_DEFS6,
+                                                 server_selector, "deleting all option definitions",
+                                                 "deleted all option definitions", true);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2937,7 +2959,10 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION6)
         .arg(code).arg(space);
-    return (impl_->deleteOption6(server_selector, code, space));
+    uint64_t result = impl_->deleteOption6(server_selector, code, space);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2947,8 +2972,11 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6)
         .arg(shared_network_name).arg(code).arg(space);
-    return (impl_->deleteOption6(server_selector, shared_network_name,
-                                 code, space));
+    uint64_t result = impl_->deleteOption6(server_selector, shared_network_name,
+                                           code, space);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2958,7 +2986,10 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6)
         .arg(subnet_id).arg(code).arg(space);
-    return (impl_->deleteOption6(server_selector, subnet_id, code, space));
+    uint64_t result = impl_->deleteOption6(server_selector, subnet_id, code, space);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2969,8 +3000,11 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6)
         .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
-    return (impl_->deleteOption6(server_selector, pool_start_address, pool_end_address,
-                                 code, space));
+    uint64_t result = impl_->deleteOption6(server_selector, pool_start_address, pool_end_address,
+                                           code, space);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2981,8 +3015,11 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6)
         .arg(pd_pool_prefix.toText()).arg(pd_pool_prefix_length).arg(code).arg(space);
-    return (impl_->deleteOption6(server_selector, pd_pool_prefix,
-                                 pd_pool_prefix_length, code, space));
+    uint64_t result = impl_->deleteOption6(server_selector, pd_pool_prefix,
+                                           pd_pool_prefix_length, code, space);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
@@ -2990,18 +3027,23 @@ MySqlConfigBackendDHCPv6::deleteGlobalParameter6(const ServerSelector& server_se
                                                  const std::string& name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_GLOBAL_PARAMETER6)
         .arg(name);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_GLOBAL_PARAMETER6,
-                                       server_selector, "deleting global parameter",
-                                       "global parameter deleted", false,
-                                       name));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_GLOBAL_PARAMETER6,
+                                                 server_selector, "deleting global parameter",
+                                                 "global parameter deleted", false, name);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_GLOBAL_PARAMETER6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteAllGlobalParameters6(const ServerSelector& server_selector) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6);
-    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_GLOBAL_PARAMETERS6,
-                                       server_selector, "deleting all global parameters",
-                                       "all global parameters deleted", true));
+    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_ALL_GLOBAL_PARAMETERS6,
+                                                 server_selector, "deleting all global parameters",
+                                                 "all global parameters deleted", true);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6_RESULT)
+        .arg(result);
+    return (result);
 }
 
 std::string
