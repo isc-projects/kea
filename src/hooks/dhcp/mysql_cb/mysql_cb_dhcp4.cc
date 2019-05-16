@@ -410,6 +410,7 @@ public:
                         last_subnet->requireClientClass(require_item->stringValue());
                     }
                 }
+
                 // reservation_mode
                 if (!out_bindings[15]->amNull()) {
                     last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
@@ -845,7 +846,6 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
                               in_server_bindings);
 
-
         } catch (const DuplicateEntry&) {
             deletePools4(subnet);
             deleteOptions4(server_selector, subnet);
@@ -1053,6 +1053,7 @@ public:
                 if (!out_bindings[2]->amNull()) {
                     last_network->allowClientClass(out_bindings[2]->getString());
                 }
+
                 // interface
                 if (!out_bindings[3]->amNull()) {
                     last_network->setIface(out_bindings[3]->getString());

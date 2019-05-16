@@ -960,7 +960,6 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
                               in_server_bindings);
 
-
         } catch (const DuplicateEntry&) {
             deletePools6(subnet);
             deletePdPools6(subnet);
@@ -1559,8 +1558,8 @@ public:
 
         MySqlTransaction transaction(conn_);
         OptionDescriptorPtr existing_option =
-          getOption(GET_OPTION6_CODE_SPACE, Option::V6, server_selector,
-                    option->option_->getType(), option->space_name_);
+            getOption(GET_OPTION6_CODE_SPACE, Option::V6, server_selector,
+                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
