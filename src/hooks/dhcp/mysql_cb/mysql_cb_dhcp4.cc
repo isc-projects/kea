@@ -22,6 +22,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
 #include <util/buffer.h>
+#include <util/boost_time_utils.h>
 #include <mysql/mysql_connection.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
@@ -2307,15 +2308,20 @@ MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& server_selector) 
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SUBNETS4);
     Subnet4Collection subnets;
     impl_->getAllSubnets4(server_selector, subnets);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SUBNETS4_RESULT)
+        .arg(subnets.size());
     return (subnets);
 }
 
 Subnet4Collection
 MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time) const {
-    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SUBNETS4);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SUBNETS4)
+        .arg(util::ptimeToText(modification_time));
     Subnet4Collection subnets;
     impl_->getModifiedSubnets4(server_selector, modification_time, subnets);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SUBNETS4_RESULT)
+        .arg(subnets.size());
     return (subnets);
 }
 
@@ -2326,6 +2332,8 @@ MySqlConfigBackendDHCPv4::getSharedNetworkSubnets4(const ServerSelector& server_
         .arg(shared_network_name);
     Subnet4Collection subnets;
     impl_->getSharedNetworkSubnets4(server_selector, shared_network_name, subnets);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4_RESULT)
+        .arg(subnets.size());
     return (subnets);
 }
 
@@ -2342,15 +2350,20 @@ MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& server_sel
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SHARED_NETWORKS4);
     SharedNetwork4Collection shared_networks;
     impl_->getAllSharedNetworks4(server_selector, shared_networks);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SHARED_NETWORKS4_RESULT)
+        .arg(shared_networks.size());
     return (shared_networks);
 }
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::getModifiedSharedNetworks4(const ServerSelector& server_selector,
         const boost::posix_time::ptime& modification_time) const {
-    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4)
+        .arg(util::ptimeToText(modification_time));
     SharedNetwork4Collection shared_networks;
     impl_->getModifiedSharedNetworks4(server_selector, modification_time, shared_networks);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4_RESULT)
+        .arg(shared_networks.size());
     return (shared_networks);
 }
 
@@ -2370,16 +2383,21 @@ MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selecto
     OptionDefContainer option_defs;
     impl_->getAllOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
                             server_selector, option_defs);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_OPTION_DEFS4_RESULT)
+        .arg(option_defs.size());
     return (option_defs);
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::getModifiedOptionDefs4(const ServerSelector& server_selector,
         const boost::posix_time::ptime& modification_time) const {
-    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTION_DEFS4);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTION_DEFS4)
+        .arg(util::ptimeToText(modification_time));
     OptionDefContainer option_defs;
     impl_->getModifiedOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
                                  server_selector, modification_time, option_defs);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTION_DEFS4_RESULT)
+        .arg(option_defs.size());
     return (option_defs);
 }
 
@@ -2396,16 +2414,23 @@ MySqlConfigBackendDHCPv4::getOption4(const ServerSelector& server_selector,
 OptionContainer
 MySqlConfigBackendDHCPv4::getAllOptions4(const ServerSelector& server_selector) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_OPTIONS4);
-    return (impl_->getAllOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-                                 Option::V4, server_selector));
+    OptionContainer options = impl_->getAllOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
+            Option::V4, server_selector);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_OPTIONS4_RESULT)
+        .arg(options.size());
+    return (options);
 }
 
 OptionContainer
 MySqlConfigBackendDHCPv4::getModifiedOptions4(const ServerSelector& server_selector,
         const boost::posix_time::ptime& modification_time) const {
-    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTIONS4);
-    return (impl_->getModifiedOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-                                      Option::V4, server_selector, modification_time));
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTIONS4)
+        .arg(util::ptimeToText(modification_time));
+    OptionContainer options = impl_->getModifiedOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
+            Option::V4, server_selector, modification_time);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_OPTIONS4_RESULT)
+        .arg(options.size());
+    return (options);
 }
 
 StampedValuePtr
@@ -2426,13 +2451,16 @@ MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_s
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
                                    in_bindings, parameters);
     }
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4_RESULT)
+        .arg(parameters.size());
     return (parameters);
 }
 
 StampedValueCollection
 MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
         const boost::posix_time::ptime& modification_time) const {
-    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4)
+        .arg(util::ptimeToText(modification_time));
     StampedValueCollection parameters;
     auto tags = impl_->getServerTags(server_selector);
     for (auto tag : tags) {
@@ -2443,16 +2471,21 @@ MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
                                    in_bindings, parameters);
     }
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4_RESULT)
+        .arg(parameters.size());
     return (parameters);
 }
 
 AuditEntryCollection
 MySqlConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector& server_selector,
         const boost::posix_time::ptime& modification_time) const {
-    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4)
+        .arg(util::ptimeToText(modification_time));
     AuditEntryCollection audit_entries;
     impl_->getRecentAuditEntries(MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
                                  server_selector, modification_time, audit_entries);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT)
+        .arg(audit_entries.size());
     return (audit_entries);
 }
 
