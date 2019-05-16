@@ -1,7 +1,6 @@
 {
     "name": "remote-subnet4-get-by-id",
-    "brief": "This command is used to fetch selected IPv4 subnet by ID for the server from the specified database.",
-    "description": "See <xref linkend=\"cmd-remote-subnet4-get-by-id\"/>",
+    "brief": "This command is used to fetch selected IPv4 subnet by ID for the server from the configuration database.",
     "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
     "hook": "cb_cmds",
@@ -16,10 +15,10 @@
         }
     }
 }",
-    "cmd-comment": "This command includes a list with exactly one id of the subnet to be returned. The <command>remote</command> map contains specification of the backend from which the subnet should be fetched. Typically it contains \"type\": \"mysql\".",
+    "cmd-comment": "This command includes a list with exactly one id of the subnet to be returned.",
     "resp-syntax": "{
     \"result\": 0,
-    \"text\": \"IPv4 subnet 123 found.\",
+    \"text\": \"IPv4 subnet found.\",
     \"arguments\": {
         \"subnets\": [ {
             \"id\": <subnet identifier>
@@ -33,5 +32,5 @@
         \"count\": 1
     }
 }",
-    "resp-comment": "The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object."
+    "resp-comment": "If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object."
 }

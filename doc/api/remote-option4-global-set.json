@@ -1,23 +1,23 @@
 {
     "name": "remote-option4-global-set",
-    "brief": "This command is used to create or update DHCPv4 global option for the server in the specified database.",
-    "description": "See <xref linkend=\"cmd-remote-option4-global-set\"/>",
+    "brief": "This command is used to create or replace a DHCPv4 global option in the configuration database.",
     "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
     "hook": "cb_cmds",
     "cmd-syntax": "{
     \"command\": \"remote-option4-global-set\",
-    \"service\": [ \"dhcp4\" ],
     \"arguments\": {
-        \"options\": [ {
-            <global option specification>
-        } ],
+        \"options\": [
+            {
+                <global option specification>
+            }
+        ],
         \"remote\": {
             <specification of the database to connect to>
         }
     }
 }",
-    "cmd-comment": "The provided list must cotain exactly one option specification. The <command>remote</command> map contains specification of the backend where shared network should be set. Typically it contains \"type\": \"mysql\".",
+    "cmd-comment": "The provided list must cotain exactly one option specification.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"DHCPv4 option set.\"

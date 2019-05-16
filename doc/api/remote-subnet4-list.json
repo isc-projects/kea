@@ -1,7 +1,6 @@
 {
     "name": "remote-subnet4-list",
-    "brief": "This command is used to fetch a list of all IPv4 shared networks for the particular server from the specified database.",
-    "description": "See <xref linkend=\"cmd-remote-subnet4-list\"/>",
+    "brief": "This command is used to fetch a list of all IPv4 subnets from the configuration database.",
     "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
     "hook": "cb_cmds",
@@ -13,7 +12,7 @@
         }
     }
 }",
-    "cmd-comment": "The <command>remote</command> map contains specification of the backend from which the subnets should be fetched. Typically it contains \"type\": \"mysql\".",
+    "cmd-comment": "This command includes no arguments besides the optional <command>remote</command> map.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"2 IPv4 subnets found.\",

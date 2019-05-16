@@ -1,12 +1,24 @@
 {
     "name": "remote-global-parameter6-set",
-    "brief": "a sentence or two explaining what this command does",
-    "description": "See <xref linkend=\"cmd-\"/>",
-    "support": [ "undocumented" ],
-    "avail": "0.0.0",
-    "hook": "undocumented",
-    "cmd-syntax": "Syntax of the command",
-    "cmd-comment": "Possibly some extra comments after the syntax.",
-    "resp-syntax": "Syntax of the response",
-    "resp-comment": "Optional extra comments after the resposne syntax."
+    "brief": "This command is used to create or update one more global DHCP parameters in the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-global-parameter6-set\"
+    \"arguments\": {
+        \"parameters\": {
+            <first parameter name>: <first parameter value>,
+            <second parameter name>: <second parameter value>
+        },
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter6-get-all</command> may be useful to verify the contents of the database after the update.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv6 global parameter(s) successfully set.\"
+}"
 }

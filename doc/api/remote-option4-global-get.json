@@ -1,7 +1,6 @@
 {
     "name": "remote-option4-global-get",
     "brief": "This command is used to fetch a global DHCPv4 option for the server from the specified database.",
-    "description": "See <xref linkend=\"cmd-remote-option4-global-get\"/>",
     "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
     "hook": "cb_cmds",
@@ -18,10 +17,10 @@
             <specification of the database to connect to>
         }
 }",
-    "cmd-comment": "The option is identified by the pair of option code/space values. The <command>remote</command> map contains specification of the backend from which the option should be fetched. Typically it contains \"type\": \"mysql\".",
+    "cmd-comment": "The option is identified by the pair of option code/space values.",
     "resp-syntax": "{
     \"result\": 0,
-    \"text\": \"DHCPv4 option <option code> in <option space> found.\",
+    \"text\": \"DHCPv4 option in found.\",
     \"arguments\": {
         \"options\": [
             {

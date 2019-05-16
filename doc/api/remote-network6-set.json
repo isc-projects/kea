@@ -1,12 +1,25 @@
 {
     "name": "remote-network6-set",
-    "brief": "a sentence or two explaining what this command does",
-    "description": "See <xref linkend=\"cmd-\"/>",
-    "support": [ "undocumented" ],
-    "avail": "0.0.0",
-    "hook": "undocumented",
-    "cmd-syntax": "Syntax of the command",
-    "cmd-comment": "Possibly some extra comments after the syntax.",
-    "resp-syntax": "Syntax of the response",
-    "resp-comment": "Optional extra comments after the resposne syntax."
+    "brief": "This command is used to create or replace an IPv6 shared network in the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-network6-set\",
+    \"arguments\": {
+        \"shared-networks\": [
+            {
+                <shared network specification excluding subnets list>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "The provided list must contain exactly one shared network specification. It must not contain subnets (\"subnet6\" parameter). The subnets are added to the shared network using <command>remote-subnet6-set</command> command.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"IPv6 shared network successfully set.\"
+}"
 }

@@ -1,7 +1,6 @@
 {
     "name": "remote-global-parameter4-get-all",
     "brief": "This command is used to fetch all global parameters for the server from the specified database.",
-    "description": "See <xref linkend=\"cmd-remote-global-parameter4-get-all\"/>",
     "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
     "hook": "cb_cmds",
@@ -13,7 +12,7 @@
         }
     }
 }",
-    "cmd-comment": "The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains \"type\": \"mysql\".",
+    "cmd-comment": "This command contains no arguments besides the optional <command>remote</command>.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"DHCPv4 global parameters found.\",

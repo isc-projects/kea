@@ -274,27 +274,7 @@
 , <command><link linkend="ref-network6-list">network6-list</link></command>
 , <command><link linkend="ref-network6-subnet-add">network6-subnet-add</link></command>
 , <command><link linkend="ref-network6-subnet-del">network6-subnet-del</link></command>
-, <command><link linkend="ref-reservation-add">reservation-add</link></command>
-, <command><link linkend="ref-reservation-del">reservation-del</link></command>
-, <command><link linkend="ref-reservation-get">reservation-get</link></command>
-, <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
-, <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
-, <command><link linkend="ref-shutdown">shutdown</link></command>
-, <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
-, <command><link linkend="ref-statistic-get">statistic-get</link></command>
-, <command><link linkend="ref-statistic-get-all">statistic-get-all</link></command>
-, <command><link linkend="ref-statistic-remove">statistic-remove</link></command>
-, <command><link linkend="ref-statistic-remove-all">statistic-remove-all</link></command>
-, <command><link linkend="ref-statistic-reset">statistic-reset</link></command>
-, <command><link linkend="ref-statistic-reset-all">statistic-reset-all</link></command>
-, <command><link linkend="ref-subnet6-add">subnet6-add</link></command>
-, <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
-, <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
-, <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
-, <command><link linkend="ref-subnet6-update">subnet6-update</link></command>
-, <command><link linkend="ref-version-get">version-get</link></command>
-.</para>
-<para xml:id="commands-undocumented">Commands supported by undocumented daemon: <command><link linkend="ref-remote-global-parameter6-del">remote-global-parameter6-del</link></command>
+, <command><link linkend="ref-remote-global-parameter6-del">remote-global-parameter6-del</link></command>
 , <command><link linkend="ref-remote-global-parameter6-get">remote-global-parameter6-get</link></command>
 , <command><link linkend="ref-remote-global-parameter6-get-all">remote-global-parameter6-get-all</link></command>
 , <command><link linkend="ref-remote-global-parameter6-set">remote-global-parameter6-set</link></command>
@@ -316,29 +296,70 @@
 , <command><link linkend="ref-remote-subnet6-get-by-prefix">remote-subnet6-get-by-prefix</link></command>
 , <command><link linkend="ref-remote-subnet6-list">remote-subnet6-list</link></command>
 , <command><link linkend="ref-remote-subnet6-set">remote-subnet6-set</link></command>
+, <command><link linkend="ref-reservation-add">reservation-add</link></command>
+, <command><link linkend="ref-reservation-del">reservation-del</link></command>
+, <command><link linkend="ref-reservation-get">reservation-get</link></command>
+, <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
+, <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
+, <command><link linkend="ref-shutdown">shutdown</link></command>
+, <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
+, <command><link linkend="ref-statistic-get">statistic-get</link></command>
+, <command><link linkend="ref-statistic-get-all">statistic-get-all</link></command>
+, <command><link linkend="ref-statistic-remove">statistic-remove</link></command>
+, <command><link linkend="ref-statistic-remove-all">statistic-remove-all</link></command>
+, <command><link linkend="ref-statistic-reset">statistic-reset</link></command>
+, <command><link linkend="ref-statistic-reset-all">statistic-reset-all</link></command>
+, <command><link linkend="ref-subnet6-add">subnet6-add</link></command>
+, <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
+, <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
+, <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
+, <command><link linkend="ref-subnet6-update">subnet6-update</link></command>
+, <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-cb_cmds-lib">Commands supported by cb_cmds hook library: <command><link linkend="ref-remote-global-parameter4-del">remote-global-parameter4-del</link></command>
 , <command><link linkend="ref-remote-global-parameter4-get">remote-global-parameter4-get</link></command>
 , <command><link linkend="ref-remote-global-parameter4-get-all">remote-global-parameter4-get-all</link></command>
 , <command><link linkend="ref-remote-global-parameter4-set">remote-global-parameter4-set</link></command>
+, <command><link linkend="ref-remote-global-parameter6-del">remote-global-parameter6-del</link></command>
+, <command><link linkend="ref-remote-global-parameter6-get">remote-global-parameter6-get</link></command>
+, <command><link linkend="ref-remote-global-parameter6-get-all">remote-global-parameter6-get-all</link></command>
+, <command><link linkend="ref-remote-global-parameter6-set">remote-global-parameter6-set</link></command>
 , <command><link linkend="ref-remote-network4-del">remote-network4-del</link></command>
 , <command><link linkend="ref-remote-network4-get">remote-network4-get</link></command>
 , <command><link linkend="ref-remote-network4-list">remote-network4-list</link></command>
 , <command><link linkend="ref-remote-network4-set">remote-network4-set</link></command>
+, <command><link linkend="ref-remote-network6-del">remote-network6-del</link></command>
+, <command><link linkend="ref-remote-network6-get">remote-network6-get</link></command>
+, <command><link linkend="ref-remote-network6-list">remote-network6-list</link></command>
+, <command><link linkend="ref-remote-network6-set">remote-network6-set</link></command>
 , <command><link linkend="ref-remote-option-def4-del">remote-option-def4-del</link></command>
 , <command><link linkend="ref-remote-option-def4-get">remote-option-def4-get</link></command>
 , <command><link linkend="ref-remote-option-def4-get-all">remote-option-def4-get-all</link></command>
 , <command><link linkend="ref-remote-option-def4-set">remote-option-def4-set</link></command>
+, <command><link linkend="ref-remote-option-def6-del">remote-option-def6-del</link></command>
+, <command><link linkend="ref-remote-option-def6-get">remote-option-def6-get</link></command>
+, <command><link linkend="ref-remote-option-def6-get-all">remote-option-def6-get-all</link></command>
+, <command><link linkend="ref-remote-option-def6-set">remote-option-def6-set</link></command>
 , <command><link linkend="ref-remote-option4-global-del">remote-option4-global-del</link></command>
 , <command><link linkend="ref-remote-option4-global-get">remote-option4-global-get</link></command>
 , <command><link linkend="ref-remote-option4-global-get-all">remote-option4-global-get-all</link></command>
 , <command><link linkend="ref-remote-option4-global-set">remote-option4-global-set</link></command>
+, <command><link linkend="ref-remote-option6-global-del">remote-option6-global-del</link></command>
+, <command><link linkend="ref-remote-option6-global-get">remote-option6-global-get</link></command>
+, <command><link linkend="ref-remote-option6-global-get-all">remote-option6-global-get-all</link></command>
+, <command><link linkend="ref-remote-option6-global-set">remote-option6-global-set</link></command>
 , <command><link linkend="ref-remote-subnet4-del-by-id">remote-subnet4-del-by-id</link></command>
 , <command><link linkend="ref-remote-subnet4-del-by-prefix">remote-subnet4-del-by-prefix</link></command>
 , <command><link linkend="ref-remote-subnet4-get-by-id">remote-subnet4-get-by-id</link></command>
 , <command><link linkend="ref-remote-subnet4-get-by-prefix">remote-subnet4-get-by-prefix</link></command>
 , <command><link linkend="ref-remote-subnet4-list">remote-subnet4-list</link></command>
 , <command><link linkend="ref-remote-subnet4-set">remote-subnet4-set</link></command>
+, <command><link linkend="ref-remote-subnet6-del-by-id">remote-subnet6-del-by-id</link></command>
+, <command><link linkend="ref-remote-subnet6-del-by-prefix">remote-subnet6-del-by-prefix</link></command>
+, <command><link linkend="ref-remote-subnet6-get-by-id">remote-subnet6-get-by-id</link></command>
+, <command><link linkend="ref-remote-subnet6-get-by-prefix">remote-subnet6-get-by-prefix</link></command>
+, <command><link linkend="ref-remote-subnet6-list">remote-subnet6-list</link></command>
+, <command><link linkend="ref-remote-subnet6-set">remote-subnet6-set</link></command>
 .</para>
 <para xml:id="commands-class_cmds-lib">Commands supported by class_cmds hook library: <command><link linkend="ref-class-add">class-add</link></command>
 , <command><link linkend="ref-class-del">class-del</link></command>
@@ -404,29 +425,6 @@
 , <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
 , <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
 , <command><link linkend="ref-subnet6-update">subnet6-update</link></command>
-.</para>
-<para xml:id="commands-undocumented-lib">Commands supported by undocumented hook library: <command><link linkend="ref-remote-global-parameter6-del">remote-global-parameter6-del</link></command>
-, <command><link linkend="ref-remote-global-parameter6-get">remote-global-parameter6-get</link></command>
-, <command><link linkend="ref-remote-global-parameter6-get-all">remote-global-parameter6-get-all</link></command>
-, <command><link linkend="ref-remote-global-parameter6-set">remote-global-parameter6-set</link></command>
-, <command><link linkend="ref-remote-network6-del">remote-network6-del</link></command>
-, <command><link linkend="ref-remote-network6-get">remote-network6-get</link></command>
-, <command><link linkend="ref-remote-network6-list">remote-network6-list</link></command>
-, <command><link linkend="ref-remote-network6-set">remote-network6-set</link></command>
-, <command><link linkend="ref-remote-option-def6-del">remote-option-def6-del</link></command>
-, <command><link linkend="ref-remote-option-def6-get">remote-option-def6-get</link></command>
-, <command><link linkend="ref-remote-option-def6-get-all">remote-option-def6-get-all</link></command>
-, <command><link linkend="ref-remote-option-def6-set">remote-option-def6-set</link></command>
-, <command><link linkend="ref-remote-option6-global-del">remote-option6-global-del</link></command>
-, <command><link linkend="ref-remote-option6-global-get">remote-option6-global-get</link></command>
-, <command><link linkend="ref-remote-option6-global-get-all">remote-option6-global-get-all</link></command>
-, <command><link linkend="ref-remote-option6-global-set">remote-option6-global-set</link></command>
-, <command><link linkend="ref-remote-subnet6-del-by-id">remote-subnet6-del-by-id</link></command>
-, <command><link linkend="ref-remote-subnet6-del-by-prefix">remote-subnet6-del-by-prefix</link></command>
-, <command><link linkend="ref-remote-subnet6-get-by-id">remote-subnet6-get-by-id</link></command>
-, <command><link linkend="ref-remote-subnet6-get-by-prefix">remote-subnet6-get-by-prefix</link></command>
-, <command><link linkend="ref-remote-subnet6-list">remote-subnet6-list</link></command>
-, <command><link linkend="ref-remote-subnet6-set">remote-subnet6-set</link></command>
 .</para>
 <!-- start of build-report -->
 <section xml:id="reference-build-report">
@@ -2583,7 +2581,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-global-parameter4-del -->
 <section xml:id="reference-remote-global-parameter4-del">
 <title>remote-global-parameter4-del reference</title>
-<para xml:id="ref-remote-global-parameter4-del"><command>remote-global-parameter4-del</command> - This command is used to delete a global DHCPv4 parameter from a configuration database. The server will use the value specified in the configuration file or a default value (if the parameter is not specified in the configuration file) after deleting the parameter from the database.</para>
+<para xml:id="ref-remote-global-parameter4-del"><command>remote-global-parameter4-del</command> - This command is used to delete a global DHCPv4 parameter from the configuration database. The server will use the value specified in the configuration file or a default value (if the parameter is not specified in the configuration file) after deleting the parameter from the database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -2601,12 +2599,12 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one name of the parameter to be deleted. The <command>remote</command> map contains specification of the backend from which the global parameter should be deleted. Typically it contains "type": "mysql".</para>
+This command carries the list including exactly one name of the parameter to be deleted.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "DHCPv4 global parameter successfully deleted.",
+    "text": "DHCPv4 global parameter(s) deleted.",
     "arguments": {
         "count": 1
     }
@@ -2643,10 +2641,8 @@ Result is an integer representation of the status. Currently supported statuses 
             &lt;specification of the database to connect to&gt;
         }
     }
-}
-
-</screen>
-The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains "type": "mysql".</para>
+}</screen>
+This command carries a list including exactly one name of the parameter to be fetched.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2687,7 +2683,7 @@ The returned response contains a map with a global parameter name/value pair. Th
         }
     }
 }</screen>
-The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains "type": "mysql".</para>
+This command contains no arguments besides the optional <command>remote</command>.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2719,7 +2715,7 @@ The returned response contains a list of maps. Each map contains a global parame
 <!-- start of remote-global-parameter4-set -->
 <section xml:id="reference-remote-global-parameter4-set">
 <title>remote-global-parameter4-set reference</title>
-<para xml:id="ref-remote-global-parameter4-set"><command>remote-global-parameter4-set</command> - This command is used to create or update one more global parameters for a server.</para>
+<para xml:id="ref-remote-global-parameter4-set"><command>remote-global-parameter4-set</command> - This command is used to create or update one more global parameters in the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -2740,7 +2736,7 @@ The returned response contains a list of maps. Each map contains a global parame
         }
     }
 }</screen>
-The <command>remote</command> map contains specification of the backend where global parameter should be set. Typically it contains "type": "mysql".</para>
+This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter4-get-all</command> may be useful to verify the contents of the database after the update.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2762,21 +2758,41 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-global-parameter6-del -->
 <section xml:id="reference-remote-global-parameter6-del">
 <title>remote-global-parameter6-del reference</title>
-<para xml:id="ref-remote-global-parameter6-del"><command>remote-global-parameter6-del</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-global-parameter6-del"><command>remote-global-parameter6-del</command> - This command is used to delete a global DHCPv6 parameter from the configuration database. The server will use the value specified in the configuration file or a default value (if the parameter is not specified in the configuration file) after deleting the parameter from the database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-global-parameter6-del"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-global-parameter6-del",
+    "arguments": {
+        "parameters": [ &lt;parameter name&gt; ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command carries the list including exactly one name of the parameter to be deleted.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 global parameter(s) deleted.",
+    "arguments": {
+        "count": 1
+    }</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-global-parameter6-del -->
@@ -2784,21 +2800,41 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-global-parameter6-get -->
 <section xml:id="reference-remote-global-parameter6-get">
 <title>remote-global-parameter6-get reference</title>
-<para xml:id="ref-remote-global-parameter6-get"><command>remote-global-parameter6-get</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-global-parameter6-get"><command>remote-global-parameter6-get</command> - This command is used to fetch selected global parameter for the server from the specified database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-global-parameter6-get"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-global-parameter6-get"
+    "arguments": {
+        "parameters": [ &lt;parameter name&gt; ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command carries a list including exactly one name of the parameter to be fetched.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 global parameter found.",
+    "arguments": {
+        "parameters": {
+            &lt;parameter name&gt;: &lt;parameter value&gt;,
+            "metadata": {
+                "server-tag": &lt;server tag&gt;
+            }
+        },
+        "count": 1
+    }
+}</screen>
+The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is included and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-global-parameter6-get -->
@@ -2806,21 +2842,48 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-global-parameter6-get-all -->
 <section xml:id="reference-remote-global-parameter6-get-all">
 <title>remote-global-parameter6-get-all reference</title>
-<para xml:id="ref-remote-global-parameter6-get-all"><command>remote-global-parameter6-get-all</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-global-parameter6-get-all"><command>remote-global-parameter6-get-all</command> - This command is used to fetch all global parameters for the server from the specified database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-global-parameter6-get-all"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-global-parameter6-get-all"
+    "arguments": {
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command contains no arguments besides the optional <command>remote</command>.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 global parameters found.",
+    "arguments": {
+        "parameters": [
+            {
+                &lt;first parameter name&gt;: &lt;first parameter value&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            },
+            {
+                &lt;second parameter name&gt;: &lt;second parameter value&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ],
+        "count": 2
+    }
+}</screen>
+The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects.</para>
 
 </section>
 <!-- end of remote-global-parameter6-get-all -->
@@ -2828,21 +2891,42 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-global-parameter6-set -->
 <section xml:id="reference-remote-global-parameter6-set">
 <title>remote-global-parameter6-set reference</title>
-<para xml:id="ref-remote-global-parameter6-set"><command>remote-global-parameter6-set</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-global-parameter6-set"><command>remote-global-parameter6-set</command> - This command is used to create or update one more global DHCP parameters in the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-global-parameter6-set"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-global-parameter6-set"
+    "arguments": {
+        "parameters": {
+            &lt;first parameter name&gt;: &lt;first parameter value&gt;,
+            &lt;second parameter name&gt;: &lt;second parameter value&gt;
+        },
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter6-get-all</command> may be useful to verify the contents of the database after the update.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 global parameter(s) successfully set."
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-global-parameter6-set -->
@@ -2862,16 +2946,18 @@ Optional extra comments after the resposne syntax.</para>
   <screen>{
     "command": "remote-network4-del",
     "arguments": {
-        "shared-networks": [ {
-            "name": &lt;shared network name&gt;
-        } ],
+        "shared-networks": [
+            {
+                "name": &lt;shared network name&gt;
+            }
+        ],
         "subnets-action": "keep" | "delete",
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not. The <command>remote</command> map contains specification of the backend from which the shared network should be deleted. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2908,33 +2994,37 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "remote-network4-get"
     "arguments": {
-        "shared-networks": [ {
-            "name": &lt;shared network name&gt;
-        } ],
+        "shared-networks": [
+            {
+                "name": &lt;shared network name&gt;
+            }
+        ],
         "subnets-include": "full" | "no",
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether subnets belonging to the shared network should also be returned. The <command>remote</command> map contains specification of the backend from which the shared network should be fetched. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "IPv4 shared network 'floor1' found.",
+    "text": "IPv4 shared network found.",
     "arguments": {
-        "shared-networks": [ {
-            "name": &lt;shared network name&gt;,
-            "metadata": {
-                "server-tag": &lt;server tag&gt;
-            },
-            &lt;the rest of the shared network information, potentially including subnets&gt;
-        } ],
+        "shared-networks": [
+            {
+                "name": &lt;shared network name&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                },
+                &lt;the rest of the shared network information, potentially including subnets&gt;
+            }
+        ],
         "count": 1
     }
 }</screen>
-The metadata is included in the returned shared network definition and it provides database specific information associated with the returned object.</para>
+If the subnets are returned with the shared network they are carried in the <command>subnet4</command> list within the shared network definition. The metadata is included in the returned shared network definition and it provides the database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-network4-get -->
@@ -2942,7 +3032,7 @@ The metadata is included in the returned shared network definition and it provid
 <!-- start of remote-network4-list -->
 <section xml:id="reference-remote-network4-list">
 <title>remote-network4-list reference</title>
-<para xml:id="ref-remote-network4-list"><command>remote-network4-list</command> - This command is used to fetch a list of all subnets for the particular server from the specified database.</para>
+<para xml:id="ref-remote-network4-list"><command>remote-network4-list</command> - This command is used to fetch a list of all IPv4 shared networks from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -2959,7 +3049,7 @@ The metadata is included in the returned shared network definition and it provid
         }
     }
 }</screen>
-The <command>remote</command> map contains specification of the backend from which the shared networks should be fetched. Typically it contains "type": "mysql".</para>
+This command contains no arguments besides the optional <command>remote</command>.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2983,7 +3073,7 @@ The <command>remote</command> map contains specification of the backend from whi
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a shared network name and the metadata which provides database specific information associated with the shared networks. The returned list does not contain full definitions of the shared networks. Use <command>remote-network4-get</command> to fetch the full information about the selected shared networks.</para>
+The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network4-get</command> to fetch the full information about the selected shared networks.</para>
 
 </section>
 <!-- end of remote-network4-list -->
@@ -2991,7 +3081,7 @@ The returned response contains a list of maps. Each map contains a shared networ
 <!-- start of remote-network4-set -->
 <section xml:id="reference-remote-network4-set">
 <title>remote-network4-set reference</title>
-<para xml:id="ref-remote-network4-set"><command>remote-network4-set</command> - This command is used to create or update IPv4 shared network for a server in the specified database.</para>
+<para xml:id="ref-remote-network4-set"><command>remote-network4-set</command> - This command is used to create or replace an IPv4 shared network in the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3003,15 +3093,17 @@ The returned response contains a list of maps. Each map contains a shared networ
   <screen>{
     "command": "remote-network4-set",
     "arguments": {
-        "shared-networks": [ {
-            &lt;shared network specification excluding subnets list&gt;
-        } ],
+        "shared-networks": [
+            {
+                &lt;shared network specification excluding subnets list&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-The provided list must contain exactly one shared network specification. It must not contain subnets (subnet4 parameter). The subnets are added to the shared network using <command>remote-subnet4-set</command> command. The <command>remote</command> map contains specification of the backend where shared network should be set. Typically it contains "type": "mysql".</para>
+The provided list must contain exactly one shared network specification. It must not contain subnets ("subnet4" parameter). The subnets are added to the shared network using <command>remote-subnet4-set</command> command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3033,21 +3125,47 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-network6-del -->
 <section xml:id="reference-remote-network6-del">
 <title>remote-network6-del reference</title>
-<para xml:id="ref-remote-network6-del"><command>remote-network6-del</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-network6-del"><command>remote-network6-del</command> - This command is used to delete an IPv6 shared network from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-network6-del"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-network6-del",
+    "arguments": {
+        "shared-networks": [
+            {
+                "name": &lt;shared network name&gt;
+            }
+        ],
+        "subnets-action": "keep" | "delete",
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "1 IPv6 shared network(s) deleted.",
+    "arguments": {
+        "count": 1
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-network6-del -->
@@ -3055,21 +3173,49 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-network6-get -->
 <section xml:id="reference-remote-network6-get">
 <title>remote-network6-get reference</title>
-<para xml:id="ref-remote-network6-get"><command>remote-network6-get</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-network6-get"><command>remote-network6-get</command> - This command is used to fetch selected IPv6 shared network for the server from the specified database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-network6-get"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-network6-get"
+    "arguments": {
+        "shared-networks": [
+            {
+                "name": &lt;shared network name&gt;
+            }
+        ],
+        "subnets-include": "full" | "no",
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "IPv6 shared network found.",
+    "arguments": {
+        "shared-networks": [
+            {
+                "name": &lt;shared network name&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                },
+                &lt;the rest of the shared network information, potentially including subnets&gt;
+            }
+        ],
+        "count": 1
+    }
+}</screen>
+If the subnets are returned with the shared network they are carried in the <command>subnet6</command> list within the shared network definition. The metadata is included in the returned shared network definition and it provides the database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-network6-get -->
@@ -3077,21 +3223,48 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-network6-list -->
 <section xml:id="reference-remote-network6-list">
 <title>remote-network6-list reference</title>
-<para xml:id="ref-remote-network6-list"><command>remote-network6-list</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-network6-list"><command>remote-network6-list</command> - This command is used to fetch a list of all IPv6 shared networks from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-network6-list"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-network6-list"
+    "arguments": {
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command contains no arguments besides the optional <command>remote</command>.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "2 IPv6 shared network(s) found.",
+    "arguments": {
+        "shared-networks": [
+            {
+                "name": &lt;first shared network name&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            },
+            {
+                "name": &lt;second shared network name&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ],
+        "count": 2
+    }
+}</screen>
+The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network6-get</command> to fetch the full information about the selected shared networks.</para>
 
 </section>
 <!-- end of remote-network6-list -->
@@ -3099,21 +3272,43 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-network6-set -->
 <section xml:id="reference-remote-network6-set">
 <title>remote-network6-set reference</title>
-<para xml:id="ref-remote-network6-set"><command>remote-network6-set</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-network6-set"><command>remote-network6-set</command> - This command is used to create or replace an IPv6 shared network in the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-network6-set"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-network6-set",
+    "arguments": {
+        "shared-networks": [
+            {
+                &lt;shared network specification excluding subnets list&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+The provided list must contain exactly one shared network specification. It must not contain subnets ("subnet6" parameter). The subnets are added to the shared network using <command>remote-subnet6-set</command> command.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "IPv6 shared network successfully set."
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-network6-set -->
@@ -3142,7 +3337,7 @@ Optional extra comments after the resposne syntax.</para>
         }
     }
 }</screen>
-This command includes a list with exactly one option definition specification comprising an option name and code. The <command>remote</command> map contains specification of the backend from which the shared network should be deleted. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one option definition specification comprising an option name and code.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3167,7 +3362,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-option-def4-get -->
 <section xml:id="reference-remote-option-def4-get">
 <title>remote-option-def4-get reference</title>
-<para xml:id="ref-remote-option-def4-get"><command>remote-option-def4-get</command> - This command is used to fetch DHCPv4 option definition for the server from the specified database.</para>
+<para xml:id="ref-remote-option-def4-get"><command>remote-option-def4-get</command> - This command is used to fetch a DHCPv4 option definition from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3179,28 +3374,32 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "remote-option-def4-get",
     "arguments": {
-        "option-defs": [ {
-            "code": &lt;option code&gt;,
-            "space": &lt;option space&gt;
-        } ],
+        "option-defs": [
+            {
+                "code": &lt;option code&gt;,
+                "space": &lt;option space&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-The desired option definition is identified by the pair of option code/space values. The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains "type": "mysql".</para>
+The desired option definition is identified by the pair of the option code/space values.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "DHCPv4 option definition 222 in 'dhcp4' found.",
+    "text": "DHCPv4 option definition found.",
     "arguments": {
-        "option-defs": [ {
-            &lt;option definition&gt;,
-            "metadata": {
-                "server-tag": &lt;server tag&gt;
+        "option-defs": [
+            {
+                &lt;option definition&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
             }
-        } ],
+        ],
         "count": 1
     }
 }</screen>
@@ -3212,7 +3411,7 @@ The metadata is included and it provides database specific information associate
 <!-- start of remote-option-def4-get-all -->
 <section xml:id="reference-remote-option-def4-get-all">
 <title>remote-option-def4-get-all reference</title>
-<para xml:id="ref-remote-option-def4-get-all"><command>remote-option-def4-get-all</command> - This command is used to fetch all option definitions for the server from the specified database.</para>
+<para xml:id="ref-remote-option-def4-get-all"><command>remote-option-def4-get-all</command> - This command is used to fetch all DHCPv4 option definitions from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3229,7 +3428,7 @@ The metadata is included and it provides database specific information associate
         }
     }
 }</screen>
-The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains "type": "mysql".</para>
+This command contains no arguments besides the optional <command>remote</command>.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3250,7 +3449,7 @@ The <command>remote</command> map contains specification of the backend from whi
                 }
             }
         ],
-        "count": &lt;count of the objects returned&gt;
+        "count": 2
     }
 }</screen>
 The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects.</para>
@@ -3261,7 +3460,7 @@ The returned response contains a list of maps. Each map contains an option defin
 <!-- start of remote-option-def4-set -->
 <section xml:id="reference-remote-option-def4-set">
 <title>remote-option-def4-set reference</title>
-<para xml:id="ref-remote-option-def4-set"><command>remote-option-def4-set</command> - This command is used to create or update DHCPv4 option definition for the server in the specified database.</para>
+<para xml:id="ref-remote-option-def4-set"><command>remote-option-def4-set</command> - This command is used to create or replace DHCPv4 option definition in the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3272,17 +3471,18 @@ The returned response contains a list of maps. Each map contains an option defin
 <para>Command syntax:
   <screen>{
     "command": "remote-option-def4-set",
-    "service": [ "dhcp4" ],
     "arguments": {
-        "option-defs": [ {
-            &lt;option definition specification&gt;
-        } ],
+        "option-defs": [
+            {
+                &lt;option definition specification&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-The provided list must contain exactly one option definition specification. The <command>remote</command> map contains specification of the backend where shared network should be set. Typically it contains "type": "mysql".</para>
+The provided list must contain exactly one option definition specification.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3304,21 +3504,47 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-option-def6-del -->
 <section xml:id="reference-remote-option-def6-del">
 <title>remote-option-def6-del reference</title>
-<para xml:id="ref-remote-option-def6-del"><command>remote-option-def6-del</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option-def6-del"><command>remote-option-def6-del</command> - This command is used to delete a DHCPv6 option definition from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option-def6-del"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option-def6-del",
+    "arguments": {
+        "option-defs": [
+            {
+                "code": &lt;option code&gt;,
+                "space": &lt;option space
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one option definition specification comprising an option name and code.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "1 DHCPv6 option definition(s) deleted.",
+    "arguments": {
+        "count": 1
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-option-def6-del -->
@@ -3326,21 +3552,48 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-option-def6-get -->
 <section xml:id="reference-remote-option-def6-get">
 <title>remote-option-def6-get reference</title>
-<para xml:id="ref-remote-option-def6-get"><command>remote-option-def6-get</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option-def6-get"><command>remote-option-def6-get</command> - This command is used to fetch a DHCPv6 option definition from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option-def6-get"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option-def6-get",
+    "arguments": {
+        "option-defs": [
+            {
+                "code": &lt;option code&gt;,
+                "space": &lt;option space&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+The desired option definition is identified by the pair of the option code/space values.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 option definition found.",
+    "arguments": {
+        "option-defs": [
+            {
+                &lt;option definition&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ],
+        "count": 1
+    }
+}</screen>
+The metadata is included and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-option-def6-get -->
@@ -3348,21 +3601,48 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-option-def6-get-all -->
 <section xml:id="reference-remote-option-def6-get-all">
 <title>remote-option-def6-get-all reference</title>
-<para xml:id="ref-remote-option-def6-get-all"><command>remote-option-def6-get-all</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option-def6-get-all"><command>remote-option-def6-get-all</command> - This command is used to fetch all DHCPv6 option definitions from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option-def6-get-all"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option-def6-get-all"
+    "arguments": {
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command contains no arguments besides the optional <command>remote</command>.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "2 DHCPv6 option definition(s) found.",
+    "arguments": {
+        "option-defs": [
+            {
+                &lt;first option definition&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            },
+            {
+                &lt;second option definition&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ],
+        "count": 2
+    }
+}</screen>
+The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects.</para>
 
 </section>
 <!-- end of remote-option-def6-get-all -->
@@ -3370,21 +3650,43 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-option-def6-set -->
 <section xml:id="reference-remote-option-def6-set">
 <title>remote-option-def6-set reference</title>
-<para xml:id="ref-remote-option-def6-set"><command>remote-option-def6-set</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option-def6-set"><command>remote-option-def6-set</command> - This command is used to create or replace DHCPv6 option definition in the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option-def6-set"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option-def6-set",
+    "arguments": {
+        "option-defs": [
+            {
+                &lt;option definition specification&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+The provided list must contain exactly one option definition specification.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 option definition set."
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-option-def6-set -->
@@ -3404,24 +3706,27 @@ Optional extra comments after the resposne syntax.</para>
   <screen>{
     "command": "remote-option4-global-del",
     "arguments": {
-        "options": [ {
-            "code": &lt;option code&gt;
-            "space": &lt;option space&gt;
-        } ],
+        "options": [
+            {
+                "code": &lt;option code&gt;
+                "space": &lt;option space&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-This command includes a list with exactly one option specification comprising an option name and code. The <command>remote</command> map contains specification of the backend from which the shared network should be deleted. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one option specification comprising an option name and code.</para>
 
 <para>Response syntax:
-  <screen>
+  <screen>{
     "result": 0,
     "text": "1 DHCPv4 option(s) deleted.",
     "arguments": {
         "count": 1
-    }</screen>
+    }
+}</screen>
 Result is an integer representation of the status. Currently supported statuses are:
 <itemizedlist>
   <listitem><para>0 - success</para></listitem>
@@ -3459,12 +3764,12 @@ Result is an integer representation of the status. Currently supported statuses 
             &lt;specification of the database to connect to&gt;
         }
 }</screen>
-The option is identified by the pair of option code/space values. The <command>remote</command> map contains specification of the backend from which the option should be fetched. Typically it contains "type": "mysql".</para>
+The option is identified by the pair of option code/space values.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "DHCPv4 option &lt;option code&gt; in &lt;option space&gt; found.",
+    "text": "DHCPv4 option in found.",
     "arguments": {
         "options": [
             {
@@ -3484,7 +3789,7 @@ The metadata is included and it provides database specific information associate
 <!-- start of remote-option4-global-get-all -->
 <section xml:id="reference-remote-option4-global-get-all">
 <title>remote-option4-global-get-all reference</title>
-<para xml:id="ref-remote-option4-global-get-all"><command>remote-option4-global-get-all</command> - This command is used to fetch all DHCPv4 global options for the server from the specified database.</para>
+<para xml:id="ref-remote-option4-global-get-all"><command>remote-option4-global-get-all</command> - This command is used to fetch all DHCPv4 global options for the server from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3494,14 +3799,14 @@ The metadata is included and it provides database specific information associate
 
 <para>Command syntax:
   <screen>{
-    "command": "remote-option4-global-get-all"
+    "command": "remote-option4-global-get-all",
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-The <command>remote</command> map contains specification of the backend from which the global parameters should be fetched. Typically it contains "type": "mysql".</para>
+This command takes no arguments besides the optional <command>remote</command> map.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3522,7 +3827,7 @@ The <command>remote</command> map contains specification of the backend from whi
                 }
             }
         ],
-        "count": &lt;count of the objects returned&gt;
+        "count": 2
     }
 }</screen>
 The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object.</para>
@@ -3533,7 +3838,7 @@ The returned response contains a list of maps. Each map contains a global option
 <!-- start of remote-option4-global-set -->
 <section xml:id="reference-remote-option4-global-set">
 <title>remote-option4-global-set reference</title>
-<para xml:id="ref-remote-option4-global-set"><command>remote-option4-global-set</command> - This command is used to create or update DHCPv4 global option for the server in the specified database.</para>
+<para xml:id="ref-remote-option4-global-set"><command>remote-option4-global-set</command> - This command is used to create or replace a DHCPv4 global option in the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3544,17 +3849,18 @@ The returned response contains a list of maps. Each map contains a global option
 <para>Command syntax:
   <screen>{
     "command": "remote-option4-global-set",
-    "service": [ "dhcp4" ],
     "arguments": {
-        "options": [ {
-            &lt;global option specification&gt;
-        } ],
+        "options": [
+            {
+                &lt;global option specification&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-The provided list must cotain exactly one option specification. The <command>remote</command> map contains specification of the backend where shared network should be set. Typically it contains "type": "mysql".</para>
+The provided list must cotain exactly one option specification.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3576,21 +3882,47 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-option6-global-del -->
 <section xml:id="reference-remote-option6-global-del">
 <title>remote-option6-global-del reference</title>
-<para xml:id="ref-remote-option6-global-del"><command>remote-option6-global-del</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option6-global-del"><command>remote-option6-global-del</command> - This command is used to delete a DHCPv6 global option from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option6-global-del"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option6-global-del",
+    "arguments": {
+        "options": [
+            {
+                "code": &lt;option code&gt;
+                "space": &lt;option space&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one option specification comprising an option name and code.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "1 DHCPv6 option(s) deleted.",
+    "arguments": {
+        "count": 1
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-option6-global-del -->
@@ -3598,21 +3930,46 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-option6-global-get -->
 <section xml:id="reference-remote-option6-global-get">
 <title>remote-option6-global-get reference</title>
-<para xml:id="ref-remote-option6-global-get"><command>remote-option6-global-get</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option6-global-get"><command>remote-option6-global-get</command> - This command is used to delete a DHCPv6 global option from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option6-global-get"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option6-global-get",
+    "arguments": {
+        "options": [
+            {
+                "code": &lt;option code&gt;,
+                "space": &lt;option space&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+}</screen>
+The option is identified by the pair of option code/space values.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 option found.",
+    "arguments": {
+        "options": [
+            {
+                &lt;option information&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ]
+    }
+}</screen>
+The metadata is included and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-option6-global-get -->
@@ -3620,21 +3977,48 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-option6-global-get-all -->
 <section xml:id="reference-remote-option6-global-get-all">
 <title>remote-option6-global-get-all reference</title>
-<para xml:id="ref-remote-option6-global-get-all"><command>remote-option6-global-get-all</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option6-global-get-all"><command>remote-option6-global-get-all</command> - This command is used to fetch all DHCPv6 global options for the server from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option6-global-get-all"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option6-global-get-all",
+    "arguments": {
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command takes no arguments besides the optional <command>remote</command> map.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "2 DHCPv6 option(s) found.",
+    "arguments": {
+        "options": [
+            {
+                &lt;first option specification&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            },
+            {
+                &lt;second option specification&gt;,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ],
+        "count": 2
+    }
+}</screen>
+The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-option6-global-get-all -->
@@ -3642,21 +4026,43 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-option6-global-set -->
 <section xml:id="reference-remote-option6-global-set">
 <title>remote-option6-global-set reference</title>
-<para xml:id="ref-remote-option6-global-set"><command>remote-option6-global-set</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-option6-global-set"><command>remote-option6-global-set</command> - This command is used to create or replace a DHCPv6 global option in the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-option6-global-set"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-option6-global-set",
+    "arguments": {
+        "options": [
+            {
+                &lt;global option specification&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+The provided list must cotain exactly one option specification.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "DHCPv6 option set."
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-option6-global-set -->
@@ -3675,17 +4081,18 @@ Optional extra comments after the resposne syntax.</para>
 <para>Command syntax:
   <screen>{
     "command": "remote-subnet4-del-by-id",
-    "service": [ "dhcp4" ],
     "arguments": {
-        "subnets": [ {
-            "id": &lt;subnet identifier&gt;
-        } ],
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-This command includes a list with exactly one id of the subnet to be deleted. The <command>remote</command> map contains specification of the backend from which the subnet should be deleted. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one id of the subnet to be deleted.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3721,17 +4128,18 @@ Result is an integer representation of the status. Currently supported statuses 
 <para>Command syntax:
   <screen>{
     "command": "remote-subnet4-del-by-prefix",
-    "service": [ "dhcp4" ],
     "arguments": {
-        "subnets": [ {
-            "subnet": &lt;subnet prefix&gt;
-        } ],
+        "subnets": [
+            {
+                "subnet": &lt;subnet prefix&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-This command includes a list with exactly one prefix of the subnet to be deleted. The <command>remote</command> map contains specification of the backend from which the subnet should be deleted. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one prefix of the subnet to be deleted.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3756,7 +4164,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-subnet4-get-by-id -->
 <section xml:id="reference-remote-subnet4-get-by-id">
 <title>remote-subnet4-get-by-id reference</title>
-<para xml:id="ref-remote-subnet4-get-by-id"><command>remote-subnet4-get-by-id</command> - This command is used to fetch selected IPv4 subnet by ID for the server from the specified database.</para>
+<para xml:id="ref-remote-subnet4-get-by-id"><command>remote-subnet4-get-by-id</command> - This command is used to fetch selected IPv4 subnet by ID for the server from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3776,12 +4184,12 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one id of the subnet to be returned. The <command>remote</command> map contains specification of the backend from which the subnet should be fetched. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one id of the subnet to be returned.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "IPv4 subnet 123 found.",
+    "text": "IPv4 subnet found.",
     "arguments": {
         "subnets": [ {
             "id": &lt;subnet identifier&gt;
@@ -3795,7 +4203,7 @@ This command includes a list with exactly one id of the subnet to be returned. T
         "count": 1
     }
 }</screen>
-The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object.</para>
+If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-subnet4-get-by-id -->
@@ -3803,7 +4211,7 @@ The metadata is included in the returned subnet definition and it provides datab
 <!-- start of remote-subnet4-get-by-prefix -->
 <section xml:id="reference-remote-subnet4-get-by-prefix">
 <title>remote-subnet4-get-by-prefix reference</title>
-<para xml:id="ref-remote-subnet4-get-by-prefix"><command>remote-subnet4-get-by-prefix</command> - This command is used to fetch selected IPv4 subnet by prefix for the server from the specified database.</para>
+<para xml:id="ref-remote-subnet4-get-by-prefix"><command>remote-subnet4-get-by-prefix</command> - This command is used to fetch selected IPv4 subnet by prefix from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3823,26 +4231,28 @@ The metadata is included in the returned subnet definition and it provides datab
         }
     }
 }</screen>
-This command includes a list with exactly one prefix of the subnet to be returned. The <command>remote</command> map contains specification of the backend from which the subnet should be fetched. Typically it contains "type": "mysql".</para>
+This command includes a list with exactly one prefix of the subnet to be returned.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "IPv4 subnet 123 found.",
+    "text": "IPv4 subnet found.",
     "arguments": {
-        "subnets": [ {
-            "id": &lt;subnet identifier&gt;
-            "subnet": &lt;subnet prefix&gt;,
-            "shared-network-name": &lt;shared network name&gt; | null,
-            "metadata": {
-                "server-tag": &lt;server tag&gt;
-            },
-            &lt;the rest of the subnet specification here&gt;
-        } ],
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;
+                "subnet": &lt;subnet prefix&gt;,
+                "shared-network-name": &lt;shared network name&gt; | null,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                },
+                &lt;the rest of the subnet specification here&gt;
+            }
+        ],
         "count": 1
     }
 }</screen>
-The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object.</para>
+If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-subnet4-get-by-prefix -->
@@ -3850,7 +4260,7 @@ The metadata is included in the returned subnet definition and it provides datab
 <!-- start of remote-subnet4-list -->
 <section xml:id="reference-remote-subnet4-list">
 <title>remote-subnet4-list reference</title>
-<para xml:id="ref-remote-subnet4-list"><command>remote-subnet4-list</command> - This command is used to fetch a list of all IPv4 shared networks for the particular server from the specified database.</para>
+<para xml:id="ref-remote-subnet4-list"><command>remote-subnet4-list</command> - This command is used to fetch a list of all IPv4 subnets from the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3867,7 +4277,7 @@ The metadata is included in the returned subnet definition and it provides datab
         }
     }
 }</screen>
-The <command>remote</command> map contains specification of the backend from which the subnets should be fetched. Typically it contains "type": "mysql".</para>
+This command includes no arguments besides the optional <command>remote</command> map.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3903,7 +4313,7 @@ The returned response contains a list of maps. Each map contains a subnet identi
 <!-- start of remote-subnet4-set -->
 <section xml:id="reference-remote-subnet4-set">
 <title>remote-subnet4-set reference</title>
-<para xml:id="ref-remote-subnet4-set"><command>remote-subnet4-set</command> - This command is used to create or update IPv4 subnet for a server in the specified database.</para>
+<para xml:id="ref-remote-subnet4-set"><command>remote-subnet4-set</command> - This command is used to create or replace an IPv4 subnet the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
@@ -3915,18 +4325,20 @@ The returned response contains a list of maps. Each map contains a subnet identi
   <screen>{
     "command": "remote-subnet4-set",
     "arguments": {
-        "subnets": [ {
-            "id": &lt;subnet identifier&gt;,
-            "subnet": &lt;subnet prefix&gt;,
-            "shared-network-name": &lt;shared network name&gt;
-            &lt;the rest of the subnet specification here&gt;
-        } ],
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;,
+                "subnet": &lt;subnet prefix&gt;,
+                "shared-network-name": &lt;shared network name&gt; | null
+                &lt;the rest of the subnet specification here&gt;
+            }
+        ],
         "remote": {
             &lt;specification of the database to connect to&gt;
         }
     }
 }</screen>
-The provided list must contain exactly one subnet specification. The <command>remote</command> map contains specification of the backend where shared network should be set. Typically it contains "type": "mysql".</para>
+The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3948,21 +4360,46 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-subnet6-del-by-id -->
 <section xml:id="reference-remote-subnet6-del-by-id">
 <title>remote-subnet6-del-by-id reference</title>
-<para xml:id="ref-remote-subnet6-del-by-id"><command>remote-subnet6-del-by-id</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-subnet6-del-by-id"><command>remote-subnet6-del-by-id</command> - This command is used to delete an IPv6 subnet by ID from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-subnet6-del-by-id"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-subnet6-del-by-id",
+    "arguments": {
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one id of the subnet to be deleted.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "1 IPv6 subnet(s) deleted.",
+    "arguments": {
+        "count": 1
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-subnet6-del-by-id -->
@@ -3970,21 +4407,46 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-subnet6-del-by-prefix -->
 <section xml:id="reference-remote-subnet6-del-by-prefix">
 <title>remote-subnet6-del-by-prefix reference</title>
-<para xml:id="ref-remote-subnet6-del-by-prefix"><command>remote-subnet6-del-by-prefix</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-subnet6-del-by-prefix"><command>remote-subnet6-del-by-prefix</command> - This command is used to delete an IPv6 subnet by prefix from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-subnet6-del-by-prefix"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-subnet6-del-by-prefix",
+    "arguments": {
+        "subnets": [
+            {
+                "subnet": &lt;subnet prefix&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one prefix of the subnet to be deleted.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "1 IPv6 subnet(s) deleted.",
+    "arguments": {
+        "count": 1
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-subnet6-del-by-prefix -->
@@ -3992,21 +4454,50 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-subnet6-get-by-id -->
 <section xml:id="reference-remote-subnet6-get-by-id">
 <title>remote-subnet6-get-by-id reference</title>
-<para xml:id="ref-remote-subnet6-get-by-id"><command>remote-subnet6-get-by-id</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-subnet6-get-by-id"><command>remote-subnet6-get-by-id</command> - This command is used to fetch selected IPv6 subnet by ID for the server from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-subnet6-get-by-id"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-subnet6-get-by-id"
+    "arguments": {
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one id of the subnet to be returned.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "IPv6 subnet found.",
+    "arguments": {
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;
+                "subnet": &lt;subnet prefix&gt;,
+                "shared-network-name": &lt;shared network name&gt; | null,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                },
+                &lt;the rest of the subnet specification here&gt;
+            }
+        ],
+        "count": 1
+    }
+}</screen>
+If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-subnet6-get-by-id -->
@@ -4014,21 +4505,48 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-subnet6-get-by-prefix -->
 <section xml:id="reference-remote-subnet6-get-by-prefix">
 <title>remote-subnet6-get-by-prefix reference</title>
-<para xml:id="ref-remote-subnet6-get-by-prefix"><command>remote-subnet6-get-by-prefix</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-subnet6-get-by-prefix"><command>remote-subnet6-get-by-prefix</command> - This command is used to fetch selected IPv6 subnet by prefix from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-subnet6-get-by-prefix"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-subnet4-get-by-prefix"
+    "arguments": {
+        "subnets": [
+            {
+                "subnet": &lt;subnet prefix&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes a list with exactly one prefix of the subnet to be returned.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "IPv6 subnet found.",
+    "arguments": {
+        "subnets": [ {
+            "id": &lt;subnet identifier&gt;
+            "subnet": &lt;subnet prefix&gt;,
+            "shared-network-name": &lt;shared network name&gt; | null,
+            "metadata": {
+                "server-tag": &lt;server tag&gt;
+            },
+            &lt;the rest of the subnet specification here&gt;
+        } ],
+        "count": 1
+    }
+}</screen>
+If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object.</para>
 
 </section>
 <!-- end of remote-subnet6-get-by-prefix -->
@@ -4036,21 +4554,52 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-subnet6-list -->
 <section xml:id="reference-remote-subnet6-list">
 <title>remote-subnet6-list reference</title>
-<para xml:id="ref-remote-subnet6-list"><command>remote-subnet6-list</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-subnet6-list"><command>remote-subnet6-list</command> - This command is used to fetch a list of all IPv6 subnets from the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-subnet6-list"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-subnet6-list"
+    "arguments": {
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+This command includes no arguments besides the optional <command>remote</command> map.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "2 IPv6 subnets found.",
+    "arguments": {
+        "subnets": [
+            {
+                "id": &lt;first subnet identifier&gt;,
+                "subnet": &lt;first subnet prefix&gt;,
+                "shared-network-name": &lt;shared network name&gt; | null,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            },
+            {
+                "id": &lt;second subnet identifier&gt;,
+                "subnet": &lt;second subnet prefix&gt;,
+                "shared-network-name": &lt;shared network name&gt; | null,
+                "metadata": {
+                    "server-tag": &lt;server tag&gt;
+                }
+            }
+        ],
+        "count": 2
+    }
+}</screen>
+The returned response contains a list of maps. Each map contains a subnet identifier, prefix and shared network name to which the subnet belongs. If the subnet does not belong to a shared netork the name is null. The metadata includes database specific information associated with the subnets. The returned list does not contain full subnet definitions. Use <command>remote-subnet6-get</command> to fetch the full information about the selected subnets.</para>
 
 </section>
 <!-- end of remote-subnet6-list -->
@@ -4058,21 +4607,46 @@ Optional extra comments after the resposne syntax.</para>
 <!-- start of remote-subnet6-set -->
 <section xml:id="reference-remote-subnet6-set">
 <title>remote-subnet6-set reference</title>
-<para xml:id="ref-remote-subnet6-set"><command>remote-subnet6-set</command> - a sentence or two explaining what this command does</para>
+<para xml:id="ref-remote-subnet6-set"><command>remote-subnet6-set</command> - This command is used to create or replace an IPv4 subnet the configuration database.</para>
 
-<para>Supported by: <command><link linkend="commands-undocumented">undocumented</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 0.0.0 (<link linkend="commands-undocumented-lib">undocumented</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-cb_cmds-lib">cb_cmds</link>  hook)</para>
 
 <para>Description and examples: See <xref linkend="command-remote-subnet6-set"/></para>
 
 <para>Command syntax:
-  <screen>Syntax of the command</screen>
-Possibly some extra comments after the syntax.</para>
+  <screen>{
+    "command": "remote-subnet6-set",
+    "arguments": {
+        "subnets": [
+            {
+                "id": &lt;subnet identifier&gt;,
+                "subnet": &lt;subnet prefix&gt;,
+                "shared-network-name": &lt;shared network name&gt; | null
+                &lt;the rest of the subnet specification here&gt;
+            }
+        ],
+        "remote": {
+            &lt;specification of the database to connect to&gt;
+        }
+    }
+}</screen>
+The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name.</para>
 
 <para>Response syntax:
-  <screen>Syntax of the response</screen>
-Optional extra comments after the resposne syntax.</para>
+  <screen>{
+    "result": 0,
+    "text": "IPv6 subnet successfully set.",
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
 
 </section>
 <!-- end of remote-subnet6-set -->

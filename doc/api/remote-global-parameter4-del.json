@@ -1,7 +1,6 @@
 {
     "name": "remote-global-parameter4-del",
-    "brief": "This command is used to delete a global DHCPv4 parameter from a configuration database. The server will use the value specified in the configuration file or a default value (if the parameter is not specified in the configuration file) after deleting the parameter from the database.",
-    "description": "See <xref linkend=\"cmd-remote-global-parameter4-del\"/>",
+    "brief": "This command is used to delete a global DHCPv4 parameter from the configuration database. The server will use the value specified in the configuration file or a default value (if the parameter is not specified in the configuration file) after deleting the parameter from the database.",
     "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
     "hook": "cb_cmds",
@@ -14,10 +13,10 @@
         }
     }
 }",
-    "cmd-comment": "This command includes a list with exactly one name of the parameter to be deleted. The <command>remote</command> map contains specification of the backend from which the global parameter should be deleted. Typically it contains \"type\": \"mysql\".",
+    "cmd-comment": "This command carries the list including exactly one name of the parameter to be deleted.",
     "resp-syntax": "{
     \"result\": 0,
-    \"text\": \"DHCPv4 global parameter successfully deleted.\",
+    \"text\": \"DHCPv4 global parameter(s) deleted.\",
     \"arguments\": {
         \"count\": 1
     }

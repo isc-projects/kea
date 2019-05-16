@@ -1,12 +1,28 @@
 {
     "name": "remote-subnet6-del-by-prefix",
-    "brief": "a sentence or two explaining what this command does",
-    "description": "See <xref linkend=\"cmd-\"/>",
-    "support": [ "undocumented" ],
-    "avail": "0.0.0",
-    "hook": "undocumented",
-    "cmd-syntax": "Syntax of the command",
-    "cmd-comment": "Possibly some extra comments after the syntax.",
-    "resp-syntax": "Syntax of the response",
-    "resp-comment": "Optional extra comments after the resposne syntax."
+    "brief": "This command is used to delete an IPv6 subnet by prefix from the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-subnet6-del-by-prefix\",
+    \"arguments\": {
+        \"subnets\": [
+            {
+                \"subnet\": <subnet prefix>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command includes a list with exactly one prefix of the subnet to be deleted.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"1 IPv6 subnet(s) deleted.\",
+    \"arguments\": {
+        \"count\": 1
+    }
+}"
 }

@@ -1,12 +1,38 @@
 {
     "name": "remote-network6-list",
-    "brief": "a sentence or two explaining what this command does",
-    "description": "See <xref linkend=\"cmd-\"/>",
-    "support": [ "undocumented" ],
-    "avail": "0.0.0",
-    "hook": "undocumented",
-    "cmd-syntax": "Syntax of the command",
-    "cmd-comment": "Possibly some extra comments after the syntax.",
-    "resp-syntax": "Syntax of the response",
-    "resp-comment": "Optional extra comments after the resposne syntax."
+    "brief": "This command is used to fetch a list of all IPv6 shared networks from the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-network6-list\"
+    \"arguments\": {
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command contains no arguments besides the optional <command>remote</command>.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"2 IPv6 shared network(s) found.\",
+    \"arguments\": {
+        \"shared-networks\": [
+            {
+                \"name\": <first shared network name>,
+                \"metadata\": {
+                    \"server-tag\": <server tag>
+                }
+            },
+            {
+                \"name\": <second shared network name>,
+                \"metadata\": {
+                    \"server-tag\": <server tag>
+                }
+            }
+        ],
+        \"count\": 2
+    }
+}",
+    "resp-comment": "The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network6-get</command> to fetch the full information about the selected shared networks."
 }
