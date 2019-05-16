@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,8 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -272,18 +274,125 @@ private:
 
 public:
 
-    /// @brief Defines a single hint (an address + prefix-length).
+    /// @brief Defines a single hint
     ///
     /// This is an entry that represents what the client had requested,
     /// either an address or a prefix. Prefix length is 128 for regular
-    /// addresses.
-    typedef std::pair<isc::asiolink::IOAddress, uint8_t> ResourceType;
+    /// addresses. Optionally it provides wanted preferred and valid
+    /// lifetimes.
+    ///
+    /// @note Seems to be used only for DHCPv6.
+    class Resource {
+    public:
+
+        /// @brief Default constructor.
+        ///
+        /// @param address the address or prefix
+        /// @param prefix_len the prefix length (128 for addresses)
+        /// @param preferred the optional preferred lifetime
+        /// @param valid the optional valid lifetime
+        Resource(const isc::asiolink::IOAddress& address,
+                 const uint8_t prefix_len,
+                 const uint32_t preferred = 0,
+                 const uint32_t valid = 0)
+            : address_(address), prefix_len_(prefix_len),
+              preferred_(preferred), valid_(valid) {
+        }
+
+        /// @brief Constructor from an IAADDR DHCPv6 option.
+        ///
+        /// @param iaaddr The pointer to the IAADDR option
+        Resource(const Option6IAAddrPtr& iaaddr);
+
+        /// @brief Constructor from an IAPREFIX DHCPv6 option.
+        ///
+        /// @param iaprefix The pointer to the IAPREFIX option
+        Resource(const Option6IAPrefixPtr& iaprefix);
+
+        /// @brief Returns the address.
+        ///
+        /// @return the address or prefix
+        isc::asiolink::IOAddress getAddress() const {
+            return (address_);
+        }
+
+        /// @brief Returns the prefix length.
+        ///
+        /// @return the prefix length
+        uint8_t getPrefixLength() const {
+            return (prefix_len_);
+        }
+
+        /// @brief Returns the optional preferred lifetime.
+        ///
+        /// @return the preferred lifetime (0 if not set)
+        uint32_t getPreferred() const {
+            return (preferred_);
+        }
+
+        /// @brief Returns the optional valid lifetime.
+        ///
+        /// @return the valid lifetime (0 if not set)
+        uint32_t getValid() const {
+            return (valid_);
+        }
+
+        /// @brief Compares two @c AllocEngine::Resource objects for equality.
+        ///
+        /// @param other object to be compared with this object
+        /// @return true if objects are equal, false otherwise.
+        bool equals(const Resource& other) const {
+            return (address_ == other.address_ &&
+                    prefix_len_ == other.prefix_len_);
+        }
+
+        /// @brief Equality operator.
+        ///
+        /// @param other object to be compared with this object
+        /// @return true if objects are equal, false otherwise.
+        bool operator==(const Resource& other) const {
+            return (equals(other));
+        }
+
+    protected:
+
+        /// @brief The address or prefix.
+        isc::asiolink::IOAddress address_;
+
+        /// @brief The prefix length (128 for an address).
+        uint8_t prefix_len_;
+
+        /// @brief The preferred lifetime (0 when not set).
+        uint32_t preferred_;
+
+        /// @brief The valid lifetime (0 when not set).
+        uint32_t valid_;
+    };
+
+    /// @brief Resource compare class.
+    ///
+    /// Needed for using sets of Resource objets.
+    struct ResourceCompare {
+        /// @brief Compare operator
+        ///
+        /// @note Only the address/prefix part of resources is used.
+        /// @param lhr Left hand resource objet
+        /// @param rhr Right hand resource objet
+        /// @return true if lhr is less than rhr, false otherwise
+        bool operator() (const Resource& lhr, const Resource& rhr) const {
+            if (lhr.getAddress() == rhr.getAddress()) {
+                return (lhr.getPrefixLength() < rhr.getPrefixLength());
+            } else {
+                return (lhr.getAddress() < rhr.getAddress());
+            }
+        }
+    };
 
     /// @brief Container for client's hints.
-    typedef std::vector<ResourceType> HintContainer;
+    typedef std::vector<Resource> HintContainer;
 
     /// @brief Container holding allocated prefixes or addresses.
-    typedef std::set<ResourceType> ResourceContainer;
+    typedef std::set<Resource, ResourceCompare> ResourceContainer;
 
     /// @brief A tuple holding host identifier type and value.
     typedef std::pair<Host::IdentifierType, std::vector<uint8_t> > IdentifierPair;
@@ -428,8 +537,22 @@ public:
             ///
             /// @param prefix Prefix or address.
             /// @param prefix_len Prefix length. Default is 128 for addresses.
+            /// @param preferred Wanted preferred lifetime. Default 0.
+            /// @param valid Wanted valid lifetime. Default 0.
             void addHint(const asiolink::IOAddress& prefix,
-                         const uint8_t prefix_len = 128);
+                         const uint8_t prefix_len = 128,
+                         const uint32_t preferred = 0,
+                         const uint32_t valid = 0);
+
+            /// @brief Convenience method adding new hint from IAADDR option.
+            ///
+            /// @param iaaddr Pointer to IAADDR.
+            void addHint(const Option6IAAddrPtr& iaaddr);
+
+            /// @brief Convenience method adding new hint from IAPREFIX option.
+            ///
+            /// @param iaprefix Pointer to IAPREFIX.
+            void addHint(const Option6IAPrefixPtr& iaprefix);
         };
 
         /// @brief Container holding IA specific contexts.

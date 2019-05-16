@@ -28,8 +28,8 @@ TEST(ClientContext6Test, addHint) {
    ctx.currentIA().addHint(IOAddress("3000:1::"), 64);
 
    ASSERT_EQ(2, ctx.currentIA().hints_.size());
-   EXPECT_EQ("2001:db8:1::1", ctx.currentIA().hints_[0].first.toText());
-   EXPECT_EQ("3000:1::", ctx.currentIA().hints_[1].first.toText());
+   EXPECT_EQ("2001:db8:1::1", ctx.currentIA().hints_[0].getAddress().toText());
+   EXPECT_EQ("3000:1::", ctx.currentIA().hints_[1].getAddress().toText());
 }
 
 // Test convenience method adding allocated prefixes and addresses to
@@ -1031,7 +1031,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
@@ -1064,7 +1064,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(IOAddress("2001:db8:1::15"), 128));
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
@@ -1667,7 +1667,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(leases[0]->addr_, 128));
+    hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
@@ -1707,7 +1707,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(leases[0]->addr_, 128));
+    hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
@@ -1846,7 +1846,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(leases[0]->addr_, 128));
+    hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
     // Create reservation for the client. This is in-pool reservation,
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
@@ -1870,7 +1870,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(leases[0]->addr_, 128));
+    hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
     // Create reservation for this address, but for another client.
     // This is in-pool reservation, as the pool is 2001:db8:1::10 - 2001:db8:1::20.
@@ -2453,7 +2453,7 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkOutOfAddresses) {
     // Now, try requesting this address by providing a hint. The engine
     // should try to honor the hint even though we start from the subnet2.
     ctx.subnet_ = subnet2_;
-    ctx.currentIA().hints_.push_back(make_pair(IOAddress("2001:db8:1::1"), 128));
+    ctx.currentIA().addHint(IOAddress("2001:db8:1::1"));
     ASSERT_NO_THROW(lease2 = expectOneLease(engine_.allocateLeases6(ctx)));
     ASSERT_TRUE(lease2);
     ASSERT_TRUE(subnet1_->inRange(lease2->addr_));
@@ -2830,7 +2830,7 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(IOAddress("2001:db8:1::10"), 128));
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::10"), 128));
 
     // Set test fixture hostname_ to the expected value. This gets checked in
     // renewTest.
@@ -2893,7 +2893,7 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(IOAddress("3001::1"), 128));
+    hints.push_back(AllocEngine::Resource(IOAddress("3001::1"), 128));
 
     // Set test fixture hostname_ to the expected value. This gets checked in
     // renewTest.
@@ -2957,7 +2957,7 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(make_pair(IOAddress("3001::"), 64));
+    hints.push_back(AllocEngine::Resource(IOAddress("3001::"), 64));
 
     // Set test fixture hostname_ to the expected value. This gets checked via
     // renewTest.

@@ -373,6 +373,16 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
+AllocEngine::Resource::Resource(const Option6IAAddrPtr& iaaddr)
+    : address_(iaaddr->getAddress()), prefix_len_(128),
+      preferred_(iaaddr->getPreferred()), valid_(iaaddr->getValid()) {
+}
+
+AllocEngine::Resource::Resource(const Option6IAPrefixPtr& iaprefix)
+    : address_(iaprefix->getAddress()), prefix_len_(iaprefix->getLength()),
+      preferred_(iaprefix->getPreferred()), valid_(iaprefix->getValid()) {
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
@@ -461,23 +471,37 @@ AllocEngine::ClientContext6::IAContext::IAContext()
 void
 AllocEngine::ClientContext6::
 IAContext::addHint(const asiolink::IOAddress& prefix,
-                   const uint8_t prefix_len) {
-    hints_.push_back(std::make_pair(prefix, prefix_len));
+                   const uint8_t prefix_len,
+                   const uint32_t preferred,
+                   const uint32_t valid) {
+    hints_.push_back(Resource(prefix, prefix_len, preferred, valid));
+}
+
+void
+AllocEngine::ClientContext6::
+IAContext::addHint(const Option6IAAddrPtr& iaaddr) {
+    hints_.push_back(Resource(iaaddr));
+}
+
+void
+AllocEngine::ClientContext6::
+IAContext::addHint(const Option6IAPrefixPtr& iaprefix) {
+    hints_.push_back(Resource(iaprefix));
 }
 
 void
 AllocEngine::ClientContext6::
 addAllocatedResource(const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len) {
-    static_cast<void>(allocated_resources_.insert(std::make_pair(prefix,
-                                                                 prefix_len)));
+    static_cast<void>(allocated_resources_.insert(Resource(prefix,
+                                                           prefix_len)));
 }
 
 bool
 AllocEngine::ClientContext6::
 isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
     return (static_cast<bool>
-            (allocated_resources_.count(std::make_pair(prefix, prefix_len))));
+            (allocated_resources_.count(Resource(prefix, prefix_len))));
 }
 
 ConstHostPtr
@@ -816,7 +840,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
     if (!ctx.currentIA().hints_.empty()) {
         /// @todo: We support only one hint for now
-        hint = ctx.currentIA().hints_[0].first;
+        hint = ctx.currentIA().hints_[0].getAddress();
     }
 
     Subnet6Ptr original_subnet = ctx.subnet_;

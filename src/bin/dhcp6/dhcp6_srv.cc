@@ -1065,11 +1065,12 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     // Secondly, pool specific options. Pools are defined within a subnet, so
     // if there is no subnet, there is nothing to do.
     if (ctx.subnet_) {
-        BOOST_FOREACH(const AllocEngine::ResourceType& resource,
-                      ctx.allocated_resources_) {
-            PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
-                                                Lease::TYPE_NA : Lease::TYPE_PD,
-                                                resource.first, false);
+        for (auto resource : ctx.allocated_resources_) {
+            PoolPtr pool =
+                ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
+                                     Lease::TYPE_NA : Lease::TYPE_PD,
+                                     resource.getAddress(),
+                                     false);
             if (pool && !pool->getCfgOption()->empty()) {
                 co_list.push_back(pool->getCfgOption());
             }
@@ -1807,7 +1808,11 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // Set per-IA context values.
     ctx.createIAContext();
     ctx.currentIA().iaid_ = ia->getIAID();
-    ctx.currentIA().addHint(hint);
+    if (hint_opt) {
+        ctx.currentIA().addHint(hint_opt);
+    } else {
+        ctx.currentIA().addHint(hint);
+    }
     ctx.currentIA().type_ = Lease::TYPE_NA;
 
     // Use allocation engine to pick a lease for this client. Allocation engine
@@ -1913,7 +1918,11 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
     // Set per-IA context values.
     ctx.createIAContext();
     ctx.currentIA().iaid_ = ia->getIAID();
-    ctx.currentIA().addHint(hint);
+    if (hint_opt) {
+        ctx.currentIA().addHint(hint_opt);
+    } else {
+        ctx.currentIA().addHint(hint);
+    }
     ctx.currentIA().type_ = Lease::TYPE_PD;
 
     // Use allocation engine to pick a lease for this client. Allocation engine
@@ -2056,7 +2065,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             // There's no way to protect against this.
             continue;
         }
-        ctx.currentIA().addHint(iaaddr->getAddress());
+        ctx.currentIA().addHint(iaaddr);
     }
 
     Lease6Collection leases = alloc_engine_->renewLeases6(ctx);
@@ -2095,7 +2104,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
             .arg(ia->getIAID());
 
         // Now remove this prefix from the hints list.
-        AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
+        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
@@ -2114,7 +2123,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         }
 
         // Now remove this address from the hints list.
-        AllocEngine::ResourceType hint_type((*l)->addr_, 128);
+        AllocEngine::Resource hint_type((*l)->addr_, 128);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
 
         // If the new FQDN settings have changed for the lease, we need to
@@ -2138,7 +2147,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     for (AllocEngine::HintContainer::const_iterator hint = hints.begin();
          hint != hints.end(); ++hint) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                                  hint->first, 0, 0));
+                                                  hint->getAddress(), 0, 0));
         ia_rsp->addOption(iaaddr);
     }
 
@@ -2231,7 +2240,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         }
 
         // Put the client's prefix into the hints list.
-        ctx.currentIA().addHint(prf->getAddress(), prf->getLength());
+        ctx.currentIA().addHint(prf);
     }
 
     // Call Allocation Engine and attempt to renew leases. Number of things
@@ -2291,7 +2300,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             .arg(ia->getIAID());
 
         // Now remove this prefix from the hints list.
-        AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
+        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
@@ -2310,7 +2319,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         }
 
         // Now remove this prefix from the hints list.
-        AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
+        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
     }
 
@@ -2322,9 +2331,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was
         // for the prefix length.
-        if (!prefix->first.isV6Zero()) {
-            OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX, prefix->first,
-                                                     prefix->second, 0, 0));
+        if (!prefix->getAddress().isV6Zero()) {
+            OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX,
+                                                     prefix->getAddress(),
+                                                     prefix->getPrefixLength(),
+                                                     0, 0));
             ia_rsp->addOption(prefix_opt);
         }
     }
@@ -3502,13 +3513,12 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         }
 
         // And finish by pools
-        BOOST_FOREACH(const AllocEngine::ResourceType& resource,
-                      ctx.allocated_resources_) {
-            PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
-                                                    Lease::TYPE_NA :
-                                                    Lease::TYPE_PD,
-                                                resource.first,
-                                                false);
+        for (auto resource : ctx.allocated_resources_) {
+            PoolPtr pool =
+                ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
+                                     Lease::TYPE_NA : Lease::TYPE_PD,
+                                     resource.getAddress(),
+                                     false);
             if (pool) {
                 const ClientClasses& to_add = pool->getRequiredClasses();
                 for (ClientClasses::const_iterator cclass = to_add.cbegin();
