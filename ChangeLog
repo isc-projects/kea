@@ -1,3 +1,7 @@
+1574.	[bug]		razvan
+	Add logging to the MySQL config backend.
+	(Gitlab #398,!315, git bc46fd3420afdf60ae8841866e8458f7f6e072e8)
+
 1573.	[bug]		razvan
 	Fixed build sysrepo from sources using sysrepo_config.
 	(Gitlab #523,!262, git b86864a9b058a18eaaded2273dc5f40a9ec97c78)
