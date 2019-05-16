@@ -501,6 +501,15 @@
                 // Shared network level renew timer.
                 "renew-timer": 31,
 
+                // Shared network level compute T1 and T2 timers.
+                "calculate-tee-times": true,
+
+                // T1 = valid lifetime * .5.
+                "t1-percent": .5,
+
+                // T2 = valid lifetime * .75.
+                "t2-percent": .75
+
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
                 "reservation-mode": "all",
@@ -630,6 +639,15 @@
                         // fetches host reservations.
                         "reservation-mode": "all",
 
+                        // Subnet level compute T1 and T2 timers.
+                        "calculate-tee-times": true,
+
+                        // T1 = valid lifetime * .5.
+                        "t1-percent": .5,
+
+                        // T2 = valid lifetime * .75.
+                        "t2-percent": .75
+
                         // List of static IPv6 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
                         "reservations": [
@@ -723,6 +741,15 @@
 
         // Data directory.
         "data-directory": "/tmp"
+
+        // Global compute T1 and T2 timers.
+        "calculate-tee-times": true,
+
+        // T1 = valid lifetime * .5.
+        "t1-percent": .5,
+
+        // T2 = valid lifetime * .75.
+        "t2-percent": .75
     },
 
     // Logging configuration begins here.
