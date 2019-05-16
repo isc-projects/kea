@@ -595,10 +595,42 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               need to restart the DHCP server.
               </entry>
             </row>
+            <row>
+              <entry>MySQL Configuration Backend</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 1.6.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
+              <entry>The MySQL CB hooks library is an implementation of the Kea
+              Configuration Backend for MySQL. It uses MySQL database as a
+              repository for the Kea configuration information. The Kea servers
+              use this library to fetch their configurations.
+              </entry>
+            </row>
+            <row>
+              <entry>Configuration Backend Commands</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.6.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
+              <entry>The Configuration Backend Commands (CB Commands) hooks library
+              implements a collection of commands to manage the configuration
+              information of the Kea servers in the database. This library may
+              only be used in conjuction with one of the supported configuration
+              backend implementations.
+              </entry>
+            </row>
           </tbody>
           </tgroup>
           </table>
-
       </para>
       <para>
         ISC hopes to see more hooks libraries become available as time
