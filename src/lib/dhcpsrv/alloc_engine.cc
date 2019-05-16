@@ -1622,8 +1622,20 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.currentIA().iaid_;
     expired->duid_ = ctx.duid_;
-    expired->preferred_lft_ = ctx.subnet_->getPreferred();
-    expired->valid_lft_ = ctx.subnet_->getValid();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getPreferred()) {
+        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
+        expired->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+    } else {
+        expired->preferred_lft_ = ctx.subnet_->getPreferred();
+    }
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getValid()) {
+        uint32_t valid = ctx.currentIA().hints_[0].getValid();
+        expired->valid_lft_ = ctx.subnet_->getValid().get(valid);
+    } else {
+        expired->valid_lft_ = ctx.subnet_->getValid();
+    }
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
     expired->hostname_ = ctx.hostname_;
@@ -1719,9 +1731,21 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         prefix_len = 128; // non-PD lease types must be always /128
     }
 
+    uint32_t preferred = ctx.subnet_->getPreferred();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getPreferred()) {
+        preferred = ctx.currentIA().hints_[0].getPreferred();
+        preferred = ctx.subnet_->getPreferred().get(preferred);
+    }
+    uint32_t valid = ctx.subnet_->getValid();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getValid()) {
+        valid = ctx.currentIA().hints_[0].getValid();
+        valid = ctx.subnet_->getValid().get(valid);
+    }
     Lease6Ptr lease(new Lease6(ctx.currentIA().type_, addr, ctx.duid_,
-                               ctx.currentIA().iaid_, ctx.subnet_->getPreferred(),
-                               ctx.subnet_->getValid(), ctx.subnet_->getID(),
+                               ctx.currentIA().iaid_, preferred,
+                               valid, ctx.subnet_->getID(),
                                ctx.hwaddr_, prefix_len));
 
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
@@ -1961,8 +1985,20 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     // Keep the old data in case the callout tells us to skip update.
     Lease6Ptr old_data(new Lease6(*lease));
 
-    lease->preferred_lft_ = ctx.subnet_->getPreferred();
-    lease->valid_lft_ = ctx.subnet_->getValid();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getPreferred()) {
+        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
+        lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+    } else {
+        lease->preferred_lft_ = ctx.subnet_->getPreferred();
+    }
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getValid()) {
+        uint32_t valid = ctx.currentIA().hints_[0].getValid();
+        lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
+    } else {
+        lease->valid_lft_ = ctx.subnet_->getValid();
+    }
     lease->hostname_ = ctx.hostname_;
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
