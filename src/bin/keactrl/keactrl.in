@@ -154,12 +154,12 @@ send_signal() {
     get_pid_from_file "${proc_name}"
     if [ ${_pid} -eq 0 ]; then
         log_info "Skip sending signal ${sig} to process ${proc_name}: \
-process is not running\n"
+process is not running"
     else
         kill "-${sig}" "${_pid}"
         retcode=$?
         if [ $retcode -ne 0 ]; then
-            log_error "Failed to send signal ${sig} to process ${proc_name}, PID {$_pid}.\n"
+            log_error "Failed to send signal ${sig} to process ${proc_name}, PID {$_pid}."
         fi
     fi
 }
@@ -205,7 +205,7 @@ stop_server() {
         retcode=$?
         if [ $retcode -ne 0 ]; then
             log_error "Stop failed, could not send signal ${sig} \
-to process ${proc_name}, PID ${_pid}.\n"
+to process ${proc_name}, PID ${_pid}."
         fi
     fi
 }
@@ -229,7 +229,7 @@ reload_server() {
         retcode=$?
         if [ $retcode -ne 0 ]; then
             log_error "Reload failed, could not send signal ${sig} \
-to process ${proc_name}, PID ${_pid}.\n"
+to process ${proc_name}, PID ${_pid}."
         fi
     fi
 }
