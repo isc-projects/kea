@@ -1,7 +1,7 @@
 1575.	[bug]		razvan
 	Fixed issue with keactrl logging error when trying to stop running
 	services.
-	(Gitlab #534,!327, git 77942d409cb7c9be8e8aa2abcf7ed85aac5a7606)
+	(Gitlab #534,!327, git 6ddee0a93ec4ad692cc385150c159d9e8da5232d)
 
 1574.	[bug]		razvan
 	Add logging to the MySQL config backend.
