@@ -201,7 +201,9 @@ stop_server() {
     else
         log_info "Stopping ${binary_name}..."
 
-        if kill -${sig} ${_pid}; then
+        kill "-${sig}" "${_pid}"
+        retcode=$?
+        if [ $retcode -ne 0 ]; then
             log_error "Stop failed, could not send signal ${sig} \
 to process ${proc_name}, PID ${_pid}.\n"
         fi
