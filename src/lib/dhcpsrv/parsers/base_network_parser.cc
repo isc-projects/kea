@@ -28,14 +28,6 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
         value = getInteger(scope, name);
         has_value = true;
     }
-    if (scope->contains("default-" + name)) {
-        if (has_value) {
-            isc_throw(DhcpConfigError, "have both " << name << " and default-"
-                      << name << " in " << scope->getPosition());
-        }
-        value = getInteger(scope, "default-" + name);
-        has_value = true;
-    }
     if (scope->contains("min-" + name)) {
         min_value = getInteger(scope, "min-" + name);
         has_min = true;
@@ -67,8 +59,8 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
         } else {
             // min and max.
             isc_throw(DhcpConfigError, "have min-" << name << " and max-"
-                      << name << " but no default-" << name << " nor "
-                      << name << " in " << scope->getPosition());
+                      << name << " but no " << name << " (default) in "
+                      << scope->getPosition());
         }
     } else {
         // max only.
@@ -77,7 +69,7 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
     }
     // Check that value is between min and max.
     if ((value < min_value) || (value > max_value)) {
-        isc_throw(DhcpConfigError, "the value of default-" << name << " ("
+        isc_throw(DhcpConfigError, "the value of (default) " << name << " ("
                   << value << ") is not between min-" << name << " ("
                   << min_value << ") and max-" << name << " ("
                   << max_value << ")");
@@ -156,8 +148,6 @@ BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network
         }
     }
 }
-
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

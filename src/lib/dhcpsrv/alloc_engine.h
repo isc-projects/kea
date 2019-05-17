@@ -299,16 +299,6 @@ public:
               preferred_(preferred), valid_(valid) {
         }
 
-        /// @brief Constructor from an IAADDR DHCPv6 option.
-        ///
-        /// @param iaaddr The pointer to the IAADDR option
-        Resource(const Option6IAAddrPtr& iaaddr);
-
-        /// @brief Constructor from an IAPREFIX DHCPv6 option.
-        ///
-        /// @param iaprefix The pointer to the IAPREFIX option
-        Resource(const Option6IAPrefixPtr& iaprefix);
-
         /// @brief Returns the address.
         ///
         /// @return the address or prefix
@@ -547,11 +537,13 @@ public:
             /// @brief Convenience method adding new hint from IAADDR option.
             ///
             /// @param iaaddr Pointer to IAADDR.
+            /// @throw BadValue if iaaddr is null.
             void addHint(const Option6IAAddrPtr& iaaddr);
 
             /// @brief Convenience method adding new hint from IAPREFIX option.
             ///
             /// @param iaprefix Pointer to IAPREFIX.
+            /// @throw BadValue if iaprefix is null.
             void addHint(const Option6IAPrefixPtr& iaprefix);
         };
 

@@ -373,16 +373,6 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
-AllocEngine::Resource::Resource(const Option6IAAddrPtr& iaaddr)
-    : address_(iaaddr->getAddress()), prefix_len_(128),
-      preferred_(iaaddr->getPreferred()), valid_(iaaddr->getValid()) {
-}
-
-AllocEngine::Resource::Resource(const Option6IAPrefixPtr& iaprefix)
-    : address_(iaprefix->getAddress()), prefix_len_(iaprefix->getLength()),
-      preferred_(iaprefix->getPreferred()), valid_(iaprefix->getValid()) {
-}
-
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
@@ -480,13 +470,21 @@ IAContext::addHint(const asiolink::IOAddress& prefix,
 void
 AllocEngine::ClientContext6::
 IAContext::addHint(const Option6IAAddrPtr& iaaddr) {
-    hints_.push_back(Resource(iaaddr));
+    if (!iaaddr) {
+        isc_throw(BadValue, "IAADDR option pointer is null.");
+    }
+    addHint(iaaddr->getAddress(), 128,
+            iaaddr->getPreferred(), iaaddr->getValid());
 }
 
 void
 AllocEngine::ClientContext6::
 IAContext::addHint(const Option6IAPrefixPtr& iaprefix) {
-    hints_.push_back(Resource(iaprefix));
+    if (!iaprefix) {
+        isc_throw(BadValue, "IAPREFIX option pointer is null.");
+    }
+    addHint(iaprefix->getAddress(), iaprefix->getLength(),
+            iaprefix->getPreferred(), iaprefix->getValid());
 }
 
 void

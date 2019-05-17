@@ -102,7 +102,6 @@ using namespace std;
   TCP_NODELAY "tcp-nodelay"
 
   VALID_LIFETIME "valid-lifetime"
-  DEFAULT_VALID_LIFETIME "default-valid-lifetime"
   MIN_VALID_LIFETIME "min-valid-lifetime"
   MAX_VALID_LIFETIME "max-valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -444,7 +443,6 @@ global_params: global_param
 // These are the parameters that are allowed in the top-level for
 // Dhcp4.
 global_param: valid_lifetime
-            | default_valid_lifetime
             | min_valid_lifetime
             | max_valid_lifetime
             | renew_timer
@@ -491,11 +489,6 @@ global_param: valid_lifetime
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("valid-lifetime", prf);
-};
-
-default_valid_lifetime: DEFAULT_VALID_LIFETIME COLON INTEGER {
-    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("default-valid-lifetime", prf);
 };
 
 min_valid_lifetime: MIN_VALID_LIFETIME COLON INTEGER {

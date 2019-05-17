@@ -37,7 +37,6 @@ namespace dhcp {
 /// Order follows global_param rule in bison grammar.
 const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "valid-lifetime",               Element::integer },
-    { "default-valid-lifetime",       Element::integer },
     { "min-valid-lifetime",           Element::integer },
     { "max-valid-lifetime",           Element::integer },
     { "renew-timer",                  Element::integer },
@@ -186,7 +185,6 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "reservation-mode",
     "server-hostname",
     "valid-lifetime",
-    "default-valid-lifetime",
     "min-valid-lifetime",
     "max-valid-lifetime",
     "calculate-tee-times",

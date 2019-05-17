@@ -412,12 +412,8 @@
             }
         ],
 
-        // Global value of the preferred lifetime.
+        // Global (default) value of the preferred lifetime.
         "preferred-lifetime": 50,
-
-        // Global default value of the preferred lifetime.
-        // (in fact only an alias of preferred lifetime)
-        "default-preferred-lifetime": 50,
 
         // Global min value of the preferred lifetime.
         "min-preferred-lifetime": 40,
@@ -491,12 +487,8 @@
                 // List of shared network specific DHCP options.
                 "option-data": [],
 
-                // Shared network specific preferred lifetime.
+                // Shared network specific (default) preferred lifetime.
                 "preferred-lifetime": 2000,
-
-                // Shared network specific default preferred lifetime.
-                // (in fact only an alias of preferred lifetime)
-                "default-preferred-lifetime": 2000,
 
                 // Shared network specific min preferred lifetime.
                 "min-preferred-lifetime": 1500,
@@ -633,12 +625,8 @@
                             }
                         ],
 
-                        // Subnet specific preferred lifetime.
+                        // Subnet specific (default) preferred lifetime.
                         "preferred-lifetime": 2000,
-
-                        // Subnet specific default preferred lifetime.
-                        // (in fact only an alias of preferred lifetime)
-                        "default-preferred-lifetime": 2000,
 
                         // Subnet specific min preferred lifetime.
                         "min-preferred-lifetime": 1500,
@@ -715,12 +703,8 @@
                         // Subnet prefix.
                         "subnet": "2001:db8::/32",
 
-                        // Subnet level valid lifetime.
+                        // Subnet level (default) valid lifetime.
                         "valid-lifetime": 6000,
-
-                        // Subnet level default valid lifetime.
-                        // (in fact only an alias of valid lifetime)
-                        "default-valid-lifetime": 6000,
 
                         // Subnet level min valid lifetime.
                         "min-valid-lifetime": 4000,
@@ -730,12 +714,8 @@
                     }
                 ],
 
-                // Shared network level valid lifetime.
+                // Shared network level (default) valid lifetime.
                 "valid-lifetime": 6001,
-
-                // Shared network level default valid lifetime.
-                // (in fact only an alias of valid lifetime)
-                "default-valid-lifetime": 6001,
 
                 // Shared network level min valid lifetime.
                 "min-valid-lifetime": 4001,
@@ -748,12 +728,8 @@
         // List of IPv6 subnets which don't belong to any shared network.
         "subnet6": [],
 
-        // Global valid lifetime value.
+        // Global (default) valid lifetime value.
         "valid-lifetime": 6000,
-
-        // Global default valid lifetime value.
-        // (in fact only an alias of valid lifetime)
-        "default-valid-lifetime": 6000,
 
         // Global min valid lifetime value.
         "min-valid-lifetime": 4000,
