@@ -1099,7 +1099,6 @@ subnet4_params: subnet4_param
 
 // This defines a list of allowed parameters for each subnet.
 subnet4_param: valid_lifetime
-             | default_valid_lifetime
              | min_valid_lifetime
              | max_valid_lifetime
              | renew_timer
@@ -1256,7 +1255,6 @@ shared_network_param: name
                     | client_class
                     | require_client_classes
                     | valid_lifetime
-                    | default_valid_lifetime
                     | min_valid_lifetime
                     | max_valid_lifetime
                     | user_context
