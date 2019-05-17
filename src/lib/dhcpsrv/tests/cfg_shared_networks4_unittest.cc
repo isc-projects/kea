@@ -191,6 +191,7 @@ TEST(CfgSharedNetworks4Test, duplicateName) {
 TEST(CfgSharedNetworks4Test, unparse) {
     SharedNetwork4Ptr network1(new SharedNetwork4("frog"));
     SharedNetwork4Ptr network2(new SharedNetwork4("dog"));
+    SharedNetwork4Ptr network3(new SharedNetwork4("cat"));
     network1->setIface("eth0");
     network1->addRelayAddress(IOAddress("198.16.1.1"));
     network1->addRelayAddress(IOAddress("198.16.1.2"));
@@ -201,14 +202,26 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
     network2->setT2(Triplet<uint32_t>(200));
-    network2->setValid(Triplet<uint32_t>(300));
+    network2->setValid(Triplet<uint32_t>(200, 300, 400));
+
+    network3->setIface("eth2");
+    network3->setValid(Triplet<uint32_t>(100));
 
     CfgSharedNetworks4 cfg;
     ASSERT_NO_THROW(cfg.add(network1));
     ASSERT_NO_THROW(cfg.add(network2));
+    ASSERT_NO_THROW(cfg.add(network3));
 
     std::string expected =
         "[\n"
+        "  {\n"
+        "    \"interface\": \"eth2\",\n"
+        "    \"name\": \"cat\",\n"
+        "    \"option-data\": [ ],\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
+        "    \"subnet4\": [ ],\n"
+        "    \"valid-lifetime\": 100\n"
+        "  },\n"
         "  {\n"
         "    \"interface\": \"eth1\",\n"
         "    \"name\": \"dog\",\n"
@@ -217,7 +230,9 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"renew-timer\": 100,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"subnet4\": [ ],\n"
-        "    \"valid-lifetime\": 300\n"
+        "    \"valid-lifetime\": 300,\n"
+        "    \"min-valid-lifetime\": 200,\n"
+        "    \"max-valid-lifetime\": 400\n"
         "  },\n"
         "  {\n"
         "    \"calculate-tee-times\": true,\n"
