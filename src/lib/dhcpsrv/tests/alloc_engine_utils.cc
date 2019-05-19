@@ -271,6 +271,58 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
 }
 
 Lease6Ptr
+AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
+                                   uint32_t preferred, uint32_t valid,
+                                   uint32_t exp_preferred, uint32_t exp_valid) {
+    Lease::Type type = pool->getType();
+    uint8_t expected_len = pool->getLength();
+
+    boost::scoped_ptr<AllocEngine> engine;
+    EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100)));
+    // We can't use ASSERT macros in non-void methods
+    EXPECT_TRUE(engine);
+    if (!engine) {
+        return (Lease6Ptr());
+    }
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.hwaddr_ = hwaddr_;
+    ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
+    ctx.currentIA().addHint(hint, expected_len, preferred, valid);
+    subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
+    subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+
+    // Set some non-standard callout status to make sure it doesn't affect the
+    // allocation.
+    ctx.callout_handle_ = HooksManager::createCalloutHandle();
+    ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+    findReservation(*engine, ctx);
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+
+    // Check that we got a lease
+    EXPECT_TRUE(lease);
+    if (!lease) {
+        return (Lease6Ptr());
+    }
+
+    // Do all checks on the lease
+    checkLease6(duid_, lease, type, expected_len, true, true);
+
+    // Check expected preferred and valid lifetimes.
+    EXPECT_EQ(exp_preferred, lease->preferred_lft_);
+    EXPECT_EQ(exp_valid, lease->valid_lft_);
+
+    return (lease);
+}
+
+Lease6Ptr
 AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
                                    const IOAddress& hint, bool fake, bool in_pool) {
     Lease::Type type = pool->getType();

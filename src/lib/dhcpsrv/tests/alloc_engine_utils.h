@@ -269,6 +269,22 @@ public:
                                const asiolink::IOAddress& hint,
                                bool fake, bool in_pool = true);
 
+    /// @brief Checks if the simple allocation can succeed with lifetimes.
+    ///
+    /// The type of lease is determined by pool type (pool->getType())
+    ///
+    /// @param pool pool from which the lease will be allocated from
+    /// @param hint address to be used as a hint
+    /// @param preferred preferred lifetime to be used as a hint
+    /// @param valid valid lifetime to be used as a hint
+    /// @param exp_preferred expected lease preferred lifetime
+    /// @param exp_valid expected lease valid lifetime
+    /// @return allocated lease (or NULL)
+    Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
+                               const asiolink::IOAddress& hint,
+                               uint32_t preferred, uint32_t valid,
+                               uint32_t exp_preferred, uint32_t exp_valid);
+
     /// @brief Checks if the simple allocation can succeed for custom DUID.
     ///
     /// The type of lease is determined by pool type (pool->getType())
