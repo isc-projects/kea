@@ -315,7 +315,7 @@ TEST_F(Dhcp4CBTest, mergeOptions) {
         "        \"name\": \"dhcp-message\", \n"
         "        \"data\": \"0A0B0C0D\", \n"
         "        \"csv-format\": false \n"
-        "     },{ \n" 
+        "     },{ \n"
         "        \"name\": \"host-name\", \n"
         "        \"data\": \"old.example.com\", \n"
         "        \"csv-format\": true \n"
@@ -372,7 +372,7 @@ TEST_F(Dhcp4CBTest, mergeOptions) {
     ASSERT_TRUE(found_opt.option_);
     EXPECT_EQ("0x0A0B0C0D", found_opt.option_->toHexString());
 
-    // host-name should come from the first back end, 
+    // host-name should come from the first back end,
     // (overwriting the original).
     found_opt = options->get("dhcp4", DHO_HOST_NAME);
     ASSERT_TRUE(found_opt.option_);

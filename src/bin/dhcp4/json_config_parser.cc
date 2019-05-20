@@ -546,6 +546,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "valid-lifetime") ||
+                 (config_pair.first == "min-valid-lifetime") ||
+                 (config_pair.first == "max-valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "echo-client-id") ||

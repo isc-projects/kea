@@ -726,10 +726,15 @@ public:
     /// @param t1 expected renew-timer value
     /// @param t2 expected rebind-timer value
     /// @param valid expected valid-lifetime value
+    /// @param min_valid expected min-valid-lifetime value
+    ///        (0 (default) means same than valid)
+    /// @param max_valid expected max-valid-lifetime value
+    ///        (0 (default) means same than valid)
     /// @return the subnet that was examined
     Subnet4Ptr
     checkSubnet(const Subnet4Collection& col, std::string subnet,
-                uint32_t t1, uint32_t t2, uint32_t valid) {
+                uint32_t t1, uint32_t t2, uint32_t valid,
+                uint32_t min_valid = 0, uint32_t max_valid = 0) {
         const auto& index = col.get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
         if (subnet_it == index.cend()) {
@@ -741,6 +746,8 @@ public:
         EXPECT_EQ(t1, s->getT1());
         EXPECT_EQ(t2, s->getT2());
         EXPECT_EQ(valid, s->getValid());
+        EXPECT_EQ(min_valid ? min_valid : valid, s->getValid().getMin());
+        EXPECT_EQ(max_valid ? max_valid : valid, s->getValid().getMax());
 
         return (s);
     }
@@ -835,6 +842,35 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
     checkResult(status, 0);
 }
 
+/// Check that valid-lifetime must be between min-valid-lifetime and
+/// max-valid-lifetime when a bound is specified, *AND* a subnet is
+/// specified (boundary check is done when lifetimes are applied).
+TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
+
+    string too_small =  "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 1001 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(too_small));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1);
+
+    string too_large =  "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4001, \"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(too_large));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1);
+}
+
 /// Check that the renew-timer doesn't have to be specified, in which case
 /// it is marked unspecified in the Subnet.
 TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
@@ -912,7 +948,9 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000,"
+        "\"min-valid-lifetime\": 3000,"
+        "\"max-valid-lifetime\": 5000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -932,6 +970,8 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(3000, subnet->getValid().getMin());
+    EXPECT_EQ(5000, subnet->getValid().getMax());
 
     // Check that subnet-id is 1
     EXPECT_EQ(1, subnet->getID());
@@ -1645,8 +1685,12 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
         "    \"renew-timer\": 1, "
         "    \"rebind-timer\": 2, "
         "    \"valid-lifetime\": 4,"
+        "    \"min-valid-lifetime\": 3,"
+        "    \"max-valid-lifetime\": 5,"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000,"
+        "\"min-valid-lifetime\": 3000,"
+        "\"max-valid-lifetime\": 5000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -1664,6 +1708,8 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
     EXPECT_EQ(4, subnet->getValid());
+    EXPECT_EQ(3, subnet->getValid().getMin());
+    EXPECT_EQ(5, subnet->getValid().getMax());
 }
 
 // This test checks that multiple pools can be defined and handled properly.
@@ -5910,6 +5956,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
 TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
     string config = "{\n"
         "\"valid-lifetime\": 4000, \n"
+        "\"min-valid-lifetime\": 3000, \n"
+        "\"max-valid-lifetime\": 5000, \n"
         "\"rebind-timer\": 2000, \n"
         "\"renew-timer\": 1000, \n"
         "\"shared-networks\": [ {\n"
@@ -5924,7 +5972,9 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
         "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
         "        \"renew-timer\": 2,\n"
         "        \"rebind-timer\": 22,\n"
-        "        \"valid-lifetime\": 222\n"
+        "        \"valid-lifetime\": 222,\n"
+        "        \"min-valid-lifetime\": 111,\n"
+        "        \"max-valid-lifetime\": 333\n"
         "    },\n"
         "    { \n"
         "        \"subnet\": \"192.0.3.0/24\",\n"
@@ -5954,9 +6004,9 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
     const Subnet4Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(3, subs->size());
-    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000);
-    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222);
-    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222, 111, 333);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
@@ -5964,9 +6014,9 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
 
     subs = subnets4->getAll();
     ASSERT_TRUE(subs);
-    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000);
-    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222);
-    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000, 3000, 5000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222, 111, 333);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000, 3000, 5000);
 }
 
 // This test checks if parameters are derived properly:
@@ -5990,6 +6040,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "\"renew-timer\": 1, \n" // global values here
         "\"rebind-timer\": 2, \n"
         "\"valid-lifetime\": 4, \n"
+        "\"min-valid-lifetime\": 3, \n"
+        "\"max-valid-lifetime\": 5, \n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n," // shared network values here
         "    \"interface\": \"eth0\",\n"
@@ -6005,6 +6057,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "    \"renew-timer\": 10,\n"
         "    \"rebind-timer\": 20,\n"
         "    \"valid-lifetime\": 40,\n"
+        "    \"min-valid-lifetime\": 30,\n"
+        "    \"max-valid-lifetime\": 50,\n"
         "    \"subnet4\": [\n"
         "    { \n"
         "        \"subnet\": \"192.0.1.0/24\",\n"
@@ -6016,6 +6070,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "        \"renew-timer\": 100,\n"
         "        \"rebind-timer\": 200,\n"
         "        \"valid-lifetime\": 400,\n"
+        "        \"min-valid-lifetime\": 300,\n"
+        "        \"max-valid-lifetime\": 500,\n"
         "        \"match-client-id\": true,\n"
         "        \"next-server\": \"11.22.33.44\",\n"
         "        \"server-hostname\": \"some-name.example.org\",\n"
@@ -6063,7 +6119,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // derived from shared-network level. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet4 level.
-    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 10, 20, 40);
+    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 10, 20, 40, 30, 50);
     ASSERT_TRUE(s);
 
     // These are values derived from shared network scope:
@@ -6080,7 +6136,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // was specified explicitly. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet4 level.
-    s = checkSubnet(*subs, "192.0.2.0/24", 100, 200, 400);
+    s = checkSubnet(*subs, "192.0.2.0/24", 100, 200, 400, 300, 500);
 
     // These are values derived from shared network scope:
     EXPECT_EQ("eth0", s->getIface().get());
@@ -6102,7 +6158,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
 
     // This subnet should derive its renew-timer from global scope.
     // All other parameters should have default values.
-    s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
+    s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4, 3, 5);
     EXPECT_EQ("", s->getIface().get());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_FALSE(s->getAuthoritative());

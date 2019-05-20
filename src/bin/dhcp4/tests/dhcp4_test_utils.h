@@ -354,9 +354,12 @@ public:
     /// present (false)
     /// @param t2_present check that t2 must be present (true) or must not be
     /// present (false)
+    /// @param expected_valid check that lease lifetime has the not-zero
+    /// expected value (zero value means that do not check).
     void checkAddressParams(const Pkt4Ptr& rsp, const Subnet4Ptr subnet,
                             bool t1_present = false,
-                            bool t2_present = false);
+                            bool t2_present = false,
+                            uint32_t expected_valid = 0);
 
     /// @brief Basic checks for generated response (message type and trans-id).
     ///

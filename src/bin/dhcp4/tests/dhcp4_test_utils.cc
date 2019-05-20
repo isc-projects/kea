@@ -273,7 +273,8 @@ HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
 void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
                                        const Subnet4Ptr subnet,
                                        bool t1_present,
-                                       bool t2_present) {
+                                       bool t2_present,
+                                       uint32_t expected_valid) {
 
     // Technically inPool implies inRange, but let's be on the safe
     // side and check both.
@@ -286,8 +287,16 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
     if (!opt) {
         ADD_FAILURE() << "Lease time option missing in response or the"
             " option has unexpected type";
+    } else if (subnet->getValid().getMin() != subnet->getValid().getMax()) {
+        EXPECT_GE(opt->getValue(), subnet->getValid().getMin());
+        EXPECT_LE(opt->getValue(), subnet->getValid().getMax());
     } else {
         EXPECT_EQ(opt->getValue(), subnet->getValid());
+    }
+
+    // Check expected value when wanted.
+    if (opt && expected_valid) {
+      EXPECT_EQ(opt->getValue(), expected_valid);
     }
 
     // Check T1 timer
