@@ -242,10 +242,22 @@ Dhcpv6SrvTest::createIA(isc::dhcp::Lease::Type lease_type,
 }
 
 void
-Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr,
+Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
+                              const std::string& existing_addr,
                               const std::string& renew_addr,
-                              const uint8_t prefix_len, bool insert_before_renew) {
+                              const uint8_t prefix_len,
+                              bool insert_before_renew,
+                              uint32_t hint_pref,
+                              uint32_t hint_valid,
+                              uint32_t expected_pref,
+                              uint32_t expected_valid) {
     NakedDhcpv6Srv srv(0);
+
+    // Use intervals for lifetimes for lifetime tests.
+    if (hint_pref != 300 || hint_valid != 500) {
+        subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+        subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+    }
 
     const IOAddress existing(existing_addr);
     const IOAddress renew(renew_addr);
@@ -277,8 +289,42 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         EXPECT_NE(l->cltt_, time(NULL));
     }
 
-    Pkt6Ptr req = createMessage(DHCPV6_RENEW, type, IOAddress(renew_addr),
-                                prefix_len, iaid);
+    Pkt6Ptr req;
+
+    if (hint_pref == 300 && hint_valid == 500) {
+        req = createMessage(DHCPV6_RENEW, type, IOAddress(renew_addr),
+                            prefix_len, iaid);
+    } else {
+        // from createMessage
+        req.reset(new Pkt6(DHCPV6_RENEW, 1234));
+        req->setRemoteAddr(IOAddress("fe80::abcd"));
+        req->setIface("eth0");
+
+        // from createIA
+        uint16_t code;
+        OptionPtr subopt;
+        switch (type) {
+        case Lease::TYPE_NA:
+            code = D6O_IA_NA;
+            subopt.reset(new Option6IAAddr(D6O_IAADDR,
+                                           IOAddress(renew_addr),
+                                           hint_pref, hint_valid));
+            break;
+        case Lease::TYPE_PD:
+            code = D6O_IA_PD;
+            subopt.reset(new Option6IAPrefix(D6O_IAPREFIX,
+                                             IOAddress(renew_addr), prefix_len,
+                                             hint_pref, hint_valid));
+            break;
+        default:
+            isc_throw(BadValue, "Invalid lease type specified "
+                      << static_cast<int>(type));
+        }
+
+        Option6IAPtr ia = generateIA(code, iaid, 1500, 3000);
+        ia->addOption(subopt);
+        req->addOption(ia);
+    };
     req->addOption(clientid);
     req->addOption(srv.getServerID());
 
@@ -301,7 +347,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         ASSERT_TRUE(addr_opt);
 
         // Check that we've got the address we requested
-        checkIAAddr(addr_opt, renew, Lease::TYPE_NA);
+        checkIAAddr(addr_opt, renew, Lease::TYPE_NA,
+                    expected_pref, expected_valid);
 
         // Check that the lease is really in the database
         l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
@@ -317,7 +364,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         ASSERT_TRUE(prefix_opt);
 
         // Check that we've got the address we requested
-        checkIAAddr(prefix_opt, renew, Lease::TYPE_PD);
+        checkIAAddr(prefix_opt, renew, Lease::TYPE_PD,
+                    expected_pref, expected_valid);
         EXPECT_EQ(pd_pool_->getLength(), prefix_opt->getLength());
 
         // Check that the lease is really in the database
@@ -330,8 +378,10 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     }
 
     // Check that preferred, valid and cltt were really updated
-    EXPECT_EQ(subnet_->getPreferred(), l->preferred_lft_);
-    EXPECT_EQ(subnet_->getValid(), l->valid_lft_);
+    EXPECT_EQ(expected_pref ? expected_pref : subnet_->getPreferred().get(),
+              l->preferred_lft_);
+    EXPECT_EQ(expected_valid ? expected_valid : subnet_->getValid().get(),
+              l->valid_lft_);
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
     int32_t cltt = static_cast<int32_t>(l->cltt_);

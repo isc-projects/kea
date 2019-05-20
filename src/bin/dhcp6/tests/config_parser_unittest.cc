@@ -450,10 +450,20 @@ public:
     /// @param t2 expected rebind-timer value
     /// @param preferred expected preferred-lifetime value
     /// @param valid expected valid-lifetime value
+    /// @param min_preferred expected min-preferred-lifetime value
+    ///        (0 (default) means same than preferred)
+    /// @param max_preferred expected max-preferred-lifetime value
+    ///        (0 (default) means same than preferred)
+    /// @param min_valid expected min-valid-lifetime value
+    ///        (0 (default) means same than valid)
+    /// @param max_valid expected max-valid-lifetime value
+    ///        (0 (default) means same than valid)
     /// @return the subnet that was examined
     Subnet6Ptr
     checkSubnet(const Subnet6Collection& col, std::string subnet,
-                uint32_t t1, uint32_t t2, uint32_t pref, uint32_t valid) {
+                uint32_t t1, uint32_t t2, uint32_t pref, uint32_t valid,
+                uint32_t min_pref = 0, uint32_t max_pref = 0,
+                uint32_t min_valid = 0, uint32_t max_valid = 0) {
         const auto& index = col.get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
         if (subnet_it == index.cend()) {
@@ -466,6 +476,10 @@ public:
         EXPECT_EQ(t2, s->getT2());
         EXPECT_EQ(pref, s->getPreferred());
         EXPECT_EQ(valid, s->getValid());
+        EXPECT_EQ(min_pref ? min_pref : pref, s->getPreferred().getMin());
+        EXPECT_EQ(max_pref ? max_pref : pref, s->getPreferred().getMax());
+        EXPECT_EQ(min_valid ? min_valid : valid, s->getValid().getMin());
+        EXPECT_EQ(max_valid ? max_valid : valid, s->getValid().getMax());
 
         return (s);
     }
@@ -980,6 +994,64 @@ TEST_F(Dhcp6ParserTest, emptyInterfaceConfig) {
     checkResult(status, 0);
 }
 
+/// Check that valid-lifetime must be between min-valid-lifetime and
+/// max-valid-lifetime when a bound is specified, *AND* a subnet is
+/// specified (boundary check is done when lifetimes are applied).
+TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
+
+    string too_small =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 1001 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(too_small));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1);
+
+    string too_large =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"valid-lifetime\": 4001, \"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(too_large));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1);
+}
+
+/// Check that preferred-lifetime must be between min-preferred-lifetime and
+/// max-preferred-lifetime when a bound is specified, *AND* a subnet is
+/// specified (boundary check is done when lifetimes are applied).
+TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
+
+    string too_small =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"preferred-lifetime\": 1000, \"min-preferred-lifetime\": 1001 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(too_small));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1);
+
+    string too_large =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"preferred-lifetime\": 4001, \"max-preferred-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(too_large));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1);
+}
+
 /// The goal of this test is to verify if configuration without any
 /// subnets defined can be accepted.
 TEST_F(Dhcp6ParserTest, emptySubnet) {
@@ -1009,12 +1081,16 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
+        "\"min-preferred-lifetime\": 2000,"
+        "\"max-preferred-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000,"
+        "\"min-valid-lifetime\": 3000,"
+        "\"max-valid-lifetime\": 5000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
@@ -1034,7 +1110,11 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
+    EXPECT_EQ(2000, subnet->getPreferred().getMin());
+    EXPECT_EQ(4000, subnet->getPreferred().getMax());
     EXPECT_EQ(4000, subnet->getValid());
+    EXPECT_EQ(3000, subnet->getValid().getMin());
+    EXPECT_EQ(5000, subnet->getValid().getMax());
 
     // Check that subnet-id is 1
     EXPECT_EQ(1, subnet->getID());
@@ -1336,6 +1416,8 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     string config = "{ " + genIfaceConfig() + ","
         "\"preferred-lifetime\": 3000,"
+        "\"min-preferred-lifetime\": 2000,"
+        "\"max-preferred-lifetime\": 4000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
@@ -1343,9 +1425,15 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
         "    \"renew-timer\": 1, "
         "    \"rebind-timer\": 2, "
         "    \"preferred-lifetime\": 3,"
+        "    \"min-preferred-lifetime\": 2,"
+        "    \"max-preferred-lifetime\": 4,"
         "    \"valid-lifetime\": 4,"
+        "    \"min-valid-lifetime\": 3,"
+        "    \"max-valid-lifetime\": 5,"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000,"
+        "\"min-valid-lifetime\": 3000,"
+        "\"max-valid-lifetime\": 5000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(config));
@@ -1363,7 +1451,11 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
     EXPECT_EQ(3, subnet->getPreferred());
+    EXPECT_EQ(2, subnet->getPreferred().getMin());
+    EXPECT_EQ(4, subnet->getPreferred().getMax());
     EXPECT_EQ(4, subnet->getValid());
+    EXPECT_EQ(3, subnet->getValid().getMin());
+    EXPECT_EQ(5, subnet->getValid().getMax());
 }
 
 // This test checks if it is possible to define a subnet with an
@@ -6289,7 +6381,11 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
         "\"renew-timer\": 1000, \n"
         "\"rebind-timer\": 2000, \n"
         "\"preferred-lifetime\": 3000, \n"
+        "\"min-preferred-lifetime\": 2000, \n"
+        "\"max-preferred-lifetime\": 4000, \n"
         "\"valid-lifetime\": 4000, \n"
+        "\"min-valid-lifetime\": 3000, \n"
+        "\"max-valid-lifetime\": 5000, \n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"subnet6\": [\n"
@@ -6303,7 +6399,11 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
         "        \"renew-timer\": 2,\n"
         "        \"rebind-timer\": 22,\n"
         "        \"preferred-lifetime\": 222,\n"
-        "        \"valid-lifetime\": 2222\n"
+        "        \"min-preferred-lifetime\": 111,\n"
+        "        \"max-preferred-lifetime\": 333,\n"
+        "        \"valid-lifetime\": 2222,\n"
+        "        \"min-valid-lifetime\": 1111,\n"
+        "        \"max-valid-lifetime\": 3333\n"
         "    },\n"
         "    { \n"
         "        \"subnet\": \"2001:db3::/48\",\n"
@@ -6333,9 +6433,15 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
     const Subnet6Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(3, subs->size());
-    checkSubnet(*subs, "2001:db1::/48", 1000, 2000, 3000, 4000);
-    checkSubnet(*subs, "2001:db2::/48", 2, 22, 222, 2222);
-    checkSubnet(*subs, "2001:db3::/48", 1000, 2000, 3000, 4000);
+    checkSubnet(*subs, "2001:db1::/48",
+                1000, 2000, 3000, 4000,
+                2000, 4000, 3000, 5000);
+    checkSubnet(*subs, "2001:db2::/48",
+                2, 22, 222, 2222,
+                111, 333, 1111, 3333);
+    checkSubnet(*subs, "2001:db3::/48",
+                1000, 2000, 3000, 4000,
+                2000, 4000, 3000, 5000);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets6Ptr subnets6 = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
@@ -6343,9 +6449,15 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
 
     subs = subnets6->getAll();
     ASSERT_TRUE(subs);
-    checkSubnet(*subs, "2001:db1::/48", 1000, 2000, 3000, 4000);
-    checkSubnet(*subs, "2001:db2::/48", 2, 22, 222, 2222);
-    checkSubnet(*subs, "2001:db3::/48", 1000, 2000, 3000, 4000);
+    checkSubnet(*subs, "2001:db1::/48",
+                1000, 2000, 3000, 4000,
+                2000, 4000, 3000, 5000);
+    checkSubnet(*subs, "2001:db2::/48",
+                2, 22, 222, 2222,
+                111, 333, 1111, 3333);
+    checkSubnet(*subs, "2001:db3::/48",
+                1000, 2000, 3000, 4000,
+                2000, 4000, 3000, 5000);
 }
 
 // This test checks if parameters are derived properly:
@@ -6372,13 +6484,21 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "\"renew-timer\": 1, \n"
         "\"rebind-timer\": 2, \n"
         "\"preferred-lifetime\": 3,\n"
+        "\"min-preferred-lifetime\": 2,\n"
+        "\"max-preferred-lifetime\": 4,\n"
         "\"valid-lifetime\": 4, \n"
+        "\"min-valid-lifetime\": 3, \n"
+        "\"max-valid-lifetime\": 5, \n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"renew-timer\": 10,\n"
         "    \"rebind-timer\": 20, \n"
         "    \"preferred-lifetime\": 30,\n"
+        "    \"min-preferred-lifetime\": 20,\n"
+        "    \"max-preferred-lifetime\": 40,\n"
         "    \"valid-lifetime\": 40, \n"
+        "    \"min-valid-lifetime\": 30, \n"
+        "    \"max-valid-lifetime\": 50, \n"
         "    \"interface-id\": \"oneone\",\n"
         "    \"relay\": {\n"
         "        \"ip-address\": \"1111::1\"\n"
@@ -6396,10 +6516,14 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "        \"renew-timer\": 100\n,"
         "        \"rebind-timer\": 200, \n"
         "        \"preferred-lifetime\": 300,\n"
+        "        \"min-preferred-lifetime\": 200,\n"
+        "        \"max-preferred-lifetime\": 400,\n"
         "        \"relay\": {\n"
         "            \"ip-address\": \"2222::2\"\n"
         "        },\n"
         "        \"valid-lifetime\": 400, \n"
+        "        \"min-valid-lifetime\": 300, \n"
+        "        \"max-valid-lifetime\": 500, \n"
         "        \"interface-id\": \"twotwo\",\n"
         "        \"rapid-commit\": true,\n"
         "        \"reservation-mode\": \"out-of-pool\"\n"
@@ -6441,7 +6565,8 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // derived from shared-network level. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
-    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 10, 20, 30, 40);
+    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48",
+                               10, 20, 30, 40, 20, 40, 30, 50);
     ASSERT_TRUE(s);
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
@@ -6453,7 +6578,8 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // was specified explicitly. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
-    s = checkSubnet(*subs, "2001:db2::/48", 100, 200, 300, 400);
+    s = checkSubnet(*subs, "2001:db2::/48",
+                    100, 200, 300, 400, 200, 400, 300, 500);
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("2222::2")));
@@ -6469,7 +6595,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(1, subs->size());
 
     // This subnet should derive its renew-timer from global scope.
-    s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
+    s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4, 2, 4, 3, 5);
     EXPECT_FALSE(s->getInterfaceId());
     EXPECT_FALSE(s->hasRelays());
     EXPECT_FALSE(s->getRapidCommit());
