@@ -104,6 +104,8 @@ namespace {
     "  s.t1_percent," \
     "  s.t2_percent," \
     "  s.authoritative," \
+    "  s.min_valid_lifetime," \
+    "  s.max_valid_lifetime," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     "INNER JOIN dhcp4_subnet_server AS a " \
@@ -189,6 +191,10 @@ namespace {
     "  s.t1_percent," \
     "  s.t2_percent," \
     "  s.interface_id," \
+    "  s.min_preferred_lifetime," \
+    "  s.max_preferred_lifetime," \
+    "  s.min_valid_lifetime," \
+    "  s.max_valid_lifetime," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     "INNER JOIN dhcp6_subnet_server AS a " \
@@ -239,6 +245,8 @@ namespace {
     "  n.boot_file_name," \
     "  n.next_server," \
     "  n.server_hostname," \
+    "  n.min_valid_lifetime," \
+    "  n.max_valid_lifetime," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     "INNER JOIN dhcp4_shared_network_server AS a " \
@@ -284,6 +292,10 @@ namespace {
     "  n.t1_percent," \
     "  n.t2_percent," \
     "  n.interface_id," \
+    "  n.min_preferred_lifetime," \
+    "  n.max_preferred_lifetime," \
+    "  n.min_valid_lifetime," \
+    "  n.max_valid_lifetime," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     "INNER JOIN dhcp6_shared_network_server AS a " \

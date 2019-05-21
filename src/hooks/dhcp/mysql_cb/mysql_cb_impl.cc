@@ -91,6 +91,22 @@ MySqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) {
     return (MySqlBinding::createInteger<uint32_t>(triplet.get()));
 }
 
+MySqlBindingPtr
+MySqlConfigBackendImpl::createMinBinding(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified() || (triplet.getMin() == triplet.get())) {
+        return (MySqlBinding::createNull());
+    }
+    return (MySqlBinding::createInteger<uint32_t>(triplet.getMin()));
+}
+
+MySqlBindingPtr
+MySqlConfigBackendImpl::createMaxBinding(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified() || (triplet.getMax() == triplet.get())) {
+        return (MySqlBinding::createNull());
+    }
+    return (MySqlBinding::createInteger<uint32_t>(triplet.getMax()));
+}
+
 Triplet<uint32_t>
 MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) {
     if (!binding) {
@@ -103,6 +119,34 @@ MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) {
     }
 
     return (Triplet<uint32_t>(binding->getInteger<uint32_t>()));
+}
+
+Triplet<uint32_t>
+MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& def_binding,
+                                      const MySqlBindingPtr& min_binding,
+                                      const MySqlBindingPtr& max_binding) {
+    if (!def_binding || !min_binding || !max_binding) {
+        isc_throw(Unexpected, "MySQL configuration backend internal error: "
+                  "binding pointer is NULL when creating a triplet value");
+    }
+
+    // This code assumes the database was filled using the API, e.g. it
+    // is not possible (so not handled) to have only the min_binding not NULL.
+    if (def_binding->amNull()) {
+        return (Triplet<uint32_t>());
+    }
+
+    uint32_t value = def_binding->getInteger<uint32_t>();
+    uint32_t min_value = value;
+    if (!min_binding->amNull()) {
+        min_value = min_binding->getInteger<uint32_t>();
+    }
+    uint32_t max_value = value;
+    if (!max_binding->amNull()) {
+        max_value = max_binding->getInteger<uint32_t>();
+    }
+
+    return (Triplet<uint32_t>(min_value, value, max_value));
 }
 
 void

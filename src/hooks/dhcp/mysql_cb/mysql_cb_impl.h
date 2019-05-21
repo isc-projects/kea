@@ -117,6 +117,24 @@ public:
     /// otherwise.
     static db::MySqlBindingPtr createBinding(const Triplet<uint32_t>& triplet);
 
+    /// @brief Creates MySQL binding from a @c Triplet max value.
+    ///
+    /// @param triplet Triplet value from which the binding should be created.
+    /// @return Pointer to a null binding if the triplet is "unspecified" or
+    /// the max value is the same than the default value, or a pointer to
+    /// a binding representing 32-bit unsigned integer value from the max
+    /// value otherwise.
+    static db::MySqlBindingPtr createMaxBinding(const Triplet<uint32_t>& triplet);
+
+    /// @brief Creates MySQL binding from a @c Triplet min value.
+    ///
+    /// @param triplet Triplet value from which the binding should be created.
+    /// @return Pointer to a null binding if the triplet is "unspecified" or
+    /// the min value is the same than the default value, or a pointer to
+    /// a binding representing 32-bit unsigned integer value from the min
+    /// value otherwise.
+    static db::MySqlBindingPtr createMinBinding(const Triplet<uint32_t>& triplet);
+
     /// @brief Creates @c Triplet object from MySQL binding.
     ///
     /// @param binding Pointer to the MySQL binding.
@@ -127,6 +145,22 @@ public:
     /// @throw isc::InvalidOperation if the binding does not represent
     /// a 32-bit unsigned integer.
     static Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& binding);
+
+    /// @brief Creates @c Triplet object from MySQL bindings.
+    ///
+    /// @param def_binding Pointer to the MySQL binding of the default.
+    /// @param min_binding Pointer to the MySQL binding of the min value.
+    /// @param max_binding Pointer to the MySQL binding of the max value.
+    /// @return Triplet value set to "unspecified" if the MySQL binding
+    /// represents a NULL value or a Triplet value encapsulating 32-bit
+    /// unsigned integer if the MySQL represents an integer.
+    /// When max or max bindings are not NULL their values are used.
+    /// @throw isc::Unexpected if the provided binding pointer is NULL.
+    /// @throw isc::InvalidOperation if the binding does not represent
+    /// a 32-bit unsigned integer.
+    static Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& def_binding,
+                                           const db::MySqlBindingPtr& min_binding,
+                                           const db::MySqlBindingPtr& max_binding);
 
     /// @brief Returns server tags associated with the particular selector.
     ///

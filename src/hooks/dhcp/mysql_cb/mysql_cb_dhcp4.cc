@@ -285,6 +285,8 @@ public:
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
             MySqlBinding::createInteger<uint8_t>(), // authoritative
+            MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
+            MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -324,8 +326,10 @@ public:
                 auto renew_timer = createTriplet(out_bindings[13]);
                 // rebind_timer
                 auto rebind_timer = createTriplet(out_bindings[11]);
-                // valid_lifetime
-                auto valid_lifetime = createTriplet(out_bindings[19]);
+                // valid_lifetime (and {min,max)_valid_lifetime)
+                auto valid_lifetime = createTriplet(out_bindings[19],
+                                                    out_bindings[53],
+                                                    out_bindings[54]);
 
                 // Create subnet with basic settings.
                 last_subnet = Subnet4::create(prefix_pair.first, prefix_pair.second,
@@ -453,8 +457,10 @@ public:
                     last_subnet->setAuthoritative(out_bindings[52]->getBool());
                 }
 
+                // {min,max}_valid_lifetime
+
                 // server_tag
-                last_subnet->setServerTag(out_bindings[53]->getString());
+                last_subnet->setServerTag(out_bindings[55]->getString());
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.push_back(last_subnet);
@@ -819,6 +825,8 @@ public:
             shared_network_binding,
             createInputContextBinding(subnet),
             createBinding(subnet->getValid(Network::Inheritance::NONE)),
+            createMinBinding(subnet->getValid(Network::Inheritance::NONE)),
+            createMaxBinding(subnet->getValid(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE)),
@@ -1033,6 +1041,8 @@ public:
             MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name
             MySqlBinding::createInteger<uint32_t>(), // next_server
             MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
+            MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
+            MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1129,9 +1139,11 @@ public:
                     last_network->setContext(user_context);
                 }
 
-                // valid_lifetime
+                // valid_lifetime (and {min,max)_valid_lifetime)
                 if (!out_bindings[12]->amNull()) {
-                    last_network->setValid(createTriplet(out_bindings[12]));
+                    last_network->setValid(createTriplet(out_bindings[12],
+                                                         out_bindings[32],
+                                                         out_bindings[33]));
                 }
 
                 // calculate_tee_times
@@ -1164,13 +1176,15 @@ public:
                     last_network->setSiaddr(IOAddress(out_bindings[30]->getInteger<uint32_t>()));
                 }
 
-                // server_hostaname
+                // server_hostname
                 if (!out_bindings[31]->amNull()) {
                     last_network->setSname(out_bindings[31]->getString());
                 }
 
+                // {min,max}_valid_lifetime
+
                 // server_tag
-                last_network->setServerTag(out_bindings[32]->getString());
+                last_network->setServerTag(out_bindings[34]->getString());
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1301,6 +1315,8 @@ public:
             hr_mode_binding,
             createInputContextBinding(shared_network),
             createBinding(shared_network->getValid(Network::Inheritance::NONE)),
+            createMinBinding(shared_network->getValid(Network::Inheritance::NONE)),
+            createMaxBinding(shared_network->getValid(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getT1Percent(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getT2Percent(Network::Inheritance::NONE)),
@@ -2049,11 +2065,13 @@ TaggedStatementArray tagged_statements = { {
       "  shared_network_name,"
       "  user_context,"
       "  valid_lifetime,"
+      "  min_valid_lifetime,"
+      "  max_valid_lifetime,"
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
       "  authoritative"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
@@ -2081,6 +2099,8 @@ TaggedStatementArray tagged_statements = { {
       "  reservation_mode,"
       "  user_context,"
       "  valid_lifetime,"
+      "  min_valid_lifetime,"
+      "  max_valid_lifetime,"
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
@@ -2088,7 +2108,8 @@ TaggedStatementArray tagged_statements = { {
       "  boot_file_name,"
       "  next_server,"
       "  server_hostname"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2143,6 +2164,8 @@ TaggedStatementArray tagged_statements = { {
       "  shared_network_name = ?,"
       "  user_context = ?,"
       "  valid_lifetime = ?,"
+      "  min_valid_lifetime = ?,"
+      "  max_valid_lifetime = ?,"
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
@@ -2164,6 +2187,8 @@ TaggedStatementArray tagged_statements = { {
       "  reservation_mode = ?,"
       "  user_context = ?,"
       "  valid_lifetime = ?,"
+      "  min_valid_lifetime = ?,"
+      "  max_valid_lifetime = ?,"
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
