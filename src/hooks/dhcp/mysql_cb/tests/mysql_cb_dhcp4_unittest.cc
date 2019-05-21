@@ -941,6 +941,33 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
     ASSERT_TRUE(subnets.empty());
 }
 
+// Test that lifetimes in subnets are handled as expected.
+TEST_F(MySqlConfigBackendDHCPv4Test, subnetLifetime) {
+    // Insert new subnet with unspecified valid lifetime
+    Triplet<uint32_t> unspecified;
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 30, 40,
+                                  unspecified, 1111));
+    subnet->setIface("eth1");
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // Verified returned and original subnets match.
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the valid lifetime.
+    subnet->setValid( Triplet<uint32_t>(100, 200, 300));
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+
+    // Fetch and verify again.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+}
+
 // Test that subnets belonging to a shared network can be retrieved.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
     // Assign test subnets to shared networks level1 and level2.
@@ -1269,6 +1296,35 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
     networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                   timestamps_["tomorrow"]);
     ASSERT_TRUE(networks.empty());
+}
+
+// Test that lifetimes in shared networks are handled as expected.
+TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkLifetime) {
+    // Insert new shared network with unspecified valid lifetime
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    Triplet<uint32_t> unspecified;
+    network->setValid(unspecified);
+    network->setIface("eth1");
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
+
+    // Fetch this shared network.
+    SharedNetwork4Ptr returned_network =
+        cbptr_->getSharedNetwork4(ServerSelector::ALL(), "foo");
+    ASSERT_TRUE(returned_network);
+
+    // Verified returned and original shared networks match.
+    EXPECT_EQ(network->toElement()->str(),
+              returned_network->toElement()->str());
+
+    // Update the preferred and valid lifetime.
+    network->setValid( Triplet<uint32_t>(100, 200, 300));
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
+
+    // Fetch and verify again.
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(), "foo");
+    ASSERT_TRUE(returned_network);
+    EXPECT_EQ(network->toElement()->str(),
+              returned_network->toElement()->str());
 }
 
 // Test that option definition can be inserted, fetched, updated and then

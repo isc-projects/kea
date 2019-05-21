@@ -967,6 +967,34 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedSubnets6) {
     ASSERT_TRUE(subnets.empty());
 }
 
+// Test that lifetimes in subnets are handled as expected.
+TEST_F(MySqlConfigBackendDHCPv6Test, subnetLifetime) {
+    // Insert new subnet with unspecified valid lifetime
+    Triplet<uint32_t> unspecified;
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 30, 40,
+                                  unspecified, unspecified, 1111));
+    subnet->setIface("eth1");
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier
+    Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // Verified returned and original subnets match.
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the preferred and valid lifetime.
+    subnet->setPreferred( Triplet<uint32_t>(100, 200, 300));
+    subnet->setValid( Triplet<uint32_t>(200, 300, 400));
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+
+    // Fetch and verify again.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+}
+
 // Test that subnets belonging to a shared network can be retrieved.
 TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
     // Assign test subnets to shared networks level1 and level2.
@@ -1293,6 +1321,37 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedSharedNetworks6) {
     networks = cbptr_->getModifiedSharedNetworks6(ServerSelector::ALL(),
                                                   timestamps_["tomorrow"]);
     ASSERT_TRUE(networks.empty());
+}
+
+// Test that lifetimes in shared networks are handled as expected.
+TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkLifetime) {
+    // Insert new shared network with unspecified valid lifetime
+    SharedNetwork6Ptr network(new SharedNetwork6("foo"));
+    Triplet<uint32_t> unspecified;
+    network->setPreferred(unspecified);
+    network->setValid(unspecified);
+    network->setIface("eth1");
+    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), network);
+
+    // Fetch this shared network.
+    SharedNetwork6Ptr returned_network =
+        cbptr_->getSharedNetwork6(ServerSelector::ALL(), "foo");
+    ASSERT_TRUE(returned_network);
+
+    // Verified returned and original shared networks match.
+    EXPECT_EQ(network->toElement()->str(),
+              returned_network->toElement()->str());
+
+    // Update the preferred and valid lifetime.
+    network->setPreferred( Triplet<uint32_t>(100, 200, 300));
+    network->setValid( Triplet<uint32_t>(200, 300, 400));
+    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), network);
+
+    // Fetch and verify again.
+    returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(), "foo");
+    ASSERT_TRUE(returned_network);
+    EXPECT_EQ(network->toElement()->str(),
+              returned_network->toElement()->str());
 }
 
 // Test that option definition can be inserted, fetched, updated and then
