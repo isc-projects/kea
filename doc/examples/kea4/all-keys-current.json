@@ -555,7 +555,7 @@
                 "t1-percent": .5,
 
                 // T2 = valid lifetime * .75.
-                "t2-percent": .75
+                "t2-percent": .75,
 
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
@@ -690,7 +690,7 @@
                         "t1-percent": .5,
 
                         // T2 = valid lifetime * .75.
-                        "t2-percent": .75
+                        "t2-percent": .75,
 
                         // List of static IPv4 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
