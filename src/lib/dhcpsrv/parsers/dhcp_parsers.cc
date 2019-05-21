@@ -1149,9 +1149,11 @@ void
 Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
     // Subnet ID is optional. If it is not supplied the value of 0 is used,
-    // which means autogenerate. The value was inserted earlier by calling
-    // SimpleParser6::setAllDefaults.
-    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
+    // which means autogenerate.
+    SubnetID subnet_id = 0;
+    if (params->contains("id")) {
+        subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
+    }
 
     // We want to log whether rapid-commit is enabled, so we get this
     // before the actual subnet creation.
