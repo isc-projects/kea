@@ -692,6 +692,8 @@ public:
     /// @param prefix_len length of the prefix (128 for addresses)
     /// @param insert_before_renew should the lease be inserted into the database
     ///        before we try renewal?
+    /// @param expire_before_renew should the lease be expired before we try
+    ///        renewal?
     /// @param hint_pref preferred lifetime hint (default is 300)
     /// @param hint_valid valid lifetime hint (default is 500)
     /// @param expected_pref expected preferred lifetime (zero means not check)
@@ -701,6 +703,7 @@ public:
                    const std::string& existing_addr,
                    const std::string& renew_addr, const uint8_t prefix_len,
                    bool insert_before_renew = true,
+                   bool expire_before_renew = false,
                    uint32_t hint_pref = 300, uint32_t hint_valid = 500,
                    uint32_t expected_pref = 0, uint32_t expected_valid = 0);
 

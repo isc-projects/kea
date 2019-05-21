@@ -247,21 +247,37 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
                               const std::string& renew_addr,
                               const uint8_t prefix_len,
                               bool insert_before_renew,
+                              bool expire_before_renew,
                               uint32_t hint_pref,
                               uint32_t hint_valid,
                               uint32_t expected_pref,
                               uint32_t expected_valid) {
     NakedDhcpv6Srv srv(0);
 
+    const IOAddress existing(existing_addr);
+    const IOAddress renew(renew_addr);
+    const uint32_t iaid = 234;
+
+    // To reuse an expired lease we need a subnet with a pool that
+    // consists of exactly one address. This address will get expired
+    // and then be reused.
+    if (expire_before_renew) {
+        CfgMgr::instance().clear();
+        subnet_.reset(new Subnet6(IOAddress("2001:db8:1:1::"),
+                                  48, 1000, 2000, 3000, 4000));
+        subnet_->setIface("eth0");
+        pool_.reset(new Pool6(Lease::TYPE_NA, existing, existing));
+        subnet_->addPool(pool_);
+        CfgMgr::instance().setFamily(AF_INET6);
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
+        CfgMgr::instance().commit();
+    }
+
     // Use intervals for lifetimes for lifetime tests.
     if (hint_pref != 300 || hint_valid != 500) {
         subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
         subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
     }
-
-    const IOAddress existing(existing_addr);
-    const IOAddress renew(renew_addr);
-    const uint32_t iaid = 234;
 
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
@@ -289,14 +305,37 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
         EXPECT_NE(l->cltt_, time(NULL));
     }
 
+    if (expire_before_renew) {
+        // The lease must exist.
+        ASSERT_TRUE(l);
+
+        // Change the subnet identifier to make the allocation engine to
+        // not treat the lease as being renewed by the same client,
+        // but to treat it as expired lease to be reused.
+        ++l->subnet_id_;
+
+        // Move the cllt back in time and make sure that the lease got expired.
+        l->cltt_ = time(NULL) - 10;
+        l->valid_lft_ = 5;
+        ASSERT_TRUE(l->expired());
+        // Update the lease in the lease database.
+        LeaseMgrFactory::instance().updateLease6(l);
+    }
+
     Pkt6Ptr req;
+    uint8_t message_type = DHCPV6_RENEW;
+    // Use a request vs a renew for getting an expired lease without
+    // extending it. i.e. not call extendLease6 after reuseExpiredLease.
+    if (expire_before_renew) {
+        message_type = DHCPV6_REQUEST;
+    }
 
     if (hint_pref == 300 && hint_valid == 500) {
-        req = createMessage(DHCPV6_RENEW, type, IOAddress(renew_addr),
+        req = createMessage(message_type, type, IOAddress(renew_addr),
                             prefix_len, iaid);
     } else {
         // from createMessage
-        req.reset(new Pkt6(DHCPV6_RENEW, 1234));
+        req.reset(new Pkt6(message_type, 1234));
         req->setRemoteAddr(IOAddress("fe80::abcd"));
         req->setIface("eth0");
 
@@ -329,7 +368,12 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
     req->addOption(srv.getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply;
+    if (!expire_before_renew) {
+        reply = srv.processRenew(req);
+    } else {
+        reply = srv.processRequest(req);
+    }
 
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);

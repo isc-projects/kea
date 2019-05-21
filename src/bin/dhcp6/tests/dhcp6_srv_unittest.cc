@@ -1269,16 +1269,16 @@ TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
 TEST_F(Dhcpv6SrvTest, defaultLifetimeRenew) {
     // Defaults are 3000 and 4000.
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
-                   "2001:db8:1:1::cafe:babe", 128, true,
-                   0, 0, 3000, 4000);
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, false, 0, 0, 3000, 4000);
 }
 
 // This test verifies that a renewal returns specified lifetimes when
-// the client adds an IAADDR sub option with in-bound lifetime hints.
+// the client adds an IAPREFIX sub option with in-bound lifetime hints.
 TEST_F(Dhcpv6SrvTest, hintLifetimeRenew) {
     testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
-                   "2001:db8:1:2::", pd_pool_->getLength(), true,
-                   2999, 4001, 2999, 4001);
+                   "2001:db8:1:2::", pd_pool_->getLength(),
+                   true, false, 2999, 4001, 2999, 4001);
 }
 
 // This test verifies that a renewal returns min lifetimes when
@@ -1286,17 +1286,62 @@ TEST_F(Dhcpv6SrvTest, hintLifetimeRenew) {
 TEST_F(Dhcpv6SrvTest, minLifetimeRenew) {
     // Min values are 2000 and 3000.
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
-                   "2001:db8:1:1::cafe:babe", 128, true,
-                   1000, 2000, 2000, 3000);
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, false, 1000, 2000, 2000, 3000);
 }
 
 // This test verifies that a renewal returns max ifetimes when
-// the client adds an IAADDR sub option with too large lifetime hints.
+// the client adds an IAPREFIX sub option with too large lifetime hints.
 TEST_F(Dhcpv6SrvTest, maxLifetimeRenew) {
     // Max  values are 4000 and 5000.
     testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
-                   "2001:db8:1:2::", pd_pool_->getLength(), true,
-                   5000, 6000, 4000, 5000);
+                   "2001:db8:1:2::", pd_pool_->getLength(),
+                   true, false, 5000, 6000, 4000, 5000);
+}
+
+// This test is a mixed of FqdnDhcpv6SrvTest.processRequestReuseExpiredLease
+// and testRenewBasic. The idea is to force the reuse of an expired lease
+// so the allocation engine reuseExpiredLease routine is called instead
+// of the two other routines computing lease lifetimes createLease6
+// and extendLease6.
+TEST_F(Dhcpv6SrvTest, reuseExpiredBasic) {
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128, true, true);
+}
+
+// This test verifies that an expired reuse returns default lifetimes when
+// the client adds an IAADDR sub option with zero lifetime hints.
+TEST_F(Dhcpv6SrvTest, defaultLifetimeReuseExpired) {
+    // Defaults are 3000 and 4000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 0, 0, 3000, 4000);
+}
+
+// This test verifies that an expired reuse returns specified lifetimes when
+// the client adds an IAADDR sub option with in-bound lifetime hints.
+TEST_F(Dhcpv6SrvTest, hintLifetimeReuseExpired) {
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 2999, 4001, 2999, 4001);
+}
+
+// This test verifies that an expired reuse returns min lifetimes when
+// the client adds an IAADDR sub option with too small lifetime hints.
+TEST_F(Dhcpv6SrvTest, minLifetimeReuseExpired) {
+    // Min values are 2000 and 3000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 1000, 2000, 2000, 3000);
+}
+
+// This test verifies that an expired reuse returns max lifetimes when
+// the client adds an IAADDR sub option with too large lifetime hints.
+TEST_F(Dhcpv6SrvTest, maxLifetimeReuseExpired) {
+    // Max  values are 4000 and 5000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 5000, 6000, 4000, 5000);
 }
 
 // This test verifies that incoming (positive) RELEASE with address can be
