@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Apr 30 2019 10:41
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 22 2019 18:12
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -23,13 +23,11 @@ extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED;
 extern const isc::log::MessageID DHCP6_CLASS_UNTESTABLE;
 extern const isc::log::MessageID DHCP6_COMMAND_RECEIVED;
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE;
-extern const isc::log::MessageID DHCP6_CONFIG_DEPRECATED_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL;
-extern const isc::log::MessageID DHCP6_CONFIG_OBSOLETE_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED;
 extern const isc::log::MessageID DHCP6_CONFIG_START;
-extern const isc::log::MessageID DHCP6_CONFIG_UNKNOWN_OBJECT;
+extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE;
 extern const isc::log::MessageID DHCP6_DB_BACKEND_STARTED;
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_ATTEMPT_FAILED;

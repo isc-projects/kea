@@ -476,8 +476,8 @@ global_param: data_directory
             | server_tag
             | reservation_mode
             | calculate_tee_times
-            | t1_percent 
-            | t2_percent 
+            | t1_percent
+            | t2_percent
             | loggers
             | unknown_map_entry
             ;
@@ -1098,8 +1098,8 @@ subnet6_param: preferred_lifetime
              | user_context
              | comment
              | calculate_tee_times
-             | t1_percent 
-             | t2_percent 
+             | t1_percent
+             | t2_percent
              | unknown_map_entry
              ;
 
@@ -1220,8 +1220,8 @@ shared_network_param: name
                     | user_context
                     | comment
                     | calculate_tee_times
-                    | t1_percent 
-                    | t2_percent 
+                    | t1_percent
+                    | t2_percent
                     | unknown_map_entry
                     ;
 

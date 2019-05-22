@@ -191,36 +191,27 @@ DControllerBase::checkConfigOnly() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Check obsolete or unknown objects.
-        std::set<std::string> unsupported;
+        // Check obsolete or unknown (aka unsupported) objects.
+        std::list<std::string> unsupported;
         for (auto obj : whole_config->mapValue()) {
             const std::string& app_name = getAppName();
             const std::string& obj_name = obj.first;
             if ((obj_name == app_name) || (obj_name == "Logging")) {
                 continue;
             }
-            if ((obj_name == "Dhcp4") || (obj_name == "Dhcp6") ||
-                (obj_name == "Control-agent") || (obj_name == "Netconf")) {
-                if ((app_name == "DhcpDdns") ||
-                    (app_name == "Control-agent")) {
-                    continue;
-                }
-                if (app_name == "Netconf") {
-                    unsupported.insert(obj_name);
-                    continue;
-                }
-            }
-            unsupported.insert(obj_name);
+            unsupported.push_back(obj_name);
         }
         if (unsupported.size() == 1) {
             isc_throw(InvalidUsage, "Unsupported object '"
-                      << *unsupported.begin() << "' in config");
+                      << unsupported.front() << "' in config");
         } else if (unsupported.size() > 1) {
             isc_throw(InvalidUsage, "Unsupported objects '"
-                      << *unsupported.begin() << "', ... in config");
+                      << unsupported.front() << "', ... in config");
         }
 
-        // Relocate Logging.
+        // Relocate Logging: if there is a global Logging object takes its
+        // loggers entry, move the entry to AppName object and remove
+        // now empty Logging.
         Daemon::relocateLogging(whole_config, getAppName());
 
         // Get an application process object.
@@ -393,11 +384,29 @@ DControllerBase::configFromFile() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Check obsolete objects.
+        // Check obsolete or unknown (aka unsupported) objects.
+        std::list<std::string> unsupported;
+        for (auto obj : whole_config->mapValue()) {
+            const std::string& app_name = getAppName();
+            const std::string& obj_name = obj.first;
+            if ((obj_name == app_name) || (obj_name == "Logging")) {
+                continue;
+            }
+            unsupported.push_back(obj_name);
+        }
+        if (unsupported.size() == 1) {
+            isc_throw(InvalidUsage, "Unsupported object '"
+                      << unsupported.front() << "' in config file "
+                      << config_file);
+        } else if (unsupported.size() > 1) {
+            isc_throw(InvalidUsage, "Unsupported objects '"
+                      << unsupported.front() << "', ... in config file "
+                      << config_file);
+        }
 
-        // Check deprecated objects.
-
-        // Relocate Logging.
+        // Relocate Logging: if there is a global Logging object takes its
+        // loggers entry, move the entry to AppName object and remove
+        // now empty Logging.
         Daemon::relocateLogging(whole_config, getAppName());
 
         // Let's configure logging before applying the configuration,
@@ -414,10 +423,6 @@ DControllerBase::configFromFile() {
         // to print out what exactly is wrong with the new config in
         // case of problems.
         storage->applyLoggingCfg();
-
-        // Log deprecated objects.
-
-        // Log obsolete objects and raise an error.
 
         answer = updateConfig(module_config);
         // In all cases the right logging configuration is in the context.

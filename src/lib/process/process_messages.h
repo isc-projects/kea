@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes on Mon Apr 29 2019 17:28
+// File created from ../../../src/lib/process/process_messages.mes on Wed May 22 2019 18:44
 
 #ifndef PROCESS_MESSAGES_H
 #define PROCESS_MESSAGES_H
@@ -20,10 +20,8 @@ extern const isc::log::MessageID DCTL_CONFIG_DEPRECATED;
 extern const isc::log::MessageID DCTL_CONFIG_FETCH;
 extern const isc::log::MessageID DCTL_CONFIG_FILE_LOAD_FAIL;
 extern const isc::log::MessageID DCTL_CONFIG_LOAD_FAIL;
-extern const isc::log::MessageID DCTL_CONFIG_OBSOLETE_OBJECT;
 extern const isc::log::MessageID DCTL_CONFIG_START;
 extern const isc::log::MessageID DCTL_CONFIG_STUB;
-extern const isc::log::MessageID DCTL_CONFIG_UNKNOWN_OBJECT;
 extern const isc::log::MessageID DCTL_CONFIG_UPDATE;
 extern const isc::log::MessageID DCTL_INIT_PROCESS;
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL;

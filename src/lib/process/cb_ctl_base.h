@@ -324,7 +324,7 @@ protected:
     ///
     /// If the collection of audit entries is empty, this method simply
     /// returns without updating the timestamp.
-    /// 
+    ///
     /// @param Reference to the collection of the fetched audit entries.
     void updateLastAuditEntryTime(const db::AuditEntryCollection& audit_entries) {
         // Do nothing if there are no audit entries. It is the case if

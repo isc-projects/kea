@@ -66,10 +66,6 @@ This critical error message indicates that the initial application
 configuration has failed. The service will start, but will not
 process requests until the configuration has been corrected.
 
-% DCTL_CONFIG_OBSOLETE_OBJECT server configuration includes an obsolete object: %1
-This error message is issued when the configuration includes an obsolete
-object (i.e. a top level element).
-
 % DCTL_CONFIG_START parsing new configuration: %1
 A debug message indicating that the application process has received an
 updated configuration and has passed it to its configuration manager
@@ -78,10 +74,6 @@ for parsing.
 % DCTL_CONFIG_STUB %1 configuration stub handler called
 This debug message is issued when the dummy handler for configuration
 events is called.  This only happens during initial startup.
-
-% DCTL_CONFIG_UNKNOWN_OBJECT server configuration includes an unknown object: %1
-This error message is issued when the configuration includes an unknown
-object (i.e. a top level element).
 
 % DCTL_CONFIG_UPDATE %1 updated configuration received: %2
 A debug message indicating that the controller has received an

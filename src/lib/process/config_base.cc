@@ -128,11 +128,6 @@ ConfigBase::toElement() const {
         result->set("server-tag", Element::create(server_tag_.get()));
     }
 
-    // Note this comment below is obsolete...
-    // We do NOT output ConfigControlInfo here, as it is not a
-    // top level element, but rather belongs within the process
-    // element.
-
     return (result);
 }
 

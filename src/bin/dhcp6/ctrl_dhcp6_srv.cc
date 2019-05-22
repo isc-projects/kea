@@ -331,31 +331,18 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     // configuration attempts.
     CfgMgr::instance().rollback();
 
-    // Check deprecated, obsolete or unknown objects.
-    set<string> deprecated;
-    set<string> obsolete;
-    set<string> unknown;
+    // Check deprecated, obsolete or unknown (aka unsupported) objects.
+    list<string> unsupported;
     for (auto obj : args->mapValue()) {
         const string& obj_name = obj.first;
         if ((obj_name == "Dhcp6") || (obj_name == "Logging")) {
             continue;
         }
-        if ((obj_name == "Dhcp4") || (obj_name == "DhcpDdns")) {
-            // Candidates for deprecated.
-            continue;
-        }
-        if (obj_name == "Control-agent") {
-            deprecated.insert(obj_name);
-            continue;
-        }
-        if (obj_name == "Netconf") {
-            obsolete.insert(obj_name);
-            continue;
-        }
-        unknown.insert(obj_name);
+        unsupported.push_back(obj_name);
     }
 
-    // Relocate Logging.
+    // Relocate Logging: if there is a global Logging object takes its
+    // loggers entry, move the entry to Dhcp6 and remove now empty Logging.
     Daemon::relocateLogging(args, "Dhcp6");
 
     // Parse the logger configuration explicitly into the staging config.
@@ -368,45 +355,13 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     // out what exactly is wrong with the new config in case of problems.
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
-    // Log deprecated objects.
-    for (auto name : deprecated) {
-        LOG_WARN(dhcp6_logger, DHCP6_CONFIG_DEPRECATED_OBJECT).arg(name);
-    }
+    // Log unsupported objects.
+    if (!unsupported.empty()) {
+        for (auto name : unsupported) {
+            LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNSUPPORTED_OBJECT).arg(name);
+        }
 
-    // Log obsolete/unknown objects and return an error.
-    string bad;
-    bool bads = false;
-    for (auto name : obsolete) {
-        LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_OBSOLETE_OBJECT).arg(name);
-        if (bad.empty()) {
-            bad = name;
-        } else {
-            bads = true;
-        }
-    }
-    for (auto name : unknown) {
-        LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNKNOWN_OBJECT).arg(name);
-        if (bad.empty()) {
-            bad= name;
-        } else {
-            bads = true;
-        }
-    }
-    if (!obsolete.empty() || !unknown.empty()) {
-        // Rollback logging.
-        CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
-
-        // Return a failure response.
-        message = "Unsupported object";
-        if (bads) {
-            message += "s";
-        }
-        message = " '" + bad + "'";
-        if (bads) {
-            message += ", ...";
-        }
-        message += " in config";
-        return (isc::config::createAnswer(status_code, message));
+        // Will return an error in a future version.
     }
 
     // Now we configure the server proper.

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Mon Apr 29 2019 17:27
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed May 22 2019 18:21
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -27,16 +27,14 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_H
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
 extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED = "DHCP4_COMMAND_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE = "DHCP4_CONFIG_COMPLETE";
-extern const isc::log::MessageID DHCP4_CONFIG_DEPRECATED_OBJECT = "DHCP4_CONFIG_DEPRECATED_OBJECT";
 extern const isc::log::MessageID DHCP4_CONFIG_FETCH = "DHCP4_CONFIG_FETCH";
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL = "DHCP4_CONFIG_LOAD_FAIL";
 extern const isc::log::MessageID DHCP4_CONFIG_NEW_SUBNET = "DHCP4_CONFIG_NEW_SUBNET";
-extern const isc::log::MessageID DHCP4_CONFIG_OBSOLETE_OBJECT = "DHCP4_CONFIG_OBSOLETE_OBJECT";
 extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE = "DHCP4_CONFIG_OPTION_DUPLICATE";
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE = "DHCP4_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED = "DHCP4_CONFIG_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_START = "DHCP4_CONFIG_START";
-extern const isc::log::MessageID DHCP4_CONFIG_UNKNOWN_OBJECT = "DHCP4_CONFIG_UNKNOWN_OBJECT";
+extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT = "DHCP4_CONFIG_UNSUPPORTED_OBJECT";
 extern const isc::log::MessageID DHCP4_CONFIG_UPDATE = "DHCP4_CONFIG_UPDATE";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_FAILED = "DHCP4_DB_RECONNECT_ATTEMPT_FAILED";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE = "DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE";
@@ -164,16 +162,14 @@ const char* values[] = {
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
     "DHCP4_COMMAND_RECEIVED", "received command %1, arguments: %2",
     "DHCP4_CONFIG_COMPLETE", "DHCPv4 server has completed configuration: %1",
-    "DHCP4_CONFIG_DEPRECATED_OBJECT", "DHCPv4 server configuration includes a deprecated object: %1",
     "DHCP4_CONFIG_FETCH", "Fetching configuration data from config backends.",
     "DHCP4_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
     "DHCP4_CONFIG_NEW_SUBNET", "a new subnet has been added to configuration: %1",
-    "DHCP4_CONFIG_OBSOLETE_OBJECT", "DHCPv4 server configuration includes an obsolete object: %1",
     "DHCP4_CONFIG_OPTION_DUPLICATE", "multiple options with the code %1 added to the subnet %2",
     "DHCP4_CONFIG_PACKET_QUEUE", "DHCPv4 packet queue info after configuration: %1",
     "DHCP4_CONFIG_RECEIVED", "received configuration %1",
     "DHCP4_CONFIG_START", "DHCPv4 server is processing the following configuration: %1",
-    "DHCP4_CONFIG_UNKNOWN_OBJECT", "DHCPv4 server configuration includes an unknown object: %1",
+    "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
     "DHCP4_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP4_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
     "DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes on Mon Apr 29 2019 17:28
+// File created from ../../../src/lib/process/process_messages.mes on Wed May 22 2019 18:44
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -19,10 +19,8 @@ extern const isc::log::MessageID DCTL_CONFIG_DEPRECATED = "DCTL_CONFIG_DEPRECATE
 extern const isc::log::MessageID DCTL_CONFIG_FETCH = "DCTL_CONFIG_FETCH";
 extern const isc::log::MessageID DCTL_CONFIG_FILE_LOAD_FAIL = "DCTL_CONFIG_FILE_LOAD_FAIL";
 extern const isc::log::MessageID DCTL_CONFIG_LOAD_FAIL = "DCTL_CONFIG_LOAD_FAIL";
-extern const isc::log::MessageID DCTL_CONFIG_OBSOLETE_OBJECT = "DCTL_CONFIG_OBSOLETE_OBJECT";
 extern const isc::log::MessageID DCTL_CONFIG_START = "DCTL_CONFIG_START";
 extern const isc::log::MessageID DCTL_CONFIG_STUB = "DCTL_CONFIG_STUB";
-extern const isc::log::MessageID DCTL_CONFIG_UNKNOWN_OBJECT = "DCTL_CONFIG_UNKNOWN_OBJECT";
 extern const isc::log::MessageID DCTL_CONFIG_UPDATE = "DCTL_CONFIG_UPDATE";
 extern const isc::log::MessageID DCTL_INIT_PROCESS = "DCTL_INIT_PROCESS";
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL = "DCTL_INIT_PROCESS_FAIL";
@@ -58,10 +56,8 @@ const char* values[] = {
     "DCTL_CONFIG_FETCH", "Fetching configuration data from config backends.",
     "DCTL_CONFIG_FILE_LOAD_FAIL", "%1 reason: %2",
     "DCTL_CONFIG_LOAD_FAIL", "%1 configuration failed to load: %2",
-    "DCTL_CONFIG_OBSOLETE_OBJECT", "server configuration includes an obsolete object: %1",
     "DCTL_CONFIG_START", "parsing new configuration: %1",
     "DCTL_CONFIG_STUB", "%1 configuration stub handler called",
-    "DCTL_CONFIG_UNKNOWN_OBJECT", "server configuration includes an unknown object: %1",
     "DCTL_CONFIG_UPDATE", "%1 updated configuration received: %2",
     "DCTL_INIT_PROCESS", "%1 initializing the application",
     "DCTL_INIT_PROCESS_FAIL", "%1 application initialization failed: %2",
