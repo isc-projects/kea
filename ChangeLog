@@ -1,3 +1,7 @@
+1576.	[doc]		fdupont
+	New commands cache-get-by-id and cache-size are now documented.
+	(Gitlab #594,!324, git 3753008cc77f71457b5d777560d8e36dc56e7acd)
+
 1575.	[bug]		razvan
 	Fixed issue with keactrl logging error when trying to stop running
 	services.
