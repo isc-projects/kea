@@ -2046,6 +2046,7 @@ should include options from the new option space:
 
     <section xml:id="dhcp6-t1-t2-times">
       <title>Controlling the Values Sent for T1 and T2 Times</title>
+      <para>
       According to <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415, section 21.4</link>,
       the recommended T1 and T2 values are 50% and 80%
@@ -2054,7 +2055,41 @@ should include options from the new option space:
       percentages of the preferred lease time.  The server's behavior is governed
       by combination of configuration parameters, two of which have already been
       mentioned.
-      <para>
+      </para><para>
+      From Kea 1.6.0 lease preferred and valid lifetime are extended from
+      single values to triplets with minimum, default and maximum values using:
+      <itemizedlist>
+        <listitem>
+         <simpara><command>min-preferred-lifetime</command> - specifies the minimal preferred lifetime (optional).
+          </simpara>
+        </listitem>
+        <listitem>
+         <simpara><command>preferred-lifetime</command> - specifies the default preferred lifetime.
+          </simpara>
+        </listitem>
+        <listitem>
+         <simpara><command>max-preferred-lifetime</command> - specifies the maximal preferred lifetime (optional).
+          </simpara>
+        </listitem>
+        <listitem>
+         <simpara><command>min-valid-lifetime</command> - specifies the minimal valid lifetime (optional).
+          </simpara>
+        </listitem>
+        <listitem>
+         <simpara><command>valid-lifetime</command> - specifies the default valid lifetime.
+          </simpara>
+        </listitem>
+        <listitem>
+         <simpara><command>max-valid-lifetime</command> - specifies the maximal valid lifetime (optional).
+          </simpara>
+        </listitem>
+      </itemizedlist>
+      When the client does not specify lifetimes the default is used. When
+      it specifies a lifetime using IAADDR or IAPREFIX sub option with not
+      zero values these values are used when they are between configured
+      minimal (lower values are round up) and maximal (larger values are
+      round down) bounds.
+      </para><para>
       To send specific, fixed values use the following two parameters:
       <itemizedlist>
         <listitem>

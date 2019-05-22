@@ -229,15 +229,27 @@ use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
 <command>rebind-timer</command> are values (also in seconds) that
 define T1 and T2 timers that govern when the client will begin the renewal and
-rebind procedures. <note>Both <command>renew-timer</command> and
-<command>rebind-timer</command> are optional. The server will only send
-rebind-timer to the client, via DHCPv4 option code 59, if it is less than
-valid-lifetime; and it will only send renew-timer, via DHCPv4 option code 58,
-if it is less than rebind-timer (or valid-lifetime if rebind-timer was not
-specified). In their absence, the client should select values for T1 and T2
-timers according to <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>.
-See section <xref linkend="dhcp4-t1-t2-times"/> for more details on
+rebind procedures.
+
+<note>From Kea 1.6.0 the lease valid lifetime is extended from a
+single value to a triplet with minimum, default and maximum values using
+<command>min-valid-lifetime</command>, <command>valid-lifetime</command> and
+<command>max-valid-lifetime</command>. When the client does not specify
+a lifetime the default value is used, when it specifies using a DHCP option
+code 51 this value is used if it is not lesser than the  minimum (in this case
+the minimum is returned) or greater than the maximum (in this case the
+maximum is used).</note>
+
+<note>Both <command>renew-timer</command>
+and <command>rebind-timer</command> are optional. The server will only
+send rebind-timer to the client, via DHCPv4 option code 59, if it is
+less than lease valid lifetime; and it will only send renew-timer, via
+DHCPv4 option code 58, if it is less than rebind-timer (or lease valid
+lifetime if rebind-timer was not specified). In their absence, the
+client should select values for T1 and T2 timers according
+to <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>. See
+section <xref linkend="dhcp4-t1-t2-times"/> for more details on
 generating T1 and T2.</note></para>
 
 <para>The <command>interfaces-config</command> map specifies the server
