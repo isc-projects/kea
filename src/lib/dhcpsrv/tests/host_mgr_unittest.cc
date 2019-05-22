@@ -1268,16 +1268,14 @@ TEST_F(CQLHostMgrTest, getAll6BySubnet) {
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
-//// Paging is not supported by Cassandra.
-TEST_F(CQLHostMgrTest, DISABLED_getPage4) {
+TEST_F(CQLHostMgrTest, getPage4) {
     testGetPage4(true);
 }
 
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
-//// Paging is not supported by Cassandra.
-TEST_F(CQLHostMgrTest, DISABLED_getPage6) {
+TEST_F(CQLHostMgrTest, getPage6) {
     testGetPage6(true);
 }
 
