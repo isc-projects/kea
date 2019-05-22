@@ -1,3 +1,13 @@
+1578.	[func]		fdupont
+	The configuration syntax has changed. The Logging scope that used
+	to be shared between all servers has been deprecated. Each daemon
+	is supposed to define its own loggers using 'loggers' array. The
+	old configuration syntax is still accepted, but is considered
+	deprecated.  Kea 1.6 will accept it, but that capability will be
+	removed in the future. Please migrate your configuration to new
+	syntax.
+	(Gitlan #208,!196, git 37b8ec6c2c4b64681059f8fad26d112adbb7ee2b)
+
 1577.	[func]		razvan
 	Implemented host reservations page retrieval for Cassandra.
 	(Gitlab #511,!278, git 152e82b49f5e5abd9d3a2a4825ed8620973f5ef1)
