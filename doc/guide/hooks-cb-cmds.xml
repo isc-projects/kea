@@ -10,12 +10,12 @@
       <title>cb_cmds: Configuration Backend Commands</title>
       <para>
         This section describes the <command>cb_cmds</command> hooks library
-        which is used to manage Kea servers' configurations with the Configuration
-        Backends. This library must be used in conjuction with available CB
-        implementations, which provide the common APIs to create, read, update
+        which is used to manage Kea servers' configurations in the Configuration
+        Backends. This library must be used in conjuction with the available CB
+        hooks libraries  implementing the common APIs to create, read, update
         and delete (CRUD) the configuration information in the respective
-        databases. For example: the <command>mysql_cb</command> hooks library
-        released in Kea 1.6.0 implements this API for MySQL. In order to manage
+        databases. For example: the <command>mysql_cb</command> hooks library,
+        released in Kea 1.6.0, implements this API for MySQL. In order to manage
         the configuration information in the MySQL database both
         <command>mysql_cb</command> and <command>cb_cmds</command> libraries
         must be loaded by the server used for the configuration management.
@@ -53,7 +53,7 @@
           .</simpara></listitem>
         </itemizedlist>
 
-        <para>All types commands accept optional <command>remote</command> map which
+        <para>All types of commands accept optional <command>remote</command> map which
         selects the database instance to which the command refers. For example:
 <screen>
 {
@@ -69,25 +69,25 @@
 </screen>
         </para>
         <para>
-          selects the MySQL database running on host 192.0.2.33 and port 3302 to
+          selects the MySQL database, running on host 192.0.2.33 and port 3302, to
           fetch the list of subnets from. All parameters in the
           <command>remote</command> are optional. The <command>port</command>
           parameter can be only specified in conjuction with the
           <command>host</command>. If no parameters in the <command>remote</command>
           parameter are to be specified, the parameter should be omitted. In this
-          case the server will use the first backend listed in the
+          case, the server will use the first backend listed in the
           <command>config-control</command> map within the configuration of the
           server receiving the command.
         </para>
 
         <note>
           <para>
-            In the Kea 1.6.0 release, it is possible to configure Kea server to
-            use only one configuration backend. Strictly speaking it is possible
+            In the Kea 1.6.0 release, it is possible to configure the Kea server to
+            use only one configuration backend. Strictly speaking, it is possible
             to point Kea server to at most one MySQL database using the
-            <command>config-control</command> parameter. That's why in this
-            release the <command>remote</command> parameter may be omitted in
-            the commands because the cb_cmds hooks library will by default use
+            <command>config-control</command> parameter. That's why, in this
+            release, the <command>remote</command> parameter may be omitted in
+            the commands because the cb_cmds hooks library will use by default
             the sole backend.
           </para>
         </note>
@@ -96,15 +96,15 @@
       <section id="cb-cmds-dhcp">
         <title>Control Commands for DHCP Servers</title>
         <para>This section describes and gives some examples of the control
-        commands provided by the <command>cb_cmds</command> hooks library to manage
-        the configuration information for the DHCPv4 and DHCPv6 server. Many of the
-        commands are almost identical between DHCPv4 and DHCPv6, i.e. only differ by
+        commands implemented by the <command>cb_cmds</command> hooks library, to manage
+        the configuration information of the DHCPv4 and DHCPv6 servers. Many of the
+        commands are almost identical between DHCPv4 and DHCPv6, i.e. only differ by the
         command name. Other commands slightly differ by the structure of the inserted
-        data, e.g. structure of the IPv4 subnet information is different than the
+        data, e.g. the structure of the IPv4 subnet information is different than the
         structure of the IPv6 subnet. Nevertheless, they still share the structure of
         the command arguments and thus it makes sense to describe them together.</para>
 
-        <para>In the following sections various commands are described and the
+        <para>In the following sections, various commands are described and the
         usage examples are provided. In the sections jointly describing the DHCPv4 and
         DHCPv6 variants of the particular command we sometimes use the following
         notation - the <command>remote-subnet[46]-set</command> is the wildcard
@@ -113,29 +113,26 @@
 
         <para>In addition, whenever the text in the subsequent sections refers to a
         DHCP command or DHCP parameter, it refers to both DHCPv4 and DHCPv6
-        case. The text specific to the particular server type refers to them as:
+        variants. The text specific to the particular server type refers to them as:
         DHCPv4 command, DHCPv4 parameter, DHCPv6 command, DHCPv6 parameter etc.
         </para>
 
         <section id="cb-cmds-metadata">
           <title>Metadata</title>
-          <para>A typical response to the <command>get</command> or <command>list</command>
+          <para>The typical response to the <command>get</command> or <command>list</command>
           command includes a list of returned objects (e.g. subnets) and each such
-          object contains the <command>metadata</command> map including some
-          database specific information for this object. In other words, the metadata
-          is meant to contain any information about the fetched object which may be
-          useful for the administrator, but is not the part of the object
-          specification from the DHCP server standpoint. In the Kea 1.6.0 release, the
-          metadata is limited to the <command>server-tag</command>, which describes
-          the association of the object with the particular server. The server tag
-          is always set to <command>all</command> in the Kea 1.6.0 beta release because
-          this release does not provide API calls to make associatiions of the
-          configuration objects with any specific servers, i.e. every object is
-          associated with all servers using the particular database instance.
+          object contains the <command>metadata</command> map with some database specific
+          information describing this object. In other words, the metadata contains any
+          information about the fetched object which may be useful for the administrator,
+          but is not the part of the object specification from the DHCP server standpoint.
+          In the Kea 1.6.0 release, the metadata is limited to the
+          <command>server-tag</command>, which describescthe association of the object
+          with the particular server or all servers. The server tag is always set to
+          <command>all</command> in the Kea 1.6.0 beta release.
           </para>
 
           <para>The following is the example response to the <command>remote-network4-list</command>
-          including the metadata:
+          command, which includes the metadata:
           <screen>
 {
     "result": 0,

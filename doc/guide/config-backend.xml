@@ -17,7 +17,7 @@
       introduced in 1.6.0 release, which provides Kea servers with the
       ability to manage and fetch their configuration from one or more
       databases. In the documentation, the term "Configuration Backend"
-      may also refer to the particular Kea module implementing support
+      may also refer to the particular Kea module providing support
       to manage and fetch the configuration information from the particular
       database type. For example: MySQL Configuration Backend is the logic
       implemented within the "mysql_cb" hooks library which provides a
@@ -26,30 +26,31 @@
     </para>
 
     <para>
-      In small deplyments, e.g. comprising a single DHCP server instance
+      In small deployments, e.g. those comprising a single DHCP server instance
       with limited and infrequently changing number of subnets, it may
       be impractical to use the CB as a configuration repository because
       it requires additional third party software to be installed and
-      configured, e.g. MySQL server, MySQL client. Once the number of
-      DHCP servers and/or the number of managed subnets in the network
-      grows, the usefulness of the CB gets obvious.
+      configured - in particular the  MySQL server and MySQL client.
+      Once the number of DHCP servers and/or the number of managed
+      subnets in the network grows, the usefulness of the CB becomes
+      obvious.
     </para>
 
     <para>
       A good example is a pair of the Kea DHCP servers which can be
       configured to support High Availability as described in
       <xref linkend="high-availability-library"/>.
-      The configurations of both servers is almost exactly the same.
-      It may differ by server identifier and designation of the
+      The configurations of both servers are almost exactly the same.
+      They may differ by the server identifier and designation of the
       server as a primary or standby (or secondary). They may also
       differ by the interfaces configuration. Typically, the subnets,
       shared networks, option definitions, global parameters are
       the same for both servers and can be sourced from a single
-      database instance to both servers.
+      database instance to both Kea servers.
     </para>
 
     <para>
-      Using a database as a single source of configuration for subnets
+      Using the database as a single source of configuration for subnets
       and/or other configuration information supported by the CB has
       the advantage that any modifications to the configuration in
       the database is automatically applied to both servers.
@@ -67,14 +68,14 @@
 
     <para>
       Using the database as a configuration repository for Kea servers also
-      brings other benefits such as:
+      brings other benefits, such as:
       <itemizedlist>
-        <listitem><simpara>ability to use database specific tools to access
+        <listitem><simpara>an ability to use database specific tools to access
         the configuration information,</simpara></listitem>
-        <listitem><simpara>ability to create customized statistics based
+        <listitem><simpara>an ability to create customized statistics based
         on the information stored in the database,</simpara></listitem>
-        <listitem><simpara>ability to backup the configuration information
-        using database builtin replication mechanisms.</simpara></listitem>
+        <listitem><simpara>an ability to backup the configuration information
+        using the database builtin replication mechanisms.</simpara></listitem>
       </itemizedlist>
     </para>
 
@@ -83,13 +84,13 @@
   <section xml:id="cb-limitations">
     <title>CB Capabilities and Limitations</title>
     <para>
-      Kea CB has been first introduced in 1.6.0 release, but this
-      implementation comes with a number of limitations caused by the
-      overall complexity of this feature and the development time
-      constraints. The fature will evolve over time and the new
+      Kea CB has been introduced in the 1.6.0 release, but this
+      implementation comes with a number of limitations being the
+      result of the overall complexity of this feature and the development
+      time constraints. This feature will evolve over time and the new
       capabilities will be added in subsequent releases. In this
-      section we present the limitations of the CB present in the
-      current Kea release:
+      section we present the limitations of the CB, present in the
+      current Kea 1.6.0 release:
     </para>
 
     <itemizedlist>
@@ -103,8 +104,8 @@
       <listitem><simpara>
         Configuration to be stored for the DHCP servers includes: global parameters,
         option definitions, global options, shared networks and subnets. Other
-        configuration parameters aren't stored in the database at the moment. They
-        have to be configured via the JSON configuration file.
+        configuration parameters are not stored in the database at the moment.
+        They have to be configured via the JSON configuration file.
       </simpara></listitem>
       <listitem><simpara>
         It is not supported to differentiate configurations of multiple
@@ -112,9 +113,7 @@
         particular database instance share the configuration stored in this
         database. This limitation will be removed in Kea 1.6.0 final release.
       </simpara></listitem>
-      
     </itemizedlist>
-
   </section>
 
   <section xml:id="cb-components">
@@ -122,7 +121,7 @@
     <para>
       In order to use the Kea CB feature, the Kea 1.6.0 version or later is
       required. The <command>mysql_cb</command> open source hooks library
-      implementing Configuration Backend for MySQL must be compiled and
+      implementing the Configuration Backend for MySQL must be compiled and
       loaded by the DHCP servers. This hooks library is compiled when the
       <filename>--with-mysql</filename> configuration switch is used during
       Kea build. The MySQL C client libraries must be installed
@@ -137,18 +136,25 @@
 
     <para>
       The <command>cb_cmds</command> premium hooks library is available to
-      our paid supported customers, which provides a complete set of commands
+      ISC paid supported customers, which provides a complete set of commands
       to manage the servers' configuration information within the database.
       This library can be attached to both DHCPv4 and DHCPv6 server instance.
       It is still possible to manage the configuration information without the
       <command>cb_cmds</command> hooks library with commonly available tools
-      such as MySQL Workbench or command line MySQL client by directly working
+      such as MySQL Workbench or command line MySQL client, by directly working
       with the database.
     </para>
 
     <para>
       Refer to the <xref linkend="cb-cmds-library"/> for the details regarding
       the <command>cb_cmds</command> hooks library.
+    </para>
+
+    <para>
+      The DHCPv4 and DHCPv6 server specific configuration of the CB as well as
+      the list of supported configuration parameters can be found in the
+      <xref linkend="dhcp4-cb"/> and <xref linkend="dhcp6-cb"/>
+      respectively.
     </para>
 
   </section>
