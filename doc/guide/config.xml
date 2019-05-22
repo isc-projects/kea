@@ -151,22 +151,7 @@
 
   </section>
 
-  <section xml:id="cb">
-    <title>Database as a Configuration Source</title>
-    <para>As of Kea 1.6.0 release, the parts of the DHCP servers'
-    configurations can be sourced from a database. The server using
-    the database as a configuration repository combines the configuration
-    specified for this server in the file (as described in the
-    <xref linkend="json"/>) with the configuration fetched from the
-    database. In this case the server configuration file must also contain
-    appropriate credentials and the location of the database holding this
-    supplementary configuration.</para>
-
-    <para>This feature is called Configuration Backend (sometimes
-    also Config Backend or CB for breivity) and is described in detail
-    in the further sections of this document.
-    </para>
-
-  </section>
+  <!-- Include large section about Kea Config Backend -->
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config-backend.xml"/>
 
 </chapter>

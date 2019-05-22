@@ -62,8 +62,6 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config-backend.xml"/>
-
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="keactrl.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="agent.xml"/>
