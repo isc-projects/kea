@@ -234,7 +234,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
                 // worry about that.
                 setEchoClientId(element->boolValue());
             }
-            else if (name == "dhcp4o6port") {
+            else if (name == "dhcp4o6-port") {
                 setDhcp4o6Port(element->intValue());
             }
             else if (name == "server-tag") {

@@ -993,7 +993,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
 
     // Add some configured globals
     cfg_to.addConfiguredGlobal("decline-probation-period", Element::create(300));
-    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(888));
+    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(888));
 
     // Now we'll create the config we'll merge from.
     SrvConfig cfg_from;
@@ -1005,7 +1005,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     cfg_from.setServerTag("nor_this_server");
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(999));
+    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
     cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
 
     // Now let's merge.
@@ -1019,7 +1019,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // echo-client-id should be the preserved "to" member value.
     EXPECT_EQ(false, cfg_to.getEchoClientId());
 
-    //  dhcp4o6port should be the "from" configured value.
+    //  dhcp4o6-port should be the "from" configured value.
     EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
 
     //  server-tag port should be the "from" configured value.
@@ -1031,7 +1031,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     std::string exp_globals =
         "{ \n"
         "   \"decline-probation-period\": 300,  \n"
-        "   \"dhcp4o6port\": 999,  \n"
+        "   \"dhcp4o6-port\": 999,  \n"
         "   \"server-tag\": \"use_this_server\"  \n"
         "} \n";
 
@@ -1061,7 +1061,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     // Add some configured globals
     cfg_to.addConfiguredGlobal("decline-probation-period", Element::create(300));
-    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(888));
+    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(888));
 
     // Now we'll create the config we'll merge from.
     SrvConfig cfg_from;
@@ -1073,7 +1073,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.setServerTag("nor_this_server");
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(999));
+    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
     cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
 
     // Now let's merge.
@@ -1084,7 +1084,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // decline-probation-period should be the "to" configured value.
     EXPECT_EQ(300, cfg_to.getDeclinePeriod());
 
-    //  dhcp4o6port should be the "from" configured value.
+    //  dhcp4o6-port should be the "from" configured value.
     EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
 
     //  server-tag port should be the "from" configured value.
@@ -1096,7 +1096,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     std::string exp_globals =
         "{ \n"
         "   \"decline-probation-period\": 300,  \n"
-        "   \"dhcp4o6port\": 999,  \n"
+        "   \"dhcp4o6-port\": 999,  \n"
         "   \"server-tag\": \"use_this_server\"  \n"
         "} \n";
 
