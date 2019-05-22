@@ -1,3 +1,7 @@
+1577.	[func]		razvan
+	Implemented host reservations page retrieval for Cassandra.
+	(Gitlab #511,!278, git f4022911725c8d5984fddb6bc8820a92076c6bd1)
+
 1576.	[doc]		fdupont
 	New commands cache-get-by-id and cache-size are now documented.
 	(Gitlab #594,!324, git 3753008cc77f71457b5d777560d8e36dc56e7acd)
