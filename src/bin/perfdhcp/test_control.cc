@@ -1011,9 +1011,7 @@ TestControl::runWrapped(bool do_stop /*= false */) const {
         if (pid < 0) {
             isc_throw(Unexpected, "unable to fork");
         } else if (pid == 0) {
-            execlp(options_.getWrapped().c_str(),
-                   do_stop ? "stop" : "start",
-                   NULL);
+            execlp(options_.getWrapped().c_str(), do_stop ? "stop" : "start", (void*)0);
         }
     }
 }
