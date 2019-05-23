@@ -1,0 +1,78 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It demonstrates how to enable Kea Configuration Backend using MySQL.
+// It requires that libdhcp_mysql_cb.so library is available and
+// optionally libdhcp_cb_cmds.so hooks library.
+
+{ "Dhcp6":
+
+{
+    // Kea is told to listen on ethX interface only.
+    "interfaces-config": {
+        "interfaces": [ "ethX" ]
+    },
+
+    // Use memfile lease database backend.
+    "lease-database": {
+        "type": "memfile",
+        "lfc-interval": 3600
+    },
+
+    // This parameter controls how the server accesses the configuration
+    // database. Currently only one database type is available - "mysql".
+    // It requires that libdhcp_mysql_cb.so hooks library is loaded.
+    "config-control": {
+        // A list of database backends to connect to. Currently, it is limited
+        // to a single backend.
+        "config-databases": [
+            {
+                "type": "mysql",
+                "name": "kea",
+                "user": "kea",
+                "password": "kea",
+                "host": "localhost",
+                "port": 3306
+            }
+        ],
+        // Controls how often the server polls the database for the
+        // configuration updates. The setting below implies that it
+        // will take up to approx. 20 seconds for the server to
+        // discover and fetch configuration changes.
+        "config-fetch-wait-time": 20
+    },
+
+    // Hooks libraries that enable configuration backend are loaded.
+    "hooks-libraries": [
+        // The libdhcp_mysql_cb.so is required to use MySQL Configuration
+        // Backend.
+        {
+            "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
+        }
+        // The libdhcp_cb_cmds.so is optional. It allows for managing the
+        // configuration in the database. If this library is not loaded,
+        // the configuration can be managed directly using available
+        // tools that work directly with the MySQL database.
+        //,{
+            // "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+        //}
+    ]
+},
+
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout. Alternatively, you can specify stderr here, a filename
+// or 'syslog', which will store output messages via syslog.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "debuglevel": 0,
+            "severity": "INFO"
+        }
+    ]
+}
+}
