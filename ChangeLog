@@ -1,7 +1,12 @@
+1580.	[bug]		jonatan.raudsepp
+	Compilation fix for Alpine linux in Perfdhcp code. Thanks to
+	Jonatan Raudsepp for sending a patch!
+	(Gitlab #624,!337, git 19321df9e4490b75ac7b322afec9d231bcb6ffe3)
+
 1579.	[bug]		razvan
 	Fixed a bug which caused setting dhcp4o6-port to not function via
 	Kea configuration backend.
-	(Gitlab #577,331!, git 98c24fe1873795bbc94d426c54c588b05d79406f)
+	(Gitlab #577,!331, git 98c24fe1873795bbc94d426c54c588b05d79406f)
 
 1578.	[func]		fdupont
 	The configuration syntax has changed. The Logging scope that used
