@@ -200,13 +200,13 @@ DControllerBase::checkConfigOnly() {
             }
             if (obj_name == "Logging") {
                 LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                    .arg("Logging defined in top level. This is deprecated."
+                    .arg("'Logging' defined in top level. This is deprecated."
                          " Please define it in the '" + app_name + "' scope.");
                 continue;
             }
             LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("Defining anything in global level besides '" + app_name
-                     + "' is no longer supported.");
+                .arg("'" + obj_name + "', defining anything in global level besides '"
+                     + app_name + "' is no longer supported.");
         }
 
         // Relocate Logging: if there is a global Logging object takes its
@@ -385,23 +385,21 @@ DControllerBase::configFromFile() {
         }
 
         // Check obsolete or unknown (aka unsupported) objects.
-        std::list<std::string> unsupported;
         for (auto obj : whole_config->mapValue()) {
             const std::string& app_name = getAppName();
             const std::string& obj_name = obj.first;
-            if ((obj_name == app_name) || (obj_name == "Logging")) {
+            if (obj_name == app_name) {
                 continue;
             }
-            unsupported.push_back(obj_name);
-        }
-        if (unsupported.size() == 1) {
-            isc_throw(InvalidUsage, "Unsupported object '"
-                      << unsupported.front() << "' in config file "
-                      << config_file);
-        } else if (unsupported.size() > 1) {
-            isc_throw(InvalidUsage, "Unsupported objects '"
-                      << unsupported.front() << "', ... in config file "
-                      << config_file);
+            if (obj_name == "Logging") {
+                LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+                    .arg("Logging defined in top level. This is deprecated."
+                         " Please define it in the '" + app_name + "' scope.");
+                continue;
+            }
+            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+                .arg("'" + obj_name + "', defining anything in global level besides '"
+                     + app_name + "' is no longer supported.");
         }
 
         // Relocate Logging: if there is a global Logging object takes its
