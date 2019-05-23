@@ -1,3 +1,8 @@
+1579.	[bug]		razvan
+	Fixed inconsistency in the code which causes setting dhcp4o6-port
+	to not work by using cb cmds.
+	(Gitlab #577,331!, git 98c24fe1873795bbc94d426c54c588b05d79406f)
+
 1578.	[func]		fdupont
 	The configuration syntax has changed. The Logging scope that used
 	to be shared between all servers has been deprecated. Each daemon
