@@ -700,6 +700,12 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
+    // If packet belongs to built-in class DROP, let's drop it.
+    if (query->inClass("DROP")) {
+        LOG_INFO(bad_packet6_logger, DHCP6_PACKET_DROP_CLASS).arg(query->getLabel());
+        return;
+    }
+
     // Park point here.
 
     try {

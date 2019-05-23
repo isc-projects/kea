@@ -508,6 +508,12 @@ This debug message is issued when a packet is dropped because it did contain
 option 53 and thus has no DHCP message type. The most likely explanation is
 that it was BOOTP packet.
 
+% DHCP4_PACKET_DROP_0010 %1: Packet dropped, because it was part of built-in class DROP
+This debug message is printed when a packet was classified and the classification
+determined that it belong to a built-in class DROP. This class has a special
+meaning. It instructs Kea to drop the packet. If you feel that packet should
+not been dropped, please look at your client class DROP definition.
+
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable

@@ -1006,6 +1006,12 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         callout_handle->getArgument("query4", query);
     }
 
+    // If packet belongs to built-in class DROP, let's drop it.
+    if (query->inClass("DROP")) {
+        LOG_INFO(bad_packet4_logger, DHCP4_PACKET_DROP_0010).arg(query->getLabel());
+        return;
+    }
+
     AllocEngine::ClientContext4Ptr ctx;
 
     try {
