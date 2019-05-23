@@ -352,7 +352,7 @@
                 // - stderr (prints on standard error)
                 // - syslog (logs to syslog)
                 // - syslog:name (logs to syslog using specified name)
-                // Any other value is considered a name of a time
+                // Any other value is considered a name of the file
                 "output": "@localstatedir@/log/kea-dhcp6.log"
 
                 // Shorter log pattern suitable for use with systemd,
