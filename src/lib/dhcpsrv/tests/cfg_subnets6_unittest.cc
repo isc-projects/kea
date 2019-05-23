@@ -250,6 +250,55 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {
     EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
 }
 
+// This test checks that subnet can be selected using a relay agent's
+// link address specified on the shared network level.
+TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
+    // Create 2 shared networks.
+    SharedNetwork6Ptr network1(new SharedNetwork6("net1"));
+    SharedNetwork6Ptr network2(new SharedNetwork6("net2"));
+    SharedNetwork6Ptr network3(new SharedNetwork6("net3"));
+
+    // Let's configure 3 subnets
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    // Associate subnets with shared networks.
+    network1->add(subnet1);
+    network2->add(subnet2);
+    network3->add(subnet3);
+
+    // Add subnets to the configuration.
+    CfgSubnets6 cfg;
+
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Make sure that none of the subnets is selected when there is no relay
+    // information configured for them.
+    SubnetSelector selector;
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::1");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::2");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::3");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+
+    // Now specify relay information.
+    network1->addRelayAddress(IOAddress("2001:db8:ff::1"));
+    network2->addRelayAddress(IOAddress("2001:db8:ff::2"));
+    network3->addRelayAddress(IOAddress("2001:db8:ff::3"));
+
+    // And try again. This time relay-info is there and should match.
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::1");
+    EXPECT_EQ(subnet1, cfg.selectSubnet(selector));
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::2");
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::3");
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+}
+
 // This test checks that the subnet can be selected using an interface
 // name associated with a asubnet.
 TEST(CfgSubnets6Test, selectSubnetByInterfaceName) {
