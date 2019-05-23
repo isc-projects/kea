@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -610,9 +610,11 @@ public:
 
     /// @brief Read string value from a buffer.
     ///
+    /// To be compliant with RFC 2132, Sec. 2, trailing NULLs are trimmed.
     /// @param buf input buffer.
     ///
     /// @return string value being read.
+    /// @throw isc::dhcp::OutOfRange is the payload contains only NULLs.
     static std::string readString(const std::vector<uint8_t>& buf);
 
     /// @brief Write UTF8-encoded string into a buffer.

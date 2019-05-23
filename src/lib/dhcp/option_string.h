@@ -20,7 +20,8 @@ namespace dhcp {
 ///
 /// This class represents an option carrying a single string value.
 /// Currently this class imposes that the minimal length of the carried
-/// string is 1.
+/// string is 1.  Per RFC 2132, Sec 2 trailing NULLs are trimmed during
+/// either construction or unpacking.
 ///
 /// @todo In the future this class may be extended with some more string
 /// content checks and encoding methods if required.
@@ -32,7 +33,7 @@ public:
     /// This constructor creates an instance of option which carries a
     /// string value specified as constructor's parameter. This constructor
     /// is most often used to create an instance of an option which will
-    /// be sent in the outgoing packet.
+    /// be sent in the outgoing packet.  Trailing NULLs will be trimmed.
     ///
     /// @param u universe (V4 or V6).
     /// @param type option code.
@@ -46,6 +47,7 @@ public:
     ///
     /// This constructor creates an instance of the option from the provided
     /// chunk of buffer. This buffer may hold the data received on the wire.
+    /// Trailing NULLs will be trimmed.
     ///
     /// @param u universe (V4 or V6).
     /// @param type option code.
@@ -71,6 +73,8 @@ public:
 
     /// @brief Sets the string value to be held by the option.
     ///
+    /// Trailing NULLs will be trimmed.
+    ///
     /// @param value string value to be set.
     ///
     /// @throw isc::OutOfRange if a string value to be set is empty.
@@ -91,6 +95,7 @@ public:
     /// it does not decode the option code and length, so the iterators must
     /// point to the beginning and end of the option payload respectively.
     /// The size of the decoded payload must be at least 1 byte.
+    /// Trailing NULLs will be trimmed.
     ///
     /// @param begin the iterator pointing to the option payload.
     /// @param end the iterator pointing to the end of the option payload.

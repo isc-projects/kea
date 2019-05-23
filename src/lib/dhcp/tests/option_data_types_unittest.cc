@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -847,6 +847,7 @@ TEST_F(OptionDataTypesTest, writePsid) {
 // The purpose of this test is to verify that the string
 // can be read from a buffer correctly.
 TEST_F(OptionDataTypesTest, readString) {
+
     // Prepare a buffer with some string in it.
     std::vector<uint8_t> buf;
     writeString("hello world", buf);
@@ -858,6 +859,34 @@ TEST_F(OptionDataTypesTest, readString) {
     );
     // Check that it is valid.
     EXPECT_EQ("hello world", value);
+
+    // Only nulls should throw.
+    OptionBuffer buffer = { 0, 0 };
+    ASSERT_THROW(OptionDataTypeUtil::readString(buffer), isc::OutOfRange);
+
+    // One trailing null should trim off.
+    buffer = {'o', 'n', 'e', 0 };
+    ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
+    EXPECT_EQ(3, value.length());
+    EXPECT_EQ(value, std::string("one"));
+
+    // More than one trailing null should trim off.
+    buffer = { 't', 'h', 'r', 'e', 'e', 0, 0, 0 };
+    ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
+    EXPECT_EQ(5, value.length());
+    EXPECT_EQ(value, std::string("three"));
+
+    // Embedded null should be left in place.
+    buffer = { 'e', 'm', 0, 'b', 'e', 'd' };
+    ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
+    EXPECT_EQ(6, value.length());
+    EXPECT_EQ(value, (std::string{"em\0bed", 6}));
+
+    // Leading null should be left in place.
+    buffer = { 0, 'l', 'e', 'a', 'd', 'i', 'n', 'g' };
+    ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
+    EXPECT_EQ(8, value.length());
+    EXPECT_EQ(value, (std::string{"\0leading", 8}));
 }
 
 // The purpose of this test is to verify that a string can be

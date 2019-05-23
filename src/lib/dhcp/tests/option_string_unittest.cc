@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +55,11 @@ TEST_F(OptionStringTest, constructorFromString) {
     // Check that an attempt to use empty string in the constructor
     // will result in an exception.
     EXPECT_THROW(OptionString(Option::V6, 123, ""), isc::OutOfRange);
+
+    // Check that an attempt to use string containgin only nulls
+    // in the constructor will result in an exception.
+    std::string nulls{"\0\0",2};
+    EXPECT_THROW(OptionString(Option::V6, 123, nulls), isc::OutOfRange);
 }
 
 // This test verifies that the constructor which creates an option instance
@@ -66,6 +71,13 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     // an exception.
     EXPECT_THROW(
         OptionString(Option::V4, 234, buf_.begin(), buf_.begin()),
+        isc::OutOfRange
+    );
+
+    // NULLs should result in an exception.
+    std::vector<uint8_t>nulls = { 0, 0, 0 };
+    EXPECT_THROW(
+        OptionString(Option::V4, 234, nulls.begin(), nulls.begin()),
         isc::OutOfRange
     );
 
@@ -145,7 +157,7 @@ TEST_F(OptionStringTest, pack) {
     // And create a string from it.
     std::string test_string(data.begin(), data.end());
     // This string should be equal to the string used to create
-    // option's instance. 
+    // option's instance.
     EXPECT_TRUE(option_value == test_string);
 }
 
@@ -161,6 +173,69 @@ TEST_F(OptionStringTest, toText) {
     option_value = "is a filler text";
     OptionString optv6(Option::V6, 512, option_value);
     EXPECT_EQ("type=00512, len=00016: \"is a filler text\" (string)", optv6.toText());
+}
+
+// This test checks proper handling of trailing and embedded NULLs in
+// data use to create or option value.
+TEST_F(OptionStringTest, setValueNullsHandling) {
+    OptionString optv4(Option::V4, 123, "123");
+
+    // Only nulls should throw.
+    ASSERT_THROW(optv4.setValue(std::string{"\0\0", 2}), isc::OutOfRange);
+
+    // One trailing null should trim off.
+    ASSERT_NO_THROW(optv4.setValue(std::string{"one\0", 4}));
+    EXPECT_EQ(3, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), std::string("one"));
+
+    // More than one trailing null should trim off.
+    ASSERT_NO_THROW(optv4.setValue(std::string{"three\0\0\0", 8}));
+    EXPECT_EQ(5, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), std::string("three"));
+
+    // Embedded null should be left in place.
+    ASSERT_NO_THROW(optv4.setValue(std::string{"em\0bed", 6}));
+    EXPECT_EQ(6, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), (std::string{"em\0bed", 6}));
+
+    // Leading null should be left in place.
+    ASSERT_NO_THROW(optv4.setValue(std::string{"\0leading", 8}));
+    EXPECT_EQ(8, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), (std::string{"\0leading", 8}));
+}
+
+// This test checks proper handling of trailing and embedded NULLs in
+// data use to create or option value.
+TEST_F(OptionStringTest, unpackNullsHandling) {
+    OptionString optv4(Option::V4, 123, "123");
+
+    // Only nulls should throw.
+    OptionBuffer buffer = { 0, 0 };
+    ASSERT_THROW(optv4.unpack(buffer.begin(), buffer.end()), isc::OutOfRange);
+
+    // One trailing null should trim off.
+    buffer = {'o', 'n', 'e', 0 };
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(3, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), std::string("one"));
+
+    // More than one trailing null should trim off.
+    buffer = { 't', 'h', 'r', 'e', 'e', 0, 0, 0 };
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(5, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), std::string("three"));
+
+    // Embedded null should be left in place.
+    buffer = { 'e', 'm', 0, 'b', 'e', 'd' };
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(6, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), (std::string{"em\0bed", 6}));
+
+    // Leading null should be left in place.
+    buffer = { 0, 'l', 'e', 'a', 'd', 'i', 'n', 'g' };
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(8, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), (std::string{"\0leading", 8}));
 }
 
 } // anonymous namespace

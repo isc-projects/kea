@@ -50,7 +50,18 @@ OptionString::setValue(const std::string& value) {
                   << getType() << "' must not be empty");
     }
 
-    setData(value.begin(), value.end());
+    // Trim off any trailing NULLs.
+    auto begin = value.begin();
+    auto end = value.end();
+    for ( ; end != begin && *(end - 1) == 0x0; --end);
+
+    if (std::distance(begin, end) == 0) {
+        isc_throw(isc::OutOfRange, "string value carried by the option '"
+                  << getType() << "' contained only NULLs");
+    }
+
+    // Now set the value.
+    setData(begin, end);
 }
 
 
@@ -74,11 +85,16 @@ OptionString::pack(isc::util::OutputBuffer& buf) const {
 void
 OptionString::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
+    // Trim off trailing null(s)
+    for ( ; end != begin && *(end - 1) == 0x0; --end);
+
     if (std::distance(begin, end) == 0) {
         isc_throw(isc::OutOfRange, "failed to parse an option '"
                   << getType() << "' holding string value"
-                  << " - empty value is not accepted");
+                  << "' was empty or contained only NULLs");
     }
+
+    // Now set the data.
     setData(begin, end);
 }
 

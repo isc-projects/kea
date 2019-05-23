@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -188,11 +188,12 @@ public:
         boost::shared_ptr<Option> x = pkt->getOption(12);
         ASSERT_TRUE(x); // option 1 should exist
         OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x);
+
         ASSERT_TRUE(option12);
         EXPECT_EQ(12, option12->getType());  // this should be option 12
         ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
         EXPECT_EQ(5, option12->len()); // total option length 5
-        EXPECT_EQ(0, memcmp(&option12->getValue()[0], opt_data_ptr + 2, 3)); // data len=3
+        EXPECT_EQ(0, memcmp(&option12->getValue()[0], opt_data_ptr + 2, 2)); // data len=3
         opt_data_ptr += x->len();
 
         x = pkt->getOption(14);
@@ -204,6 +205,7 @@ public:
         EXPECT_EQ(14, option14->getType());  // this should be option 14
         ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
         EXPECT_EQ(5, option14->len()); // total option length 5
+
         EXPECT_EQ(0, memcmp(&option14->getValue()[0], opt_data_ptr + 2, 3)); // data len=3
         opt_data_ptr += x->len();
 
@@ -1202,6 +1204,99 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     // VIVSO option should not be there
     x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_FALSE(x);
+}
+
+// Verifies that we handle text options that contain trailing
+// and embedded NULLs correctly.  Per RFC 2132, Sec 2 we should
+// be stripping trailing NULLs.  We've agreed to permit
+// embedded NULLs (for now).
+TEST_F(Pkt4Test, nullTerminatedOptions) {
+    // Construct the onwire packet.
+    vector<uint8_t> base_msg = generateTestPacket2();
+    base_msg.push_back(0x63); // magic cookie
+    base_msg.push_back(0x82);
+    base_msg.push_back(0x53);
+    base_msg.push_back(0x63);
+
+    base_msg.push_back(0x35); // message-type
+    base_msg.push_back(0x1);
+    base_msg.push_back(0x1);
+
+    int base_size = base_msg.size();
+
+    // We'll create four text options, with various combinations of NULLs.
+    vector<uint8_t> hostname = { DHO_HOST_NAME, 5, 't', 'w', 'o', 0, 0 };
+    vector<uint8_t> merit_dump = { DHO_MERIT_DUMP, 4, 'o', 'n', 'e', 0 };
+    vector<uint8_t> root_path = { DHO_ROOT_PATH, 4, 'n', 'o', 'n', 'e' };
+    vector<uint8_t> domain_name = { DHO_DOMAIN_NAME, 6, 'e', 'm', 0, 'b', 'e', 'd' };
+
+    // Add the options to the onwire packet.
+    vector<uint8_t> test_msg = base_msg;
+    test_msg.insert(test_msg.end(), hostname.begin(), hostname.end());
+    test_msg.insert(test_msg.end(), root_path.begin(), root_path.end());
+    test_msg.insert(test_msg.end(), merit_dump.begin(), merit_dump.end());
+    test_msg.insert(test_msg.end(), domain_name.begin(), domain_name.end());
+    test_msg.push_back(DHO_END);
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&test_msg[0], test_msg.size()));
+
+    // Unpack the onwire packet.
+    EXPECT_NO_THROW(
+        pkt->unpack()
+    );
+
+    EXPECT_EQ(DHCPDISCOVER, pkt->getType());
+
+    OptionPtr opt;
+    OptionStringPtr opstr;
+
+    // Now let's verify that each text option is as expected.
+    ASSERT_TRUE(opt = pkt->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ("two", opstr->getValue());
+
+    ASSERT_TRUE(opt = pkt->getOption(DHO_MERIT_DUMP));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ("one", opstr->getValue());
+
+    ASSERT_TRUE(opt = pkt->getOption(DHO_ROOT_PATH));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(4, opstr->getValue().length());
+    EXPECT_EQ("none", opstr->getValue());
+
+    ASSERT_TRUE(opt = pkt->getOption(DHO_DOMAIN_NAME));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(6, opstr->getValue().length());
+    std::string embed{"em\0bed", 6};
+    EXPECT_EQ(embed, opstr->getValue());
+
+
+    // Next we pack the packet, to make sure trailing NULLs have
+    // been eliminated, embedded NULLs are intact.
+    EXPECT_NO_THROW(
+        pkt->pack()
+    );
+
+    // Create a vector of our expectd packed option data.
+    vector<uint8_t> packed_opts =
+        {
+          DHO_HOST_NAME, 3, 't', 'w', 'o',
+          DHO_MERIT_DUMP, 3, 'o', 'n', 'e',
+          DHO_DOMAIN_NAME, 6, 'e', 'm', 0, 'b', 'e', 'd',
+          DHO_ROOT_PATH, 4, 'n', 'o', 'n', 'e',
+        };
+
+    const uint8_t* packed = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+    int packed_len = pkt->getBuffer().getLength();
+
+    // Packed message options should be 3 bytes smaller than original onwire data.
+    int dif = packed_len - test_msg.size();
+    ASSERT_EQ(-3, dif);
+
+    // Make sure the packed content is as expected.
+    EXPECT_EQ(0, memcmp(&packed[base_size], &packed_opts[0], packed_opts.size()));
 }
 
 } // end of anonymous namespace
