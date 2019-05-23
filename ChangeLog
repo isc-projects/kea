@@ -1,3 +1,8 @@
+1582.	[bug]		tmark
+	Input values for DHCPv4 and DHCPv6 options of type 'string'
+	will now be trimmed of any trailing null bytes (0x0).
+	(Gitlab #539, !330, git #TBD)
+
 1581.	[bug]		marcin
 	Corrected a bug whereby the DHCPv6 server did not take into
 	account a relay address specified at the shared network level
