@@ -263,6 +263,11 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
     Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
     Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
 
+    // Allow subnet class of clients to use the subnets.
+    subnet1->allowClientClass("subnet");
+    subnet2->allowClientClass("subnet");
+    subnet3->allowClientClass("subnet");
+
     // Associate subnets with shared networks.
     network1->add(subnet1);
     network2->add(subnet2);
@@ -278,6 +283,10 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
     // Make sure that none of the subnets is selected when there is no relay
     // information configured for them.
     SubnetSelector selector;
+    selector.client_classes_.insert("subnet");
+
+    // The relays are not set for networks, so none of the subnets should
+    // be selected.
     selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::1");
     EXPECT_FALSE(cfg.selectSubnet(selector));
     selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::2");
@@ -295,6 +304,18 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
     EXPECT_EQ(subnet1, cfg.selectSubnet(selector));
     selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::2");
     EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::3");
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+
+    // Modify the client classes associated with the first two subnets.
+    subnet1->allowClientClass("subnet1");
+    subnet2->allowClientClass("subnet2");
+
+    // This time the non-matching classes should prevent selection.
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::1");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+    selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::2");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
     selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::3");
     EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
 }

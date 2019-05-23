@@ -250,26 +250,26 @@ CfgSubnets6::selectSubnet(const asiolink::IOAddress& address,
             // If the specified address matches a relay address, return this
             // subnet.
             if ((*subnet)->hasRelays()) {
-                if (!(*subnet)->hasRelayAddress(address) ||
-                    !(*subnet)->clientSupported(client_classes)) {
+                if (!(*subnet)->hasRelayAddress(address)) {
                     continue;
                 }
 
             } else {
                 SharedNetwork6Ptr network;
                 (*subnet)->getSharedNetwork(network);
-                if (!network || !network->hasRelayAddress(address) ||
-                    !network->clientSupported(client_classes)) {
+                if (!network || !network->hasRelayAddress(address)) {
                     continue;
                 }
             }
 
-            // The relay address is matching the one specified for a subnet
-            // or a shared network.
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_CFGMGR_SUBNET6_RELAY)
-                .arg((*subnet)->toText()).arg(address.toText());
-            return (*subnet);
+            if ((*subnet)->clientSupported(client_classes)) {
+                // The relay address is matching the one specified for a subnet
+                // or its shared network.
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                          DHCPSRV_CFGMGR_SUBNET6_RELAY)
+                    .arg((*subnet)->toText()).arg(address.toText());
+                return (*subnet);
+            }
         }
     }
 
