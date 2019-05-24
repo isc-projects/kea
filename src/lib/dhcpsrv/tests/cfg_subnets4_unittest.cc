@@ -280,6 +280,8 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
 
+    // subnet 3b updates subnet 3 with different ID and removes it
+    // from network 2
     Subnet4Ptr subnet3b(new Subnet4(IOAddress("192.0.3.0"),
                                    26, 3, 4, 500, SubnetID(30)));
 
@@ -327,11 +329,11 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     ASSERT_EQ(5, cfg_to.getAll()->size());
 
     // The subnet1 should be replaced by subnet1b.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.1.0/26",
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.10.0/26",
                                               SubnetID(1), 400, shared_network1));
 
     // Let's verify that our option is there and populated correctly.
-    auto subnet = cfg_to.getByPrefix("192.0.1.0/26");
+    auto subnet = cfg_to.getByPrefix("192.0.10.0/26");
     auto desc = subnet->getCfgOption()->get("isc", 1);
     ASSERT_TRUE(desc.option_);
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
@@ -344,7 +346,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
 
     // subnet3 should be replaced by subnet3b and no longer assigned to a network.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.3.0/26",
-                                              SubnetID(3), 500, no_network));
+                                              SubnetID(30), 500, no_network));
     // Let's verify that our option is there and populated correctly.
     subnet = cfg_to.getByPrefix("192.0.3.0/26");
     desc = subnet->getCfgOption()->get("isc", 1);
