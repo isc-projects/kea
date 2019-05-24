@@ -57,7 +57,7 @@ std::string trim(const std::string& instring);
 /// \brief Finds the "trimmed" end of a buffer
 ///
 /// Works backward from the the end of the buffer, looking for the first
-/// character not equal to the trim value, and returns an iterator 
+/// character not equal to the trim value, and returns an iterator
 /// pointing that that position.
 ///
 /// \param begin - Forward iterator pointing to the beginning of the
@@ -66,7 +66,7 @@ std::string trim(const std::string& instring);
 /// the buffer to trim
 /// \param val - byte value to trim off
 ///
-/// \retrun Iterator pointing the first character from the end of the 
+/// \retrun Iterator pointing the first character from the end of the
 /// buffer not equal to the  trim value
 template<typename Iterator>
 Iterator
