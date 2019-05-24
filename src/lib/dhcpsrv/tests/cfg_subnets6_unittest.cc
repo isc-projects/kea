@@ -873,8 +873,8 @@ TEST(CfgSubnets6Test, mergeSubnets) {
                                               SubnetID(4), 100, shared_network2));
 
     // Fill cfg_from configuration with subnets.
-    // subnet 1b updates subnet 1 but leaves it in network 1
-    Subnet6Ptr subnet1b(new Subnet6(IOAddress("2001:1::"),
+    // subnet 1b updates subnet 1 but leaves it in network 1 with the same ID.
+    Subnet6Ptr subnet1b(new Subnet6(IOAddress("2001:10::"),
                                    64, 2, 3, 100, 400, SubnetID(1)));
     subnet1b->setSharedNetworkName("shared-network1");
 
@@ -884,9 +884,10 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
 
-    // subnet 3b updates subnet 3 and removes it from network 2
+    // subnet 3b updates subnet 3 with different UD and removes it
+    // from network 2
     Subnet6Ptr subnet3b(new Subnet6(IOAddress("2001:3::"),
-                                   64, 3, 4, 100, 500, SubnetID(3)));
+                                   64, 3, 4, 100, 500, SubnetID(30)));
 
     // Now Add generic option 1 to subnet 3b.
     value = "Team!";
@@ -932,11 +933,11 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     ASSERT_EQ(5, cfg_to.getAll()->size());
 
     // The subnet1 should be replaced by subnet1b.
-    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:1::/64",
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:10::/64",
                                               SubnetID(1), 400, shared_network1));
 
     // Let's verify that our option is there and populated correctly.
-    auto subnet = cfg_to.getByPrefix("2001:1::/64");
+    auto subnet = cfg_to.getByPrefix("2001:10::/64");
     auto desc = subnet->getCfgOption()->get("isc", 1);
     ASSERT_TRUE(desc.option_);
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
@@ -949,7 +950,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
 
     // subnet3 should be replaced by subnet3b and no longer assigned to a network.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:3::/64",
-                                              SubnetID(3), 500, no_network));
+                                              SubnetID(30), 500, no_network));
     // Let's verify that our option is there and populated correctly.
     subnet = cfg_to.getByPrefix("2001:3::/64");
     desc = subnet->getCfgOption()->get("isc", 1);
