@@ -157,10 +157,12 @@ public:
     ///
     /// Iterator over the definitions in each name space in this configuration:
     /// If either the definition's name or code are defined in @c other
-    /// then skip over the definition otherwise add it to @other.
+    /// then skip over the definition otherwise add it to @c other.
     ///
     /// Replace this configuration's definitions with the definitions
     /// in @c other using @c copyTo().
+    ///
+    /// @param other option definitions to merge in.
     ///
     /// @warning The merge operation affects @c other.
     /// Therefore, the caller must not rely on the data held in the @c other

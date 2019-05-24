@@ -78,14 +78,14 @@ public:
     /// \brief Receive DHCPv4 packet from interface.
     ///
     /// \param timeout_sec number of seconds for waiting for a packet,
-    /// \param timeout_sec number of microseconds for waiting for a packet,
+    /// \param timeout_usec number of microseconds for waiting for a packet,
     /// \return received packet or nullptr if timed out
     virtual dhcp::Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec) override;
 
     /// \brief Receive DHCPv6 packet from interface.
     ///
     /// \param timeout_sec number of seconds for waiting for a packet,
-    /// \param timeout_sec number of microseconds for waiting for a packet,
+    /// \param timeout_usec number of microseconds for waiting for a packet,
     /// \return received packet or nullptr if timed out
     virtual dhcp::Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec) override;
 

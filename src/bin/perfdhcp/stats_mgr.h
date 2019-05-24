@@ -44,6 +44,7 @@ enum class ExchangeType {
 /// Function returns name of the specified exchange type.
 /// This function is mainly for logging purposes.
 ///
+/// \param os output stream to use.
 /// \param xchg_type exchange type.
 /// \return string representing name of the exchange.
 std::ostream& operator<<(std::ostream& os, ExchangeType xchg_type);

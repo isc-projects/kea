@@ -433,7 +433,7 @@ public:
     /// @return Pointer to the created binding.
     static MySqlBindingPtr createFloat(const float value);
 
-    /// @Conditionally creates binding of float type for sending data if
+    /// @brief Conditionally creates binding of float type for sending data if
     /// provided value is specified.
     ///
     /// @tparam T Floating point type to be converted to float.

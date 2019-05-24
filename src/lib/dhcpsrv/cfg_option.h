@@ -406,7 +406,8 @@ public:
     ///
     /// @param cfg_def set of of user-defined option definitions to use
     /// when creating option instances.
-    /// @param option configurations to merge with.
+    /// @param cfg_def option definitions to reference when merging
+    /// @param other option configuration to merge in.
     void merge(CfgOptionDefPtr cfg_def, CfgOption& other);
 
     /// @brief Re-create the option in each descriptor based on given definitions

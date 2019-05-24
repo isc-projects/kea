@@ -57,9 +57,9 @@ static const size_t DHCPV6_IA_NA_OFFSET = 40;
 /// \brief Test Control class.
 ///
 /// This class is used to run the performance test with
-/// with \ref TestControl::run function. This function can be executed
+/// with \ref TestControl::runWrapped function. This function can be executed
 /// multiple times if desired because it resets TestControl's internal
-/// state every time it is executed. Prior to running \ref TestControl::run,
+/// state every time it is executed. Prior to running \ref TestControl::runWrapped,
 /// one must make sure to parse command line options by calling
 /// \ref CommandOptions::parse. Failing to do this will result in an exception.
 ///

@@ -64,9 +64,9 @@ std::string trim(const std::string& instring);
 /// buffer to trim
 /// \param end - Forward iterator pointing to the untrimmed end of
 /// the buffer to trim
-/// \param val - byte value to trim off
+/// \param trim_val - byte value to trim off
 ///
-/// \retrun Iterator pointing the first character from the end of the
+/// \return Iterator pointing the first character from the end of the
 /// buffer not equal to the  trim value
 template<typename Iterator>
 Iterator

@@ -676,6 +676,9 @@ protected:
     /// should be called on the parent network instance (typically on
     /// @c SharedNetwork4 or @c SharedNetwork6) to fetch the parent specific
     /// value if the value is unspecified for this instance.
+    /// @param property the value to return when inheritance mode is NONE, or
+    /// when the mode is PARENT_NETWORK and the property has not been specified
+    /// by a parent network.
     /// @param inheritance inheritance mode to be used.
     ///
     /// @return Option pointer fetched from this instance level or parent

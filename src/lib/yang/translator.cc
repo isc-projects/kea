@@ -48,7 +48,12 @@ TranslatorBasic::~TranslatorBasic() {
 }
 
 ElementPtr
-TranslatorBasic::value(S_Val s_val) {
+
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorBasic::value(sysrepo::S_Val s_val) {
+#else
+    TranslatorBasic::value(S_Val s_val) {
+#endif
     if (!s_val) {
         isc_throw(BadValue, "value called with null");
     }
