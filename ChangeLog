@@ -1,7 +1,7 @@
 1582.	[bug]		tmark
 	Input values for DHCPv4 and DHCPv6 options of type 'string'
 	will now be trimmed of any trailing null bytes (0x0).
-	(Gitlab #539, !330, git #TBD)
+	(Gitlab #539, !330, git b126558e9e39e9bff517dceac25a00e96d150085)
 
 1581.	[bug]		marcin
 	Corrected a bug whereby the DHCPv6 server did not take into
