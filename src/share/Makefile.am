@@ -1,1 +1,6 @@
-SUBDIRS = database yang
+SUBDIRS = database
+
+if HAVE_SYSREPO
+SUBDIRS += yang
+endif
+
