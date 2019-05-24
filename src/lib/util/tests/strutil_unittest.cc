@@ -551,4 +551,50 @@ TEST(StringUtilTest, stringSanitizer) {
                        "abc.123");
 }
 
+// Verifies templated buffer iterator trim() function
+TEST(StringUtilTest, seekTrimmed) {
+
+    // Empty buffer should be fine.
+    std::vector<uint8_t> buffer;
+    auto begin = buffer.end();
+    auto end = buffer.end();
+    ASSERT_NO_THROW(end = seekTrimmed(begin, end, 0));
+    EXPECT_EQ(0, std::distance(begin, end));
+
+    // Buffer of only trim values, should be fine.
+    buffer = { 1, 1 };
+    begin = buffer.begin();
+    end = buffer.end();
+    ASSERT_NO_THROW(end = seekTrimmed(begin, end, 1));
+    EXPECT_EQ(0, std::distance(begin, end));
+
+    // One trailing null should trim off.
+    buffer = {'o', 'n', 'e', 0 };
+    begin = buffer.begin();
+    end = buffer.end();
+    ASSERT_NO_THROW(end = seekTrimmed(begin, end, 0));
+    EXPECT_EQ(3, std::distance(begin, end));
+
+    // More than one trailing null should trim off.
+    buffer = { 't', 'h', 'r', 'e', 'e', 0, 0, 0 };
+    begin = buffer.begin();
+    end = buffer.end();
+    ASSERT_NO_THROW(end = seekTrimmed(begin, end, 0));
+    EXPECT_EQ(5, std::distance(begin, end));
+
+    // Embedded null should be left in place.
+    buffer = { 'e', 'm', 0, 'b', 'e', 'd' };
+    begin = buffer.begin();
+    end = buffer.end();
+    ASSERT_NO_THROW(end = seekTrimmed(begin, end, 0));
+    EXPECT_EQ(6, std::distance(begin, end));
+
+    // Leading null should be left in place.
+    buffer = { 0, 'l', 'e', 'a', 'd', 'i', 'n', 'g' };
+    begin = buffer.begin();
+    end = buffer.end();
+    ASSERT_NO_THROW(end = seekTrimmed(begin, end, 0));
+    EXPECT_EQ(8, std::distance(begin, end));
+}
+
 } // end of anonymous namespace

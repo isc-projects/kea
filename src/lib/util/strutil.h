@@ -54,6 +54,26 @@ void normalizeSlash(std::string& name);
 /// \return String with leading and trailing spaces removed
 std::string trim(const std::string& instring);
 
+/// \brief Finds the "trimmed" end of a buffer
+///
+/// Works backward from the the end of the buffer, looking for the first
+/// character not equal to the trim value, and returns an iterator 
+/// pointing that that position.
+///
+/// \param begin - Forward iterator pointing to the beginning of the
+/// buffer to trim
+/// \param end - Forward iterator pointing to the untrimmed end of
+/// the buffer to trim
+/// \param val - byte value to trim off
+///
+/// \retrun Iterator pointing the first character from the end of the 
+/// buffer not equal to the  trim value
+template<typename Iterator>
+Iterator
+seekTrimmed(Iterator begin, Iterator end, uint8_t trim_val) {
+    for ( ; end != begin && *(end - 1) == trim_val; --end);
+    return(end);
+}
 
 /// \brief Split String into Tokens
 ///

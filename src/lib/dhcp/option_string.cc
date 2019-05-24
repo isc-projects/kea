@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcp/option_string.h>
+#include <util/strutil.h>
 #include <sstream>
 
 namespace isc {
@@ -52,8 +53,7 @@ OptionString::setValue(const std::string& value) {
 
     // Trim off any trailing NULLs.
     auto begin = value.begin();
-    auto end = value.end();
-    for ( ; end != begin && *(end - 1) == 0x0; --end);
+    auto end = util::str::seekTrimmed(begin, value.end(), 0x0);
 
     if (std::distance(begin, end) == 0) {
         isc_throw(isc::OutOfRange, "string value carried by the option '"
@@ -86,8 +86,7 @@ void
 OptionString::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
     // Trim off trailing null(s)
-    for ( ; end != begin && *(end - 1) == 0x0; --end);
-
+    end = util::str::seekTrimmed(begin, end, 0x0);
     if (std::distance(begin, end) == 0) {
         isc_throw(isc::OutOfRange, "failed to parse an option '"
                   << getType() << "' holding string value"

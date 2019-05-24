@@ -9,6 +9,7 @@
 #include <dhcp/option_data_types.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
+#include <util/strutil.h>
 #include <util/encode/hex.h>
 #include <algorithm>
 #include <limits>
@@ -576,9 +577,7 @@ OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {
     if (!buf.empty()) {
         // Per RFC 2132, section 2 we need to drop trailing NULLs
         auto begin = buf.begin();
-        auto end = buf.end();
-        for ( ; end != begin && *(end - 1) == 0x0; --end);
-
+        auto end = util::str::seekTrimmed(begin, buf.end(), 0x0);
         if (std::distance(begin, end) == 0) {
             isc_throw(isc::OutOfRange, "string value carried by the option "
                       << " contained only NULLs");
