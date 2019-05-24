@@ -1,3 +1,9 @@
+1581.	[bug]		marcin
+	Corrected a bug whereby the DHCPv6 server did not take into
+	account a relay address specified at the shared network level
+	during the subnet selection.
+	(Gitlab #620,!332, git c2383e404a5227f6b55655c09ccdc03930815500)
+
 1580.	[bug]		jonatan.raudsepp
 	Compilation fix for Alpine linux in Perfdhcp code. Thanks to
 	Jonatan Raudsepp for sending a patch!
