@@ -4329,7 +4329,7 @@ The returned response contains a list of maps. Each map contains a subnet identi
             {
                 "id": &lt;subnet identifier&gt;,
                 "subnet": &lt;subnet prefix&gt;,
-                "shared-network-name": &lt;shared network name&gt; | null
+                "shared-network-name": &lt;shared network name&gt; | null,
                 &lt;the rest of the subnet specification here&gt;
             }
         ],
@@ -4344,6 +4344,10 @@ The provided list must contain exactly one subnet specification. The <command>sh
   <screen>{
     "result": 0,
     "text": "IPv4 subnet successfully set.",
+    "arguments": {
+        "id": &lt;subnet identifier&gt;,
+        "subnet": &lt;subnet prefix&gt;
+    }
 }</screen>
 Result is an integer representation of the status. Currently supported statuses are:
 <itemizedlist>
@@ -4623,7 +4627,7 @@ The returned response contains a list of maps. Each map contains a subnet identi
             {
                 "id": &lt;subnet identifier&gt;,
                 "subnet": &lt;subnet prefix&gt;,
-                "shared-network-name": &lt;shared network name&gt; | null
+                "shared-network-name": &lt;shared network name&gt; | null,
                 &lt;the rest of the subnet specification here&gt;
             }
         ],
@@ -4638,6 +4642,10 @@ The provided list must contain exactly one subnet specification. The <command>sh
   <screen>{
     "result": 0,
     "text": "IPv6 subnet successfully set.",
+    "arguments": {
+        "id": &lt;subnet identifier&gt;,
+        "subnet": &lt;subnet prefix&gt;
+    }
 }</screen>
 Result is an integer representation of the status. Currently supported statuses are:
 <itemizedlist>
