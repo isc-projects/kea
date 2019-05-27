@@ -69,9 +69,11 @@ nobase_dist_doc_DATA += examples/kea6/stateless.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 
 if HAVE_SYSREPO
-nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-config.xml
-nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-schema.xml
-nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-translator.xml
+# BAD configs are for testing only. Do not install them.
+#nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-config.xml
+#nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-schema.xml
+#nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-translator.xml
+
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/boot.json
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/logging.xml
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/netconf.json

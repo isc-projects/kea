@@ -19,7 +19,7 @@ DISTCLEANFILES = keactrl keactrl.conf $(man_MANS)
 CLEANFILES = $(KEA_CONFIGFILES)
 EXTRA_DIST = keactrl.in keactrl.conf.in kea-dhcp4.conf.pre \
              kea-dhcp6.conf.pre kea-dhcp-ddns.conf.pre \
-             kea-ctrl-agent.conf.pre kea-netconf.conf.pre \
+             kea-ctrl-agent.conf.pre \
              $(man_MANS) keactrl.xml
 
 if HAVE_SYSREPO
