@@ -9,7 +9,7 @@ Here's a quick list of how to contribute a patch:
 3. **ask someone from the ISC team to give you permission to fork Kea** (ask @tomek, @vicky, @ondrej or @godfryd or basically anyone from the Kea dev team)
 4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new). If you can't, you didn't complete step 3.
 5. **Implement your fix or feature, push code** to your repo.
-6. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests), click New merge request. If you don't see the button, you didn't complete step 3.
+6. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests), click [New merge request](https://gitlab.isc.org/isc-projects/kea/merge_requests/new). If you don't see the button, you didn't complete step 3.
 7. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get to the ticket and will review your code. Please make sure you respond to comments. It's likely you'll be asked to update the code.
  
 For a much more detailed description with details, see the text below.
