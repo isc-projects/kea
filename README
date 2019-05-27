@@ -10,8 +10,7 @@ The developers website is at https://gitlab.isc.org/isc-projects/kea
 Limitations, known issues and feature requests can be found
 at https://gitlab.isc.org/isc-projects/kea/wikis/known-issues-list
 
-If you are thinking about contributing a patch, please read this first:
-https://jenkins.isc.org/job/Kea_doc/doxygen/d7/df4/contributorGuide.html
+If you are thinking about contributing a patch, please read the
+contributors-guide.md file first.
 
-The Kea mailing lists are available via
-https://lists.isc.org/
+The Kea mailing lists are available via https://lists.isc.org/
