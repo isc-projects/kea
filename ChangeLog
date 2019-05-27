@@ -1,3 +1,7 @@
+1587.	[build]		razvan
+	Bumped up libraries version numbers for Kea 1.6 beta release.
+	(Gitlab #617,!340, git TBD)
+
 1586.	[bug, func]		marcin
 	MySQL Configuration Backend supports DHCPv6 interface-id parameter.
 	(Gitlab #628,!341, git 3a07c636ba4c7fceabe59ec597c44a9c8e3367eb)
