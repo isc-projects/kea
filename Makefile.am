@@ -146,6 +146,17 @@ cppcheck:
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
 
+# this is a shortcut that builds only documentation dependecies and documentation itself
+gen-docs:
+	$(MAKE) -C src/lib/asiolink
+	$(MAKE) -C src/lib/exceptions
+	$(MAKE) -C src/lib/util
+	$(MAKE) -C src/lib/cc
+	$(MAKE) -C tools
+	$(MAKE) -C doc
+	$(MAKE) -C doc/guide pdf
+
+
 # These steps are necessary during installation
 install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/log/

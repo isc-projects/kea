@@ -123,15 +123,15 @@
         </para>
         </listitem>
 
-          <listitem>
-        <para>
-          Botan (at least version 1.9) or OpenSSL (at least version 1.0.1).
-          Note that Botan version 2 or later and OpenSSL version 1.0.2 or
-          1.1.0 or later are strongly recommended.
-        </para>
-          </listitem>
+        <listitem>
+          <para>
+          OpenSSL (at least version 1.0.1) or Botan (at least version 1.9).
+          Note that OpenSSL version 1.0.2 or 1.1.0 or later and Botan version 2
+          or later are strongly recommended.
+          </para>
+        </listitem>
 
-          <listitem>
+        <listitem>
           <para>
             log4cplus (at least version 1.0.3)
           development include headers.
@@ -147,9 +147,8 @@ Debian and Ubuntu:
         <listitem>
         <para>
           A C++ compiler (with C++11 support) and standard development
-          headers. Kea builds have been tested with GCC g++ 4.7.2 4.7.3
-          4.8.2 4.8.4 4.8.5 4.9.3 4.9.4 5.3.1 5.4.0 6.3.0 6.3.1
-          clang-800.0.38 clang-802.0.42 clang-900.0.37
+          headers. Kea building was checked with GCC g++ 4.8.5 and some later
+          versions and Clang 800.0.38 and some later versions.
         </para>
         </listitem>
 
@@ -329,23 +328,6 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
-            <term>--with-boost-include</term>
-            <listitem>
-              <simpara>Define the path to find the Boost headers.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>--with-botan-config</term>
-            <listitem>
-              <simpara>Specify the path to the botan-config
-                script to build with Botan for cryptographic functions.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
             <term>--with-mysql</term>
             <listitem>
               <simpara>
@@ -379,7 +361,24 @@ Debian and Ubuntu:
             <term>--with-log4cplus</term>
             <listitem>
               <simpara>Define the path to find the Log4cplus headers
-                and libraries.
+                and libraries.  Normally this is not necessary.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-include</term>
+            <listitem>
+              <simpara>Define the path to find the Boost headers. Normally this is not necessary.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-botan-config</term>
+            <listitem>
+              <simpara>Specify the path to the botan-config
+                script to build with Botan for cryptographic functions. It is prefered to use OpenSSL (see below).
               </simpara>
             </listitem>
           </varlistentry>
@@ -390,6 +389,7 @@ Debian and Ubuntu:
               <simpara>Replace Botan by the OpenSSL the cryptographic library.
                 By default <command>configure</command> searches for a valid
                 Botan installation. If one is not found, it searches for OpenSSL.
+                Normally this is not necessary.
               </simpara>
             </listitem>
           </varlistentry>
