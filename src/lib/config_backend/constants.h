@@ -34,6 +34,8 @@ constexpr unsigned long CLIENT_CLASS_BUF_LENGTH = 128;
 
 constexpr unsigned long INTERFACE_BUF_LENGTH = 128;
 
+constexpr unsigned long INTERFACE_ID_BUF_LENGTH = 128;
+
 constexpr unsigned long RELAY_BUF_LENGTH = 65536;
 
 constexpr unsigned long REQUIRE_CLIENT_CLASSES_BUF_LENGTH = 65536;

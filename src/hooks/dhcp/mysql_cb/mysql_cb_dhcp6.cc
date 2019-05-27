@@ -307,6 +307,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
+            MySqlBinding::createBlob(INTERFACE_ID_BUF_LENGTH), // interface_id
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -458,8 +459,18 @@ public:
                     last_subnet->setT2Percent(out_bindings[67]->getFloat());
                 }
 
+                // interface_id
+                if (!out_bindings[68]->amNull()) {
+                    auto iface_id_data = out_bindings[68]->getBlob();
+                    if (!iface_id_data.empty()) {
+                        OptionPtr opt_iface_id(new Option(Option::V6, D6O_INTERFACE_ID,
+                                                          iface_id_data));
+                        last_subnet->setInterfaceId(opt_iface_id);
+                    }
+                }
+
                 // server_tag
-                last_subnet->setServerTag(out_bindings[68]->getString());
+                last_subnet->setServerTag(out_bindings[69]->getString());
 
                 // Subnet ready. Add it to the list.
                 subnets.push_back(last_subnet);
@@ -910,6 +921,17 @@ public:
              shared_network_binding = MySqlBinding::createNull();
         }
 
+        // Create the binding holding interface_id.
+        MySqlBindingPtr interface_id_binding = MySqlBinding::createNull();
+        auto opt_iface_id = subnet->getInterfaceId();
+        if (opt_iface_id) {
+            auto iface_id_data = opt_iface_id->getData();
+            if (!iface_id_data.empty()) {
+                interface_id_binding = MySqlBinding::createBlob(iface_id_data.begin(),
+                                                                iface_id_data.end());
+            }
+        }
+
         // Create input bindings.
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(subnet->getID()),
@@ -929,7 +951,8 @@ public:
             createBinding(subnet->getValid(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE))
+            MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE)),
+            interface_id_binding
         };
 
         MySqlTransaction transaction(conn_);
@@ -1193,6 +1216,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
+            MySqlBinding::createBlob(INTERFACE_ID_BUF_LENGTH), // interface_id
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1314,8 +1338,18 @@ public:
                     last_network->setT2Percent(out_bindings[29]->getFloat());
                 }
 
+                // interface_id
+                if (!out_bindings[30]->amNull()) {
+                    auto iface_id_data = out_bindings[30]->getBlob();
+                    if (!iface_id_data.empty()) {
+                        OptionPtr opt_iface_id(new Option(Option::V6, D6O_INTERFACE_ID,
+                                                          iface_id_data));
+                        last_network->setInterfaceId(opt_iface_id);
+                    }
+                }
+
                 // server_tag
-                last_network->setServerTag(out_bindings[30]->getString());
+                last_network->setServerTag(out_bindings[31]->getString());
 
                 shared_networks.push_back(last_network);
             }
@@ -1425,6 +1459,17 @@ public:
             hr_mode_binding = MySqlBinding::createNull();
         }
 
+        // Create the binding holding interface_id.
+        MySqlBindingPtr interface_id_binding = MySqlBinding::createNull();
+        auto opt_iface_id = shared_network->getInterfaceId();
+        if (opt_iface_id) {
+            auto iface_id_data = opt_iface_id->getData();
+            if (!iface_id_data.empty()) {
+                interface_id_binding = MySqlBinding::createBlob(iface_id_data.begin(),
+                                                                iface_id_data.end());
+            }
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
             MySqlBinding::condCreateString(shared_network->getClientClass(Network::Inheritance::NONE)),
@@ -1441,7 +1486,8 @@ public:
             createBinding(shared_network->getValid(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getT1Percent(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateFloat(shared_network->getT2Percent(Network::Inheritance::NONE))
+            MySqlBinding::condCreateFloat(shared_network->getT2Percent(Network::Inheritance::NONE)),
+            interface_id_binding
         };
 
         MySqlTransaction transaction(conn_);
@@ -2317,8 +2363,9 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime,"
       "  calculate_tee_times,"
       "  t1_percent,"
-      "  t2_percent "
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  t2_percent,"
+      "  interface_id"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
@@ -2353,8 +2400,9 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime,"
       "  calculate_tee_times,"
       "  t1_percent,"
-      "  t2_percent "
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  t2_percent,"
+      "  interface_id"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
@@ -2406,7 +2454,8 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime = ?,"
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
-      "  t2_percent = ? "
+      "  t2_percent = ?,"
+      "  interface_id = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -2427,7 +2476,8 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime = ?,"
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
-      "  t2_percent = ? "
+      "  t2_percent = ?,"
+      "  interface_id = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

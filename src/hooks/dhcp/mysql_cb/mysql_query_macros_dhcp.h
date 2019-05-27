@@ -188,6 +188,7 @@ namespace {
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
     "  s.t2_percent," \
+    "  s.interface_id," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     "INNER JOIN dhcp6_subnet_server AS a " \
@@ -282,6 +283,7 @@ namespace {
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
     "  n.t2_percent," \
+    "  n.interface_id," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     "INNER JOIN dhcp6_shared_network_server AS a " \

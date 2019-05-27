@@ -87,6 +87,8 @@ public:
         // First subnet includes all parameters.
         std::string interface_id_text = "whale";
         OptionBuffer interface_id(interface_id_text.begin(), interface_id_text.end());
+        OptionPtr opt_interface_id(new Option(Option::V6, D6O_INTERFACE_ID,
+                                              interface_id));
         ElementPtr user_context = Element::createMap();
         user_context->set("foo", Element::create("bar"));
 
@@ -94,6 +96,7 @@ public:
                                       64, 30, 40, 50, 60, 1024));
         subnet->allowClientClass("home");
         subnet->setIface("eth1");
+        subnet->setInterfaceId(opt_interface_id);
         subnet->setT2(323212);
         subnet->addRelayAddress(IOAddress("2001:db8:1::2"));
         subnet->addRelayAddress(IOAddress("2001:db8:3::4"));
@@ -206,9 +209,16 @@ public:
         ElementPtr user_context = Element::createMap();
         user_context->set("foo", Element::create("bar"));
 
+        std::string interface_id_text = "fish";
+        OptionBuffer interface_id(interface_id_text.begin(),
+                                  interface_id_text.end());
+        OptionPtr opt_interface_id(new Option(Option::V6, D6O_INTERFACE_ID,
+                                              interface_id));
+
         SharedNetwork6Ptr shared_network(new SharedNetwork6("level1"));
         shared_network->allowClientClass("foo");
         shared_network->setIface("eth1");
+        shared_network->setInterfaceId(opt_interface_id);
         shared_network->setT2(323212);
         shared_network->addRelayAddress(IOAddress("2001:db8:1::2"));
         shared_network->addRelayAddress(IOAddress("2001:db8:3::4"));
