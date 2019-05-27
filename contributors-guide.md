@@ -2,6 +2,17 @@
 
 So you found a bug in Kea or plan to develop an extension and want to send us a patch? Great! This page will explain how to contribute your changes smoothly.
 
+Here's a quick list of how to contribute a patch:
+
+1. **create account** on [gitlab](https://gitlab.isc.org)
+2. **open a bug ticket** in [Kea project](https://gitlab.isc.org/isc-projects/kea/issues/new), make sure it describes what you want to fix and **why**
+3. **ask someone from the ISC team to give you permission to fork Kea** (ask @tomek, @vicky, @ondrej or @godfryd or basically anyone from the Kea dev team)
+4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new). If you can't, you didn't complete step 3.
+5. **Implement your fix or feature, push code** to your repo.
+6. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests), click New merge request. If you don't see the button, you didn't complete step 3.
+7. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get to the ticket and will review your code. Please make sure you respond to comments. It's likely you'll be asked to update the code.
+ 
+For a much more detailed description with details, see the text below.
 
 ## Writing a patch
 
@@ -13,12 +24,12 @@ regarding new design or the best proposed solution to a certain problem. This is
 feedback. The internal details, questions about the code and its internals are better asked on kea-dev.
 
 OK, so you have written a patch? Great! Before you submit it, make sure that your code compiles. This may
-seem obvious, but there's more to it. You have surely checked that it compiles on your system, but Kea is 
-portable software. Besides Linux, it is compiled and used on relatively uncommon systems like OpenBSD. Will 
+seem obvious, but there's more to it. You have surely checked that it compiles on your system, but Kea is
+a portable software. Besides Linux, it is compiled and used on relatively uncommon systems like OpenBSD. Will 
 your code compile and work there? What about endianness? It is likely that you used a regular x86 architecture 
 machine to write your patch, but the software is expected to run on many other architectures. You may take
 a look at [system specific build notes](https://kb.isc.org/docs/installing-kea). For a complete list of
-systems we build on, you may take a look at the [Jenkins build farm report](https://jenkins.isc.org/view/Kea_BuildFarm/).
+systems we build on, you may take a look at the [Jenkins build farm](https://jenkins.isc.org/).
 
 Does your patch conform to [Kea coding guidelines](https://gitlab.isc.org/isc-projects/kea/wikis/coding-guidelines)? 
 You can submit a patch that does not adhere to them, but that will reduce its chances of being accepted. 
@@ -32,8 +43,8 @@ extensive set of unit-tests for almost every line of code. Even if you are fixin
 single line fix, you are encouraged to write unit-tests for that change. That is even more true for new code:
 if you write a new function, method or a class, you definitely should write unit-tests for it.
 
-To ensure that everything is tested, ISC uses a development method called Test Driven Development (TDD). In 
-TDD, a feature is developed alongside the tests, with the tests being written first. In detail, a test is 
+To ensure that everything is tested, ISC uses a development method called [Test Driven Development (TDD)](https://en.wikipedia.org/wiki/Test-driven_development). In 
+TDD, a feature is developed alongside the tests, preferably with the tests being written first. In detail, a test is 
 written for a small piece of functionality and run against the existing code. (In the case where the test is
 a unit test for a function, it would be run against an empty (unimplemented) function.) The test should fail.
 A minimal amount of code is then written, just enough to get the test to pass. Then the process is repeated for
@@ -84,6 +95,14 @@ The first step in writing the patch or new feature should be to get the source c
 The procedure is very easy and is [explained here](https://gitlab.isc.org/isc-projects/kea/wikis/gitlab-howto).
 While it is possible to provide a patch against the latest stable release, it makes the review process much
 easier if it is for latest code from the Git master branch.
+
+ISC uses [gitlab](https://gitlab.isc.org) to manage its source code. While we also maintain presence on [github](https://github.com/isc-projects/kea),
+the process of syncing gitlab to github is mostly automated and Kea devs rarely look at github.
+
+ISC's gitlab has been a target for spammers in the past, so it is now set up defensively. In particular, new users
+can't fork the code on their own and it requires someone from ISC to manually grant the ability to fork projects.
+Fortunately, this is easy to do and we glady do this for anyone who asks and provides a good reason. "I'd like to fix
+bug X or develop feature Y" is an excellent reason. The best place for asking is either kea-dev or 
 
 Since you won't get write access to the Kea repository, you should fork it and then commit your changes to
 your own repo. How you organize the work depends entirely on you, but it seems reasonable to create a branch
