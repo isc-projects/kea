@@ -5,12 +5,12 @@ So you found a bug in Kea or plan to develop an extension and want to send us a 
 Here's a quick list of how to contribute a patch:
 
 1. **create account** on [gitlab](https://gitlab.isc.org)
-2. **open a bug ticket** in [Kea project](https://gitlab.isc.org/isc-projects/kea/issues/new), make sure it describes what you want to fix and **why**
+2. **open an issue** in [Kea project](https://gitlab.isc.org/isc-projects/kea/issues/new), make sure it describes what you want to fix and **why**
 3. **ask someone from the ISC team to give you permission to fork Kea** (ask @tomek, @vicky, @ondrej or @godfryd or basically anyone from the Kea dev team)
 4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new). If you can't, you didn't complete step 3.
 5. **Implement your fix or feature, push code** to your repo. Make sure it compiles, has unit-tests, is documented and does what it's supposed to do.
 6. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests), click [New merge request](https://gitlab.isc.org/isc-projects/kea/merge_requests/new). If you don't see the button, you didn't complete step 3.
-7. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get to the ticket and will review your code. Please make sure you respond to comments. It's likely you'll be asked to update the code.
+7. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get to the issue and will review your code. Please make sure you respond to comments. It's likely you'll be asked to update the code.
  
 For a much more detailed description with details, see the text below.
 
@@ -102,8 +102,8 @@ the process of syncing gitlab to github is mostly automated and Kea devs rarely 
 ISC's gitlab has been a target for spammers in the past, so it is now set up defensively. In particular, new users
 can't fork the code on their own and it requires someone from ISC to manually grant the ability to fork projects.
 Fortunately, this is easy to do and we glady do this for anyone who asks and provides a good reason. "I'd like to fix
-bug X or develop feature Y" is an excellent reason. The best place for asking is either kea-dev or asking in your
-ticket. Make sure you put a name tag (@tomek, @godfryd or @vicky). When you write a comment in a ticket or merge
+bug X or develop feature Y" is an excellent reason. The best place for asking is either kea-dev or asking in a comment
+in your issue. Make sure you put a name tag (@tomek, @godfryd, @vicky or @ondrej). When you write a comment in an issue or merge
 request and add a name tag on it, the user is automatically notified.
 
 Once you fork the Kea code in gitlab, you have your own copy and you can commit your changes there and push them
@@ -138,7 +138,7 @@ listed as contributor and Kea will be listed as project you have contributed to.
 Well, you are out of luck. There are other ways, but those are really awkward and the chances of your patch
 being ignored are really high. Anyway, here they are:
 
-- [create a ticket in the Kea Gitlab](https://gitlab.isc.org/isc-projects/kea/issues/new) and attach your patch to it. Sending
+- [create an issue in the Kea Gitlab](https://gitlab.isc.org/isc-projects/kea/issues/new) and attach your patch to it. Sending
   a patch has a number of disadvantages. First, if you don't specify the base version against which it was created,
   one of Kea developers will have to guess that or go through a series of trials and errors to find that out. If the
   code doesn't compile, the reviewer will not know if the patch is broken or maybe it was applied to incorrect base
