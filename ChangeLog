@@ -307,7 +307,7 @@
 	kea-dhcp4 will now merge option definitions.
 	(Gitlab #400,!243, git 0c5d1417031e49bd0c247889989e187db2dd8f4b)
 
-1530.	[bug] 		adwol
+1530.	[bug]		adwol
 	Potential syntax error in keactrl fixed. Thanks to Adam Osuchowski
 	from Silesian University of Technology for providing a patch.
 	(Gitlab #162,!241, git b1a1137f252432aa956ed6fea3da21c740857333)
@@ -907,10 +907,10 @@ Kea 1.5.0-beta1 released on Nov 9, 2018
 	in lease_cmds hooks library.
 	(Trac #5651, git b056828212f7b206ff8bd07c097fd6f427d22d71)
 
-1430.	[func] 		fdupont
+1430.	[func]		fdupont
 	Lease objects and lease backends are now able to store user
-        context. User context can store an arbitrary data as long
-        as it is in JSON format. Database schemas updated.
+	context. User context can store an arbitrary data as long
+	as it is in JSON format. Database schemas updated.
 	(Trac #5584, git b0b7a198b99fd417466708c80cb7cc2162ae480c)
 
 1429.	[bug]		marcin
@@ -1260,7 +1260,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	hosts, ability to store fixed DHCPv4 fields (next-server,
 	server-hostname, boot-file-name) and user contexts in host
 	reservations. Also, the ability to store MAC address details
-        in DHCPv6 leases on PostgreSQL has been improved.
+	in DHCPv6 leases on PostgreSQL has been improved.
 	(Github #70, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
 	(Trac #5506, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
 	(Trac #5507, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
@@ -1381,7 +1381,7 @@ Kea 1.4.0-beta released on May 18, 2018
 1355.	[func]		tomek
 	Lightweight 4over6 options reinstantiated. Definitions for DHCPv6
 	options 89 through 96 were added back. DHCPv4 v4 Parameters Option
-        159 has its definition tweaked slightly.
+	159 has its definition tweaked slightly.
 	(Trac #5514, git 6a4aac2b3bfffe41460db6d1cd3c55b1430aa50c)
 
 1354.	[build]		andrei
@@ -2171,7 +2171,7 @@ Kea 1.2.0-beta released on April 7, 2017
 1219.   [func]		marcin
 	Control Agent uses libkea-http to process commands over
 	the RESTful interface.
-        (Trac #5107, git 88ce715926a46b6b3832630116fc7782adc46c7b)
+	(Trac #5107, git 88ce715926a46b6b3832630116fc7782adc46c7b)
 
 1218.	[func]		tmark, tomek
 	Configuration parsing for D2 has been migrated to bison/flex
@@ -2314,7 +2314,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	instances of the deprecated std::auto_ptr with std::unique_ptr.
 	(Trac #5066, git a060d4a983860bf3056d50d9bf7ee4355c8372f2)
 
-1194.   [build]     	marcin
+1194.   [build]		marcin
 	Moved StateModel class from D2 to libkea-util.
 	(Trac #3175, git 270ec379aec2894104a299cdd1080e24007e25fb)
 
@@ -6053,7 +6053,7 @@ bind10-1.1.0beta1 released on April 4, 2013
 	http://bind10.isc.org/wiki/StatisticsItems. Qtype counters are
 	dropped as it requires further spec design discussion.
 	(Trac #2154, Trac #2155,
-	             git 61d7c3959eb991b22bc1c0ef8f4ecb96b65d9325)
+		     git 61d7c3959eb991b22bc1c0ef8f4ecb96b65d9325)
 	(Trac #2157, git e653adac032f871cbd66cd500c37407a56d14589)
 
 bind10-1.0.0-rc released on February 14, 2013
@@ -8268,7 +8268,7 @@ bind10-devel-20110819 released on August 19, 2011
 	if and only if the request is signed with a TSIG of a key name
 	"key.example":
 	> config set Xfrout/query_acl[0] {"action": "ACCEPT", \
-	                                  "key": "key.example"}
+					  "key": "key.example"}
 	(Trac #1104, git 9b2e89cabb6191db86f88ee717f7abc4171fa979)
 
 274.	[bug]		naokikambe
@@ -8320,12 +8320,12 @@ bind10-devel-20110705 released on July 05, 2011
 	(Trac #990, git 4a590df96a1b1d373e87f1f56edaceccb95f267d)
 
 266.	[func]		Multiple developers
-        Convert various error messages, debugging and other output
-        to the new logging interface, including for b10-resolver,
-        the resolver library, the CC library, b10-auth, b10-cfgmgr,
-        b10-xfrin, and b10-xfrout. This includes a lot of new
-        documentation describing the new log messages.
-        (Trac #738, #739, #742, #746, #759, #761, #762)
+	Convert various error messages, debugging and other output
+	to the new logging interface, including for b10-resolver,
+	the resolver library, the CC library, b10-auth, b10-cfgmgr,
+	b10-xfrin, and b10-xfrout. This includes a lot of new
+	documentation describing the new log messages.
+	(Trac #738, #739, #742, #746, #759, #761, #762)
 
 265.	[func]*		jinmei
 	b10-resolver: Introduced ACL on incoming queries.  By default the
@@ -9057,7 +9057,7 @@ bind10-devel-20110120 released on January 20, 2011
 	2nd argument of type bool (true or false). This flag, if
 	set, will cause the message to be printed whether or not
 	-v is chosen.
-        (Trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
+	(Trac #432, git 880220478c3e8702d56d761b1e0b21b77d08ee5a)
 
 150.	[bug]		jelte
 	b10-cfgmgr: No longer save the configuration on exit. Configuration
@@ -9070,7 +9070,7 @@ bind10-devel-20110120 released on January 20, 2011
 	bindctl: Check if the user session has disappeared (either by a
 	timeout or by a server restart), and reauthenticate if so. This
 	fixes the 'cmdctl not running' problem.
-        (Trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
+	(Trac #431, git b929be82fec5f92e115d8985552f84b4fdd385b9)
 
 148.	[func]		jelte
 	bindctl: Command results are now pretty-printed (i.e. printed in
@@ -9769,9 +9769,9 @@ bind10-devel-20100602 released on June 2, 2010
 
 32.	[func]*		each
 	bin/auth: removed custom query-processing code, changed
-        boost::asio code to use plain asio instead, and added asio
-        headers to the source tree.  This allows building without
-        using an external boost library. (Trac #163, svn r1983)
+	boost::asio code to use plain asio instead, and added asio
+	headers to the source tree.  This allows building without
+	using an external boost library. (Trac #163, svn r1983)
 
 31.	[func]		jinmei
 	lib/dns: added a separate signature for Name::split() as a
