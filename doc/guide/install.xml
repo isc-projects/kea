@@ -31,12 +31,6 @@
         <itemizedlist>
           <listitem>
           <simpara>
-            <filename>bin/</filename> —
-            utility programs.
-          </simpara>
-          </listitem>
-          <listitem>
-          <simpara>
             <filename>etc/kea/</filename> —
             configuration files.
           </simpara>
