@@ -68,7 +68,9 @@ nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 
-if HAVE_SYSREPO
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-config.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-schema.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-translator.xml
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/boot.json
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/logging.xml
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/netconf.json
@@ -78,7 +80,6 @@ nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twosubnets.xml
 nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
-endif
 
 # These are files that document our APIs. They're not really needed as the
 # content is included in the api.xml, but may be useful for people who
