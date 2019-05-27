@@ -1,3 +1,7 @@
+1586.	[bug, func]		marcin
+	MySQL Configuration Backend supports DHCPv6 interface-id parameter.
+	(Gitlab #628,!341, git 3a07c636ba4c7fceabe59ec597c44a9c8e3367eb)
+
 1585.	[build]		tmark
 	Files related to YANG and netconf are now only installed
 	when the build is configured with --with-syspro.
