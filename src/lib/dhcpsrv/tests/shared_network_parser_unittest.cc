@@ -220,7 +220,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
 
-    try { 
+    try {
         network = parser.parse(config_element);
     } catch (const std::exception& ex) {
         std::cout << "kabook: " << ex.what() << std::endl;
@@ -407,13 +407,19 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
 class SharedNetwork6ParserTest : public SharedNetworkParserTest {
 public:
 
+    /// @brief Constructor.
+    SharedNetwork6ParserTest()
+        : SharedNetworkParserTest(), network_(), use_iface_id_(false) {
+    }
+
     /// @brief Creates valid shared network configuration.
     ///
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
                 "    \"client-class\": \"srv1\","
-                "    \"interface\": \"eth1\","
+                + std::string(use_iface_id_ ? "\"interface-id\": " : "\"interface\": ") +
+                "\"eth1\","
                 "    \"name\": \"bird\","
                 "    \"preferred-lifetime\": 211,"
                 "    \"rapid-commit\": true,"
@@ -479,8 +485,13 @@ public:
         return (*network_);
     }
 
-private:
+public:
+
     SharedNetwork6Ptr network_;
+
+    /// Boolean flag indicating if the interface-id should be used instead
+    /// of interface.
+    bool use_iface_id_;
 };
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -548,6 +559,41 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     Option6AddrLst::AddressContainer addresses = dns_servers->getAddresses();
     ASSERT_EQ(1, addresses.size());
     EXPECT_EQ("2001:db8:1::cafe", addresses[0].toText());
+}
+
+// This test verifies that shared network parser for IPv4 works properly
+// in a positive test scenario.
+TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
+    // Use the configuration with interface-id instead of interface parameter.
+    use_iface_id_ = true;
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Check that interface-id has been parsed.
+    auto opt_iface_id = network->getInterfaceId();
+    ASSERT_TRUE(opt_iface_id);
+}
+
+// This test verifies that error is returned when trying to configure a
+// shared network with both interface and interface id.
+TEST_F(SharedNetwork6ParserTest, mutuallyExclusiveInterfaceId) {
+    // Use the configuration with interface-id instead of interface parameter.
+    use_iface_id_ = true;
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Add interface which is mutually exclusive with interface-id
+    config_element->set("interface", Element::create("eth1"));
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
 }
 
 // This test verifies that it's possible to specify client-class

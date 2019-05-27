@@ -19,6 +19,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -203,6 +204,45 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         if (shared_network_data->contains("preferred-lifetime")) {
             shared_network->setPreferred(getInteger(shared_network_data,
                                                     "preferred-lifetime"));
+        }
+
+        // Get interface-id option content. For now we support string
+        // representation only
+        Optional<std::string> ifaceid;
+        if (shared_network_data->contains("interface-id")) {
+            ifaceid = getString(shared_network_data, "interface-id");
+        }
+
+        Optional<std::string> iface;
+        if (shared_network_data->contains("interface")) {
+            iface = getString(shared_network_data, "interface");
+        }
+
+        // Specifying both interface for locally reachable subnets and
+        // interface id for relays is mutually exclusive. Need to test for
+        // this condition.
+        if (!ifaceid.unspecified() && !iface.unspecified() && !ifaceid.empty() &&
+            !iface.empty()) {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "parser error: interface (defined for locally reachable "
+                      "subnets) and interface-id (defined for subnets reachable"
+                      " via relays) cannot be defined at the same time for "
+                      "shared network " << name << "("
+                      << shared_network_data->getPosition() << ")");
+        }
+
+        // Configure interface-id for remote interfaces, if defined
+        if (!ifaceid.unspecified() && !ifaceid.empty()) {
+            std::string ifaceid_value = ifaceid.get();
+            OptionBuffer tmp(ifaceid_value.begin(), ifaceid_value.end());
+            OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+            shared_network->setInterfaceId(opt);
+        }
+
+        // Get interface name. If it is defined, then the subnet is available
+        // directly over specified network interface.
+        if (!iface.unspecified() && !iface.empty()) {
+            shared_network->setIface(iface);
         }
 
         // Interface is an optional parameter
