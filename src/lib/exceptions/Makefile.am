@@ -6,7 +6,7 @@ AM_CXXFLAGS=$(KEA_CXXFLAGS)
 lib_LTLIBRARIES = libkea-exceptions.la
 
 libkea_exceptions_la_SOURCES = exceptions.h exceptions.cc
-libkea_exceptions_la_LDFLAGS = -no-undefined -version-info 0:1:0
+libkea_exceptions_la_LDFLAGS = -no-undefined -version-info 0:2:0
 
 CLEANFILES = *.gcno *.gcda
 
