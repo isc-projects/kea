@@ -83,12 +83,12 @@
         // deliver lease updates to the server as well as synchronize the
         // lease database after failure.
         {
-            "library": "/opt/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/opt/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
             // The HA hooks library should be loaded.
-            "library": "/opt/lib/hooks/libdhcp_ha.so",
+            "library": "/opt/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 // High Availability configuration is specified for the HA hook library.
                 // Each server should have the same HA configuration, except for the

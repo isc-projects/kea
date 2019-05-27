@@ -125,7 +125,7 @@
   "hooks-libraries": [
      {
         // Load the flex-id hook library.
-        "library": "/usr/local/lib/hooks/libdhcp_flex_id.so",
+        "library": "/usr/local/lib/kea/hooks/libdhcp_flex_id.so",
 
         "parameters": {
             // Take the ID from the AOP option.
@@ -141,11 +141,11 @@
          // Load the host cache hook library. It is needed by the RADIUS
          // library to keep the attributes from authorization to later user
          // for accounting.
-         "library": "/usr/local/lib/hooks/libdhcp_host_cache.so"
+         "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
      },
      {
          // Load the RADIUS hook library.
-         "library": "/usr/local/lib/hooks/libdhcp_radius.so",
+         "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
 
          "parameters": {
              // If do not use RFC 4361

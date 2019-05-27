@@ -41,7 +41,7 @@
 
   "hooks-libraries": [
   {
-      "library": "/usr/local/lib/hooks/libdhc_host_cache.so",
+      "library": "/usr/local/lib/kea/hooks/libdhc_host_cache.so",
       "parameters": {
 
           // Tells Kea to never cache more than 1000 hosts.

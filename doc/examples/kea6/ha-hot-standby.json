@@ -40,12 +40,12 @@
     // The latter implements high availability feature for Kea.
     "hooks-libraries": [
         {
-            "library": "/opt/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/opt/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
             // The HA hooks library should be loaded.
-            "library": "/opt/lib/hooks/libdhcp_ha.so",
+            "library": "/opt/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 // High Availability configuration is specified for the HA hook library.
                 // Each server should have the same HA configuration, except for the
@@ -148,4 +148,3 @@
 }
 
 }
-

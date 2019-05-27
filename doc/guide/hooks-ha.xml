@@ -420,11 +420,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
                     "this-server-name": "server1",
@@ -703,11 +703,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
 
@@ -790,11 +790,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
                     "this-server-name": "server1",
@@ -916,11 +916,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
                     "this-server-name": "server1",
@@ -1023,11 +1023,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
                     "this-server-name": "server1",
@@ -1118,11 +1118,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
                     "this-server-name": "server1",
@@ -1182,11 +1182,11 @@
 
     "hooks-libraries": [
         {
-            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
             "parameters": { }
         },
         {
-            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
             "parameters": {
                 "high-availability": [ {
                     "this-server-name": "server1",

@@ -55,7 +55,7 @@
           </listitem>
           <listitem>
             <simpara>
-              <filename>lib/hooks</filename> —
+              <filename>lib/kea/hooks</filename> —
               additional hooks libraries.
             </simpara>
           </listitem>

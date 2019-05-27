@@ -229,7 +229,7 @@ Package:
   Extended version:  &keaversion; (tarball)
   OS Family:         Linux
 
-  Hooks directory:   /usr/local/lib/hooks
+  Hooks directory:   /usr/local/lib/kea/hooks
   Premium hooks:     yes
   Included Hooks:    forensic_log flex_id host_cmds subnet_cmds radius host_cache
 
@@ -342,10 +342,10 @@ Please make sure that your compilation has the following:
   {
       // Note that RADIUS requires host-cache for proper operation,
       // so that library is loaded as well.
-      "library": "/usr/local/lib/hooks/libdhcp_host_cache.so"
+      "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
   },
   {
-      "library": "/usr/local/lib/hooks/libdhc_radius.so",
+      "library": "/usr/local/lib/kea/hooks/libdhc_radius.so",
       "parameters": {
 
           // Specify where FreeRADIUS dictionary could be located
@@ -499,7 +499,7 @@ Please make sure that your compilation has the following:
           <itemizedlist>
             <listitem><simpara><command>name</command> of the
             attribute.</simpara></listitem>
-            
+
             <listitem><simpara><command>type</command> of the attribute. Either the type
             or the name must be provided, and the attribute must be defined in the dictionary.</simpara></listitem>
 

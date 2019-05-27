@@ -235,7 +235,7 @@
         "hooks-libraries": [
             {
                 // Location of the hooks library to be loaded.
-                "library": "/opt/lib/hooks/libdhcp_lease_cmds.so",
+                "library": "/opt/lib/kea/hooks/libdhcp_lease_cmds.so",
 
                 // Hook library specific configuration parameters.
                 "parameters": { }

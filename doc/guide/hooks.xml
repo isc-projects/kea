@@ -178,20 +178,20 @@ $ <userinput>sudo make install</userinput>
       <para>
       The installation location of the hooks libraries depends whether you
       specified --prefix parameter to the configure script. If you did not,
-      the default location will be /usr/local/lib/hooks. You can verify the
+      the default location will be /usr/local/lib/kea/hooks. You can verify the
       libraries are installed properly with this command:
 <screen>
-$ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
-/usr/local/lib/hooks/libdhcp_class_cmds.so
-/usr/local/lib/hooks/libdhcp_flex_id.so
-/usr/local/lib/hooks/libdhcp_host_cmds.so
-/usr/local/lib/hooks/libdhcp_lease_cmds.so
-/usr/local/lib/hooks/libdhcp_legal_log.so
-/usr/local/lib/hooks/libdhcp_subnet_cmds.so
+$ <userinput>ls -l /usr/local/lib/kea/hooks/*.so</userinput>
+/usr/local/lib/kea/hooks/libdhcp_class_cmds.so
+/usr/local/lib/kea/hooks/libdhcp_flex_id.so
+/usr/local/lib/kea/hooks/libdhcp_host_cmds.so
+/usr/local/lib/kea/hooks/libdhcp_lease_cmds.so
+/usr/local/lib/kea/hooks/libdhcp_legal_log.so
+/usr/local/lib/kea/hooks/libdhcp_subnet_cmds.so
 </screen>
       The exact list you see will depend on the packages you have.
       If you specified directory via --prefix, the hooks libraries
-      will be located in {prefix directory}/lib/hooks.
+      will be located in {prefix directory}/lib/kea/hooks.
       </para>
     </section>
 
