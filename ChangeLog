@@ -9,7 +9,7 @@
 1585.	[build]		tmark
 	Files related to YANG and netconf are now only installed
 	when the build is configured with --with-syspro.
-	(Gitlab #584,!338, git 5e73959d234bda06aabd7a33a8c656b60319cc3d)
+	(Gitlab #584,!338, git )
 
 1584.	[doc]		marcin
 	Documented Kea Configuration Backend in the Kea Administrator
