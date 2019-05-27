@@ -1,3 +1,8 @@
+1584.	[doc]		marcin
+	Documented Kea Configuration Backend in the Kea Administrator
+	Reference Manual.
+	(Gitlab #71,!314, git 3a65b7a9104f2a988dacf1acc26312b4259e958d)
+
 1583.	[bug]		fdupont, marcin
 	Corrected a bug which caused failures to merge a subnet from the
 	Configuration Backend into the DHCP server's configuration
