@@ -114,6 +114,32 @@
         database. This limitation will be removed in Kea 1.6.0 final release.
       </simpara></listitem>
     </itemizedlist>
+
+    <note>
+      <para>
+        We strongly recommend to not duplicate the configuration information
+        in the file and the database. For example, when specifying subnets
+        for the DHCP server, please store them in the configuration backend
+        or in the configuration file, not in both places. Storing some subnets
+        in the database and other in the file may put you at risk of potential
+        configuration conflicts. Note that the configuration from the database
+        takes precedence over the configuration from the file, thus it is possible
+        that parts of the configuration specified in the file may be overriden.
+      </para>
+    </note>
+
+    <note>
+      <para>
+        It is recommended that <command>subnet_cmds</command> hooks library is
+        not used to manage the subnets when the configuration backend is used
+        as a source of information about the subnets. The
+        <command>subnet_cmds</command> hooks library modifies the local subnets
+        configuration (in the server's memory), not in the database. Use
+        the <command>cb_cmds</command> hooks library to manage the subnets
+        information in the database instead.
+      </para>
+    </note>
+
   </section>
 
   <section xml:id="cb-components">

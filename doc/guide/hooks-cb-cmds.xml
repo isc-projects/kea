@@ -351,7 +351,9 @@
           </screen>
             deletes the "level3" IPv6 shared network. The subnets are preserved
             but they are disassociated from the deleted shared network and become
-            global.
+            global. This behavior corresponds to the behavior of the
+            <command>network[46]-del</command> commands with respect to the
+            <command>subnets-action</command>.
           </para>
         </section>
 
@@ -597,6 +599,7 @@
           </para>
           <para>
             The following command retrieves the IPv6 "DNS Servers" (code 23) option:
+            <screen>
 {
     "command": remote-option6-global-get",
     "arguments": {
@@ -611,6 +614,7 @@
         }
     }
 }
+            </screen>
           </para>
         </section>
 

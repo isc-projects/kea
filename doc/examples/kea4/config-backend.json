@@ -54,14 +54,12 @@
         //,{
             // "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
         //}
-    ]
-},
+    ],
 
-// The following configures logging. It assumes that messages with at
-// least informational level (info, warn, error and fatal) should be
-// logged to stdout. Alternatively, you can specify stderr here, a filename
-// or 'syslog', which will store output messages via syslog.
-"Logging": {
+    // The following configures logging. It assumes that messages with at
+    // least informational level (info, warn, error and fatal) should be
+    // logged to stdout. Alternatively, you can specify stderr here, a filename
+    // or 'syslog', which will store output messages via syslog.
     "loggers": [
         {
             "name": "kea-dhcp4",
