@@ -20,6 +20,14 @@
     "cmd-comment": "The provided list must cotain exactly one option specification.",
     "resp-syntax": "{
     \"result\": 0,
-    \"text\": \"DHCPv6 option set.\"
+    \"text\": \"DHCPv6 option set.\",
+    \"arguments\": {
+        \"options\": [
+            {
+                \"code\": <option code>,
+                \"space\": <option space>
+            }
+        ]
+    }
 }"
 }
