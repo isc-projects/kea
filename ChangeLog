@@ -1,15 +1,10 @@
-1587.	[build]		razvan, marcin
+1586.	[build]		razvan, marcin
 	Bumped up libraries version numbers for Kea 1.6.0 beta release.
 	(Gitlab #617,!340, git c0434bf882b6ec483120e39f6b70b5a40fe7c711)
 
-1586.	[bug, func]		marcin
+1585.	[bug, func]		marcin
 	MySQL Configuration Backend supports DHCPv6 interface-id parameter.
 	(Gitlab #628,!341, git 3a07c636ba4c7fceabe59ec597c44a9c8e3367eb)
-
-1585.	[build]		tmark
-	Files related to YANG and netconf are now only installed
-	when the build is configured with --with-syspro.
-	(Gitlab #584,!338, git )
 
 1584.	[doc]		marcin
 	Documented Kea Configuration Backend in the Kea Administrator
@@ -26,6 +21,7 @@
 	Input values for DHCPv4 and DHCPv6 options of type 'string'
 	will now be trimmed of any trailing null bytes (0x0).
 	(Gitlab #539, !330, git b126558e9e39e9bff517dceac25a00e96d150085)
+
 
 1581.	[bug]		marcin
 	Corrected a bug whereby the DHCPv6 server did not take into

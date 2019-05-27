@@ -6,12 +6,7 @@ SUBDIRS = . tests
 # setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
 KEA_CONFIGFILES = kea-dhcp4.conf kea-dhcp6.conf kea-dhcp-ddns.conf \
-                  kea-ctrl-agent.conf
-
-if HAVE_SYSREPO
-KEA_CONFIGFILES += kea-netconf.conf
-endif
-
+                  kea-ctrl-agent.conf kea-netconf.conf
 CONFIGFILES = keactrl.conf $(KEA_CONFIGFILES)
 
 man_MANS = keactrl.8
@@ -21,10 +16,6 @@ EXTRA_DIST = keactrl.in keactrl.conf.in kea-dhcp4.conf.pre \
              kea-dhcp6.conf.pre kea-dhcp-ddns.conf.pre \
              kea-ctrl-agent.conf.pre kea-netconf.conf.pre \
              $(man_MANS) keactrl.xml
-
-if HAVE_SYSREPO
-EXTRA_DIST += kea-netconf.conf.pre
-endif
 
 # *.conf files are not really sources used for building other targets, but we need
 # these files to be generated before make install is called.
@@ -60,11 +51,9 @@ kea-ctrl-agent.conf: kea-ctrl-agent.conf.pre
 	$(top_builddir)/tools/path_replacer.sh \
     $(top_srcdir)/src/bin/keactrl/kea-ctrl-agent.conf.pre $@
 
-if HAVE_SYSREPO
 kea-netconf.conf: kea-netconf.conf.pre
 	$(top_builddir)/tools/path_replacer.sh \
     $(top_srcdir)/src/bin/keactrl/kea-netconf.conf.pre $@
-endif
 
 if INSTALL_CONFIGURATIONS
 
