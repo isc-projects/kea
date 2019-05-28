@@ -92,9 +92,27 @@ description of the host found.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv4 subnet. The argument specifies subnet id.
 
+% HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT using IPv4 subnet %1, found %2 host(s)
+This debug message include the details of the host found using the DHCPv4
+subnet id. The arguments specify subnet id and the number of hosts found
+respectively.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST using IPv4 subnet %1, found host: %2
+This debug message includes the details of the host found using the DHCPv4
+subnet id. The arguments specify subnet id and found host details respectively.
+
 % HOSTS_CFG_GET_ALL_SUBNET_ID6 get all hosts with reservations for IPv6 subnet %1
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv6 subnet. The argument specifies subnet id.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT using IPv6 subnet %1, found %2 host(s)
+This debug message include the details of the host found using the DHCPv6
+subnet id. The arguments specify subnet id and the number of hosts found
+respectively.
+
+% HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST using IPv6 subnet %1, found host: %2
+This debug message includes the details of the host found using the DHCPv6
+subnet id. The arguments specify subnet id and found host details respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6 get all hosts with reservations for subnet id %1 and IPv6 address %2
 This debug message is issued when starting to retrieve all hosts connected to
@@ -111,24 +129,6 @@ This debug message includes the details of the host found using the
 subnet id and address. The arguments specify subnet id, address and
 the number of hosts found respectively.
 found host details respectively.
-
-% HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT using IPv4 subnet %1, found %2 host(s)
-This debug message include the details of the host found using the DHCPv4
-subnet id. The arguments specify subnet id and the number of hosts found
-respectively.
-
-% HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT using IPv6 subnet %1, found %2 host(s)
-This debug message include the details of the host found using the DHCPv6
-subnet id. The arguments specify subnet id and the number of hosts found
-respectively.
-
-% HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST using IPv4 subnet %1, found host: %2
-This debug message includes the details of the host found using the DHCPv4
-subnet id. The arguments specify subnet id and found host details respectively.
-
-% HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST using IPv6 subnet %1, found host: %2
-This debug message includes the details of the host found using the DHCPv6
-subnet id. The arguments specify subnet id and found host details respectively.
 
 % HOSTS_CFG_GET_ONE_PREFIX get one host with reservation for prefix %1/%2
 This debug message is issued when starting to retrieve a host having a

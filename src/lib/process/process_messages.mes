@@ -49,13 +49,13 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
-% DCTL_CONFIG_FETCH Fetching configuration data from config backends.
-This is an informational message emitted when the Kea server is about to begin
-retrieving configuration data from one or more configuration backends.
-
 % DCTL_CONFIG_DEPRECATED server configuration includes a deprecated object: %1
 This warning message is issued when the configuration includes a deprecated
 object (i.e. a top level element) which will be ignored.
+
+% DCTL_CONFIG_FETCH Fetching configuration data from config backends.
+This is an informational message emitted when the Kea server is about to begin
+retrieving configuration data from one or more configuration backends.
 
 % DCTL_CONFIG_FILE_LOAD_FAIL %1 reason: %2
 This fatal error message indicates that the application attempted to load its
