@@ -405,7 +405,7 @@
             ]
             // You can add more subnets there.
         }
-    ]
+    ],
 
     // There are many, many more parameters that DHCPv4 server is able to use.
     // They were not added here to not overwhelm people with too much

@@ -327,7 +327,7 @@
         //          "subnet": "2001:db8:4::/64",
         //          "pools": [ { "pool": "2001:db8:4::/80" } ]
         //      }
-    ]
+    ],
 
     // Client-classes can be defined here. See "client-classes" in Dhcp4 for
     // an example.
