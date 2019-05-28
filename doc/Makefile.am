@@ -66,6 +66,7 @@ nobase_dist_doc_DATA += examples/kea6/shared-network.json
 nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
+nobase_dist_doc_DATA += examples/kea6/tee-times.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-config.xml
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-schema.xml
