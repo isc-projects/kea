@@ -49,7 +49,7 @@ Kea 1.6.0-beta released on May 29, 2019
 	deprecated.  Kea 1.6 will accept it, but that capability will be
 	removed in the future. Please migrate your configuration to new
 	syntax.
-	(Gitlan #208,!196, git 37b8ec6c2c4b64681059f8fad26d112adbb7ee2b)
+	(Gitlab #208,!196, git 37b8ec6c2c4b64681059f8fad26d112adbb7ee2b)
 
 1577.	[func]		razvan
 	Implemented host reservations page retrieval for Cassandra.
