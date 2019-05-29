@@ -1,10 +1,14 @@
+1587.	[bug]		razvan
+	Fixed mysql_cb subnet pd_pools retrieval query by sorting data.
+	(Gitlab #637,!349, git 483273734e8608ed68624d7a868f20672c859c95)
+
 Kea 1.6.0-beta released on May 29, 2019
 
 1586.	[build]		razvan, marcin
 	Bumped up libraries version numbers for Kea 1.6.0 beta release.
 	(Gitlab #617,!340, git c0434bf882b6ec483120e39f6b70b5a40fe7c711)
 
-1585.	[bug, func]		marcin
+1585.	[bug, func]	marcin
 	MySQL Configuration Backend supports DHCPv6 interface-id parameter.
 	(Gitlab #628,!341, git 3a07c636ba4c7fceabe59ec597c44a9c8e3367eb)
 
