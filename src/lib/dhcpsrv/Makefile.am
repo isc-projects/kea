@@ -103,6 +103,7 @@ libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_exceptions.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
+libkea_dhcpsrv_la_SOURCES += fuzz.cc fuzz.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_data_source_factory.cc host_data_source_factory.h
