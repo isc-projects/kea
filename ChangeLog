@@ -1,5 +1,6 @@
 1587.	[bug]		razvan
-	Fixed mysql_cb subnet pd_pools retrieval query by sorting data.
+	Fixed IPv6 prefix delegation pools retrieval from the MySQL
+	Configuration Backend.
 	(Gitlab #637,!349, git 483273734e8608ed68624d7a868f20672c859c95)
 
 Kea 1.6.0-beta released on May 29, 2019
