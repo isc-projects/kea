@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = . testutils tests benchmarks
 
-dhcp_data_dir = @localstatedir@/@PACKAGE@
+dhcp_data_dir = @localstatedir@/lib/@PACKAGE@
 kea_lfc_location = @prefix@/sbin/kea-lfc
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""

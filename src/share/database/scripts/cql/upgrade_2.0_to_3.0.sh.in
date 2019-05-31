@@ -10,10 +10,10 @@ else
 fi
 
 # Need a path for temporary files created during upgrade data migration
-# Use the state directory in the  install path directory if it exists, otherwise
+# Use the state directory in the install path directory if it exists, otherwise
 # use the build tree
-if [ -e "@localstatedir@/@PACKAGE_NAME@" ]; then
-    temp_file_dir="@localstatedir@/@PACKAGE_NAME@"
+if [ -e "@localstatedir@/lib/@PACKAGE_NAME@" ]; then
+    temp_file_dir="@localstatedir@/lib/@PACKAGE_NAME@"
 else
     temp_file_dir="@abs_top_builddir@/src/share/database/scripts/cql"
 fi
