@@ -107,9 +107,9 @@ This is an error message that occurs when the server is unable to create
 its PID file.  The log message should contain details sufficient to
 determine the underlying cause.  The most likely culprits are that
 some portion of the pathname does not exist or a permissions issue. The
-default path is determined by --localstatedir configure parameter but
-may be overridden by setting environment variable, KEA_PIDFILE_DIR.  The
-first argument is the process name.
+default path is determined by --localstatedir or --runstatedir configure
+parameters but may be overridden by setting environment variable,
+KEA_PIDFILE_DIR.  The first argument is the process name.
 
 % DCTL_PROCESS_FAILED %1 application execution failed: %2
 The controller has encountered a fatal error while running the

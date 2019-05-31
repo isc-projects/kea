@@ -99,9 +99,9 @@ get_pid_from_file() {
     local conf_name
     conf_name=$(basename -- "${kea_config_file}" | cut -f1 -d'.')
 
-    # Default the directory to --localstatedir
+    # Default the directory to --localstatedir / run
     local pid_file_dir
-    pid_file_dir=@localstatedir@/@PACKAGE@
+    pid_file_dir=@runstatedir@/@PACKAGE@
 
     # Use directory override if set (primarily for testing only)
     if [ -n "$KEA_PIDFILE_DIR" ]; then
@@ -333,7 +333,7 @@ run_conditional() {
 # to the default file.
 if [ -z "${KEA_LOGGER_DESTINATION}" ]; then
     prefix=@prefix@
-    export KEA_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
+    export KEA_LOGGER_DESTINATION=@localstatedir@/log/kea.log
 fi
 
 command=${1}

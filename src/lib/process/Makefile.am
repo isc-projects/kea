@@ -1,5 +1,5 @@
 SUBDIRS = . testutils tests
-dhcp_data_dir = @localstatedir@/@PACKAGE@
+dhcp_data_dir = @runstatedir@/@PACKAGE@
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
 

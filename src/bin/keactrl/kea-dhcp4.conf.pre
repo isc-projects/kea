@@ -252,7 +252,7 @@
     //      // of all devices serviced by Kea, including their identifiers
     //      // (like MAC address), their location in the network, times
     //      // when they were active etc.
-    //      "library": "@localstatedir@/kea/libdhcp_legal_log.so"
+    //      "library": "@libdir@/kea/hooks/libdhcp_legal_log.so"
     //      "parameters": {
     //          "path": "/var/kea/var",
     //          "base-name": "kea-forensic4"
@@ -269,7 +269,7 @@
     //      // of specific options or perhaps even a combination of several
     //      // options and fields to uniquely identify a client. Those scenarios
     //      // are addressed by the Flexible Identifiers hook application.
-    //      "library": "@localstatedir@/kea/libdhcp_flex_id.so",
+    //      "library": "@libdir@/kea/hooks/libdhcp_flex_id.so",
     //      "parameters": {
     //          "identifier-expression": "substring(relay6[0].option[18],0,8)"
     //      }

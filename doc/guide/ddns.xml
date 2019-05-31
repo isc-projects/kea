@@ -174,12 +174,12 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 
       <para>
         During startup the server will attempt to create a PID file of the
-        form: [localstatedir]/[conf name].kea-dhcp-ddns.pid
+        form: [runstatedir]/[conf name].kea-dhcp-ddns.pid
         where:
         <itemizedlist>
             <listitem>
-            <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script; it defaults to "/usr/local/var". Note
+            <simpara><command>runstatedir</command>: The value as passed into the
+            build configure script; it defaults to "/usr/local/var/run". Note
             that this value may be overridden at runtime by setting the environment
             variable KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
             </simpara>
