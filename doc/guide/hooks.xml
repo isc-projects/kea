@@ -1039,7 +1039,7 @@ Examples:
         {
             "library": "/usr/local/lib/libdhcp_legal_log.so",
             "parameters": {
-                "path": "/var/kea/var",
+                "path": "/var/lib/kea/log",
                 "base-name": "kea-forensic4"
             }
         },
@@ -1056,7 +1056,7 @@ Examples:
         {
             "library": "/usr/local/lib/libdhcp_legal_log.so",
             "parameters": {
-                "path": "/var/kea/var",
+                "path": "/var/lib/kea/log",
                 "base-name": "kea-forensic6"
             }
         },

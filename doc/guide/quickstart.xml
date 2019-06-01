@@ -96,10 +96,10 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <screen># <userinput>keactrl status</userinput></screen>
           A server status of "inactive" may indicate a configuration
           error. Please check the log file (by default named
-          <filename>[kea-install-dir]/var/kea/kea-dhcp4.log</filename>,
-          <filename>[kea-install-dir]/var/kea/kea-dhcp6.log</filename>,
-          <filename>[kea-install-dir]/var/kea/kea-ddns.log</filename> or
-          <filename>[kea-install-dir]/var/kea/kea-ctrl-agent.log</filename>) 
+          <filename>[kea-install-dir]/var/log/kea-dhcp4.log</filename>,
+          <filename>[kea-install-dir]/var/log/kea-dhcp6.log</filename>,
+          <filename>[kea-install-dir]/var/log/kea-ddns.log</filename> or
+          <filename>[kea-install-dir]/var/log/kea-ctrl-agent.log</filename>) 
           for the details of the error.
           </para>
         </listitem>

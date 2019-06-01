@@ -210,11 +210,11 @@ INFO/keactrl: Starting kea-netconf -c /usr/local/etc/kea/kea-netconf.conf -d
       output will look similar to the following:
 <screen>
 <userinput>$ keactrl start</userinput>
-INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/local/var/kea/kea.kea-dhcp4.pid.
-INFO/keactrl: kea-dhcp6 appears to be running, see: PID 10924, PID file: /usr/local/var/kea/kea.kea-dhcp6.pid.
-INFO/keactrl: kea-dhcp-ddns appears to be running, see: PID 10930, PID file: /usr/local/var/kea/kea.kea-dhcp-ddns.pid.
-INFO/keactrl: kea-ctrl-agent appears to be running, see: PID 10931, PID file: /usr/local/var/kea/kea.kea-ctrl-agent.pid.
-INFO/keactrl: kea-netconf appears to be running, see: PID 10123, PID file: /usr/local/var/kea/kea.kea-netconf.pid.
+INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/local/var/run/kea/kea.kea-dhcp4.pid.
+INFO/keactrl: kea-dhcp6 appears to be running, see: PID 10924, PID file: /usr/local/var/run/kea/kea.kea-dhcp6.pid.
+INFO/keactrl: kea-dhcp-ddns appears to be running, see: PID 10930, PID file: /usr/local/var/run/kea/kea.kea-dhcp-ddns.pid.
+INFO/keactrl: kea-ctrl-agent appears to be running, see: PID 10931, PID file: /usr/local/var/run/kea/kea.kea-ctrl-agent.pid.
+INFO/keactrl: kea-netconf appears to be running, see: PID 10123, PID file: /usr/local/var/run/kea/kea.kea-netconf.pid.
 </screen>
       During normal shutdowns these PID files are deleted. They may, however,
       be left over as remnants following a system crash. It is possible,

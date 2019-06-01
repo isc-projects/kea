@@ -79,8 +79,20 @@
           </listitem>
           <listitem>
             <simpara>
-              <filename>var/kea/</filename> —
-              server identification, lease databases, and log files.
+              <filename>var/lib/kea/</filename> —
+              server identification, and lease databases files.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>var/log/</filename> —
+              log files.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>var/run/kea/</filename> —
+              pid and logger lock files.
             </simpara>
           </listitem>
         </itemizedlist>
@@ -178,7 +190,7 @@ Debian and Ubuntu:
         <listitem>
         <para>
           The cpp-driver from DataStax is needed when using the --with-cql
-	  configuration flag to build Kea with the Cassandra database backend.
+          configuration flag to build Kea with the Cassandra database backend.
           In this case, an instance of the Cassandra server running locally
           or on some other machine, reachable over the network from the
           machine running Kea, is required. Note that running the unit
@@ -408,6 +420,35 @@ Debian and Ubuntu:
           </varlistentry>
 
           </variablelist>
+          <note>
+            <para>
+              The <option>--runstatedir</option> in the installation
+              directories is particular: there are three cases:
+              <orderedlist>
+                 <listitem>
+                    <simpara>You use autoconf 2.70 or greater which supports
+                    this but this autoconf version has not been currently
+                    released.
+                    </simpara>
+                 </listitem>
+                 <listitem>
+                    <simpara>You use autoconf 2.69 patched to add support of
+                    this. In this case and the previous simply use when needed
+                    the <option>--runstatedir</option> configure parameter.
+                    </simpara>
+                 </listitem>
+                 <listitem>
+                    <simpara>There is no support (the configure parameter is
+                    not recognized and configure directly raises an error).
+                    For autoconf 2.69 the <option>runstatedir</option>
+                    environment variable is supported so simply remove the
+                    <command>--</command> before <option>runstatedir</option>
+                    in the configure script call.
+                    </simpara>
+                 </listitem>
+               </orderedlist>
+            </para>
+          </note>
           <note>
             <para>
               For instructions concerning the installation and configuration

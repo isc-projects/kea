@@ -1528,10 +1528,12 @@ AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 # Autoconf 2.70 has runstatedir but is not yet released.
+m4_version_prereq([2.70], [], [dnl
+    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])dnl
+    AC_SUBST(runstatedir)dnl
+])
 if test "x$runstatedir" = "x"; then
-    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])
     runstatedir="$localstatedir/run"
-    AC_SUBST(runstatedir)
 fi
 
 AC_CONFIG_FILES([Makefile

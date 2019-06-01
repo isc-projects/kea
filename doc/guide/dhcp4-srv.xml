@@ -96,7 +96,7 @@
 
       <para>
         During startup, the server will attempt to create a PID file of the
-        form: [runstatedir]/[conf name].kea-dhcp4.pid where:
+        form: [runstatedir]/kea/[conf name].kea-dhcp4.pid where:
         <itemizedlist>
             <listitem>
             <simpara><command>runstatedir</command>: The value as passed into the
@@ -155,7 +155,7 @@
     "lease-database": {
         "type": "memfile",
         "persist": true,
-        "name": "/var/kea/dhcp4.leases"
+        "name": "/var/lib/kea/dhcp4.leases"
     },
 
 # Finally, we list the subnets from which we will be leasing addresses.
@@ -351,7 +351,7 @@ global and Dhcp4, hence we need two closing curly brackets to close them.
     <listitem>
       <simpara><command>name</command>: specifies an absolute location of the lease
       file in which new leases and lease updates will be recorded. The default value
-      for this parameter is <userinput>"[kea-install-dir]/var/kea/kea-leases4.csv"
+      for this parameter is <userinput>"[kea-install-dir]/var/lib/kea/kea-leases4.csv"
       </userinput>.</simpara>
     </listitem>
 
