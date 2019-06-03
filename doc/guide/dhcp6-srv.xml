@@ -829,6 +829,32 @@ temporarily override a list of interface names and listen on all interfaces.
       id -->
     </section>
 
+    <section xml:id="ipv6-subnet-prefix">
+       <title>IPv6 Subnet Prefix</title>
+       <para>
+        The subnet prefix is the second way to identify a subnet. It does not
+        need to have the address part to match the prefix length, for instance
+        this configuration is accepted:
+
+    <screen>
+"Dhcp6": {
+    "subnet6": [
+        {
+            <userinput>"subnet": "2001:db8:1::1/64"</userinput>,
+            ...
+        }
+    ]
+}
+</screen>
+         Even there is another subnet with the "2001:db8:1::/64" prefix:
+         only the textual form of subnets are compared to avoid duplicates.
+        </para>
+        <note>
+          Abuse of this feature can lead to incorrect subnet selection
+          (see <xref linkend="dhcp6-config-subnets"/>).
+        </note>
+    </section>
+
     <section xml:id="dhcp6-unicast">
       <title>Unicast Traffic Support</title>
       <para>

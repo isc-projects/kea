@@ -910,11 +910,14 @@ TEST(CfgSubnets4Test, duplication) {
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.1"), 26, 1, 2, 3, 125));
 
     ASSERT_NO_THROW(cfg.add(subnet1));
     EXPECT_NO_THROW(cfg.add(subnet2));
     // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
     EXPECT_THROW(cfg.add(subnet3), isc::dhcp::DuplicateSubnetID);
+    // Subnet 4 has a similar but different subnet as subnet 1.
+    EXPECT_NO_THROW(cfg.add(subnet4));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the IPv6 address.

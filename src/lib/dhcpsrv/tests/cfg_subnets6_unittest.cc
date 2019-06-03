@@ -588,11 +588,14 @@ TEST(CfgSubnets6Test, duplication) {
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4, 123));
     Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4, 124));
     Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4, 123));
+    Subnet6Ptr subnet4(new Subnet6(IOAddress("2000::1"), 48, 1, 2, 3, 4, 125));
 
     ASSERT_NO_THROW(cfg.add(subnet1));
     EXPECT_NO_THROW(cfg.add(subnet2));
     // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
     EXPECT_THROW(cfg.add(subnet3), isc::dhcp::DuplicateSubnetID);
+    // Subnet 4 has a similar but different subnet as subnet 1.
+    EXPECT_NO_THROW(cfg.add(subnet4));
 }
 
 // This test check if IPv6 subnets can be unparsed in a predictable way,

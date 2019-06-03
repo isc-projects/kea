@@ -1084,6 +1084,32 @@ temporarily override a list of interface names and listen on all interfaces.
       id -->
 </section>
 
+<section xml:id="ipv4-subnet-prefix">
+  <title>IPv4 Subnet Prefix</title>
+  <para>
+    The subnet prefix is the second way to identify a subnet. It does not
+    need to have the address part to match the prefix length, for instance
+    this configuration is accepted:
+
+    <screen>
+"Dhcp4": {
+    "subnet4": [
+        {
+            <userinput>"subnet": "192.0.2.1/24"</userinput>,
+            ...
+        }
+    ]
+}
+</screen>
+    Even there is another subnet with the "192.0.2.0/24" prefix: only the
+    textual form of subnets are compared to avoid duplicates.
+    </para>
+    <note>
+       Abuse of this feature can lead to incorrect subnet selection
+       (see <xref linkend="dhcp4-subnet-selection"/>).
+    </note>
+</section>
+
 <section xml:id="dhcp4-address-config">
   <title>Configuration of IPv4 Address Pools</title>
   <para>
