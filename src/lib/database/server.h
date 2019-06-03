@@ -28,15 +28,13 @@ typedef boost::shared_ptr<Server> ServerPtr;
 ///
 /// This class extends the base class with the server description field.
 class Server : public data::StampedElement {
-private:
+public:
 
-    /// @brief Private constructor.
+    /// @brief Constructor.
     ///
     /// @param tag server tag.
     /// @param server description.
     Server(const data::ServerTag& tag, const std::string& description);
-
-public:
 
     /// @brief Factory function to be used to create an instance of the
     /// @c Server object.

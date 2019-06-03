@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <database/server.h>
+#include <database/server_collection.h>
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 #include <string>
@@ -16,6 +16,7 @@ using namespace isc::db;
 
 namespace {
 
+// Tests the constructor of the Server.
 TEST(ServerTest, constructor) {
     ServerPtr server;
 
@@ -27,9 +28,36 @@ TEST(ServerTest, constructor) {
     EXPECT_EQ("my first server", server->getDescription());
 }
 
+// Tests that too long description is rejected.
 TEST(ServerTest, tooLongDescription) {
     EXPECT_THROW(Server::create(ServerTag("xyz"), std::string(65537, 'c')),
                  BadValue);
+}
+
+// Tests that it is possible to fetch server by tag fromn the collection.
+TEST(ServerFetcherTest, getByTag) {
+    ServerCollection servers;
+    servers.insert(Server::create(ServerTag("alpha"), "alpha description"));
+    servers.insert(Server::create(ServerTag("beta"), "beta description"));
+    servers.insert(Server::create(ServerTag("gamma"), "gamma description"));
+
+    auto alpha = ServerFetcher::get(servers, ServerTag("alpha"));
+    ASSERT_TRUE(alpha);
+    EXPECT_EQ("alpha", alpha->getServerTag());
+    EXPECT_EQ("alpha description", alpha->getDescription());
+
+    auto beta = ServerFetcher::get(servers, ServerTag("beta"));
+    ASSERT_TRUE(beta);
+    EXPECT_EQ("beta", beta->getServerTag());
+    EXPECT_EQ("beta description", beta->getDescription());
+
+    auto gamma = ServerFetcher::get(servers, ServerTag("gamma"));
+    ASSERT_TRUE(gamma);
+    EXPECT_EQ("gamma", gamma->getServerTag());
+    EXPECT_EQ("gamma description", gamma->getDescription());
+
+    // Null pointer should be returned when a given server does not exist.
+    EXPECT_FALSE(ServerFetcher::get(servers, ServerTag("non-existent")));
 }
 
 }
