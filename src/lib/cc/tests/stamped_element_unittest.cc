@@ -23,8 +23,8 @@ TEST(StampedElementTest, create) {
     // Default identifier is 0.
     EXPECT_EQ(0, element.getId());
 
-    // Default server tag is empty.
-    EXPECT_TRUE(element.getServerTag().empty());
+    // Default server tag is 'all'.
+    EXPECT_EQ(ServerTag::ALL, element.getServerTag());
 
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.

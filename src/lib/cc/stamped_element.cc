@@ -23,6 +23,16 @@ StampedElement::updateModificationTime() {
     setModificationTime(boost::posix_time::second_clock::local_time());
 }
 
+std::string
+StampedElement:: getServerTag() const {
+    return (server_tag_.get());
+}
+
+bool
+StampedElement::allServers() const {
+    return (server_tag_.amAll());
+}
+
 ElementPtr
 StampedElement::getMetadata() const {
     ElementPtr metadata = Element::createMap();

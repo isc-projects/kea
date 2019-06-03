@@ -18,6 +18,7 @@ libkea_database_la_SOURCES += dbaccess_parser.h dbaccess_parser.cc
 libkea_database_la_SOURCES += db_exceptions.h
 libkea_database_la_SOURCES += db_log.cc db_log.h
 libkea_database_la_SOURCES += db_messages.cc db_messages.h
+libkea_database_la_SOURCES += server.cc server.h
 libkea_database_la_SOURCES += server_selector.h
 
 libkea_database_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
@@ -73,4 +74,5 @@ libkea_database_include_HEADERS = \
 	db_exceptions.h \
 	db_log.h \
 	db_messages.h \
+	server.h \
 	server_selector.h

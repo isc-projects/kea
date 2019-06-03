@@ -8,7 +8,9 @@
 #define STAMPED_ELEMENT_H
 
 #include <cc/data.h>
+#include <cc/server_tag.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <cstdint>
 #include <string>
 
@@ -69,15 +71,22 @@ public:
 
     /// @brief Sets new server tag.
     ///
-    /// @param server_tag
+    /// @param server_tag new server tag.
+    /// @throw BadValue if the server tag length exceeds 256 characters.
     void setServerTag(const std::string& server_tag) {
-        server_tag_ = server_tag;
+        server_tag_ = ServerTag(server_tag);
     }
 
     /// @brief Returns server tag.
-    std::string getServerTag() const {
-        return (server_tag_);
-    }
+    ///
+    /// @return Server tag as string.
+    std::string getServerTag() const;
+
+    /// @brief Checks if the stamped element is for all servers.
+    ///
+    /// @return true if the stamped element is associated with all servers,
+    /// false otherwise.
+    bool allServers() const;
 
     /// @brief Returns an object representing metadata to be returned
     /// with objects from the configuration backend.
@@ -97,7 +106,7 @@ private:
     boost::posix_time::ptime timestamp_;
 
     /// @brief Holds server tag.
-    std::string server_tag_;
+    ServerTag server_tag_;
 };
 
 } // end of namespace isc::data
