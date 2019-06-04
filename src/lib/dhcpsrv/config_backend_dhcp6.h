@@ -10,6 +10,8 @@
 #include <cc/stamped_value.h>
 #include <config_backend/base_config_backend.h>
 #include <database/audit_entry.h>
+#include <database/server.h>
+#include <database/server_collection.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
@@ -197,6 +199,20 @@ public:
     getRecentAuditEntries(const db::ServerSelector& server_selector,
                           const boost::posix_time::ptime& modification_time) const = 0;
 
+    /// @brief Retrieves all servers.
+    ///
+    /// @return Collection of servers from the backend.
+    virtual db::ServerCollection
+    getAllServers6() const = 0;
+
+    /// @brief Retrieves a server.
+    ///
+    /// @param server_tag Tag of the server to be retrieved.
+    /// @return Pointer to the server instance or null pointer if no server
+    /// with the particular tag was found.
+    virtual db::ServerPtr
+    getServer6(const data::ServerTag& server_tag) const = 0;
+
     /// @brief Creates or updates a subnet.
     ///
     /// @param server_selector Server selector.
@@ -285,6 +301,12 @@ public:
     virtual void
     createUpdateGlobalParameter6(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value) = 0;
+
+    /// @brief Creates or updates a server.
+    ///
+    /// @param server Instance of the server to be stored.
+    virtual void
+    createUpdateServer6(const db::ServerPtr& server) = 0;
 
     /// @brief Deletes subnet by prefix.
     ///
@@ -437,6 +459,20 @@ public:
     /// @return Number of deleted global parameters.
     virtual uint64_t
     deleteAllGlobalParameters6(const db::ServerSelector& server_selector) = 0;
+
+    /// @brief Deletes a server from the backend.
+    ///
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteServer6(const std::string& server_tag) = 0;
+
+    /// @brief Deletes all servers from the backend except the logical
+    /// server 'all'.
+    ///
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteAllServers6() = 0;
 };
 
 /// @brief Shared pointer to the @c ConfigBackendDHCPv6 instance.

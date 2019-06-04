@@ -217,6 +217,18 @@ TestConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector&,
     return (AuditEntryCollection());
 }
 
+ServerCollection
+TestConfigBackendDHCPv4::getAllServers4() const {
+    return (servers_);
+}
+
+ServerPtr
+TestConfigBackendDHCPv4::getServer4(const ServerTag& server_tag) const {
+    const auto& index = servers_.get<ServerTagIndexTag>();
+    auto server_it = index.find(server_tag.get());
+    return ((server_it != index.cend()) ? (*server_it) : ServerPtr());
+}
+
 void
 TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& server_selector,
                                              const Subnet4Ptr& subnet) {
@@ -349,6 +361,19 @@ TestConfigBackendDHCPv4::createUpdateGlobalParameter4(const db::ServerSelector& 
 
     } else {
         index.insert(value);
+    }
+}
+
+void
+TestConfigBackendDHCPv4::createUpdateServer4(const db::ServerPtr& server) {
+    auto& index = servers_.get<ServerTagIndexTag>();
+    auto server_it = index.find(server->getServerTag());
+
+    if (server_it != index.end()) {
+        index.replace(server_it, server);
+
+    } else {
+        index.insert(server);
     }
 }
 
@@ -522,6 +547,19 @@ TestConfigBackendDHCPv4::deleteAllGlobalParameters4(const db::ServerSelector& /*
     auto globals_size = globals_.size();
     globals_.clear();
     return (globals_size);
+}
+
+uint64_t
+TestConfigBackendDHCPv4::deleteServer4(const std::string& server_tag) {
+    auto& index = servers_.get<ServerTagIndexTag>();
+    return (index.erase(server_tag));
+}
+
+uint64_t
+TestConfigBackendDHCPv4::deleteAllServers4() {
+    auto servers_size = servers_.size();
+    servers_.clear();
+    return (servers_size);
 }
 
 } // namespace test

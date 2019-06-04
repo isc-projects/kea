@@ -212,6 +212,24 @@ getRecentAuditEntries(const db::BackendSelector& backend_selector,
     return (audit_entries);
 }
 
+ServerCollection
+ConfigBackendPoolDHCPv6::getAllServers6(const BackendSelector& backend_selector) const {
+    ServerCollection servers;
+    getAllBackendPropertiesConst<ServerCollection>
+        (&ConfigBackendDHCPv6::getAllServers6, backend_selector, servers);
+    return (servers);
+}
+
+ServerPtr
+ConfigBackendPoolDHCPv6::getServer6(const BackendSelector& backend_selector,
+                                    const ServerTag& server_tag) const {
+    ServerPtr server;
+    getBackendPropertyPtrConst<ServerPtr, const ServerTag&>
+        (&ConfigBackendDHCPv6::getServer6, backend_selector, server,
+         server_tag);
+    return (server);
+}
+
 void
 ConfigBackendPoolDHCPv6::createUpdateSubnet6(const BackendSelector& backend_selector,
                                              const ServerSelector& server_selector,
@@ -300,6 +318,14 @@ ConfigBackendPoolDHCPv6::createUpdateGlobalParameter6(const BackendSelector& bac
     createUpdateDeleteProperty<void, const StampedValuePtr&>
         (&ConfigBackendDHCPv6::createUpdateGlobalParameter6, backend_selector,
          server_selector, value);
+}
+
+void
+ConfigBackendPoolDHCPv6::createUpdateServer6(const BackendSelector& backend_selector,
+                                             const ServerPtr& server) {
+    createUpdateDeleteBackendProperty<void, const ServerPtr&>
+        (&ConfigBackendDHCPv6::createUpdateServer6, backend_selector,
+         server);
 }
 
 uint64_t
@@ -445,6 +471,19 @@ ConfigBackendPoolDHCPv6::deleteAllGlobalParameters6(const BackendSelector& backe
              server_selector));
 }
 
+uint64_t
+ConfigBackendPoolDHCPv6::deleteServer6(const BackendSelector& backend_selector,
+                                       const std::string& server_tag) {
+    return (createUpdateDeleteBackendProperty<uint64_t>
+            (&ConfigBackendDHCPv6::deleteServer6, backend_selector,
+             server_tag));
+}
+
+uint64_t
+ConfigBackendPoolDHCPv6::deleteAllServers6(const BackendSelector& backend_selector) {
+    return (createUpdateDeleteBackendProperty<uint64_t>
+            (&ConfigBackendDHCPv6::deleteAllServers6, backend_selector));
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

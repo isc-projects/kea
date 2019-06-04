@@ -231,6 +231,23 @@ public:
                           const db::ServerSelector& server_selector,
                           const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves all servers from the particular backend.
+    ///
+    /// @param backend_selector Backend selector.
+    /// @return Collection of servers from the backend.
+    virtual db::ServerCollection
+    getAllServers6(const db::BackendSelector& backend_selector) const;
+
+    /// @brief Retrieves a server from the particular backend.
+    ///
+    /// @param backend_selector Backend selector.
+    /// @param server_tag Tag of the server to be retrieved.
+    /// @return Pointer to the server instance or null pointer if no server
+    /// with the particular tag was found.
+    virtual db::ServerPtr
+    getServer6(const db::BackendSelector& backend_selector,
+               const data::ServerTag& server_tag) const;
+
     /// @brief Creates or updates a subnet.
     ///
     /// @param backend_selector Backend selector.
@@ -337,6 +354,14 @@ public:
     createUpdateGlobalParameter6(const db::BackendSelector& backend_selector,
                                  const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
+
+    /// @brief Creates or updates a server.
+    ///
+    /// @param backend_selector Backend selector.
+    /// @param server Instance of the server to be stored.
+    virtual void
+    createUpdateServer6(const db::BackendSelector& backend_selector,
+                        const db::ServerPtr& server);
 
     /// @brief Deletes subnet by prefix.
     ///
@@ -523,6 +548,23 @@ public:
     virtual uint64_t
     deleteAllGlobalParameters6(const db::BackendSelector& backend_selector,
                                const db::ServerSelector& server_selector);
+
+    /// @brief Deletes a server from the backend.
+    ///
+    /// @param backend_selector Backend selector.
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteServer6(const db::BackendSelector& backend_selector,
+                  const std::string& server_tag);
+
+    /// @brief Deletes all servers from the backend except the logical
+    /// server 'all'.
+    ///
+    /// @param backend_selector Backend selector.
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteAllServers6(const db::BackendSelector& backend_selector);
 };
 
 

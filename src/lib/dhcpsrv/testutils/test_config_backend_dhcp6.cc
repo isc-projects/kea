@@ -216,6 +216,18 @@ TestConfigBackendDHCPv6::getRecentAuditEntries(const db::ServerSelector&,
     return (AuditEntryCollection());
 }
 
+ServerCollection
+TestConfigBackendDHCPv6::getAllServers6() const {
+    return (servers_);
+}
+
+ServerPtr
+TestConfigBackendDHCPv6::getServer6(const ServerTag& server_tag) const {
+    const auto& index = servers_.get<ServerTagIndexTag>();
+    auto server_it = index.find(server_tag.get());
+    return ((server_it != index.cend()) ? (*server_it) : ServerPtr());
+}
+
 void
 TestConfigBackendDHCPv6::createUpdateSubnet6(const db::ServerSelector& server_selector,
                                              const Subnet6Ptr& subnet) {
@@ -368,6 +380,19 @@ TestConfigBackendDHCPv6::createUpdateGlobalParameter6(const db::ServerSelector& 
 
     } else {
         index.insert(value);
+    }
+}
+
+void
+TestConfigBackendDHCPv6::createUpdateServer6(const db::ServerPtr& server) {
+    auto& index = servers_.get<ServerTagIndexTag>();
+    auto server_it = index.find(server->getServerTag());
+
+    if (server_it != index.end()) {
+        index.replace(server_it, server);
+
+    } else {
+        index.insert(server);
     }
 }
 
@@ -560,6 +585,20 @@ TestConfigBackendDHCPv6::deleteAllGlobalParameters6(const db::ServerSelector& /*
     globals_.clear();
     return (globals_size);
 }
+
+uint64_t
+TestConfigBackendDHCPv6::deleteServer6(const std::string& server_tag) {
+    auto& index = servers_.get<ServerTagIndexTag>();
+    return (index.erase(server_tag));
+}
+
+uint64_t
+TestConfigBackendDHCPv6::deleteAllServers6() {
+    auto servers_size = servers_.size();
+    servers_.clear();
+    return (servers_size);
+}
+
 
 } // namespace test
 } // namespace dhcp
