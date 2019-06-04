@@ -862,11 +862,11 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {
     // (valid lifetime = 60, cltt = now - 100).
     DuidPtr duid0(new DUID(DUID::fromText("00:01:02:03:04:05:06").getDuid()));
     Lease6Ptr lease0(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),
-                                duid0, 1, 50, 60, 10, 20, SubnetID(1)));
+                                duid0, 1, 50, 60, SubnetID(1)));
     lease0->cltt_ = time(NULL) - 100;
     DuidPtr duid1(new DUID(DUID::fromText("01:02:03:04:05:06:07").getDuid()));
     Lease6Ptr lease1(new Lease6(Lease::TYPE_NA, IOAddress("3000::2"),
-                                duid1, 1, 50, 60, 10, 20, SubnetID(1)));
+                                duid1, 1, 50, 60, SubnetID(1)));
     lease1->cltt_ = time(NULL) - 100;
 
     // Add leases to the database.
@@ -924,11 +924,11 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
     // (valid lifetime = 60, cltt = now - 100).
     DuidPtr duid0(new DUID(DUID::fromText("00:01:02:03:04:05:06").getDuid()));
     Lease6Ptr lease0(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),
-                                duid0, 1, 50, 60, 10, 20, SubnetID(1)));
+                                duid0, 1, 50, 60, SubnetID(1)));
     lease0->cltt_ = time(NULL) - 100;
     DuidPtr duid1(new DUID(DUID::fromText("01:02:03:04:05:06:07").getDuid()));
     Lease6Ptr lease1(new Lease6(Lease::TYPE_NA, IOAddress("3000::2"),
-                                duid1, 1, 50, 60, 10, 20, SubnetID(1)));
+                                duid1, 1, 50, 60, SubnetID(1)));
     lease1->cltt_ = time(NULL) - 100;
 
     // Add leases to the database.

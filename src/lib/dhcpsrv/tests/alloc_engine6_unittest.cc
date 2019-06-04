@@ -807,7 +807,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -849,7 +849,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -912,7 +912,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 
     const SubnetID other_subnetid = 999;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, other_subnetid, HWAddrPtr(),
+                               501, 502, other_subnetid, HWAddrPtr(),
                                0));
 
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
@@ -968,7 +968,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 TEST_F(AllocEngine6Test, requestExtendLeaseLifetime) {
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -995,7 +995,7 @@ TEST_F(AllocEngine6Test, requestExtendLeaseLifetimeForReservation) {
 
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1c"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -1018,7 +1018,7 @@ TEST_F(AllocEngine6Test, requestExtendLeaseLifetimeForReservation) {
 TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -1051,7 +1051,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
 
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -2074,7 +2074,7 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
 
         // Allocate the lease.
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress(address.str()),
-                                   duid, iaid, 501, 502, 503, 504, subnet_->getID(),
+                                   duid, iaid, 501, 502, subnet_->getID(),
                                    HWAddrPtr(), 0));
         ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
     }
@@ -2272,7 +2272,7 @@ TEST_F(AllocEngine6Test, reuseReclaimedExpiredViaRequest) {
 
     // Let's create an expired lease
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
-                               501, 502, 503, 504, subnet_->getID(), HWAddrPtr(),
+                               501, 502, subnet_->getID(), HWAddrPtr(),
                                0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -2343,7 +2343,7 @@ public:
     Lease6Ptr
     insertLease(std::string addr, SubnetID subnet_id) {
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress(addr), duid_, iaid_,
-                                   501, 502, 503, 504, subnet_->getID(),
+                                   501, 502, subnet_->getID(),
                                    HWAddrPtr(), 0));
         lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
         if (!LeaseMgrFactory::instance().addLease(lease)) {
@@ -2416,7 +2416,7 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkOutOfAddresses) {
     DuidPtr other_duid(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                               other_duid, other_iaid, 501, 502, 503, 504,
+                               other_duid, other_iaid, 501, 502,
                                subnet1_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
@@ -2702,7 +2702,7 @@ TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkExistingLeases) {
     // reclaimed state initially to allow for checking whether the lease
     // gets renewed.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"),
-                               duid_, iaid_, 501, 502, 503, 504,
+                               duid_, iaid_, 501, 502,
                                subnet2_->getID(), HWAddrPtr(), 128));
     lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));

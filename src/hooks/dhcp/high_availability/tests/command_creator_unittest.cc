@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,7 @@ Lease4Ptr createLease4() {
     HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 11), HTYPE_ETHER));
     Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
                                 static_cast<const uint8_t*>(0), 0,
-                                60, 30, 40, 0, 1));
+                                60, 0, 1));
     return (lease4);
 }
 
@@ -48,7 +48,7 @@ Lease4Ptr createLease4() {
 Lease6Ptr createLease6() {
     DuidPtr duid(new DUID(std::vector<uint8_t>(8, 02)));
     Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"),
-                                duid, 1234, 50, 60, 30, 40, 1));
+                                duid, 1234, 50, 60, 1));
     return (lease6);
 }
 

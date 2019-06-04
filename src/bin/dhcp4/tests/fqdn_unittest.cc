@@ -316,7 +316,7 @@ public:
         Lease4Ptr lease(new Lease4(addr, hwaddr,
                                    &generateClientId()->getData()[0],
                                    generateClientId()->getData().size(),
-                                   100, 50, 75, time(NULL), subnet_->getID()));
+                                   100, time(NULL), subnet_->getID()));
         // @todo Set this through the Lease4 constructor.
         lease->hostname_ = hostname;
         lease->fqdn_fwd_ = fqdn_fwd;

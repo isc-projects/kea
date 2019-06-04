@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -550,7 +550,7 @@ public:
 
             Lease4Ptr result(new Lease4(addr4_, hwaddr,
                                          client_id_buffer_, client_id_length_,
-                                         valid_lifetime_, 0, 0, cltt_,
+                                         valid_lifetime_, cltt_,
                                          subnet_id_, fqdn_fwd_, fqdn_rev_,
                                          hostname_));
 
@@ -830,7 +830,7 @@ public:
 
             Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr,
                                         iaid_u_.uval_, pref_lifetime_,
-                                        valid_lifetime_, 0, 0,
+                                        valid_lifetime_,
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
                                         hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;

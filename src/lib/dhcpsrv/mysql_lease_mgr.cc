@@ -779,10 +779,9 @@ public:
             }
         }
 
-        // note that T1 and T2 are not stored
         Lease4Ptr lease(new Lease4(addr4_, hwaddr,
                                      client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, 0, 0, cltt, subnet_id_,
+                                     valid_lifetime_, cltt, subnet_id_,
                                      fqdn_fwd_, fqdn_rev_, hostname));
 
         // Set state.
@@ -1381,7 +1380,7 @@ public:
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
         Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
-                                    pref_lifetime_, valid_lifetime_, 0, 0,
+                                    pref_lifetime_, valid_lifetime_,
                                     subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname, hwaddr, prefixlen_));
         time_t cltt = 0;

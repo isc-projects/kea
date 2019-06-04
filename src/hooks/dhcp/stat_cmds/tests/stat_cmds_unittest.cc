@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -505,11 +505,6 @@ public:
         Lease4Ptr lease(new Lease4());
 
         lease->addr_ = IOAddress(ip_address);
-
-        // Initialize unused fields.
-        lease->t1_ = 0;                             // Not saved
-        lease->t2_ = 0;                             // Not saved
-
 
         ++hwaddr_[5];
 

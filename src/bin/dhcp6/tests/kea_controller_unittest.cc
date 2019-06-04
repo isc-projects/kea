@@ -716,7 +716,7 @@ TEST_F(JSONFileBackendTest, timers) {
     // current configuration.
     DuidPtr duid_expired(new DUID(DUID::fromText("00:01:02:03:04:05:06").getDuid()));
     Lease6Ptr lease_expired(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),
-                                       duid_expired, 1, 50, 60, 10, 20, SubnetID(1)));
+                                       duid_expired, 1, 50, 60, SubnetID(1)));
     lease_expired->cltt_ = time(NULL) - 100;
 
 
@@ -725,7 +725,7 @@ TEST_F(JSONFileBackendTest, timers) {
     // goes off.
     DuidPtr duid_reclaimed(new DUID(DUID::fromText("01:02:03:04:05:06:07").getDuid()));
     Lease6Ptr lease_reclaimed(new Lease6(Lease::TYPE_NA, IOAddress("3000::2"),
-                                         duid_reclaimed, 1, 50, 60, 10, 20, SubnetID(1)));
+                                         duid_reclaimed, 1, 50, 60, SubnetID(1)));
     lease_reclaimed->cltt_ = time(NULL) - 1000;
     lease_reclaimed->state_ = Lease6::STATE_EXPIRED_RECLAIMED;
 

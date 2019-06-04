@@ -1270,8 +1270,8 @@ ExpirationAllocEngine6Test::createLeases() {
         IOAddress address(address_s.str());
 
         // Create lease.
-        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60, 10,
-                                   20, SubnetID(1), true, true,
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60,
+                                   SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
         // Copy the lease before adding it to the lease manager. We want to
@@ -1832,7 +1832,7 @@ ExpirationAllocEngine4Test::createLeases() {
         IOAddress address(address_s.str());
 
         // Create lease.
-        Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60, 10, 20,
+        Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60,
                                    time(NULL), SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);

@@ -537,11 +537,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     // (valid lifetime = 60, cltt = now - 100).
     HWAddrPtr hwaddr0(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
     Lease4Ptr lease0(new Lease4(IOAddress("10.0.0.1"), hwaddr0,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
     HWAddrPtr hwaddr1(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
     Lease4Ptr lease1(new Lease4(IOAddress("10.0.0.2"), hwaddr1,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
 
     // Add leases to the database.
@@ -614,11 +614,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     // (valid lifetime = 60, cltt = now - 100).
     HWAddrPtr hwaddr0(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
     Lease4Ptr lease0(new Lease4(IOAddress("10.0.0.1"), hwaddr0,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
     HWAddrPtr hwaddr1(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
     Lease4Ptr lease1(new Lease4(IOAddress("10.0.0.2"), hwaddr1,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
 
     // Add leases to the database.

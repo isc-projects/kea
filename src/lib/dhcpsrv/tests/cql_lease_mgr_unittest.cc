@@ -632,7 +632,7 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
 // Test checks whether simple add, get and delete operations are possible
 // on Lease6
 TEST_F(CqlLeaseMgrTest, testAddGetDelete6) {
-    testAddGetDelete6(false);
+    testAddGetDelete6();
 }
 
 /// @brief Basic Lease6 Checks

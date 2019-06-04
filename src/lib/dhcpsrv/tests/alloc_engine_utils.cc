@@ -119,7 +119,7 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
     HWAddrPtr hwaddr(new HWAddr());
     time_t now = time(NULL);
     Lease4Ptr declined(new Lease4(addr, hwaddr, ClientIdPtr(), 495,
-                                  100, 200, now, subnet_->getID()));
+                                  now, subnet_->getID()));
     declined->decline(probation_period);
     declined->cltt_ = now - probation_period + expired;
     return (declined);
@@ -392,7 +392,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
     DuidPtr duid2 = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xff)));
     time_t now = time(NULL);
     Lease6Ptr used(new Lease6(type, used_addr,
-                              duid2, 1, 2, 3, 4, now, subnet_->getID()));
+                              duid2, 1, 2, now, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Another client comes in and request an address that is in pool, but
@@ -520,7 +520,7 @@ AllocEngine6Test::generateDeclinedLease(const std::string& addr,
                                         time_t probation_period,
                                         int32_t expired) {
     Lease6Ptr declined(new Lease6(Lease::TYPE_NA, IOAddress(addr),
-                       duid_, iaid_, 100, 100, 100, 100, subnet_->getID()));
+                       duid_, iaid_, 100, 100, subnet_->getID()));
 
     time_t now = time(NULL);
     declined->decline(probation_period);

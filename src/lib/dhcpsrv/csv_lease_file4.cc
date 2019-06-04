@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,7 +117,6 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
                                client_id_vec.empty() ? NULL : &client_id_vec[0],
                                client_id_len,
                                readValid(row),
-                               0, 0, // t1, t2 = 0
                                readCltt(row),
                                readSubnetID(row),
                                readFqdnFwd(row),

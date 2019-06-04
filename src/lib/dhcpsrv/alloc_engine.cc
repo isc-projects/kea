@@ -1599,8 +1599,6 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     expired->duid_ = ctx.duid_;
     expired->preferred_lft_ = ctx.subnet_->getPreferred();
     expired->valid_lft_ = ctx.subnet_->getValid();
-    expired->t1_ = ctx.subnet_->getT1();
-    expired->t2_ = ctx.subnet_->getT2();
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
     expired->hostname_ = ctx.hostname_;
@@ -1698,8 +1696,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 
     Lease6Ptr lease(new Lease6(ctx.currentIA().type_, addr, ctx.duid_,
                                ctx.currentIA().iaid_, ctx.subnet_->getPreferred(),
-                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
-                               ctx.subnet_->getT2(), ctx.subnet_->getID(),
+                               ctx.subnet_->getValid(), ctx.subnet_->getID(),
                                ctx.hwaddr_, prefix_len));
 
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
@@ -1941,8 +1938,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
     lease->preferred_lft_ = ctx.subnet_->getPreferred();
     lease->valid_lft_ = ctx.subnet_->getValid();
-    lease->t1_ = ctx.subnet_->getT1();
-    lease->t2_ = ctx.subnet_->getT2();
     lease->hostname_ = ctx.hostname_;
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
@@ -3452,8 +3447,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     const uint8_t* local_copy0 = local_copy.empty() ? 0 : &local_copy[0];
 
     Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, local_copy0, local_copy.size(),
-                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
-                               ctx.subnet_->getT2(),
+                               ctx.subnet_->getValid(),
                                now, ctx.subnet_->getID()));
 
     // Set FQDN specific lease parameters.
@@ -3858,8 +3852,6 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->hwaddr_ = ctx.hwaddr_;
     lease->client_id_ = ctx.subnet_->getMatchClientId() ? ctx.clientid_ : ClientIdPtr();
     lease->cltt_ = time(NULL);
-    lease->t1_ = ctx.subnet_->getT1();
-    lease->t2_ = ctx.subnet_->getT2();
     lease->valid_lft_ = ctx.subnet_->getValid();
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;

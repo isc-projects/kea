@@ -1302,8 +1302,6 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     const IOAddress addr("192.0.2.106");
-    const uint32_t temp_t1 = 50;
-    const uint32_t temp_t2 = 75;
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
@@ -1318,18 +1316,15 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_t1, temp_t2, temp_timestamp,
-                              subnet_->getID()));
+                              temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt really set.
+    // Check that preferred, valid and cltt really set.
     // Constructed lease looks as if it was assigned 10 seconds ago
-    // EXPECT_EQ(l->t1_, temp_t1);
-    // EXPECT_EQ(l->t2_, temp_t2);
     EXPECT_EQ(l->valid_lft_, temp_valid);
     EXPECT_EQ(l->cltt_, temp_timestamp);
 
@@ -1363,9 +1358,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
+    // Check that preferred, valid and cltt were really updated
     EXPECT_EQ(l->valid_lft_, subnet_->getValid());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors

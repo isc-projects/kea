@@ -196,8 +196,6 @@ public:
         EXPECT_EQ(iaid_, lease->iaid_);
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
-        EXPECT_EQ(subnet_->getT1(), lease->t1_);
-        EXPECT_EQ(subnet_->getT2(), lease->t2_);
         EXPECT_EQ(exp_pd_len, lease->prefixlen_);
         EXPECT_EQ(fqdn_fwd_, lease->fqdn_fwd_);
         EXPECT_EQ(fqdn_rev_, lease->fqdn_rev_);
@@ -462,8 +460,6 @@ public:
 
         // Check that it has proper parameters
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
-        EXPECT_EQ(subnet_->getT1(), lease->t1_);
-        EXPECT_EQ(subnet_->getT2(), lease->t2_);
         if (lease->client_id_ && !clientid_) {
             ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
         } else

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -162,10 +162,8 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Let's fabricate some data and we're ready to go.
-    uint32_t t1 = subnet->getT1();
-    uint32_t t2 = subnet->getT2();
 
-    Lease4Ptr l(new Lease4(addr, hwaddr_ptr, client_id, valid_lft, t1, t2,
+    Lease4Ptr l(new Lease4(addr, hwaddr_ptr, client_id, valid_lft,
                            cltt, subnet_id,
                            fqdn_fwd, fqdn_rev, hostname));
     l->state_ = state;
@@ -358,10 +356,8 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Let's fabricate some data and we're ready to go.
-    uint32_t t1 = subnet->getT1();
-    uint32_t t2 = subnet->getT2();
 
-    Lease6Ptr l(new Lease6(type, addr, duid_ptr, iaid, pref_lft, valid_lft, t1, t2,
+    Lease6Ptr l(new Lease6(type, addr, duid_ptr, iaid, pref_lft, valid_lft,
                            subnet_id, fqdn_fwd, fqdn_rev, hostname,
                            hwaddr_ptr, prefix_len));
     l->cltt_ = cltt;

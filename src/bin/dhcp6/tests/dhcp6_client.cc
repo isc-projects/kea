@@ -169,8 +169,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state) {
                                        iaaddr->getAddress(),
                                        duid_, ia->getIAID(),
                                        iaaddr->getPreferred(),
-                                       iaaddr->getValid(),
-                                       ia->getT1(), ia->getT2(), 0,
+                                       iaaddr->getValid(), 0,
                                        hwaddr);
                         lease.cltt_ = time(NULL);
                         lease.state_ = state;
@@ -189,8 +188,7 @@ Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply, uint32_t state) {
                                        iaprefix->getAddress(), duid_,
                                        ia->getIAID(),
                                        iaprefix->getPreferred(),
-                                       iaprefix->getValid(),
-                                       ia->getT1(), ia->getT2(), 0,
+                                       iaprefix->getValid(), 0,
                                        hwaddr,
                                        iaprefix->getLength());
                         lease.cltt_ = time(NULL);
@@ -361,8 +359,6 @@ Dhcp6Client::copyIAsFromLeases(const Pkt6Ptr& dest) const {
         }
         Option6IAPtr opt(new Option6IA(leases[0].type_ == Lease::TYPE_NA ?
                                        D6O_IA_NA : D6O_IA_PD, *iaid));
-        opt->setT1(leases[0].t1_);
-        opt->setT2(leases[0].t2_);
         for (std::vector<Lease6>::const_iterator lease = leases.begin();
              lease != leases.end(); ++lease) {
             if ((lease->preferred_lft_ != 0) && (lease->valid_lft_ != 0)) {
@@ -874,15 +870,11 @@ bool
 Dhcp6Client::getTeeTimes(const uint32_t iaid, uint32_t& t1, uint32_t& t2) const {
 
     auto leases = getLeasesByIAID(iaid);
-    if (leases.empty()) { 
+    if (leases.empty()) {
         // No aquired leases so punt.
         return (false);
     }
 
-    // All leases for a given iaid should have the same values for T1 
-    // and T2, so using them from the first one should be fine.
-    t1 = leases[0].t1_;
-    t2 = leases[0].t2_;
     return (true);
 }
 

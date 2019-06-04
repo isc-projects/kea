@@ -248,14 +248,7 @@ public:
     void testLease6HWTypeAndSource();
 
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
-    ///
-    /// This method checks basic IPv6 lease operations. There's check_t1_t2
-    /// parameter that controls whether the backend supports storing T1, T2
-    /// parameters. memfile supports it, while MySQL doesn't. If T1,T2
-    /// storage is not supported, the expected values are 0.
-    ///
-    /// @param check_t1_t2 controls whether T1,T2 timers should be checked
-    void testAddGetDelete6(bool check_t1_t2);
+    void testAddGetDelete6();
 
     /// @brief Check GetLease6 methods - access by DUID/IAID
     ///

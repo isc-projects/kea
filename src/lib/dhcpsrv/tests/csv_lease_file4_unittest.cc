@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -212,7 +212,7 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
                                hwaddr0_,
                                NULL, 0,
-                               200, 50, 80, 0, 8, true, true,
+                               200, 0, 8, true, true,
                                "host.example.com"));
     lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
     {
@@ -225,7 +225,7 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     lease.reset(new Lease4(IOAddress("192.0.3.10"),
                            hwaddr1_,
                            CLIENTID, sizeof(CLIENTID),
-                           100, 60, 90, 0, 7));
+                           100, 0, 7));
     lease->setContext(Element::fromJSON("{ \"foobar\": true }"));
     {
     SCOPED_TRACE("Second write");
@@ -439,7 +439,7 @@ TEST_F(CSVLeaseFile4Test, highLeaseLifetime) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
                                hwaddr0_,
                                NULL, 0,
-                               0xFFFFFFFF, 50, 80, time(0),
+                               0xFFFFFFFF, time(0),
                                8, true, true,
                                "host.example.com"));
     // Write this lease out to the lease file.

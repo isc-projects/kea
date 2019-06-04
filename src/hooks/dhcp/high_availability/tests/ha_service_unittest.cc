@@ -79,7 +79,7 @@ void generateTestLeases(std::vector<Lease4Ptr>& leases) {
         Lease4Ptr lease(new Lease4(IOAddress(lease_address),
                                    HWAddrPtr(new HWAddr(hwaddr, HTYPE_ETHER)),
                                    ClientIdPtr(),
-                                   60, 30, 40,
+                                   60,
                                    static_cast<time_t>(1000 + i),
                                    SubnetID(i)));
         leases.push_back(lease);
@@ -96,7 +96,7 @@ void generateTestLeases(std::vector<Lease6Ptr>& leases) {
         address_bytes[6] += i;
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA,
                                    IOAddress::fromBytes(AF_INET6, &address_bytes[0]),
-                                   duid, 1, 50, 60, 30, 40, SubnetID(i)));
+                                   duid, 1, 50, 60, SubnetID(i)));
         leases.push_back(lease);
     }
 }
@@ -673,14 +673,14 @@ public:
         HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
         Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
                                     static_cast<const uint8_t*>(0), 0,
-                                    60, 30, 40, 0, 1));
+                                    60, 0, 1));
         leases4->push_back(lease4);
 
         // Create deleted leases collection and put the lease there too.
         Lease4CollectionPtr deleted_leases4(new Lease4Collection());
         Lease4Ptr deleted_lease4(new Lease4(IOAddress("192.2.3.4"), hwaddr,
                                             static_cast<const uint8_t*>(0), 0,
-                                            60, 30, 40, 0, 1));
+                                            60, 0, 1));
         deleted_leases4->push_back(deleted_lease4);
 
         // The communication state is the member of the HAServce object. We have to
@@ -760,13 +760,13 @@ public:
         Lease6CollectionPtr leases6(new Lease6Collection());
         DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
         Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
-                                    1234, 50, 60, 30, 40, 1));
+                                    1234, 50, 60, 1));
         leases6->push_back(lease6);
 
         // Create deleted leases collection and put the lease there too.
         Lease6CollectionPtr deleted_leases6(new Lease6Collection());
         Lease6Ptr deleted_lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::efac"),
-                                            duid, 1234, 50, 60, 30, 40, 1));
+                                            duid, 1234, 50, 60, 1));
         deleted_leases6->push_back(deleted_lease6);
 
         // The communication state is the member of the HAServce object. We have to

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,15 +124,13 @@ TEST_F(Lease4Test, constructor) {
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
 
         // Create the lease
-        Lease4 lease(ADDRESS[i], hwaddr_, clientid_, VALID_LIFETIME, 0, 0,
+        Lease4 lease(ADDRESS[i], hwaddr_, clientid_, VALID_LIFETIME,
                      current_time, SUBNET_ID, true, true,
                      "hostname.example.com.");
 
         EXPECT_EQ(ADDRESS[i], lease.addr_.toUint32());
         EXPECT_TRUE(util::equalValues(hwaddr_, lease.hwaddr_));
         EXPECT_TRUE(util::equalValues(clientid_, lease.client_id_));
-        EXPECT_EQ(0, lease.t1_);
-        EXPECT_EQ(0, lease.t2_);
         EXPECT_EQ(VALID_LIFETIME, lease.valid_lft_);
         EXPECT_EQ(current_time, lease.cltt_);
         EXPECT_EQ(SUBNET_ID, lease.subnet_id_);
@@ -151,7 +149,7 @@ TEST_F(Lease4Test, copyConstructor) {
     const time_t current_time = time(NULL);
 
     // Create the lease
-    Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, 0, 0, current_time,
+    Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, current_time,
                  SUBNET_ID);
 
     // Declined is a non-default state. We'll see if the state will be copied
@@ -196,7 +194,7 @@ TEST_F(Lease4Test, operatorAssign) {
     const time_t current_time = time(NULL);
 
     // Create the lease
-    Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, 0, 0, current_time,
+    Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, current_time,
                  SUBNET_ID);
 
     // Declined is a non-default state. We'll see if the state will be copied
@@ -309,8 +307,8 @@ TEST_F(Lease4Test, operatorEquals) {
     const time_t current_time = time(NULL);
 
     // Check when the leases are equal.
-    Lease4 lease1(ADDRESS, hwaddr_, clientid_, VALID_LIFETIME, current_time, 0,
-                  0, SUBNET_ID);
+    Lease4 lease1(ADDRESS, hwaddr_, clientid_, VALID_LIFETIME, current_time,
+                  SUBNET_ID);
     lease1.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
     // We need to make an explicit copy. Otherwise the second lease will just
@@ -320,7 +318,7 @@ TEST_F(Lease4Test, operatorEquals) {
     ClientIdPtr clientid_copy(new ClientId(*clientid_));
 
     Lease4 lease2(ADDRESS, hwcopy, clientid_copy, VALID_LIFETIME, current_time,
-                  0, 0, SUBNET_ID);
+                  SUBNET_ID);
     lease2.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     EXPECT_TRUE(lease1 == lease2);
     EXPECT_FALSE(lease1 != lease2);
@@ -348,20 +346,6 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 != lease2);
     --clientid_vec[0];
     lease1.client_id_.reset(new ClientId(clientid_vec));
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
-    ++lease1.t1_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.t1_ = lease2.t1_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
-    ++lease1.t2_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.t2_ = lease2.t2_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
@@ -472,15 +456,13 @@ TEST_F(Lease4Test, hasIdenticalFqdn) {
 TEST_F(Lease4Test, toText) {
 
     const time_t current_time = 12345678;
-    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
-                 456, current_time, 789);
+    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600,
+                 current_time, 789);
     lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
     std::stringstream expected;
     expected << "Address:       192.0.2.3\n"
              << "Valid life:    3600\n"
-             << "T1:            123\n"
-             << "T2:            456\n"
              << "Cltt:          12345678\n"
              << "Hardware addr: " << hwaddr_->toText(false) << "\n"
              << "Client id:     " << clientid_->toText() << "\n"
@@ -498,8 +480,6 @@ TEST_F(Lease4Test, toText) {
     expected.str("");
     expected << "Address:       192.0.2.3\n"
              << "Valid life:    3600\n"
-             << "T1:            123\n"
-             << "T2:            456\n"
              << "Cltt:          12345678\n"
              << "Hardware addr: (none)\n"
              << "Client id:     (none)\n"
@@ -512,8 +492,8 @@ TEST_F(Lease4Test, toText) {
 TEST_F(Lease4Test, toElement) {
 
     const time_t current_time = 12345678;
-    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
-                 456, current_time, 789, true, true, "urania.example.org");
+    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600,
+                 current_time, 789, true, true, "urania.example.org");
     lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
     std::string expected = "{"
@@ -652,8 +632,8 @@ TEST_F(Lease4Test, fromElementInvalidValues) {
 TEST_F(Lease4Test, decline) {
 
     const time_t current_time = 12345678;
-    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600, 123,
-                 456, current_time, 789);
+    Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600,
+                 current_time, 789);
     lease.hostname_="foo.example.org";
     lease.fqdn_fwd_ = true;
     lease.fqdn_rev_ = true;
@@ -665,8 +645,6 @@ TEST_F(Lease4Test, decline) {
     ASSERT_TRUE(lease.hwaddr_);
     EXPECT_EQ("", lease.hwaddr_->toText(false));
     EXPECT_FALSE(lease.client_id_);
-    EXPECT_EQ(0, lease.t1_);
-    EXPECT_EQ(0, lease.t2_);
 
     EXPECT_TRUE(now <= lease.cltt_);
     EXPECT_TRUE(lease.cltt_ <= now + 1);
@@ -722,7 +700,7 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
-                               duid, iaid, 100, 200, 50, 80,
+                               duid, iaid, 100, 200,
                                subnet_id));
 
         EXPECT_TRUE(lease->addr_ == addr);
@@ -732,8 +710,6 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
         EXPECT_TRUE(lease->type_ == Lease::TYPE_NA);
         EXPECT_TRUE(lease->preferred_lft_ == 100);
         EXPECT_TRUE(lease->valid_lft_ == 200);
-        EXPECT_TRUE(lease->t1_ == 50);
-        EXPECT_TRUE(lease->t2_ == 80);
         EXPECT_FALSE(lease->fqdn_fwd_);
         EXPECT_FALSE(lease->fqdn_rev_);
         EXPECT_TRUE(lease->hostname_.empty());
@@ -744,7 +720,7 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
     EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200, 50, 80,
+                                         DuidPtr(), iaid, 100, 200,
                                          subnet_id)), InvalidOperation);
 }
 
@@ -769,7 +745,7 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
-                               duid, iaid, 100, 200, 50, 80, subnet_id,
+                                   duid, iaid, 100, 200, subnet_id,
                                    true, true, "host.example.com."));
 
         EXPECT_TRUE(lease->addr_ == addr);
@@ -779,8 +755,6 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
         EXPECT_TRUE(lease->type_ == Lease::TYPE_NA);
         EXPECT_TRUE(lease->preferred_lft_ == 100);
         EXPECT_TRUE(lease->valid_lft_ == 200);
-        EXPECT_TRUE(lease->t1_ == 50);
-        EXPECT_TRUE(lease->t2_ == 80);
         EXPECT_TRUE(lease->fqdn_fwd_);
         EXPECT_TRUE(lease->fqdn_rev_);
         EXPECT_EQ("host.example.com.", lease->hostname_);
@@ -790,7 +764,7 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
     EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200, 50, 80,
+                                         DuidPtr(), iaid, 100, 200,
                                          subnet_id)), InvalidOperation);
 }
 
@@ -809,10 +783,8 @@ TEST(Lease6Test, operatorEquals) {
     SubnetID subnet_id = 8; // just another number
 
     // Check for equality.
-    Lease6 lease1(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
-                               subnet_id);
-    Lease6 lease2(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
-                               subnet_id);
+    Lease6 lease1(Lease::TYPE_NA, addr, duid, iaid, 100, 200, subnet_id);
+    Lease6 lease2(Lease::TYPE_NA, addr, duid, iaid, 100, 200, subnet_id);
 
     lease1.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     lease2.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
@@ -873,20 +845,6 @@ TEST(Lease6Test, operatorEquals) {
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.valid_lft_ = lease2.valid_lft_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
-    ++lease1.t1_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.t1_ = lease2.t1_;
-    EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
-    EXPECT_FALSE(lease1 != lease2); // ... leases equal
-
-    ++lease1.t2_;
-    EXPECT_FALSE(lease1 == lease2);
-    EXPECT_TRUE(lease1 != lease2);
-    lease1.t2_ = lease2.t2_;
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
@@ -954,8 +912,7 @@ TEST(Lease6Test, Lease6Expired) {
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
     const uint32_t iaid = IAID;     // Just a number
     const SubnetID subnet_id = 8;   // Just another number
-    Lease6 lease(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
-                               subnet_id);
+    Lease6 lease(Lease::TYPE_NA, addr, duid, iaid, 100, 200, subnet_id);
 
     // Case 1: a second before expiration
     lease.cltt_ = time(NULL) - 100;
@@ -1000,9 +957,9 @@ TEST(Lease6Test, decline) {
     HWAddrPtr hwaddr(new HWAddr(HWADDR, sizeof(HWADDR), HTYPE_ETHER));
 
     // Let's create a lease for 2001:db8::1, DUID, iaid=1234,
-    // t1=1000, t2=2000, pref=3000, valid=4000, subnet-id = 1
+    // pref=3000, valid=4000, subnet-id = 1
     Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid,
-                 1234, 3000, 4000, 1000, 2000, 1, hwaddr);
+                 1234, 3000, 4000, 1, hwaddr);
     lease.cltt_ = 12345678;
     lease.hostname_ = "foo.example.org";
     lease.fqdn_fwd_ = true;
@@ -1016,8 +973,6 @@ TEST(Lease6Test, decline) {
     ASSERT_TRUE(lease.duid_);
     ASSERT_EQ("00", lease.duid_->toText());
     ASSERT_FALSE(lease.hwaddr_);
-    EXPECT_EQ(0, lease.t1_);
-    EXPECT_EQ(0, lease.t2_);
     EXPECT_EQ(0, lease.preferred_lft_);
 
     EXPECT_TRUE(now <= lease.cltt_);
@@ -1059,7 +1014,7 @@ TEST(Lease6Test, toText) {
     DuidPtr duid(new DUID(llt, sizeof(llt)));
 
     Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid, 123456,
-                 400, 800, 100, 200, 5678, hwaddr, 128);
+                 400, 800, 5678, hwaddr, 128);
     lease.cltt_ = 12345678;
     lease.state_ = Lease::STATE_DECLINED;
     lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
@@ -1108,7 +1063,7 @@ TEST(Lease6Test, toElementAddress) {
     DuidPtr duid(new DUID(llt, sizeof(llt)));
 
     Lease6 lease(Lease::TYPE_NA, IOAddress("2001:db8::1"), duid, 123456,
-                 400, 800, 100, 200, 5678, hwaddr, 128);
+                 400, 800, 5678, hwaddr, 128);
     lease.cltt_ = 12345678;
     lease.state_ = Lease::STATE_DECLINED;
     lease.hostname_ = "urania.example.org";
@@ -1130,7 +1085,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 800"
         "}";
-    
+
     runToElementTest<Lease6>(expected, lease);
 
     // Now let's try with a lease without hardware address and user context.
@@ -1151,7 +1106,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
-    
+
     runToElementTest<Lease6>(expected, lease);
 
     // And to finish try with a comment.
@@ -1172,7 +1127,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
-    
+
     runToElementTest<Lease6>(expected, lease);
 }
 
@@ -1186,7 +1141,7 @@ TEST(Lease6Test, toElementPrefix) {
     DuidPtr duid(new DUID(llt, sizeof(llt)));
 
     Lease6 lease(Lease::TYPE_PD, IOAddress("2001:db8::"), duid, 123456,
-                 400, 800, 100, 200, 5678, hwaddr, 56);
+                 400, 800, 5678, hwaddr, 56);
     lease.cltt_ = 12345678;
     lease.state_ = Lease::STATE_DEFAULT;
     lease.hostname_ = "urania.example.org";

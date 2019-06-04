@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,7 +68,7 @@ public:
         // Return created lease.
         return (Lease4Ptr(new Lease4(address, hwaddr,
                                      &clientid[0], 0, // no client-id
-                                     1200, 600, 900, // valid, t1, t2
+                                     1200, // valid
                                      timestamp, subnet_id, false, false, "")));
     }
 
@@ -95,7 +95,7 @@ public:
 
         // Return created lease.
         Lease6Ptr lease(new Lease6(lease_type, address, duid, iaid,
-                                   1000, 1200, 600, 900, // pref, valid, t1, t2
+                                   1000, 1200, // pref, valid
                                    subnet_id,
                                    false, false, "")); // fqdn fwd, rev, hostname
         return (lease);

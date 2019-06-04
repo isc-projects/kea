@@ -261,7 +261,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     if (insert_before_renew) {
         // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
         // value on purpose. They should be updated during RENEW.
-        Lease6Ptr lease(new Lease6(type, existing, duid_, iaid, 501, 502, 503, 504,
+        Lease6Ptr lease(new Lease6(type, existing, duid_, iaid, 501, 502,
                                    subnet_->getID(), HWAddrPtr(), prefix_len));
         lease->cltt_ = 1234;
         ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -270,10 +270,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         l = LeaseMgrFactory::instance().getLease6(type, existing);
         ASSERT_TRUE(l);
 
-        // Check that T1, T2, preferred, valid and cltt really set and not using
+        // Check that preferred, valid and cltt really set and not using
         // previous (500, 501, etc.) values
-        EXPECT_NE(l->t1_, subnet_->getT1());
-        EXPECT_NE(l->t2_, subnet_->getT2());
         EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
         EXPECT_NE(l->valid_lft_, subnet_->getValid());
         EXPECT_NE(l->cltt_, time(NULL));
@@ -331,9 +329,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
         isc_throw(BadValue, "Invalid lease type");
     }
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(subnet_->getT1(), l->t1_);
-    EXPECT_EQ(subnet_->getT2(), l->t2_);
+    // Check that preferred, valid and cltt were really updated
     EXPECT_EQ(subnet_->getPreferred(), l->preferred_lft_);
     EXPECT_EQ(subnet_->getValid(), l->valid_lft_);
 
@@ -370,7 +366,7 @@ Dhcpv6SrvTest::testRenewWrongIAID(Lease::Type type, const IOAddress& addr) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -419,7 +415,7 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
 
     // Let's create a lease.
     Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -481,7 +477,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
     // Let's prepopulate the database
     Lease6Ptr lease(new Lease6(type, existing, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -609,8 +605,8 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     // CASE 2: Lease is known and belongs to this client, but to a different IAID
     SCOPED_TRACE("CASE 2: Lease is known and belongs to this client, but to a different IAID");
 
-    Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid, 501, 502, 503,
-                               504, subnet_->getID(), HWAddrPtr(), prefix_len));
+    Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid, 501, 502,
+                               subnet_->getID(), HWAddrPtr(), prefix_len));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Let's create a different RELEASE, with a bogus iaid

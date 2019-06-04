@@ -769,7 +769,7 @@ TEST_F(JSONFileBackendTest, timers) {
     // current configuration.
     HWAddrPtr hwaddr_expired(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
     Lease4Ptr lease_expired(new Lease4(IOAddress("10.0.0.1"), hwaddr_expired,
-                                       ClientIdPtr(), 60, 10, 20,
+                                       ClientIdPtr(), 60,
                                        time(NULL) - 100, SubnetID(1)));
 
     // Create expired-reclaimed lease. The lease has expired 1000 - 60 seconds
@@ -777,7 +777,7 @@ TEST_F(JSONFileBackendTest, timers) {
     // goes off.
     HWAddrPtr hwaddr_reclaimed(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
     Lease4Ptr lease_reclaimed(new Lease4(IOAddress("10.0.0.2"), hwaddr_reclaimed,
-                                         ClientIdPtr(), 60, 10, 20,
+                                         ClientIdPtr(), 60,
                                          time(NULL) - 1000, SubnetID(1)));
     lease_reclaimed->state_ = Lease4::STATE_EXPIRED_RECLAIMED;
 
