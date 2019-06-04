@@ -45,8 +45,7 @@ const uint8_t revMask6[]= { 0xff, 0x7f, 0x3f, 0x1f, 0xf, 0x7, 0x3, 0x1 };
 ///
 /// @param prefix IPv6 prefix
 /// @param len prefix length
-isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len) {
+IOAddress firstAddrInPrefix6(const IOAddress& prefix, uint8_t len) {
     if (len > 128) {
         isc_throw(isc::BadValue,
                   "Too large netmask. 0..128 is allowed in IPv6");
@@ -82,7 +81,7 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
     }
 
     // Finally, let's wrap this into nice and easy IOAddress object.
-    return (isc::asiolink::IOAddress::fromBytes(AF_INET6, packed));
+    return (IOAddress::fromBytes(AF_INET6, packed));
 }
 
 /// @brief calculates the first IPv4 address in a IPv4 prefix
@@ -92,8 +91,7 @@ isc::asiolink::IOAddress firstAddrInPrefix6(const isc::asiolink::IOAddress& pref
 ///
 /// @param prefix IPv4 prefix
 /// @param len netmask length (0-32)
-isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len) {
+IOAddress firstAddrInPrefix4(const IOAddress& prefix, uint8_t len) {
     if (len > 32) {
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
@@ -112,8 +110,7 @@ isc::asiolink::IOAddress firstAddrInPrefix4(const isc::asiolink::IOAddress& pref
 ///
 /// @param prefix IPv4 prefix that we calculate first address for
 /// @param len netmask length (0-32)
-isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len) {
+IOAddress lastAddrInPrefix4(const IOAddress& prefix, uint8_t len) {
     if (len > 32) {
         isc_throw(isc::BadValue, "Too large netmask. 0..32 is allowed in IPv4");
     }
@@ -129,8 +126,7 @@ isc::asiolink::IOAddress lastAddrInPrefix4(const isc::asiolink::IOAddress& prefi
 ///
 /// @param prefix IPv6 prefix that we calculate first address for
 /// @param len netmask length (0-128)
-isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len) {
+IOAddress lastAddrInPrefix6(const IOAddress& prefix, uint8_t len) {
     if (len > 128) {
         isc_throw(isc::BadValue,
                   "Too large netmask. 0..128 is allowed in IPv6");
@@ -165,16 +161,15 @@ isc::asiolink::IOAddress lastAddrInPrefix6(const isc::asiolink::IOAddress& prefi
     }
 
     // Finally, let's wrap this into nice and easy IOAddress object.
-    return (isc::asiolink::IOAddress::fromBytes(AF_INET6, packed));
+    return (IOAddress::fromBytes(AF_INET6, packed));
 }
 
 }; // end of anonymous namespace
 
 namespace isc {
-namespace dhcp {
+namespace asiolink {
 
-isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len) {
+IOAddress firstAddrInPrefix(const IOAddress& prefix, uint8_t len) {
     if (prefix.isV4()) {
         return (firstAddrInPrefix4(prefix, len));
 
@@ -184,8 +179,7 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
     }
 }
 
-isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len) {
+IOAddress lastAddrInPrefix(const IOAddress& prefix, uint8_t len) {
     if (prefix.isV4()) {
         return (lastAddrInPrefix4(prefix, len));
 
@@ -195,10 +189,10 @@ isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix
     }
 }
 
-isc::asiolink::IOAddress getNetmask4(uint8_t len) {
+IOAddress getNetmask4(uint8_t len) {
     if (len > 32) {
-      isc_throw(BadValue, "Invalid netmask size "
-                << static_cast<unsigned>(len) << ", allowed range is 0..32");
+        isc_throw(BadValue, "Invalid netmask size "
+                  << static_cast<unsigned>(len) << ", allowed range is 0..32");
     }
     uint32_t x = ~bitMask4[len];
 
@@ -206,8 +200,7 @@ isc::asiolink::IOAddress getNetmask4(uint8_t len) {
 }
 
 uint64_t
-addrsInRange(const isc::asiolink::IOAddress& min,
-             const isc::asiolink::IOAddress& max) {
+addrsInRange(const IOAddress& min, const IOAddress& max) {
     if (min.getFamily() != max.getFamily()) {
         isc_throw(BadValue, "Both addresses have to be the same family");
     }
@@ -277,8 +270,7 @@ addrsInRange(const isc::asiolink::IOAddress& min,
 }
 
 int
-prefixLengthFromRange(const isc::asiolink::IOAddress& min,
-                      const isc::asiolink::IOAddress& max) {
+prefixLengthFromRange(const IOAddress& min, const IOAddress& max) {
     if (min.getFamily() != max.getFamily()) {
         isc_throw(BadValue, "Both addresses have to be the same family");
     }

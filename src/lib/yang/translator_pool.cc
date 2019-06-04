@@ -17,7 +17,6 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::asiolink;
-using namespace isc::dhcp;
 #ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
 #endif

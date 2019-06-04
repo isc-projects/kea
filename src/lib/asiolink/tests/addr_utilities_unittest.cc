@@ -17,7 +17,6 @@
 #include <stdlib.h>
 
 using namespace std;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace {
