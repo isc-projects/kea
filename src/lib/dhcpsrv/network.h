@@ -8,6 +8,7 @@
 #define NETWORK_H
 
 #include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <cc/element_value.h>
@@ -850,8 +851,13 @@ public:
     /// @return siaddr value
     util::Optional<asiolink::IOAddress>
     getSiaddr(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network4>(&Network4::getSiaddr, siaddr_,
-                                      inheritance, "next-server"));
+        // Temporary fix for global next-server being the empty string.
+        try {
+            return (getProperty<Network4>(&Network4::getSiaddr, siaddr_,
+                                          inheritance, "next-server"));
+        } catch (asiolink::IOError) {
+            return (siaddr_);
+        }
     }
 
     /// @brief Sets server hostname for the network.
