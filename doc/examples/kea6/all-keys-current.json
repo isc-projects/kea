@@ -581,13 +581,30 @@
                         // clients.
                         "pd-pools": [
                             {
+                                // Restricts this prefix pool to be only used for the client
+                                // requests belonging to a particular client class.
                                 "client-class": "phones_server1",
+
+                                // Length of prefixes delegated to clients.
                                 "delegated-len": 64,
+
+                                // Excluded prefix (address) from client assignments.
                                 "excluded-prefix": "2001:db8::",
+
+                                // Excluded prefix (length) from client assignments.
                                 "excluded-prefix-len": 48,
+
+                                // Prefix pool level list of DHCP options.
                                 "option-data": [],
+
+                                // Prefix range (address) used for client assignments.
                                 "prefix": "2001:db8::",
+
+                                // Prefix range (length) used for client assignments.
                                 "prefix-len": 40,
+
+                                // List of client classes which must be evaluated
+                                // when this prefix pool is selected for client assignments.
                                 "require-client-classes": []
                             }
                         ],
