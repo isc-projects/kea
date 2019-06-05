@@ -278,6 +278,75 @@ SrvConfig::clearConfiguredGlobals() {
 }
 
 void
+SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
+    // Code from SimpleParser::setDefaults
+    // This is the position representing a default value. As the values
+    // we're inserting here are not present in whatever the config file
+    // came from, we need to make sure it's clearly labeled as default.
+    const Element::Position pos("<default-value>", 0, 0);
+    ConstElementPtr globals = getConfiguredGlobals();
+
+    // Let's go over all parameters we have defaults for.
+    for (auto def_value : defaults) {
+
+        // Try if such a parameter is there. If it is, let's
+        // skip it, because user knows best *cough*.
+        ConstElementPtr x = globals->get(def_value.name_);
+        if (x) {
+            // There is such a value already, skip it.
+            continue;
+        }
+
+        // There isn't such a value defined, let's create the default
+        // value...
+        switch (def_value.type_) {
+        case Element::string: {
+            x.reset(new StringElement(def_value.value_, pos));
+            break;
+        }
+        case Element::integer: {
+            try {
+                int int_value = boost::lexical_cast<int>(def_value.value_);
+                x.reset(new IntElement(int_value, pos));
+            }
+            catch (const std::exception& ex) {
+                isc_throw(BadValue,
+                          "Internal error. Integer value expected for: "
+                          << def_value.name_ << ", value is: "
+                          << def_value.value_ );
+            }
+
+            break;
+        }
+        case Element::boolean: {
+            bool bool_value;
+            if (def_value.value_ == std::string("true")) {
+                bool_value = true;
+            } else if (def_value.value_ == std::string("false")) {
+                bool_value = false;
+            } else {
+                isc_throw(BadValue,
+                          "Internal error. Boolean value specified as "
+                          << def_value.value_ << ", expected true or false");
+            }
+            x.reset(new BoolElement(bool_value, pos));
+            break;
+        }
+        case Element::real: {
+            double dbl_value = boost::lexical_cast<double>(def_value.value_);
+            x.reset(new DoubleElement(dbl_value, pos));
+            break;
+        }
+        default:
+            // No default values for null, list or map
+            isc_throw(BadValue,
+                      "Internal error. Incorrect default value type.");
+        }
+        addConfiguredGlobal(def_value.name_, x);
+    }
+}
+
+void
 SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     if (config->getType() != Element::map) {
         isc_throw(BadValue, "extractConfiguredGlobals must be given a map element");

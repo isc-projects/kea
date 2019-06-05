@@ -8,6 +8,7 @@
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 
 using namespace isc::db;
 using namespace isc::data;
@@ -50,6 +51,9 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
             data::StampedValueCollection globals;
             globals = getMgr().getPool()->getAllGlobalParameters4(backend_selector, server_selector);
             addGlobalsToConfig(external_cfg, globals);
+
+            // Add defaults.
+            external_cfg->applyDefaultsConfiguredGlobals(SimpleParser4::GLOBAL4_DEFAULTS);
 
             // Now that we successfully fetched the new global parameters, let's
             // remove existing ones and merge them into the current configuration.
