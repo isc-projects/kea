@@ -868,14 +868,32 @@ Dhcp6Client::getStatusCode(const uint32_t iaid) const {
 
 bool
 Dhcp6Client::getTeeTimes(const uint32_t iaid, uint32_t& t1, uint32_t& t2) const {
-
-    auto leases = getLeasesByIAID(iaid);
-    if (leases.empty()) {
-        // No aquired leases so punt.
+    // Sanity check.
+    if (!context_.response_) {
         return (false);
     }
 
-    return (true);
+    // Get all options in the response message and pick IA_NA, IA_PD.
+    OptionCollection opts = context_.response_->options_;
+
+    for (auto opt = opts.begin(); opt != opts.end(); ++opt) {
+        Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
+        if (!ia) {
+            // This is not IA, so let's just skip it.
+            continue;
+        }
+        if (ia->getIAID() != iaid) {
+            // This is not the right IA, so let's just skip it.
+            continue;
+        }
+        // Found the IA.
+        t1 = ia->getT1();
+        t2 = ia->getT2();
+        return (true);
+    }
+
+    // Not found the IA.
+    return (false);
 }
 
 void

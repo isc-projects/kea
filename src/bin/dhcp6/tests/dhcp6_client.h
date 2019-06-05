@@ -505,21 +505,13 @@ public:
 
     /// @brief Returns T1 and T2 timers associated with a given iaid
     ///
-    /// Currently this method gleans the T1 an T2 times from the first
-    /// aquired lease belonging to the target iaid.  Since all leases for
-    /// an iaid should have the same values for T1 and T2, this should be 
-    /// fine.  If there are no acquired leases for the iaid, then t1 and
-    /// t2 are indeterminate.
+    /// Changed to get the T1 an T2 times from acquired leases to
+    /// IA options.
     ///
-    /// The primary impetus for this method is isolate the fact that T1
-    /// and T2 are stored on each lease.  This may change in the future. 
-    ///
-    /// @param iaid  iaid of the target IA
+    /// @param iaid iaid of the target IA
     /// @param[out] t1 set to the value of the IA's T1
     /// @param[out] t2 set to the value of the IA's T2
-    /// if there are no leases for the iaid
-    ///
-    /// @return true if there are aquired leases for the given iaid
+    /// @return true if there is an IA option for the given iaid
     bool getTeeTimes(const uint32_t iaid, uint32_t& t1, uint32_t& t2) const;
 
     /// @brief Returns number of acquired leases.
