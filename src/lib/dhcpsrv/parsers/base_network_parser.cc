@@ -39,7 +39,7 @@ BaseNetworkParser::parseTeePercents(const ConstElementPtr& network_data,
                                     NetworkPtr& network) {
     bool calculate_tee_times = network->getCalculateTeeTimes();
     if (network_data->contains("calculate-tee-times")) {
-        bool calculate_tee_times = getBoolean(network_data, "calculate-tee-times");
+        calculate_tee_times = getBoolean(network_data, "calculate-tee-times");
         network->setCalculateTeeTimes(calculate_tee_times);
     }
 
