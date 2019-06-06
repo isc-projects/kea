@@ -147,11 +147,28 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
-[A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?/({blank}|\n)*] {
+[A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?({blank}|\n)*/] {
     /* This string specifies option name starting with a letter
        and further containing letters, digits, hyphens and
        underscores and finishing by letters or digits. */
-    return isc::eval::EvalParser::make_OPTION_NAME(evaltext, loc);
+    /* Moved from a variable trailing context to C++ code as it was too slow */
+    std::string tmp(evaltext);
+    /* remove possible trailing blanks or newlines */
+    while (tmp.size() > 1) {
+        char last = tmp[tmp.size() - 1];
+        if ((last != ' ') && (last != '\t') && (last != '\n')) {
+            break;
+        }
+        if (last == '\n') {
+            /* Take embedded newlines into account */
+            /* Can make it more complex to handle spaces after the last
+               newline but currently keep it simple... */
+            loc.lines();
+            loc.step();
+        }
+        tmp.resize(tmp.size() - 1);
+    }
+    return isc::eval::EvalParser::make_OPTION_NAME(tmp, loc);
 }
 
 {addr4}|{addr6} {
