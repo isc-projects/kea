@@ -8,7 +8,6 @@
 #define NETWORK_H
 
 #include <asiolink/io_address.h>
-#include <asiolink/io_error.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <cc/element_value.h>
@@ -34,8 +33,9 @@ template<>
 class ElementValue<asiolink::IOAddress> {
 public:
 
-    /// @brief Function operator extracting an @c Element value as
-    /// string.
+    /// @brief Function operator extracting an @c Element value as string.
+    ///
+    /// @note This does NOT support empty string value.
     ///
     /// @param el Element holding a value to be extracted.
     asiolink::IOAddress operator()(ConstElementPtr el) const {
@@ -585,6 +585,37 @@ protected:
         return (property);
     }
 
+    /// @brief The @c getGlobalProperty specialization for Optional<IOAddress>.
+    ///
+    /// This does two things:
+    ///  - uses the string value of the parameter
+    ///  - falls back when the value is empty
+    ///
+    /// @param property Value to be returned when it is specified or when
+    /// no global value is found.
+    /// @param global_name Name of the global parameter which value should
+    /// be returned
+    ///
+    /// @return Optional value fetched from the global level or the value
+    /// of @c property.
+    template<> util::Optional<asiolink::IOAddress>
+    getGlobalProperty(util::Optional<asiolink::IOAddress> property,
+                      const std::string& global_name) const {
+        if (!global_name.empty() && fetch_globals_fn_) {
+            data::ConstElementPtr globals = fetch_globals_fn_();
+            if (globals && (globals->getType() == data::Element::map)) {
+                data::ConstElementPtr global_param = globals->get(global_name);
+                if (global_param) {
+                    std::string global_str = global_param->stringValue();
+                    if (!global_str.empty()) {
+                        return (asiolink::IOAddress(global_str));
+                    }
+                }
+            }
+        }
+        return (property);
+    }
+
     /// @brief Returns a value associated with a network using inheritance.
     ///
     /// This template method provides a generic mechanism to retrieve a
@@ -851,13 +882,8 @@ public:
     /// @return siaddr value
     util::Optional<asiolink::IOAddress>
     getSiaddr(const Inheritance& inheritance = Inheritance::ALL) const {
-        // Temporary fix for global next-server being the empty string.
-        try {
-            return (getProperty<Network4>(&Network4::getSiaddr, siaddr_,
-                                          inheritance, "next-server"));
-        } catch (asiolink::IOError) {
-            return (siaddr_);
-        }
+        return (getProperty<Network4>(&Network4::getSiaddr, siaddr_,
+                                      inheritance, "next-server"));
     }
 
     /// @brief Sets server hostname for the network.
