@@ -62,6 +62,7 @@ void Observation::setMaxSampleAge(const StatsDuration& duration) {
         isc_throw(InvalidStatType, "Unknown statistic type: "
                   << typeToText(type_));
     };
+
 }
 
 void Observation::setMaxSampleCount(uint32_t max_samples) {
@@ -318,8 +319,7 @@ std::string Observation::typeToText(Type type) {
         tmp << "integer";
         break;
     case STAT_FLOAT:
-        tmp << "float";
-        break;
+        tmp << "float";        break;
     case STAT_DURATION:
         tmp << "duration";
         break;
@@ -340,6 +340,10 @@ Observation::getJSON() const {
     ElementPtr entry = isc::data::Element::createList(); // multiple observation
     ElementPtr value;
     ElementPtr timestamp;
+
+    /// @todo: Add support for retrieving more than one sample for a given
+    /// observation
+
 
     // Support for retrieving more than one sample
     // retrieving all samples of indicated observation
