@@ -134,7 +134,6 @@ class Observation {
     /// be kept. When adding max_samples + 1 sample, the oldest sample will be
     /// discarded.
     ///
-    ///
     /// @param max_samples how many samples of a given statistic should be kept
     /// Example:
     /// To set a statistic to keep the last 100 observations, call:

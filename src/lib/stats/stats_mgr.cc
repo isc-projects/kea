@@ -79,11 +79,7 @@ bool StatsMgr::deleteObservation(const std::string& name) {
     return (global_->del(name));
 }
 
-<<<<<<< HEAD
-void StatsMgr::setMaxSampleAge(const std::string& name,
-=======
 bool StatsMgr::setMaxSampleAge(const std::string& name,
->>>>>>> 6c13611d946510551151ac6973c2ad01702bdb4e
                                const StatsDuration& duration) {
     ObservationPtr obs = getObservation(name);
     if (obs) {
