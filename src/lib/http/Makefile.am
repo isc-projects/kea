@@ -23,6 +23,7 @@ libkea_http_la_SOURCES += http_message_parser_base.cc http_message_parser_base.h
 libkea_http_la_SOURCES += http_messages.cc http_messages.h
 libkea_http_la_SOURCES += http_types.h
 libkea_http_la_SOURCES += listener.cc listener.h
+libkea_http_la_SOURCES += listener_impl.cc listener_impl.h
 libkea_http_la_SOURCES += post_request.cc post_request.h
 libkea_http_la_SOURCES += post_request_json.cc post_request_json.h
 libkea_http_la_SOURCES += request.cc request.h
@@ -99,6 +100,7 @@ libkea_http_include_HEADERS = \
 	http_messages.h \
 	http_types.h \
 	listener.h \
+	listener_impl.h \
 	post_request.h \
 	post_request_json.h \
 	request.h \
