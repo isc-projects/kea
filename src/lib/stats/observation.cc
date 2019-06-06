@@ -314,8 +314,7 @@ std::string Observation::typeToText(Type type) {
         tmp << "integer";
         break;
     case STAT_FLOAT:
-        tmp << "float";
-        break;
+        tmp << "float";        break;
     case STAT_DURATION:
         tmp << "duration";
         break;
