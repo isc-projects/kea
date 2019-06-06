@@ -132,6 +132,68 @@ TEST_F(ObservationTest, addValue) {
 
     EXPECT_EQ(millisec::time_duration(6,8,10,12), c.getDuration().first);
     EXPECT_EQ("1234fiveSixSevenEight", d.getString().first);
+
+}
+
+// This test checks if collecting more than one sample
+// works well.
+TEST_F(ObservationTest, moreThanOne){
+
+    // Arrays of 4 types of samples
+    int64_t int_samples[3] = {1234, 6912, 5678};
+    double float_samples[3] = {12.34, 69.12, 56e+78};
+    millisec::time_duration duration_samples[3] = {millisec::time_duration(1,2,3,4), millisec::time_duration(6,8,10,12), millisec::time_duration(5,6,7,8)};
+    std::string string_samples[3] = {"1234", "1234fiveSixSevenEight", "fiveSixSevenEight"};
+
+    EXPECT_NO_THROW(a.addValue(static_cast<int64_t>(5678)));
+    EXPECT_NO_THROW(b.addValue(56.78));
+    EXPECT_NO_THROW(c.addValue(millisec::time_duration(5,6,7,8)));
+    EXPECT_NO_THROW(d.addValue("fiveSixSevenEight"));
+
+    EXPECT_NO_THROW(a.setValue(static_cast<int64_t>(5678)));
+    EXPECT_NO_THROW(b.setValue(56e+78));
+    EXPECT_NO_THROW(c.setValue(millisec::time_duration(5,6,7,8)));
+    EXPECT_NO_THROW(d.setValue("fiveSixSevenEight"));
+
+    ASSERT_NO_THROW(a.getIntegers());
+
+    int i = 2; // Index pointed to the end of array of samples
+
+    std::list<IntegerSample> samples_int = a.getIntegers(); // List of all integer samples
+    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it){
+        EXPECT_EQ(int_samples[i],static_cast<int64_t>((*it).first));
+        --i;
+    }
+
+    ASSERT_NO_THROW(b.getFloats());
+
+    i = 2;
+
+    std::list<FloatSample> samples_float = b.getFloats(); // List of all float samples
+    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it){
+        EXPECT_EQ(float_samples[i],(*it).first);
+        --i;
+    }
+
+    ASSERT_NO_THROW(c.getDurations());
+
+    i = 2;
+
+    std::list<DurationSample> samples_dur = c.getDurations(); // List of all duration samples
+    for (std::list<DurationSample>::iterator it=samples_dur.begin(); it != samples_dur.end(); ++it){
+        EXPECT_EQ(duration_samples[i],(*it).first);
+        --i;
+    }
+
+    ASSERT_NO_THROW(d.getStrings());
+
+    i = 2;
+
+    std::list<StringSample> samples_str = d.getStrings(); // List of all string samples
+    for (std::list<StringSample>::iterator it=samples_str.begin(); it != samples_str.end(); ++it){
+        EXPECT_EQ(string_samples[i],(*it).first);
+        --i;
+    }
 }
 
 // Test checks whether timing is reported properly.
@@ -159,11 +221,14 @@ TEST_F(ObservationTest, timers) {
 // See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
 /// for details.
 TEST_F(ObservationTest, integerToJSON) {
+    // String which contains first added sample
+    std::string first_sample = ", 1234, \""
+        + isc::util::ptimeToText(a.getInteger().second) + "\" ] ]";
 
     a.setValue(static_cast<int64_t>(1234));
 
     std::string exp = "[ [ 1234, \""
-        + isc::util::ptimeToText(a.getInteger().second) + "\" ] ]";
+        + isc::util::ptimeToText(a.getInteger().second) + "\"" + first_sample;
 
     std::cout << a.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, a.getJSON()->str());
@@ -174,13 +239,17 @@ TEST_F(ObservationTest, integerToJSON) {
 /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
 /// for details.
 TEST_F(ObservationTest, floatToJSON) {
+    // String which contains first added sample
+    std::string first_sample = ", 12.34, \""
+      + isc::util::ptimeToText(b.getFloat().second) + "\" ] ]";
 
     // Let's use a value that converts easily to floating point.
     // No need to deal with infinite fractions in binary systems.
+
     b.setValue(1234.5);
 
     std::string exp = "[ [ 1234.5, \""
-        + isc::util::ptimeToText(b.getFloat().second) + "\" ] ]";
+        + isc::util::ptimeToText(b.getFloat().second) + "\"" + first_sample;
 
     std::cout << b.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, b.getJSON()->str());
@@ -191,11 +260,15 @@ TEST_F(ObservationTest, floatToJSON) {
 // details.
 TEST_F(ObservationTest, durationToJSON) {
 
+    // String which contains first added sample
+    std::string first_sample = ", \"01:02:03.000004\", \""
+        + isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
+
     // 1 hour 2 minutes 3 seconds and 4 milliseconds
     c.setValue(time_duration(1,2,3,4));
 
     std::string exp = "[ [ \"01:02:03.000004\", \""
-        + isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
+        + isc::util::ptimeToText(c.getDuration().second) + "\"" + first_sample;
 
     std::cout << c.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, c.getJSON()->str());
@@ -205,12 +278,14 @@ TEST_F(ObservationTest, durationToJSON) {
 // See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
 // for details.
 TEST_F(ObservationTest, stringToJSON) {
-
+    // String which contains first added sample
+    std::string first_sample = ", \"1234\", \""
+        + isc::util::ptimeToText(d.getString().second) + "\" ] ]";
     //
     d.setValue("Lorem ipsum dolor sit amet");
 
     std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \""
-        + isc::util::ptimeToText(d.getString().second) + "\" ] ]";
+        + isc::util::ptimeToText(d.getString().second) + "\"" + first_sample;
 
     std::cout << d.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, d.getJSON()->str());

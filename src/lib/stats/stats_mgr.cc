@@ -77,13 +77,21 @@ bool StatsMgr::deleteObservation(const std::string& name) {
     return (global_->del(name));
 }
 
-void StatsMgr::setMaxSampleAge(const std::string& ,
-                               const StatsDuration&) {
-    isc_throw(NotImplemented, "setMaxSampleAge not implemented");
+void StatsMgr::setMaxSampleAge(const std::string& name,
+                               const StatsDuration& duration) {
+    ObservationPtr obs = getObservation(name);
+    if (obs) {
+        obs->setMaxSampleAge(duration);
+    }
+    //isc_throw(NotImplemented, "setMaxSampleAge not implemented");
 }
 
-void StatsMgr::setMaxSampleCount(const std::string& , uint32_t){
-    isc_throw(NotImplemented, "setMaxSampleCount not implemented");
+void StatsMgr::setMaxSampleCount(const std::string& name, uint32_t max_samples){
+    //isc_throw(NotImplemented, "setMaxSampleCount not implemented");
+    ObservationPtr obs = getObservation(name);
+    if (obs) {
+        obs->setMaxSampleCount(max_samples);
+    }
 }
 
 bool StatsMgr::reset(const std::string& name) {
@@ -108,7 +116,7 @@ isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
     isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
     ObservationPtr obs = getObservation(name);
     if (obs) {
-        response->set(name, obs->getJSON()); // that contains the observation
+        response->set(name, obs->getJSON()); // that contains observations
     }
     return (response);
 }

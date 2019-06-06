@@ -134,8 +134,9 @@ class StatsMgr : public boost::noncopyable {
     /// approach. For sample count constrained approach, see @ref
     /// setMaxSampleCount() below.
     ///
-    /// @todo: Not implemented.
     ///
+    /// @param name name of the observation
+    /// @param duration determines maximum age of samples
     /// Example: to set a statistic to keep observations for the last 5 minutes,
     /// call setMaxSampleAge("incoming-packets", time_duration(0,5,0,0));
     /// to revert statistic to a single value, call:
@@ -148,8 +149,9 @@ class StatsMgr : public boost::noncopyable {
     /// rather as a set of values. In this form, at most max_samples will be kept.
     /// When adding max_samples+1 sample, the oldest sample will be discarded.
     ///
-    /// @todo: Not implemented.
     ///
+    /// @param name name of the observation
+    /// @param max_samples how many samples of a given statistic should be kept
     /// Example:
     /// To set a statistic to keep the last 100 observations, call:
     /// setMaxSampleCount("incoming-packets", 100);

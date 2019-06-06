@@ -40,6 +40,55 @@ Observation::Observation(const std::string& name, const std::string& value)
     setValue(value);
 }
 
+void Observation::setMaxSampleAge(const StatsDuration& duration) {
+    switch(type_) {
+    case STAT_INTEGER: {
+        setMaxSampleAgeInternal(integer_samples_, duration, STAT_INTEGER);
+        return;
+    }
+    case STAT_FLOAT: {
+        setMaxSampleAgeInternal(float_samples_, duration, STAT_FLOAT);
+        return;
+    }
+    case STAT_DURATION: {
+        setMaxSampleAgeInternal(duration_samples_, duration, STAT_DURATION);
+        return;
+    }
+    case STAT_STRING: {
+        setMaxSampleAgeInternal(string_samples_, duration, STAT_STRING);
+        return;
+    }
+    default:
+        isc_throw(InvalidStatType, "Unknown statistic type: "
+                  << typeToText(type_));
+    };
+
+}
+
+void Observation::setMaxSampleCount(uint32_t max_samples) {
+    switch(type_) {
+    case STAT_INTEGER: {
+        setMaxSampleCountInternal(integer_samples_, max_samples, STAT_INTEGER);
+        return;
+    }
+    case STAT_FLOAT: {
+        setMaxSampleCountInternal(float_samples_, max_samples, STAT_FLOAT);
+        return;
+    }
+    case STAT_DURATION: {
+        setMaxSampleCountInternal(duration_samples_, max_samples, STAT_DURATION);
+        return;
+    }
+    case STAT_STRING: {
+        setMaxSampleCountInternal(string_samples_, max_samples, STAT_STRING);
+        return;
+    }
+    default:
+        isc_throw(InvalidStatType, "Unknown statistic type: "
+                  << typeToText(type_));
+    };
+}
+
 void Observation::addValue(const int64_t value) {
     IntegerSample current = getInteger();
     setValue(current.first + value);
@@ -88,9 +137,29 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
     if (storage.empty()) {
         storage.push_back(make_pair(value, microsec_clock::local_time()));
     } else {
+        //*storage.begin() = make_pair(value, microsec_clock::local_time());
 
-        /// @todo: Update once more than one sample is supported
-        *storage.begin() = make_pair(value, microsec_clock::local_time());
+        // Storing of more than one sample
+        storage.push_front(make_pair(value, microsec_clock::local_time()));
+
+        if (max_sample_count.first) {
+            // if max_sample_count is set to true
+            // and size of storage is equal to max_sample_count
+            if (storage.size() >= max_sample_count.second) {
+                storage.pop_back();    // removing the last element
+            }
+
+        } else {
+            StatsDuration range_of_storage =
+                storage.front().second - storage.back().second;
+            // removing samples until the range_of_storage
+            // stops exceeding the duration limit
+            while (range_of_storage >= max_sample_age.second) {
+                storage.pop_back();
+                range_of_storage =
+                    storage.front().second - storage.back().second;
+            }
+        }
     }
 }
 
@@ -127,6 +196,84 @@ SampleType Observation::getValueInternal(Storage& storage, Type exp_type) const 
     return (*storage.begin());
 }
 
+std::list<IntegerSample> Observation::getIntegers() const {
+    return (getValuesInternal<IntegerSample>(integer_samples_, STAT_INTEGER));
+}
+
+std::list<FloatSample> Observation::getFloats() const {
+    return (getValuesInternal<FloatSample>(float_samples_, STAT_FLOAT));
+}
+
+std::list<DurationSample> Observation::getDurations() const {
+    return (getValuesInternal<DurationSample>(duration_samples_, STAT_DURATION));
+}
+
+std::list<StringSample> Observation::getStrings() const {
+    return (getValuesInternal<StringSample>(string_samples_, STAT_STRING));
+}
+
+template<typename SampleType, typename Storage>
+std::list<SampleType> Observation::getValuesInternal(Storage& storage, Type exp_type) const {
+    if (type_ != exp_type) {
+        isc_throw(InvalidStatType, "Invalid statistic type requested: "
+                  << typeToText(exp_type) << ", but the actual type is "
+                  << typeToText(type_) );
+    }
+
+    if (storage.empty()) {
+        // That should never happen. The first element is always initialized in
+        // the constructor. reset() sets its value to zero, but the element should
+        // still be there.
+        isc_throw(Unexpected, "Observation storage container empty");
+    }
+    return (storage);
+}
+
+template<typename StorageType>
+void Observation::setMaxSampleAgeInternal(StorageType& storage,
+    const StatsDuration& duration, Type exp_type) {
+    if (type_ != exp_type) {
+        isc_throw(InvalidStatType, "Invalid statistic type requested: "
+                  << typeToText(exp_type) << ", but the actual type is "
+                  << typeToText(type_) );
+    }
+    // setting new value of max_sample_count
+    max_sample_age.first = true;
+    max_sample_age.second = duration;
+    // unactivating the max_sample_count limit
+    max_sample_count.first = false;
+
+    StatsDuration range_of_storage =
+        storage.front().second - storage.back().second;
+
+    while (range_of_storage > duration) {
+        // deleting elements which are exceeding the duration limit
+        storage.pop_back();
+        range_of_storage = storage.front().second - storage.back().second;
+    }
+}
+
+template<typename StorageType>
+void Observation::setMaxSampleCountInternal(StorageType& storage,
+    uint32_t max_samples, Type exp_type) {
+    if (type_ != exp_type) {
+        isc_throw(InvalidStatType, "Invalid statistic type requested: "
+                  << typeToText(exp_type) << ", but the actual type is "
+                  << typeToText(type_) );
+    }
+    // setting new value of max_sample_count
+    max_sample_count.first = true;
+    max_sample_count.second = max_samples;
+    // unactivating the max_sample_age limit
+    max_sample_age.first = false;
+
+    while (storage.size() > max_samples) {
+        // deleting elements which are exceeding the max_samples limit
+        storage.pop_back();
+    }
+}
+
+
 std::string Observation::typeToText(Type type) {
     std::stringstream tmp;
     switch (type) {
@@ -134,8 +281,7 @@ std::string Observation::typeToText(Type type) {
         tmp << "integer";
         break;
     case STAT_FLOAT:
-        tmp << "float";
-        break;
+        tmp << "float";        break;
     case STAT_DURATION:
         tmp << "duration";
         break;
@@ -153,36 +299,66 @@ std::string Observation::typeToText(Type type) {
 isc::data::ConstElementPtr
 Observation::getJSON() const {
 
-    ElementPtr entry = isc::data::Element::createList(); // a single observation
+    ElementPtr entry = isc::data::Element::createList(); // multiple observation
     ElementPtr value;
     ElementPtr timestamp;
 
     /// @todo: Add support for retrieving more than one sample for a given
     /// observation
 
+
+    // Support for retrieving more than one sample
+    // retrieving all samples of indicated observation
     switch (type_) {
     case STAT_INTEGER: {
-        IntegerSample s = getInteger();
-        value = isc::data::Element::create(static_cast<int64_t>(s.first));
-        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
+        std::list<IntegerSample> s = getIntegers(); // List of all integer samples
+
+    // Iteration over all elements in the list
+    // and adding alternately value and timestamp to the entry
+        for (std::list<IntegerSample>::iterator it=s.begin(); it != s.end(); ++it){
+          value = isc::data::Element::create(static_cast<int64_t>((*it).first));
+          timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+
+          entry->add(value);
+          entry->add(timestamp);
+        }
+
         break;
     }
     case STAT_FLOAT: {
-        FloatSample s = getFloat();
-        value = isc::data::Element::create(s.first);
-        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
+        std::list<FloatSample> s = getFloats();
+
+        for (std::list<FloatSample>::iterator it=s.begin(); it != s.end(); ++it){
+          value = isc::data::Element::create((*it).first);
+          timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+
+          entry->add(value);
+          entry->add(timestamp);
+        }
         break;
     }
     case STAT_DURATION: {
-        DurationSample s = getDuration();
-        value = isc::data::Element::create(isc::util::durationToText(s.first));
-        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
+        std::list<DurationSample> s = getDurations();
+
+        for (std::list<DurationSample>::iterator it=s.begin(); it != s.end(); ++it){
+          value = isc::data::Element::create(isc::util::durationToText((*it).first));
+          timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+
+          entry->add(value);
+          entry->add(timestamp);
+        }
         break;
     }
     case STAT_STRING: {
-        StringSample s = getString();
-        value = isc::data::Element::create(s.first);
-        timestamp = isc::data::Element::create(isc::util::ptimeToText(s.second));
+        std::list<StringSample> s = getStrings();
+
+        for (std::list<StringSample>::iterator it=s.begin(); it != s.end(); ++it){
+          value = isc::data::Element::create((*it).first);
+          timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
+
+          entry->add(value);
+          entry->add(timestamp);
+        }
         break;
     }
     default:
@@ -190,10 +366,7 @@ Observation::getJSON() const {
                   << typeToText(type_));
     };
 
-    entry->add(value);
-    entry->add(timestamp);
-
-    ElementPtr list = isc::data::Element::createList(); // a single observation
+    ElementPtr list = isc::data::Element::createList(); // multiple observation
     list->add(entry);
 
     return (list);
