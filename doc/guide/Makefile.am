@@ -1,78 +1,47 @@
-# generated documentation
-HTMLDOCS = kea-guide.html kea-messages.html
-DOCS = kea-guide.txt
 
-dist_doc_DATA = $(DOCS)
-dist_html_DATA = $(HTMLDOCS) kea-guide.css kea-logo-100x70.png
+rst_sources=admin.rst
+rst_sources+=agent.rst
+rst_sources+=api.rst
+rst_sources+=classify.rst
+rst_sources+=config-backend.rst
+rst_sources+=config.rst
+rst_sources+=congestion-handling.rst
+rst_sources+=ctrl-channel.rst
+rst_sources+=ddns.rst
+rst_sources+=dhcp4-srv.rst
+rst_sources+=dhcp6-srv.rst
+rst_sources+=hammer.rst
+rst_sources+=hooks-cb-cmds.rst
+rst_sources+=hooks-class-cmds.rst
+rst_sources+=hooks-ha.rst
+rst_sources+=hooks-host-cache.rst
+rst_sources+=hooks-lease-cmds.rst
+rst_sources+=hooks-radius.rst
+rst_sources+=hooks.rst
+rst_sources+=hooks-stat-cmds.rst
+rst_sources+=install.rst
+rst_sources+=intro.rst
+rst_sources+=keactrl.rst
+rst_sources+=kea-guide.rst
+rst_sources+=lease-expiration.rst
+rst_sources+=lfc.rst
+rst_sources+=logging.rst
+rst_sources+=netconf.rst
+rst_sources+=quickstart.rst
+rst_sources+=shell.rst
+rst_sources+=stats.rst
 
-DOCBOOK = kea-guide.xml intro.xml quickstart.xml install.xml admin.xml config.xml
-DOCBOOK += config-backend.xml keactrl.xml dhcp4-srv.xml dhcp6-srv.xml lease-expiration.xml
-DOCBOOK += logging.xml ddns.xml hooks.xml hooks-class-cmds.xml hooks-cb-cmds.xml
-DOCBOOK += hooks-ha.xml hooks-host-cache.xml hooks-lease-cmds.xml hooks-radius.xml
-DOCBOOK += hooks-stat-cmds.xml lfc.xml stats.xml ctrl-channel.xml classify.xml shell.xml
-DOCBOOK += agent.xml netconf.xml api.xml congestion-handling.xml hammer.xml
 
-EXTRA_DIST = $(DOCBOOK) kea-docbook.xsl
+sphinxbuild = sphinx-build
+sphinxopts = -E
 
-DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
+kea-guide.pdf: $(rst_sources)
+	@$(sphinxbuild) -M latexpdf $(srcdir) $(builddir)/_build $(sphinxopts)
 
-kea-messages.xml:
-	$(top_builddir)/tools/system_messages -o $@ \
-	`find $(top_srcdir) -name "*.mes" -print`
+kea-guide.html: $(rst_sources)
+	@$(sphinxbuild) -M singlehtml $(srcdir) $(builddir)/_build $(sphinxopts)
 
-# This is not a "man" manual, but reuse this for now for docbook.
-if GENERATE_DOCS
 
-kea-guide.html: $(DOCBOOK)
-	@XSLTPROC@ --novalid --xinclude @NONET@ \
-		--path $(top_builddir)/doc \
-		-o $@ \
-		--stringparam section.autolabel 1 \
-		--stringparam section.label.includes.component.label 1 \
-		--stringparam html.stylesheet kea-guide.css \
-		$(srcdir)/kea-docbook.xsl \
-		$(srcdir)/kea-guide.xml
+EXTRA_DIST = $(rst_sources)
 
-kea-guide.txt: kea-guide.html
-	@ELINKS@ -dump -no-numbering -no-references kea-guide.html > $@
-
-kea-messages.html: kea-messages.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ \
-		--path $(top_builddir)/doc \
-		-o $@ \
-		--stringparam generate.toc "book toc" \
-		--stringparam html.stylesheet kea-guide.css \
-		$(srcdir)/kea-docbook.xsl \
-		kea-messages.xml
-
-else
-
-$(HTMLDOCS) $(DOCS):
-	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
-
-if HAVE_DBLATEX
-
-CLEANFILES = kea-guide.pdf kea-messages.pdf
-
-DBLATEX_FLAGS = --xslt-opts=--path --xslt-opts=$(abs_top_builddir)/doc \
-	-P doc.collab.show=0 -P latex.output.revhistory=0 \
-	-P term.breakline=1 -P filename.as.url=0 \
-	-P imagedata.default.scale="maxwidth=50px,maxheight=35px"
-
-pdf: kea-guide.pdf kea-messages.pdf
-
-kea-guide.pdf: $(DOCBOOK)
-	@DBLATEX@ $(DBLATEX_FLAGS) kea-guide.xml
-
-kea-messages.pdf: kea-messages.xml
-	@DBLATEX@ $(DBLATEX_FLAGS) kea-messages.xml
-
-else
-
-pdf kea-guide.pdf kea-messages.pdf:
-	@echo Install dblatex tool and rerun ./configure to be able to generate documentation in PDF format.
-
-endif
+# TODO: here should ba added some stuff for DIST, etc to be consumed by automake/autoconf

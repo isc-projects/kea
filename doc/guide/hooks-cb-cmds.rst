@@ -1,0 +1,893 @@
+.. _cb-cmds-library:
+
+cb_cmds: Configuration Backend Commands
+=======================================
+
+This section describes the ``cb_cmds`` hooks library which is used to
+manage Kea servers' configurations in the Configuration Backends. This
+library must be used in conjuction with the available CB hooks libraries
+implementing the common APIs to create, read, update and delete (CRUD)
+the configuration information in the respective databases. For example:
+the ``mysql_cb`` hooks library, released in Kea 1.6.0, implements this
+API for MySQL. In order to manage the configuration information in the
+MySQL database both ``mysql_cb`` and ``cb_cmds`` libraries must be
+loaded by the server used for the configuration management.
+
+The ``cb_cmds`` library is only available to ISC customers with a
+support contract.
+
+   **Note**
+
+   This library may only be loaded by the ``kea-dhcp4`` or the
+   ``kea-dhcp6`` process.
+
+Commands Structure
+------------------
+
+There are 5 types of commands supported by this library:
+
+-  ``del`` - delete selected object from the database, e.g.
+   ``remote-global-parameter4-del``
+
+-  ``get`` - fetch selected object from the database, e.g.
+   ``remote-subnet4-get``,
+
+-  ``get-all`` - fetch all objects of the particular type from the
+   database, e.g. ``remote-option-def4-get-all``,
+
+-  ``list`` - list all objects of the particular type in the database,
+   e.g. ``remote-network4-list``; this class of commands returns brief
+   information about each object comparing to the output of ``get-all``,
+
+-  ``set`` - creates or replaces an object of the given type in the
+   database, e.g. ``remote-option4-global-set`` .
+
+All types of commands accept optional ``remote`` map which selects the
+database instance to which the command refers. For example:
+
+::
+
+   {
+       "command": "remote-subnet4-list",
+       "arguments": {
+           "remote": {
+               "type": "mysql",
+               "host": "192.0.2.33",
+               "port": 3302
+           }
+       }
+   }
+
+selects the MySQL database, running on host 192.0.2.33 and port 3302, to
+fetch the list of subnets from. All parameters in the ``remote`` are
+optional. The ``port`` parameter can be only specified in conjuction
+with the ``host``. If no parameters in the ``remote`` parameter are to
+be specified, the parameter should be omitted. In this case, the server
+will use the first backend listed in the ``config-control`` map within
+the configuration of the server receiving the command.
+
+   **Note**
+
+   In the Kea 1.6.0 release, it is possible to configure the Kea server
+   to use only one configuration backend. Strictly speaking, it is
+   possible to point Kea server to at most one MySQL database using the
+   ``config-control`` parameter. That's why, in this release, the
+   ``remote`` parameter may be omitted in the commands because the
+   cb_cmds hooks library will use by default the sole backend.
+
+.. _cb-cmds-dhcp:
+
+Control Commands for DHCP Servers
+---------------------------------
+
+This section describes and gives some examples of the control commands
+implemented by the ``cb_cmds`` hooks library, to manage the
+configuration information of the DHCPv4 and DHCPv6 servers. Many of the
+commands are almost identical between DHCPv4 and DHCPv6, i.e. only
+differ by the command name. Other commands slightly differ by the
+structure of the inserted data, e.g. the structure of the IPv4 subnet
+information is different than the structure of the IPv6 subnet.
+Nevertheless, they still share the structure of the command arguments
+and thus it makes sense to describe them together.
+
+In the following sections, various commands are described and the usage
+examples are provided. In the sections jointly describing the DHCPv4 and
+DHCPv6 variants of the particular command we sometimes use the following
+notation - the ``remote-subnet[46]-set`` is the wildcard name for the
+two commands: ``remote-subnet4-set`` and ``remote-subnet6-set``.
+
+In addition, whenever the text in the subsequent sections refers to a
+DHCP command or DHCP parameter, it refers to both DHCPv4 and DHCPv6
+variants. The text specific to the particular server type refers to them
+as: DHCPv4 command, DHCPv4 parameter, DHCPv6 command, DHCPv6 parameter
+etc.
+
+.. _cb-cmds-metadata:
+
+Metadata
+~~~~~~~~
+
+The typical response to the ``get`` or ``list`` command includes a list
+of returned objects (e.g. subnets) and each such object contains the
+``metadata`` map with some database specific information describing this
+object. In other words, the metadata contains any information about the
+fetched object which may be useful for the administrator, but is not the
+part of the object specification from the DHCP server standpoint. In the
+Kea 1.6.0 release, the metadata is limited to the ``server-tag``, which
+describescthe association of the object with the particular server or
+all servers. The server tag is always set to ``all`` in the Kea 1.6.0
+beta release.
+
+The following is the example response to the ``remote-network4-list``
+command, which includes the metadata:
+
+::
+
+   {
+       "result": 0,
+       "text": "1 IPv4 shared network(s) found.",
+       "arguments": {
+           "shared-networks": [
+               {
+                   "name": "level3",
+                   "metadata": {
+                       "server-tag": "all"
+                   }
+               }
+           ],
+           "count": 1
+       }
+   }
+            
+
+Client implementations must not assume that the metadata contains only
+the ``server-tag`` parameter. In the future releases this map will be
+extended with additional information, e.g. object modification time, log
+message created during the last modification etc.
+
+.. _command-remote-global-parameter4-del:
+
+remote-global-parameter4-del, remote-global-parameter6-del commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to delete a global DHCP parameter from the
+configuration database. When the parameter is deleted from the database
+the server will use the value specified in the configuration file for
+this parameter or a default value if the parameter is not specified in
+the configuration file.
+
+The following command attempts to delete the DHCPv4 ``renew-timer``
+parameter from the database:
+
+::
+
+   {
+       "command": "remote-global-parameter4-del",
+       "arguments": {
+           "parameters": [ "renew-timer" ],
+           "remote": {
+               "type": "mysql"
+            }
+       }
+   }
+             
+
+.. _command-remote-global-parameter4-get:
+
+remote-global-parameter4-get, remote-global-parameter6-get commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to fetch a scalar global DHCP parameter from the
+configuration database.
+
+The following command attempts to fetch the ``boot-file-name``
+parameter:
+
+::
+
+   {
+       "command": "remote-global-parameter4-get",
+       "arguments": {
+           "parameters": [ "boot-file-name" ],
+            "remote": {
+                "type": "mysql"
+            }
+       }
+   }
+             
+
+The returned value has one of the four scalar types: string, integer,
+real or boolean. Non scalar global configuration parameters, such as map
+or list, are not returned by this command.
+
+In case of the example above the string value is returned, e.g.:
+
+::
+
+   {
+       "result": 0,
+       "text": "1 DHCPv4 global parameter found.",
+       "arguments": {
+           "parameters": {
+               "boot-file-name": "/dev/null",
+               "metadata": {
+                   "server-tag": "all"
+               }
+           },
+           "count": 1
+       }
+   }
+               
+
+The example response for the integer value is:
+
+::
+
+   {
+       "result": 0,
+       "text": "1 DHCPv4 global parameter found.",
+       "arguments": {
+           "parameters": {
+               "renew-timer": 2000,
+               "metadata": {
+                   "server-tag": "all"
+               }
+           },
+           "count": 1
+       }
+   }
+               
+
+The real value:
+
+::
+
+   {
+       "result": 0,
+       "text": "1 DHCPv4 global parameter found.",
+       "arguments": {
+           "parameters": {
+               "t1-percent": 0.85,
+               "metadata": {
+                   "server-tag": "all"
+               }
+           },
+           "count": 1
+       }
+   }
+               
+
+Finally, the boolean value:
+
+::
+
+   {
+       "result": 0,
+       "text": "1 DHCPv4 global parameter found.",
+       "arguments": {
+           "parameters": {
+               "match-client-id": true,
+               "metadata": {
+                   "server-tag": "all"
+               }
+           },
+           "count": 1
+       }
+   }
+               
+
+.. _command-remote-global-parameter4-get-all:
+
+remote-global-parameter4-get-all, remote-global-parameter6-get-all commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to fetch all global DHCP parameters from the
+database. They include no arguments besides the optional ``remote`` map.
+
+.. _command-remote-global-parameter4-set:
+
+remote-global-parameter4-set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to create scalar global DHCP parameters in the
+database. If any of the parameters already exists, its value is replaced
+as a result of this command. It is possible to set multiple parameters
+within a single command, each having one of the four types: a string,
+integer, real and boolean. For example:
+
+::
+
+   {
+       "command": "remote-global-parameter4-set"
+       "arguments": {
+           "parameters": {
+               "boot-file-name": "/dev/null",
+               "renew-timer": 2000,
+               "t1-percent": 0.85,
+               "match-client-id": true
+           },
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+An error is returned if any of the parameters is not supported by the
+DHCP server or its type does not match. Care should be taken when
+multiple parameters are specified in a single command because it is
+possible that only some of the parameters are stored successfully and
+some fail. If an error occurred when processing this command, it is
+recommended to use ``remote-global-parameter[46]-get-all`` to check
+which of the parameters have been stored/updated successfully and which
+failed.
+
+.. _command-remote-network4-del:
+
+remote-network4-del, remote-network6-del commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to delete an IPv4 or IPv6 shared network from
+the database. The optional parameter ``subnets-action`` determines
+whether the subnets belonging to the deleted shared network should also
+be deleted or preserved. The ``subnets-action`` defaults to ``keep``,
+which preserves the subnets. If it is set to ``delete``, the subnets are
+deleted along with the shared network.
+
+The following command:
+
+::
+
+   {
+       "command": "remote-network6-del",
+       "arguments": {
+           "shared-networks": [
+               {
+                   "name": "level3"
+               }
+           ],
+           "subnets-action": "keep",
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+deletes the "level3" IPv6 shared network. The subnets are preserved but
+they are disassociated from the deleted shared network and become
+global. This behavior corresponds to the behavior of the
+``network[46]-del`` commands with respect to the ``subnets-action``.
+
+.. _command-remote-network4-get:
+
+remote-network4-get, remote-network6-get commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to retrieve the information about an IPv4 or
+IPv6 shared network. The optional parameter ``subnets-include`` denotes
+whether the subnets belonging to the shared network should also be
+returned. This parameter defaults to ``no`` in which case the subnets
+are not returned. If this parameter is set to ``full``, the subnets are
+returned together with the shared network.
+
+The following command fetches the "level3" IPv6 shared network along
+with the full information about the subnets belonging to it:
+
+::
+
+   {
+       "command": "remote-network6-get",
+       "arguments": {
+           "shared-networks": [
+               {
+                   "name": "level3"
+               }
+           ],
+           "subnets-include": "full",
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-network4-list:
+
+remote-network4-list, remote-network6-list commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to list all IPv4 or IPv6 shared networks in the
+particular database. The returned information about each shared network
+merely contains the shared network name and the metadata. In order to
+fetch the detailed information about the selected shared network, use
+the ``remote-network[46]-get`` command.
+
+The ``remote-network[46]-list`` takes no argument except the optional
+``remote`` map.
+
+.. _command-remote-network4-set:
+
+remote-network4-set
+~~~~~~~~~~~~~~~~~~~
+
+These commands creates new or replaces an existing IPv4 or IPv6 shared
+network in the database. The structure of the shared network information
+is the same as in the Kea configuration file (see
+`??? <#shared-network4>`__ and `??? <#shared-network6>`__ for details),
+except that it is not allowed to specify subnets along with the shared
+network information. Including the ``subnet4`` or ``subnet6`` parameter
+within the shared network information will result in an error.
+
+These commands are intended to be used for managing the shared network
+specific information and DHCP options. In order to associate and
+disassociate the subnets with the shared networks the
+``remote-subnet[46]-set`` commands should be used.
+
+The following command adds the IPv6 shared network "level3" to the
+database:
+
+::
+
+   {
+       "command": "remote-network6-set",
+       "arguments": {
+           "shared-networks": [
+               {
+                   "name": "level3",
+                   "interface": "eth0",
+                   "option-data": [ {
+                       "name": "sntp-servers",
+                       "data": "2001:db8:1::1"
+                   } ],
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+               
+
+This command includes the ``interface`` parameter which sets the shared
+network level interface name. Remaining shared network level parameters,
+which are not specified with the command, will be marked as
+"unspecified" in the database. The DHCP server will use the global
+values for unspecified parameters or, if the global values are not
+specified, the default values will be used.
+
+   **Note**
+
+   Same as for other "set" commands, this command replaces the entire
+   information about the given shared network in the database if the
+   shared network already exists. Therefore, when sending this command,
+   make sure to always include all parameters that must be specified for
+   the updated shared network instance. Any unspecified parameter will
+   be marked unspecified in the database, even if its value was present
+   prior to sending the command.
+
+.. _command-remote-option-def4-del:
+
+remote-option-def4-del, remote-option-def6-del commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to delete a DHCP option definition from the
+database. The option definition is identified by an option code and
+option space. For example:
+
+::
+
+   {
+       "command": "remote-option-def6-del",
+       "arguments": {
+           "option-defs": [
+               {
+                   "code": 1,
+                   "space": "isc"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+deletes the definition of the option having the code of 1 and belonging
+to the option space "isc". The default option spaces are "dhcp4" and
+"dhcp6" for the DHCPv4 and DHCPv6 top level options respectively.
+
+.. _command-remote-option-def4-get:
+
+remote-option-def4-get, remote-option-def6-get commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to fetch a specified DHCP option definition from
+the database. The option definition is identified by the option code and
+option space. The default option spaces are "dhcp4" and "dhcp6" for the
+DHCPv4 and DHCPv6 top level options respectively.
+
+The following command retrieves a DHCPv4 option definition having the
+code of 1 and belonging to option space "isc":
+
+::
+
+   {
+       "command": "remote-option-def4-get"
+       "arguments": {
+           "option-defs": [
+               {
+                   "code": 1,
+                   "space": "isc"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-option-def4-get-all:
+
+remote-option-def4-get-all, remote-option-def6-get-all commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to fetch all DHCP option definitions from the
+database. It takes no arguments except the optional ``remote`` map.
+
+.. _command-remote-option-def4-set:
+
+remote-option-def4-set, remote-option-def6-set commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands create a new DHCP option definition or replace an
+existing option definition in the database. The structure of the option
+definition information is the same as in the Kea configuration file (see
+`??? <#dhcp4-custom-options>`__ and `??? <#dhcp6-custom-options>`__).
+The following command creates the DHCPv4 option definition in the top
+level "dhcp4" option space:
+
+::
+
+   {
+       "command": "remote-option-def4-set",
+       "arguments": {
+           "option-defs": [
+               {
+                   "name": "foo",
+                   "code": 222,
+                   "type": "uint32",
+                   "array": false,
+                   "record-types": "",
+                   "space": "dhcp4",
+                   "encapsulate": ""
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-option4-global-del:
+
+remote-option4-global-del, remote-option6-global-del commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to delete a global DHCP option from the
+database. The option is identified by an option code and option space.
+For example:
+
+::
+
+   {
+       "command": "remote-option4-global-del",
+       "arguments": {
+           "options": [
+               {
+                   "code": 5
+                   "space": "dhcp4"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+The "dhcp4" is the top level option space where the standard DHCPv4
+options belong.
+
+.. _command-remote-option4-global-get:
+
+remote-option4-global-get, remote-option6-global-get commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to fetch a global DHCP option from the database.
+The option is identified by the code and option space. The top level
+option spaces where DHCP standard options belong are called "dhcp4" and
+"dhcp6" for the DHCPv4 and DHCPv6 servers respectively.
+
+The following command retrieves the IPv6 "DNS Servers" (code 23) option:
+
+::
+
+   {
+       "command": remote-option6-global-get",
+       "arguments": {
+           "options": [
+               {
+                   "code": 23,
+                   "space": "dhcp6"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+               
+
+.. _command-remote-option4-global-get-all:
+
+remote-option4-global-get-all, remote-option6-global-get-all commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to fetch all global DHCP options from the
+configuration database. It takes no arguments except the optional
+``remote`` map.
+
+.. _command-remote-option4-global-set:
+
+remote-option4-global-set, remote-option6-global-set command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands create a new global DHCP option or replace an existing
+option in the database. The structure of the option information is the
+same as in the Kea configuration file (see `??? <#dhcp4-std-options>`__
+and see `??? <#dhcp4-std-options>`__). For example:
+
+::
+
+   {
+       "command": "remote-option6-global-set",
+       "arguments": {
+           "options": [
+               {
+                   "name": "dns-servers",
+                   "data": "2001:db8:1::1"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+Note that specifying an option name instead of the option code only
+works reliably for the standard DHCP options. When specifying a value
+for the user defined DHCP option, the option code should be specified
+instead of the name. For example:
+
+::
+
+   {
+       "command": "remote-option6-global-set",
+       "arguments": {
+           "options": [
+               {
+                   "code": 1,
+                   "space": "isc",
+                   "data": "2001:db8:1::1"
+               }
+           ]
+       }
+   }
+               
+
+.. _command-remote-subnet4-del-by-id:
+
+remote-subnet4-del-by-id, remote-subnet6-del-by-id command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the first variant of the commands used to delete an IPv4 or IPv6
+subnet from the database. It uses subnet ID to identify the subnet. For
+example, in order to delete the IPv4 subnet with ID of 5:
+
+::
+
+   {
+       "command": "remote-subnet4-del-by-id",
+       "arguments": {
+           "subnets": [
+               {
+                   "id": 5
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-subnet4-del-by-prefix:
+
+remote-subnet4-del-by-prefix, remote-subnet6-del-by-prefix commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the second variant of the commands used to delete an IPv4 or
+IPv6 subnet from the database. It uses the subnet prefix to identify the
+subnet. For example:
+
+::
+
+   {
+       "command": "remote-subnet6-del-by-prefix",
+       "arguments": {
+           "subnets": [
+               {
+                   "subnet": "2001:db8:1::/64"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-subnet4-get-by-id:
+
+remote-subnet4-get-by-id, remote-subnet6-get-by-id commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the first variant of the commands used to fetch an IPv4 or IPv6
+subnet from the database. It uses a subnet ID to identify the subnet.
+For example:
+
+::
+
+   {
+       "command": "remote-subnet4-get-by-id",
+       "arguments": {
+           "subnets": [
+               {
+                   "id": 5
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-subnet4-get-by-prefix:
+
+remote-subnet4-get-by-prefix, remote-subnet6-get-by-prefix command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the second variant of the commands used to fetch an IPv4 or IPv6
+subnet from the database. It uses a subnet prefix to identify the
+subnet. For example:
+
+::
+
+   {
+       "command": "remote-subnet6-get-by-prefix",
+       "arguments": {
+           "subnets": [
+               {
+                   "subnet": "2001:db8:1::/64"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+.. _command-remote-subnet4-list:
+
+remote-subnet4-list, remote-subnet6-list commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to list all IPv4 or IPv6 subnets from the
+database. It takes no parameters except the optional ``remote`` map. The
+returned information about each subnet is limited to subnet identifier,
+prefix and associated shared network name. In order to retrieve full
+information about the selected subnet use the
+``remote-subnet[46]-get-by-id`` or ``remote-subnet[46]-get-by-prefix``.
+
+.. _command-remote-subnet4-set:
+
+remote-subnet4-set, remote-subnet6-set commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to create a new IPv4 or IPv6 subnet or replace
+an existing subnet in the database. Setting the subnet also associates
+or disassociates the subnet with a shared network.
+
+The structure of the subnet information is similar to the structure used
+in the configuration file (see `??? <#dhcp4-configuration>`__ and
+`??? <#dhcp6-configuration>`__). The subnet information conveyed in the
+``remote-subnet[46]-set`` must include additional parameter
+``shared-network-name`` which denotes whether the subnet belongs to a
+shared network or not.
+
+Consider the following example:
+
+::
+
+   {
+       "command": "remote-subnet4-set",
+       "arguments": {
+           "subnets": [
+               {
+                   "id": 5,
+                   "subnet": "192.0.2.0/24",
+                   "shared-network-name": "level3",
+                   "pools": [ { "pool": "192.0.2.100-192.0.2.200" } ],
+                   "option-data": [ {
+                       "name": "routers",
+                       "data": "192.0.2.1"
+                   } ]
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+             
+
+It creates the subnet and associates the subnet with the "level3" shared
+network. The "level3" must be created with the ``remote-network4-set``
+prior to creating the subnet.
+
+If the created subnet must be global (not associated with any shared
+network), the ``shared-network-name`` must be explicitly set to
+``null``:
+
+::
+
+   {
+       "command": "remote-subnet4-set",
+       "arguments": {
+           "subnets": [
+               {
+                   "id": 5,
+                   "subnet": "192.0.2.0/24",
+                   "shared-network-name": null,
+                   "pools": [ { "pool": "192.0.2.100-192.0.2.200" } ],
+                   "option-data": [ {
+                       "name": "routers",
+                       "data": "192.0.2.1"
+                   } ]
+              }
+           ]
+       }
+   }
+             
+
+The subnet created in the previous example is replaced with the new
+subnet having the same parameters but it becomes global.
+
+The ``shared-network-name`` parameter is mandatory for the
+``remote-subnet4-set`` command.
+
+   **Note**
+
+   Same as for other "set" commands, this command replaces the entire
+   information about the particular subnet in the database, if the
+   subnet information is already present. Therefore, when sending this
+   command, make sure to always include all parameters that must be
+   specified for the updated subnet instance. Any unspecified parameter
+   will be marked as unspecified in the database, even if its value was
+   present prior to sending the command.
