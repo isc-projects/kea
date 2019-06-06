@@ -12,7 +12,7 @@ DOCBOOK += hooks-ha.xml hooks-host-cache.xml hooks-lease-cmds.xml hooks-radius.x
 DOCBOOK += hooks-stat-cmds.xml lfc.xml stats.xml ctrl-channel.xml classify.xml shell.xml
 DOCBOOK += agent.xml netconf.xml api.xml congestion-handling.xml hammer.xml
 
-EXTRA_DIST = $(DOCBOOK)
+EXTRA_DIST = $(DOCBOOK) kea-docbook.xsl
 
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
@@ -30,7 +30,7 @@ kea-guide.html: $(DOCBOOK)
 		--stringparam section.autolabel 1 \
 		--stringparam section.label.includes.component.label 1 \
 		--stringparam html.stylesheet kea-guide.css \
-		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
+		$(srcdir)/kea-docbook.xsl \
 		$(srcdir)/kea-guide.xml
 
 kea-guide.txt: kea-guide.html
@@ -42,8 +42,8 @@ kea-messages.html: kea-messages.xml
 		-o $@ \
 		--stringparam generate.toc "book toc" \
 		--stringparam html.stylesheet kea-guide.css \
-		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
-		kea-messages.xml
+		$(srcdir)/kea-docbook.xsl \
+		$(srcdir)/kea-messages.xml
 
 else
 
