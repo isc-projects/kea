@@ -6,7 +6,11 @@ SUBDIRS = . tests
 # setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
 KEA_CONFIGFILES = kea-dhcp4.conf kea-dhcp6.conf kea-dhcp-ddns.conf \
-                  kea-ctrl-agent.conf kea-netconf.conf
+                  kea-ctrl-agent.conf
+if HAVE_SYSREPO
+KEA_CONFIGFILES += kea-netconf.conf
+endif
+
 CONFIGFILES = keactrl.conf $(KEA_CONFIGFILES)
 
 man_MANS = keactrl.8

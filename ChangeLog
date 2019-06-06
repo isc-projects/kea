@@ -1,3 +1,8 @@
+1592.	[build]		tmark
+	Files related to YANG and netconf are now only installed
+	when the build is configured with --with-syspro.
+	(Gitlab #584,!364, git TBD)
+
 1591.	[doc]		razvan
 	Fixed classify and pd-exclude documentation examples.
 	(Gitlab #590,!380, git 26b04d2d2d2a88be6abc5879a2fb48e05f0003fd)
