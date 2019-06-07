@@ -2827,6 +2827,18 @@ MySqlConfigBackendDHCPv6::getRecentAuditEntries(const db::ServerSelector& server
     return (audit_entries);
 }
 
+ServerCollection
+MySqlConfigBackendDHCPv6::getAllServers6() const {
+    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::getAllServers6"
+              " is not implemented");
+}
+
+ServerPtr
+MySqlConfigBackendDHCPv6::getServer6(const data::ServerTag& /* server_tag */) const {
+    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::getServer6"
+              " is not implemented");
+}
+
 void
 MySqlConfigBackendDHCPv6::createUpdateSubnet6(const ServerSelector& server_selector,
                                               const Subnet6Ptr& subnet) {
@@ -2904,6 +2916,12 @@ MySqlConfigBackendDHCPv6::createUpdateGlobalParameter6(const ServerSelector& ser
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6)
         .arg(value->getName());
     impl_->createUpdateGlobalParameter6(server_selector, value);
+}
+
+void
+MySqlConfigBackendDHCPv6::createUpdateServer6(const ServerPtr& /* server */) {
+    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::createUpdateServer6"
+              " is not implemented");
 }
 
 uint64_t
@@ -3094,6 +3112,18 @@ MySqlConfigBackendDHCPv6::deleteAllGlobalParameters6(const ServerSelector& serve
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6_RESULT)
         .arg(result);
     return (result);
+}
+
+uint64_t
+MySqlConfigBackendDHCPv6::deleteServer6(const std::string& /* server_tag */) {
+    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::deleteServer6"
+              " is not implemented");
+}
+
+uint64_t
+MySqlConfigBackendDHCPv6::deleteAllServers6() {
+    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::deleteAllServers6"
+              " is not implemented");
 }
 
 std::string

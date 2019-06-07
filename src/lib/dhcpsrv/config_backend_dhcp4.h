@@ -10,6 +10,8 @@
 #include <cc/stamped_value.h>
 #include <config_backend/base_config_backend.h>
 #include <database/audit_entry.h>
+#include <database/server.h>
+#include <database/server_collection.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>

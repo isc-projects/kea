@@ -194,6 +194,20 @@ public:
     getRecentAuditEntries(const db::ServerSelector& server_selector,
                           const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves all servers.
+    ///
+    /// @return Collection of servers from the backend.
+    virtual db::ServerCollection
+    getAllServers4() const;
+
+    /// @brief Retrieves a server.
+    ///
+    /// @param server_tag Tag of the server to be retrieved.
+    /// @return Pointer to the server instance or null pointer if no server
+    /// with the particular tag was found.
+    virtual db::ServerPtr
+    getServer4(const data::ServerTag& server_tag) const;
+
     /// @brief Creates or updates a subnet.
     ///
     /// @param server_selector Server selector.
@@ -277,6 +291,12 @@ public:
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
+
+    /// @brief Creates or updates a server.
+    ///
+    /// @param server Instance of the server to be stored.
+    virtual void
+    createUpdateServer4(const db::ServerPtr& server);
 
     /// @brief Deletes subnet by prefix.
     ///
@@ -424,6 +444,20 @@ public:
     /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector);
+
+    /// @brief Deletes a server from the backend.
+    ///
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteServer4(const std::string& server_tag);
+
+    /// @brief Deletes all servers from the backend except the logical
+    /// server 'all'.
+    ///
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteAllServers4();
 
     /// @brief Returns backend type in the textual format.
     ///
