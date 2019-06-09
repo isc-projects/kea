@@ -724,7 +724,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         "               {\"subnet\": \"192.2.1.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
     string bad_subnet =
-        "               {\"BOGUS\": \"192.2.2.0/24\", \n"
+        "               {\"comment\": \"192.2.2.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -923,7 +923,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         "               {\"subnet\": \"192.2.1.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
     string bad_subnet =
-        "               {\"BOGUS\": \"192.2.2.0/24\", \n"
+        "               {\"comment\": \"192.2.2.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";

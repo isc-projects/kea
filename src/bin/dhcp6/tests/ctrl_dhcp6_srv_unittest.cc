@@ -500,7 +500,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "               {\"subnet\": \"3003::/64\", \n"
         "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
     string bad_subnet =
-        "               {\"BOGUS\": \"3005::/64\", \n"
+        "               {\"comment\": \"3005::/64\", \n"
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -645,7 +645,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "               {\"subnet\": \"3003::/64\", \n"
         "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
     string bad_subnet =
-        "               {\"BOGUS\": \"3005::/64\", \n"
+        "               {\"comment\": \"3005::/64\", \n"
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";

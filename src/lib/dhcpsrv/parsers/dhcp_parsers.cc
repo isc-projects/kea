@@ -122,7 +122,8 @@ OptionDefParser::OPTION_DEF_PARAMETERS = {
     { "encapsulate",  Element::string },
     { "array",        Element::boolean, },
     { "user-context", Element::map },
-    { "comment",      Element::string }
+    { "comment",      Element::string },
+    { "metadata",     Element::map }
 };
 
 OptionDefParser::OptionDefParser(const uint16_t address_family)
@@ -387,7 +388,8 @@ PoolParser::POOL_PARAMETERS = {
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
     { "user-context",           Element::map },
-    { "comment",                Element::string }
+    { "comment",                Element::string },
+    { "metadata",               Element::map }
 };
 
 void
@@ -716,7 +718,8 @@ Subnet4ConfigParser::SUBNET4_PARAMETERS = {
     { "comment",                Element::string },
     { "calculate-tee-times",    Element::boolean },
     { "t1-percent",             Element::real },
-    { "t2-percent",             Element::real }
+    { "t2-percent",             Element::real },
+    { "metadata",               Element::map }
 };
 
 Subnet4ConfigParser::Subnet4ConfigParser()
@@ -1061,7 +1064,8 @@ PdPoolParser::PD_POOL_PARAMETERS = {
     { "excluded-prefix",        Element::string },
     { "excluded-prefix-len",    Element::integer },
     { "user-context",           Element::map },
-    { "comment",                Element::string }
+    { "comment",                Element::string },
+    { "metadata",               Element::map }
 };
 
 PdPoolParser::PdPoolParser() : options_(new CfgOption()) {
@@ -1188,7 +1192,8 @@ Subnet6ConfigParser::SUBNET6_PARAMETERS = {
     { "comment",                Element::string },
     { "calculate-tee-times",    Element::boolean },
     { "t1-percent",             Element::real },
-    { "t2-percent",             Element::real }
+    { "t2-percent",             Element::real },
+    { "metadata",               Element::map }
 };
 
 Subnet6ConfigParser::Subnet6ConfigParser()

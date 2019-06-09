@@ -36,7 +36,8 @@ OptionDataParser::OPTION_PARAMETERS = {
     { "csv-format",   Element::boolean },
     { "always-send",  Element::boolean },
     { "user-context", Element::map },
-    { "comment",      Element::string }
+    { "comment",      Element::string },
+    { "metadata",     Element::map }
 };
 
 OptionDataParser::OptionDataParser(const uint16_t address_family,

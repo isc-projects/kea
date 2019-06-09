@@ -46,7 +46,8 @@ SharedNetwork4Parser::SHARED_NETWORK4_PARAMETERS = {
     { "comment",                Element::string },
     { "calculate-tee-times",    Element::boolean },
     { "t1-percent",             Element::real },
-    { "t2-percent",             Element::real }
+    { "t2-percent",             Element::real },
+    { "metadata",               Element::map }
 };
 
 SharedNetwork4Ptr
@@ -234,7 +235,8 @@ SharedNetwork6Parser::SHARED_NETWORK6_PARAMETERS = {
     { "comment",                Element::string },
     { "calculate-tee-times",    Element::boolean },
     { "t1-percent",             Element::real },
-    { "t2-percent",             Element::real }
+    { "t2-percent",             Element::real },
+    { "metadata",               Element::map }
 };
 
 SharedNetwork6Ptr
