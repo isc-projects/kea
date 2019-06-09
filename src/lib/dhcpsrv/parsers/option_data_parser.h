@@ -64,6 +64,14 @@ public:
     ///         space
     std::pair<OptionDescriptor, std::string>
     parse(isc::data::ConstElementPtr single_option);
+
+    /// @brief This table defines all option parameters.
+    ///
+    /// Boolean, integer, real and string types are for scalar parameters,
+    /// list and map types for entries.
+    /// Order follows option_param rules in bison grammar.
+    static const isc::data::SimpleKeywords OPTION_PARAMETERS;
+
 private:
 
     /// @brief Finds an option definition within an option space

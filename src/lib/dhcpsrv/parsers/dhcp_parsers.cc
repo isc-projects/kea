@@ -112,12 +112,28 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
 
 // ******************************** OptionDefParser ****************************
 
+const SimpleKeywords
+OptionDefParser::OPTION_DEF_PARAMETERS = {
+    { "name",         Element::string },
+    { "code",         Element::integer },
+    { "type",         Element::string },
+    { "record-types", Element::string },
+    { "space",        Element::string },
+    { "encapsulate",  Element::string },
+    { "array",        Element::boolean, },
+    { "user-context", Element::map },
+    { "comment",      Element::string }
+};
+
 OptionDefParser::OptionDefParser(const uint16_t address_family)
     : address_family_(address_family) {
 }
 
 std::pair<isc::dhcp::OptionDefinitionPtr, std::string>
 OptionDefParser::parse(ConstElementPtr option_def) {
+
+    // Check parameters.
+    checkKeywords(OPTION_DEF_PARAMETERS, option_def);
 
     // Get mandatory parameters.
     std::string name = getString(option_def, "name");
@@ -364,10 +380,22 @@ RelayInfoParser::addAddress(const std::string& name,
 
 //****************************** PoolParser ********************************
 
+const SimpleKeywords
+PoolParser::POOL_PARAMETERS = {
+    { "pool",                   Element::string },
+    { "option-data",            Element::list },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "user-context",           Element::map },
+    { "comment",                Element::string }
+};
+
 void
 PoolParser::parse(PoolStoragePtr pools,
                   ConstElementPtr pool_structure,
                   const uint16_t address_family) {
+
+    checkKeywords(POOL_PARAMETERS, pool_structure);
 
     ConstElementPtr text_pool = pool_structure->get("pool");
 
@@ -661,12 +689,45 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 
 //****************************** Subnet4ConfigParser *************************
 
+const SimpleKeywords
+Subnet4ConfigParser::SUBNET4_PARAMETERS = {
+    { "valid-lifetime",         Element::integer },
+    { "renew-timer",            Element::integer },
+    { "rebind-timer",           Element::integer },
+    { "option-data",            Element::list },
+    { "pools",                  Element::list },
+    { "subnet",                 Element::string },
+    { "interface",              Element::string },
+    { "id",                     Element::integer },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "reservations",           Element::list },
+    { "reservation-mode",       Element::string },
+    { "relay",                  Element::map },
+    { "match-client-id",        Element::boolean },
+    { "authoritative",          Element::boolean },
+    { "next-server",            Element::string },
+    { "server-hostname",        Element::string },
+    { "boot-file-name",         Element::string },
+    { "4o6-interface",          Element::string },
+    { "4o6-interface-id",       Element::string },
+    { "4o6-subnet",             Element::string },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "calculate-tee-times",    Element::boolean },
+    { "t1-percent",             Element::real },
+    { "t2-percent",             Element::real }
+};
+
 Subnet4ConfigParser::Subnet4ConfigParser()
     :SubnetConfigParser(AF_INET) {
 }
 
 Subnet4Ptr
 Subnet4ConfigParser::parse(ConstElementPtr subnet) {
+    // Check parameters.
+    checkKeywords(SUBNET4_PARAMETERS, subnet);
+
     /// Parse Pools first.
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
@@ -989,11 +1050,27 @@ Pools6ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list) {
 
 //**************************** PdPoolParser ******************************
 
+const SimpleKeywords
+PdPoolParser::PD_POOL_PARAMETERS = {
+    { "prefix",                 Element::string },
+    { "prefix-len",             Element::integer },
+    { "delegated-len",          Element::integer },
+    { "option-data",            Element::list },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "excluded-prefix",        Element::string },
+    { "excluded-prefix-len",    Element::integer },
+    { "user-context",           Element::map },
+    { "comment",                Element::string }
+};
+
 PdPoolParser::PdPoolParser() : options_(new CfgOption()) {
 }
 
 void
 PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
+    checkKeywords(PD_POOL_PARAMETERS, pd_pool_);
+
     std::string addr_str = getString(pd_pool_, "prefix");
 
     uint8_t prefix_len = getUint8(pd_pool_, "prefix-len");
@@ -1088,12 +1165,41 @@ PdPoolsListParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_list) {
 
 //**************************** Subnet6ConfigParser ***********************
 
+const SimpleKeywords
+Subnet6ConfigParser::SUBNET6_PARAMETERS = {
+    { "preferred-lifetime",     Element::integer },
+    { "valid-lifetime",         Element::integer },
+    { "renew-timer",            Element::integer },
+    { "rebind-timer",           Element::integer },
+    { "option-data",            Element::list },
+    { "pools",                  Element::list },
+    { "pd-pools",               Element::list },
+    { "subnet",                 Element::string },
+    { "interface",              Element::string },
+    { "interface-id",           Element::string },
+    { "id",                     Element::integer },
+    { "rapid-commit",           Element::boolean },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "reservations",           Element::list },
+    { "reservation-mode",       Element::string },
+    { "relay",                  Element::map },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "calculate-tee-times",    Element::boolean },
+    { "t1-percent",             Element::real },
+    { "t2-percent",             Element::real }
+};
+
 Subnet6ConfigParser::Subnet6ConfigParser()
     : SubnetConfigParser(AF_INET6) {
 }
 
 Subnet6Ptr
 Subnet6ConfigParser::parse(ConstElementPtr subnet) {
+    // Check parameters.
+    checkKeywords(SUBNET6_PARAMETERS, subnet);
+
     /// Parse all pools first.
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {

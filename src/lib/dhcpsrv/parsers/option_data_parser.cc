@@ -27,6 +27,18 @@ namespace dhcp {
 
 // **************************** OptionDataParser *************************
 
+const SimpleKeywords
+OptionDataParser::OPTION_PARAMETERS = {
+    { "name",         Element::string },
+    { "data",         Element::string },
+    { "code",         Element::integer },
+    { "space",        Element::string },
+    { "csv-format",   Element::boolean },
+    { "always-send",  Element::boolean },
+    { "user-context", Element::map },
+    { "comment",      Element::string }
+};
+
 OptionDataParser::OptionDataParser(const uint16_t address_family,
                                    CfgOptionDefPtr cfg_option_def)
     : address_family_(address_family), cfg_option_def_(cfg_option_def) {
@@ -34,6 +46,9 @@ OptionDataParser::OptionDataParser(const uint16_t address_family,
 
 std::pair<OptionDescriptor, std::string>
 OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
+
+    // Check parameters.
+    checkKeywords(OPTION_PARAMETERS, single_option);
 
     // Try to create the option instance.
     std::pair<OptionDescriptor, std::string> opt = createOption(single_option);

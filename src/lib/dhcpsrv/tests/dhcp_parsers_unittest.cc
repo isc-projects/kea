@@ -1701,7 +1701,7 @@ TEST_F(ParseConfigTest, hexOptionData) {
             "{ \n"
             "  \"option-data\": [ { \n"
             "    \"name\": \"domain-name-servers\", \n"
-            "    \"code \": 6, \n"
+            "    \"code\": 6, \n"
             "    \"space\": \"dhcp4\", \n"
             "    \"csv-format\": false, \n"
             "    \"data\": \"" << hex_str << "\" \n"

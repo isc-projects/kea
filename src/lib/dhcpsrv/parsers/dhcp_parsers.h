@@ -242,6 +242,13 @@ public:
     OptionDefinitionTuple
     parse(isc::data::ConstElementPtr option_def);
 
+    /// @brief This table defines all option definition parameters.
+    ///
+    /// Boolean, integer, real and string types are for scalar parameters,
+    /// list and map types for entries.
+    /// Order follows option_def_param rules in bison grammar.
+    static const isc::data::SimpleKeywords OPTION_DEF_PARAMETERS;
+
 private:
     /// @brief Address family: @c AF_INET or @c AF_INET6.
     uint16_t address_family_;
@@ -308,6 +315,13 @@ public:
     virtual void parse(PoolStoragePtr pools,
                        isc::data::ConstElementPtr pool_structure,
                        const uint16_t address_family);
+
+    /// @brief This table defines all pool parameters.
+    ///
+    /// Boolean, integer, real and string types are for scalar parameters,
+    /// list and map types for entries.
+    /// Order follows pool_param rules in bison grammar.
+    static const isc::data::SimpleKeywords POOL_PARAMETERS;
 
 protected:
     /// @brief Creates a Pool object given a IPv4 prefix and the prefix length.
@@ -547,6 +561,13 @@ public:
     /// @return a pointer to created Subnet4 object
     Subnet4Ptr parse(data::ConstElementPtr subnet);
 
+    /// @brief This table defines all subnet parameters for DHCPv4.
+    ///
+    /// Boolean, integer, real and string types are for scalar parameters,
+    /// list and map types for entries.
+    /// Order follows subnet4_param rule in bison grammar.
+    static const isc::data::SimpleKeywords SUBNET4_PARAMETERS;
+
 protected:
 
     /// @brief Instantiates the IPv4 Subnet based on a given IPv4 address
@@ -669,6 +690,13 @@ public:
     /// @throw DhcpConfigError if configuration parsing fails.
     void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_);
 
+    /// @brief This table defines all prefix delegation pool parameters.
+    ///
+    /// Boolean, integer, real and string types are for scalar parameters,
+    /// list and map types for entries.
+    /// Order follows pd_pool_param rules in bison grammar.
+    static const isc::data::SimpleKeywords PD_POOL_PARAMETERS;
+
 private:
 
     /// Pointer to the created pool object.
@@ -729,6 +757,13 @@ public:
     /// @param subnet A new subnet being configured.
     /// @return a pointer to created Subnet6 object
     Subnet6Ptr parse(data::ConstElementPtr subnet);
+
+    /// @brief This table defines all subnet parameters for DHCPv6.
+    ///
+    /// Boolean, integer, real and string types are for scalar parameters,
+    /// list and map types for entries.
+    /// Order follows subnet6_param rule in bison grammar.
+    static const isc::data::SimpleKeywords SUBNET6_PARAMETERS;
 
 protected:
     /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet

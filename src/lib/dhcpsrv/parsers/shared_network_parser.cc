@@ -24,10 +24,38 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+const SimpleKeywords
+SharedNetwork4Parser::SHARED_NETWORK4_PARAMETERS = {
+    { "name",                   Element::string },
+    { "subnet4",                Element::list },
+    { "interface",              Element::string },
+    { "renew-timer",            Element::integer },
+    { "rebind-timer",           Element::integer },
+    { "option-data",            Element::list },
+    { "match-client-id",        Element::boolean },
+    { "authoritative",          Element::boolean },
+    { "next-server",            Element::string },
+    { "server-hostname",        Element::string },
+    { "boot-file-name",         Element::string },
+    { "relay",                  Element::map },
+    { "reservation-mode",       Element::string },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "valid-lifetime",         Element::integer },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "calculate-tee-times",    Element::boolean },
+    { "t1-percent",             Element::real },
+    { "t2-percent",             Element::real }
+};
+
 SharedNetwork4Ptr
 SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork4Ptr shared_network;
     try {
+
+        // Check parameters.
+        checkKeywords(SHARED_NETWORK4_PARAMETERS, shared_network_data);
 
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork4 object.
@@ -186,11 +214,37 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     return (shared_network);
 }
 
+const SimpleKeywords
+SharedNetwork6Parser::SHARED_NETWORK6_PARAMETERS = {
+    { "name",                   Element::string },
+    { "subnet6",                Element::list },
+    { "interface",              Element::string },
+    { "interface-id",           Element::string },
+    { "renew-timer",            Element::integer },
+    { "rebind-timer",           Element::integer },
+    { "option-data",            Element::list },
+    { "relay",                  Element::map },
+    { "reservation-mode",       Element::string },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "preferred-lifetime",     Element::integer },
+    { "rapid-commit",           Element::boolean },
+    { "valid-lifetime",         Element::integer },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "calculate-tee-times",    Element::boolean },
+    { "t1-percent",             Element::real },
+    { "t2-percent",             Element::real }
+};
+
 SharedNetwork6Ptr
 SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork6Ptr shared_network;
     std::string name;
     try {
+        // Check parameters.
+        checkKeywords(SHARED_NETWORK6_PARAMETERS, shared_network_data);
+
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork6 object.
         std::string name = getString(shared_network_data, "name");
