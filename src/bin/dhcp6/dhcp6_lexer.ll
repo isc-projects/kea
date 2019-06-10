@@ -308,6 +308,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname-char-set\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
     default:
@@ -317,6 +318,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname-char-replacement\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
     default:
