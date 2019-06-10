@@ -477,6 +477,8 @@ global_param: valid_lifetime
             | t1_percent
             | t2_percent
             | loggers
+            | hostname_char_set
+            | hostname_char_replacement
             | unknown_map_entry
             ;
 

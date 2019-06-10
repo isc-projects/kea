@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -94,8 +95,8 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const ReplaceClientNameMode replace_client_name_mode,
                                const std::string& generated_prefix,
                                const std::string& qualifying_suffix,
-                               const std::string& hostname_char_set,
-                               const std::string& hostname_char_replacement)
+                               Optional<std::string> hostname_char_set,
+                               Optional<std::string> hostname_char_replacement)
     : enable_updates_(enable_updates),
       server_ip_(server_ip),
       server_port_(server_port),
@@ -111,7 +112,8 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       qualifying_suffix_(qualifying_suffix),
       hostname_char_set_(hostname_char_set),
       hostname_char_replacement_(hostname_char_replacement),
-      hostname_sanitizer_(0) {
+      hostname_sanitizer_(0),
+      fetch_globals_fn_(0) {
     validateContents();
 }
 
@@ -129,9 +131,10 @@ D2ClientConfig::D2ClientConfig()
       replace_client_name_mode_(stringToReplaceClientNameMode(DFT_REPLACE_CLIENT_NAME_MODE)),
       generated_prefix_(DFT_GENERATED_PREFIX),
       qualifying_suffix_(""),
-      hostname_char_set_(DFT_HOSTNAME_CHAR_SET),
-      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET),
-      hostname_sanitizer_(0) {
+      hostname_char_set_(DFT_HOSTNAME_CHAR_SET, true),
+      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET, true),
+      hostname_sanitizer_(0),
+      fetch_globals_fn_(0) {
     validateContents();
 }
 
@@ -170,10 +173,10 @@ D2ClientConfig::validateContents() {
                   << server_ip_.toText() << "/" << server_port_);
     }
 
-    if (!hostname_char_set_.empty()) {
+    if (!getHostnameCharSet().unspecified() && !getHostnameCharSet().empty()) {
         try {
-            hostname_sanitizer_.reset(new isc::util::str::StringSanitizer(hostname_char_set_,
-                                                                          hostname_char_replacement_));
+            hostname_sanitizer_.reset(new isc::util::str::StringSanitizer(getHostnameCharSet(),
+                                                                          getHostnameCharReplacement()));
         } catch (const std::exception& ex) {
             isc_throw(D2ClientError, "D2ClientConfig: hostname-char-set"
                       " is not a valid regular expression");
@@ -229,8 +232,8 @@ D2ClientConfig::toText() const {
                << replaceClientNameModeToString(replace_client_name_mode_)
                << ", generated-prefix: [" << generated_prefix_ << "]"
                << ", qualifying-suffix: [" << qualifying_suffix_ << "]"
-               << ", hostname-char-set: [" << hostname_char_set_ << "]"
-               << ", hostname-char-replacement: [" << hostname_char_replacement_ << "]";
+               << ", hostname-char-set: [" << getHostnameCharSet() << "]"
+               << ", hostname-char-replacement: [" << getHostnameCharReplacement() << "]";
     }
 
     return (stream.str());
@@ -269,9 +272,13 @@ D2ClientConfig::toElement() const {
     // Set generated-prefix
     result->set("generated-prefix", Element::create(generated_prefix_));
     // Set hostname-char-set
-    result->set("hostname-char-set", Element::create(hostname_char_set_));
+    if (!hostname_char_set_.unspecified()) {
+        result->set("hostname-char-set", Element::create(hostname_char_set_));
+    }
     // Set hostname-char-replacement
-    result->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
+    if (!hostname_char_replacement_.unspecified()) {
+        result->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
+    }
     return (result);
 }
 

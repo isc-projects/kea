@@ -653,7 +653,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a subnet we need to set a callback function for each
     // subnet to allow for fetching global parameters.
-     subnet_->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet_->setFetchGlobalsFn([]() -> ConstElementPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
 
@@ -1384,11 +1384,16 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string generated_prefix =
         getString(client_config, "generated-prefix");
 
-    std::string hostname_char_set =
-        getString(client_config, "hostname-char-set");
+    Optional<std::string> hostname_char_set(D2ClientConfig::DFT_HOSTNAME_CHAR_SET, true);
+    if (client_config->contains("hostname-char-set")) {
+        hostname_char_set = getString(client_config, "hostname-char-set");
+    }
 
-    std::string hostname_char_replacement =
-        getString(client_config, "hostname-char-replacement");
+    Optional<std::string> hostname_char_replacement(D2ClientConfig::DFT_HOSTNAME_CHAR_REPLACEMENT, true);
+    if (client_config->contains("hostname-char-replacement")) {
+        hostname_char_replacement =
+            getString(client_config, "hostname-char-replacement");
+    }
 
     // qualifying-suffix is the only parameter which has no default
     std::string qualifying_suffix = "";
@@ -1484,6 +1489,13 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
         new_config->setContext(user_context);
     }
 
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a subnet we need to set a callback function for
+    // the d2 client config to allow for fetching global parameters.
+    new_config->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+    });
+
     return(new_config);
 }
 
@@ -1502,9 +1514,8 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "override-no-update", Element::boolean, "false" },
     { "override-client-update", Element::boolean, "false" },
     { "replace-client-name", Element::string, "never" },
-    { "generated-prefix", Element::string, "myhost" },
-    { "hostname-char-set", Element::string, "" },
-    { "hostname-char-replacement", Element::string, "" }
+    { "generated-prefix", Element::string, "myhost" }
+    // hostname-char-set and hostname-char-replacement moved to global
     // qualifying-suffix has no default
 };
 

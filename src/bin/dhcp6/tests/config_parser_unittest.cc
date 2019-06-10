@@ -4627,8 +4627,8 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
-    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet());
-    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement());
+    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
 }
 
 // This test checks the ability of the server to handle a configuration
