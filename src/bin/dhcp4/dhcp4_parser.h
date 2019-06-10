@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -44,7 +44,7 @@
 #ifndef YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 # define YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp4_parser.yy" // lalr1.cc:401
+#line 17 "dhcp4_parser.yy"
 
 #include <string>
 #include <cc/data.h>
@@ -56,7 +56,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 60 "dhcp4_parser.h" // lalr1.cc:401
+#line 60 "dhcp4_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -178,9 +178,10 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER4_DEBUG */
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:401
+#line 14 "dhcp4_parser.yy"
 namespace isc { namespace dhcp {
-#line 184 "dhcp4_parser.h" // lalr1.cc:401
+#line 184 "dhcp4_parser.h"
+
 
 
 
@@ -3870,7 +3871,7 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1036,     ///< Last index in yytable_.
+      yylast_ = 1028,     ///< Last index in yytable_.
       yynnts_ = 381,  ///< Number of nonterminal symbols.
       yyfinal_ = 30, ///< Termination state number.
       yyterror_ = 1,
@@ -4162,9 +4163,10 @@ switch (yytype)
     return token_type (yytoken_number_[type]);
   }
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:401
+#line 14 "dhcp4_parser.yy"
 } } // isc::dhcp
-#line 4168 "dhcp4_parser.h" // lalr1.cc:401
+#line 4169 "dhcp4_parser.h"
+
 
 
 

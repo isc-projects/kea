@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -43,11 +43,11 @@
 
 
 // Unqualified %code blocks.
-#line 34 "dhcp4_parser.yy" // lalr1.cc:435
+#line 34 "dhcp4_parser.yy"
 
 #include <dhcp4/parser_context.h>
 
-#line 51 "dhcp4_parser.cc" // lalr1.cc:435
+#line 51 "dhcp4_parser.cc"
 
 
 #ifndef YY_
@@ -140,9 +140,10 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:510
+#line 14 "dhcp4_parser.yy"
 namespace isc { namespace dhcp {
-#line 146 "dhcp4_parser.cc" // lalr1.cc:510
+#line 146 "dhcp4_parser.cc"
+
 
   /* Return YYSTR after stripping away unnecessary quotes and
      backslashes, so that it's suitable for yyerror.  The heuristic is
@@ -401,75 +402,75 @@ namespace isc { namespace dhcp {
     switch (yytype)
     {
       case 171: // "constant string"
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < std::string > (); }
-#line 407 "dhcp4_parser.cc" // lalr1.cc:676
+#line 408 "dhcp4_parser.cc"
         break;
 
       case 172: // "integer"
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < int64_t > (); }
-#line 413 "dhcp4_parser.cc" // lalr1.cc:676
+#line 414 "dhcp4_parser.cc"
         break;
 
       case 173: // "floating point"
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < double > (); }
-#line 419 "dhcp4_parser.cc" // lalr1.cc:676
+#line 420 "dhcp4_parser.cc"
         break;
 
       case 174: // "boolean"
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < bool > (); }
-#line 425 "dhcp4_parser.cc" // lalr1.cc:676
+#line 426 "dhcp4_parser.cc"
         break;
 
       case 191: // value
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 431 "dhcp4_parser.cc" // lalr1.cc:676
+#line 432 "dhcp4_parser.cc"
         break;
 
       case 195: // map_value
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 437 "dhcp4_parser.cc" // lalr1.cc:676
+#line 438 "dhcp4_parser.cc"
         break;
 
       case 239: // socket_type
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 443 "dhcp4_parser.cc" // lalr1.cc:676
+#line 444 "dhcp4_parser.cc"
         break;
 
       case 242: // outbound_interface_value
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 449 "dhcp4_parser.cc" // lalr1.cc:676
+#line 450 "dhcp4_parser.cc"
         break;
 
       case 264: // db_type
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 455 "dhcp4_parser.cc" // lalr1.cc:676
+#line 456 "dhcp4_parser.cc"
         break;
 
       case 350: // hr_mode
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 461 "dhcp4_parser.cc" // lalr1.cc:676
+#line 462 "dhcp4_parser.cc"
         break;
 
       case 499: // ncr_protocol_value
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 467 "dhcp4_parser.cc" // lalr1.cc:676
+#line 468 "dhcp4_parser.cc"
         break;
 
       case 506: // replace_client_name_value
-#line 253 "dhcp4_parser.yy" // lalr1.cc:676
+#line 253 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 473 "dhcp4_parser.cc" // lalr1.cc:676
+#line 474 "dhcp4_parser.cc"
         break;
 
       default:
@@ -734,280 +735,280 @@ namespace isc { namespace dhcp {
           switch (yyn)
             {
   case 2:
-#line 262 "dhcp4_parser.yy" // lalr1.cc:919
+#line 262 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.NO_KEYWORD; }
-#line 740 "dhcp4_parser.cc" // lalr1.cc:919
+#line 741 "dhcp4_parser.cc"
     break;
 
   case 4:
-#line 263 "dhcp4_parser.yy" // lalr1.cc:919
+#line 263 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.CONFIG; }
-#line 746 "dhcp4_parser.cc" // lalr1.cc:919
+#line 747 "dhcp4_parser.cc"
     break;
 
   case 6:
-#line 264 "dhcp4_parser.yy" // lalr1.cc:919
+#line 264 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.DHCP4; }
-#line 752 "dhcp4_parser.cc" // lalr1.cc:919
+#line 753 "dhcp4_parser.cc"
     break;
 
   case 8:
-#line 265 "dhcp4_parser.yy" // lalr1.cc:919
+#line 265 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.INTERFACES_CONFIG; }
-#line 758 "dhcp4_parser.cc" // lalr1.cc:919
+#line 759 "dhcp4_parser.cc"
     break;
 
   case 10:
-#line 266 "dhcp4_parser.yy" // lalr1.cc:919
+#line 266 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.SUBNET4; }
-#line 764 "dhcp4_parser.cc" // lalr1.cc:919
+#line 765 "dhcp4_parser.cc"
     break;
 
   case 12:
-#line 267 "dhcp4_parser.yy" // lalr1.cc:919
+#line 267 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.POOLS; }
-#line 770 "dhcp4_parser.cc" // lalr1.cc:919
+#line 771 "dhcp4_parser.cc"
     break;
 
   case 14:
-#line 268 "dhcp4_parser.yy" // lalr1.cc:919
+#line 268 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.RESERVATIONS; }
-#line 776 "dhcp4_parser.cc" // lalr1.cc:919
+#line 777 "dhcp4_parser.cc"
     break;
 
   case 16:
-#line 269 "dhcp4_parser.yy" // lalr1.cc:919
+#line 269 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.DHCP4; }
-#line 782 "dhcp4_parser.cc" // lalr1.cc:919
+#line 783 "dhcp4_parser.cc"
     break;
 
   case 18:
-#line 270 "dhcp4_parser.yy" // lalr1.cc:919
+#line 270 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.OPTION_DEF; }
-#line 788 "dhcp4_parser.cc" // lalr1.cc:919
+#line 789 "dhcp4_parser.cc"
     break;
 
   case 20:
-#line 271 "dhcp4_parser.yy" // lalr1.cc:919
+#line 271 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.OPTION_DATA; }
-#line 794 "dhcp4_parser.cc" // lalr1.cc:919
+#line 795 "dhcp4_parser.cc"
     break;
 
   case 22:
-#line 272 "dhcp4_parser.yy" // lalr1.cc:919
+#line 272 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.HOOKS_LIBRARIES; }
-#line 800 "dhcp4_parser.cc" // lalr1.cc:919
+#line 801 "dhcp4_parser.cc"
     break;
 
   case 24:
-#line 273 "dhcp4_parser.yy" // lalr1.cc:919
+#line 273 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.DHCP_DDNS; }
-#line 806 "dhcp4_parser.cc" // lalr1.cc:919
+#line 807 "dhcp4_parser.cc"
     break;
 
   case 26:
-#line 274 "dhcp4_parser.yy" // lalr1.cc:919
+#line 274 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.LOGGING; }
-#line 812 "dhcp4_parser.cc" // lalr1.cc:919
+#line 813 "dhcp4_parser.cc"
     break;
 
   case 28:
-#line 275 "dhcp4_parser.yy" // lalr1.cc:919
+#line 275 "dhcp4_parser.yy"
     { ctx.ctx_ = ctx.CONFIG_CONTROL; }
-#line 818 "dhcp4_parser.cc" // lalr1.cc:919
+#line 819 "dhcp4_parser.cc"
     break;
 
   case 30:
-#line 283 "dhcp4_parser.yy" // lalr1.cc:919
+#line 283 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 824 "dhcp4_parser.cc" // lalr1.cc:919
+#line 825 "dhcp4_parser.cc"
     break;
 
   case 31:
-#line 284 "dhcp4_parser.yy" // lalr1.cc:919
+#line 284 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 830 "dhcp4_parser.cc" // lalr1.cc:919
+#line 831 "dhcp4_parser.cc"
     break;
 
   case 32:
-#line 285 "dhcp4_parser.yy" // lalr1.cc:919
+#line 285 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 836 "dhcp4_parser.cc" // lalr1.cc:919
+#line 837 "dhcp4_parser.cc"
     break;
 
   case 33:
-#line 286 "dhcp4_parser.yy" // lalr1.cc:919
+#line 286 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 842 "dhcp4_parser.cc" // lalr1.cc:919
+#line 843 "dhcp4_parser.cc"
     break;
 
   case 34:
-#line 287 "dhcp4_parser.yy" // lalr1.cc:919
+#line 287 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 848 "dhcp4_parser.cc" // lalr1.cc:919
+#line 849 "dhcp4_parser.cc"
     break;
 
   case 35:
-#line 288 "dhcp4_parser.yy" // lalr1.cc:919
+#line 288 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 854 "dhcp4_parser.cc" // lalr1.cc:919
+#line 855 "dhcp4_parser.cc"
     break;
 
   case 36:
-#line 289 "dhcp4_parser.yy" // lalr1.cc:919
+#line 289 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 860 "dhcp4_parser.cc" // lalr1.cc:919
+#line 861 "dhcp4_parser.cc"
     break;
 
   case 37:
-#line 292 "dhcp4_parser.yy" // lalr1.cc:919
+#line 292 "dhcp4_parser.yy"
     {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 869 "dhcp4_parser.cc" // lalr1.cc:919
+#line 870 "dhcp4_parser.cc"
     break;
 
   case 38:
-#line 297 "dhcp4_parser.yy" // lalr1.cc:919
+#line 297 "dhcp4_parser.yy"
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 880 "dhcp4_parser.cc" // lalr1.cc:919
+#line 881 "dhcp4_parser.cc"
     break;
 
   case 39:
-#line 302 "dhcp4_parser.yy" // lalr1.cc:919
+#line 302 "dhcp4_parser.yy"
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 890 "dhcp4_parser.cc" // lalr1.cc:919
+#line 891 "dhcp4_parser.cc"
     break;
 
   case 40:
-#line 308 "dhcp4_parser.yy" // lalr1.cc:919
+#line 308 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 896 "dhcp4_parser.cc" // lalr1.cc:919
+#line 897 "dhcp4_parser.cc"
     break;
 
   case 43:
-#line 315 "dhcp4_parser.yy" // lalr1.cc:919
+#line 315 "dhcp4_parser.yy"
     {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 905 "dhcp4_parser.cc" // lalr1.cc:919
+#line 906 "dhcp4_parser.cc"
     break;
 
   case 44:
-#line 319 "dhcp4_parser.yy" // lalr1.cc:919
+#line 319 "dhcp4_parser.yy"
     {
                   // map consisting of a shorter map followed by
                   // comma and string:value
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 915 "dhcp4_parser.cc" // lalr1.cc:919
+#line 916 "dhcp4_parser.cc"
     break;
 
   case 45:
-#line 326 "dhcp4_parser.yy" // lalr1.cc:919
+#line 326 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 924 "dhcp4_parser.cc" // lalr1.cc:919
+#line 925 "dhcp4_parser.cc"
     break;
 
   case 46:
-#line 329 "dhcp4_parser.yy" // lalr1.cc:919
+#line 329 "dhcp4_parser.yy"
     {
     // list parsing complete. Put any sanity checking here
 }
-#line 932 "dhcp4_parser.cc" // lalr1.cc:919
+#line 933 "dhcp4_parser.cc"
     break;
 
   case 49:
-#line 337 "dhcp4_parser.yy" // lalr1.cc:919
+#line 337 "dhcp4_parser.yy"
     {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 941 "dhcp4_parser.cc" // lalr1.cc:919
+#line 942 "dhcp4_parser.cc"
     break;
 
   case 50:
-#line 341 "dhcp4_parser.yy" // lalr1.cc:919
+#line 341 "dhcp4_parser.yy"
     {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 950 "dhcp4_parser.cc" // lalr1.cc:919
+#line 951 "dhcp4_parser.cc"
     break;
 
   case 51:
-#line 348 "dhcp4_parser.yy" // lalr1.cc:919
+#line 348 "dhcp4_parser.yy"
     {
     // List parsing about to start
 }
-#line 958 "dhcp4_parser.cc" // lalr1.cc:919
+#line 959 "dhcp4_parser.cc"
     break;
 
   case 52:
-#line 350 "dhcp4_parser.yy" // lalr1.cc:919
+#line 350 "dhcp4_parser.yy"
     {
     // list parsing complete. Put any sanity checking here
     //ctx.stack_.pop_back();
 }
-#line 967 "dhcp4_parser.cc" // lalr1.cc:919
+#line 968 "dhcp4_parser.cc"
     break;
 
   case 55:
-#line 359 "dhcp4_parser.yy" // lalr1.cc:919
+#line 359 "dhcp4_parser.yy"
     {
                           ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
                           ctx.stack_.back()->add(s);
                           }
-#line 976 "dhcp4_parser.cc" // lalr1.cc:919
+#line 977 "dhcp4_parser.cc"
     break;
 
   case 56:
-#line 363 "dhcp4_parser.yy" // lalr1.cc:919
+#line 363 "dhcp4_parser.yy"
     {
                           ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
                           ctx.stack_.back()->add(s);
                           }
-#line 985 "dhcp4_parser.cc" // lalr1.cc:919
+#line 986 "dhcp4_parser.cc"
     break;
 
   case 57:
-#line 374 "dhcp4_parser.yy" // lalr1.cc:919
+#line 374 "dhcp4_parser.yy"
     {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as < std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 996 "dhcp4_parser.cc" // lalr1.cc:919
+#line 997 "dhcp4_parser.cc"
     break;
 
   case 58:
-#line 384 "dhcp4_parser.yy" // lalr1.cc:919
+#line 384 "dhcp4_parser.yy"
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1007 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1008 "dhcp4_parser.cc"
     break;
 
   case 59:
-#line 389 "dhcp4_parser.yy" // lalr1.cc:919
+#line 389 "dhcp4_parser.yy"
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -1016,11 +1017,11 @@ namespace isc { namespace dhcp {
     // Dhcp4 is required
     ctx.require("Dhcp4", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
 }
-#line 1020 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1021 "dhcp4_parser.cc"
     break;
 
   case 68:
-#line 413 "dhcp4_parser.yy" // lalr1.cc:919
+#line 413 "dhcp4_parser.yy"
     {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -1029,329 +1030,329 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP4);
 }
-#line 1033 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1034 "dhcp4_parser.cc"
     break;
 
   case 69:
-#line 420 "dhcp4_parser.yy" // lalr1.cc:919
+#line 420 "dhcp4_parser.yy"
     {
     // No global parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1043 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1044 "dhcp4_parser.cc"
     break;
 
   case 70:
-#line 428 "dhcp4_parser.yy" // lalr1.cc:919
+#line 428 "dhcp4_parser.yy"
     {
     // Parse the Dhcp4 map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1053 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1054 "dhcp4_parser.cc"
     break;
 
   case 71:
-#line 432 "dhcp4_parser.yy" // lalr1.cc:919
+#line 432 "dhcp4_parser.yy"
     {
     // No global parameter is required
     // parsing completed
 }
-#line 1062 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1063 "dhcp4_parser.cc"
     break;
 
-  case 112:
-#line 483 "dhcp4_parser.yy" // lalr1.cc:919
+  case 114:
+#line 485 "dhcp4_parser.yy"
     {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("valid-lifetime", prf);
 }
-#line 1071 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1072 "dhcp4_parser.cc"
     break;
 
-  case 113:
-#line 488 "dhcp4_parser.yy" // lalr1.cc:919
+  case 115:
+#line 490 "dhcp4_parser.yy"
     {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("renew-timer", prf);
 }
-#line 1080 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1081 "dhcp4_parser.cc"
     break;
 
-  case 114:
-#line 493 "dhcp4_parser.yy" // lalr1.cc:919
+  case 116:
+#line 495 "dhcp4_parser.yy"
     {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("rebind-timer", prf);
 }
-#line 1089 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1090 "dhcp4_parser.cc"
     break;
 
-  case 115:
-#line 498 "dhcp4_parser.yy" // lalr1.cc:919
+  case 117:
+#line 500 "dhcp4_parser.yy"
     {
     ElementPtr ctt(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("calculate-tee-times", ctt);
 }
-#line 1098 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1099 "dhcp4_parser.cc"
     break;
 
-  case 116:
-#line 503 "dhcp4_parser.yy" // lalr1.cc:919
+  case 118:
+#line 505 "dhcp4_parser.yy"
     {
     ElementPtr t1(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("t1-percent", t1);
 }
-#line 1107 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1108 "dhcp4_parser.cc"
     break;
 
-  case 117:
-#line 508 "dhcp4_parser.yy" // lalr1.cc:919
+  case 119:
+#line 510 "dhcp4_parser.yy"
     {
     ElementPtr t2(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("t2-percent", t2);
 }
-#line 1116 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1117 "dhcp4_parser.cc"
     break;
 
-  case 118:
-#line 513 "dhcp4_parser.yy" // lalr1.cc:919
+  case 120:
+#line 515 "dhcp4_parser.yy"
     {
     ElementPtr dpp(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
 }
-#line 1125 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1126 "dhcp4_parser.cc"
     break;
 
-  case 119:
-#line 518 "dhcp4_parser.yy" // lalr1.cc:919
+  case 121:
+#line 520 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1133 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1134 "dhcp4_parser.cc"
     break;
 
-  case 120:
-#line 520 "dhcp4_parser.yy" // lalr1.cc:919
+  case 122:
+#line 522 "dhcp4_parser.yy"
     {
     ElementPtr stag(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
 }
-#line 1143 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1144 "dhcp4_parser.cc"
     break;
 
-  case 121:
-#line 526 "dhcp4_parser.yy" // lalr1.cc:919
+  case 123:
+#line 528 "dhcp4_parser.yy"
     {
     ElementPtr echo(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("echo-client-id", echo);
 }
-#line 1152 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1153 "dhcp4_parser.cc"
     break;
 
-  case 122:
-#line 531 "dhcp4_parser.yy" // lalr1.cc:919
+  case 124:
+#line 533 "dhcp4_parser.yy"
     {
     ElementPtr match(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("match-client-id", match);
 }
-#line 1161 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1162 "dhcp4_parser.cc"
     break;
 
-  case 123:
-#line 536 "dhcp4_parser.yy" // lalr1.cc:919
+  case 125:
+#line 538 "dhcp4_parser.yy"
     {
     ElementPtr prf(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("authoritative", prf);
 }
-#line 1170 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1171 "dhcp4_parser.cc"
     break;
 
-  case 124:
-#line 542 "dhcp4_parser.yy" // lalr1.cc:919
+  case 126:
+#line 544 "dhcp4_parser.yy"
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
 }
-#line 1181 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1182 "dhcp4_parser.cc"
     break;
 
-  case 125:
-#line 547 "dhcp4_parser.yy" // lalr1.cc:919
+  case 127:
+#line 549 "dhcp4_parser.yy"
     {
     // No interfaces config param is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1191 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1192 "dhcp4_parser.cc"
     break;
 
-  case 135:
-#line 566 "dhcp4_parser.yy" // lalr1.cc:919
+  case 137:
+#line 568 "dhcp4_parser.yy"
     {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1201 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1202 "dhcp4_parser.cc"
     break;
 
-  case 136:
-#line 570 "dhcp4_parser.yy" // lalr1.cc:919
+  case 138:
+#line 572 "dhcp4_parser.yy"
     {
     // No interfaces config param is required
     // parsing completed
 }
-#line 1210 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1211 "dhcp4_parser.cc"
     break;
 
-  case 137:
-#line 575 "dhcp4_parser.yy" // lalr1.cc:919
+  case 139:
+#line 577 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1221 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1222 "dhcp4_parser.cc"
     break;
 
-  case 138:
-#line 580 "dhcp4_parser.yy" // lalr1.cc:919
+  case 140:
+#line 582 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1230 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1231 "dhcp4_parser.cc"
     break;
 
-  case 139:
-#line 585 "dhcp4_parser.yy" // lalr1.cc:919
+  case 141:
+#line 587 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.DHCP_SOCKET_TYPE);
 }
-#line 1238 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1239 "dhcp4_parser.cc"
     break;
 
-  case 140:
-#line 587 "dhcp4_parser.yy" // lalr1.cc:919
+  case 142:
+#line 589 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("dhcp-socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1247 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 141:
-#line 592 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
-#line 1253 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 142:
-#line 593 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("udp", ctx.loc2pos(yystack_[0].location))); }
-#line 1259 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1248 "dhcp4_parser.cc"
     break;
 
   case 143:
-#line 596 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-    ctx.enter(ctx.OUTBOUND_INTERFACE);
-}
-#line 1267 "dhcp4_parser.cc" // lalr1.cc:919
+#line 594 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
+#line 1254 "dhcp4_parser.cc"
     break;
 
   case 144:
-#line 598 "dhcp4_parser.yy" // lalr1.cc:919
+#line 595 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("udp", ctx.loc2pos(yystack_[0].location))); }
+#line 1260 "dhcp4_parser.cc"
+    break;
+
+  case 145:
+#line 598 "dhcp4_parser.yy"
+    {
+    ctx.enter(ctx.OUTBOUND_INTERFACE);
+}
+#line 1268 "dhcp4_parser.cc"
+    break;
+
+  case 146:
+#line 600 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("outbound-interface", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1276 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 145:
-#line 603 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-    yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(yystack_[0].location)));
-}
-#line 1284 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 146:
-#line 605 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-    yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("use-routing", ctx.loc2pos(yystack_[0].location)));
-    }
-#line 1292 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1277 "dhcp4_parser.cc"
     break;
 
   case 147:
-#line 609 "dhcp4_parser.yy" // lalr1.cc:919
+#line 605 "dhcp4_parser.yy"
+    {
+    yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(yystack_[0].location)));
+}
+#line 1285 "dhcp4_parser.cc"
+    break;
+
+  case 148:
+#line 607 "dhcp4_parser.yy"
+    {
+    yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("use-routing", ctx.loc2pos(yystack_[0].location)));
+    }
+#line 1293 "dhcp4_parser.cc"
+    break;
+
+  case 149:
+#line 611 "dhcp4_parser.yy"
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("re-detect", b);
 }
-#line 1301 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1302 "dhcp4_parser.cc"
     break;
 
-  case 148:
-#line 615 "dhcp4_parser.yy" // lalr1.cc:919
+  case 150:
+#line 617 "dhcp4_parser.yy"
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.LEASE_DATABASE);
 }
-#line 1312 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1313 "dhcp4_parser.cc"
     break;
 
-  case 149:
-#line 620 "dhcp4_parser.yy" // lalr1.cc:919
+  case 151:
+#line 622 "dhcp4_parser.yy"
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1323 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1324 "dhcp4_parser.cc"
     break;
 
-  case 150:
-#line 627 "dhcp4_parser.yy" // lalr1.cc:919
+  case 152:
+#line 629 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sanity-checks", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SANITY_CHECKS);
 }
-#line 1334 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1335 "dhcp4_parser.cc"
     break;
 
-  case 151:
-#line 632 "dhcp4_parser.yy" // lalr1.cc:919
+  case 153:
+#line 634 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1343 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1344 "dhcp4_parser.cc"
     break;
 
-  case 155:
-#line 642 "dhcp4_parser.yy" // lalr1.cc:919
+  case 157:
+#line 644 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1351 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1352 "dhcp4_parser.cc"
     break;
 
-  case 156:
-#line 644 "dhcp4_parser.yy" // lalr1.cc:919
+  case 158:
+#line 646 "dhcp4_parser.yy"
     {
 
     if ( (string(yystack_[0].value.as < std::string > ()) == "none") ||
@@ -1367,613 +1368,613 @@ namespace isc { namespace dhcp {
               ", supported values are: none, warn, fix, fix-del, del");
     }
 }
-#line 1371 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1372 "dhcp4_parser.cc"
     break;
 
-  case 157:
-#line 660 "dhcp4_parser.yy" // lalr1.cc:919
+  case 159:
+#line 662 "dhcp4_parser.yy"
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hosts-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1382 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1383 "dhcp4_parser.cc"
     break;
 
-  case 158:
-#line 665 "dhcp4_parser.yy" // lalr1.cc:919
+  case 160:
+#line 667 "dhcp4_parser.yy"
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1393 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1394 "dhcp4_parser.cc"
     break;
 
-  case 159:
-#line 672 "dhcp4_parser.yy" // lalr1.cc:919
+  case 161:
+#line 674 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hosts-databases", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1404 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1405 "dhcp4_parser.cc"
     break;
 
-  case 160:
-#line 677 "dhcp4_parser.yy" // lalr1.cc:919
+  case 162:
+#line 679 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1413 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1414 "dhcp4_parser.cc"
     break;
 
-  case 165:
-#line 690 "dhcp4_parser.yy" // lalr1.cc:919
+  case 167:
+#line 692 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1423 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1424 "dhcp4_parser.cc"
     break;
 
-  case 166:
-#line 694 "dhcp4_parser.yy" // lalr1.cc:919
+  case 168:
+#line 696 "dhcp4_parser.yy"
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1433 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1434 "dhcp4_parser.cc"
     break;
 
-  case 189:
-#line 726 "dhcp4_parser.yy" // lalr1.cc:919
+  case 191:
+#line 728 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.DATABASE_TYPE);
 }
-#line 1441 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1442 "dhcp4_parser.cc"
     break;
 
-  case 190:
-#line 728 "dhcp4_parser.yy" // lalr1.cc:919
+  case 192:
+#line 730 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1450 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 191:
-#line 733 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
-#line 1456 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 192:
-#line 734 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
-#line 1462 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1451 "dhcp4_parser.cc"
     break;
 
   case 193:
-#line 735 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
-#line 1468 "dhcp4_parser.cc" // lalr1.cc:919
+#line 735 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
+#line 1457 "dhcp4_parser.cc"
     break;
 
   case 194:
-#line 736 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("cql", ctx.loc2pos(yystack_[0].location))); }
-#line 1474 "dhcp4_parser.cc" // lalr1.cc:919
+#line 736 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
+#line 1463 "dhcp4_parser.cc"
     break;
 
   case 195:
-#line 739 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-    ctx.enter(ctx.NO_KEYWORD);
-}
-#line 1482 "dhcp4_parser.cc" // lalr1.cc:919
+#line 737 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
+#line 1469 "dhcp4_parser.cc"
     break;
 
   case 196:
-#line 741 "dhcp4_parser.yy" // lalr1.cc:919
+#line 738 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("cql", ctx.loc2pos(yystack_[0].location))); }
+#line 1475 "dhcp4_parser.cc"
+    break;
+
+  case 197:
+#line 741 "dhcp4_parser.yy"
+    {
+    ctx.enter(ctx.NO_KEYWORD);
+}
+#line 1483 "dhcp4_parser.cc"
+    break;
+
+  case 198:
+#line 743 "dhcp4_parser.yy"
     {
     ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("user", user);
     ctx.leave();
 }
-#line 1492 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1493 "dhcp4_parser.cc"
     break;
 
-  case 197:
-#line 747 "dhcp4_parser.yy" // lalr1.cc:919
+  case 199:
+#line 749 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1500 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1501 "dhcp4_parser.cc"
     break;
 
-  case 198:
-#line 749 "dhcp4_parser.yy" // lalr1.cc:919
+  case 200:
+#line 751 "dhcp4_parser.yy"
     {
     ElementPtr pwd(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("password", pwd);
     ctx.leave();
 }
-#line 1510 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1511 "dhcp4_parser.cc"
     break;
 
-  case 199:
-#line 755 "dhcp4_parser.yy" // lalr1.cc:919
+  case 201:
+#line 757 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1518 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1519 "dhcp4_parser.cc"
     break;
 
-  case 200:
-#line 757 "dhcp4_parser.yy" // lalr1.cc:919
+  case 202:
+#line 759 "dhcp4_parser.yy"
     {
     ElementPtr h(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host", h);
     ctx.leave();
 }
-#line 1528 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1529 "dhcp4_parser.cc"
     break;
 
-  case 201:
-#line 763 "dhcp4_parser.yy" // lalr1.cc:919
+  case 203:
+#line 765 "dhcp4_parser.yy"
     {
     ElementPtr p(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", p);
 }
-#line 1537 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1538 "dhcp4_parser.cc"
     break;
 
-  case 202:
-#line 768 "dhcp4_parser.yy" // lalr1.cc:919
+  case 204:
+#line 770 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1545 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1546 "dhcp4_parser.cc"
     break;
 
-  case 203:
-#line 770 "dhcp4_parser.yy" // lalr1.cc:919
+  case 205:
+#line 772 "dhcp4_parser.yy"
     {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1555 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1556 "dhcp4_parser.cc"
     break;
 
-  case 204:
-#line 776 "dhcp4_parser.yy" // lalr1.cc:919
+  case 206:
+#line 778 "dhcp4_parser.yy"
     {
     ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("persist", n);
 }
-#line 1564 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1565 "dhcp4_parser.cc"
     break;
 
-  case 205:
-#line 781 "dhcp4_parser.yy" // lalr1.cc:919
+  case 207:
+#line 783 "dhcp4_parser.yy"
     {
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lfc-interval", n);
 }
-#line 1573 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1574 "dhcp4_parser.cc"
     break;
 
-  case 206:
-#line 786 "dhcp4_parser.yy" // lalr1.cc:919
+  case 208:
+#line 788 "dhcp4_parser.yy"
     {
     ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("readonly", n);
 }
-#line 1582 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1583 "dhcp4_parser.cc"
     break;
 
-  case 207:
-#line 791 "dhcp4_parser.yy" // lalr1.cc:919
+  case 209:
+#line 793 "dhcp4_parser.yy"
     {
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("connect-timeout", n);
 }
-#line 1591 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1592 "dhcp4_parser.cc"
     break;
 
-  case 208:
-#line 796 "dhcp4_parser.yy" // lalr1.cc:919
+  case 210:
+#line 798 "dhcp4_parser.yy"
     {
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("request-timeout", n);
 }
-#line 1600 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1601 "dhcp4_parser.cc"
     break;
 
-  case 209:
-#line 801 "dhcp4_parser.yy" // lalr1.cc:919
+  case 211:
+#line 803 "dhcp4_parser.yy"
     {
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-keepalive", n);
 }
-#line 1609 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1610 "dhcp4_parser.cc"
     break;
 
-  case 210:
-#line 806 "dhcp4_parser.yy" // lalr1.cc:919
+  case 212:
+#line 808 "dhcp4_parser.yy"
     {
     ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-nodelay", n);
 }
-#line 1618 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1619 "dhcp4_parser.cc"
     break;
 
-  case 211:
-#line 811 "dhcp4_parser.yy" // lalr1.cc:919
+  case 213:
+#line 813 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1626 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1627 "dhcp4_parser.cc"
     break;
 
-  case 212:
-#line 813 "dhcp4_parser.yy" // lalr1.cc:919
+  case 214:
+#line 815 "dhcp4_parser.yy"
     {
     ElementPtr cp(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
 }
-#line 1636 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1637 "dhcp4_parser.cc"
     break;
 
-  case 213:
-#line 819 "dhcp4_parser.yy" // lalr1.cc:919
+  case 215:
+#line 821 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1644 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1645 "dhcp4_parser.cc"
     break;
 
-  case 214:
-#line 821 "dhcp4_parser.yy" // lalr1.cc:919
+  case 216:
+#line 823 "dhcp4_parser.yy"
     {
     ElementPtr ks(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
 }
-#line 1654 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1655 "dhcp4_parser.cc"
     break;
 
-  case 215:
-#line 827 "dhcp4_parser.yy" // lalr1.cc:919
+  case 217:
+#line 829 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1662 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1663 "dhcp4_parser.cc"
     break;
 
-  case 216:
-#line 829 "dhcp4_parser.yy" // lalr1.cc:919
+  case 218:
+#line 831 "dhcp4_parser.yy"
     {
     ElementPtr c(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("consistency", c);
     ctx.leave();
 }
-#line 1672 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1673 "dhcp4_parser.cc"
     break;
 
-  case 217:
-#line 835 "dhcp4_parser.yy" // lalr1.cc:919
+  case 219:
+#line 837 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1680 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1681 "dhcp4_parser.cc"
     break;
 
-  case 218:
-#line 837 "dhcp4_parser.yy" // lalr1.cc:919
+  case 220:
+#line 839 "dhcp4_parser.yy"
     {
     ElementPtr c(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("serial-consistency", c);
     ctx.leave();
 }
-#line 1690 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1691 "dhcp4_parser.cc"
     break;
 
-  case 219:
-#line 843 "dhcp4_parser.yy" // lalr1.cc:919
+  case 221:
+#line 845 "dhcp4_parser.yy"
     {
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
 }
-#line 1699 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1700 "dhcp4_parser.cc"
     break;
 
-  case 220:
-#line 848 "dhcp4_parser.yy" // lalr1.cc:919
+  case 222:
+#line 850 "dhcp4_parser.yy"
     {
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 }
-#line 1708 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1709 "dhcp4_parser.cc"
     break;
 
-  case 221:
-#line 853 "dhcp4_parser.yy" // lalr1.cc:919
+  case 223:
+#line 855 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host-reservation-identifiers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);
 }
-#line 1719 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1720 "dhcp4_parser.cc"
     break;
 
-  case 222:
-#line 858 "dhcp4_parser.yy" // lalr1.cc:919
+  case 224:
+#line 860 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1728 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1729 "dhcp4_parser.cc"
     break;
 
-  case 230:
-#line 874 "dhcp4_parser.yy" // lalr1.cc:919
+  case 232:
+#line 876 "dhcp4_parser.yy"
     {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(duid);
 }
-#line 1737 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1738 "dhcp4_parser.cc"
     break;
 
-  case 231:
-#line 879 "dhcp4_parser.yy" // lalr1.cc:919
+  case 233:
+#line 881 "dhcp4_parser.yy"
     {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(hwaddr);
 }
-#line 1746 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1747 "dhcp4_parser.cc"
     break;
 
-  case 232:
-#line 884 "dhcp4_parser.yy" // lalr1.cc:919
+  case 234:
+#line 886 "dhcp4_parser.yy"
     {
     ElementPtr circuit(new StringElement("circuit-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(circuit);
 }
-#line 1755 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1756 "dhcp4_parser.cc"
     break;
 
-  case 233:
-#line 889 "dhcp4_parser.yy" // lalr1.cc:919
+  case 235:
+#line 891 "dhcp4_parser.yy"
     {
     ElementPtr client(new StringElement("client-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(client);
 }
-#line 1764 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1765 "dhcp4_parser.cc"
     break;
 
-  case 234:
-#line 894 "dhcp4_parser.yy" // lalr1.cc:919
+  case 236:
+#line 896 "dhcp4_parser.yy"
     {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(flex_id);
 }
-#line 1773 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1774 "dhcp4_parser.cc"
     break;
 
-  case 235:
-#line 899 "dhcp4_parser.yy" // lalr1.cc:919
+  case 237:
+#line 901 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1784 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1785 "dhcp4_parser.cc"
     break;
 
-  case 236:
-#line 904 "dhcp4_parser.yy" // lalr1.cc:919
+  case 238:
+#line 906 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1793 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1794 "dhcp4_parser.cc"
     break;
 
-  case 241:
-#line 917 "dhcp4_parser.yy" // lalr1.cc:919
+  case 243:
+#line 919 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1803 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1804 "dhcp4_parser.cc"
     break;
 
-  case 242:
-#line 921 "dhcp4_parser.yy" // lalr1.cc:919
+  case 244:
+#line 923 "dhcp4_parser.yy"
     {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1813 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1814 "dhcp4_parser.cc"
     break;
 
-  case 243:
-#line 927 "dhcp4_parser.yy" // lalr1.cc:919
+  case 245:
+#line 929 "dhcp4_parser.yy"
     {
     // Parse the hooks-libraries list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1823 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1824 "dhcp4_parser.cc"
     break;
 
-  case 244:
-#line 931 "dhcp4_parser.yy" // lalr1.cc:919
+  case 246:
+#line 933 "dhcp4_parser.yy"
     {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 1833 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1834 "dhcp4_parser.cc"
     break;
 
-  case 250:
-#line 946 "dhcp4_parser.yy" // lalr1.cc:919
+  case 252:
+#line 948 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1841 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1842 "dhcp4_parser.cc"
     break;
 
-  case 251:
-#line 948 "dhcp4_parser.yy" // lalr1.cc:919
+  case 253:
+#line 950 "dhcp4_parser.yy"
     {
     ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1851 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1852 "dhcp4_parser.cc"
     break;
 
-  case 252:
-#line 954 "dhcp4_parser.yy" // lalr1.cc:919
+  case 254:
+#line 956 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1859 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1860 "dhcp4_parser.cc"
     break;
 
-  case 253:
-#line 956 "dhcp4_parser.yy" // lalr1.cc:919
+  case 255:
+#line 958 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1868 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1869 "dhcp4_parser.cc"
     break;
 
-  case 254:
-#line 962 "dhcp4_parser.yy" // lalr1.cc:919
+  case 256:
+#line 964 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 }
-#line 1879 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1880 "dhcp4_parser.cc"
     break;
 
-  case 255:
-#line 967 "dhcp4_parser.yy" // lalr1.cc:919
+  case 257:
+#line 969 "dhcp4_parser.yy"
     {
     // No expired lease parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1889 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1890 "dhcp4_parser.cc"
     break;
 
-  case 264:
-#line 985 "dhcp4_parser.yy" // lalr1.cc:919
+  case 266:
+#line 987 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reclaim-timer-wait-time", value);
 }
-#line 1898 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1899 "dhcp4_parser.cc"
     break;
 
-  case 265:
-#line 990 "dhcp4_parser.yy" // lalr1.cc:919
+  case 267:
+#line 992 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
 }
-#line 1907 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1908 "dhcp4_parser.cc"
     break;
 
-  case 266:
-#line 995 "dhcp4_parser.yy" // lalr1.cc:919
+  case 268:
+#line 997 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hold-reclaimed-time", value);
 }
-#line 1916 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1917 "dhcp4_parser.cc"
     break;
 
-  case 267:
-#line 1000 "dhcp4_parser.yy" // lalr1.cc:919
+  case 269:
+#line 1002 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-leases", value);
 }
-#line 1925 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1926 "dhcp4_parser.cc"
     break;
 
-  case 268:
-#line 1005 "dhcp4_parser.yy" // lalr1.cc:919
+  case 270:
+#line 1007 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-time", value);
 }
-#line 1934 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1935 "dhcp4_parser.cc"
     break;
 
-  case 269:
-#line 1010 "dhcp4_parser.yy" // lalr1.cc:919
+  case 271:
+#line 1012 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 }
-#line 1943 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1944 "dhcp4_parser.cc"
     break;
 
-  case 270:
-#line 1018 "dhcp4_parser.yy" // lalr1.cc:919
+  case 272:
+#line 1020 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet4", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SUBNET4);
 }
-#line 1954 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1955 "dhcp4_parser.cc"
     break;
 
-  case 271:
-#line 1023 "dhcp4_parser.yy" // lalr1.cc:919
+  case 273:
+#line 1025 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1963 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1964 "dhcp4_parser.cc"
     break;
 
-  case 276:
-#line 1043 "dhcp4_parser.yy" // lalr1.cc:919
+  case 278:
+#line 1045 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1973 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1974 "dhcp4_parser.cc"
     break;
 
-  case 277:
-#line 1047 "dhcp4_parser.yy" // lalr1.cc:919
+  case 279:
+#line 1049 "dhcp4_parser.yy"
     {
     // Once we reached this place, the subnet parsing is now complete.
     // If we want to, we can implement default values here.
@@ -1995,294 +1996,294 @@ namespace isc { namespace dhcp {
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1999 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2000 "dhcp4_parser.cc"
     break;
 
-  case 278:
-#line 1069 "dhcp4_parser.yy" // lalr1.cc:919
+  case 280:
+#line 1071 "dhcp4_parser.yy"
     {
     // Parse the subnet4 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2009 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2010 "dhcp4_parser.cc"
     break;
 
-  case 279:
-#line 1073 "dhcp4_parser.yy" // lalr1.cc:919
+  case 281:
+#line 1075 "dhcp4_parser.yy"
     {
     // The subnet subnet4 parameter is required
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2019 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2020 "dhcp4_parser.cc"
     break;
 
-  case 309:
-#line 1114 "dhcp4_parser.yy" // lalr1.cc:919
+  case 311:
+#line 1116 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2027 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2028 "dhcp4_parser.cc"
     break;
 
-  case 310:
-#line 1116 "dhcp4_parser.yy" // lalr1.cc:919
+  case 312:
+#line 1118 "dhcp4_parser.yy"
     {
     ElementPtr subnet(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet", subnet);
     ctx.leave();
 }
-#line 2037 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2038 "dhcp4_parser.cc"
     break;
 
-  case 311:
-#line 1122 "dhcp4_parser.yy" // lalr1.cc:919
+  case 313:
+#line 1124 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2045 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2046 "dhcp4_parser.cc"
     break;
 
-  case 312:
-#line 1124 "dhcp4_parser.yy" // lalr1.cc:919
+  case 314:
+#line 1126 "dhcp4_parser.yy"
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-interface", iface);
     ctx.leave();
 }
-#line 2055 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2056 "dhcp4_parser.cc"
     break;
 
-  case 313:
-#line 1130 "dhcp4_parser.yy" // lalr1.cc:919
+  case 315:
+#line 1132 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2063 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2064 "dhcp4_parser.cc"
     break;
 
-  case 314:
-#line 1132 "dhcp4_parser.yy" // lalr1.cc:919
+  case 316:
+#line 1134 "dhcp4_parser.yy"
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-interface-id", iface);
     ctx.leave();
 }
-#line 2073 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2074 "dhcp4_parser.cc"
     break;
 
-  case 315:
-#line 1138 "dhcp4_parser.yy" // lalr1.cc:919
+  case 317:
+#line 1140 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2081 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2082 "dhcp4_parser.cc"
     break;
 
-  case 316:
-#line 1140 "dhcp4_parser.yy" // lalr1.cc:919
+  case 318:
+#line 1142 "dhcp4_parser.yy"
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-subnet", iface);
     ctx.leave();
 }
-#line 2091 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2092 "dhcp4_parser.cc"
     break;
 
-  case 317:
-#line 1146 "dhcp4_parser.yy" // lalr1.cc:919
+  case 319:
+#line 1148 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2099 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2100 "dhcp4_parser.cc"
     break;
 
-  case 318:
-#line 1148 "dhcp4_parser.yy" // lalr1.cc:919
+  case 320:
+#line 1150 "dhcp4_parser.yy"
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interface", iface);
     ctx.leave();
 }
-#line 2109 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2110 "dhcp4_parser.cc"
     break;
 
-  case 319:
-#line 1154 "dhcp4_parser.yy" // lalr1.cc:919
+  case 321:
+#line 1156 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2117 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2118 "dhcp4_parser.cc"
     break;
 
-  case 320:
-#line 1156 "dhcp4_parser.yy" // lalr1.cc:919
+  case 322:
+#line 1158 "dhcp4_parser.yy"
     {
     ElementPtr cls(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-class", cls);
     ctx.leave();
 }
-#line 2127 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2128 "dhcp4_parser.cc"
     break;
 
-  case 321:
-#line 1162 "dhcp4_parser.yy" // lalr1.cc:919
+  case 323:
+#line 1164 "dhcp4_parser.yy"
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2138 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2139 "dhcp4_parser.cc"
     break;
 
-  case 322:
-#line 1167 "dhcp4_parser.yy" // lalr1.cc:919
+  case 324:
+#line 1169 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2147 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2148 "dhcp4_parser.cc"
     break;
 
-  case 323:
-#line 1172 "dhcp4_parser.yy" // lalr1.cc:919
+  case 325:
+#line 1174 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.RESERVATION_MODE);
 }
-#line 2155 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2156 "dhcp4_parser.cc"
     break;
 
-  case 324:
-#line 1174 "dhcp4_parser.yy" // lalr1.cc:919
+  case 326:
+#line 1176 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("reservation-mode", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 2164 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 325:
-#line 1179 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
-#line 2170 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 326:
-#line 1180 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(yystack_[0].location))); }
-#line 2176 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2165 "dhcp4_parser.cc"
     break;
 
   case 327:
-#line 1181 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("global", ctx.loc2pos(yystack_[0].location))); }
-#line 2182 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1181 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
+#line 2171 "dhcp4_parser.cc"
     break;
 
   case 328:
-#line 1182 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("all", ctx.loc2pos(yystack_[0].location))); }
-#line 2188 "dhcp4_parser.cc" // lalr1.cc:919
+#line 1182 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(yystack_[0].location))); }
+#line 2177 "dhcp4_parser.cc"
     break;
 
   case 329:
-#line 1185 "dhcp4_parser.yy" // lalr1.cc:919
+#line 1183 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("global", ctx.loc2pos(yystack_[0].location))); }
+#line 2183 "dhcp4_parser.cc"
+    break;
+
+  case 330:
+#line 1184 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("all", ctx.loc2pos(yystack_[0].location))); }
+#line 2189 "dhcp4_parser.cc"
+    break;
+
+  case 331:
+#line 1187 "dhcp4_parser.yy"
     {
     ElementPtr id(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("id", id);
 }
-#line 2197 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2198 "dhcp4_parser.cc"
     break;
 
-  case 330:
-#line 1192 "dhcp4_parser.yy" // lalr1.cc:919
+  case 332:
+#line 1194 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("shared-networks", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SHARED_NETWORK);
 }
-#line 2208 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2209 "dhcp4_parser.cc"
     break;
 
-  case 331:
-#line 1197 "dhcp4_parser.yy" // lalr1.cc:919
+  case 333:
+#line 1199 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2217 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2218 "dhcp4_parser.cc"
     break;
 
-  case 336:
-#line 1212 "dhcp4_parser.yy" // lalr1.cc:919
+  case 338:
+#line 1214 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2227 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2228 "dhcp4_parser.cc"
     break;
 
-  case 337:
-#line 1216 "dhcp4_parser.yy" // lalr1.cc:919
+  case 339:
+#line 1218 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
 }
-#line 2235 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2236 "dhcp4_parser.cc"
     break;
 
-  case 362:
-#line 1252 "dhcp4_parser.yy" // lalr1.cc:919
+  case 364:
+#line 1254 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("option-def", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DEF);
 }
-#line 2246 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2247 "dhcp4_parser.cc"
     break;
 
-  case 363:
-#line 1257 "dhcp4_parser.yy" // lalr1.cc:919
+  case 365:
+#line 1259 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2255 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2256 "dhcp4_parser.cc"
     break;
 
-  case 364:
-#line 1265 "dhcp4_parser.yy" // lalr1.cc:919
+  case 366:
+#line 1267 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2264 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2265 "dhcp4_parser.cc"
     break;
 
-  case 365:
-#line 1268 "dhcp4_parser.yy" // lalr1.cc:919
+  case 367:
+#line 1270 "dhcp4_parser.yy"
     {
     // parsing completed
 }
-#line 2272 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2273 "dhcp4_parser.cc"
     break;
 
-  case 370:
-#line 1284 "dhcp4_parser.yy" // lalr1.cc:919
+  case 372:
+#line 1286 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2282 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2283 "dhcp4_parser.cc"
     break;
 
-  case 371:
-#line 1288 "dhcp4_parser.yy" // lalr1.cc:919
+  case 373:
+#line 1290 "dhcp4_parser.yy"
     {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -2290,21 +2291,21 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2294 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2295 "dhcp4_parser.cc"
     break;
 
-  case 372:
-#line 1299 "dhcp4_parser.yy" // lalr1.cc:919
+  case 374:
+#line 1301 "dhcp4_parser.yy"
     {
     // Parse the option-def list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2304 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2305 "dhcp4_parser.cc"
     break;
 
-  case 373:
-#line 1303 "dhcp4_parser.yy" // lalr1.cc:919
+  case 375:
+#line 1305 "dhcp4_parser.yy"
     {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -2312,281 +2313,281 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2316 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2317 "dhcp4_parser.cc"
     break;
 
-  case 389:
-#line 1335 "dhcp4_parser.yy" // lalr1.cc:919
+  case 391:
+#line 1337 "dhcp4_parser.yy"
     {
     ElementPtr code(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("code", code);
 }
-#line 2325 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2326 "dhcp4_parser.cc"
     break;
 
-  case 391:
-#line 1342 "dhcp4_parser.yy" // lalr1.cc:919
+  case 393:
+#line 1344 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2333 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2334 "dhcp4_parser.cc"
     break;
 
-  case 392:
-#line 1344 "dhcp4_parser.yy" // lalr1.cc:919
+  case 394:
+#line 1346 "dhcp4_parser.yy"
     {
     ElementPtr prf(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("type", prf);
     ctx.leave();
 }
-#line 2343 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2344 "dhcp4_parser.cc"
     break;
 
-  case 393:
-#line 1350 "dhcp4_parser.yy" // lalr1.cc:919
+  case 395:
+#line 1352 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2351 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2352 "dhcp4_parser.cc"
     break;
 
-  case 394:
-#line 1352 "dhcp4_parser.yy" // lalr1.cc:919
+  case 396:
+#line 1354 "dhcp4_parser.yy"
     {
     ElementPtr rtypes(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("record-types", rtypes);
     ctx.leave();
 }
-#line 2361 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2362 "dhcp4_parser.cc"
     break;
 
-  case 395:
-#line 1358 "dhcp4_parser.yy" // lalr1.cc:919
+  case 397:
+#line 1360 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2369 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2370 "dhcp4_parser.cc"
     break;
 
-  case 396:
-#line 1360 "dhcp4_parser.yy" // lalr1.cc:919
+  case 398:
+#line 1362 "dhcp4_parser.yy"
     {
     ElementPtr space(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("space", space);
     ctx.leave();
 }
-#line 2379 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2380 "dhcp4_parser.cc"
     break;
 
-  case 398:
-#line 1368 "dhcp4_parser.yy" // lalr1.cc:919
+  case 400:
+#line 1370 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2387 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2388 "dhcp4_parser.cc"
     break;
 
-  case 399:
-#line 1370 "dhcp4_parser.yy" // lalr1.cc:919
+  case 401:
+#line 1372 "dhcp4_parser.yy"
     {
     ElementPtr encap(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("encapsulate", encap);
     ctx.leave();
 }
-#line 2397 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2398 "dhcp4_parser.cc"
     break;
 
-  case 400:
-#line 1376 "dhcp4_parser.yy" // lalr1.cc:919
+  case 402:
+#line 1378 "dhcp4_parser.yy"
     {
     ElementPtr array(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("array", array);
 }
-#line 2406 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2407 "dhcp4_parser.cc"
     break;
 
-  case 401:
-#line 1385 "dhcp4_parser.yy" // lalr1.cc:919
+  case 403:
+#line 1387 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("option-data", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DATA);
 }
-#line 2417 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2418 "dhcp4_parser.cc"
     break;
 
-  case 402:
-#line 1390 "dhcp4_parser.yy" // lalr1.cc:919
+  case 404:
+#line 1392 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2426 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2427 "dhcp4_parser.cc"
     break;
 
-  case 407:
-#line 1409 "dhcp4_parser.yy" // lalr1.cc:919
+  case 409:
+#line 1411 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2436 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2437 "dhcp4_parser.cc"
     break;
 
-  case 408:
-#line 1413 "dhcp4_parser.yy" // lalr1.cc:919
+  case 410:
+#line 1415 "dhcp4_parser.yy"
     {
     /// @todo: the code or name parameters are required.
     ctx.stack_.pop_back();
 }
-#line 2445 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2446 "dhcp4_parser.cc"
     break;
 
-  case 409:
-#line 1421 "dhcp4_parser.yy" // lalr1.cc:919
+  case 411:
+#line 1423 "dhcp4_parser.yy"
     {
     // Parse the option-data list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2455 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2456 "dhcp4_parser.cc"
     break;
 
-  case 410:
-#line 1425 "dhcp4_parser.yy" // lalr1.cc:919
+  case 412:
+#line 1427 "dhcp4_parser.yy"
     {
     /// @todo: the code or name parameters are required.
     // parsing completed
 }
-#line 2464 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2465 "dhcp4_parser.cc"
     break;
 
-  case 425:
-#line 1458 "dhcp4_parser.yy" // lalr1.cc:919
+  case 427:
+#line 1460 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2472 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2473 "dhcp4_parser.cc"
     break;
 
-  case 426:
-#line 1460 "dhcp4_parser.yy" // lalr1.cc:919
+  case 428:
+#line 1462 "dhcp4_parser.yy"
     {
     ElementPtr data(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("data", data);
     ctx.leave();
 }
-#line 2482 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2483 "dhcp4_parser.cc"
     break;
 
-  case 429:
-#line 1470 "dhcp4_parser.yy" // lalr1.cc:919
+  case 431:
+#line 1472 "dhcp4_parser.yy"
     {
     ElementPtr space(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("csv-format", space);
 }
-#line 2491 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2492 "dhcp4_parser.cc"
     break;
 
-  case 430:
-#line 1475 "dhcp4_parser.yy" // lalr1.cc:919
+  case 432:
+#line 1477 "dhcp4_parser.yy"
     {
     ElementPtr persist(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("always-send", persist);
 }
-#line 2500 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2501 "dhcp4_parser.cc"
     break;
 
-  case 431:
-#line 1483 "dhcp4_parser.yy" // lalr1.cc:919
+  case 433:
+#line 1485 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pools", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.POOLS);
 }
-#line 2511 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2512 "dhcp4_parser.cc"
     break;
 
-  case 432:
-#line 1488 "dhcp4_parser.yy" // lalr1.cc:919
+  case 434:
+#line 1490 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2520 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2521 "dhcp4_parser.cc"
     break;
 
-  case 437:
-#line 1503 "dhcp4_parser.yy" // lalr1.cc:919
+  case 439:
+#line 1505 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2530 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2531 "dhcp4_parser.cc"
     break;
 
-  case 438:
-#line 1507 "dhcp4_parser.yy" // lalr1.cc:919
+  case 440:
+#line 1509 "dhcp4_parser.yy"
     {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2540 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2541 "dhcp4_parser.cc"
     break;
 
-  case 439:
-#line 1513 "dhcp4_parser.yy" // lalr1.cc:919
+  case 441:
+#line 1515 "dhcp4_parser.yy"
     {
     // Parse the pool list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2550 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2551 "dhcp4_parser.cc"
     break;
 
-  case 440:
-#line 1517 "dhcp4_parser.yy" // lalr1.cc:919
+  case 442:
+#line 1519 "dhcp4_parser.yy"
     {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2560 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2561 "dhcp4_parser.cc"
     break;
 
-  case 450:
-#line 1536 "dhcp4_parser.yy" // lalr1.cc:919
+  case 452:
+#line 1538 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2568 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2569 "dhcp4_parser.cc"
     break;
 
-  case 451:
-#line 1538 "dhcp4_parser.yy" // lalr1.cc:919
+  case 453:
+#line 1540 "dhcp4_parser.yy"
     {
     ElementPtr pool(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
 }
-#line 2578 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2579 "dhcp4_parser.cc"
     break;
 
-  case 452:
-#line 1544 "dhcp4_parser.yy" // lalr1.cc:919
+  case 454:
+#line 1546 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2586 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2587 "dhcp4_parser.cc"
     break;
 
-  case 453:
-#line 1546 "dhcp4_parser.yy" // lalr1.cc:919
+  case 455:
+#line 1548 "dhcp4_parser.yy"
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
@@ -2609,19 +2610,19 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 2613 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2614 "dhcp4_parser.cc"
     break;
 
-  case 454:
-#line 1569 "dhcp4_parser.yy" // lalr1.cc:919
+  case 456:
+#line 1571 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2621 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2622 "dhcp4_parser.cc"
     break;
 
-  case 455:
-#line 1571 "dhcp4_parser.yy" // lalr1.cc:919
+  case 457:
+#line 1573 "dhcp4_parser.yy"
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -2646,449 +2647,449 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 2650 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2651 "dhcp4_parser.cc"
     break;
 
-  case 456:
-#line 1599 "dhcp4_parser.yy" // lalr1.cc:919
+  case 458:
+#line 1601 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.RESERVATIONS);
 }
-#line 2661 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2662 "dhcp4_parser.cc"
     break;
 
-  case 457:
-#line 1604 "dhcp4_parser.yy" // lalr1.cc:919
+  case 459:
+#line 1606 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2670 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2671 "dhcp4_parser.cc"
     break;
 
-  case 462:
-#line 1617 "dhcp4_parser.yy" // lalr1.cc:919
+  case 464:
+#line 1619 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2680 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2681 "dhcp4_parser.cc"
     break;
 
-  case 463:
-#line 1621 "dhcp4_parser.yy" // lalr1.cc:919
+  case 465:
+#line 1623 "dhcp4_parser.yy"
     {
     /// @todo: an identifier parameter is required.
     ctx.stack_.pop_back();
 }
-#line 2689 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2690 "dhcp4_parser.cc"
     break;
 
-  case 464:
-#line 1626 "dhcp4_parser.yy" // lalr1.cc:919
+  case 466:
+#line 1628 "dhcp4_parser.yy"
     {
     // Parse the reservations list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2699 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2700 "dhcp4_parser.cc"
     break;
 
-  case 465:
-#line 1630 "dhcp4_parser.yy" // lalr1.cc:919
+  case 467:
+#line 1632 "dhcp4_parser.yy"
     {
     /// @todo: an identifier parameter is required.
     // parsing completed
 }
-#line 2708 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2709 "dhcp4_parser.cc"
     break;
 
-  case 485:
-#line 1661 "dhcp4_parser.yy" // lalr1.cc:919
+  case 487:
+#line 1663 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2716 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2717 "dhcp4_parser.cc"
     break;
 
-  case 486:
-#line 1663 "dhcp4_parser.yy" // lalr1.cc:919
+  case 488:
+#line 1665 "dhcp4_parser.yy"
     {
     ElementPtr next_server(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("next-server", next_server);
     ctx.leave();
 }
-#line 2726 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2727 "dhcp4_parser.cc"
     break;
 
-  case 487:
-#line 1669 "dhcp4_parser.yy" // lalr1.cc:919
+  case 489:
+#line 1671 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2734 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2735 "dhcp4_parser.cc"
     break;
 
-  case 488:
-#line 1671 "dhcp4_parser.yy" // lalr1.cc:919
+  case 490:
+#line 1673 "dhcp4_parser.yy"
     {
     ElementPtr srv(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-hostname", srv);
     ctx.leave();
 }
-#line 2744 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2745 "dhcp4_parser.cc"
     break;
 
-  case 489:
-#line 1677 "dhcp4_parser.yy" // lalr1.cc:919
+  case 491:
+#line 1679 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2752 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2753 "dhcp4_parser.cc"
     break;
 
-  case 490:
-#line 1679 "dhcp4_parser.yy" // lalr1.cc:919
+  case 492:
+#line 1681 "dhcp4_parser.yy"
     {
     ElementPtr bootfile(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("boot-file-name", bootfile);
     ctx.leave();
 }
-#line 2762 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2763 "dhcp4_parser.cc"
     break;
 
-  case 491:
-#line 1685 "dhcp4_parser.yy" // lalr1.cc:919
+  case 493:
+#line 1687 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2770 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2771 "dhcp4_parser.cc"
     break;
 
-  case 492:
-#line 1687 "dhcp4_parser.yy" // lalr1.cc:919
+  case 494:
+#line 1689 "dhcp4_parser.yy"
     {
     ElementPtr addr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 }
-#line 2780 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2781 "dhcp4_parser.cc"
     break;
 
-  case 493:
-#line 1693 "dhcp4_parser.yy" // lalr1.cc:919
+  case 495:
+#line 1695 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2791 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2792 "dhcp4_parser.cc"
     break;
 
-  case 494:
-#line 1698 "dhcp4_parser.yy" // lalr1.cc:919
+  case 496:
+#line 1700 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2800 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2801 "dhcp4_parser.cc"
     break;
 
-  case 495:
-#line 1703 "dhcp4_parser.yy" // lalr1.cc:919
+  case 497:
+#line 1705 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2808 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2809 "dhcp4_parser.cc"
     break;
 
-  case 496:
-#line 1705 "dhcp4_parser.yy" // lalr1.cc:919
+  case 498:
+#line 1707 "dhcp4_parser.yy"
     {
     ElementPtr d(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("duid", d);
     ctx.leave();
 }
-#line 2818 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2819 "dhcp4_parser.cc"
     break;
 
-  case 497:
-#line 1711 "dhcp4_parser.yy" // lalr1.cc:919
+  case 499:
+#line 1713 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2826 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2827 "dhcp4_parser.cc"
     break;
 
-  case 498:
-#line 1713 "dhcp4_parser.yy" // lalr1.cc:919
+  case 500:
+#line 1715 "dhcp4_parser.yy"
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hw-address", hw);
     ctx.leave();
 }
-#line 2836 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2837 "dhcp4_parser.cc"
     break;
 
-  case 499:
-#line 1719 "dhcp4_parser.yy" // lalr1.cc:919
+  case 501:
+#line 1721 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2844 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2845 "dhcp4_parser.cc"
     break;
 
-  case 500:
-#line 1721 "dhcp4_parser.yy" // lalr1.cc:919
+  case 502:
+#line 1723 "dhcp4_parser.yy"
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-id", hw);
     ctx.leave();
 }
-#line 2854 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2855 "dhcp4_parser.cc"
     break;
 
-  case 501:
-#line 1727 "dhcp4_parser.yy" // lalr1.cc:919
+  case 503:
+#line 1729 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2862 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2863 "dhcp4_parser.cc"
     break;
 
-  case 502:
-#line 1729 "dhcp4_parser.yy" // lalr1.cc:919
+  case 504:
+#line 1731 "dhcp4_parser.yy"
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("circuit-id", hw);
     ctx.leave();
 }
-#line 2872 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2873 "dhcp4_parser.cc"
     break;
 
-  case 503:
-#line 1735 "dhcp4_parser.yy" // lalr1.cc:919
+  case 505:
+#line 1737 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2880 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2881 "dhcp4_parser.cc"
     break;
 
-  case 504:
-#line 1737 "dhcp4_parser.yy" // lalr1.cc:919
+  case 506:
+#line 1739 "dhcp4_parser.yy"
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flex-id", hw);
     ctx.leave();
 }
-#line 2890 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2891 "dhcp4_parser.cc"
     break;
 
-  case 505:
-#line 1743 "dhcp4_parser.yy" // lalr1.cc:919
+  case 507:
+#line 1745 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2898 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2899 "dhcp4_parser.cc"
     break;
 
-  case 506:
-#line 1745 "dhcp4_parser.yy" // lalr1.cc:919
+  case 508:
+#line 1747 "dhcp4_parser.yy"
     {
     ElementPtr host(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname", host);
     ctx.leave();
 }
-#line 2908 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2909 "dhcp4_parser.cc"
     break;
 
-  case 507:
-#line 1751 "dhcp4_parser.yy" // lalr1.cc:919
+  case 509:
+#line 1753 "dhcp4_parser.yy"
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2919 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2920 "dhcp4_parser.cc"
     break;
 
-  case 508:
-#line 1756 "dhcp4_parser.yy" // lalr1.cc:919
+  case 510:
+#line 1758 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2928 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2929 "dhcp4_parser.cc"
     break;
 
-  case 509:
-#line 1764 "dhcp4_parser.yy" // lalr1.cc:919
+  case 511:
+#line 1766 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("relay", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.RELAY);
 }
-#line 2939 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2940 "dhcp4_parser.cc"
     break;
 
-  case 510:
-#line 1769 "dhcp4_parser.yy" // lalr1.cc:919
+  case 512:
+#line 1771 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2948 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2949 "dhcp4_parser.cc"
     break;
 
-  case 513:
-#line 1781 "dhcp4_parser.yy" // lalr1.cc:919
+  case 515:
+#line 1783 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-classes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CLIENT_CLASSES);
 }
-#line 2959 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2960 "dhcp4_parser.cc"
     break;
 
-  case 514:
-#line 1786 "dhcp4_parser.yy" // lalr1.cc:919
+  case 516:
+#line 1788 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2968 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2969 "dhcp4_parser.cc"
     break;
 
-  case 517:
-#line 1795 "dhcp4_parser.yy" // lalr1.cc:919
+  case 519:
+#line 1797 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2978 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2979 "dhcp4_parser.cc"
     break;
 
-  case 518:
-#line 1799 "dhcp4_parser.yy" // lalr1.cc:919
+  case 520:
+#line 1801 "dhcp4_parser.yy"
     {
     // The name client class parameter is required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2988 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2989 "dhcp4_parser.cc"
     break;
 
-  case 535:
-#line 1828 "dhcp4_parser.yy" // lalr1.cc:919
+  case 537:
+#line 1830 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2996 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2997 "dhcp4_parser.cc"
     break;
 
-  case 536:
-#line 1830 "dhcp4_parser.yy" // lalr1.cc:919
+  case 538:
+#line 1832 "dhcp4_parser.yy"
     {
     ElementPtr test(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 }
-#line 3006 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3007 "dhcp4_parser.cc"
     break;
 
-  case 537:
-#line 1836 "dhcp4_parser.yy" // lalr1.cc:919
+  case 539:
+#line 1838 "dhcp4_parser.yy"
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("only-if-required", b);
 }
-#line 3015 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3016 "dhcp4_parser.cc"
     break;
 
-  case 538:
-#line 1845 "dhcp4_parser.yy" // lalr1.cc:919
+  case 540:
+#line 1847 "dhcp4_parser.yy"
     {
     ElementPtr time(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 }
-#line 3024 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3025 "dhcp4_parser.cc"
     break;
 
-  case 539:
-#line 1852 "dhcp4_parser.yy" // lalr1.cc:919
+  case 541:
+#line 1854 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 3035 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3036 "dhcp4_parser.cc"
     break;
 
-  case 540:
-#line 1857 "dhcp4_parser.yy" // lalr1.cc:919
+  case 542:
+#line 1859 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3044 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3045 "dhcp4_parser.cc"
     break;
 
-  case 548:
-#line 1873 "dhcp4_parser.yy" // lalr1.cc:919
+  case 550:
+#line 1875 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3052 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3053 "dhcp4_parser.cc"
     break;
 
-  case 549:
-#line 1875 "dhcp4_parser.yy" // lalr1.cc:919
+  case 551:
+#line 1877 "dhcp4_parser.yy"
     {
     ElementPtr stype(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
     ctx.leave();
 }
-#line 3062 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3063 "dhcp4_parser.cc"
     break;
 
-  case 550:
-#line 1881 "dhcp4_parser.yy" // lalr1.cc:919
+  case 552:
+#line 1883 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3070 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3071 "dhcp4_parser.cc"
     break;
 
-  case 551:
-#line 1883 "dhcp4_parser.yy" // lalr1.cc:919
+  case 553:
+#line 1885 "dhcp4_parser.yy"
     {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 3080 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3081 "dhcp4_parser.cc"
     break;
 
-  case 552:
-#line 1892 "dhcp4_parser.yy" // lalr1.cc:919
+  case 554:
+#line 1894 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3088 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3089 "dhcp4_parser.cc"
     break;
 
-  case 553:
-#line 1894 "dhcp4_parser.yy" // lalr1.cc:919
+  case 555:
+#line 1896 "dhcp4_parser.yy"
     {
     ElementPtr qc = yystack_[0].value.as < ElementPtr > ();
     ctx.stack_.back()->set("dhcp-queue-control", qc);
@@ -3122,626 +3123,627 @@ namespace isc { namespace dhcp {
 
     ctx.leave();
 }
-#line 3126 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3127 "dhcp4_parser.cc"
     break;
 
-  case 554:
-#line 1930 "dhcp4_parser.yy" // lalr1.cc:919
+  case 556:
+#line 1932 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP_DDNS);
 }
-#line 3137 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3138 "dhcp4_parser.cc"
     break;
 
-  case 555:
-#line 1935 "dhcp4_parser.yy" // lalr1.cc:919
+  case 557:
+#line 1937 "dhcp4_parser.yy"
     {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3148 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3149 "dhcp4_parser.cc"
     break;
 
-  case 556:
-#line 1942 "dhcp4_parser.yy" // lalr1.cc:919
+  case 558:
+#line 1944 "dhcp4_parser.yy"
     {
     // Parse the dhcp-ddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3158 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3159 "dhcp4_parser.cc"
     break;
 
-  case 557:
-#line 1946 "dhcp4_parser.yy" // lalr1.cc:919
+  case 559:
+#line 1948 "dhcp4_parser.yy"
     {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 3168 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3169 "dhcp4_parser.cc"
     break;
 
-  case 578:
-#line 1976 "dhcp4_parser.yy" // lalr1.cc:919
+  case 580:
+#line 1978 "dhcp4_parser.yy"
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enable-updates", b);
 }
-#line 3177 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3178 "dhcp4_parser.cc"
     break;
 
-  case 579:
-#line 1981 "dhcp4_parser.yy" // lalr1.cc:919
+  case 581:
+#line 1983 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3185 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3186 "dhcp4_parser.cc"
     break;
 
-  case 580:
-#line 1983 "dhcp4_parser.yy" // lalr1.cc:919
+  case 582:
+#line 1985 "dhcp4_parser.yy"
     {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("qualifying-suffix", s);
     ctx.leave();
 }
-#line 3195 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3196 "dhcp4_parser.cc"
     break;
 
-  case 581:
-#line 1989 "dhcp4_parser.yy" // lalr1.cc:919
+  case 583:
+#line 1991 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3203 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3204 "dhcp4_parser.cc"
     break;
 
-  case 582:
-#line 1991 "dhcp4_parser.yy" // lalr1.cc:919
+  case 584:
+#line 1993 "dhcp4_parser.yy"
     {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-ip", s);
     ctx.leave();
 }
-#line 3213 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3214 "dhcp4_parser.cc"
     break;
 
-  case 583:
-#line 1997 "dhcp4_parser.yy" // lalr1.cc:919
+  case 585:
+#line 1999 "dhcp4_parser.yy"
     {
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-port", i);
 }
-#line 3222 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3223 "dhcp4_parser.cc"
     break;
 
-  case 584:
-#line 2002 "dhcp4_parser.yy" // lalr1.cc:919
+  case 586:
+#line 2004 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3230 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3231 "dhcp4_parser.cc"
     break;
 
-  case 585:
-#line 2004 "dhcp4_parser.yy" // lalr1.cc:919
+  case 587:
+#line 2006 "dhcp4_parser.yy"
     {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-ip", s);
     ctx.leave();
 }
-#line 3240 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3241 "dhcp4_parser.cc"
     break;
 
-  case 586:
-#line 2010 "dhcp4_parser.yy" // lalr1.cc:919
+  case 588:
+#line 2012 "dhcp4_parser.yy"
     {
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-port", i);
 }
-#line 3249 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3250 "dhcp4_parser.cc"
     break;
 
-  case 587:
-#line 2015 "dhcp4_parser.yy" // lalr1.cc:919
+  case 589:
+#line 2017 "dhcp4_parser.yy"
     {
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-queue-size", i);
 }
-#line 3258 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3259 "dhcp4_parser.cc"
     break;
 
-  case 588:
-#line 2020 "dhcp4_parser.yy" // lalr1.cc:919
+  case 590:
+#line 2022 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NCR_PROTOCOL);
 }
-#line 3266 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3267 "dhcp4_parser.cc"
     break;
 
-  case 589:
-#line 2022 "dhcp4_parser.yy" // lalr1.cc:919
+  case 591:
+#line 2024 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 3275 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 590:
-#line 2028 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
-#line 3281 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 591:
-#line 2029 "dhcp4_parser.yy" // lalr1.cc:919
-    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
-#line 3287 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3276 "dhcp4_parser.cc"
     break;
 
   case 592:
-#line 2032 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-    ctx.enter(ctx.NCR_FORMAT);
-}
-#line 3295 "dhcp4_parser.cc" // lalr1.cc:919
+#line 2030 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
+#line 3282 "dhcp4_parser.cc"
     break;
 
   case 593:
-#line 2034 "dhcp4_parser.yy" // lalr1.cc:919
+#line 2031 "dhcp4_parser.yy"
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
+#line 3288 "dhcp4_parser.cc"
+    break;
+
+  case 594:
+#line 2034 "dhcp4_parser.yy"
+    {
+    ctx.enter(ctx.NCR_FORMAT);
+}
+#line 3296 "dhcp4_parser.cc"
+    break;
+
+  case 595:
+#line 2036 "dhcp4_parser.yy"
     {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 }
-#line 3305 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3306 "dhcp4_parser.cc"
     break;
 
-  case 594:
-#line 2040 "dhcp4_parser.yy" // lalr1.cc:919
+  case 596:
+#line 2042 "dhcp4_parser.yy"
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("override-no-update", b);
 }
-#line 3314 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3315 "dhcp4_parser.cc"
     break;
 
-  case 595:
-#line 2045 "dhcp4_parser.yy" // lalr1.cc:919
+  case 597:
+#line 2047 "dhcp4_parser.yy"
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("override-client-update", b);
 }
-#line 3323 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3324 "dhcp4_parser.cc"
     break;
 
-  case 596:
-#line 2050 "dhcp4_parser.yy" // lalr1.cc:919
+  case 598:
+#line 2052 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
 }
-#line 3331 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3332 "dhcp4_parser.cc"
     break;
 
-  case 597:
-#line 2052 "dhcp4_parser.yy" // lalr1.cc:919
+  case 599:
+#line 2054 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("replace-client-name", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 3340 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 598:
-#line 2058 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location)));
-      }
-#line 3348 "dhcp4_parser.cc" // lalr1.cc:919
-    break;
-
-  case 599:
-#line 2061 "dhcp4_parser.yy" // lalr1.cc:919
-    {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("never", ctx.loc2pos(yystack_[0].location)));
-      }
-#line 3356 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3341 "dhcp4_parser.cc"
     break;
 
   case 600:
-#line 2064 "dhcp4_parser.yy" // lalr1.cc:919
+#line 2060 "dhcp4_parser.yy"
     {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("always", ctx.loc2pos(yystack_[0].location)));
+      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3364 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3349 "dhcp4_parser.cc"
     break;
 
   case 601:
-#line 2067 "dhcp4_parser.yy" // lalr1.cc:919
+#line 2063 "dhcp4_parser.yy"
     {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(yystack_[0].location)));
+      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("never", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3372 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3357 "dhcp4_parser.cc"
     break;
 
   case 602:
-#line 2070 "dhcp4_parser.yy" // lalr1.cc:919
+#line 2066 "dhcp4_parser.yy"
+    {
+      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("always", ctx.loc2pos(yystack_[0].location)));
+      }
+#line 3365 "dhcp4_parser.cc"
+    break;
+
+  case 603:
+#line 2069 "dhcp4_parser.yy"
+    {
+      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(yystack_[0].location)));
+      }
+#line 3373 "dhcp4_parser.cc"
+    break;
+
+  case 604:
+#line 2072 "dhcp4_parser.yy"
     {
       error(yystack_[0].location, "boolean values for the replace-client-name are "
                 "no longer supported");
       }
-#line 3381 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3382 "dhcp4_parser.cc"
     break;
 
-  case 603:
-#line 2076 "dhcp4_parser.yy" // lalr1.cc:919
+  case 605:
+#line 2078 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3389 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3390 "dhcp4_parser.cc"
     break;
 
-  case 604:
-#line 2078 "dhcp4_parser.yy" // lalr1.cc:919
+  case 606:
+#line 2080 "dhcp4_parser.yy"
     {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("generated-prefix", s);
     ctx.leave();
 }
-#line 3399 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3400 "dhcp4_parser.cc"
     break;
 
-  case 605:
-#line 2084 "dhcp4_parser.yy" // lalr1.cc:919
+  case 607:
+#line 2086 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3407 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3408 "dhcp4_parser.cc"
     break;
 
-  case 606:
-#line 2086 "dhcp4_parser.yy" // lalr1.cc:919
+  case 608:
+#line 2088 "dhcp4_parser.yy"
     {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-set", s);
     ctx.leave();
 }
-#line 3417 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3418 "dhcp4_parser.cc"
     break;
 
-  case 607:
-#line 2092 "dhcp4_parser.yy" // lalr1.cc:919
+  case 609:
+#line 2094 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3425 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3426 "dhcp4_parser.cc"
     break;
 
-  case 608:
-#line 2094 "dhcp4_parser.yy" // lalr1.cc:919
+  case 610:
+#line 2096 "dhcp4_parser.yy"
     {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
 }
-#line 3435 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3436 "dhcp4_parser.cc"
     break;
 
-  case 609:
-#line 2103 "dhcp4_parser.yy" // lalr1.cc:919
+  case 611:
+#line 2105 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3443 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3444 "dhcp4_parser.cc"
     break;
 
-  case 610:
-#line 2105 "dhcp4_parser.yy" // lalr1.cc:919
+  case 612:
+#line 2107 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 3452 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3453 "dhcp4_parser.cc"
     break;
 
-  case 611:
-#line 2110 "dhcp4_parser.yy" // lalr1.cc:919
+  case 613:
+#line 2112 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3460 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3461 "dhcp4_parser.cc"
     break;
 
-  case 612:
-#line 2112 "dhcp4_parser.yy" // lalr1.cc:919
+  case 614:
+#line 2114 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 3469 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3470 "dhcp4_parser.cc"
     break;
 
-  case 613:
-#line 2117 "dhcp4_parser.yy" // lalr1.cc:919
+  case 615:
+#line 2119 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3477 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3478 "dhcp4_parser.cc"
     break;
 
-  case 614:
-#line 2119 "dhcp4_parser.yy" // lalr1.cc:919
+  case 616:
+#line 2121 "dhcp4_parser.yy"
     {
     ctx.stack_.back()->set("Control-agent", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 3486 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3487 "dhcp4_parser.cc"
     break;
 
-  case 615:
-#line 2124 "dhcp4_parser.yy" // lalr1.cc:919
+  case 617:
+#line 2126 "dhcp4_parser.yy"
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-control", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.CONFIG_CONTROL);
 }
-#line 3497 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3498 "dhcp4_parser.cc"
     break;
 
-  case 616:
-#line 2129 "dhcp4_parser.yy" // lalr1.cc:919
+  case 618:
+#line 2131 "dhcp4_parser.yy"
     {
     // No config control params are required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3507 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3508 "dhcp4_parser.cc"
     break;
 
-  case 617:
-#line 2135 "dhcp4_parser.yy" // lalr1.cc:919
+  case 619:
+#line 2137 "dhcp4_parser.yy"
     {
     // Parse the config-control map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3517 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3518 "dhcp4_parser.cc"
     break;
 
-  case 618:
-#line 2139 "dhcp4_parser.yy" // lalr1.cc:919
+  case 620:
+#line 2141 "dhcp4_parser.yy"
     {
     // No config_control params are required
     // parsing completed
 }
-#line 3526 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3527 "dhcp4_parser.cc"
     break;
 
-  case 623:
-#line 2154 "dhcp4_parser.yy" // lalr1.cc:919
+  case 625:
+#line 2156 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-databases", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CONFIG_DATABASE);
 }
-#line 3537 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3538 "dhcp4_parser.cc"
     break;
 
-  case 624:
-#line 2159 "dhcp4_parser.yy" // lalr1.cc:919
+  case 626:
+#line 2161 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3546 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3547 "dhcp4_parser.cc"
     break;
 
-  case 625:
-#line 2164 "dhcp4_parser.yy" // lalr1.cc:919
+  case 627:
+#line 2166 "dhcp4_parser.yy"
     {
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-fetch-wait-time", value);
 }
-#line 3555 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3556 "dhcp4_parser.cc"
     break;
 
-  case 626:
-#line 2174 "dhcp4_parser.yy" // lalr1.cc:919
+  case 628:
+#line 2176 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 3566 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3567 "dhcp4_parser.cc"
     break;
 
-  case 627:
-#line 2179 "dhcp4_parser.yy" // lalr1.cc:919
+  case 629:
+#line 2181 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3575 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3576 "dhcp4_parser.cc"
     break;
 
-  case 628:
-#line 2184 "dhcp4_parser.yy" // lalr1.cc:919
+  case 630:
+#line 2186 "dhcp4_parser.yy"
     {
     // Parse the Logging map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3585 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3586 "dhcp4_parser.cc"
     break;
 
-  case 629:
-#line 2188 "dhcp4_parser.yy" // lalr1.cc:919
+  case 631:
+#line 2190 "dhcp4_parser.yy"
     {
     // parsing completed
 }
-#line 3593 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3594 "dhcp4_parser.cc"
     break;
 
-  case 633:
-#line 2204 "dhcp4_parser.yy" // lalr1.cc:919
+  case 635:
+#line 2206 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 3604 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3605 "dhcp4_parser.cc"
     break;
 
-  case 634:
-#line 2209 "dhcp4_parser.yy" // lalr1.cc:919
+  case 636:
+#line 2211 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3613 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3614 "dhcp4_parser.cc"
     break;
 
-  case 637:
-#line 2221 "dhcp4_parser.yy" // lalr1.cc:919
+  case 639:
+#line 2223 "dhcp4_parser.yy"
     {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 3623 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3624 "dhcp4_parser.cc"
     break;
 
-  case 638:
-#line 2225 "dhcp4_parser.yy" // lalr1.cc:919
+  case 640:
+#line 2227 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
 }
-#line 3631 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3632 "dhcp4_parser.cc"
     break;
 
-  case 648:
-#line 2242 "dhcp4_parser.yy" // lalr1.cc:919
+  case 650:
+#line 2244 "dhcp4_parser.yy"
     {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 3640 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3641 "dhcp4_parser.cc"
     break;
 
-  case 649:
-#line 2247 "dhcp4_parser.yy" // lalr1.cc:919
+  case 651:
+#line 2249 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3648 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3649 "dhcp4_parser.cc"
     break;
 
-  case 650:
-#line 2249 "dhcp4_parser.yy" // lalr1.cc:919
+  case 652:
+#line 2251 "dhcp4_parser.yy"
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 3658 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3659 "dhcp4_parser.cc"
     break;
 
-  case 651:
-#line 2255 "dhcp4_parser.yy" // lalr1.cc:919
+  case 653:
+#line 2257 "dhcp4_parser.yy"
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 3669 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3670 "dhcp4_parser.cc"
     break;
 
-  case 652:
-#line 2260 "dhcp4_parser.yy" // lalr1.cc:919
+  case 654:
+#line 2262 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3678 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3679 "dhcp4_parser.cc"
     break;
 
-  case 655:
-#line 2269 "dhcp4_parser.yy" // lalr1.cc:919
+  case 657:
+#line 2271 "dhcp4_parser.yy"
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3688 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3689 "dhcp4_parser.cc"
     break;
 
-  case 656:
-#line 2273 "dhcp4_parser.yy" // lalr1.cc:919
+  case 658:
+#line 2275 "dhcp4_parser.yy"
     {
     ctx.stack_.pop_back();
 }
-#line 3696 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3697 "dhcp4_parser.cc"
     break;
 
-  case 663:
-#line 2287 "dhcp4_parser.yy" // lalr1.cc:919
+  case 665:
+#line 2289 "dhcp4_parser.yy"
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3704 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3705 "dhcp4_parser.cc"
     break;
 
-  case 664:
-#line 2289 "dhcp4_parser.yy" // lalr1.cc:919
+  case 666:
+#line 2291 "dhcp4_parser.yy"
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 3714 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3715 "dhcp4_parser.cc"
     break;
 
-  case 665:
-#line 2295 "dhcp4_parser.yy" // lalr1.cc:919
+  case 667:
+#line 2297 "dhcp4_parser.yy"
     {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 3723 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3724 "dhcp4_parser.cc"
     break;
 
-  case 666:
-#line 2300 "dhcp4_parser.yy" // lalr1.cc:919
+  case 668:
+#line 2302 "dhcp4_parser.yy"
     {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 3732 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3733 "dhcp4_parser.cc"
     break;
 
-  case 667:
-#line 2305 "dhcp4_parser.yy" // lalr1.cc:919
+  case 669:
+#line 2307 "dhcp4_parser.yy"
     {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 3741 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3742 "dhcp4_parser.cc"
     break;
 
 
-#line 3745 "dhcp4_parser.cc" // lalr1.cc:919
+#line 3746 "dhcp4_parser.cc"
+
             default:
               break;
             }
@@ -4011,121 +4013,121 @@ namespace isc { namespace dhcp {
   }
 
 
-  const short Dhcp4Parser::yypact_ninf_ = -837;
+  const short Dhcp4Parser::yypact_ninf_ = -827;
 
   const signed char Dhcp4Parser::yytable_ninf_ = -1;
 
   const short
   Dhcp4Parser::yypact_[] =
   {
-     454,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,    44,    38,    41,    49,    59,
-      73,    90,    96,   113,   124,   134,   151,   167,   200,   209,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,    38,  -108,
-       6,   107,    60,   207,   214,     9,     2,   395,    74,   -48,
-     459,   -41,    76,  -837,   179,   188,   228,   216,   237,  -837,
-    -837,  -837,  -837,  -837,   243,  -837,    43,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,   257,   258,   284,  -837,
-    -837,  -837,  -837,  -837,  -837,   296,   302,   303,   309,   312,
-     313,   342,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,   344,  -837,  -837,  -837,  -837,
-    -837,    56,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,   345,  -837,    78,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   346,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,    98,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,   111,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,   277,   307,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   291,  -837,
-    -837,   356,  -837,  -837,  -837,   360,  -837,  -837,   332,   365,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,   366,   367,  -837,  -837,  -837,  -837,   368,
-     371,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,   114,  -837,  -837,  -837,   375,  -837,  -837,
-     377,  -837,   380,   383,  -837,  -837,   386,   389,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,   184,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,   198,  -837,  -837,  -837,   391,   205,  -837,  -837,
-    -837,  -837,    38,    38,  -837,   225,   394,   396,   398,   400,
-     403,  -837,     6,  -837,   406,   414,   415,   208,   246,   256,
-     427,   428,   430,   432,   438,   440,   227,   265,   273,   282,
-     293,   297,   283,   453,   460,   465,   470,   471,   472,   475,
-     476,   478,   479,   480,   481,   482,   315,   484,   491,   492,
-     494,   107,  -837,   495,   496,   497,   330,    60,  -837,   501,
-     502,   503,   504,   505,   506,   339,   508,   509,   510,   207,
-    -837,   513,   214,  -837,   515,   517,   518,   519,   520,   521,
-     527,   529,  -837,     9,  -837,   530,   531,   372,   532,   533,
-     535,   369,  -837,   395,   536,   373,   374,  -837,    74,   541,
-     542,    63,  -837,   379,   545,   548,   382,   551,   384,   385,
-     555,   557,   388,   390,   559,   561,   563,   564,   459,  -837,
-     -41,  -837,   565,   399,    76,  -837,  -837,  -837,   566,   567,
-     568,    38,    38,    38,  -837,   570,   572,   573,  -837,  -837,
-    -837,   401,   402,   410,   589,   590,   593,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,   429,   594,   596,   600,   601,   602,
-     436,    64,   620,   621,   622,   623,   624,  -837,   625,   602,
-     626,   629,  -837,   630,   180,   218,  -837,  -837,   458,   466,
-     467,   631,   468,   469,  -837,   630,   473,   634,  -837,   474,
-    -837,   630,   477,   483,   485,   486,   487,   488,   489,  -837,
-     490,   493,  -837,   498,   499,   500,  -837,  -837,   507,  -837,
-    -837,  -837,   511,    38,  -837,  -837,   512,   514,  -837,   516,
-    -837,  -837,    13,   524,  -837,  -837,   -15,   522,   523,   525,
-    -837,  -837,   637,  -837,  -837,    38,   107,   -41,  -837,  -837,
-    -837,    76,    60,   619,  -837,  -837,  -837,   281,   281,   639,
-    -837,   640,   642,   643,   644,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,   150,   645,   646,   648,   240,   100,  -837,
-     459,   656,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,   658,  -837,  -837,  -837,  -837,   152,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,   639,  -837,   211,   219,   220,   238,  -837,   252,
-    -837,  -837,  -837,  -837,  -837,  -837,   662,   663,   664,   668,
-     669,  -837,  -837,  -837,  -837,   670,   671,   672,   673,   675,
-    -837,   272,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,   274,  -837,   674,   678,  -837,  -837,   680,   681,
-    -837,  -837,   682,   686,  -837,  -837,   684,   688,  -837,  -837,
-     689,   694,  -837,  -837,  -837,  -837,  -837,  -837,    26,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,    71,  -837,  -837,   692,
-     696,  -837,  -837,   695,   697,  -837,   698,   699,   700,   701,
-     702,   703,   276,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,   278,  -837,  -837,  -837,   295,
-    -837,   101,  -837,   537,  -837,   704,   706,  -837,  -837,  -837,
-    -837,   705,   708,  -837,  -837,  -837,  -837,   707,   619,  -837,
-     711,   712,   713,   714,   540,   546,   547,   549,   550,   717,
-     720,   721,   722,   556,   558,   560,   562,   553,   281,  -837,
-    -837,   281,  -837,   639,   207,  -837,   640,   395,  -837,   642,
-      74,  -837,   643,   433,  -837,   644,   150,  -837,   174,   645,
-    -837,     9,  -837,   646,   -48,  -837,   648,   569,   571,   574,
-     575,   576,   577,   240,  -837,   725,   727,   100,  -837,  -837,
-      46,   656,  -837,  -837,   729,   730,   214,  -837,   658,   732,
-    -837,  -837,   579,  -837,   378,   580,   581,   582,  -837,  -837,
-    -837,  -837,  -837,   583,   584,   585,   586,  -837,  -837,  -837,
-    -837,  -837,  -837,   306,  -837,   334,  -837,   731,  -837,   734,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,   335,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   733,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   736,   735,
-    -837,  -837,  -837,  -837,  -837,   737,  -837,   336,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,   587,   588,  -837,  -837,
-     756,  -837,  -837,  -837,  -837,  -837,   355,  -837,  -837,  -837,
-    -837,  -837,  -837,   591,   358,  -837,   630,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,   433,  -837,   757,   592,  -837,   174,
-    -837,  -837,  -837,  -837,   759,   595,   760,    46,  -837,  -837,
-    -837,  -837,  -837,   597,  -837,  -837,   687,  -837,   598,  -837,
-    -837,   758,  -837,  -837,   178,  -837,   -53,   758,  -837,  -837,
-     766,   767,   768,   364,  -837,  -837,  -837,  -837,  -837,  -837,
-     769,   605,   603,   604,   -53,  -837,   610,  -837,  -837,  -837,
-    -837,  -837
+     356,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,    48,    21,    37,    64,    80,
+      86,    88,   100,   125,   134,   136,   150,   163,   167,   169,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,    21,    16,
+      17,   152,    54,    62,    71,   228,   128,    26,   217,   -47,
+     504,    60,    93,  -827,   234,   244,   245,   240,   252,  -827,
+    -827,  -827,  -827,  -827,   257,  -827,    42,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,   258,   261,   272,  -827,
+    -827,  -827,  -827,  -827,  -827,   275,   279,   297,   301,   305,
+     312,   318,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,   320,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,    44,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   342,  -827,    75,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,   345,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,    78,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,   147,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,   353,   266,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,   354,  -827,  -827,   346,  -827,  -827,  -827,   360,
+    -827,  -827,   357,   323,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   363,   364,  -827,
+    -827,  -827,  -827,   362,   368,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   161,  -827,  -827,
+    -827,   369,  -827,  -827,   372,  -827,   376,   379,  -827,  -827,
+     380,   381,  -827,  -827,  -827,  -827,  -827,   183,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,   196,  -827,  -827,  -827,   382,   199,
+    -827,  -827,  -827,  -827,    21,    21,  -827,   201,   387,   389,
+     394,   396,   397,  -827,    17,  -827,   399,   400,   401,   237,
+     238,   241,   403,   417,   426,   427,   446,   447,   280,   281,
+     282,   283,   285,   286,   284,   451,   456,   458,   465,   466,
+     468,   469,   471,   474,   475,   476,   477,   478,   311,   480,
+     481,   482,   483,   484,   487,   152,  -827,   489,   491,   492,
+     324,    54,  -827,   493,   495,   496,   498,   499,   501,   335,
+     502,   505,   506,    62,  -827,   507,    71,  -827,   523,   525,
+     526,   528,   529,   531,   532,   533,  -827,   228,  -827,   534,
+     535,   371,   536,   537,   540,   373,  -827,    26,   541,   374,
+     375,  -827,   217,   542,   546,     7,  -827,   378,   549,   550,
+     383,   552,   385,   386,   557,   559,   390,   392,   563,   565,
+     504,  -827,    60,  -827,   566,   402,    93,  -827,  -827,  -827,
+     567,   568,   569,    21,    21,    21,  -827,   570,   572,   573,
+    -827,  -827,  -827,   337,   388,   410,   575,   576,   579,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,   419,   583,   587,   607,
+     609,   608,   445,   265,   612,   613,   614,   615,   616,  -827,
+     617,   608,   619,   450,   470,   622,  -827,   637,   108,   202,
+    -827,  -827,   472,   473,   479,   640,   485,   486,  -827,   637,
+     488,   639,  -827,   490,  -827,   637,   494,   497,   500,   503,
+     508,   509,   510,  -827,   511,   512,  -827,   513,   514,   515,
+    -827,  -827,   516,  -827,  -827,  -827,   517,    21,  -827,  -827,
+     518,   519,  -827,   520,  -827,  -827,    14,   435,  -827,  -827,
+     112,   521,  -827,  -827,   644,  -827,  -827,    21,   152,    60,
+    -827,  -827,  -827,    93,    54,   598,  -827,  -827,  -827,   555,
+     555,   645,  -827,   646,   647,   648,   651,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,   213,   653,   655,   656,    -2,
+      18,  -827,   504,  -827,  -827,   657,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   659,  -827,  -827,
+    -827,  -827,   123,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,   645,  -827,   216,   229,   233,   235,
+    -827,   256,  -827,  -827,  -827,  -827,  -827,  -827,   663,   665,
+     666,   668,   669,  -827,  -827,  -827,  -827,   672,   673,   674,
+     689,   690,  -827,   269,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,   270,  -827,   691,   692,  -827,  -827,
+     693,   695,  -827,  -827,   694,   698,  -827,  -827,   696,   700,
+    -827,  -827,   699,   701,  -827,  -827,  -827,  -827,  -827,  -827,
+      74,  -827,  -827,  -827,  -827,  -827,  -827,  -827,    91,  -827,
+    -827,   702,   703,  -827,  -827,   704,   706,  -827,   707,   708,
+     709,   710,   711,   712,   299,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   300,  -827,  -827,
+    -827,   317,  -827,   155,  -827,   547,  -827,   713,   714,  -827,
+    -827,  -827,  -827,   643,   715,  -827,  -827,  -827,  -827,   716,
+     598,  -827,   718,   719,   720,   721,   524,   553,   556,   558,
+     561,   725,   726,   727,   730,   564,   571,   574,   577,   578,
+     555,  -827,  -827,   555,  -827,   645,    62,  -827,   646,    26,
+    -827,   647,   217,  -827,   648,   407,  -827,   651,   213,  -827,
+     198,   653,  -827,   228,  -827,   655,   -47,  -827,   656,   581,
+     582,   584,   585,   586,   588,    -2,  -827,   731,   733,    18,
+    -827,  -827,   135,   657,  -827,  -827,   732,   736,    71,  -827,
+     659,   737,  -827,  -827,   580,  -827,   322,   590,   591,   592,
+    -827,  -827,  -827,  -827,  -827,   593,   594,   595,   596,  -827,
+    -827,  -827,  -827,  -827,  -827,   330,  -827,   332,  -827,   734,
+    -827,   739,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,   333,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+     740,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+     742,   745,  -827,  -827,  -827,  -827,  -827,   747,  -827,   334,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,   597,   599,
+    -827,  -827,   741,  -827,  -827,  -827,  -827,  -827,   336,  -827,
+    -827,  -827,  -827,  -827,  -827,   600,   340,  -827,   637,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,   407,  -827,   755,   601,
+    -827,   198,  -827,  -827,  -827,  -827,   765,   602,   768,   135,
+    -827,  -827,  -827,  -827,  -827,   606,  -827,  -827,   735,  -827,
+     610,  -827,  -827,   766,  -827,  -827,   197,  -827,   -18,   766,
+    -827,  -827,   774,   779,   780,   344,  -827,  -827,  -827,  -827,
+    -827,  -827,   785,   624,   627,   632,   -18,  -827,   635,  -827,
+    -827,  -827,  -827,  -827
   };
 
   const unsigned short
@@ -4135,154 +4137,154 @@ namespace isc { namespace dhcp {
       20,    22,    24,    26,    28,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        1,    45,    38,    34,    33,    30,    31,    32,    37,     3,
-      35,    36,    58,     5,    70,     7,   135,     9,   278,    11,
-     439,    13,   464,    15,   364,    17,   372,    19,   409,    21,
-     243,    23,   556,    25,   628,    27,   617,    29,    47,    41,
-       0,     0,     0,     0,     0,   466,     0,   374,   411,     0,
+      35,    36,    58,     5,    70,     7,   137,     9,   280,    11,
+     441,    13,   466,    15,   366,    17,   374,    19,   411,    21,
+     245,    23,   558,    25,   630,    27,   619,    29,    47,    41,
+       0,     0,     0,     0,     0,   468,     0,   376,   413,     0,
        0,     0,     0,    49,     0,    48,     0,     0,    42,    68,
-     626,   609,   611,   613,     0,    67,     0,    60,    62,    64,
-      65,    66,    63,   615,   124,   150,     0,     0,     0,   485,
-     487,   489,   148,   157,   159,     0,     0,     0,     0,     0,
-       0,     0,   119,   270,   362,   401,   330,   452,   454,   323,
-     221,   513,   456,   235,   254,     0,   539,   552,   554,   633,
-     111,     0,    72,    74,    75,    76,   107,   108,   109,    77,
-     105,    94,    95,    96,    80,    81,   102,    82,    83,    84,
-      88,    89,    78,   106,    79,    86,    87,   100,   101,   103,
-      97,    98,    99,    85,    90,    91,    92,    93,   104,   110,
-     137,   139,   143,     0,   134,     0,   126,   128,   129,   130,
-     131,   132,   133,   311,   313,   315,   431,   309,   317,     0,
-     321,   319,   509,   308,   282,   283,   284,   305,   306,   307,
-     295,   296,     0,   280,   287,   300,   301,   302,   288,   290,
-     291,   293,   289,   285,   286,   303,   304,   292,   297,   298,
-     299,   294,   450,   449,   445,   446,   444,     0,   441,   443,
-     447,   448,   507,   495,   497,   501,   499,   505,   503,   491,
-     484,   478,   482,   483,     0,   467,   468,   479,   480,   481,
-     475,   470,   476,   472,   473,   474,   477,   471,     0,   391,
-     202,     0,   395,   393,   398,     0,   387,   388,     0,   375,
-     376,   378,   390,   379,   380,   381,   397,   382,   383,   384,
-     385,   386,   425,     0,     0,   423,   424,   427,   428,     0,
-     412,   413,   415,   416,   417,   418,   419,   420,   421,   422,
-     250,   252,   247,     0,   245,   248,   249,     0,   579,   581,
-       0,   584,     0,     0,   588,   592,     0,     0,   596,   603,
-     605,   607,   577,   575,   576,     0,   558,   560,   561,   562,
+     628,   611,   613,   615,     0,    67,     0,    60,    62,    64,
+      65,    66,    63,   617,   126,   152,     0,     0,     0,   487,
+     489,   491,   150,   159,   161,     0,     0,     0,     0,     0,
+       0,     0,   121,   272,   364,   403,   332,   454,   456,   325,
+     223,   515,   458,   237,   256,     0,   541,   554,   556,   607,
+     609,   635,   113,     0,    72,    74,    75,    76,   107,   108,
+     109,    77,   105,    94,    95,    96,    80,    81,   102,    82,
+      83,    84,    88,    89,    78,   106,    79,    86,    87,   100,
+     101,   103,    97,    98,    99,    85,    90,    91,    92,    93,
+     111,   112,   104,   110,   139,   141,   145,     0,   136,     0,
+     128,   130,   131,   132,   133,   134,   135,   313,   315,   317,
+     433,   311,   319,     0,   323,   321,   511,   310,   284,   285,
+     286,   307,   308,   309,   297,   298,     0,   282,   289,   302,
+     303,   304,   290,   292,   293,   295,   291,   287,   288,   305,
+     306,   294,   299,   300,   301,   296,   452,   451,   447,   448,
+     446,     0,   443,   445,   449,   450,   509,   497,   499,   503,
+     501,   507,   505,   493,   486,   480,   484,   485,     0,   469,
+     470,   481,   482,   483,   477,   472,   478,   474,   475,   476,
+     479,   473,     0,   393,   204,     0,   397,   395,   400,     0,
+     389,   390,     0,   377,   378,   380,   392,   381,   382,   383,
+     399,   384,   385,   386,   387,   388,   427,     0,     0,   425,
+     426,   429,   430,     0,   414,   415,   417,   418,   419,   420,
+     421,   422,   423,   424,   252,   254,   249,     0,   247,   250,
+     251,     0,   581,   583,     0,   586,     0,     0,   590,   594,
+       0,     0,   598,   605,   579,   577,   578,     0,   560,   562,
      563,   564,   565,   566,   567,   568,   569,   570,   571,   572,
-     573,   574,     0,   630,   632,   623,     0,     0,   619,   621,
-     622,    46,     0,     0,    39,     0,     0,     0,     0,     0,
-       0,    57,     0,    59,     0,     0,     0,     0,     0,     0,
+     573,   574,   575,   576,     0,   632,   634,   625,     0,     0,
+     621,   623,   624,    46,     0,     0,    39,     0,     0,     0,
+       0,     0,     0,    57,     0,    59,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,    71,     0,     0,     0,     0,     0,   136,     0,
+       0,     0,     0,     0,     0,     0,    71,     0,     0,     0,
+       0,     0,   138,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   281,     0,     0,   442,     0,     0,
+       0,     0,     0,     0,     0,     0,   467,     0,   367,     0,
+       0,     0,     0,     0,     0,     0,   375,     0,     0,     0,
+       0,   412,     0,     0,     0,     0,   246,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-     279,     0,     0,   440,     0,     0,     0,     0,     0,     0,
-       0,     0,   465,     0,   365,     0,     0,     0,     0,     0,
-       0,     0,   373,     0,     0,     0,     0,   410,     0,     0,
-       0,     0,   244,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   557,
-       0,   629,     0,     0,     0,   618,    50,    43,     0,     0,
-       0,     0,     0,     0,    61,     0,     0,     0,   121,   122,
-     123,     0,     0,     0,     0,     0,     0,   112,   113,   114,
-     115,   116,   117,   118,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,   538,     0,     0,
-       0,     0,    73,     0,     0,     0,   147,   127,     0,     0,
-       0,     0,     0,     0,   329,     0,     0,     0,   281,     0,
-     442,     0,     0,     0,     0,     0,     0,     0,     0,   469,
-       0,     0,   389,     0,     0,     0,   400,   377,     0,   429,
-     430,   414,     0,     0,   246,   578,     0,     0,   583,     0,
-     586,   587,     0,     0,   594,   595,     0,     0,     0,     0,
-     559,   631,     0,   625,   620,     0,     0,     0,   610,   612,
-     614,     0,     0,     0,   486,   488,   490,     0,     0,   161,
-     120,   272,   366,   403,   332,    40,   453,   455,   325,   326,
-     327,   328,   324,     0,     0,   458,   237,     0,     0,   553,
-       0,     0,    51,   138,   141,   142,   140,   145,   146,   144,
-     312,   314,   316,   433,   310,   318,   322,   320,     0,   451,
-     508,   496,   498,   502,   500,   506,   504,   492,   392,   203,
-     396,   394,   399,   426,   251,   253,   580,   582,   585,   590,
-     591,   589,   593,   598,   599,   600,   601,   602,   597,   604,
-     606,   608,   161,    44,     0,     0,     0,     0,   155,     0,
-     152,   154,   189,   195,   197,   199,     0,     0,     0,     0,
-       0,   211,   213,   215,   217,     0,     0,     0,     0,     0,
-     188,     0,   167,   169,   170,   171,   172,   173,   174,   175,
-     176,   177,   178,   182,   183,   184,   179,   185,   186,   187,
-     180,   181,     0,   165,     0,   162,   163,   276,     0,   273,
-     274,   370,     0,   367,   368,   407,     0,   404,   405,   336,
-       0,   333,   334,   230,   231,   232,   233,   234,     0,   223,
-     225,   226,   227,   228,   229,   517,     0,   515,   462,     0,
-     459,   460,   241,     0,   238,   239,     0,     0,     0,     0,
-       0,     0,     0,   256,   258,   259,   260,   261,   262,   263,
-     548,   550,   547,   545,   546,     0,   541,   543,   544,     0,
-     637,     0,   635,    53,   437,     0,   434,   435,   493,   511,
-     512,     0,     0,    69,   627,   616,   125,     0,     0,   151,
+       0,   559,     0,   631,     0,     0,     0,   620,    50,    43,
+       0,     0,     0,     0,     0,     0,    61,     0,     0,     0,
+     123,   124,   125,     0,     0,     0,     0,     0,     0,   114,
+     115,   116,   117,   118,   119,   120,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,   540,
+       0,     0,     0,     0,     0,     0,    73,     0,     0,     0,
+     149,   129,     0,     0,     0,     0,     0,     0,   331,     0,
+       0,     0,   283,     0,   444,     0,     0,     0,     0,     0,
+       0,     0,     0,   471,     0,     0,   391,     0,     0,     0,
+     402,   379,     0,   431,   432,   416,     0,     0,   248,   580,
+       0,     0,   585,     0,   588,   589,     0,     0,   596,   597,
+       0,     0,   561,   633,     0,   627,   622,     0,     0,     0,
+     612,   614,   616,     0,     0,     0,   488,   490,   492,     0,
+       0,   163,   122,   274,   368,   405,   334,    40,   455,   457,
+     327,   328,   329,   330,   326,     0,     0,   460,   239,     0,
+       0,   555,     0,   608,   610,     0,    51,   140,   143,   144,
+     142,   147,   148,   146,   314,   316,   318,   435,   312,   320,
+     324,   322,     0,   453,   510,   498,   500,   504,   502,   508,
+     506,   494,   394,   205,   398,   396,   401,   428,   253,   255,
+     582,   584,   587,   592,   593,   591,   595,   600,   601,   602,
+     603,   604,   599,   606,   163,    44,     0,     0,     0,     0,
+     157,     0,   154,   156,   191,   197,   199,   201,     0,     0,
+       0,     0,     0,   213,   215,   217,   219,     0,     0,     0,
+       0,     0,   190,     0,   169,   171,   172,   173,   174,   175,
+     176,   177,   178,   179,   180,   184,   185,   186,   181,   187,
+     188,   189,   182,   183,     0,   167,     0,   164,   165,   278,
+       0,   275,   276,   372,     0,   369,   370,   409,     0,   406,
+     407,   338,     0,   335,   336,   232,   233,   234,   235,   236,
+       0,   225,   227,   228,   229,   230,   231,   519,     0,   517,
+     464,     0,   461,   462,   243,     0,   240,   241,     0,     0,
+       0,     0,     0,     0,     0,   258,   260,   261,   262,   263,
+     264,   265,   550,   552,   549,   547,   548,     0,   543,   545,
+     546,     0,   639,     0,   637,    53,   439,     0,   436,   437,
+     495,   513,   514,     0,     0,    69,   629,   618,   127,     0,
+       0,   153,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   149,
-     158,     0,   160,     0,     0,   271,     0,   374,   363,     0,
-     411,   402,     0,     0,   331,     0,     0,   222,   519,     0,
-     514,   466,   457,     0,     0,   236,     0,     0,     0,     0,
-       0,     0,     0,     0,   255,     0,     0,     0,   540,   555,
-       0,     0,   634,    55,     0,    54,     0,   432,     0,     0,
-     510,   624,     0,   153,     0,     0,     0,     0,   201,   204,
-     205,   206,   207,     0,     0,     0,     0,   219,   220,   208,
-     209,   210,   168,     0,   164,     0,   275,     0,   369,     0,
-     406,   361,   355,   343,   344,   358,   359,   360,   346,   347,
-     340,   341,   342,   353,   354,   352,     0,   338,   345,   356,
-     357,   348,   349,   350,   351,   335,   224,   535,     0,   533,
-     534,   526,   527,   531,   532,   528,   529,   530,     0,   520,
-     521,   523,   524,   525,   516,     0,   461,     0,   240,   264,
-     265,   266,   267,   268,   269,   257,     0,     0,   542,   651,
-       0,   649,   647,   641,   645,   646,     0,   639,   643,   644,
-     642,   636,    52,     0,     0,   436,     0,   156,   191,   192,
-     193,   194,   190,   196,   198,   200,   212,   214,   216,   218,
-     166,   277,   371,   408,     0,   337,     0,     0,   518,     0,
-     463,   242,   549,   551,     0,     0,     0,     0,   638,    56,
-     438,   494,   339,     0,   537,   522,     0,   648,     0,   640,
-     536,     0,   650,   655,     0,   653,     0,     0,   652,   663,
-       0,     0,     0,     0,   657,   659,   660,   661,   662,   654,
-       0,     0,     0,     0,     0,   656,     0,   665,   666,   667,
-     658,   664
+       0,   151,   160,     0,   162,     0,     0,   273,     0,   376,
+     365,     0,   413,   404,     0,     0,   333,     0,     0,   224,
+     521,     0,   516,   468,   459,     0,     0,   238,     0,     0,
+       0,     0,     0,     0,     0,     0,   257,     0,     0,     0,
+     542,   557,     0,     0,   636,    55,     0,    54,     0,   434,
+       0,     0,   512,   626,     0,   155,     0,     0,     0,     0,
+     203,   206,   207,   208,   209,     0,     0,     0,     0,   221,
+     222,   210,   211,   212,   170,     0,   166,     0,   277,     0,
+     371,     0,   408,   363,   357,   345,   346,   360,   361,   362,
+     348,   349,   342,   343,   344,   355,   356,   354,     0,   340,
+     347,   358,   359,   350,   351,   352,   353,   337,   226,   537,
+       0,   535,   536,   528,   529,   533,   534,   530,   531,   532,
+       0,   522,   523,   525,   526,   527,   518,     0,   463,     0,
+     242,   266,   267,   268,   269,   270,   271,   259,     0,     0,
+     544,   653,     0,   651,   649,   643,   647,   648,     0,   641,
+     645,   646,   644,   638,    52,     0,     0,   438,     0,   158,
+     193,   194,   195,   196,   192,   198,   200,   202,   214,   216,
+     218,   220,   168,   279,   373,   410,     0,   339,     0,     0,
+     520,     0,   465,   244,   551,   553,     0,     0,     0,     0,
+     640,    56,   440,   496,   341,     0,   539,   524,     0,   650,
+       0,   642,   538,     0,   652,   657,     0,   655,     0,     0,
+     654,   665,     0,     0,     0,     0,   659,   661,   662,   663,
+     664,   656,     0,     0,     0,     0,     0,   658,     0,   667,
+     668,   669,   660,   666
   };
 
   const short
   Dhcp4Parser::yypgoto_[] =
   {
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,   -44,  -837,  -479,  -837,
-     253,  -837,  -837,  -837,  -837,  -837,  -837,  -515,  -837,  -837,
-    -837,   -70,  -837,  -837,  -837,   413,  -837,  -837,  -837,  -837,
-     144,   376,   -54,   -24,    -5,    -4,    -1,    11,  -837,  -837,
-    -837,  -837,    14,    17,  -837,  -837,   187,   409,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,   -22,  -837,  -837,  -837,  -837,  -837,
-    -837,   115,  -837,   -43,  -837,  -593,   -35,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,   -36,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   -51,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   -58,
-    -837,  -837,  -837,   -62,   351,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,   -50,  -837,  -837,  -837,  -837,  -837,  -837,  -836,
-    -837,  -837,  -837,   -31,  -837,  -837,  -837,   -25,   408,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -835,  -837,    19,
-    -837,    22,  -837,    21,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,   -23,  -837,  -837,  -183,   -65,  -837,  -837,  -837,  -837,
-    -837,   -14,  -837,  -837,  -837,     0,  -837,   416,  -837,   -72,
-    -837,  -837,  -837,  -837,  -837,   -64,  -837,  -837,  -837,  -837,
-    -837,   -40,  -837,  -837,  -837,    24,  -837,  -837,  -837,    12,
-    -837,   419,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,   -10,  -837,  -837,  -837,   -13,   447,  -837,
-    -837,   -52,  -837,   -20,  -837,   -60,  -837,  -837,  -837,    18,
-    -837,  -837,  -837,    23,  -837,   437,    -8,  -837,    -2,  -837,
-      10,  -837,   234,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -826,  -837,  -837,  -837,  -837,  -837,    27,  -837,  -837,  -837,
-    -136,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,     8,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-     259,   412,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,   286,   404,
-    -837,  -837,  -837,  -837,  -837,  -837,  -837,   294,   417,   -69,
-    -837,  -837,    15,  -837,  -837,  -135,  -837,  -837,  -837,  -837,
-    -837,  -837,  -154,  -837,  -837,  -170,  -837,  -837,  -837,  -837,
-    -837
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,   -46,  -827,  -456,  -827,
+     176,  -827,  -827,  -827,  -827,  -827,  -827,  -524,  -827,  -827,
+    -827,   -70,  -827,  -827,  -827,   441,  -827,  -827,  -827,  -827,
+     225,   411,   -55,   -54,   -27,   -24,    -9,     6,  -827,  -827,
+    -827,  -827,     9,    11,  -827,  -827,   230,   408,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,    15,  -827,  -827,  -827,  -827,  -827,
+    -827,   158,  -827,     5,  -827,  -597,    28,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   -35,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,    19,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,     2,
+    -827,  -827,  -827,   -15,   409,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,    -3,  -827,  -827,  -827,  -827,  -827,  -827,  -826,
+    -827,  -827,  -827,    25,  -827,  -827,  -827,    29,   443,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -818,  -827,   -23,
+    -827,   -17,  -827,    12,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,    22,  -827,  -827,  -138,   -65,  -827,  -827,  -827,  -827,
+    -827,    31,  -827,  -827,  -827,    34,  -827,   423,  -827,   -72,
+    -827,  -827,  -827,  -827,  -827,   -66,  -827,  -827,  -827,  -827,
+    -827,    -7,  -827,  -827,  -827,    30,  -827,  -827,  -827,    33,
+    -827,   424,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,     0,  -827,  -827,  -827,     1,   452,  -827,
+    -827,   -39,  -827,   -19,  -827,   -59,  -827,  -827,  -827,    27,
+    -827,  -827,  -827,    24,  -827,   444,   -58,  -827,   -52,  -827,
+      -1,  -827,   242,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -815,  -827,  -827,  -827,  -827,  -827,    32,  -827,  -827,  -827,
+    -126,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,    20,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+     264,   418,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,   -64,  -827,   -60,  -827,  -827,  -827,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,  -827,   294,   414,
+    -827,  -827,  -827,  -827,  -827,  -827,  -827,   302,   420,   -57,
+    -827,  -827,    23,  -827,  -827,  -125,  -827,  -827,  -827,  -827,
+    -827,  -827,  -146,  -827,  -827,  -161,  -827,  -827,  -827,  -827,
+    -827
   };
 
   const short
@@ -4290,261 +4292,259 @@ namespace isc { namespace dhcp {
   {
       -1,    15,    16,    17,    18,    19,    20,    21,    22,    23,
       24,    25,    26,    27,    28,    29,    38,    39,    40,    69,
-     616,    87,    88,    41,    68,    84,    85,   633,   803,   884,
-     885,   710,    43,    70,    96,    97,    98,   366,    45,    71,
-     141,   142,   143,   144,   145,   146,   147,   148,   149,   150,
-     393,   151,   152,   153,   154,   375,   185,   186,    47,    72,
-     187,   413,   188,   414,   636,   189,   415,   639,   190,   155,
-     383,   156,   376,   689,   690,   691,   817,   157,   384,   158,
-     385,   734,   735,   736,   841,   711,   712,   713,   820,  1002,
-     714,   821,   715,   822,   716,   823,   717,   718,   446,   719,
-     720,   721,   722,   723,   724,   725,   726,   829,   727,   830,
-     728,   831,   729,   832,   730,   731,   159,   401,   758,   759,
-     760,   761,   762,   763,   764,   160,   404,   773,   774,   775,
-     864,    61,    79,   313,   314,   315,   459,   316,   460,   161,
-     405,   782,   783,   784,   785,   786,   787,   788,   789,   162,
-     394,   738,   739,   740,   844,    49,    73,   212,   213,   214,
-     423,   215,   419,   216,   420,   217,   421,   218,   424,   219,
-     427,   220,   426,   163,   400,   622,   222,   164,   397,   750,
-     751,   752,   853,   936,   937,   165,   395,    55,    76,   742,
-     743,   744,   847,    57,    77,   278,   279,   280,   281,   282,
-     283,   284,   445,   285,   449,   286,   448,   287,   288,   450,
-     289,   166,   396,   746,   747,   748,   850,    59,    78,   299,
-     300,   301,   302,   303,   454,   304,   305,   306,   307,   224,
-     422,   805,   806,   807,   886,    51,    74,   237,   238,   239,
-     431,   167,   398,   168,   399,   169,   403,   769,   770,   771,
-     861,    53,    75,   254,   255,   256,   170,   380,   171,   381,
-     172,   382,   260,   441,   810,   889,   261,   435,   262,   436,
-     263,   438,   264,   437,   265,   440,   266,   439,   267,   434,
-     231,   428,   811,   173,   402,   766,   767,   858,   958,   959,
-     960,   961,   962,  1016,   963,   174,   175,   407,   795,   796,
-     797,   875,   798,   876,   176,   408,   177,   409,    63,    80,
-     335,   336,   337,   338,   464,   339,   465,   340,   341,   467,
-     342,   343,   344,   470,   671,   345,   471,   346,   347,   348,
-     474,   678,   349,   475,   350,   476,   351,   477,    99,   368,
-     100,   369,   101,   370,   178,   374,    67,    82,   357,   358,
-     359,   482,   360,   102,   367,    65,    81,   352,   353,   179,
-     410,   801,   802,   880,   986,   987,   988,   989,  1026,   990,
-    1024,  1044,  1045,  1046,  1053,  1054,  1055,  1060,  1056,  1057,
-    1058
+     618,    87,    88,    41,    68,    84,    85,   637,   805,   886,
+     887,   712,    43,    70,    96,    97,    98,   368,    45,    71,
+     143,   144,   145,   146,   147,   148,   149,   150,   151,   152,
+     395,   153,   154,   155,   156,   377,   189,   190,    47,    72,
+     191,   417,   192,   418,   640,   193,   419,   643,   194,   157,
+     385,   158,   378,   691,   692,   693,   819,   159,   386,   160,
+     387,   736,   737,   738,   843,   713,   714,   715,   822,  1004,
+     716,   823,   717,   824,   718,   825,   719,   720,   450,   721,
+     722,   723,   724,   725,   726,   727,   728,   831,   729,   832,
+     730,   833,   731,   834,   732,   733,   161,   403,   760,   761,
+     762,   763,   764,   765,   766,   162,   406,   775,   776,   777,
+     866,    61,    79,   317,   318,   319,   463,   320,   464,   163,
+     407,   784,   785,   786,   787,   788,   789,   790,   791,   164,
+     396,   740,   741,   742,   846,    49,    73,   216,   217,   218,
+     427,   219,   423,   220,   424,   221,   425,   222,   428,   223,
+     431,   224,   430,   165,   402,   624,   226,   166,   399,   752,
+     753,   754,   855,   938,   939,   167,   397,    55,    76,   744,
+     745,   746,   849,    57,    77,   282,   283,   284,   285,   286,
+     287,   288,   449,   289,   453,   290,   452,   291,   292,   454,
+     293,   168,   398,   748,   749,   750,   852,    59,    78,   303,
+     304,   305,   306,   307,   458,   308,   309,   310,   311,   228,
+     426,   807,   808,   809,   888,    51,    74,   241,   242,   243,
+     435,   169,   400,   170,   401,   171,   405,   771,   772,   773,
+     863,    53,    75,   258,   259,   260,   172,   382,   173,   383,
+     174,   384,   264,   445,   812,   891,   265,   439,   266,   440,
+     267,   442,   268,   441,   269,   444,   270,   443,   271,   438,
+     235,   432,   813,   175,   404,   768,   769,   860,   960,   961,
+     962,   963,   964,  1018,   965,   176,   177,   409,   797,   798,
+     799,   877,   800,   878,   178,   410,   179,   411,    63,    80,
+     337,   338,   339,   340,   468,   341,   469,   342,   343,   471,
+     344,   345,   346,   474,   675,   347,   475,   348,   349,   350,
+     478,   682,   351,   479,   180,   412,   181,   413,    99,   370,
+     100,   371,   101,   372,   182,   376,    67,    82,   359,   360,
+     361,   484,   362,   102,   369,    65,    81,   354,   355,   183,
+     414,   803,   804,   882,   988,   989,   990,   991,  1028,   992,
+    1026,  1046,  1047,  1048,  1055,  1056,  1057,  1062,  1058,  1059,
+    1060
   };
 
   const unsigned short
   Dhcp4Parser::yytable_[] =
   {
-      95,   140,   184,   203,   233,   250,   297,   276,   295,   312,
-     332,   268,   354,   227,   298,   732,    89,   931,   932,   204,
-     191,   225,   240,   252,    83,   290,   308,   944,   333,   856,
-     646,   669,   857,   223,   236,   251,   650,   109,   110,   111,
-     615,   277,   296,    31,    30,    32,   372,    33,    42,   205,
-     615,   373,   192,   226,   241,   253,    44,   291,   309,   411,
-     334,   310,   311,    86,   412,   228,    46,   257,   206,   207,
-     124,   229,   208,   258,   859,   180,   181,   860,   125,   182,
-      48,   417,   183,   230,   209,   259,   418,   210,   355,   356,
-     211,   127,   128,   234,   221,  1049,   235,    50,  1050,  1051,
-    1052,   429,   242,    52,   881,   139,   430,   882,   243,   244,
-     245,   246,   247,   248,   432,   249,   270,   461,   103,   433,
-      54,   104,   462,    94,   673,   674,   675,   676,   127,   128,
-     105,    56,   106,   107,   108,   109,   110,   111,   112,   113,
-     114,    58,   127,   128,   270,   292,   271,   272,   293,   294,
-     670,    90,   618,   619,   620,   621,   127,   128,    60,   677,
-      91,    92,    93,   115,   116,   117,   118,   119,   120,   121,
-     122,   123,   310,   311,    62,   124,   125,    94,   931,   932,
-      94,  1047,   127,   128,  1048,   361,   126,   478,   944,   127,
-     128,   362,   479,   979,   129,   980,   981,   634,   635,   130,
-     131,   480,   109,   110,   111,   132,   481,    64,   484,    34,
-      35,    36,    37,   485,   411,   133,    66,    94,   134,   813,
-     790,   791,   480,   484,   364,   135,   136,   814,   815,   137,
-     138,    94,   363,   107,   108,   109,   110,   111,   637,   638,
-     365,   417,   124,   125,   270,    94,   816,   371,   913,   753,
-     754,   755,   756,   139,   757,   818,   127,   128,   249,   808,
-     819,   377,   378,   115,   116,   117,   118,   119,   120,   947,
-     948,    94,   193,   194,   195,   838,   125,   838,    94,   873,
-     839,   877,   840,   125,   874,   442,   878,   196,   379,   127,
-     128,   197,   198,   199,   129,   232,   127,   128,   478,   444,
-     386,   200,    95,   879,   201,   132,   387,   388,   200,   838,
-     443,   201,   202,   389,  1010,   692,   390,   391,   486,   487,
-     693,   694,   695,   696,   697,   698,   699,   700,   701,   702,
-     703,   704,   705,   706,   707,   708,   709,   429,  1014,   461,
-     452,   140,  1011,  1015,  1021,    94,   392,   184,   406,   416,
-     425,   270,   776,   777,   778,   779,   780,   781,  1027,   203,
-     447,   432,   233,  1028,   451,   191,  1030,  1064,   453,   227,
-     455,   456,  1065,   250,   458,   204,   457,   225,    94,   463,
-     240,   466,   498,   276,   468,    94,   297,   469,   295,   223,
-     472,   252,   236,   473,   298,   483,   488,   192,   489,   507,
-     490,   290,   491,   251,   492,   205,   308,   493,   332,   226,
-     495,   354,   241,   998,   999,  1000,  1001,   277,   496,   497,
-     499,   228,   296,   253,   206,   207,   333,   229,   208,   269,
-     500,   501,   502,   291,   503,   257,   504,   508,   309,   230,
-     209,   258,   505,   210,   506,   509,   211,   598,   599,   600,
-     221,   234,    94,   259,   235,   513,   510,   514,   334,   107,
-     108,   109,   110,   111,   515,   270,   511,   271,   272,   516,
-     512,   273,   274,   275,   517,   518,   519,   127,   128,   520,
-     521,  1031,   522,   523,   524,   525,   526,   527,   528,   115,
-     116,   117,   118,   119,   120,   529,   530,   123,   531,   533,
-     534,   535,   125,   270,   536,   538,   539,   540,   541,   542,
-     543,   544,   545,   546,   547,   127,   128,   549,   198,   551,
-     129,   552,   553,   554,   555,   556,   140,   200,   354,   665,
-     201,   557,   184,   558,   560,   561,   563,   564,   202,   565,
-     568,   127,   128,   566,   562,   572,   573,   569,   570,   576,
-     191,   683,   577,   575,   578,   579,   580,   581,   792,   582,
-     332,   583,   584,   586,   585,   587,    94,   588,   589,   592,
-     595,   593,   604,   605,   596,   597,   793,   601,   333,   602,
-     603,   606,   192,   317,   318,   319,   320,   321,   322,   323,
-     324,   325,   326,   327,   328,   329,   607,   608,   609,   611,
-     610,   612,   330,   331,    94,   613,   614,   617,   794,    32,
-     334,     1,     2,     3,     4,     5,     6,     7,     8,     9,
-      10,    11,    12,    13,    14,   623,   624,   625,   626,   640,
-      94,   627,   628,   630,   631,   632,   643,   641,   642,   644,
-     645,   648,   682,   688,   647,   649,   733,   737,   651,   741,
-     745,   749,   765,   768,   652,   772,   653,   654,   655,   656,
-     657,   658,   672,   800,   659,   804,   824,   825,   826,   660,
-     661,   662,   827,   828,   833,   834,   835,   836,   663,   837,
-     842,   843,   664,   666,   846,   667,   845,   668,   848,   849,
-     851,   852,  1041,   679,   680,   854,   681,   855,   862,   863,
-     866,   865,   867,   868,   869,   870,   871,   872,   883,   888,
-     887,   892,   898,   890,   891,   894,   895,   896,   897,   900,
-     899,   903,   902,   901,   904,   905,   906,   911,   907,   976,
-     908,   977,   909,   993,   910,   992,   996,  1017,  1019,  1012,
-     684,   969,  1013,   970,  1018,  1020,   971,   972,   973,   974,
-     997,  1003,  1004,  1005,  1006,  1007,  1008,  1009,  1022,  1023,
-    1025,  1033,  1029,  1036,  1038,  1043,  1034,  1037,  1040,  1042,
-    1061,  1062,  1063,  1066,   203,  1068,  1069,   276,   297,  1067,
-     295,  1071,   629,   921,   227,   494,   298,   532,   949,   687,
-     204,   250,   225,   951,   312,   290,   893,   812,   308,   922,
-     914,   939,   967,   912,   223,   946,   953,   792,   968,   252,
-     982,   277,   574,   938,   296,   916,   233,   930,   952,   915,
-     205,   251,   950,   975,   226,   793,   537,   291,   984,   923,
-     309,  1032,   945,   940,   240,   918,   228,   548,   954,   206,
-     207,   253,   229,   208,   983,   941,   236,   917,   924,   925,
-     955,   942,   926,   257,   230,   209,   956,   794,   210,   258,
-     985,   211,   919,   943,   927,   221,   241,   928,   957,   567,
-     929,   259,   933,   994,   935,   934,   920,   571,   995,   550,
-     559,   966,   809,  1035,   965,   978,   964,   686,   594,   799,
-     590,   685,  1039,  1059,  1070,     0,   991,   591,     0,     0,
-       0,     0,     0,     0,     0,   234,     0,     0,   235,     0,
+      95,   142,   188,   207,   237,   254,   301,   280,   299,   316,
+     334,   272,   302,   734,   231,   232,   352,   261,   208,   209,
+     353,   233,    83,   262,   356,   650,    31,    89,    32,   933,
+      33,   654,   673,   195,   229,   244,   256,   934,   294,   312,
+     946,   335,   281,   300,    42,   374,   210,   415,    30,   211,
+     375,   238,   416,   196,   230,   245,   257,   239,   295,   313,
+     273,   336,   314,   315,   212,   617,   227,   240,   255,   184,
+     185,    44,   234,   186,   263,   617,   187,   858,   421,   213,
+     859,   433,   214,   422,   215,   225,   434,    46,   107,   108,
+     109,   110,   111,    48,   861,    50,   274,   862,   275,   276,
+     127,   128,   277,   278,   279,   357,   358,    52,   127,   128,
+     778,   779,   780,   781,   782,   783,   314,   315,   115,   116,
+     117,   118,   119,   120,    94,   638,   639,   197,   198,   199,
+    1051,   125,    54,  1052,  1053,  1054,   127,   128,   792,   793,
+     125,    56,   200,    58,   127,   128,   201,   202,   203,   129,
+     436,   674,   236,   127,   128,   437,   204,    60,   883,   205,
+     132,   884,    90,   103,   465,   204,   104,   206,   205,   466,
+      62,    91,    92,    93,    64,   105,    66,   106,   107,   108,
+     109,   110,   111,   112,   113,   114,   480,    86,    94,    94,
+     933,   481,    34,    35,    36,    37,   124,    94,   934,   482,
+    1049,   946,   486,  1050,   483,   274,   141,   487,   115,   116,
+     117,   118,   119,   120,   121,   122,   123,   127,   128,   415,
+     124,   125,   641,   642,   815,    94,   109,   110,   111,   253,
+     810,   126,   482,    94,   127,   128,   486,   816,   421,   129,
+     363,   817,    94,   818,   130,   131,   915,   364,   366,   365,
+     132,   677,   678,   679,   680,   367,   109,   110,   111,   820,
+     133,   373,   379,   134,   821,   380,   124,   125,   274,   447,
+     135,   136,   840,   840,   137,   138,   381,   841,   842,   388,
+     127,   128,   981,   389,   982,   983,   681,   274,   296,   275,
+     276,   297,   298,   949,   950,   139,   140,   125,   141,   127,
+     128,   390,   875,   879,    95,   391,    94,   876,   880,   392,
+     127,   128,   755,   756,   757,   758,   393,   759,   488,   489,
+     480,   246,   394,    94,   408,   881,   457,   247,   248,   249,
+     250,   251,   252,   840,   253,   433,  1016,   465,  1012,  1029,
+    1013,  1017,  1023,   436,  1030,   142,   420,  1066,  1032,   429,
+     451,   188,  1067,   620,   621,   622,   623,  1000,  1001,  1002,
+    1003,   446,   448,   207,   455,   456,   237,   459,   460,    94,
+     461,   462,   490,   467,   231,   232,   470,   254,   208,   209,
+     472,   233,   195,   473,   476,   477,   485,   280,    94,   261,
+     301,   491,   299,   492,   229,   262,   302,   244,   493,    94,
+     494,   495,   196,   497,   498,   499,   210,   503,   256,   211,
+     334,   500,   501,   238,   230,   502,   352,   245,   294,   239,
+     353,   504,   281,   312,   212,   356,   227,   300,   257,   240,
+     505,   506,   234,   107,   108,   109,   110,   111,   295,   213,
+     255,   335,   214,   313,   215,   225,   263,   600,   601,   602,
+     507,   508,   509,   510,   511,   516,   515,   512,   513,   514,
+     517,   336,   518,   115,   116,   117,   118,   119,   120,   519,
+     520,   123,   521,   522,  1033,   523,   125,   274,   524,   525,
+     526,   527,   528,   529,   530,   531,   532,   533,   534,   127,
+     128,   535,   202,   537,   129,   538,   539,   542,   540,   543,
+     544,   204,   545,   546,   205,   547,   549,   548,   606,   550,
+     551,   553,   206,     1,     2,     3,     4,     5,     6,     7,
+       8,     9,    10,    11,    12,    13,    14,   555,   142,   556,
+     557,   669,   558,   559,   188,   560,   561,   562,   564,   565,
+     567,   568,   356,   566,   569,   572,   576,   570,   573,   574,
+     577,   685,   579,   580,   581,   582,   583,   584,   585,   607,
+     794,   586,   334,   587,   588,   195,   589,   590,   352,   591,
+     594,   597,   353,   676,   595,   598,   599,   603,    94,   604,
+     605,   608,   609,   610,   611,   196,   127,   128,   613,   694,
+     612,   795,   614,   335,   695,   696,   697,   698,   699,   700,
+     701,   702,   703,   704,   705,   706,   707,   708,   709,   710,
+     711,   796,   615,   336,   616,    32,   619,   625,   626,   627,
+     628,   633,   690,   629,   630,   274,   632,   635,   321,   322,
+     323,   324,   325,   326,   327,   328,   329,   330,   331,   332,
+     333,   634,   636,   644,   645,   647,   652,   139,   140,   684,
+     646,   892,   735,   739,   743,   747,   648,   649,   751,   651,
+     767,   653,   770,   774,   802,   655,   806,   826,   656,   827,
+     828,   657,   829,   830,   658,    94,   835,   836,   837,   659,
+     660,   661,   662,   663,   664,   665,   666,   667,   668,   670,
+     671,   672,   683,   838,   839,   845,   900,   844,   848,   847,
+     850,   851,   853,   854,   857,   856,   865,   631,   864,   868,
+     867,   869,   870,   871,   872,   873,   874,   890,   885,   889,
+     894,   893,   896,   897,   898,   899,    94,   901,   902,   905,
+     906,   907,   903,   904,   908,   978,   909,   979,   994,   995,
+    1043,   998,  1014,   910,  1019,  1027,   911,  1015,  1021,   912,
+    1020,   999,   913,   971,   972,  1022,   973,   974,   975,  1035,
+     976,  1005,  1006,  1007,  1008,  1009,  1010,  1011,  1024,  1038,
+    1025,  1031,  1040,  1045,  1039,  1036,   207,  1042,  1063,   280,
+     301,  1044,   299,  1064,  1065,   923,   302,   231,   232,  1068,
+     951,   208,   209,   254,   233,   953,   316,   943,  1069,  1070,
+     924,   925,   957,   944,  1071,   261,  1073,   229,   958,   794,
+     294,   262,   984,   312,   281,   496,   941,   300,   237,   210,
+     932,   955,   211,   686,   256,   952,   536,   230,   926,   541,
+     295,   927,   935,   313,   689,   895,   942,   212,   936,   227,
+     795,   956,   814,   986,   257,   234,   928,   985,   940,   244,
+     916,   969,   213,   954,   945,   214,   255,   215,   225,   959,
+     796,   929,   263,   987,   930,   238,   931,   937,   914,   245,
+     970,   239,   977,   918,   578,   917,   552,   948,  1034,   947,
+     571,   240,   920,   919,   922,   921,   575,   967,   554,   996,
+     997,   563,   968,   966,   811,  1037,   801,   688,   592,   980,
+     596,   687,   593,  1061,  1041,  1072,   993,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   921,     0,     0,     0,     0,   949,
-       0,     0,     0,     0,   951,     0,     0,   982,     0,     0,
-     922,     0,   939,     0,     0,     0,     0,   953,     0,     0,
-       0,     0,     0,     0,   938,   984,     0,     0,   930,   952,
-       0,     0,     0,   950,     0,     0,     0,     0,     0,     0,
-     923,   983,     0,     0,   940,     0,     0,     0,     0,   954,
-       0,     0,     0,     0,     0,     0,   941,   985,     0,   924,
-     925,   955,   942,   926,     0,     0,     0,   956,     0,     0,
-       0,     0,     0,     0,   943,   927,     0,     0,   928,   957,
-       0,   929,     0,   933,     0,   935,   934
+       0,     0,     0,     0,     0,     0,   923,     0,     0,     0,
+       0,   951,     0,     0,     0,     0,   953,     0,   943,   984,
+       0,   924,   925,   957,   944,     0,     0,     0,     0,   958,
+       0,     0,     0,     0,     0,     0,     0,   941,     0,     0,
+       0,   932,   955,     0,     0,     0,   952,     0,     0,   926,
+     986,     0,   927,   935,   985,     0,     0,   942,     0,   936,
+       0,     0,   956,     0,     0,     0,     0,   928,     0,   940,
+     987,     0,     0,     0,   954,   945,     0,     0,     0,     0,
+     959,     0,   929,     0,     0,   930,     0,   931,   937
   };
 
   const short
   Dhcp4Parser::yycheck_[] =
   {
       70,    71,    72,    73,    74,    75,    78,    77,    78,    79,
-      80,    76,    81,    73,    78,   608,    10,   853,   853,    73,
-      72,    73,    74,    75,    68,    77,    78,   853,    80,     3,
-     545,    18,     6,    73,    74,    75,   551,    28,    29,    30,
-     519,    77,    78,     5,     0,     7,     3,     9,     7,    73,
-     529,     8,    72,    73,    74,    75,     7,    77,    78,     3,
-      80,   109,   110,   171,     8,    73,     7,    75,    73,    73,
-      68,    73,    73,    75,     3,    15,    16,     6,    69,    19,
-       7,     3,    22,    73,    73,    75,     8,    73,    12,    13,
-      73,    82,    83,    74,    73,   148,    74,     7,   151,   152,
-     153,     3,    93,     7,     3,   146,     8,     6,    99,   100,
-     101,   102,   103,   104,     3,   106,    70,     3,    11,     8,
-       7,    14,     8,   171,   139,   140,   141,   142,    82,    83,
-      23,     7,    25,    26,    27,    28,    29,    30,    31,    32,
-      33,     7,    82,    83,    70,    71,    72,    73,    74,    75,
-     137,   145,    88,    89,    90,    91,    82,    83,     7,   174,
-     154,   155,   156,    56,    57,    58,    59,    60,    61,    62,
-      63,    64,   109,   110,     7,    68,    69,   171,  1014,  1014,
-     171,     3,    82,    83,     6,     6,    79,     3,  1014,    82,
-      83,     3,     8,   147,    87,   149,   150,    17,    18,    92,
-      93,     3,    28,    29,    30,    98,     8,     7,     3,   171,
-     172,   173,   174,     8,     3,   108,     7,   171,   111,     8,
-     120,   121,     3,     3,     8,   118,   119,     8,     8,   122,
-     123,   171,     4,    26,    27,    28,    29,    30,    20,    21,
-       3,     3,    68,    69,    70,   171,     8,     4,   841,    99,
-     100,   101,   102,   146,   104,     3,    82,    83,   106,   107,
-       8,     4,     4,    56,    57,    58,    59,    60,    61,    95,
-      96,   171,    65,    66,    67,     3,    69,     3,   171,     3,
-       8,     3,     8,    69,     8,     8,     8,    80,     4,    82,
-      83,    84,    85,    86,    87,    81,    82,    83,     3,     8,
-       4,    94,   372,     8,    97,    98,     4,     4,    94,     3,
-       3,    97,   105,     4,     8,    34,     4,     4,   362,   363,
-      39,    40,    41,    42,    43,    44,    45,    46,    47,    48,
-      49,    50,    51,    52,    53,    54,    55,     3,     3,     3,
-       8,   411,     8,     8,     8,   171,     4,   417,     4,     4,
-       4,    70,   112,   113,   114,   115,   116,   117,     3,   429,
-       4,     3,   432,     8,     4,   417,     8,     3,     3,   429,
-       4,     4,     8,   443,     3,   429,     8,   429,   171,     4,
-     432,     4,   174,   453,     4,   171,   458,     4,   458,   429,
-       4,   443,   432,     4,   458,     4,   171,   417,     4,   172,
-       4,   453,     4,   443,     4,   429,   458,     4,   478,   429,
-       4,   480,   432,    35,    36,    37,    38,   453,     4,     4,
-     174,   429,   458,   443,   429,   429,   478,   429,   429,    34,
-     174,     4,     4,   453,     4,   443,     4,   172,   458,   429,
-     429,   443,     4,   429,     4,   172,   429,   491,   492,   493,
-     429,   432,   171,   443,   432,   172,   174,     4,   478,    26,
-      27,    28,    29,    30,     4,    70,   173,    72,    73,     4,
-     173,    76,    77,    78,     4,     4,     4,    82,    83,     4,
-       4,   996,     4,     4,     4,     4,     4,   172,     4,    56,
-      57,    58,    59,    60,    61,     4,     4,    64,     4,     4,
-       4,     4,    69,    70,   174,     4,     4,     4,     4,     4,
-       4,   172,     4,     4,     4,    82,    83,     4,    85,     4,
-      87,     4,     4,     4,     4,     4,   596,    94,   597,   573,
-      97,     4,   602,     4,     4,     4,     4,     4,   105,     4,
-       4,    82,    83,   174,   172,     4,     4,   174,   174,     4,
-     602,   595,     4,   174,   172,     4,   172,   172,   628,     4,
-     630,     4,   174,     4,   174,     4,   171,     4,     4,     4,
-       4,   172,   171,   171,     7,     7,   628,     7,   630,     7,
-       7,   171,   602,   124,   125,   126,   127,   128,   129,   130,
-     131,   132,   133,   134,   135,   136,     7,     7,     5,     5,
-     171,     5,   143,   144,   171,     5,     5,   171,   628,     7,
-     630,   157,   158,   159,   160,   161,   162,   163,   164,   165,
-     166,   167,   168,   169,   170,     5,     5,     5,     5,   171,
-     171,     7,     7,     7,     5,     5,     5,   171,   171,   171,
-     171,     7,     5,    24,   171,   171,     7,     7,   171,     7,
-       7,     7,     7,     7,   171,     7,   171,   171,   171,   171,
-     171,   171,   138,     7,   171,     7,     4,     4,     4,   171,
-     171,   171,     4,     4,     4,     4,     4,     4,   171,     4,
-       6,     3,   171,   171,     3,   171,     6,   171,     6,     3,
-       6,     3,     5,   171,   171,     6,   171,     3,     6,     3,
-       3,     6,     4,     4,     4,     4,     4,     4,   171,     3,
-       6,     4,   172,     8,     6,     4,     4,     4,     4,   172,
-     174,     4,   172,   174,     4,     4,     4,   174,   172,     4,
-     172,     4,   172,     3,   172,     6,     4,     4,     3,     8,
-     596,   172,     8,   172,     8,     8,   172,   172,   172,   172,
+      80,    76,    78,   610,    73,    73,    80,    75,    73,    73,
+      80,    73,    68,    75,    81,   549,     5,    10,     7,   855,
+       9,   555,    18,    72,    73,    74,    75,   855,    77,    78,
+     855,    80,    77,    78,     7,     3,    73,     3,     0,    73,
+       8,    74,     8,    72,    73,    74,    75,    74,    77,    78,
+      34,    80,   109,   110,    73,   521,    73,    74,    75,    15,
+      16,     7,    73,    19,    75,   531,    22,     3,     3,    73,
+       6,     3,    73,     8,    73,    73,     8,     7,    26,    27,
+      28,    29,    30,     7,     3,     7,    70,     6,    72,    73,
+      82,    83,    76,    77,    78,    12,    13,     7,    82,    83,
+     112,   113,   114,   115,   116,   117,   109,   110,    56,    57,
+      58,    59,    60,    61,   171,    17,    18,    65,    66,    67,
+     148,    69,     7,   151,   152,   153,    82,    83,   120,   121,
+      69,     7,    80,     7,    82,    83,    84,    85,    86,    87,
+       3,   137,    81,    82,    83,     8,    94,     7,     3,    97,
+      98,     6,   145,    11,     3,    94,    14,   105,    97,     8,
+       7,   154,   155,   156,     7,    23,     7,    25,    26,    27,
+      28,    29,    30,    31,    32,    33,     3,   171,   171,   171,
+    1016,     8,   171,   172,   173,   174,    68,   171,  1016,     3,
+       3,  1016,     3,     6,     8,    70,   146,     8,    56,    57,
+      58,    59,    60,    61,    62,    63,    64,    82,    83,     3,
+      68,    69,    20,    21,     8,   171,    28,    29,    30,   106,
+     107,    79,     3,   171,    82,    83,     3,     8,     3,    87,
+       6,     8,   171,     8,    92,    93,   843,     3,     8,     4,
+      98,   139,   140,   141,   142,     3,    28,    29,    30,     3,
+     108,     4,     4,   111,     8,     4,    68,    69,    70,     3,
+     118,   119,     3,     3,   122,   123,     4,     8,     8,     4,
+      82,    83,   147,     4,   149,   150,   174,    70,    71,    72,
+      73,    74,    75,    95,    96,   143,   144,    69,   146,    82,
+      83,     4,     3,     3,   374,     4,   171,     8,     8,     4,
+      82,    83,    99,   100,   101,   102,     4,   104,   364,   365,
+       3,    93,     4,   171,     4,     8,     3,    99,   100,   101,
+     102,   103,   104,     3,   106,     3,     3,     3,     8,     3,
+       8,     8,     8,     3,     8,   415,     4,     3,     8,     4,
+       4,   421,     8,    88,    89,    90,    91,    35,    36,    37,
+      38,     8,     8,   433,     4,     8,   436,     4,     4,   171,
+       8,     3,   171,     4,   433,   433,     4,   447,   433,   433,
+       4,   433,   421,     4,     4,     4,     4,   457,   171,   447,
+     462,     4,   462,     4,   433,   447,   462,   436,     4,   171,
+       4,     4,   421,     4,     4,     4,   433,     4,   447,   433,
+     480,   174,   174,   436,   433,   174,   480,   436,   457,   436,
+     480,     4,   457,   462,   433,   482,   433,   462,   447,   436,
+       4,     4,   433,    26,    27,    28,    29,    30,   457,   433,
+     447,   480,   433,   462,   433,   433,   447,   493,   494,   495,
+       4,     4,   172,   172,   172,     4,   172,   174,   173,   173,
+       4,   480,     4,    56,    57,    58,    59,    60,    61,     4,
+       4,    64,     4,     4,   998,     4,    69,    70,     4,     4,
+       4,     4,     4,   172,     4,     4,     4,     4,     4,    82,
+      83,     4,    85,     4,    87,     4,     4,     4,   174,     4,
+       4,    94,     4,     4,    97,     4,     4,   172,   171,     4,
+       4,     4,   105,   157,   158,   159,   160,   161,   162,   163,
+     164,   165,   166,   167,   168,   169,   170,     4,   598,     4,
+       4,   577,     4,     4,   604,     4,     4,     4,     4,     4,
+       4,     4,   599,   172,     4,     4,     4,   174,   174,   174,
+       4,   597,   174,     4,     4,   172,     4,   172,   172,   171,
+     630,     4,   632,     4,   174,   604,   174,     4,   632,     4,
+       4,     4,   632,   138,   172,     7,     7,     7,   171,     7,
+       7,   171,     7,     7,     5,   604,    82,    83,     5,    34,
+     171,   630,     5,   632,    39,    40,    41,    42,    43,    44,
+      45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
+      55,   630,     5,   632,     5,     7,   171,     5,     5,     5,
+       5,   171,    24,     7,     7,    70,     7,     5,   124,   125,
+     126,   127,   128,   129,   130,   131,   132,   133,   134,   135,
+     136,   171,     5,   171,   171,     5,     7,   143,   144,     5,
+     171,     8,     7,     7,     7,     7,   171,   171,     7,   171,
+       7,   171,     7,     7,     7,   171,     7,     4,   171,     4,
+       4,   171,     4,     4,   171,   171,     4,     4,     4,   171,
      171,   171,   171,   171,   171,   171,   171,   171,   171,   171,
-       4,     4,   171,     4,     4,     7,   174,   172,   171,   171,
-       4,     4,     4,     4,   844,   172,   172,   847,   850,   174,
-     850,   171,   529,   853,   844,   372,   850,   411,   858,   602,
-     844,   861,   844,   858,   864,   847,   818,   682,   850,   853,
-     843,   853,   864,   838,   844,   856,   858,   877,   866,   861,
-     880,   847,   461,   853,   850,   846,   886,   853,   858,   844,
-     844,   861,   858,   873,   844,   877,   417,   847,   880,   853,
-     850,  1014,   855,   853,   886,   849,   844,   429,   858,   844,
-     844,   861,   844,   844,   880,   853,   886,   847,   853,   853,
-     858,   853,   853,   861,   844,   844,   858,   877,   844,   861,
-     880,   844,   850,   853,   853,   844,   886,   853,   858,   453,
-     853,   861,   853,   886,   853,   853,   852,   458,   888,   432,
-     443,   863,   648,  1019,   861,   877,   859,   601,   484,   630,
-     478,   597,  1027,  1047,  1064,    -1,   881,   480,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,   886,    -1,    -1,   886,    -1,
+     171,   171,   171,     4,     4,     3,   172,     6,     3,     6,
+       6,     3,     6,     3,     3,     6,     3,   531,     6,     3,
+       6,     4,     4,     4,     4,     4,     4,     3,   171,     6,
+       4,     6,     4,     4,     4,     4,   171,   174,   172,     4,
+       4,     4,   174,   172,     4,     4,   172,     4,     6,     3,
+       5,     4,     8,   172,     4,     4,   172,     8,     3,   172,
+       8,   171,   174,   172,   172,     8,   172,   172,   172,     4,
+     172,   171,   171,   171,   171,   171,   171,   171,   171,     4,
+     171,   171,     4,     7,   172,   174,   846,   171,     4,   849,
+     852,   171,   852,     4,     4,   855,   852,   846,   846,     4,
+     860,   846,   846,   863,   846,   860,   866,   855,   174,   172,
+     855,   855,   860,   855,   172,   863,   171,   846,   860,   879,
+     849,   863,   882,   852,   849,   374,   855,   852,   888,   846,
+     855,   860,   846,   598,   863,   860,   415,   846,   855,   421,
+     849,   855,   855,   852,   604,   820,   855,   846,   855,   846,
+     879,   860,   684,   882,   863,   846,   855,   882,   855,   888,
+     845,   866,   846,   860,   855,   846,   863,   846,   846,   860,
+     879,   855,   863,   882,   855,   888,   855,   855,   840,   888,
+     868,   888,   875,   848,   465,   846,   433,   858,  1016,   857,
+     457,   888,   851,   849,   854,   852,   462,   863,   436,   888,
+     890,   447,   865,   861,   652,  1021,   632,   603,   480,   879,
+     486,   599,   482,  1049,  1029,  1066,   883,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,  1014,    -1,    -1,    -1,    -1,  1019,
-      -1,    -1,    -1,    -1,  1019,    -1,    -1,  1027,    -1,    -1,
-    1014,    -1,  1014,    -1,    -1,    -1,    -1,  1019,    -1,    -1,
-      -1,    -1,    -1,    -1,  1014,  1027,    -1,    -1,  1014,  1019,
-      -1,    -1,    -1,  1019,    -1,    -1,    -1,    -1,    -1,    -1,
-    1014,  1027,    -1,    -1,  1014,    -1,    -1,    -1,    -1,  1019,
-      -1,    -1,    -1,    -1,    -1,    -1,  1014,  1027,    -1,  1014,
-    1014,  1019,  1014,  1014,    -1,    -1,    -1,  1019,    -1,    -1,
-      -1,    -1,    -1,    -1,  1014,  1014,    -1,    -1,  1014,  1019,
-      -1,  1014,    -1,  1014,    -1,  1014,  1014
+      -1,    -1,    -1,    -1,    -1,    -1,  1016,    -1,    -1,    -1,
+      -1,  1021,    -1,    -1,    -1,    -1,  1021,    -1,  1016,  1029,
+      -1,  1016,  1016,  1021,  1016,    -1,    -1,    -1,    -1,  1021,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,  1016,    -1,    -1,
+      -1,  1016,  1021,    -1,    -1,    -1,  1021,    -1,    -1,  1016,
+    1029,    -1,  1016,  1016,  1029,    -1,    -1,  1016,    -1,  1016,
+      -1,    -1,  1021,    -1,    -1,    -1,    -1,  1016,    -1,  1016,
+    1029,    -1,    -1,    -1,  1021,  1016,    -1,    -1,    -1,    -1,
+    1021,    -1,  1016,    -1,    -1,  1016,    -1,  1016,  1016
   };
 
   const unsigned short
@@ -4563,101 +4563,101 @@ namespace isc { namespace dhcp {
      515,   517,   528,    11,    14,    23,    25,    26,    27,    28,
       29,    30,    31,    32,    33,    56,    57,    58,    59,    60,
       61,    62,    63,    64,    68,    69,    79,    82,    83,    87,
-      92,    93,    98,   108,   111,   118,   119,   122,   123,   146,
-     206,   215,   216,   217,   218,   219,   220,   221,   222,   223,
-     224,   226,   227,   228,   229,   244,   246,   252,   254,   291,
-     300,   314,   324,   348,   352,   360,   386,   416,   418,   420,
-     431,   433,   435,   458,   470,   471,   479,   481,   519,   534,
-      15,    16,    19,    22,   206,   231,   232,   235,   237,   240,
-     243,   416,   418,    65,    66,    67,    80,    84,    85,    86,
-      94,    97,   105,   206,   217,   218,   219,   220,   221,   222,
-     227,   228,   332,   333,   334,   336,   338,   340,   342,   344,
-     346,   348,   351,   386,   404,   416,   418,   420,   431,   433,
-     435,   455,    81,   206,   344,   346,   386,   412,   413,   414,
-     416,   418,    93,    99,   100,   101,   102,   103,   104,   106,
-     206,   386,   416,   418,   428,   429,   430,   431,   433,   435,
-     437,   441,   443,   445,   447,   449,   451,   453,   360,    34,
-      70,    72,    73,    76,    77,    78,   206,   272,   370,   371,
-     372,   373,   374,   375,   376,   378,   380,   382,   383,   385,
-     416,   418,    71,    74,    75,   206,   272,   374,   380,   394,
-     395,   396,   397,   398,   400,   401,   402,   403,   416,   418,
-     109,   110,   206,   308,   309,   310,   312,   124,   125,   126,
-     127,   128,   129,   130,   131,   132,   133,   134,   135,   136,
-     143,   144,   206,   416,   418,   485,   486,   487,   488,   490,
-     492,   493,   495,   496,   497,   500,   502,   503,   504,   507,
-     509,   511,   532,   533,   534,    12,    13,   523,   524,   525,
-     527,     6,     3,     4,     8,     3,   212,   529,   514,   516,
-     518,     4,     3,     8,   520,   230,   247,     4,     4,     4,
-     432,   434,   436,   245,   253,   255,     4,     4,     4,     4,
-       4,     4,     4,   225,   325,   361,   387,   353,   417,   419,
-     349,   292,   459,   421,   301,   315,     4,   472,   480,   482,
-     535,     3,     8,   236,   238,   241,     4,     3,     8,   337,
-     339,   341,   405,   335,   343,     4,   347,   345,   456,     3,
-       8,   415,     3,     8,   454,   442,   444,   448,   446,   452,
-     450,   438,     8,     3,     8,   377,   273,     4,   381,   379,
-     384,     4,     8,     3,   399,     4,     4,     8,     3,   311,
-     313,     3,     8,     4,   489,   491,     4,   494,     4,     4,
-     498,   501,     4,     4,   505,   508,   510,   512,     3,     8,
-       3,     8,   526,     4,     3,     8,   191,   191,   171,     4,
-       4,     4,     4,     4,   210,     4,     4,     4,   174,   174,
-     174,     4,     4,     4,     4,     4,     4,   172,   172,   172,
-     174,   173,   173,   172,     4,     4,     4,     4,     4,     4,
-       4,     4,     4,     4,     4,     4,     4,   172,     4,     4,
-       4,     4,   216,     4,     4,     4,   174,   232,     4,     4,
-       4,     4,     4,     4,   172,     4,     4,     4,   333,     4,
-     413,     4,     4,     4,     4,     4,     4,     4,     4,   430,
-       4,     4,   172,     4,     4,     4,   174,   372,     4,   174,
-     174,   396,     4,     4,   309,   174,     4,     4,   172,     4,
-     172,   172,     4,     4,   174,   174,     4,     4,     4,     4,
-     486,   533,     4,   172,   524,     4,     7,     7,   191,   191,
-     191,     7,     7,     7,   171,   171,   171,     7,     7,     5,
-     171,     5,     5,     5,     5,   193,   195,   171,    88,    89,
-      90,    91,   350,     5,     5,     5,     5,     7,     7,   195,
-       7,     5,     5,   202,    17,    18,   239,    20,    21,   242,
-     171,   171,   171,     5,   171,   171,   202,   171,     7,   171,
-     202,   171,   171,   171,   171,   171,   171,   171,   171,   171,
-     171,   171,   171,   171,   171,   191,   171,   171,   171,    18,
-     137,   499,   138,   139,   140,   141,   142,   174,   506,   171,
-     171,   171,     5,   191,   215,   532,   523,   231,    24,   248,
-     249,   250,    34,    39,    40,    41,    42,    43,    44,    45,
-      46,    47,    48,    49,    50,    51,    52,    53,    54,    55,
-     206,   260,   261,   262,   265,   267,   269,   271,   272,   274,
-     275,   276,   277,   278,   279,   280,   281,   283,   285,   287,
-     289,   290,   260,     7,   256,   257,   258,     7,   326,   327,
-     328,     7,   364,   365,   366,     7,   388,   389,   390,     7,
-     354,   355,   356,    99,   100,   101,   102,   104,   293,   294,
-     295,   296,   297,   298,   299,     7,   460,   461,     7,   422,
-     423,   424,     7,   302,   303,   304,   112,   113,   114,   115,
-     116,   117,   316,   317,   318,   319,   320,   321,   322,   323,
-     120,   121,   206,   416,   418,   473,   474,   475,   477,   485,
-       7,   536,   537,   203,     7,   406,   407,   408,   107,   437,
-     439,   457,   256,     8,     8,     8,     8,   251,     3,     8,
-     263,   266,   268,   270,     4,     4,     4,     4,     4,   282,
-     284,   286,   288,     4,     4,     4,     4,     4,     3,     8,
-       8,   259,     6,     3,   329,     6,     3,   367,     6,     3,
-     391,     6,     3,   357,     6,     3,     3,     6,   462,     3,
-       6,   425,     6,     3,   305,     6,     3,     4,     4,     4,
-       4,     4,     4,     3,     8,   476,   478,     3,     8,     8,
-     538,     3,     6,   171,   204,   205,   409,     6,     3,   440,
-       8,     6,     4,   249,     4,     4,     4,     4,   172,   174,
-     172,   174,   172,     4,     4,     4,     4,   172,   172,   172,
-     172,   174,   261,   260,   258,   332,   328,   370,   366,   394,
-     390,   206,   217,   218,   219,   220,   221,   222,   227,   228,
-     272,   324,   342,   344,   346,   348,   358,   359,   386,   416,
-     418,   431,   433,   435,   455,   356,   294,    95,    96,   206,
-     272,   360,   386,   416,   418,   431,   433,   435,   463,   464,
-     465,   466,   467,   469,   461,   428,   424,   308,   304,   172,
-     172,   172,   172,   172,   172,   317,     4,     4,   474,   147,
-     149,   150,   206,   272,   416,   418,   539,   540,   541,   542,
-     544,   537,     6,     3,   412,   408,     4,   171,    35,    36,
-      37,    38,   264,   171,   171,   171,   171,   171,   171,   171,
-       8,     8,     8,     8,     3,     8,   468,     4,     8,     3,
-       8,     8,   171,   171,   545,     4,   543,     3,     8,   171,
-       8,   202,   359,     4,   174,   465,     4,   172,     4,   540,
-     171,     5,   171,     7,   546,   547,   548,     3,     6,   148,
-     151,   152,   153,   549,   550,   551,   553,   554,   555,   547,
-     552,     4,     4,     4,     3,     8,     4,   174,   172,   172,
-     550,   171
+      92,    93,    98,   108,   111,   118,   119,   122,   123,   143,
+     144,   146,   206,   215,   216,   217,   218,   219,   220,   221,
+     222,   223,   224,   226,   227,   228,   229,   244,   246,   252,
+     254,   291,   300,   314,   324,   348,   352,   360,   386,   416,
+     418,   420,   431,   433,   435,   458,   470,   471,   479,   481,
+     509,   511,   519,   534,    15,    16,    19,    22,   206,   231,
+     232,   235,   237,   240,   243,   416,   418,    65,    66,    67,
+      80,    84,    85,    86,    94,    97,   105,   206,   217,   218,
+     219,   220,   221,   222,   227,   228,   332,   333,   334,   336,
+     338,   340,   342,   344,   346,   348,   351,   386,   404,   416,
+     418,   420,   431,   433,   435,   455,    81,   206,   344,   346,
+     386,   412,   413,   414,   416,   418,    93,    99,   100,   101,
+     102,   103,   104,   106,   206,   386,   416,   418,   428,   429,
+     430,   431,   433,   435,   437,   441,   443,   445,   447,   449,
+     451,   453,   360,    34,    70,    72,    73,    76,    77,    78,
+     206,   272,   370,   371,   372,   373,   374,   375,   376,   378,
+     380,   382,   383,   385,   416,   418,    71,    74,    75,   206,
+     272,   374,   380,   394,   395,   396,   397,   398,   400,   401,
+     402,   403,   416,   418,   109,   110,   206,   308,   309,   310,
+     312,   124,   125,   126,   127,   128,   129,   130,   131,   132,
+     133,   134,   135,   136,   206,   416,   418,   485,   486,   487,
+     488,   490,   492,   493,   495,   496,   497,   500,   502,   503,
+     504,   507,   509,   511,   532,   533,   534,    12,    13,   523,
+     524,   525,   527,     6,     3,     4,     8,     3,   212,   529,
+     514,   516,   518,     4,     3,     8,   520,   230,   247,     4,
+       4,     4,   432,   434,   436,   245,   253,   255,     4,     4,
+       4,     4,     4,     4,     4,   225,   325,   361,   387,   353,
+     417,   419,   349,   292,   459,   421,   301,   315,     4,   472,
+     480,   482,   510,   512,   535,     3,     8,   236,   238,   241,
+       4,     3,     8,   337,   339,   341,   405,   335,   343,     4,
+     347,   345,   456,     3,     8,   415,     3,     8,   454,   442,
+     444,   448,   446,   452,   450,   438,     8,     3,     8,   377,
+     273,     4,   381,   379,   384,     4,     8,     3,   399,     4,
+       4,     8,     3,   311,   313,     3,     8,     4,   489,   491,
+       4,   494,     4,     4,   498,   501,     4,     4,   505,   508,
+       3,     8,     3,     8,   526,     4,     3,     8,   191,   191,
+     171,     4,     4,     4,     4,     4,   210,     4,     4,     4,
+     174,   174,   174,     4,     4,     4,     4,     4,     4,   172,
+     172,   172,   174,   173,   173,   172,     4,     4,     4,     4,
+       4,     4,     4,     4,     4,     4,     4,     4,     4,   172,
+       4,     4,     4,     4,     4,     4,   216,     4,     4,     4,
+     174,   232,     4,     4,     4,     4,     4,     4,   172,     4,
+       4,     4,   333,     4,   413,     4,     4,     4,     4,     4,
+       4,     4,     4,   430,     4,     4,   172,     4,     4,     4,
+     174,   372,     4,   174,   174,   396,     4,     4,   309,   174,
+       4,     4,   172,     4,   172,   172,     4,     4,   174,   174,
+       4,     4,   486,   533,     4,   172,   524,     4,     7,     7,
+     191,   191,   191,     7,     7,     7,   171,   171,   171,     7,
+       7,     5,   171,     5,     5,     5,     5,   193,   195,   171,
+      88,    89,    90,    91,   350,     5,     5,     5,     5,     7,
+       7,   195,     7,   171,   171,     5,     5,   202,    17,    18,
+     239,    20,    21,   242,   171,   171,   171,     5,   171,   171,
+     202,   171,     7,   171,   202,   171,   171,   171,   171,   171,
+     171,   171,   171,   171,   171,   171,   171,   171,   171,   191,
+     171,   171,   171,    18,   137,   499,   138,   139,   140,   141,
+     142,   174,   506,   171,     5,   191,   215,   532,   523,   231,
+      24,   248,   249,   250,    34,    39,    40,    41,    42,    43,
+      44,    45,    46,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,   206,   260,   261,   262,   265,   267,   269,   271,
+     272,   274,   275,   276,   277,   278,   279,   280,   281,   283,
+     285,   287,   289,   290,   260,     7,   256,   257,   258,     7,
+     326,   327,   328,     7,   364,   365,   366,     7,   388,   389,
+     390,     7,   354,   355,   356,    99,   100,   101,   102,   104,
+     293,   294,   295,   296,   297,   298,   299,     7,   460,   461,
+       7,   422,   423,   424,     7,   302,   303,   304,   112,   113,
+     114,   115,   116,   117,   316,   317,   318,   319,   320,   321,
+     322,   323,   120,   121,   206,   416,   418,   473,   474,   475,
+     477,   485,     7,   536,   537,   203,     7,   406,   407,   408,
+     107,   437,   439,   457,   256,     8,     8,     8,     8,   251,
+       3,     8,   263,   266,   268,   270,     4,     4,     4,     4,
+       4,   282,   284,   286,   288,     4,     4,     4,     4,     4,
+       3,     8,     8,   259,     6,     3,   329,     6,     3,   367,
+       6,     3,   391,     6,     3,   357,     6,     3,     3,     6,
+     462,     3,     6,   425,     6,     3,   305,     6,     3,     4,
+       4,     4,     4,     4,     4,     3,     8,   476,   478,     3,
+       8,     8,   538,     3,     6,   171,   204,   205,   409,     6,
+       3,   440,     8,     6,     4,   249,     4,     4,     4,     4,
+     172,   174,   172,   174,   172,     4,     4,     4,     4,   172,
+     172,   172,   172,   174,   261,   260,   258,   332,   328,   370,
+     366,   394,   390,   206,   217,   218,   219,   220,   221,   222,
+     227,   228,   272,   324,   342,   344,   346,   348,   358,   359,
+     386,   416,   418,   431,   433,   435,   455,   356,   294,    95,
+      96,   206,   272,   360,   386,   416,   418,   431,   433,   435,
+     463,   464,   465,   466,   467,   469,   461,   428,   424,   308,
+     304,   172,   172,   172,   172,   172,   172,   317,     4,     4,
+     474,   147,   149,   150,   206,   272,   416,   418,   539,   540,
+     541,   542,   544,   537,     6,     3,   412,   408,     4,   171,
+      35,    36,    37,    38,   264,   171,   171,   171,   171,   171,
+     171,   171,     8,     8,     8,     8,     3,     8,   468,     4,
+       8,     3,     8,     8,   171,   171,   545,     4,   543,     3,
+       8,   171,     8,   202,   359,     4,   174,   465,     4,   172,
+       4,   540,   171,     5,   171,     7,   546,   547,   548,     3,
+       6,   148,   151,   152,   153,   549,   550,   551,   553,   554,
+     555,   547,   552,     4,     4,     4,     3,     8,     4,   174,
+     172,   172,   550,   171
   };
 
   const unsigned short
@@ -4674,62 +4674,62 @@ namespace isc { namespace dhcp {
      216,   216,   216,   216,   216,   216,   216,   216,   216,   216,
      216,   216,   216,   216,   216,   216,   216,   216,   216,   216,
      216,   216,   216,   216,   216,   216,   216,   216,   216,   216,
-     216,   216,   217,   218,   219,   220,   221,   222,   223,   225,
-     224,   226,   227,   228,   230,   229,   231,   231,   232,   232,
-     232,   232,   232,   232,   232,   234,   233,   236,   235,   238,
-     237,   239,   239,   241,   240,   242,   242,   243,   245,   244,
-     247,   246,   248,   248,   249,   251,   250,   253,   252,   255,
-     254,   256,   256,   257,   257,   259,   258,   260,   260,   261,
+     216,   216,   216,   216,   217,   218,   219,   220,   221,   222,
+     223,   225,   224,   226,   227,   228,   230,   229,   231,   231,
+     232,   232,   232,   232,   232,   232,   232,   234,   233,   236,
+     235,   238,   237,   239,   239,   241,   240,   242,   242,   243,
+     245,   244,   247,   246,   248,   248,   249,   251,   250,   253,
+     252,   255,   254,   256,   256,   257,   257,   259,   258,   260,
+     260,   261,   261,   261,   261,   261,   261,   261,   261,   261,
      261,   261,   261,   261,   261,   261,   261,   261,   261,   261,
-     261,   261,   261,   261,   261,   261,   261,   261,   261,   263,
-     262,   264,   264,   264,   264,   266,   265,   268,   267,   270,
-     269,   271,   273,   272,   274,   275,   276,   277,   278,   279,
-     280,   282,   281,   284,   283,   286,   285,   288,   287,   289,
-     290,   292,   291,   293,   293,   294,   294,   294,   294,   294,
-     295,   296,   297,   298,   299,   301,   300,   302,   302,   303,
-     303,   305,   304,   307,   306,   308,   308,   308,   309,   309,
-     311,   310,   313,   312,   315,   314,   316,   316,   317,   317,
-     317,   317,   317,   317,   318,   319,   320,   321,   322,   323,
-     325,   324,   326,   326,   327,   327,   329,   328,   331,   330,
-     332,   332,   333,   333,   333,   333,   333,   333,   333,   333,
+     261,   263,   262,   264,   264,   264,   264,   266,   265,   268,
+     267,   270,   269,   271,   273,   272,   274,   275,   276,   277,
+     278,   279,   280,   282,   281,   284,   283,   286,   285,   288,
+     287,   289,   290,   292,   291,   293,   293,   294,   294,   294,
+     294,   294,   295,   296,   297,   298,   299,   301,   300,   302,
+     302,   303,   303,   305,   304,   307,   306,   308,   308,   308,
+     309,   309,   311,   310,   313,   312,   315,   314,   316,   316,
+     317,   317,   317,   317,   317,   317,   318,   319,   320,   321,
+     322,   323,   325,   324,   326,   326,   327,   327,   329,   328,
+     331,   330,   332,   332,   333,   333,   333,   333,   333,   333,
      333,   333,   333,   333,   333,   333,   333,   333,   333,   333,
-     333,   333,   333,   333,   333,   333,   333,   333,   333,   335,
-     334,   337,   336,   339,   338,   341,   340,   343,   342,   345,
-     344,   347,   346,   349,   348,   350,   350,   350,   350,   351,
-     353,   352,   354,   354,   355,   355,   357,   356,   358,   358,
+     333,   333,   333,   333,   333,   333,   333,   333,   333,   333,
+     333,   335,   334,   337,   336,   339,   338,   341,   340,   343,
+     342,   345,   344,   347,   346,   349,   348,   350,   350,   350,
+     350,   351,   353,   352,   354,   354,   355,   355,   357,   356,
+     358,   358,   359,   359,   359,   359,   359,   359,   359,   359,
      359,   359,   359,   359,   359,   359,   359,   359,   359,   359,
-     359,   359,   359,   359,   359,   359,   359,   359,   359,   359,
-     359,   359,   361,   360,   363,   362,   364,   364,   365,   365,
-     367,   366,   369,   368,   370,   370,   371,   371,   372,   372,
-     372,   372,   372,   372,   372,   372,   372,   372,   373,   374,
-     375,   377,   376,   379,   378,   381,   380,   382,   384,   383,
-     385,   387,   386,   388,   388,   389,   389,   391,   390,   393,
-     392,   394,   394,   395,   395,   396,   396,   396,   396,   396,
-     396,   396,   396,   396,   397,   399,   398,   400,   401,   402,
-     403,   405,   404,   406,   406,   407,   407,   409,   408,   411,
-     410,   412,   412,   413,   413,   413,   413,   413,   413,   413,
-     415,   414,   417,   416,   419,   418,   421,   420,   422,   422,
-     423,   423,   425,   424,   427,   426,   428,   428,   429,   429,
-     430,   430,   430,   430,   430,   430,   430,   430,   430,   430,
-     430,   430,   430,   430,   430,   432,   431,   434,   433,   436,
-     435,   438,   437,   440,   439,   442,   441,   444,   443,   446,
-     445,   448,   447,   450,   449,   452,   451,   454,   453,   456,
-     455,   457,   457,   459,   458,   460,   460,   462,   461,   463,
-     463,   464,   464,   465,   465,   465,   465,   465,   465,   465,
-     465,   465,   465,   465,   466,   468,   467,   469,   470,   472,
-     471,   473,   473,   474,   474,   474,   474,   474,   476,   475,
-     478,   477,   480,   479,   482,   481,   484,   483,   485,   485,
+     359,   359,   359,   359,   361,   360,   363,   362,   364,   364,
+     365,   365,   367,   366,   369,   368,   370,   370,   371,   371,
+     372,   372,   372,   372,   372,   372,   372,   372,   372,   372,
+     373,   374,   375,   377,   376,   379,   378,   381,   380,   382,
+     384,   383,   385,   387,   386,   388,   388,   389,   389,   391,
+     390,   393,   392,   394,   394,   395,   395,   396,   396,   396,
+     396,   396,   396,   396,   396,   396,   397,   399,   398,   400,
+     401,   402,   403,   405,   404,   406,   406,   407,   407,   409,
+     408,   411,   410,   412,   412,   413,   413,   413,   413,   413,
+     413,   413,   415,   414,   417,   416,   419,   418,   421,   420,
+     422,   422,   423,   423,   425,   424,   427,   426,   428,   428,
+     429,   429,   430,   430,   430,   430,   430,   430,   430,   430,
+     430,   430,   430,   430,   430,   430,   430,   432,   431,   434,
+     433,   436,   435,   438,   437,   440,   439,   442,   441,   444,
+     443,   446,   445,   448,   447,   450,   449,   452,   451,   454,
+     453,   456,   455,   457,   457,   459,   458,   460,   460,   462,
+     461,   463,   463,   464,   464,   465,   465,   465,   465,   465,
+     465,   465,   465,   465,   465,   465,   466,   468,   467,   469,
+     470,   472,   471,   473,   473,   474,   474,   474,   474,   474,
+     476,   475,   478,   477,   480,   479,   482,   481,   484,   483,
+     485,   485,   486,   486,   486,   486,   486,   486,   486,   486,
      486,   486,   486,   486,   486,   486,   486,   486,   486,   486,
-     486,   486,   486,   486,   486,   486,   486,   486,   487,   489,
-     488,   491,   490,   492,   494,   493,   495,   496,   498,   497,
-     499,   499,   501,   500,   502,   503,   505,   504,   506,   506,
-     506,   506,   506,   508,   507,   510,   509,   512,   511,   514,
-     513,   516,   515,   518,   517,   520,   519,   522,   521,   523,
-     523,   524,   524,   526,   525,   527,   529,   528,   531,   530,
-     532,   532,   533,   535,   534,   536,   536,   538,   537,   539,
-     539,   540,   540,   540,   540,   540,   540,   540,   541,   543,
-     542,   545,   544,   546,   546,   548,   547,   549,   549,   550,
-     550,   550,   550,   552,   551,   553,   554,   555
+     487,   489,   488,   491,   490,   492,   494,   493,   495,   496,
+     498,   497,   499,   499,   501,   500,   502,   503,   505,   504,
+     506,   506,   506,   506,   506,   508,   507,   510,   509,   512,
+     511,   514,   513,   516,   515,   518,   517,   520,   519,   522,
+     521,   523,   523,   524,   524,   526,   525,   527,   529,   528,
+     531,   530,   532,   532,   533,   535,   534,   536,   536,   538,
+     537,   539,   539,   540,   540,   540,   540,   540,   540,   540,
+     541,   543,   542,   545,   544,   546,   546,   548,   547,   549,
+     549,   550,   550,   550,   550,   552,   551,   553,   554,   555
   };
 
   const unsigned char
@@ -4746,62 +4746,62 @@ namespace isc { namespace dhcp {
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     3,     3,     3,     3,     3,     3,     3,     0,
-       4,     3,     3,     3,     0,     6,     1,     3,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
-       4,     1,     1,     0,     4,     1,     1,     3,     0,     6,
-       0,     6,     1,     3,     1,     0,     4,     0,     6,     0,
-       6,     0,     1,     1,     3,     0,     4,     1,     3,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     0,
-       4,     1,     1,     1,     1,     0,     4,     0,     4,     0,
-       4,     3,     0,     4,     3,     3,     3,     3,     3,     3,
-       3,     0,     4,     0,     4,     0,     4,     0,     4,     3,
-       3,     0,     6,     1,     3,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     6,     0,     1,     1,
-       3,     0,     4,     0,     4,     1,     3,     1,     1,     1,
-       0,     4,     0,     4,     0,     6,     1,     3,     1,     1,
        1,     1,     1,     1,     3,     3,     3,     3,     3,     3,
-       0,     6,     0,     1,     1,     3,     0,     4,     0,     4,
+       3,     0,     4,     3,     3,     3,     0,     6,     1,     3,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
+       4,     0,     4,     1,     1,     0,     4,     1,     1,     3,
+       0,     6,     0,     6,     1,     3,     1,     0,     4,     0,
+       6,     0,     6,     0,     1,     1,     3,     0,     4,     1,
+       3,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     0,     4,     1,     1,     1,     1,     0,     4,     0,
+       4,     0,     4,     3,     0,     4,     3,     3,     3,     3,
+       3,     3,     3,     0,     4,     0,     4,     0,     4,     0,
+       4,     3,     3,     0,     6,     1,     3,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     6,     0,
+       1,     1,     3,     0,     4,     0,     4,     1,     3,     1,
+       1,     1,     0,     4,     0,     4,     0,     6,     1,     3,
+       1,     1,     1,     1,     1,     1,     3,     3,     3,     3,
+       3,     3,     0,     6,     0,     1,     1,     3,     0,     4,
+       0,     4,     1,     3,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     0,     4,     0,     4,     0,     4,     0,     4,     0,
+       4,     0,     4,     0,     4,     0,     4,     1,     1,     1,
+       1,     3,     0,     6,     0,     1,     1,     3,     0,     4,
        1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     0,
-       4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
-       4,     0,     4,     0,     4,     1,     1,     1,     1,     3,
-       0,     6,     0,     1,     1,     3,     0,     4,     1,     3,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     0,     6,     0,     4,     0,     1,     1,     3,
-       0,     4,     0,     4,     0,     1,     1,     3,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     3,
-       1,     0,     4,     0,     4,     0,     4,     1,     0,     4,
-       3,     0,     6,     0,     1,     1,     3,     0,     4,     0,
-       4,     0,     1,     1,     3,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     1,     1,     3,
-       3,     0,     6,     0,     1,     1,     3,     0,     4,     0,
-       4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
-       0,     4,     0,     4,     0,     4,     0,     6,     0,     1,
+       1,     1,     1,     1,     0,     6,     0,     4,     0,     1,
        1,     3,     0,     4,     0,     4,     0,     1,     1,     3,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
+       1,     3,     1,     0,     4,     0,     4,     0,     4,     1,
+       0,     4,     3,     0,     6,     0,     1,     1,     3,     0,
+       4,     0,     4,     0,     1,     1,     3,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     1,
+       1,     3,     3,     0,     6,     0,     1,     1,     3,     0,
+       4,     0,     4,     1,     3,     1,     1,     1,     1,     1,
+       1,     1,     0,     4,     0,     4,     0,     4,     0,     6,
+       0,     1,     1,     3,     0,     4,     0,     4,     0,     1,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
-       6,     1,     1,     0,     6,     1,     3,     0,     4,     0,
-       1,     1,     3,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     3,     3,     0,
-       6,     1,     3,     1,     1,     1,     1,     1,     0,     4,
-       0,     4,     0,     4,     0,     6,     0,     4,     1,     3,
+       4,     0,     6,     1,     1,     0,     6,     1,     3,     0,
+       4,     0,     1,     1,     3,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     3,
+       3,     0,     6,     1,     3,     1,     1,     1,     1,     1,
+       0,     4,     0,     4,     0,     4,     0,     6,     0,     4,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     3,     0,
-       4,     0,     4,     3,     0,     4,     3,     3,     0,     4,
-       1,     1,     0,     4,     3,     3,     0,     4,     1,     1,
-       1,     1,     1,     0,     4,     0,     4,     0,     4,     0,
-       4,     0,     4,     0,     4,     0,     6,     0,     4,     1,
-       3,     1,     1,     0,     6,     3,     0,     6,     0,     4,
-       1,     3,     1,     0,     6,     1,     3,     0,     4,     1,
-       3,     1,     1,     1,     1,     1,     1,     1,     3,     0,
-       4,     0,     6,     1,     3,     0,     4,     1,     3,     1,
-       1,     1,     1,     0,     4,     3,     3,     3
+       3,     0,     4,     0,     4,     3,     0,     4,     3,     3,
+       0,     4,     1,     1,     0,     4,     3,     3,     0,     4,
+       1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
+       4,     0,     4,     0,     4,     0,     4,     0,     6,     0,
+       4,     1,     3,     1,     1,     0,     6,     3,     0,     6,
+       0,     4,     1,     3,     1,     0,     6,     1,     3,     0,
+       4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       3,     0,     4,     0,     6,     1,     3,     0,     4,     1,
+       3,     1,     1,     1,     1,     0,     4,     3,     3,     3
   };
 
 
@@ -4968,62 +4968,62 @@ namespace isc { namespace dhcp {
      449,   450,   451,   452,   453,   454,   455,   456,   457,   458,
      459,   460,   461,   462,   463,   464,   465,   466,   467,   468,
      469,   470,   471,   472,   473,   474,   475,   476,   477,   478,
-     479,   480,   483,   488,   493,   498,   503,   508,   513,   518,
-     518,   526,   531,   536,   542,   542,   553,   554,   557,   558,
-     559,   560,   561,   562,   563,   566,   566,   575,   575,   585,
-     585,   592,   593,   596,   596,   603,   605,   609,   615,   615,
-     627,   627,   637,   638,   640,   642,   642,   660,   660,   672,
-     672,   682,   683,   686,   687,   690,   690,   700,   701,   704,
-     705,   706,   707,   708,   709,   710,   711,   712,   713,   714,
-     715,   716,   717,   718,   719,   720,   721,   722,   723,   726,
-     726,   733,   734,   735,   736,   739,   739,   747,   747,   755,
-     755,   763,   768,   768,   776,   781,   786,   791,   796,   801,
-     806,   811,   811,   819,   819,   827,   827,   835,   835,   843,
-     848,   853,   853,   863,   864,   867,   868,   869,   870,   871,
-     874,   879,   884,   889,   894,   899,   899,   909,   910,   913,
-     914,   917,   917,   927,   927,   937,   938,   939,   942,   943,
-     946,   946,   954,   954,   962,   962,   973,   974,   977,   978,
-     979,   980,   981,   982,   985,   990,   995,  1000,  1005,  1010,
-    1018,  1018,  1031,  1032,  1035,  1036,  1043,  1043,  1069,  1069,
-    1080,  1081,  1085,  1086,  1087,  1088,  1089,  1090,  1091,  1092,
+     479,   480,   481,   482,   485,   490,   495,   500,   505,   510,
+     515,   520,   520,   528,   533,   538,   544,   544,   555,   556,
+     559,   560,   561,   562,   563,   564,   565,   568,   568,   577,
+     577,   587,   587,   594,   595,   598,   598,   605,   607,   611,
+     617,   617,   629,   629,   639,   640,   642,   644,   644,   662,
+     662,   674,   674,   684,   685,   688,   689,   692,   692,   702,
+     703,   706,   707,   708,   709,   710,   711,   712,   713,   714,
+     715,   716,   717,   718,   719,   720,   721,   722,   723,   724,
+     725,   728,   728,   735,   736,   737,   738,   741,   741,   749,
+     749,   757,   757,   765,   770,   770,   778,   783,   788,   793,
+     798,   803,   808,   813,   813,   821,   821,   829,   829,   837,
+     837,   845,   850,   855,   855,   865,   866,   869,   870,   871,
+     872,   873,   876,   881,   886,   891,   896,   901,   901,   911,
+     912,   915,   916,   919,   919,   929,   929,   939,   940,   941,
+     944,   945,   948,   948,   956,   956,   964,   964,   975,   976,
+     979,   980,   981,   982,   983,   984,   987,   992,   997,  1002,
+    1007,  1012,  1020,  1020,  1033,  1034,  1037,  1038,  1045,  1045,
+    1071,  1071,  1082,  1083,  1087,  1088,  1089,  1090,  1091,  1092,
     1093,  1094,  1095,  1096,  1097,  1098,  1099,  1100,  1101,  1102,
-    1103,  1104,  1105,  1106,  1107,  1108,  1109,  1110,  1111,  1114,
-    1114,  1122,  1122,  1130,  1130,  1138,  1138,  1146,  1146,  1154,
-    1154,  1162,  1162,  1172,  1172,  1179,  1180,  1181,  1182,  1185,
-    1192,  1192,  1203,  1204,  1208,  1209,  1212,  1212,  1220,  1221,
-    1224,  1225,  1226,  1227,  1228,  1229,  1230,  1231,  1232,  1233,
+    1103,  1104,  1105,  1106,  1107,  1108,  1109,  1110,  1111,  1112,
+    1113,  1116,  1116,  1124,  1124,  1132,  1132,  1140,  1140,  1148,
+    1148,  1156,  1156,  1164,  1164,  1174,  1174,  1181,  1182,  1183,
+    1184,  1187,  1194,  1194,  1205,  1206,  1210,  1211,  1214,  1214,
+    1222,  1223,  1226,  1227,  1228,  1229,  1230,  1231,  1232,  1233,
     1234,  1235,  1236,  1237,  1238,  1239,  1240,  1241,  1242,  1243,
-    1244,  1245,  1252,  1252,  1265,  1265,  1274,  1275,  1278,  1279,
-    1284,  1284,  1299,  1299,  1313,  1314,  1317,  1318,  1321,  1322,
-    1323,  1324,  1325,  1326,  1327,  1328,  1329,  1330,  1333,  1335,
-    1340,  1342,  1342,  1350,  1350,  1358,  1358,  1366,  1368,  1368,
-    1376,  1385,  1385,  1397,  1398,  1403,  1404,  1409,  1409,  1421,
-    1421,  1433,  1434,  1439,  1440,  1445,  1446,  1447,  1448,  1449,
-    1450,  1451,  1452,  1453,  1456,  1458,  1458,  1466,  1468,  1470,
-    1475,  1483,  1483,  1495,  1496,  1499,  1500,  1503,  1503,  1513,
-    1513,  1523,  1524,  1527,  1528,  1529,  1530,  1531,  1532,  1533,
-    1536,  1536,  1544,  1544,  1569,  1569,  1599,  1599,  1609,  1610,
-    1613,  1614,  1617,  1617,  1626,  1626,  1635,  1636,  1639,  1640,
-    1644,  1645,  1646,  1647,  1648,  1649,  1650,  1651,  1652,  1653,
-    1654,  1655,  1656,  1657,  1658,  1661,  1661,  1669,  1669,  1677,
-    1677,  1685,  1685,  1693,  1693,  1703,  1703,  1711,  1711,  1719,
-    1719,  1727,  1727,  1735,  1735,  1743,  1743,  1751,  1751,  1764,
-    1764,  1774,  1775,  1781,  1781,  1791,  1792,  1795,  1795,  1805,
-    1806,  1809,  1810,  1813,  1814,  1815,  1816,  1817,  1818,  1819,
-    1820,  1821,  1822,  1823,  1826,  1828,  1828,  1836,  1845,  1852,
-    1852,  1862,  1863,  1866,  1867,  1868,  1869,  1870,  1873,  1873,
-    1881,  1881,  1892,  1892,  1930,  1930,  1942,  1942,  1952,  1953,
-    1956,  1957,  1958,  1959,  1960,  1961,  1962,  1963,  1964,  1965,
-    1966,  1967,  1968,  1969,  1970,  1971,  1972,  1973,  1976,  1981,
-    1981,  1989,  1989,  1997,  2002,  2002,  2010,  2015,  2020,  2020,
-    2028,  2029,  2032,  2032,  2040,  2045,  2050,  2050,  2058,  2061,
-    2064,  2067,  2070,  2076,  2076,  2084,  2084,  2092,  2092,  2103,
-    2103,  2110,  2110,  2117,  2117,  2124,  2124,  2135,  2135,  2145,
-    2146,  2150,  2151,  2154,  2154,  2164,  2174,  2174,  2184,  2184,
-    2195,  2196,  2200,  2204,  2204,  2216,  2217,  2221,  2221,  2229,
-    2230,  2233,  2234,  2235,  2236,  2237,  2238,  2239,  2242,  2247,
-    2247,  2255,  2255,  2265,  2266,  2269,  2269,  2277,  2278,  2281,
-    2282,  2283,  2284,  2287,  2287,  2295,  2300,  2305
+    1244,  1245,  1246,  1247,  1254,  1254,  1267,  1267,  1276,  1277,
+    1280,  1281,  1286,  1286,  1301,  1301,  1315,  1316,  1319,  1320,
+    1323,  1324,  1325,  1326,  1327,  1328,  1329,  1330,  1331,  1332,
+    1335,  1337,  1342,  1344,  1344,  1352,  1352,  1360,  1360,  1368,
+    1370,  1370,  1378,  1387,  1387,  1399,  1400,  1405,  1406,  1411,
+    1411,  1423,  1423,  1435,  1436,  1441,  1442,  1447,  1448,  1449,
+    1450,  1451,  1452,  1453,  1454,  1455,  1458,  1460,  1460,  1468,
+    1470,  1472,  1477,  1485,  1485,  1497,  1498,  1501,  1502,  1505,
+    1505,  1515,  1515,  1525,  1526,  1529,  1530,  1531,  1532,  1533,
+    1534,  1535,  1538,  1538,  1546,  1546,  1571,  1571,  1601,  1601,
+    1611,  1612,  1615,  1616,  1619,  1619,  1628,  1628,  1637,  1638,
+    1641,  1642,  1646,  1647,  1648,  1649,  1650,  1651,  1652,  1653,
+    1654,  1655,  1656,  1657,  1658,  1659,  1660,  1663,  1663,  1671,
+    1671,  1679,  1679,  1687,  1687,  1695,  1695,  1705,  1705,  1713,
+    1713,  1721,  1721,  1729,  1729,  1737,  1737,  1745,  1745,  1753,
+    1753,  1766,  1766,  1776,  1777,  1783,  1783,  1793,  1794,  1797,
+    1797,  1807,  1808,  1811,  1812,  1815,  1816,  1817,  1818,  1819,
+    1820,  1821,  1822,  1823,  1824,  1825,  1828,  1830,  1830,  1838,
+    1847,  1854,  1854,  1864,  1865,  1868,  1869,  1870,  1871,  1872,
+    1875,  1875,  1883,  1883,  1894,  1894,  1932,  1932,  1944,  1944,
+    1954,  1955,  1958,  1959,  1960,  1961,  1962,  1963,  1964,  1965,
+    1966,  1967,  1968,  1969,  1970,  1971,  1972,  1973,  1974,  1975,
+    1978,  1983,  1983,  1991,  1991,  1999,  2004,  2004,  2012,  2017,
+    2022,  2022,  2030,  2031,  2034,  2034,  2042,  2047,  2052,  2052,
+    2060,  2063,  2066,  2069,  2072,  2078,  2078,  2086,  2086,  2094,
+    2094,  2105,  2105,  2112,  2112,  2119,  2119,  2126,  2126,  2137,
+    2137,  2147,  2148,  2152,  2153,  2156,  2156,  2166,  2176,  2176,
+    2186,  2186,  2197,  2198,  2202,  2206,  2206,  2218,  2219,  2223,
+    2223,  2231,  2232,  2235,  2236,  2237,  2238,  2239,  2240,  2241,
+    2244,  2249,  2249,  2257,  2257,  2267,  2268,  2271,  2271,  2279,
+    2280,  2283,  2284,  2285,  2286,  2289,  2289,  2297,  2302,  2307
   };
 
   // Print the state stack on the debug stream.
@@ -5056,10 +5056,11 @@ namespace isc { namespace dhcp {
 #endif // PARSER4_DEBUG
 
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:1242
+#line 14 "dhcp4_parser.yy"
 } } // isc::dhcp
-#line 5062 "dhcp4_parser.cc" // lalr1.cc:1242
-#line 2310 "dhcp4_parser.yy" // lalr1.cc:1243
+#line 5062 "dhcp4_parser.cc"
+
+#line 2312 "dhcp4_parser.yy"
 
 
 void
