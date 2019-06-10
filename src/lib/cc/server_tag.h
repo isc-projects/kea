@@ -33,7 +33,8 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param tag server tag provided as string.
+    /// @param tag server tag provided as string. The tag is converted to
+    /// lower case.
     explicit ServerTag(const std::string& tag);
 
     /// @brief Checks if the server tag is set to "all servers".
@@ -41,7 +42,10 @@ public:
     /// @return true if the server tag is set to all servers, false
     /// otherwise.
     bool amAll() const;
+
     /// @brief Returns server tag as string.
+    ///
+    /// @return lower case server tag.
     std::string get() const {
         return (tag_);
     }

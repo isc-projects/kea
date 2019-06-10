@@ -401,7 +401,6 @@ protected:
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
     /// @param backend_selector Backend selector.
-    /// @param server_selector Server selector.
     /// @param [out] properties Reference to the collection of retrieved properties.
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector

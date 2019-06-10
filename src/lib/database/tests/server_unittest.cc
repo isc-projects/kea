@@ -37,9 +37,13 @@ TEST(ServerTest, tooLongDescription) {
 // Tests that it is possible to fetch server by tag fromn the collection.
 TEST(ServerFetcherTest, getByTag) {
     ServerCollection servers;
-    servers.insert(Server::create(ServerTag("alpha"), "alpha description"));
-    servers.insert(Server::create(ServerTag("beta"), "beta description"));
-    servers.insert(Server::create(ServerTag("gamma"), "gamma description"));
+
+    EXPECT_TRUE(servers.insert(Server::create(ServerTag("alpha"), "alpha description")).second);
+    EXPECT_TRUE(servers.insert(Server::create(ServerTag("beta"), "beta description")).second);
+    EXPECT_TRUE(servers.insert(Server::create(ServerTag("gamma"), "gamma description")).second);
+
+    // Inserting an element with duplicated server tag should be unsuccessful.
+    EXPECT_FALSE(servers.insert(Server::create(ServerTag("gamma"), "gamma 2 description")).second);
 
     auto alpha = ServerFetcher::get(servers, ServerTag("alpha"));
     ASSERT_TRUE(alpha);

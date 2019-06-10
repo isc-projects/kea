@@ -7,6 +7,7 @@
 #include <cc/server_tag.h>
 #include <exceptions/exceptions.h>
 #include <util/strutil.h>
+#include <boost/algorithm/string.hpp>
 
 namespace isc {
 namespace data {
@@ -25,6 +26,8 @@ ServerTag::ServerTag(const std::string& tag)
     } else if (tag_.length() > 256) {
         isc_throw(BadValue, "server-tag must not be longer than 256 characters");
     }
+
+    boost::algorithm::to_lower(tag_);
 }
 
 bool

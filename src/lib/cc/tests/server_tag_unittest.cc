@@ -62,6 +62,13 @@ TEST(ServerTagTest, constructors) {
         EXPECT_EQ("both left-right", tag->get());
         EXPECT_FALSE(tag->amAll());
     }
+
+    {
+        SCOPED_TRACE("upper to lower case");
+        ASSERT_NO_THROW(tag.reset(new ServerTag("UPPER CASE TAG")));
+        EXPECT_EQ("upper case tag", tag->get());
+        EXPECT_FALSE(tag->amAll());
+    }
 }
 
 // This test verifies that malformed server tags are rejected.

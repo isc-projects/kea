@@ -19,7 +19,7 @@ class Server;
 /// @brief Shared pointer to the @c Server class.
 typedef boost::shared_ptr<Server> ServerPtr;
 
-/// @brief Represents information about the Kea server in the database.
+/// @brief Represents information about a Kea server in the database.
 ///
 /// The configuration backend holds the information about the servers
 /// for which the backend holds the configuration information. The
@@ -33,14 +33,14 @@ public:
     /// @brief Constructor.
     ///
     /// @param tag server tag.
-    /// @param server description.
+    /// @param description server description.
     Server(const data::ServerTag& tag, const std::string& description);
 
     /// @brief Factory function to be used to create an instance of the
     /// @c Server object.
     ///
     /// @param tag server tag.
-    /// @param server description.
+    /// @param description server description.
     ///
     /// @return Pointer to the server instance.
     /// @throw BadValue if the server tag exceeds 256 characters or the
