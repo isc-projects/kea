@@ -944,7 +944,11 @@ Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
         Subnet4Ptr subnet = parser.parse(subnet_json);
         if (subnet) {
             try {
-                subnets.push_back(subnet);
+                auto ret = subnets.push_back(subnet);
+                if (!ret.second) {
+                    isc_throw(Unexpected,
+                              "can't store subnet because of conflict");
+                }
                 ++cnt;
             } catch (const std::exception& ex) {
                 isc_throw(DhcpConfigError, ex.what() << " ("
@@ -1311,12 +1315,18 @@ Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
 
         Subnet6ConfigParser parser;
         Subnet6Ptr subnet = parser.parse(subnet_json);
-        try {
-            subnets.push_back(subnet);
-            ++cnt;
-        } catch (const std::exception& ex) {
-            isc_throw(DhcpConfigError, ex.what() << " ("
-                      << subnet_json->getPosition() << ")");
+        if (subnet) {
+            try {
+                auto ret = subnets.push_back(subnet);
+                if (!ret.second) {
+                    isc_throw(Unexpected,
+                              "can't store subnet because of conflict");
+                }
+                ++cnt;
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet_json->getPosition() << ")");
+            }
         }
     }
     return (cnt);

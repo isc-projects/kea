@@ -66,7 +66,7 @@ public:
         }
 
         // Add a subnet to the collection of subnets for this shared network.
-        subnets.push_back(subnet);
+        static_cast<void>(subnets.push_back(subnet));
     }
 
     /// @brief Replaces IPv4 subnet in a shared network.

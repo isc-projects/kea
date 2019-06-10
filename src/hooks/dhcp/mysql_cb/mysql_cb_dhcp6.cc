@@ -473,7 +473,14 @@ public:
                 last_subnet->setServerTag(out_bindings[69]->getString());
 
                 // Subnet ready. Add it to the list.
-                subnets.push_back(last_subnet);
+                auto ret = subnets.push_back(last_subnet);
+
+                // subnets is a multi index container with unique indexes
+                // but these indexes are unique too in the database,
+                // so this is for sanity only.
+                if (!ret.second) {
+                    isc_throw(Unexpected, "add subnet failed");
+                }
             }
 
             // Pool is between 15 and 19
@@ -1351,7 +1358,15 @@ public:
                 // server_tag
                 last_network->setServerTag(out_bindings[31]->getString());
 
-                shared_networks.push_back(last_network);
+                // Add the shared network.
+                auto ret = shared_networks.push_back(last_network);
+
+                // shared_networks is a multi index container with an unique
+                // index but this index is unique too in the database,
+                // so this is for sanity only.
+                if (!ret.second) {
+                    isc_throw(Unexpected, "add shared network failed");
+                }
             }
 
             // Parse option from 14 to 26.
