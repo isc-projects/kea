@@ -1488,6 +1488,13 @@ TEST_F(EvalContextTest, parseErrors) {
                "expecting integer");
     checkError("substring('foobar',1,a) == 'foo'",
                "<string>:1.22: Invalid character: a");
+    string long_text = "substring('foobar',1,65535) == ";
+    for (int i = 0; i < (1 << 16); ++i) {
+        long_text += "0";
+    }
+    long_text += "'";
+    checkError(long_text,
+               "<string>:1.65568: Invalid character: '");
     checkError("concat('foobar') == 'f'",
                "<string>:1.16: syntax error, unexpected ), expecting \",\"");
     checkError("concat('foo','bar','') == 'foobar'",
