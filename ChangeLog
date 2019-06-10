@@ -1,3 +1,8 @@
+1588.	[func]		marcin
+	Extended APIs of the DHCPv4 and DHCPv6 configuration backends with
+	the management functions for the server tags.
+	(Gitlab #641,!352, git 022d2266e71ced7ec79e0717298ca8e88330a7e7)
+
 1587.	[bug]		razvan
 	Fixed IPv6 prefix delegation pools retrieval from the MySQL
 	Configuration Backend.
