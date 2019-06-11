@@ -478,7 +478,7 @@ global_param: data_directory
             | calculate_tee_times
             | t1_percent
             | t2_percent
-            | logger
+            | loggers
             | hostname_char_set
             | hostname_char_replacement
             | unknown_map_entry
