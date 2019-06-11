@@ -751,6 +751,16 @@
         // T2 = valid lifetime * .75.
         "t2-percent": .75,
 
+        // String of zero or more characters with which to replace each
+        // invalid character in the hostname or Client FQDN. The default
+        // value is an empty string which will cause invalid characters
+        // to be omitted rather than replaced.
+        "hostname-char-replacement": "x",
+
+        // Regular expression describing the invalid character set in
+        // the hostname or Client FQDN.
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+
         // List of loggers used by the servers using this configuration file.
         "loggers": [
             {

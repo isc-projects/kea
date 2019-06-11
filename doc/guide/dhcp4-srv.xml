@@ -3219,6 +3219,13 @@ It is merely echoed by the server.
         invalid characters.
         </para>
         </note>
+        <note>
+        Since the 1.6.0 Kea release it is possible to specify hostname-char-set
+        and/or hostname-char-replacement at the global scope. This allows
+        to sanitize host names without requiring a dhcp-ddns entry. When
+        a hostname-char parameter is defined at the global scope and
+        in a dhcp-ddns entry the second (local) value is used.
+        </note>
       </section>
 
     </section>
