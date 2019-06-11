@@ -94,6 +94,7 @@ extern const isc::log::MessageID DHCP4_PACKET_DROP_0006;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0007;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0008;
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0009;
+extern const isc::log::MessageID DHCP4_PACKET_DROP_DROP_CLASS;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0001;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0002;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003;

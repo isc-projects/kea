@@ -93,6 +93,7 @@ extern const isc::log::MessageID DHCP4_PACKET_DROP_0006 = "DHCP4_PACKET_DROP_000
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0007 = "DHCP4_PACKET_DROP_0007";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0008 = "DHCP4_PACKET_DROP_0008";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0009 = "DHCP4_PACKET_DROP_0009";
+extern const isc::log::MessageID DHCP4_PACKET_DROP_DROP_CLASS = "DHCP4_PACKET_DROP_DROP_CLASS";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0001 = "DHCP4_PACKET_NAK_0001";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0002 = "DHCP4_PACKET_NAK_0002";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003 = "DHCP4_PACKET_NAK_0003";
@@ -228,6 +229,7 @@ const char* values[] = {
     "DHCP4_PACKET_DROP_0007", "%1: failed to process packet: %2",
     "DHCP4_PACKET_DROP_0008", "%1: DHCP service is globally disabled",
     "DHCP4_PACKET_DROP_0009", "%1: Option 53 missing (no DHCP message type), is this a BOOTP packet?",
+    "DHCP4_PACKET_DROP_DROP_CLASS", "dropped as member of the special DROP class: %1",
     "DHCP4_PACKET_NAK_0001", "%1: failed to select a subnet for incoming packet, src %2, type %3",
     "DHCP4_PACKET_NAK_0002", "%1: invalid address %2 requested by INIT-REBOOT",
     "DHCP4_PACKET_NAK_0003", "%1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3",

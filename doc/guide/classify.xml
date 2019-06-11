@@ -90,6 +90,11 @@
       resort) definition.
       </para></listitem>
       <listitem><para>
+      When the incoming packet belongs the special DROP class it is
+      dropped and an informational message is logged with the packet
+      information.
+      </para></listitem>
+      <listitem><para>
       A subnet is chosen, possibly based on the class information when
       some subnets are reserved. More precisely: when choosing a subnet,
       the server iterates over all of the subnets that are
@@ -111,10 +116,11 @@
       request") evaluation - are processed in the order they are defined
       in the configuration; the boolean expression is evaluated and,
       if it returns true ("match"), the incoming packet is associated
-      with the class. After a subnet is selected, the server determines whether there is a reservation
-      for a given client. Therefore, it
+      with the class. After a subnet is selected, the server determines
+      whether there is a reservation for a given client. Therefore, it
       is not possible to use KNOWN/UNKNOWN classes to select a shared
-      network or a subnet.
+      network or a subnet, nor to make the DROP class dependent of
+      KNOWN/UNKNOWN classes.
       </para></listitem>
       <listitem><para>
       If needed, addresses and prefixes from pools are assigned,

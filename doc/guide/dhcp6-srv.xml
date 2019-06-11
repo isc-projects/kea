@@ -2429,7 +2429,8 @@ should include options from the new option space:
       The first step is to assess an incoming packet and assign it to
       zero or more classes.
       Next, a subnet is chosen, possibly based on the
-      class information.
+      class information. When the incoming packet is inthe "DROP"
+      special class it is dropped and an information message logged.
       After that, class expressions are evaluated depending on the
       built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
       using them for pool/pd-pool selection and assigning classes from host

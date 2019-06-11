@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -341,6 +341,10 @@ ClientClassDictionary::toElement() const {
 
 std::list<std::string>
 builtinNames = {
+    // DROP is not in this list because it is special but not built-in.
+    // In fact DROP is set from an expression as callouts can drop
+    // directly the incoming packet. The expression must not depend on
+    // KNOWN/UNKNOWN which are set far after the drop point.
     "ALL", "KNOWN", "UNKNOWN"
 };
 

@@ -683,6 +683,14 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
+    // Check the DROP special class.
+    if (query->inClass("DROP")) {
+        LOG_INFO(packet6_logger, DHCP6_PACKET_DROP_DROP_CLASS)
+            .arg(query->toText());
+        // increase pkt6-receive-drop stats?
+        return;
+    }
+
     if (query->getType() == DHCPV6_DHCPV4_QUERY) {
         // This call never throws. Should this change, this section must be
         // enclosed in try-catch.

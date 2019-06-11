@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1183,6 +1183,112 @@ TEST_F(ClientClassDefListParserTest, dependOnKnown) {
     ASSERT_TRUE(cclass);
     EXPECT_EQ("zeta", cclass->getName());
     EXPECT_TRUE(cclass->getDependOnKnown());
+}
+
+// Verifies that a built-in class can't be required or evaluated.
+TEST_F(ClientClassDefListParserTest, builtinCheckError) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"ALL\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"ALL\", \n"
+        "       \"only-if-required\": true \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"ALL\", \n"
+        "       \"test\": \"'aa' == 'aa'\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"KNOWN\", \n"
+        "       \"only-if-required\": true \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"KNOWN\", \n"
+        "       \"test\": \"'aa' == 'aa'\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"UNKNOWN\", \n"
+        "       \"only-if-required\": true \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"UNKNOWN\", \n"
+        "       \"test\": \"'aa' == 'aa'\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that the special DROP class can't be required or
+// dependent on KNOWN/UNKNOWN
+TEST_F(ClientClassDefListParserTest, dropCheckError) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"DROP\", \n"
+        "       \"test\": \"option[123].text == 'abc'\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"DROP\", \n"
+        "       \"only-if-required\": true \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"DROP\", \n"
+        "       \"test\": \"member('KNOWN')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,6 +74,12 @@ namespace {
 ///      server1 and server2 for each HA server
 ///      option[93].hex == 0x0009 aka telephones
 ///      option[93].hex == 0x0007 aka computers
+///
+/// - Configuration 5:
+///   - Used for the DROP class
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - the following class defined: option[93].hex == 0x0009, DROP
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -275,6 +281,22 @@ const char* CONFIGS[] = {
         " } ]"
     "}",
 
+    // Configuration 5
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"DROP\","
+        "   \"test\": \"option[93].hex == 0x0009\""
+        "}],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
+        " } ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing classification.
@@ -1105,6 +1127,33 @@ TEST_F(ClassifyTest, precedenceNetwork) {
     auto addrs = servers->getAddresses();
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("10.0.0.3", addrs[0].toText());
+}
+
+// This test checks the handling for the DROP special class.
+TEST_F(ClassifyTest, dropClass) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[5], *client.getServer());
+
+    // Send the discover.
+    client.doDiscover();
+
+    // No option: no drop.
+    EXPECT_TRUE(client.getContext().response_);
+
+    // Retry with an option matching the DROP class.
+    Dhcp4Client client2(Dhcp4Client::SELECTING);
+
+    // Add the pxe option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+    client2.addExtraOption(pxe);
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Option, dropped.
+    EXPECT_FALSE(client2.getContext().response_);
 }
 
 } // end of anonymous namespace

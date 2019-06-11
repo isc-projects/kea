@@ -505,6 +505,10 @@ has been temporarily disabled. This affects all received DHCP packets. The
 service may be enabled by the "dhcp-enable" control command or automatically
 after a specified amount of time since receiving "dhcp-disable" command.
 
+% DHCP6_PACKET_DROP_DROP_CLASS dropped as member of the special DROP class: %1
+This informational message is emitted when an incoming packet was classified
+into the special DROP class and dropped. The packet details are displayed.
+
 % DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv6 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.

@@ -1006,6 +1006,14 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         callout_handle->getArgument("query4", query);
     }
 
+    // Check the DROP special class.
+    if (query->inClass("DROP")) {
+        LOG_INFO(packet4_logger, DHCP4_PACKET_DROP_DROP_CLASS)
+            .arg(query->toText());
+        // increase pkt4-receive-drop stats?
+        return;
+    }
+
     AllocEngine::ClientContext4Ptr ctx;
 
     try {
