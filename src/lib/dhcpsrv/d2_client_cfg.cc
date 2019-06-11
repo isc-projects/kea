@@ -8,6 +8,7 @@
 
 #include <dhcp_ddns/ncr_udp.h>
 #include <dhcpsrv/d2_client_cfg.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <boost/algorithm/string/predicate.hpp>

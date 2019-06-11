@@ -70,7 +70,9 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "calculate-tee-times",          Element::boolean },
     { "t1-percent",                   Element::real },
     { "t2-percent",                   Element::real },
-    { "loggers",                      Element::list }
+    { "loggers",                      Element::list },
+    { "hostname-char-set",            Element::string },
+    { "hostname-char-replacement",    Element::string }
 };
 
 /// @brief This table defines default values for option definitions in DHCPv6.

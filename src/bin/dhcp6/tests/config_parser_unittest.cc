@@ -4627,8 +4627,167 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
     EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
     EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+}
+
+// This test checks the ability of the server to parse a configuration
+// containing a full, valid dhcp-ddns (D2ClientConfig) entry with
+// hostname-char-* at the global scope.
+TEST_F(Dhcp6ParserTest, d2ClientConfigGlobal) {
+    // Verify that the D2 configuration can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ], "
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"3001::1\", "
+        "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"3001::2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" }, "
+        "\"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "\"hostname-char-replacement\" : \"x\", "
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_str));
+    extractConfig(config_str);
+
+    // Pass the configuration in for parsing.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("3001::1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("3001::2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+}
+
+// This test checks the ability of the server to parse a configuration
+// containing a full, valid dhcp-ddns (D2ClientConfig) entry with
+// hostname-char-* at the local and global scopes (local has the priority).
+TEST_F(Dhcp6ParserTest, d2ClientConfigBoth) {
+    // Verify that the D2 configuration can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ], "
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"3001::1\", "
+        "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"3001::2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "     \"hostname-char-replacement\" : \"x\" }, "
+        "\"hostname-char-set\" : \"[^A-Z]\", "
+        "\"hostname-char-replacement\" : \"z\", "
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP6(config_str));
+    extractConfig(config_str);
+
+    // Pass the configuration in for parsing.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("3001::1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("3001::2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
 }
 
 // This test checks the ability of the server to handle a configuration

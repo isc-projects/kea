@@ -368,6 +368,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // early.
         Dhcp4ConfigParser global_parser;
 
+        // D2 client configuration.
+        D2ClientConfigPtr d2_client_cfg;
+
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
                                                         mutable_cfg->mapValue();
@@ -445,8 +448,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 // Apply defaults
                 D2ClientConfigParser::setAllDefaults(config_pair.second);
                 D2ClientConfigParser parser;
-                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
-                srv_cfg->setD2ClientConfig(cfg);
+                d2_client_cfg = parser.parse(config_pair.second);
                 continue;
             }
 
@@ -557,7 +559,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||
-                 (config_pair.first == "loggers")) {
+                 (config_pair.first == "loggers") ||
+                 (config_pair.first == "hostname-char-set") ||
+                 (config_pair.first == "hostname-char-replacement")) {
 
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
@@ -583,6 +587,16 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // it checks that there is no conflict between plain subnets and those
         // defined as part of shared networks.
         global_parser.sanityChecks(srv_cfg, mutable_cfg);
+
+        // Validate D2 client confuguration.
+        if (!d2_client_cfg) {
+            d2_client_cfg.reset(new D2ClientConfig());
+            d2_client_cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
+                return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+             });
+        }
+        d2_client_cfg->validateContents();
+        srv_cfg->setD2ClientConfig(d2_client_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)

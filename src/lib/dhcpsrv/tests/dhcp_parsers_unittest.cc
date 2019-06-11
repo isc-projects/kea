@@ -216,6 +216,14 @@ public:
                     continue;
                 }
 
+                // Save global hostname-char-*.
+                if ((config_pair.first == "hostname-char-set") ||
+                    (config_pair.first == "hostname-char-replacement")) {
+                    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
+                                                                            config_pair.second);
+                    continue;
+                }
+
                 if (config_pair.first == "hooks-libraries") {
                     HooksLibrariesParser hook_parser;
                     HooksConfig&  libraries =
@@ -254,6 +262,7 @@ public:
                 // Used to be done by parser commit
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(d2_client_config->second);
+                cfg->validateContents();
                 CfgMgr::instance().setD2ClientConfig(cfg);
             }
 
@@ -1683,13 +1692,13 @@ TEST_F(ParseConfigTest, hexOptionData) {
         "0C:00:03:01:C0:00:03:02", // colons
         "0x0C000301C0000302",  // 0x
         "C 0 3 1 C0 0 3 02",  // one or two digit octets
-        "0x0c000301C0000302"   // upper or lower case digits 
+        "0x0c000301C0000302"   // upper or lower case digits
     };
 
     for (auto hex_str : valid_hexes) {
-        ostringstream os; 
+        ostringstream os;
         os <<
-            "{ \n" 
+            "{ \n"
             "  \"option-data\": [ { \n"
             "    \"name\": \"domain-name-servers\", \n"
             "    \"code \": 6, \n"
@@ -2261,6 +2270,11 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
     ASSERT_TRUE(d2_client_config->getContext());
     EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
 
     // Verify that the configuration object unparses.
     ConstElementPtr expected;
@@ -2315,6 +2329,251 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
     ASSERT_TRUE(d2_client_config->getContext());
     EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    ASSERT_NO_THROW(expected = Element::fromJSON(config_str2)->get("dhcp-ddns"));
+    ASSERT_TRUE(expected);
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
+}
+
+/// @brief Checks that a valid, enabled D2 client configuration works correctly
+/// with hostname-char stuff moved to global.
+TEST_F(ParseConfigTest, validD2ConfigGlobal) {
+
+    // Configuration string containing valid values.
+    std::string config_str =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 3432, "
+        "     \"sender-ip\" : \"192.0.2.1\", "
+        "     \"sender-port\" : 3433, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
+        "    },"
+        "  \"hostname-char-set\" : \"[^A-Z]\", "
+        "  \"hostname-char-replacement\" : \"*\" "
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config_str);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is enabled and we can fetch the configuration.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+    D2ClientConfigPtr d2_client_config;
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.0.2.0", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(3432, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(config_str)->get("dhcp-ddns"));
+    ASSERT_TRUE(expected);
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
+
+    // Another valid Configuration string.
+    // This one is disabled, has IPV6 server ip, control flags false,
+    // empty prefix/suffix
+    std::string config_str2 =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : false, "
+        "     \"server-ip\" : \"2001:db8::\", "
+        "     \"server-port\" : 43567, "
+        "     \"sender-ip\" : \"2001:db8::1\", "
+        "     \"sender-port\" : 3433, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"override-no-update\" : false, "
+        "     \"override-client-update\" : false, "
+        "     \"replace-client-name\" : \"never\", "
+        "     \"generated-prefix\" : \"\", "
+        "     \"qualifying-suffix\" : \"\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
+        "    },"
+        "  \"hostname-char-set\" : \"[^A-Z]\", "
+        "  \"hostname-char-replacement\" : \"*\" "
+        "}";
+
+    // Verify that the configuration string parses.
+    rcode = parseConfiguration(config_str2);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is disabled and we can fetch the configuration.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("2001:db8::", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(43567, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
+    EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    ASSERT_NO_THROW(expected = Element::fromJSON(config_str2)->get("dhcp-ddns"));
+    ASSERT_TRUE(expected);
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
+}
+
+/// @brief Checks that a valid, enabled D2 client configuration works correctly
+/// with hostname-char stuff in both local and global (local has the priority).
+TEST_F(ParseConfigTest, validD2ConfigBoth) {
+
+    // Configuration string containing valid values.
+    std::string config_str =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 3432, "
+        "     \"sender-ip\" : \"192.0.2.1\", "
+        "     \"sender-port\" : 3433, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
+        "    },"
+        "  \"hostname-char-set\" : \"[^A-Z]\", "
+        "  \"hostname-char-replacement\" : \"*\" "
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config_str);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is enabled and we can fetch the configuration.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+    D2ClientConfigPtr d2_client_config;
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.0.2.0", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(3432, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    // Verify that the configuration object unparses.
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(config_str)->get("dhcp-ddns"));
+    ASSERT_TRUE(expected);
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
+
+    // Another valid Configuration string.
+    // This one is disabled, has IPV6 server ip, control flags false,
+    // empty prefix/suffix
+    std::string config_str2 =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : false, "
+        "     \"server-ip\" : \"2001:db8::\", "
+        "     \"server-port\" : 43567, "
+        "     \"sender-ip\" : \"2001:db8::1\", "
+        "     \"sender-port\" : 3433, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"override-no-update\" : false, "
+        "     \"override-client-update\" : false, "
+        "     \"replace-client-name\" : \"never\", "
+        "     \"generated-prefix\" : \"\", "
+        "     \"qualifying-suffix\" : \"\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
+        "    },"
+        "  \"hostname-char-set\" : \"[^A-Z]\", "
+        "  \"hostname-char-replacement\" : \"*\" "
+        "}";
+
+    // Verify that the configuration string parses.
+    rcode = parseConfiguration(config_str2);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is disabled and we can fetch the configuration.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("2001:db8::", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(43567, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
+    EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
 
     ASSERT_NO_THROW(expected = Element::fromJSON(config_str2)->get("dhcp-ddns"));
     ASSERT_TRUE(expected);
@@ -2345,6 +2604,36 @@ TEST_F(ParseConfigTest, validDisabledD2Config) {
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
     EXPECT_TRUE(d2_client_config);
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
+    EXPECT_TRUE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_TRUE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_FALSE(d2_client_config->getHostnameSanitizer());
+
+    // Retry with hostname-char-* globals.
+    std::string config_str2 =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : false"
+        "    },"
+        "  \"hostname-char-set\" : \"[^A-Z]\", "
+        "  \"hostname-char-replacement\" : \"*\" "
+        "}";
+
+    // Verify that the configuration string parses.
+    rcode = parseConfiguration(config_str2);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is disabled.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    // Make sure fetched config agrees.
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    EXPECT_TRUE(d2_client_config);
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ("[^A-Z]", d2_client_config->getHostnameCharSet().get());
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ("*", d2_client_config->getHostnameCharReplacement().get());
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
 }
 
 /// @brief Checks that given a partial configuration, parser supplies
@@ -2394,6 +2683,11 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.",
               d2_client_config->getQualifyingSuffix());
+    EXPECT_TRUE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_TRUE(d2_client_config->getHostnameCharSet().empty());
+    EXPECT_TRUE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_TRUE(d2_client_config->getHostnameCharReplacement().empty());
+    EXPECT_FALSE(d2_client_config->getHostnameSanitizer());
 }
 
 

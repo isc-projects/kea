@@ -295,10 +295,11 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
-protected:
     /// @brief Validates member values.
     ///
     /// Method is used by the constructor to validate member contents.
+    /// Should be called when parsing is complete to (re)compute
+    /// the hostname sanitizer.
     ///
     /// @throw D2ClientError if given an invalid protocol or format.
     virtual void validateContents();

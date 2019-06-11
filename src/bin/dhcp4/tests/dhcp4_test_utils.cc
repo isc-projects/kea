@@ -635,6 +635,10 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     } );
 
     if (commit) {
+        auto cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+        cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
+            return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+        });
         CfgMgr::instance().commit();
     }
  }
@@ -680,6 +684,10 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
             cfg_db->createManagers();
             } );
         if (commit) {
+            auto cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+            cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
+                return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+            });
             CfgMgr::instance().commit();
         }
     }

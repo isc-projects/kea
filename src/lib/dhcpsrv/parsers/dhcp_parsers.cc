@@ -1493,7 +1493,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     // parameters to a subnet we need to set a callback function for
     // the d2 client config to allow for fetching global parameters.
     new_config->setFetchGlobalsFn([]() -> ConstElementPtr {
-        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
 
     return(new_config);
