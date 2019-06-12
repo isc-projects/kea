@@ -38,9 +38,11 @@ constexpr useconds_t    Fuzz::SLEEP_INTERVAL;
 constexpr long          Fuzz::LOOP_COUNT;
 
 // Variables needed to synchronize between main and fuzzing threads.
-condition_variable      Fuzz::sync_cond_;
-mutex                   Fuzz::sync_mutex_;
-thread                  Fuzz::fuzz_thread_;
+condition_variable      Fuzz::fuzz_cond_;
+mutex                   Fuzz::fuzz_mutex_;
+thread                  Fuzz::fuzzing_thread_;
+condition_variable      Fuzz::main_cond_;
+mutex                   Fuzz::main_mutex_;
 
 // Address structure used to send data to address/port on which Kea listens
 struct sockaddr_in6     Fuzz::servaddr_;
@@ -48,6 +50,10 @@ struct sockaddr_in6     Fuzz::servaddr_;
 // Pointer to the shutdown flag used by Kea.  The fuzzing code will set this
 // after the appropriate number of packets have been fuzzed.
 volatile bool*          Fuzz::shutdown_ptr_ = NULL;
+
+// Variable used in condition checks
+volatile bool Fuzz::fuzz_ready_ = false;
+volatile bool Fuzz::main_ready_ = false;
 
 // Flag to state that the 
 
@@ -113,13 +119,25 @@ Fuzz::init(volatile bool* shutdown_flag) {
         servaddr_.sin6_port = htons(port);
         servaddr_.sin6_scope_id = iface_id;
 
+        // Ensure that condition variables are initially clear.
+        fuzz_ready_ = false;
+        main_ready_ = false;
+
         // Initialization complete.
         LOG_INFO(fuzz_logger, FUZZ_INTERFACE)
                  .arg(iface_ptr).arg(address_ptr).arg(port);
 
         // Start the thread that reads the packets sent by AFL from stdin and
-        // passes them to the port on which Kea is listening.
-        fuzz_thread_ = std::thread(Fuzz::main);
+        // passes them to the port on which Kea is listening.  We'll ensure
+        // the the fuzzing thread has read its first packet from the fuzzer
+        // before continuing.
+        unique_lock<mutex> lock(fuzz_mutex_);
+        fuzzing_thread_ = std::thread(Fuzz::run);
+        LOG_DEBUG(fuzz_logger, 1, FUZZ_WAI).arg("fuzz_cond").arg("init");
+        fuzz_cond_.wait(lock, []{return fuzz_ready_;});
+        fuzz_ready_ = false;
+        LOG_DEBUG(fuzz_logger, 1, FUZZ_CWT).arg("fuzz_cond").arg("init");
+        lock.unlock();
 
     } catch (const FuzzInitFail& e) {
         // AFL tends to make it difficult to find out what exactly has failed:
@@ -134,7 +152,7 @@ Fuzz::init(volatile bool* shutdown_flag) {
 // Then it wait for a conditional, which is called in kea_fuzz_notify() from
 // Kea main loop.
 void
-Fuzz::main(void) {
+Fuzz::run(void) {
     // Create the socket throw which packets read from stdin will be send
     // to the port on which Kea is listening.
     int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -151,6 +169,11 @@ Fuzz::main(void) {
     // of the fuzzing process.
     auto loop = Fuzz::LOOP_COUNT;
     while (loop-- > 0) {
+        // Prevent the main thread from reading until we have made a packet
+        // available.  Although the read in Kea itself is not protected by
+        // a mutex, the condition variable used to control when the main
+        // thread runs is.
+        unique_lock<mutex> fuzz_lock(fuzz_mutex_);
 
         // Read from stdin and continue reading (albeit after a pause) even
         // if there is an error.  Do the same with end of files although, as
@@ -181,7 +204,6 @@ Fuzz::main(void) {
         // code doesn't work.
 
         // Block the completion function until the data has been sent:
-        unique_lock<std::mutex> lock(sync_mutex_);
 
         // Send the data to the main Kea thread.
         ssize_t sent = sendto(sockfd, buf, length, 0,
@@ -194,40 +216,58 @@ Fuzz::main(void) {
             LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SEND).arg(sent);
         }
 
-        // If this is the last loop iteration, set the shutdown flag.  This
-        // is done under the protection of the mutex to avoid the following
-        // scenario:
-        // 
-        // a) This loop reaches its last iteration, then waits for
-        //    notify() to complete.
-        // b) notify() completes and returns.  The main processing loop checks
-        //    the shutdown flag and finds that it is not set.  It enters the
-        //    next iteration of the loop and waits to read something from the
-        //    configured interface.
-        // c) This thread resumes execution, sets the shutdown flag and exits.
-        //
-        // This would leave the main processing loop waiting for a packet that
-        // will never arrive.
-        //
-        // By setting the shutdown flag under the protection of the mutex,
-        // the notify() call will not take place until the flag is set, and
-        // the main thread will see the flag being set and exit.  We might
-        // as well close the socket at the same time.
         if (loop <= 0) {
+            // If this is the last loop iteration, set the shutdown flag.  This
+            // is done under the protection of the mutex to avoid the following
+            // scenario:
+            // 
+            // a) This loop reaches its last iteration, then waits for
+            //    notify() to complete.
+            // b) notify() completes and returns.  The main processing loop
+            //    check the shutdown flag and finds that it is not set.  It
+            //    enters the next iteration of the loop and waits to read
+            //    something from the configured interface.
+            // c) This thread resumes execution, sets the shutdown flag and
+            //    exits.
+            //
+            // This would leave the main processing loop waiting for a packet
+            // that will never arrive.
+            //
+            // By setting the shutdown flag under the protection of the mutex,
+            // the notify() call will not take place until the flag is set, and
+            // the main thread will see the flag being set and exit.  We might
+            // as well close the socket at the same time.
             *shutdown_ptr_ = true;
             close(sockfd);
+            LOG_DEBUG(fuzz_logger, 1, FUZZ_SHUTDOWN_INITIATED);
         }
+        LOG_DEBUG(fuzz_logger, 1, FUZZ_SET).arg("fuzz_cond-1").arg("main");
+        fuzz_ready_ = true;
+        fuzz_cond_.notify_all();
+        LOG_DEBUG(fuzz_logger, 1, FUZZ_CST).arg("fumz_cond-1").arg("main");
+        fuzz_lock.unlock();
 
         // We now need to synchronize with the main thread.  In particular,
         // we suspend processing until we know that the processing of the
         // packet by Kea has finished and that the completion function has
         // raised a SIGSTOP.
-        sync_cond_.wait(lock);
-        lock.unlock();
+        unique_lock<std::mutex> main_lock(main_mutex_);
+        LOG_DEBUG(fuzz_logger, 1, FUZZ_WAI).arg("main_cond").arg("main");
+        main_cond_.wait(main_lock, [] {return main_ready_;});
+        LOG_DEBUG(fuzz_logger, 1, FUZZ_CWT).arg("main_cond").arg("main");
+        main_ready_ = false;
+        main_lock.unlock();
     }
 
-    // Loop has exited, so we should shut down Kea.  Tidy up and signal Kea
-    // to exit.
+    // If the main thread is waiting, let it terminate as well.
+    unique_lock<mutex> fuzz_lock(fuzz_mutex_);
+    fuzz_ready_ = true;
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_SET).arg("fuzz_cond-2").arg("main");
+    fuzz_cond_.notify_all();
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_CST).arg("fuzz_cond-2").arg("main");
+    fuzz_lock.unlock();
+
+    // Loop has exited, so we should shut down Kea.
     LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_LOOP_EXIT);
 
     return;
@@ -236,7 +276,14 @@ Fuzz::main(void) {
 // Waits for the fuzzing thread to terminate.
 void
 Fuzz::wait(void) {
-    fuzz_thread_.join();
+    unique_lock<mutex> main_lock(main_mutex_);
+    main_ready_ = true;
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_SET).arg("main_cond").arg("wait");
+    main_cond_.notify_all();
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_CST).arg("main_cond").arg("wait");
+    main_lock.unlock();
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_THREAD_WAIT);
+    fuzzing_thread_.join();
 }
 
 // Called by the main thread, this notifies AFL that processing for the
@@ -245,8 +292,22 @@ void
 Fuzz::notify(void) {
     LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_NOTIFY_CALLED);
     raise(SIGSTOP);
-    lock_guard<std::mutex> lock(sync_mutex_);
-    sync_cond_.notify_all();
+
+    // Tell the fuzzing loop that it can continue.
+    unique_lock<std::mutex> main_lock(main_mutex_);
+    main_ready_ = true;
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_SET).arg("main_cond").arg("notify");
+    main_cond_.notify_all();
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_CST).arg("main_cond").arg("notify");
+    main_lock.unlock();
+
+    // ... and wait until it tells us that it can continue.
+    unique_lock<mutex> fuzz_lock(fuzz_mutex_);
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_WAI).arg("fuzz_cond").arg("notify");
+    fuzz_cond_.wait(fuzz_lock, []{return fuzz_ready_;});
+    LOG_DEBUG(fuzz_logger, 1, FUZZ_CWT).arg("fuzz_cond").arg("notify");
+    fuzz_ready_ = false;
+    fuzz_lock.unlock();
 }
 
 #endif  // ENABLE_AFL

@@ -54,4 +54,20 @@ communications between the fuzzing thread and the main Kea processing; the c
 % FUZZ_SOCKET_CREATE_FAIL failed to crease socket for use by fuzzing thread: %1
 An error message output when the fuzzing code has failed to create a socket
 through which is will copy data received on stdin from the AFL fuzzer to
-the port on which
+the port on which Kea is listening.
+
+% FUZZ_WAI %2: %1
+A debug message stating what is being waited for.
+
+% FUZZ_SET %2: %1
+A debug message stating what is being set.
+
+% FUZZ_CWT %2: %1
+
+% FUZZ_CST %2: %1
+
+% FUZZ_THREAD_WAIT waiting for thread to die
+
+% FUZZ_SHUTDOWN_INITIATED shutdown initated, shutdown flag is set
+
+% FUZZ_GENERAL %1

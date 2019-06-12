@@ -55,19 +55,7 @@ public:
     /// logger. (Other than initialization - when the thread is not running -
     /// this is the only use of the fuzzing logger.) If the error is fatal, the
     /// thread will terminate, something that may cause the fuzzer to hang.
-    static void kea_fuzz_main(void);
-
-    /// @brief Fuzzing Thread
-    ///
-    /// This function is run in a separate thread.  It loops, reading input
-    /// from AFL that appears on stdin and writing it to the address/port on
-    /// which Kea is listening.
-    ///
-    /// After writing the data to the Kea address/port, the function waits
-    /// until processing of the data is complete (as indicated by a condition
-    /// variable set by the notification function) before reading the next
-    /// input.
-    static void main(void);
+    static void run(void);
 
     /// @brief Notify fuzzing thread that processing is complete
     ///
@@ -98,22 +86,24 @@ public:
     ///  processing packets properly.
     static constexpr long LOOP_COUNT = 1000;
 
-    // Member variables
+    // Condition/mutext variables.  The fuzz_XX_ variables are set by the
+    // fuzzing thread and waited on by the main thread.  The main_XX_ variables
+    // are set by the main thread and waited on by the fuzzing thread.
+    static std::condition_variable  fuzz_cond_;     //< Set by fuzzing thread
+    static std::mutex               fuzz_mutex_;    //< Set by fuzzing thread
+    static std::condition_variable  main_cond_;     //< Set by main thread
+    static std::mutex               main_mutex_;    //< Set by main thread
 
-    /// @brief Condition variable to synchronize between threads.
-    static std::condition_variable  sync_cond_;
+    // The next two variables are used in the condition variables test.  fuzz_ready_
+    // i set by the fuzzing thread and cleared by the main thread.  main_ready_
+    // is set by the main thread and cleared by the fuzzing thread.
+    static volatile bool            fuzz_ready_;    //< Set when data has been read from fuzzer
+    static volatile bool            main_ready_;    //< Set when data has been read from fuzzer
 
-    /// @brief Mutex to synchronize between threads.
-    static std::mutex               sync_mutex_;
-
-    /// @brief Holds the separate thread that reads from stdin
-    static std::thread              fuzz_thread_;
-
-    /// @brief Socket structure used for sending data to main thread
-    static struct sockaddr_in6      servaddr_;
-
-    /// @brief Pointer to the Kea shutdown flag
-    static volatile bool*           shutdown_ptr_;
+    // Other member variables.
+    static std::thread              fuzzing_thread_;//< Holds the thread ID
+    static struct sockaddr_in6      servaddr_;      //< For sending data to main thread
+    static volatile bool*           shutdown_ptr_;  //< Pointer to shutdown flag
 };
 
 
