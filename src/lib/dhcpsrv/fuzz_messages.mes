@@ -1,0 +1,57 @@
+# Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::dhcp
+
+% FUZZ_DATA_READ read %1 byte(s) from AFL via stdin
+A debug message output to indicate how much data has been received from
+the fuzzer.
+
+% FUZZ_INTERFACE fuzzing will use interface %1 (address %2, port %3)
+An informational message output during fuzzing initialization, this reports
+the details of the interface to be used for fuzzing.
+
+% FUZZ_INIT_FAIL fuzz initialization failure, reason: %1
+A generic message reported via standard Kea logging if the fuzzing
+initialization failed.  The reason for the failure is given in the message.
+
+% FUZZ_LOOP_EXIT main loop has exited, shutting down Kea
+This debug message is output when Kea has processed the number of packets
+given by the hard-coded variable Fuzz::LOOP_COUNT.  Kea is shutting
+itself down and will be restarted by AFL.  This is recommended by the AFL
+documentation as a way of avoiding issues if Kea gets itself into a funny
+state after running for a long time.
+
+% FUZZ_NOTIFY_CALLED kea_fuzz_notify() has been called
+A debug message indicating that the processing of a packet by Kea has
+finished and that the kea_fuzz_notify() function has been called (which
+raises a SIGSTOP informing AFL that Kea is ready to receive another packet).
+
+% FUZZ_READ_FAIL error reading input from fuzzer: %1
+This error is reported if the read of data from the fuzzer (which is received
+over stdin) fails.  If this occurs, the thread will sleep for a short period
+before retrying the read.  The message gives the reason for the failure.
+
+% FUZZ_SEND sent %1 byte(s) to the socket connected to the Kea interface
+A debug message stating that the sendto() call in the main fuzzing function
+has successfully completed.
+
+% FUZZ_SEND_ERROR failed to send data to Kea input socket: %1
+This error will be reported if the sendto() call in the fuzzing thread (which
+sends data received from AFL to the socket on which Kea is listening) fails.
+The reason for the failure is given in the message.  The fuzzing code will
+attempt to continue from this, but it may cause the fuzzing process to fail.
+
+% FUZZ_SHORT_SEND expected to send %d bytes to Kea input socket but only sent %2
+A warning message that is output if the sendto() call (used to send data
+from the fuzzing thread to the main Kea processing) did not send as much
+data as that read from AFL.  This may indicate a problem in the underlying
+communications between the fuzzing thread and the main Kea processing; the c
+
+% FUZZ_SOCKET_CREATE_FAIL failed to crease socket for use by fuzzing thread: %1
+An error message output when the fuzzing code has failed to create a socket
+through which is will copy data received on stdin from the AFL fuzzer to
+the port on which

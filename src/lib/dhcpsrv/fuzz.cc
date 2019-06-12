@@ -1,280 +1,252 @@
-/*
- * Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- */
+// Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "config.h"
-
-#include <dhcp6/fuzz.h>
-
-#define ENABLE_AFL
+#include <config.h>
 
 #ifdef ENABLE_AFL
-#include <sys/errno.h>
+
+#ifndef __AFL_LOOP
+#error To use American Fuzzy Lop you have to set CXX to afl-clang-fast++
+#endif
 
 #include <dhcp/dhcp6.h>
+#include <dhcpsrv/fuzz.h>
+#include <dhcpsrv/fuzz_log.h>
 
-#include <iostream>
-#include <fstream>
-#include <ctime>
+#include <boost/lexical_cast.hpp>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <pthread.h>
 
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <ctime>
 
-#ifndef __AFL_LOOP
-#error To use American Fuzzy Lop you have to set CC to afl-clang-fast!!!
-#endif
-
-/// This is how many packets Kea will process until shutting itself down.
-/// AFL should restart it. This safety switch is here for eliminating cases
-/// where Kea goes into a weird state and stops processing packets properly.
-const unsigned int LOOP_COUNT = 100000;
-
-/// This mechanism limits down the number of logs this harness prints.
-/// E.g. when set to 100, it will print a message every 100 packets.
-const unsigned int PRINT_EVERY = 5;
-
-/// This is the place where the harness log message will be printed.
-const std::string PRINT_LOG("/tmp/kea-fuzz-harness.txt");
-
-/*
- * We are using pthreads directly because we might be using it with unthreaded
- * version of BIND, where all thread functions are mocks. Since AFL for now only
- * works on Linux it's not a problem.
- */
-static pthread_cond_t cond;
-static pthread_mutex_t mutex;
-
-static bool ready;
-
+using namespace isc;
+using namespace isc::dhcp;
 using namespace std;
 
-static volatile bool * shutdown_reference = NULL;
+// Constants defined in the class definition
+constexpr size_t        Fuzz::BUFFER_SIZE;
+constexpr useconds_t    Fuzz::SLEEP_INTERVAL;
+constexpr long          Fuzz::LOOP_COUNT;
 
-void kea_shutdown(void) {
-    if (shutdown_reference) {
-        // do we have the reference to shutdown flag from Dhcp6Srv?
-        // If yes, then let's set it to true. Kea will shutdown on
-        // its own.
-        *shutdown_reference = true;
-    } else {
-        // We don't have the pointer yet. Let's terminate abruptly.
-        exit(EXIT_SUCCESS);
+// Variables needed to synchronize between main and fuzzing threads.
+condition_variable      Fuzz::sync_cond_;
+mutex                   Fuzz::sync_mutex_;
+thread                  Fuzz::fuzz_thread_;
+
+// Address structure used to send data to address/port on which Kea listens
+struct sockaddr_in6     Fuzz::servaddr_;
+
+// Pointer to the shutdown flag used by Kea.  The fuzzing code will set this
+// after the appropriate number of packets have been fuzzed.
+volatile bool*          Fuzz::shutdown_ptr_ = NULL;
+
+// Flag to state that the 
+
+
+
+// Fuzzer initialization: create the thread artifacts and start the
+// main thread.
+void
+Fuzz::init(volatile bool* shutdown_flag) {
+    try {
+        stringstream reason;
+
+        // Store reference to shutdown flag.  When the fuzzing loop has read
+        // the set number of packets from kea, it will set this flag to trigger
+        // a Kea shutdown.
+        if (shutdown_flag) {
+            shutdown_ptr_ = shutdown_flag;
+        } else {
+            isc_throw(FuzzInitFail, "must pass shutdown flag to kea_fuzz_init");
+        }
+
+        // Get the environment for the fuzzing.  First the interface to use.
+        const char *iface_ptr = getenv("KEA_AFL_INTERFACE");
+        if (! iface_ptr) {
+            isc_throw(FuzzInitFail, "no fuzzing interface has been set");
+        }
+
+        unsigned int iface_id = if_nametoindex(iface_ptr);
+        if (iface_id == 0) {
+            reason << "error retrieving interface ID for "
+                   << iface_ptr << ": " << strerror(errno);
+            isc_throw(FuzzInitFail, reason.str());
+        }
+
+        // Now the address.
+        const char *address_ptr = getenv("KEA_AFL_ADDRESS");
+        if (address_ptr == 0) {
+            isc_throw(FuzzInitFail, "no fuzzing address has been set");
+        }
+
+        // ... and the port.
+        unsigned short port = 0;
+        const char *port_ptr = getenv("KEA_AFL_PORT");
+        if (port_ptr == 0) {
+            isc_throw(FuzzInitFail, "no fuzzing port has been set");
+        }
+        try {
+            port = boost::lexical_cast<uint16_t>(port_ptr);
+        } catch (const boost::bad_lexical_cast&) {
+            reason << "cannot convert port number specification "
+                   << port_ptr << " to an integer";
+            isc_throw(FuzzInitFail, reason.str());
+        }
+
+        // Set up the IPv6 address structure.
+        memset(&servaddr_, 0, sizeof (servaddr_));
+        servaddr_.sin6_family = AF_INET6;
+        if (inet_pton(AF_INET6, address_ptr, &servaddr_.sin6_addr) != 1) {
+            reason << "inet_pton() failed: can't convert "
+                   << address_ptr << " to an IPv6 address" << endl;
+            isc_throw(FuzzInitFail, reason.str());
+        }
+        servaddr_.sin6_port = htons(port);
+        servaddr_.sin6_scope_id = iface_id;
+
+        // Initialization complete.
+        LOG_INFO(fuzz_logger, FUZZ_INTERFACE)
+                 .arg(iface_ptr).arg(address_ptr).arg(port);
+
+        // Start the thread that reads the packets sent by AFL from stdin and
+        // passes them to the port on which Kea is listening.
+        fuzz_thread_ = std::thread(Fuzz::main);
+
+    } catch (const FuzzInitFail& e) {
+        // AFL tends to make it difficult to find out what exactly has failed:
+        // make sure that the error is logged.
+        LOG_ERROR(fuzz_logger, FUZZ_INIT_FAIL).arg(e.what());
+        throw;
     }
 }
-
 
 // This is the main fuzzing function. It receives data from fuzzing engine.
 // That data is received to stdin and then sent over the configured UDP socket.
 // Then it wait for a conditional, which is called in kea_fuzz_notify() from
 // Kea main loop.
-static void *
-kea_main_client(void *) {
-    const char *host;
-    struct sockaddr_in6 servaddr;
-    int sockfd;
-    int loop;
-    void *buf;
-
-    string iface("eth0");
-    string dst(ALL_DHCP_RELAY_AGENTS_AND_SERVERS);
-    string port("547");
-
-    ofstream f(PRINT_LOG.c_str(), ios::ate);
-
-    const char *iface_ptr = getenv("KEA_AFL_INTERFACE");
-    if (iface_ptr) {
-        iface = string(iface_ptr);
-    }
-
-    const char *dst_ptr = getenv("KEA_AFL_ADDR");
-    if (dst_ptr) {
-        dst = string(dst_ptr);
-    }
-
-    const char *port_ptr = getenv("KEA_AFL_PORT");
-    if (port_ptr) {
-        port = string(port_ptr);
-    }
-
-    unsigned int iface_id = if_nametoindex(iface.c_str());
-
-    f << "Kea AFL setup:" << endl;
-    f << "Interface: " << iface << endl;
-    f << "Interface index: " << iface_id << endl;
-    f << "UDP destination addr: " << dst << endl;
-    f << "UDP destination port: " << port << endl;
-
-    memset(&servaddr, 0, sizeof (servaddr));
-    servaddr.sin6_family = AF_INET6;
-    if (inet_pton(AF_INET6, dst.c_str(), &servaddr.sin6_addr) != 1) {
-        f << "Error: inet_pton() failed: can't convert " << dst
-          << " to address." << endl;
-        exit(EXIT_FAILURE);
-    }
-    servaddr.sin6_port = htons(atoi(port.c_str()));
-    servaddr.sin6_scope_id = iface_id;
-
-    sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-        f << "Failed to create UDP6 socket" << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    buf = malloc(65536);
-    if (!buf) {
-        f << "Failed to allocate a buffer" << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    time_t t;
-
-    loop = LOOP_COUNT;
-    while (loop--) {
-        ssize_t length;
-
-        length = read(0, buf, 65536);
-        if (length <= 0) {
-            usleep(1000000);
-            continue;
-        }
-
-        /* if (length > 4096) {
-            if (getenv("AFL_CMIN")) {
-                ns_server_flushonshutdown(ns_g_server,
-                                          ISC_FALSE);
-                isc_app_shutdown();
-                return (NULL);
-            }
-            raise(SIGSTOP);
-            continue;
-            } */
-
-        if (pthread_mutex_lock(&mutex) != 0) {
-            f << "#### Failed to lock mutex" << endl;
-	    abort();
-        }
-
-        ready = false;
-
-        ssize_t sent;
-
-        t = time(0);
-        struct tm * now = localtime(&t);
-
-        if (! (loop%PRINT_EVERY)) {
-            f << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << (now->tm_mday)
-              << " " << (now->tm_hour) << ":" << (now->tm_min) << ":" << (now->tm_sec)
-              << " Sending " << length << " bytes to " << dst << "/" << port
-              << " over " << iface << "/" << iface_id << ", loop iteration << "
-              << loop << endl;
-        }
-
-        sent = sendto(sockfd, buf, length, 0,
-                      (struct sockaddr *) &servaddr, sizeof(servaddr));
-        if (sent != length) {
-            f << "#### Error: expected to send " << length
-              << ", but really sent " << sent << endl;
-	    f << "#### errno=" << errno << endl;
-        }
-
-        /* unclog */
-        recvfrom(sockfd, buf, 65536, MSG_DONTWAIT, NULL, NULL);
-
-        while (!ready)
-            pthread_cond_wait(&cond, &mutex);
-
-        if (pthread_mutex_unlock(&mutex) != 0) {
-            f << "#### Failed to unlock mutex" << endl;
-	    abort();
-        }
-    }
-
-    f << LOOP_COUNT << " packets processed, terminating." << endl;
-    f.close();
-
-    free(buf);
-    close(sockfd);
-
-    // @todo: shutdown kea
-    // ns_server_flushonshutdown(ns_g_server, ISC_FALSE);
-    // isc_app_shutdown();
-    kea_shutdown();
-
-    /*
-     * It's here just for the signature, that's how AFL detects if it's
-     * a 'persistent mode' binary.
-     */
-    __AFL_LOOP(0);
-
-    return (NULL);
-}
-
-#endif /* ENABLE_AFT */
-
 void
-kea_fuzz_notify(void) {
-#ifdef ENABLE_AFL
-    if (getenv("AFL_CMIN")) {
-        kea_shutdown();
+Fuzz::main(void) {
+    // Create the socket throw which packets read from stdin will be send
+    // to the port on which Kea is listening.
+    int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        LOG_FATAL(fuzz_logger, FUZZ_SOCKET_CREATE_FAIL).arg(strerror(errno));
         return;
     }
 
-    raise(SIGSTOP);
+    // Main loop.  This runs for a fixed number of iterations, after which
+    // Kea will be terminated and AFL will restart it.  The counting of loop
+    // iterations is done here with a separate variable (instead of inside
+    // inside the read loop in the server process using __AFL_LOOP) to ensure
+    // that thread running this function shutdown down between each restart
+    // of the fuzzing process.
+    auto loop = Fuzz::LOOP_COUNT;
+    while (loop-- > 0) {
 
-    if (pthread_mutex_lock(&mutex) != 0) {
-        cerr << "#### unable to lock mutex" << endl;
-        abort();
+        // Read from stdin and continue reading (albeit after a pause) even
+        // if there is an error.  Do the same with end of files although, as
+        // the fuzzer generates them in normal operation, don't log them.
+        char buf[BUFFER_SIZE];
+        ssize_t length = read(0, buf, sizeof(buf));
+        if (length <= 0) {
+            LOG_ERROR(fuzz_logger, FUZZ_READ_FAIL).arg(strerror(errno));
+            usleep(SLEEP_INTERVAL);
+            continue;
+        }
+        LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_DATA_READ)
+                  .arg(length);
+
+        // Now send the data to the socket.  This will be picked up by the main
+        // loop and acted upon, after which kea_fuzz_notify will be called.
+        //
+        // The condition variables synchronize the operation: this thread
+        // will read from stdin and write to the socket.  It then blocks until
+        // the main thread has processed the packet, at which point it can read
+        // more data from stdin.
+        //
+        // Since the read() and sendto() calls are blocking, one would think
+        // that the two threads would synchronize even without locks.  However,
+        // the problem seems to arise in the generation of SIGSTOP and the
+        // tying it to a particular packet set to Kea by the fuzzer.  But this
+        // is speculation: the fact is that without the synchronization, the
+        // code doesn't work.
+
+        // Block the completion function until the data has been sent:
+        unique_lock<std::mutex> lock(sync_mutex_);
+
+        // Send the data to the main Kea thread.
+        ssize_t sent = sendto(sockfd, buf, length, 0,
+                          (struct sockaddr *) &servaddr_, sizeof(servaddr_));
+        if (sent < 0) {
+            LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
+        } else if (sent != length) {
+            LOG_WARN(fuzz_logger, FUZZ_SHORT_SEND).arg(length).arg(sent);
+        } else {
+            LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SEND).arg(sent);
+        }
+
+        // If this is the last loop iteration, set the shutdown flag.  This
+        // is done under the protection of the mutex to avoid the following
+        // scenario:
+        // 
+        // a) This loop reaches its last iteration, then waits for
+        //    notify() to complete.
+        // b) notify() completes and returns.  The main processing loop checks
+        //    the shutdown flag and finds that it is not set.  It enters the
+        //    next iteration of the loop and waits to read something from the
+        //    configured interface.
+        // c) This thread resumes execution, sets the shutdown flag and exits.
+        //
+        // This would leave the main processing loop waiting for a packet that
+        // will never arrive.
+        //
+        // By setting the shutdown flag under the protection of the mutex,
+        // the notify() call will not take place until the flag is set, and
+        // the main thread will see the flag being set and exit.  We might
+        // as well close the socket at the same time.
+        if (loop <= 0) {
+            *shutdown_ptr_ = true;
+            close(sockfd);
+        }
+
+        // We now need to synchronize with the main thread.  In particular,
+        // we suspend processing until we know that the processing of the
+        // packet by Kea has finished and that the completion function has
+        // raised a SIGSTOP.
+        sync_cond_.wait(lock);
+        lock.unlock();
     }
 
-    ready = true;
+    // Loop has exited, so we should shut down Kea.  Tidy up and signal Kea
+    // to exit.
+    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_LOOP_EXIT);
 
-    if (pthread_cond_signal(&cond) != 0) {
-        cerr << "#### unable to cond signal" << endl;
-        abort();
-    }
-
-    if (pthread_mutex_unlock(&mutex) != 0) {
-        cerr << "Unable to unlock mutex" << endl;
-        abort();
-    }
-#endif /* ENABLE_AFL */
+    return;
 }
 
+// Waits for the fuzzing thread to terminate.
 void
-kea_fuzz_setup(volatile bool* shutdown) {
-#ifdef ENABLE_AFL
-
-    shutdown_reference = shutdown;
-
-    /// @todo: What are those variables? What do they do?
-    if (getenv("__AFL_PERSISTENT") || getenv("AFL_CMIN")) {
-        pthread_t thread;
-
-        if (pthread_mutex_init(&mutex, NULL) != 0) {
-	    cerr << "#### unable to init mutex" << endl;
-	    abort();
-        }
-
-        if (pthread_cond_init(&cond, NULL) != 0) {
-	    cerr << "#### unable to init condition variable" << endl;
-	    abort();
-        }
-
-        if (pthread_create(&thread, NULL, kea_main_client, NULL) != 0) {
-	    cerr << "#### unable to create fuzz thread" << endl;
-	    abort();
-        }
-    }
-
-#endif /* ENABLE_AFL */
+Fuzz::wait(void) {
+    fuzz_thread_.join();
 }
+
+// Called by the main thread, this notifies AFL that processing for the
+// // last packet has finished.
+void
+Fuzz::notify(void) {
+    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_NOTIFY_CALLED);
+    raise(SIGSTOP);
+    lock_guard<std::mutex> lock(sync_mutex_);
+    sync_cond_.notify_all();
+}
+
+#endif  // ENABLE_AFL

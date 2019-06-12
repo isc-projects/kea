@@ -103,7 +103,6 @@ libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_exceptions.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
-libkea_dhcpsrv_la_SOURCES += fuzz.cc fuzz.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_data_source_factory.cc host_data_source_factory.h
@@ -180,6 +179,12 @@ libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.h
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.cc
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.h
 
+if ENABLE_AFL
+libkea_dhcpsrv_la_SOURCES += fuzz.cc fuzz.h
+libkea_dhcpsrv_la_SOURCES += fuzz_log.cc fuzz_log.h
+libkea_dhcpsrv_la_SOURCES += fuzz_messages.cc fuzz_messages.h
+endif
+
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcpsrv_la_LIBADD  = $(top_builddir)/src/lib/eval/libkea-eval.la
@@ -226,6 +231,7 @@ endif
 EXTRA_DIST += alloc_engine_messages.mes
 EXTRA_DIST += dhcpsrv_messages.mes
 EXTRA_DIST += hosts_messages.mes
+EXTRA_DIST += fuzz_messages.mes
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for
@@ -237,6 +243,7 @@ maintainer-clean-local:
 	rm -f alloc_engine_messages.h alloc_engine_messages.cc
 	rm -f dhcpsrv_messages.h dhcpsrv_messages.cc
 	rm -f hosts_messages.h hosts_messages.cc
+	rm -f fuzz_messages.h fuzz_messages.cc
 
 # To regenerate messages files, one can do:
 #
@@ -251,7 +258,8 @@ if GENERATE_MESSAGES
 # Define rule to build logging source files from message file
 messages: alloc_engine_messages.h alloc_engine_messages.cc \
 	  dhcpsrv_messages.h dhcpsrv_messages.cc \
-	  hosts_messages.h hosts_messages.cc
+	  hosts_messages.h hosts_messages.cc \
+	  fuzz_messages.h fuzz_messages.cc 
 	@echo Message files regenerated
 
 alloc_engine_messages.h alloc_engine_messages.cc: alloc_engine_messages.mes
@@ -263,11 +271,15 @@ dhcpsrv_messages.h dhcpsrv_messages.cc: dhcpsrv_messages.mes
 hosts_messages.h hosts_messages.cc: hosts_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
 
+fuzz_messages.h fuzz_messages.cc: fuzz_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/fuzz_messages.mes
+
 else
 
 messages: alloc_engine_messages.h alloc_engine_messages.cc \
 	  dhcpsrv_messages.h dhcpsrv_messages.cc \
-	  hosts_messages.h hosts_messages.cc
+	  hosts_messages.h hosts_messages.cc \
+	  fuzz_messages.h fuzz_messages.cc
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif

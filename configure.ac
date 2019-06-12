@@ -1599,10 +1599,10 @@ AC_ARG_ENABLE(fuzz, [AC_HELP_STRING([--enable-fuzz],
   [indicates that the code will be built with AFL (American Fuzzy Lop) support.
    Code built this way is unusable as a regular server. [default=no]])],
    enable_fuzz=$enableval, enable_fuzz=no)
-AM_CONDITIONAL(FUZZ, test x$enable_fuzz != xno)
+AM_CONDITIONAL(ENABLE_AFL, test x$enable_fuzz != xno)
 
 if test "x$enable_fuzz" != "xno" ; then
-    AC_DEFINE([FUZZ], [1], [AFL fuzzing was enabled.])
+    AC_DEFINE([ENABLE_AFL], [1], [AFL fuzzing was enabled.])
 fi
 
 

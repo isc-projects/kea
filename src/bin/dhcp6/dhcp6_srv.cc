@@ -13,6 +13,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/duid.h>
 #include <dhcp/duid_factory.h>
+#include <dhcpsrv/fuzz.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
@@ -64,8 +65,6 @@
 #include <dhcpsrv/cql_lease_mgr.h>
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
-
-#include <dhcp6/fuzz.h>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -444,8 +443,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 }
 
 bool Dhcpv6Srv::run() {
-
-#ifdef FUZZ
+#ifdef ENABLE_AFL
     // AFL fuzzing setup initiated here. At this stage, Kea has loaded its
     // config, opened sockets, established DB connections, etc. It is truly
     // ready to process packets. Now it's time to initialize AFL. It will
@@ -453,9 +451,9 @@ bool Dhcpv6Srv::run() {
     // and will send it as packets to Kea. Kea is supposed to process them
     // and hopefully not crash in the process. Once the packet processing
     // is done, Kea should let the AFL know that it's ready for the next
-    // packet. This is done further down in this loop (see kea_fuzz_notify()).
-    kea_fuzz_setup(&shutdown_);
-#endif /* FUZZ */
+    // packet. This is done further down in this loop (see Fuzz::notify()).
+    Fuzz::init(&shutdown_);
+#endif // ENABLE_AFL
 
     while (!shutdown_) {
         try {
@@ -473,12 +471,21 @@ bool Dhcpv6Srv::run() {
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
         }
 
-#ifdef FUZZ
-        // Ok, this particular packet processing is done.
-        // Let the AFL know about it.
-        kea_fuzz_notify();
-#endif
+#ifdef ENABLE_AFL
+        // Ok, this particular packet processing is done.  If we are fuzzing,
+        // let AFL know about it.
+        Fuzz::notify();
+#endif // ENABLE_AFL
     }
+
+#ifdef ENABLE_AFL
+    // Ensure that the fuzzing thread has cleanly finished.
+    Fuzz::wait();
+
+    // The next line is needed as a signature for AFL to recognise that
+    // we are running persistent fuzzing.
+    __AFL_LOOP(0);
+#endif  // ENABLE_AFL
 
     return (true);
 }
