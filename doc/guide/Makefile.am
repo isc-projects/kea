@@ -36,12 +36,15 @@ sphinxbuild = sphinx-build
 sphinxopts = -E
 
 kea-guide.pdf: $(rst_sources)
-	@$(sphinxbuild) -M latexpdf $(srcdir) $(builddir)/_build $(sphinxopts)
+	@$(sphinxbuild) -b latex $(srcdir) $(builddir)/_build $(sphinxopts)
 
 kea-guide.html: $(rst_sources)
-	@$(sphinxbuild) -M singlehtml $(srcdir) $(builddir)/_build $(sphinxopts)
+	@$(sphinxbuild) -b singlehtml $(srcdir) $(builddir)/_build $(sphinxopts)
+
+pages: $(rst_sources)
+	@$(sphinxbuild) -b html $(srcdir) $(builddir)/_build2 $(sphinxopts)
 
 
 EXTRA_DIST = $(rst_sources)
 
-# TODO: here should ba added some stuff for DIST, etc to be consumed by automake/autoconf
+# TODO: here should be added some stuff for DIST, etc to be consumed by automake/autoconf

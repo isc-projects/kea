@@ -185,6 +185,12 @@ devel:
 guide:
 	$(MAKE) -C guide kea-guide.html
 
+pdf:
+	$(MAKE) -C guide kea-guide.pdf
+
+pages:
+	$(MAKE) -C guide pages
+
 clean:
 	rm -rf html
 
