@@ -550,9 +550,9 @@ TestConfigBackendDHCPv4::deleteAllGlobalParameters4(const db::ServerSelector& /*
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteServer4(const std::string& server_tag) {
+TestConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
     auto& index = servers_.get<ServerTagIndexTag>();
-    return (index.erase(server_tag));
+    return (index.erase(server_tag.get()));
 }
 
 uint64_t

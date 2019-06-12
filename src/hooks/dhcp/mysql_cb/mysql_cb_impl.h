@@ -10,6 +10,8 @@
 #include <cc/stamped_value.h>
 #include <database/audit_entry.h>
 #include <database/database_connection.h>
+#include <database/server.h>
+#include <database/server_collection.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
@@ -340,7 +342,7 @@ public:
     /// size of the bindings collection must match the number of placeholders
     /// in the prepared statement. The input bindings collection must be empty
     /// if the query contains no WHERE clause.
-    /// @param [out] subnets Reference to the container where fetched parameters
+    /// @param [out] parameters Reference to the container where fetched parameters
     /// will be inserted.
     void getGlobalParameters(const int index,
                              const db::MySqlBindingCollection& in_bindings,
@@ -595,6 +597,79 @@ public:
                 db::MySqlBinding::createNull());
     }
 
+    /// @brief Creates input binding for option value parameter.
+    ///
+    /// @param option Option descriptor holding option for which binding is to
+    /// be created.
+    /// @return Pointer to the binding (possibly null binding if formatted
+    /// value is non-empty.
+    db::MySqlBindingPtr createOptionValueBinding(const OptionDescriptorPtr& option);
+
+    /// @brief Retrieves a server.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param server_tag Server tag of the server to be retrieved.
+    /// @return Pointer to the @c Server object representing the server or
+    /// null if such server doesn't exist.
+    db::ServerPtr getServer(const int index, const data::ServerTag& server_tag);
+
+    /// @brief Retrieves all servers.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param [out] servers Reference to the container where fetched servers
+    /// will be inserted.
+    void getAllServers(const int index, db::ServerCollection& servers);
+
+    /// @brief Sends query to retrieve servers.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Reference to the MySQL input bindings.
+    /// @param [out] servers Reference to the container where fetched servers
+    /// will be inserted.
+    void getServers(const int index,
+                    const db::MySqlBindingCollection& in_bindings,
+                    db::ServerCollection& servers);
+
+    /// @brief Creates or updates a server.
+    ///
+    /// This method attempts to insert a new server into the database using
+    /// the query identified by @c create_index. If the insertion fails because
+    /// the server with the given tag already exists in the database, the
+    /// existing server is updated using the query identified by the
+    /// @c update_index.
+    ///
+    /// @param create_audit_revision Index of the query inserting audit
+    /// revision.
+    /// @param create_index Index of the INSERT query to be used.
+    /// @param update_index index of the UPDATE query to be used.
+    /// @param server Pointer to the server to be insertedor updated.
+    void createUpdateServer(const int create_audit_revision_index,
+                            const int create_index,
+                            const int update_index,
+                            const db::ServerPtr& server);
+
+    /// @brief Attempts to delete a server having a given tag.
+    ///
+    /// @param create_audit_revision Index of the query inserting audit
+    /// revision.
+    /// @param create_index Index of the DELETE query to be executed.
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    uint64_t deleteServer(const int create_audit_revision_index, const int index,
+                          const std::string& server_tag);
+
+    /// @brief Attempts to delete all servers.
+    ///
+    /// This method deletes all servers added by the user. It does not
+    /// delete the logical server 'all'.
+    ///
+    /// @param create_audit_revision Index of the query inserting audit
+    /// revision.
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    uint64_t deleteAllServers(const int create_audit_revision_index,
+                              const int index);
+
     /// @brief Returns backend type in the textual format.
     ///
     /// @return "mysql".
@@ -615,14 +690,6 @@ public:
     ///
     /// @return Port number on which database service is available.
     uint16_t getPort() const;
-
-    /// @brief Creates input binding for option value parameter.
-    ///
-    /// @param option Option descriptor holding option for which binding is to
-    /// be created.
-    /// @return Pointer to the binding (possibly null binding if formatted
-    /// value is non-empty.
-    db::MySqlBindingPtr createOptionValueBinding(const OptionDescriptorPtr& option);
 
     /// @brief Represents connection to the MySQL database.
     db::MySqlConnection conn_;

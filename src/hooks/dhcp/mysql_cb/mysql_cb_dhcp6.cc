@@ -82,6 +82,8 @@ public:
         GET_OPTION6_PD_POOL_ID_CODE_SPACE,
         GET_OPTION6_SHARED_NETWORK_CODE_SPACE,
         GET_AUDIT_ENTRIES6_TIME,
+        GET_SERVER6,
+        GET_ALL_SERVERS6,
         INSERT_GLOBAL_PARAMETER6,
         INSERT_GLOBAL_PARAMETER6_SERVER,
         INSERT_SUBNET6,
@@ -94,6 +96,7 @@ public:
         INSERT_OPTION_DEF6_SERVER,
         INSERT_OPTION6,
         INSERT_OPTION6_SERVER,
+        INSERT_SERVER6,
         UPDATE_GLOBAL_PARAMETER6,
         UPDATE_SUBNET6,
         UPDATE_SHARED_NETWORK6,
@@ -103,6 +106,7 @@ public:
         UPDATE_OPTION6_POOL_ID,
         UPDATE_OPTION6_PD_POOL_ID,
         UPDATE_OPTION6_SHARED_NETWORK,
+        UPDATE_SERVER6,
         DELETE_GLOBAL_PARAMETER6,
         DELETE_ALL_GLOBAL_PARAMETERS6,
         DELETE_SUBNET6_ID,
@@ -122,6 +126,8 @@ public:
         DELETE_OPTION6_SHARED_NETWORK,
         DELETE_OPTIONS6_SUBNET_ID,
         DELETE_OPTIONS6_SHARED_NETWORK,
+        DELETE_SERVER6,
+        DELETE_ALL_SERVERS6,
         NUM_STATEMENTS
     };
 
@@ -2380,6 +2386,16 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_AUDIT_ENTRIES_TIME(dhcp6)
     },
 
+    // Retrieves a server by tag.
+    { MySqlConfigBackendDHCPv6Impl::GET_SERVER6,
+      MYSQL_GET_SERVER(dhcp6)
+    },
+
+    // Retrieves all servers.
+    { MySqlConfigBackendDHCPv6Impl::GET_ALL_SERVERS6,
+      MYSQL_GET_ALL_SERVERS(dhcp6)
+    },
+
     // Insert global parameter.
     { MySqlConfigBackendDHCPv6Impl::INSERT_GLOBAL_PARAMETER6,
       MYSQL_INSERT_GLOBAL_PARAMETER(dhcp6)
@@ -2486,6 +2502,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_INSERT_OPTION_SERVER(dhcp6)
     },
 
+    // Insert server with server tag and description.
+    { MySqlConfigBackendDHCPv6Impl::INSERT_SERVER6,
+      MYSQL_INSERT_SERVER(dhcp6)
+    },
+
     // Update existing global parameter.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_GLOBAL_PARAMETER6,
       MYSQL_UPDATE_GLOBAL_PARAMETER(dhcp6)
@@ -2573,6 +2594,11 @@ TaggedStatementArray tagged_statements = { {
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SHARED_NETWORK,
       MYSQL_UPDATE_OPTION6(AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+    },
+
+    // Update existing server, e.g. server description.
+    { MySqlConfigBackendDHCPv6Impl::UPDATE_SERVER6,
+      MYSQL_UPDATE_SERVER(dhcp6)
     },
 
     // Delete global parameter by name.
@@ -2670,6 +2696,16 @@ TaggedStatementArray tagged_statements = { {
     // Delete options belonging to a shared_network.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SHARED_NETWORK,
       MYSQL_DELETE_OPTION(dhcp6, AND o.scope_id = 4 AND o.shared_network_name = ?)
+    },
+
+    // Delete a server by tag.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_SERVER6,
+      MYSQL_DELETE_SERVER(dhcp6)
+    },
+
+    // Deletes all servers except logical server 'all'.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SERVERS6,
+      MYSQL_DELETE_ALL_SERVERS(dhcp6)
     }
 }
 };
@@ -2894,14 +2930,22 @@ MySqlConfigBackendDHCPv6::getRecentAuditEntries(const db::ServerSelector& server
 
 ServerCollection
 MySqlConfigBackendDHCPv6::getAllServers6() const {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::getAllServers6"
-              " is not implemented");
+    ServerCollection servers;
+
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SERVERS6);
+    impl_->getAllServers(MySqlConfigBackendDHCPv6Impl::GET_ALL_SERVERS6,
+                         servers);
+
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SERVERS6_RESULT)
+        .arg(servers.size());
+    return (servers);
 }
 
 ServerPtr
-MySqlConfigBackendDHCPv6::getServer6(const data::ServerTag& /* server_tag */) const {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::getServer6"
-              " is not implemented");
+MySqlConfigBackendDHCPv6::getServer6(const data::ServerTag& server_tag) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SERVER6)
+        .arg(server_tag.get());
+    return (impl_->getServer(MySqlConfigBackendDHCPv6Impl::GET_SERVER6, server_tag));
 }
 
 void
@@ -2984,9 +3028,13 @@ MySqlConfigBackendDHCPv6::createUpdateGlobalParameter6(const ServerSelector& ser
 }
 
 void
-MySqlConfigBackendDHCPv6::createUpdateServer6(const ServerPtr& /* server */) {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::createUpdateServer6"
-              " is not implemented");
+MySqlConfigBackendDHCPv6::createUpdateServer6(const ServerPtr& server) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SERVER6)
+        .arg(server->getServerTag());
+    impl_->createUpdateServer(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                              MySqlConfigBackendDHCPv6Impl::INSERT_SERVER6,
+                              MySqlConfigBackendDHCPv6Impl::UPDATE_SERVER6,
+                              server);
 }
 
 uint64_t
@@ -3180,15 +3228,18 @@ MySqlConfigBackendDHCPv6::deleteAllGlobalParameters6(const ServerSelector& serve
 }
 
 uint64_t
-MySqlConfigBackendDHCPv6::deleteServer6(const std::string& /* server_tag */) {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::deleteServer6"
-              " is not implemented");
+MySqlConfigBackendDHCPv6::deleteServer6(const ServerTag& server_tag) {
+    uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                                          MySqlConfigBackendDHCPv6Impl::DELETE_SERVER6,
+                                          server_tag.get());
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteAllServers6() {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv6::deleteAllServers6"
-              " is not implemented");
+    uint64_t result = impl_->deleteAllServers(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                                              MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SERVERS6);
+    return (result);
 }
 
 std::string

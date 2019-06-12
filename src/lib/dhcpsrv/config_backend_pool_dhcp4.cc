@@ -448,7 +448,7 @@ ConfigBackendPoolDHCPv4::deleteAllGlobalParameters4(const BackendSelector& backe
 
 uint64_t
 ConfigBackendPoolDHCPv4::deleteServer4(const BackendSelector& backend_selector,
-                                       const std::string& server_tag) {
+                                       const ServerTag& server_tag) {
     return (createUpdateDeleteBackendProperty<uint64_t>
             (&ConfigBackendDHCPv4::deleteServer4, backend_selector,
              server_tag));

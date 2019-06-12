@@ -832,6 +832,136 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
     return (MySqlBinding::createNull());
 }
 
+ServerPtr
+MySqlConfigBackendImpl::getServer(const int index, const ServerTag& server_tag) {
+    ServerCollection servers;
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(server_tag.get())
+    };
+    getServers(index, in_bindings, servers);
+
+    return (servers.empty() ? ServerPtr() : *servers.begin());
+}
+
+void
+MySqlConfigBackendImpl::getAllServers(const int index, db::ServerCollection& servers) {
+    MySqlBindingCollection in_bindings;
+    getServers(index, in_bindings, servers);
+}
+
+void
+MySqlConfigBackendImpl::getServers(const int index,
+                                   const MySqlBindingCollection& in_bindings,
+                                   ServerCollection& servers) {
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(),
+        MySqlBinding::createString(SERVER_TAG_BUF_LENGTH),
+        MySqlBinding::createString(SERVER_DESCRIPTION_BUF_LENGTH),
+        MySqlBinding::createTimestamp()
+    };
+
+    conn_.selectQuery(index, in_bindings, out_bindings,
+                      [&servers](MySqlBindingCollection& out_bindings) {
+
+        ServerPtr last_server;
+        uint64_t id = out_bindings[0]->getInteger<uint64_t>();
+        if (!last_server || (last_server->getId() != id)) {
+
+            // Set description if it is non-null.
+            auto desc = (out_bindings[2]->amNull() ? "" : out_bindings[2]->getString());
+            last_server = Server::create(ServerTag(out_bindings[1]->getString()),
+                                         desc);
+
+            // id
+            last_server->setId(id);
+
+            // modification_ts
+            last_server->setModificationTime(out_bindings[3]->getTimestamp());
+
+            // New server fetched. Let's store it.
+            servers.insert(last_server);
+        }
+    });
+}
+
+void
+MySqlConfigBackendImpl::createUpdateServer(const int create_audit_revision_index,
+                                           const int create_index,
+                                           const int update_index,
+                                           const ServerPtr& server) {
+    // Create scoped audit revision. As long as this instance exists
+    // no new audit revisions are created in any subsequent calls.
+    ScopedAuditRevision audit_revision(this,
+                                       create_audit_revision_index,
+                                       ServerSelector::ALL(),
+                                       "server set",
+                                       true);
+
+    MySqlTransaction transaction(conn_);
+
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(server->getServerTag()),
+        MySqlBinding::createString(server->getDescription()),
+        MySqlBinding::createTimestamp(server->getModificationTime())
+    };
+
+    try {
+        conn_.insertQuery(create_index, in_bindings);
+
+    } catch (const DuplicateEntry&) {
+        in_bindings.push_back(MySqlBinding::createString(server->getServerTag()));
+        conn_.updateDeleteQuery(update_index, in_bindings);
+    }
+
+    transaction.commit();
+}
+
+uint64_t
+MySqlConfigBackendImpl::deleteServer(const int create_audit_revision_index,
+                                     const int delete_index,
+                                     const std::string& server_tag) {
+
+    MySqlTransaction transaction(conn_);
+
+    // Create scoped audit revision. As long as this instance exists
+    // no new audit revisions are created in any subsequent calls.
+    ScopedAuditRevision
+        audit_revision(this, create_audit_revision_index,
+                       ServerSelector::ALL(), "deleting a server", false);
+
+    // Specify which server should be deleted.
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(server_tag)
+    };
+
+    // Attempt to delete the server.
+    auto count = conn_.updateDeleteQuery(delete_index, in_bindings);
+    transaction.commit();
+
+    return (count);
+}
+
+uint64_t
+MySqlConfigBackendImpl::deleteAllServers(const int create_audit_revision_index,
+                                         const int delete_index) {
+
+    MySqlTransaction transaction(conn_);
+
+    // Create scoped audit revision. As long as this instance exists
+    // no new audit revisions are created in any subsequent calls.
+    ScopedAuditRevision
+        audit_revision(this, create_audit_revision_index,
+                       ServerSelector::ALL(), "deleting a server", false);
+
+    MySqlBindingCollection in_bindings;
+
+    // Attempt to delete the servers.
+    auto count = conn_.updateDeleteQuery(delete_index, in_bindings);
+    transaction.commit();
+
+    return (count);
+}
+
 std::string
 MySqlConfigBackendImpl::getType() const {
     return ("mysql");

@@ -455,7 +455,7 @@ public:
     /// @param server_tag Tag of the server to be deleted.
     /// @return Number of deleted servers.
     virtual uint64_t
-    deleteServer4(const std::string& server_tag);
+    deleteServer4(const data::ServerTag& server_tag);
 
     /// @brief Deletes all servers from the backend except the logical
     /// server 'all'.

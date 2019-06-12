@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Thu May 16 2019 15:00
+// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Wed Jun 12 2019 14:09
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -18,6 +18,8 @@ extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_OPTION4 = "MYSQL_CB_CREA
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_OPTION6 = "MYSQL_CB_CREATE_UPDATE_OPTION6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_OPTION_DEF4 = "MYSQL_CB_CREATE_UPDATE_OPTION_DEF4";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_OPTION_DEF6 = "MYSQL_CB_CREATE_UPDATE_OPTION_DEF6";
+extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SERVER4 = "MYSQL_CB_CREATE_UPDATE_SERVER4";
+extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SERVER6 = "MYSQL_CB_CREATE_UPDATE_SERVER6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4 = "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK6 = "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4 = "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4";
@@ -95,6 +97,10 @@ extern const isc::log::MessageID MYSQL_CB_GET_ALL_OPTION_DEFS4 = "MYSQL_CB_GET_A
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_OPTION_DEFS4_RESULT = "MYSQL_CB_GET_ALL_OPTION_DEFS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_OPTION_DEFS6 = "MYSQL_CB_GET_ALL_OPTION_DEFS6";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_OPTION_DEFS6_RESULT = "MYSQL_CB_GET_ALL_OPTION_DEFS6_RESULT";
+extern const isc::log::MessageID MYSQL_CB_GET_ALL_SERVERS4 = "MYSQL_CB_GET_ALL_SERVERS4";
+extern const isc::log::MessageID MYSQL_CB_GET_ALL_SERVERS4_RESULT = "MYSQL_CB_GET_ALL_SERVERS4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_GET_ALL_SERVERS6 = "MYSQL_CB_GET_ALL_SERVERS6";
+extern const isc::log::MessageID MYSQL_CB_GET_ALL_SERVERS6_RESULT = "MYSQL_CB_GET_ALL_SERVERS6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_SHARED_NETWORKS4 = "MYSQL_CB_GET_ALL_SHARED_NETWORKS4";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_SHARED_NETWORKS4_RESULT = "MYSQL_CB_GET_ALL_SHARED_NETWORKS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_ALL_SHARED_NETWORKS6 = "MYSQL_CB_GET_ALL_SHARED_NETWORKS6";
@@ -137,6 +143,8 @@ extern const isc::log::MessageID MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4 = "MYSQL_CB_
 extern const isc::log::MessageID MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT = "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6 = "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6";
 extern const isc::log::MessageID MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT = "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT";
+extern const isc::log::MessageID MYSQL_CB_GET_SERVER4 = "MYSQL_CB_GET_SERVER4";
+extern const isc::log::MessageID MYSQL_CB_GET_SERVER6 = "MYSQL_CB_GET_SERVER6";
 extern const isc::log::MessageID MYSQL_CB_GET_SHARED_NETWORK4 = "MYSQL_CB_GET_SHARED_NETWORK4";
 extern const isc::log::MessageID MYSQL_CB_GET_SHARED_NETWORK6 = "MYSQL_CB_GET_SHARED_NETWORK6";
 extern const isc::log::MessageID MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4 = "MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4";
@@ -172,6 +180,8 @@ const char* values[] = {
     "MYSQL_CB_CREATE_UPDATE_OPTION6", "create or update option",
     "MYSQL_CB_CREATE_UPDATE_OPTION_DEF4", "create or update option definition: %1 code: %2",
     "MYSQL_CB_CREATE_UPDATE_OPTION_DEF6", "create or update option definition: %1 code: %2",
+    "MYSQL_CB_CREATE_UPDATE_SERVER4", "create or update server: %1",
+    "MYSQL_CB_CREATE_UPDATE_SERVER6", "create or update server: %1",
     "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4", "create or update shared network: %1",
     "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK6", "create or update shared network: %1",
     "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4", "create or update shared network: %1 option",
@@ -249,6 +259,10 @@ const char* values[] = {
     "MYSQL_CB_GET_ALL_OPTION_DEFS4_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_ALL_OPTION_DEFS6", "retrieving all option definitions",
     "MYSQL_CB_GET_ALL_OPTION_DEFS6_RESULT", "retrieving: %1 elements",
+    "MYSQL_CB_GET_ALL_SERVERS4", "retrieving all servers",
+    "MYSQL_CB_GET_ALL_SERVERS4_RESULT", "retrieving: %1 elements",
+    "MYSQL_CB_GET_ALL_SERVERS6", "retrieving all DHCPv6 servers",
+    "MYSQL_CB_GET_ALL_SERVERS6_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_ALL_SHARED_NETWORKS4", "retrieving all shared networks",
     "MYSQL_CB_GET_ALL_SHARED_NETWORKS4_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_ALL_SHARED_NETWORKS6", "retrieving all shared networks",
@@ -291,6 +305,8 @@ const char* values[] = {
     "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT", "retrieving: %1 elements",
     "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6", "retrieving audit entries from: %1",
     "MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT", "retrieving: %1 elements",
+    "MYSQL_CB_GET_SERVER4", "retrieving DHCPv4 server: %1",
+    "MYSQL_CB_GET_SERVER6", "retrieving DHCPv6 server: %1",
     "MYSQL_CB_GET_SHARED_NETWORK4", "retrieving shared network: %1",
     "MYSQL_CB_GET_SHARED_NETWORK6", "retrieving shared network: %1",
     "MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4", "retrieving shared network: %1 subnets",

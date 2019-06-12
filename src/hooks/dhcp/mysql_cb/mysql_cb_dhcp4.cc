@@ -79,6 +79,8 @@ public:
         GET_OPTION4_POOL_ID_CODE_SPACE,
         GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
         GET_AUDIT_ENTRIES4_TIME,
+        GET_SERVER4,
+        GET_ALL_SERVERS4,
         INSERT_GLOBAL_PARAMETER4,
         INSERT_GLOBAL_PARAMETER4_SERVER,
         INSERT_SUBNET4,
@@ -90,6 +92,7 @@ public:
         INSERT_OPTION_DEF4_SERVER,
         INSERT_OPTION4,
         INSERT_OPTION4_SERVER,
+        INSERT_SERVER4,
         UPDATE_GLOBAL_PARAMETER4,
         UPDATE_SUBNET4,
         UPDATE_SHARED_NETWORK4,
@@ -98,6 +101,7 @@ public:
         UPDATE_OPTION4_SUBNET_ID,
         UPDATE_OPTION4_POOL_ID,
         UPDATE_OPTION4_SHARED_NETWORK,
+        UPDATE_SERVER4,
         DELETE_GLOBAL_PARAMETER4,
         DELETE_ALL_GLOBAL_PARAMETERS4,
         DELETE_SUBNET4_ID,
@@ -115,6 +119,8 @@ public:
         DELETE_OPTION4_SHARED_NETWORK,
         DELETE_OPTIONS4_SUBNET_ID,
         DELETE_OPTIONS4_SHARED_NETWORK,
+        DELETE_SERVER4,
+        DELETE_ALL_SERVERS4,
         NUM_STATEMENTS
     };
 
@@ -1886,6 +1892,7 @@ public:
                                     true,
                                     in_bindings));
     }
+
 };
 
 namespace {
@@ -2032,6 +2039,16 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_AUDIT_ENTRIES_TIME(dhcp4)
     },
 
+    // Retrieves a server by tag.
+    { MySqlConfigBackendDHCPv4Impl::GET_SERVER4,
+      MYSQL_GET_SERVER(dhcp4)
+    },
+
+    // Retrieves all servers.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_SERVERS4,
+      MYSQL_GET_ALL_SERVERS(dhcp4)
+    },
+
     // Insert global parameter.
     { MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4,
       MYSQL_INSERT_GLOBAL_PARAMETER(dhcp4)
@@ -2136,6 +2153,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_INSERT_OPTION_SERVER(dhcp4)
     },
 
+    // Insert server with server tag and description.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_SERVER4,
+      MYSQL_INSERT_SERVER(dhcp4)
+    },
+
     // Update existing global parameter.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
       MYSQL_UPDATE_GLOBAL_PARAMETER(dhcp4)
@@ -2223,6 +2245,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_UPDATE_OPTION4(AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
+    // Update existing server, e.g. server description.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_SERVER4,
+      MYSQL_UPDATE_SERVER(dhcp4)
+    },
+
     // Delete global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
       MYSQL_DELETE_GLOBAL_PARAMETER(dhcp4, AND g.name = ?)
@@ -2308,6 +2335,16 @@ TaggedStatementArray tagged_statements = { {
     // Delete options belonging to a shared_network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTIONS4_SHARED_NETWORK,
       MYSQL_DELETE_OPTION(dhcp4, AND o.scope_id = 4 AND o.shared_network_name = ?)
+    },
+
+    // Delete a server by tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SERVER4,
+      MYSQL_DELETE_SERVER(dhcp4)
+    },
+
+    // Deletes all servers except logical server 'all'.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SERVERS4,
+      MYSQL_DELETE_ALL_SERVERS(dhcp4)
     }
 }
 };
@@ -2532,14 +2569,22 @@ MySqlConfigBackendDHCPv4::getRecentAuditEntries(const db::ServerSelector& server
 
 ServerCollection
 MySqlConfigBackendDHCPv4::getAllServers4() const {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::getAllServers4"
-              " is not implemented");
+    ServerCollection servers;
+
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SERVERS4);
+    impl_->getAllServers(MySqlConfigBackendDHCPv4Impl::GET_ALL_SERVERS4,
+                         servers);
+
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_SERVERS4_RESULT)
+        .arg(servers.size());
+    return (servers);
 }
 
 ServerPtr
-MySqlConfigBackendDHCPv4::getServer4(const data::ServerTag& /* server_tag */) const {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::getServer4"
-              " is not implemented");
+MySqlConfigBackendDHCPv4::getServer4(const data::ServerTag& server_tag) const {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SERVER4)
+        .arg(server_tag.get());
+    return (impl_->getServer(MySqlConfigBackendDHCPv4Impl::GET_SERVER4, server_tag));
 }
 
 void
@@ -2611,9 +2656,13 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateServer4(const ServerPtr& /* server */) {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::createUpdateServer4"
-              " is not implemented");
+MySqlConfigBackendDHCPv4::createUpdateServer4(const ServerPtr& server) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SERVER4)
+        .arg(server->getServerTag());
+    impl_->createUpdateServer(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                              MySqlConfigBackendDHCPv4Impl::INSERT_SERVER4,
+                              MySqlConfigBackendDHCPv4Impl::UPDATE_SERVER4,
+                              server);
 }
 
 uint64_t
@@ -2792,15 +2841,18 @@ MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteServer4(const std::string& /* server_tag */) {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::deleteServer4"
-              " is not implemented");
+MySqlConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
+    uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                                          MySqlConfigBackendDHCPv4Impl::DELETE_SERVER4,
+                                          server_tag.get());
+    return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllServers4() {
-    isc_throw(NotImplemented, "MySqlConfigBackendDHCPv4::deleteAllServers4"
-              " is not implemented");
+    uint64_t result = impl_->deleteAllServers(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                                              MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SERVERS4);
+    return (result);
 }
 
 std::string

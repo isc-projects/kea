@@ -7,6 +7,7 @@
 #ifndef CONFIG_BACKEND_POOL_DHCP6_H
 #define CONFIG_BACKEND_POOL_DHCP6_H
 
+#include <cc/server_tag.h>
 #include <cc/stamped_value.h>
 #include <config_backend/base_config_backend_pool.h>
 #include <database/backend_selector.h>
@@ -556,7 +557,7 @@ public:
     /// @return Number of deleted servers.
     virtual uint64_t
     deleteServer6(const db::BackendSelector& backend_selector,
-                  const std::string& server_tag);
+                  const data::ServerTag& server_tag);
 
     /// @brief Deletes all servers from the backend except the logical
     /// server 'all'.

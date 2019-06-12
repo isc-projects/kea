@@ -473,7 +473,7 @@ ConfigBackendPoolDHCPv6::deleteAllGlobalParameters6(const BackendSelector& backe
 
 uint64_t
 ConfigBackendPoolDHCPv6::deleteServer6(const BackendSelector& backend_selector,
-                                       const std::string& server_tag) {
+                                       const ServerTag& server_tag) {
     return (createUpdateDeleteBackendProperty<uint64_t>
             (&ConfigBackendDHCPv6::deleteServer6, backend_selector,
              server_tag));

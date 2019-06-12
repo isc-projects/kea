@@ -53,6 +53,14 @@ Debug message issued when triggered an action to create or update subnet
 % MYSQL_CB_CREATE_UPDATE_SUBNET6 create or update subnet: %1
 Debug message issued when triggered an action to create or update subnet
 
+% MYSQL_CB_CREATE_UPDATE_SERVER4 create or update server: %1
+Debug message issued when triggered an action to create or update a DHCPv4
+server information.
+
+% MYSQL_CB_CREATE_UPDATE_SERVER6 create or update server: %1
+Debug message issued when triggered an action to create or update a DHCPv6
+server information.
+
 % MYSQL_CB_DEINIT_OK unloading MYSQAL CB hooks library successful
 This informational message indicates that the MySQL Configuration Backend hooks
 library has been unloaded successfully.
@@ -267,6 +275,22 @@ Debug message issued when triggered an action to retrieve all option definitions
 % MYSQL_CB_GET_ALL_OPTION_DEFS6_RESULT retrieving: %1 elements
 Debug message indicating the result of an action to retrieve all option definitions
 
+% MYSQL_CB_GET_ALL_SERVERS4 retrieving all servers
+Debug message issued when triggered an action to retrieve all DHCPv4
+servers
+
+% MYSQL_CB_GET_ALL_SERVERS4_RESULT retrieving: %1 elements
+Debug message indicating the result of an action to retrieve all DHCPv4
+servers
+
+% MYSQL_CB_GET_ALL_SERVERS6 retrieving all DHCPv6 servers
+Debug message issued when triggered an action to retrieve all DHCPv6
+servers
+
+% MYSQL_CB_GET_ALL_SERVERS6_RESULT retrieving: %1 elements
+Debug message indicating the result of an action to retrieve all DHCPv6
+servers
+
 % MYSQL_CB_GET_ALL_SHARED_NETWORKS4 retrieving all shared networks
 Debug message issued when triggered an action to retrieve all shared networks
 
@@ -392,6 +416,12 @@ Debug message issued when triggered an action to retrieve audit entries from spe
 
 % MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT retrieving: %1 elements
 Debug message indicating the result of an action to retrieve audit entries from specified time
+
+% MYSQL_CB_GET_SERVER4 retrieving DHCPv4 server: %1
+Debug message issued when triggered an action to retrieve a DHCPv4 server information.
+
+% MYSQL_CB_GET_SERVER6 retrieving DHCPv6 server: %1
+Debug message issued when triggered an action to retrieve a DHCPv6 server information.
 
 % MYSQL_CB_GET_SHARED_NETWORK4 retrieving shared network: %1
 Debug message issued when triggered an action to retrieve shared network

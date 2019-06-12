@@ -48,7 +48,9 @@ public:
 
     /// @brief Constructor.
     MySqlConfigBackendDHCPv6Test()
-        : test_subnets_(), test_networks_(), timestamps_(), audit_entries_() {
+        : test_subnets_(), test_networks_(), test_option_defs_(),
+          test_options_(), test_servers_(), timestamps_(), cbptr_(),
+          audit_entries_() {
         // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
@@ -68,6 +70,7 @@ public:
         }
 
         // Create test data.
+        initTestServers();
         initTestOptions();
         initTestSubnets();
         initTestSharedNetworks();
@@ -80,6 +83,14 @@ public:
         cbptr_.reset();
         // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
+    }
+
+    /// @brief Creates several servers used in tests.
+    void initTestServers() {
+        test_servers_.push_back(Server::create(ServerTag("server1"), "this is server 1"));
+        test_servers_.push_back(Server::create(ServerTag("server1"), "this is server 1 bis"));
+        test_servers_.push_back(Server::create(ServerTag("server2"), "this is server 2"));
+        test_servers_.push_back(Server::create(ServerTag("server3"), "this is server 3"));
     }
 
     /// @brief Creates several subnets used in tests.
@@ -436,6 +447,9 @@ public:
     /// @brief Holds pointers to options used in tests.
     std::vector<OptionDescriptorPtr> test_options_;
 
+    /// @brief Holds pointers to the servers used in tests.
+    std::vector<ServerPtr> test_servers_;
+
     /// @brief Holds timestamp values used in tests.
     std::map<std::string, boost::posix_time::ptime> timestamps_;
 
@@ -476,6 +490,115 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getPort) {
     params["user"] = "keatest";
     ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv6(params)));
     EXPECT_EQ(0, cbptr_->getPort());
+}
+
+// This test verifies that the server can be added, updated and deleted.
+TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteServer) {
+    // Explicitly set modification time to make sure that the time
+    // returned from the database is correct.
+    test_servers_[0]->setModificationTime(timestamps_["yesterday"]);
+    test_servers_[1]->setModificationTime(timestamps_["today"]);
+
+    // Insert the server1 into the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    ServerPtr returned_server;
+
+    // An attempt to fetch the server that hasn't been inserted should return
+    // a null pointer.
+    EXPECT_NO_THROW(returned_server = cbptr_->getServer6(ServerTag("server2")));
+    EXPECT_FALSE(returned_server);
+
+    // Try to fetch the server which we expect to exist.
+    EXPECT_NO_THROW(returned_server = cbptr_->getServer6(ServerTag("server1")));
+    ASSERT_TRUE(returned_server);
+    EXPECT_EQ("server1", returned_server->getServerTag());
+    EXPECT_EQ("this is server 1", returned_server->getDescription());
+    EXPECT_EQ(timestamps_["yesterday"], returned_server->getModificationTime());
+
+    // This call is expected to update the existing server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[1]));
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for server");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::UPDATE,
+                          "server set");
+    }
+
+    // Verify that the server has been updated. 
+    EXPECT_NO_THROW(returned_server = cbptr_->getServer6(ServerTag("server1")));
+    ASSERT_TRUE(returned_server);
+    EXPECT_EQ("server1", returned_server->getServerTag());
+    EXPECT_EQ("this is server 1 bis", returned_server->getDescription());
+    EXPECT_EQ(timestamps_["today"], returned_server->getModificationTime());
+
+
+    uint64_t servers_deleted = 0;
+
+    // Try to delete non-existing server.
+    EXPECT_NO_THROW(servers_deleted = cbptr_->deleteServer6(ServerTag("server2")));
+    EXPECT_EQ(0, servers_deleted);
+
+
+    // Delete the existing server.
+    EXPECT_NO_THROW(servers_deleted = cbptr_->deleteServer6(ServerTag("server1")));
+    EXPECT_EQ(1, servers_deleted);
+
+    {
+        SCOPED_TRACE("DELETE audit entry for server");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting a server");
+    }
+
+    // Make sure that the server is gone.
+    EXPECT_NO_THROW(returned_server = cbptr_->getServer6(ServerTag("server1")));
+    EXPECT_FALSE(returned_server);
+}
+
+// This test verifies that it is possible to retrieve all servers from the
+// database and then delete all of them.
+TEST_F(MySqlConfigBackendDHCPv6Test, getAndDeleteAllServers) {
+    for (auto i = 1; i < test_servers_.size(); ++i) {
+        EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[i]));
+    }
+
+    ServerCollection servers;
+    EXPECT_NO_THROW(servers = cbptr_->getAllServers6());
+    ASSERT_EQ(test_servers_.size() - 1, servers.size());
+
+    // All servers should have been returned.
+    EXPECT_TRUE(ServerFetcher::get(servers, ServerTag("server1")));
+    EXPECT_TRUE(ServerFetcher::get(servers, ServerTag("server2")));
+    EXPECT_TRUE(ServerFetcher::get(servers, ServerTag("server3")));
+
+    // The logical server all should not be returned. We merely return the
+    // user configured servers.
+    EXPECT_FALSE(ServerFetcher::get(servers, ServerTag()));
+
+    // Delete all servers and make sure they are gone.
+    uint64_t deleted_servers = 0;
+    EXPECT_NO_THROW(deleted_servers = cbptr_->deleteAllServers6());
+
+    EXPECT_NO_THROW(servers = cbptr_->getAllServers6());
+    EXPECT_TRUE(servers.empty());
+
+    // All servers should be gone.
+    EXPECT_FALSE(ServerFetcher::get(servers, ServerTag("server1")));
+    EXPECT_FALSE(ServerFetcher::get(servers, ServerTag("server2")));
+    EXPECT_FALSE(ServerFetcher::get(servers, ServerTag("server3")));
+
+    // The number of deleted server should be equal to the number of
+    // inserted servers. The logical 'all' server should be excluded.
+    EXPECT_EQ(test_servers_.size() - 1, deleted_servers);
 }
 
 // This test verifies that the global parameter can be added, updated and

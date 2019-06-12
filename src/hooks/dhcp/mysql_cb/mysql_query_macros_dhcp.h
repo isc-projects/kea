@@ -379,6 +379,23 @@ namespace {
     "ORDER BY r.modification_ts, r.id"
 #endif
 
+#ifndef MYSQL_GET_SERVERS_COMMON
+#define MYSQL_GET_SERVERS_COMMON(table_prefix, ...) \
+    "SELECT" \
+    "  s.id," \
+    "  s.tag," \
+    "  s.description," \
+    "  s.modification_ts " \
+    "FROM " #table_prefix "_server AS s " \
+    "WHERE s.id > 1 " \
+    __VA_ARGS__ \
+    "ORDER BY s.id"
+#define MYSQL_GET_ALL_SERVERS(table_prefix) \
+    MYSQL_GET_SERVERS_COMMON(table_prefix, "")
+#define MYSQL_GET_SERVER(table_prefix) \
+    MYSQL_GET_SERVERS_COMMON(table_prefix, "AND s.tag = ? ")
+#endif
+
 #ifndef MYSQL_INSERT_GLOBAL_PARAMETER
 #define MYSQL_INSERT_GLOBAL_PARAMETER(table_prefix) \
     "INSERT INTO " #table_prefix "_global_parameter(" \
@@ -497,6 +514,15 @@ namespace {
     ") VALUES (?, (SELECT id FROM " #table_prefix "_server WHERE tag = ?), ?)"
 #endif
 
+#ifndef MYSQL_INSERT_SERVER
+#define MYSQL_INSERT_SERVER(table_prefix) \
+    "INSERT INTO " #table_prefix "_server (" \
+    "  tag," \
+    "  description," \
+    "  modification_ts" \
+    ") VALUES (?, ?, ?)"
+#endif
+
 #ifndef MYSQL_UPDATE_GLOBAL_PARAMETER
 #define MYSQL_UPDATE_GLOBAL_PARAMETER(table_prefix) \
     "UPDATE " #table_prefix "_global_parameter AS g " \
@@ -559,6 +585,16 @@ namespace {
     MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
 #define MYSQL_UPDATE_OPTION6(...) \
     MYSQL_UPDATE_OPTION_COMMON(dhcp6, ", o.pd_pool_id = ? ", __VA_ARGS__)
+#endif
+
+#ifndef MYSQL_UPDATE_SERVER
+#define MYSQL_UPDATE_SERVER(table_prefix) \
+    "UPDATE " #table_prefix "_server " \
+    "SET" \
+    "  tag = ?," \
+    "  description = ?," \
+    "  modification_ts = ? " \
+    "WHERE tag = ?"
 #endif
 
 #ifndef MYSQL_DELETE_GLOBAL_PARAMETER
@@ -647,6 +683,18 @@ namespace {
     "  AND o.pd_pool_id = " \
     "  (SELECT id FROM dhcp6_pd_pool" \
     "   WHERE prefix = ? AND prefix_length = ?)"
+#endif
+
+#ifndef MYSQL_DELETE_SERVER
+#define MYSQL_DELETE_SERVER(table_prefix) \
+    "DELETE FROM " #table_prefix "_server " \
+    "WHERE tag = ?"
+#endif
+
+#ifndef MYSQL_DELETE_ALL_SERVERS
+#define MYSQL_DELETE_ALL_SERVERS(table_prefix) \
+    "DELETE FROM " #table_prefix "_server " \
+    "WHERE id > 1"
 #endif
 
 } // end of anonymous namespace
