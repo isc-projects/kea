@@ -1435,46 +1435,30 @@ fi
 AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
-  [regenerate documentation using Docbook [default=no]])],
+  [regenerate documentation using Sphinx [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
 if test "x$enable_generate_docs" != xno ; then
 
-# xsltproc --nonet parameter
-  NONET="--nonet"
-  AC_ARG_VAR(XSLTPROC_NET, [xsltproc uses the Internet to fetch DTDs, entities or documents.])
-  if test "x$XSLTPROC_NET" != x ; then
-    NONET=
-  fi
-  AC_SUBST(NONET)
-
 # Check for xsltproc
-  AC_PATH_PROG([XSLTPROC], [xsltproc])
-  if test -z "$XSLTPROC"; then
-    AC_MSG_ERROR("xsltproc not found; it is required for --enable-generate-docs")
+  AC_PATH_PROG([SPHINX], [sphinx-build])
+  if test -z "$SPHINX"; then
+    AC_MSG_ERROR([sphinx-build not found; it is required for --enable-generate-docs, please see http://www.sphinx-doc.org/en/master/usage/installation.html for details])
   else
-    AC_MSG_CHECKING([if $XSLTPROC works])
-    # run xsltproc to see if works
-    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    AC_MSG_CHECKING([whether $SPHINX works])
+    # run sphinx to see if it works
+    # We should probably do a more thorough checks
+    $SPHINX --version
     if test $? -ne 0 ; then
-      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
+      AC_MSG_ERROR("Error with $SPHINX --version")
     fi
-    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
-    if test $? -ne 0 ; then
-      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
-    fi
-    AC_MSG_RESULT(yes)
-  fi
-
-  AC_PATH_PROG([ELINKS], [elinks])
-  if test -z "$ELINKS"; then
-    AC_MSG_ERROR("elinks not found; it is required for --enable-generate-docs")
+    AC_MSG_RESULT(yes (found in $SPHINX))
   fi
 fi
 
 # Don't fail here if not found, used to generate PDF documentation.
-AC_PATH_PROG([DBLATEX], [dblatex])
-AM_CONDITIONAL(HAVE_DBLATEX, test "x$DBLATEX" != "x")
+#AC_PATH_PROG([DBLATEX], [dblatex])
+#AM_CONDITIONAL(HAVE_DBLATEX, test "x$DBLATEX" != "x")
 
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
