@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes on Wed May 22 2019 18:44
+// File created from ../../../src/lib/process/process_messages.mes on Thu Jun 13 2019 01:25
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -9,7 +9,6 @@ namespace process {
 
 extern const isc::log::MessageID DCTL_ALREADY_RUNNING = "DCTL_ALREADY_RUNNING";
 extern const isc::log::MessageID DCTL_CCSESSION_ENDING = "DCTL_CCSESSION_ENDING";
-extern const isc::log::MessageID DCTL_CCSESSION_STARTING = "DCTL_CCSESSION_STARTING";
 extern const isc::log::MessageID DCTL_CFG_FILE_RELOAD_ERROR = "DCTL_CFG_FILE_RELOAD_ERROR";
 extern const isc::log::MessageID DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD = "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD";
 extern const isc::log::MessageID DCTL_COMMAND_RECEIVED = "DCTL_COMMAND_RECEIVED";
@@ -46,7 +45,6 @@ namespace {
 const char* values[] = {
     "DCTL_ALREADY_RUNNING", "%1 already running? %2",
     "DCTL_CCSESSION_ENDING", "%1 ending control channel session",
-    "DCTL_CCSESSION_STARTING", "%1 starting control channel session, specfile: %2",
     "DCTL_CFG_FILE_RELOAD_ERROR", "configuration reload failed: %1, reverting to current configuration.",
     "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD", "OS signal %1 received, reloading configuration from file: %2",
     "DCTL_COMMAND_RECEIVED", "%1 received command: %2, arguments: %3",
