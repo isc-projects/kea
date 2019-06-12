@@ -8,15 +8,15 @@ $NAMESPACE isc::dhcp
 
 % FUZZ_DATA_READ read %1 byte(s) from AFL via stdin
 A debug message output to indicate how much data has been received from
-the fuzzer.
+the fuzzer via stdin
 
 % FUZZ_INTERFACE fuzzing will use interface %1 (address %2, port %3)
 An informational message output during fuzzing initialization, this reports
 the details of the interface to be used for fuzzing.
 
 % FUZZ_INIT_FAIL fuzz initialization failure, reason: %1
-A generic message reported via standard Kea logging if the fuzzing
-initialization failed.  The reason for the failure is given in the message.
+An error message reported if the fuzzing initialization failed.  The reason
+for the failure is given in the message.
 
 % FUZZ_LOOP_EXIT main loop has exited, shutting down Kea
 This debug message is output when Kea has processed the number of packets
@@ -25,19 +25,21 @@ itself down and will be restarted by AFL.  This is recommended by the AFL
 documentation as a way of avoiding issues if Kea gets itself into a funny
 state after running for a long time.
 
-% FUZZ_NOTIFY_CALLED kea_fuzz_notify() has been called
+% FUZZ_PACKET_PROCESSED_CALLED packetProcessed has been called
 A debug message indicating that the processing of a packet by Kea has
-finished and that the kea_fuzz_notify() function has been called (which
-raises a SIGSTOP informing AFL that Kea is ready to receive another packet).
+finished and that the Fuzz::packetProcessed() method has been called.  This
+raises a SIGSTOP informing AFL that Kea is ready to receive another packet.
 
 % FUZZ_READ_FAIL error reading input from fuzzer: %1
-This error is reported if the read of data from the fuzzer (which is received
-over stdin) fails.  If this occurs, the thread will sleep for a short period
-before retrying the read.  The message gives the reason for the failure.
+This error is reported if the read of data from the fuzzer (which is
+received over stdin) fails, or if a read returns zero bytes.  If this
+occurs, the thread will sleep for a short period before retrying the read.
+The message includes the reason for the failure.
 
 % FUZZ_SEND sent %1 byte(s) to the socket connected to the Kea interface
 A debug message stating that the sendto() call in the main fuzzing function
-has successfully completed.
+has successfully completed and reporting the number of bytes sent.  This
+call sends data received from AFL to the port on which Kea is listening.
 
 % FUZZ_SEND_ERROR failed to send data to Kea input socket: %1
 This error will be reported if the sendto() call in the fuzzing thread (which
@@ -45,29 +47,44 @@ sends data received from AFL to the socket on which Kea is listening) fails.
 The reason for the failure is given in the message.  The fuzzing code will
 attempt to continue from this, but it may cause the fuzzing process to fail.
 
+% FUZZ_SET successfully set %1 condition variable
+A debug message stating the named condition variable has been be set.
+
+% FUZZ_SETTING setting %1 condition variable
+A debug message stating the named condition variable is to be set.
+
 % FUZZ_SHORT_SEND expected to send %d bytes to Kea input socket but only sent %2
 A warning message that is output if the sendto() call (used to send data
 from the fuzzing thread to the main Kea processing) did not send as much
 data as that read from AFL.  This may indicate a problem in the underlying
-communications between the fuzzing thread and the main Kea processing; the c
+communications between the fuzzing thread and the main Kea processing.
+
+% FUZZ_SHUTDOWN_INITIATED shutdown initated, shutdown flag is set
+A debug message output when the fuzzing thread has reached the maximum number
+of iterations.  At this point, the shutdown flag is set, Kea will exit and
+the fuzzer will restart it.  Periodic shutdowns of the program being fuzzed
+are recommended in the AFL documentation as a way of overcoming memory leaks
+of odd conditions that a program can get into after an extended period of
+running.
 
 % FUZZ_SOCKET_CREATE_FAIL failed to crease socket for use by fuzzing thread: %1
 An error message output when the fuzzing code has failed to create a socket
 through which is will copy data received on stdin from the AFL fuzzer to
-the port on which Kea is listening.
+the port on which Kea is listening.  The program will most likely hang if
+this occurs.
 
-% FUZZ_WAI %2: %1
-A debug message stating what is being waited for.
+% FUZZ_THREAD_TERMINATED fuzzing thread has terminated
+A debug message, output when the main thread has detected that the fuzzing
+thread has terminated.
 
-% FUZZ_SET %2: %1
-A debug message stating what is being set.
+% FUZZ_THREAD_WAIT waiting for fuzzing thread to terminate
+A debug message, output when the main thread is waiting for the fuzzing thread
+to terminate.
 
-% FUZZ_CWT %2: %1
+% FUZZ_WAITED successfully waited for for %1 condition variable to be set
+A debug message stating the the condition variable for which the originating
+thread was waiting has been set and that the wait has completed.
 
-% FUZZ_CST %2: %1
-
-% FUZZ_THREAD_WAIT waiting for thread to die
-
-% FUZZ_SHUTDOWN_INITIATED shutdown initated, shutdown flag is set
-
-% FUZZ_GENERAL %1
+% FUZZ_WAITING waiting for %1 condition variable to be set
+A debug message stating the condition variable for which the originating
+thread is waiting.

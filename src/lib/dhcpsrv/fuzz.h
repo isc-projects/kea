@@ -14,11 +14,63 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <string>
 #include <thread>
 
 namespace isc {
+
+/// @brief Helper class to manage synchronization between fuzzing threads
+///
+/// This contains the variables and encapsulates the primitives required
+/// to manage the condition variables between the two threads.
+
+class FuzzSynch {
+public:
+    /// @brief Initialization
+    ///
+    /// Objects of this type are declared static to allow them to be accessed
+    /// from mutiple thread.  This function allows appropriate initialization.
+    ///
+    /// @param name Name for debug messages
+    void init(const char* name);
+
+    /// @brief Waits for condition notification
+    ///
+    /// Called by a thread, this function will wait for another thread to
+    /// notify it that it can proceed: in other words, this function calls
+    /// <condition_variable>.wait() and waits for the other to call
+    /// <condition_variable>.notify().
+    ///
+    /// As it is possible to miss a notification - if one thread reaches the
+    /// notification point before the other thread reaches the wait point -
+    /// the operation is mediated by a predicate (in this case, a boolean
+    /// variable).  If this is set when the waiting thread reaches the wait
+    /// point, the thread does not wait.  If it is not set, the thread will
+    /// wait until it is notified through the condition variable.  At this
+    /// point, if the variable is still not set, the thread will re-enter the
+    /// wait state.
+    ///
+    /// In both cases, the predicate variable is cleared on exit.
+    void wait(void);
+
+    /// @brief Notifies other thread to continue
+    ///
+    /// Called by a thread, this function will notify another thread that is
+    /// waiting on the condition variable that it can continue.  As noted
+    /// in the documentation for wait(), the operation is mediated by a
+    /// predicate variable; in this case, the variable is explicitly set
+    /// before the notification is sent.
+    void notify(void);
+
+private:
+    std::condition_variable cond_;
+    std::mutex              mutex_;
+    volatile bool           ready_;
+    std::string             name_;
+};
+    
 
 /// @brief AFL Fuzzing Functions
 
@@ -26,13 +78,13 @@ class Fuzz {
 public:
     /// @brief Initializes Kea fuzzing
     ///
-    /// This takes one parameter, which is a pointer to the shutdown flag,
-    /// Dhcp6Srv::shutdown_. Kea runs until something sets this flag to true,
-    /// which is an indication to shutdown Kea.
+    /// This takes one parameter, which is a pointer to the shutdown flag. Kea
+    /// runs until something sets this flag to true, at which point it shuts
+    /// down.
     ///
     /// In the case of fuzzing, the shutdown flag is set when a fixed number of
-    /// packets has been received from the fuzzer.  At this point, the fuzzer
-    /// shutdow down Kea and restarts it.
+    /// packets has been received from the fuzzer.  After Kea exits, the fuzzer
+    /// will restart it.
     ///
     /// @param shutdown Pointer to boolean flag that will be set to true to
     ///        trigger the shutdown procedure.
@@ -40,38 +92,33 @@ public:
 
     /// @brief Main Kea Fuzzing Function
     ///
-    /// This is the main Kea fuzzing function.  It is the entry point for the
-    /// thread that handles the interface between AFL and Kea.  The function
+    /// This is the main Kea fuzzing method.  It is the entry point for the
+    /// thread that handles the interface between AFL and Kea.  The method
     /// receives data from the fuzzing engine via stdin, and then sends it to
-    /// the configured UDP socket.  Kea reads it from there, processes it and
-    /// when processing is complete, calls the notification function.
+    /// the configured UDP socket.  The main thread of Kea reads it from there,
+    /// processes it and when processing is complete, calls the
+    /// packetProcessed() method to notify the fuzzing thread that processing
+    /// of the packet is complete.
     ///
-    /// After a given number of packets, this function will shut down Kea.  This
-    /// is recommended by AFL as it avoids any resource leaks (which are not
-    /// caught by AFL) from getting too large and interfering with the fuzzing.
-    ///  AFL will automatically restart the program to continue fuzzing.
-    ///
-    /// Since this runs in a separate thread, errors are logged via the fuzzing
-    /// logger. (Other than initialization - when the thread is not running -
-    /// this is the only use of the fuzzing logger.) If the error is fatal, the
-    /// thread will terminate, something that may cause the fuzzer to hang.
+    /// After a given number of packets, this method will set the flag shut
+    /// down Kea.  This is recommended by the AFL documentation as it avoids
+    /// any resource leaks (which are not caught by AFL) from getting too large
+    /// and interfering with the fuzzing.  AFL will automatically restart the
+    /// program to continue fuzzing.
     static void run(void);
 
     /// @brief Notify fuzzing thread that processing is complete
     ///
-    /// This function is called by the main Kea processing loop when it has
-    /// finished processing a packet.  It raises a SIGSTOP signal, which tells
-    /// the AFL fuzzer that processing for the data it has just sent has
-    /// finished; this causes it to send another fuzzed packet to stdin. It
-    /// also sets a condition variable, so releasing the fuzzing thread to
-    /// read the next data from AFL.
-    static void notify(void);
-
-    /// @brief Wait for fuzzing thread to exit
+    /// This function is called by the Kea processing loop running in the main
+    /// thread when it has finished processing a packet.  It raises a SIGSTOP
+    /// signal, which tells the AFL fuzzer that processing for the data it has
+    /// just sent has finished; this causes it to send another fuzzed packet
+    /// to stdin. It also sets a condition variable, so releasing the fuzzing
+    /// thread to read the next data from AFL.
     ///
-    /// A short function, called after the fuzzing thread is supposed to have
-    /// finished, to ensure that it really has finished.
-    static void wait(void);
+    /// If a shutdown has been initiated, this method waits for the fuzzing
+    /// thread to exit before allowing the shutdown to continue.
+    static void packetProcessed(void);
 
     /// @brief size of the buffer used to transfer data between AFL and Kea.
     static constexpr size_t BUFFER_SIZE = 65536;
@@ -89,21 +136,13 @@ public:
     // Condition/mutext variables.  The fuzz_XX_ variables are set by the
     // fuzzing thread and waited on by the main thread.  The main_XX_ variables
     // are set by the main thread and waited on by the fuzzing thread.
-    static std::condition_variable  fuzz_cond_;     //< Set by fuzzing thread
-    static std::mutex               fuzz_mutex_;    //< Set by fuzzing thread
-    static std::condition_variable  main_cond_;     //< Set by main thread
-    static std::mutex               main_mutex_;    //< Set by main thread
-
-    // The next two variables are used in the condition variables test.  fuzz_ready_
-    // i set by the fuzzing thread and cleared by the main thread.  main_ready_
-    // is set by the main thread and cleared by the fuzzing thread.
-    static volatile bool            fuzz_ready_;    //< Set when data has been read from fuzzer
-    static volatile bool            main_ready_;    //< Set when data has been read from fuzzer
+    static FuzzSynch        fuzz_sync_;     // Set by fuzzing thread
+    static FuzzSynch        main_sync_;     // Set by main thread
 
     // Other member variables.
-    static std::thread              fuzzing_thread_;//< Holds the thread ID
-    static struct sockaddr_in6      servaddr_;      //< For sending data to main thread
-    static volatile bool*           shutdown_ptr_;  //< Pointer to shutdown flag
+    static std::thread          fuzzing_thread_;//< Holds the thread ID
+    static struct sockaddr_in6  servaddr_;      //< Address information
+    static volatile bool*       shutdown_ptr_;  //< Pointer to shutdown flag
 };
 
 
