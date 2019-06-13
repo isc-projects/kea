@@ -1,3 +1,7 @@
+1591.	[doc]		razvan
+	Fixed classify and pd-exclude documentation examples.
+	(Gitlab #590,!380, git 26b04d2d2d2a88be6abc5879a2fb48e05f0003fd)
+
 1590.	[func]		fdupont
 	It is now possible to specify hostname-char-set and
 	hostname-char-replacement at the global scope allowing to sanitize
