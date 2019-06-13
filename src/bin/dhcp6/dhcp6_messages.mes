@@ -282,9 +282,9 @@ This error is output if the IPv6 DHCP server fails to send an assembled
 DHCPv4o6 message to a client. The reason for the error is included in the
 message.
 
-% DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
+% DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
 This is the info message logged when the DHCPv6 server starts reconfiguration
-as a result of receiving SIGHUP signal.
+as a result of receiving SIGHUP signal or config-reload command.
 
 % DHCP6_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
 This is an error message logged when the dynamic reconfiguration of the

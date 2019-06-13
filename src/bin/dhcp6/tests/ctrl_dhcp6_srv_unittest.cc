@@ -1100,7 +1100,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadMissingFile) {
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed: "
               "configuration error using file 'test6.json': Unable to open file "
               "test6.json\" }",
               response);
@@ -1126,7 +1126,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadBrokenFile) {
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload will fail.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed: "
               "configuration error using file 'test7.json': "
               "test7.json:1.1: Invalid character: g\" }",
               response);

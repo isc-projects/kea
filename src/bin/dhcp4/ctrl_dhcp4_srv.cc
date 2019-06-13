@@ -232,7 +232,7 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
         LOG_ERROR(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Config reload failed:" + string(ex.what())));
+                             "Config reload failed: " + string(ex.what())));
     }
 }
 

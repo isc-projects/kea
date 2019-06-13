@@ -195,7 +195,7 @@ const char* values[] = {
     "DHCP6_DHCP4O6_RECEIVE_FAIL", "failed to receive DHCPv4o6: %1",
     "DHCP6_DHCP4O6_RECEIVING", "receiving DHCPv4o6 packet from DHCPv4 server",
     "DHCP6_DHCP4O6_SEND_FAIL", "failed to send DHCPv4o6 packet: %1",
-    "DHCP6_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal",
+    "DHCP6_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP6_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP6_FLEX_ID", "flexible identifier generated for incoming packet: %1",
     "DHCP6_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",

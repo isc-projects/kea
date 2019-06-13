@@ -270,9 +270,9 @@ information. The second and third argument contains the packet name
 and type respectively. The fourth argument contains detailed packet
 information.
 
-% DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
+% DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
 This is the info message logged when the DHCPv4 server starts reconfiguration
-as a result of receiving SIGHUP signal.
+as a result of receiving SIGHUP signal or config-reload command.
 
 % DHCP4_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
 This is an error message logged when the dynamic reconfiguration of the
