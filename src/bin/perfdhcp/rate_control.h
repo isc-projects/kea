@@ -69,7 +69,7 @@ public:
     /// rounded to 1, so as at least one message is sent.
     ///
     /// \return A number of messages to be sent immediately.
-    uint64_t getOutboundMessageCount();
+    uint64_t getOutboundMessageCount(bool const waiting_to_exit = false);
 
     /// \brief Returns the rate.
     unsigned int getRate() const {

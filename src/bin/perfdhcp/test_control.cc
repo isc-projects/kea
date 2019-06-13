@@ -41,23 +41,21 @@ namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
 
-
 bool
-TestControl::waitToExit() const {
-    static ptime exit_time = ptime(not_a_date_time);
-    uint32_t wait_time = options_.getExitWaitTime();
+TestControl::waitToExit() {
+    uint32_t const wait_time = options_.getExitWaitTime();
 
     // If we care and not all packets are in yet
     if (wait_time && !haveAllPacketsBeenReceived()) {
         const ptime now = microsec_clock::universal_time();
 
         // Init the end time if it hasn't started yet
-        if (exit_time.is_not_a_date_time()) {
-            exit_time = now + time_duration(microseconds(wait_time));
+        if (exit_time_.is_not_a_date_time()) {
+            exit_time_ = now + time_duration(microseconds(wait_time));
         }
 
         // If we're not at end time yet, return true
-        return (now < exit_time);
+        return (now < exit_time_);
     }
 
     // No need to wait, return false;
@@ -952,6 +950,7 @@ TestControl::reset() {
 }
 
 TestControl::TestControl(CommandOptions& options, BasePerfSocket &socket) :
+    exit_time_(not_a_date_time),
     number_generator_(0, options.getMacsFromFile().size()),
     socket_(socket),
     receiver_(socket, options.isSingleThreaded(), options.getIpVersion()),

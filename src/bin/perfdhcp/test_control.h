@@ -128,7 +128,7 @@ public:
     /// @brief Delay the exit by a fixed given time to catch up to all exchanges
     ///     that were already started.
     /// @return true if need to wait, false = ok to exit now
-    bool waitToExit() const;
+    bool waitToExit();
 
     /// @brief Checks if all expected packets were already received
     bool haveAllPacketsBeenReceived() const;
@@ -299,6 +299,10 @@ public:
     /// Method prints information about data offsets
     /// in packet templates and their contents.
     void printTemplates() const;
+
+    /// @brief Initialized at first exit condition with the time perfdhcp should
+    ///     exit
+    boost::posix_time::ptime exit_time_;
 
     // We would really like following methods and members to be private but
     // they have to be accessible for unit-testing. Another, possibly better,
