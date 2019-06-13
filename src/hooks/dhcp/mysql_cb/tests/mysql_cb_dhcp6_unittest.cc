@@ -776,11 +776,25 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
     EXPECT_EQ("all", returned_global->getServerTag());
 
+    // Attempt to delete global parameter for server1.
+    uint64_t deleted_num = 0;
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteGlobalParameter6(ServerSelector::ONE("server1"),
+                                                                 "global"));
+    // No parameters should be deleted. In particular, the parameter for the logical
+    // server 'all' should not be deleted.
+    EXPECT_EQ(0, deleted_num);
+
+    // Deleting the existing value for server2 should succeed.
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteGlobalParameter6(ServerSelector::ONE("server2"),
+                                                                 "global"));
+    EXPECT_EQ(1, deleted_num);
+
     // Delete all servers, except 'all'.
     EXPECT_NO_THROW(cbptr_->deleteAllServers6());
     EXPECT_NO_THROW(
         returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ALL())
     );
+    EXPECT_EQ(1, deleted_num);
     ASSERT_EQ(1, returned_globals.size());
     returned_global = *returned_globals.begin();
     // The common value for all servers should still be available because 'all'
