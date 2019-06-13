@@ -1,3 +1,9 @@
+1590.	[func]		fdupont
+	It is now possible to specify hostname-char-set and
+	hostname-char-replacement at the global scope allowing to sanitize
+	host names without requiring a dhcp-ddns entry.
+	(Gitlab #540,!374, git 0a5979369902070ee0c4faf3b713627455b99489)
+
 1589.	[bug]		razvan
 	Fixed configuring kea with tools/cql_config when using --with-cql
 	from source.
