@@ -43,7 +43,7 @@ kea-messages.html: kea-messages.xml
 		--stringparam generate.toc "book toc" \
 		--stringparam html.stylesheet kea-guide.css \
 		$(srcdir)/kea-docbook.xsl \
-		$(srcdir)/kea-messages.xml
+		kea-messages.xml
 
 else
 
