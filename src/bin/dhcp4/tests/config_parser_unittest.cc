@@ -6689,7 +6689,9 @@ TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
 
     // Should fail because "type=mysql" has no factories.
     configure(config, CONTROL_RESULT_ERROR,
-              "The type of the configuration backend: 'mysql' is not supported");
+              "during update from config backend database: "
+              "The type of the configuration backend: "
+              "'mysql' is not supported");
 }
 
 // This test verifies that configuration control info gets populated.
