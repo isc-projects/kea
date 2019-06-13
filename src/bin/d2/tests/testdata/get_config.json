@@ -31,7 +31,7 @@
                 }
             ]
         },
-        "ip-address": "172.16.1.10",
+        "ip-address": "127.0.0.1",
         "loggers": [
             {
                 "debuglevel": 0,
