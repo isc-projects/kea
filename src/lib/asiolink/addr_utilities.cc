@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -286,7 +286,12 @@ prefixLengthFromRange(const IOAddress& min, const IOAddress& max) {
         uint32_t min_numeric = min.toUint32();
 
         // Get the exclusive or which must be one of the bit masks
+        // and the min must be at the beginning of the prefix
+        // so it does not contribute to trailing ones.
         uint32_t xor_numeric = max_numeric ^ min_numeric;
+        if ((min_numeric & ~xor_numeric) != min_numeric) {
+            return (-1);
+        }
         for (uint8_t prefix_len = 0; prefix_len <= 32; ++prefix_len) {
             if (xor_numeric == bitMask4[prefix_len]) {
                 // Got it: the wanted value is also the index
@@ -308,6 +313,11 @@ prefixLengthFromRange(const IOAddress& min, const IOAddress& max) {
         bool zeroes = true;
         for (uint8_t i = 0; i < 16; ++i) {
             uint8_t xor_byte = min_packed[i] ^ max_packed[i];
+            // The min must be at the beginning of the prefix
+            // so it does not contribute to trailing ones.
+            if ((min_packed[i] & ~xor_byte) != min_packed[i]) {
+                return (-1);
+            }
             if (zeroes) {
                 // Skipping zero bits searching for one bits
                 if (xor_byte == 0) {
