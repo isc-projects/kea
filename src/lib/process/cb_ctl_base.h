@@ -183,7 +183,7 @@ public:
 
         // Use the server_tag if set, otherwise use ALL.
         std::string server_tag = srv_cfg->getServerTag();
-        db::ServerSelector& server_selector =
+        db::ServerSelector server_selector =
             (server_tag.empty()? db::ServerSelector::ALL() : db::ServerSelector::ONE(server_tag));
 
         // This collection will hold the audit entries since the last update if

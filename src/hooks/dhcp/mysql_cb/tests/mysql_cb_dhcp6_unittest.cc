@@ -678,6 +678,117 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteGlobalParameter6) {
     }
 }
 
+// This test verifies that it is possible to differentiate between the
+// global parameters by server tag and that the value specified for the
+// particular server overrides the value specified for all servers.
+TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
+    // Create three global parameters having the same name.
+    StampedValuePtr global_parameter1 = StampedValue::create("global", "value1");
+    StampedValuePtr global_parameter2 = StampedValue::create("global", "value2");
+    StampedValuePtr global_parameter3 = StampedValue::create("global", "value3");
+
+    // Try to insert one of them and associate with non-existing server.
+    // This should fail because the server must be inserted first.
+    EXPECT_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
+                                                      global_parameter1),
+                 DbOperationError);
+
+    // Create two servers.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[1]));
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+
+    // This time inserting the global parameters for the server1 and server2 should
+    // be successful.
+    EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
+                                                         global_parameter1));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server2"),
+                                                         global_parameter2));
+
+    // The last parameter is associated with all servers.
+    EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ALL(),
+                                                         global_parameter3));
+
+    StampedValuePtr returned_global;
+
+    // Try to fetch the value specified for all servers.
+    EXPECT_NO_THROW(
+        returned_global = cbptr_->getGlobalParameter6(ServerSelector::ALL(),
+                                                      "global")
+    );
+    ASSERT_TRUE(returned_global);
+    EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
+    EXPECT_EQ("all", returned_global->getServerTag());
+
+    // Try to fetch the value specified for the server1. This should override the
+    // value specified for all servers.
+    EXPECT_NO_THROW(
+        returned_global = cbptr_->getGlobalParameter6(ServerSelector::ONE("server1"),
+                                                      "global")
+    );
+    ASSERT_TRUE(returned_global);
+    EXPECT_EQ(global_parameter1->getValue(), returned_global->getValue());
+    EXPECT_EQ("server1", returned_global->getServerTag());
+
+    // The same in case of the server2.
+    EXPECT_NO_THROW(
+        returned_global = cbptr_->getGlobalParameter6(ServerSelector::ONE("server2"),
+                                                      "global")
+    );
+    ASSERT_TRUE(returned_global);
+    EXPECT_EQ(global_parameter2->getValue(), returned_global->getValue());
+    EXPECT_EQ("server2", returned_global->getServerTag());
+
+    StampedValueCollection returned_globals;
+
+    // Try to fetch the collection of globals for the server2. It should contain
+    // server specific values.
+    EXPECT_NO_THROW(
+        returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ONE("server2"))
+    );
+    ASSERT_EQ(1, returned_globals.size());
+    returned_global = *returned_globals.begin();
+    EXPECT_EQ(global_parameter2->getValue(), returned_global->getValue());
+    EXPECT_EQ("server2", returned_global->getServerTag());
+
+    // Try to fetch the collection of global parameters specified for all servers.
+    // This excludes the values specific to server1 and server2. It returns only the
+    // common ones.
+    EXPECT_NO_THROW(
+        returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ALL())
+    );
+    ASSERT_EQ(1, returned_globals.size());
+    returned_global = *returned_globals.begin();
+    EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
+    EXPECT_EQ("all", returned_global->getServerTag());
+
+    // Delete the server1. It should remove associations of this server with the
+    // global parameters.
+    EXPECT_NO_THROW(cbptr_->deleteServer6(ServerTag("server1")));
+    EXPECT_NO_THROW(
+        returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ONE("server1"))
+    );
+    ASSERT_EQ(1, returned_globals.size());
+    returned_global = *returned_globals.begin();
+    // As a result, the value fetched for the server1 should be the one available for
+    // all servers, rather than the one dedicated for server1. The association of
+    // the server1 specific value with the server1 should be gone.
+    EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
+    EXPECT_EQ("all", returned_global->getServerTag());
+
+    // Delete all servers, except 'all'.
+    EXPECT_NO_THROW(cbptr_->deleteAllServers6());
+    EXPECT_NO_THROW(
+        returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ALL())
+    );
+    ASSERT_EQ(1, returned_globals.size());
+    returned_global = *returned_globals.begin();
+    // The common value for all servers should still be available because 'all'
+    // logical server should not be deleted.
+    EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
+    EXPECT_EQ("all", returned_global->getServerTag());
+}
+
 // This test verifies that all global parameters can be retrieved and deleted.
 TEST_F(MySqlConfigBackendDHCPv6Test, getAllGlobalParameters6) {
     // Create 3 parameters and put them into the database.

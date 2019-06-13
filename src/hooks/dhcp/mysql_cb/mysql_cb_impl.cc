@@ -250,21 +250,79 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
         MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
     };
 
+    // This remembers id of the last entry processed.
+    uint64_t last_id = 0;
+
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&parameters] (MySqlBindingCollection& out_bindings) {
-        if (!out_bindings[1]->getString().empty()) {
+                      [&last_id, &parameters] (MySqlBindingCollection& out_bindings) {
 
-            // Convert value read as string from the database to the actual
-            // data type known from the database as binding #3.
-            StampedValuePtr stamped_value =
-                StampedValue::create(out_bindings[1]->getString(),
-                                     out_bindings[2]->getString(),
-                                     static_cast<Element::types>
-                                     (out_bindings[3]->getInteger<uint8_t>()));
+        // Store id of the current entry.
+        uint64_t id = out_bindings[0]->getInteger<uint64_t>();
 
-            stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
-            stamped_value->setServerTag(out_bindings[5]->getString());
-            parameters.insert(stamped_value);
+        // If we're starting or if this is new parameter being processed...
+        if ((last_id == 0) || (last_id != id)) {
+
+            // parameter name
+            std::string name = out_bindings[1]->getString();
+
+            if (!name.empty()) {
+
+                // Remember last processed entry.
+                last_id = id;
+
+                // The server may use one of the two values present in the
+                // database, i.e. the value specified for the particular
+                // server tag or the value specified for all servers. The
+                // former takes precedence. Therefore, we check here if the
+                // value already present in the parameters collection is
+                // specified for all servers or selected server.
+                auto& index = parameters.get<StampedValueNameIndexTag>();
+                auto existing = index.find(name);
+                if (existing != index.end()) {
+                    // The value of this parameter has been already seen.
+                    // Let's check if the value we stored is for all
+                    // servers or one server.
+                    try {
+                        ServerTag existing_tag((*existing)->getServerTag());
+                        ServerTag new_tag(out_bindings[5]->getString());
+                        if (!existing_tag.amAll() && new_tag.amAll()) {
+                            // The stored value is for one server and the
+                            // currently fetched value is for all servers,
+                            // so let's drop the currently processed value.
+                            return;
+                        }
+
+                    } catch (...) {
+                        // This shouldn't occur because the value comes
+                        // from the database and should have been validated.
+                        return;
+                    }
+                }
+
+                // Convert value read as string from the database to the actual
+                // data type known from the database as binding #3.
+                StampedValuePtr stamped_value =
+                    StampedValue::create(out_bindings[1]->getString(),
+                                         out_bindings[2]->getString(),
+                                         static_cast<Element::types>
+                                         (out_bindings[3]->getInteger<uint8_t>()));
+
+                stamped_value->setId(id);
+                stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
+                stamped_value->setServerTag(out_bindings[5]->getString());
+
+                // If the parameter is already stored, it means that the
+                // stored value is for all servers and the one we're fetching
+                // is for a server tag. Let's replace the value.
+                if (existing != index.end()) {
+                    parameters.replace(existing, stamped_value);
+
+                } else {
+                    // The parameter doesn't exist, so insert it whether
+                    // it is for all or one server.
+                    parameters.insert(stamped_value);
+                }
+            }
         }
     });
 }

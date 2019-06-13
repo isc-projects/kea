@@ -53,30 +53,30 @@ public:
     };
 
     /// @brief Factory returning "unassigned" server selector.
-    static ServerSelector& UNASSIGNED() {
-        static ServerSelector selector(Type::UNASSIGNED);
+    static ServerSelector UNASSIGNED() {
+        ServerSelector selector(Type::UNASSIGNED);
         return (selector);
     }
 
     /// @brief Factory returning "all servers" selector.
-    static ServerSelector& ALL() {
-        static ServerSelector selector(Type::ALL);
+    static ServerSelector ALL() {
+        ServerSelector selector(Type::ALL);
         return (selector);
     }
 
     /// @brief Factory returning selector of one server.
     ///
     /// @param server_tag tag of the single server to be selected.
-    static ServerSelector& ONE(const std::string& server_tag) {
-        static ServerSelector selector(server_tag);
+    static ServerSelector ONE(const std::string& server_tag) {
+        ServerSelector selector(server_tag);
         return (selector);
     }
 
     /// @brief Factory returning "multiple servers" selector.
     ///
     /// @param server_tags set of server tags to be selected.
-    static ServerSelector& MULTIPLE(const std::set<std::string>& server_tags) {
-        static ServerSelector selector(server_tags);
+    static ServerSelector MULTIPLE(const std::set<std::string>& server_tags) {
+        ServerSelector selector(server_tags);
         return (selector);
     }
 
