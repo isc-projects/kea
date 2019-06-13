@@ -7,6 +7,8 @@
 #ifndef FUZZ_H
 #define FUZZ_H
 
+#ifdef ENABLE_AFL
+
 #include <exceptions/exceptions.h>
 
 #include <arpa/inet.h>
@@ -86,9 +88,11 @@ public:
     /// packets has been received from the fuzzer.  After Kea exits, the fuzzer
     /// will restart it.
     ///
+    /// @param ipversion Either 4 or 6 depending on what IP version the
+    ///                  server responds to.
     /// @param shutdown Pointer to boolean flag that will be set to true to
     ///        trigger the shutdown procedure.
-    static void init(volatile bool* shutdown);
+    static void init(int ipversion, volatile bool* shutdown);
 
     /// @brief Main Kea Fuzzing Function
     ///
@@ -120,17 +124,29 @@ public:
     /// thread to exit before allowing the shutdown to continue.
     static void packetProcessed(void);
 
+    /// @brief Populate address structures
+    ///
+    /// Decodes the environment variables used to pass address/port information
+    /// to the program and sets up the appropriate address structures.
+    ///
+    /// @param ipversion Either 4 or 6 depending on which IP version address
+    ///                  is expected.
+    ///
+    /// @throws FuzzInitFail Thrown if the address is not in the expected
+    ///                      format.
+    static void setAddress(int ipversion);
+
     /// @brief size of the buffer used to transfer data between AFL and Kea.
     static constexpr size_t BUFFER_SIZE = 65536;
 
-    // @brief Delay before rereading if read from stdin returns an error (us)
+    /// @brief Delay before rereading if read from stdin returns an error (us)
     static constexpr  useconds_t SLEEP_INTERVAL = 50000;
 
     /// @brief Number of many packets Kea will process until shutting down.
     ///
-    /// After the shutdown, AFL ill restart it. This safety switch is here for
-    ///  eliminating cases where Kea goes into a weird state and stops
-    ///  processing packets properly.
+    /// After the shutdown, AFL will restart it. This safety switch is here for
+    /// eliminating cases where Kea goes into a weird state and stops
+    /// processing packets properly.
     static constexpr long LOOP_COUNT = 1000;
 
     // Condition/mutext variables.  The fuzz_XX_ variables are set by the
@@ -141,7 +157,10 @@ public:
 
     // Other member variables.
     static std::thread          fuzzing_thread_;//< Holds the thread ID
-    static struct sockaddr_in6  servaddr_;      //< Address information
+    static struct sockaddr*     sockaddr_ptr;   //< Pointer to structure used
+    static size_t               sockaddr_len;   //< Length of the structure
+    static struct sockaddr_in   servaddr4_;     //< IPv6 address information
+    static struct sockaddr_in6  servaddr6_;     //< IPv6 address information
     static volatile bool*       shutdown_ptr_;  //< Pointer to shutdown flag
 };
 
@@ -154,5 +173,7 @@ public:
 };
 
 }
+
+#endif // ENABLE_AFL
 
 #endif // FUZZ_H

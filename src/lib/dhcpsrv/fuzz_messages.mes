@@ -14,11 +14,15 @@ the fuzzer via stdin
 An informational message output during fuzzing initialization, this reports
 the details of the interface to be used for fuzzing.
 
+% FUZZ_INIT_COMPLETE fuzz initialization complete
+A debug message output when the fuzzing initialization function has completed
+successfully.
+
 % FUZZ_INIT_FAIL fuzz initialization failure, reason: %1
 An error message reported if the fuzzing initialization failed.  The reason
 for the failure is given in the message.
 
-% FUZZ_LOOP_EXIT main loop has exited, shutting down Kea
+% FUZZ_LOOP_EXIT fuzzing loop has exited, shutting down Kea
 This debug message is output when Kea has processed the number of packets
 given by the hard-coded variable Fuzz::LOOP_COUNT.  Kea is shutting
 itself down and will be restarted by AFL.  This is recommended by the AFL

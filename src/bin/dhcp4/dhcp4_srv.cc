@@ -31,6 +31,7 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/fuzz.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -767,6 +768,21 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
 
 bool
 Dhcpv4Srv::run() {
+#ifdef ENABLE_AFL
+    // AFL fuzzing setup initiated here. At this stage, Kea has loaded its
+    // config, opened sockets, established DB connections, etc. It is truly
+    // ready to process packets. Now it's time to initialize AFL. It will set
+    // up a separate thread that will receive data from fuzzing engine and will
+    // send it as packets to Kea. Kea is supposed to process them and hopefully
+    // not crash in the process. Once the packet processing is done, Kea should
+    // let the know that it's ready for the next packet. This is done further
+    // down in this loop (see Fuzz::packetProcessed()).
+    Fuzz::init(4, &shutdown_);
+    //
+    // The next line is needed as a signature for AFL to recognise that we are
+    // running persistent fuzzing.
+    __AFL_LOOP(0);
+#endif // ENABLE_AFL
     while (!shutdown_) {
         try {
             run_one();
@@ -782,6 +798,12 @@ Dhcpv4Srv::run() {
             // std::exception.
             LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
         }
+
+#ifdef ENABLE_AFL
+        // Ok, this particular packet processing is done.  If we are fuzzing,
+        // let AFL know about it.
+        Fuzz::packetProcessed();
+#endif // ENABLE_AFL
     }
 
     return (true);

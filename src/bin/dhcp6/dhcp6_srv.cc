@@ -452,7 +452,7 @@ bool Dhcpv6Srv::run() {
     // not crash in the process. Once the packet processing is done, Kea should
     // let the know that it's ready for the next packet. This is done further
     // down in this loop (see Fuzz::packetProcessed()).
-    Fuzz::init(&shutdown_);
+    Fuzz::init(6, &shutdown_);
     //
     // The next line is needed as a signature for AFL to recognise that we are
     // running persistent fuzzing.
