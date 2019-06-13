@@ -1,3 +1,8 @@
+1589.	[bug]		razvan
+	Fixed configuring kea with tools/cql_config when using --with-cql
+	from source.
+	(Gitlab #522,!261, git bf7debc182e094a8b34f1f2df99cf4e9f84c8906)
+
 1588.	[func]		marcin
 	Extended APIs of the DHCPv4 and DHCPv6 configuration backends with
 	the management functions for the server tags.
