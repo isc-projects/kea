@@ -14,9 +14,10 @@ the fuzzer via stdin
 An informational message output during fuzzing initialization, this reports
 the details of the interface to be used for fuzzing.
 
-% FUZZ_INIT_COMPLETE fuzz initialization complete
-A debug message output when the fuzzing initialization function has completed
-successfully.
+% FUZZ_INIT_COMPLETE fuzz initialization complete: interface %1, address %2, port %3, max loops %4
+An informational message output when the fuzzing initialization function has
+completed successfully. The parameters listed are those which must be/can be
+set via environment variables.
 
 % FUZZ_INIT_FAIL fuzz initialization failure, reason: %1
 An error message reported if the fuzzing initialization failed.  The reason
@@ -28,6 +29,11 @@ given by the hard-coded variable Fuzz::LOOP_COUNT.  Kea is shutting
 itself down and will be restarted by AFL.  This is recommended by the AFL
 documentation as a way of avoiding issues if Kea gets itself into a funny
 state after running for a long time.
+
+% FUZZ_LOOP_MAX fuzzing loop will run %1 time(s) before exiting
+A debug message noting how many loops (i.e. packets from the fuzzer) the code
+will process before Kea exits and the fuzzer restarts it.  The hard-coded
+value can be overridden by setting the environment variable KEA_AFL_LOOP_MAX.
 
 % FUZZ_PACKET_PROCESSED_CALLED packetProcessed has been called
 A debug message indicating that the processing of a packet by Kea has
@@ -76,6 +82,11 @@ An error message output when the fuzzing code has failed to create a socket
 through which is will copy data received on stdin from the AFL fuzzer to
 the port on which Kea is listening.  The program will most likely hang if
 this occurs.
+
+% FUZZ_THREAD_NOT_TERMINATED fuzzing thread has not terminated
+An error message output in the destructor of the fuzzing object should the
+object go out of scope with the fuzzing thread running.  This message is
+for diagnosing problems in the fuzzing code.
 
 % FUZZ_THREAD_TERMINATED fuzzing thread has terminated
 A debug message, output when the main thread has detected that the fuzzing

@@ -28,15 +28,14 @@ namespace isc {
 /// This contains the variables and encapsulates the primitives required
 /// to manage the condition variables between the two threads.
 
-class FuzzSynch {
+class FuzzSync {
 public:
-    /// @brief Initialization
+    /// @brief Constructor
     ///
-    /// Objects of this type are declared static to allow them to be accessed
-    /// from mutiple thread.  This function allows appropriate initialization.
+    /// Just set the name of the variable for debug message purposes.
     ///
-    /// @param name Name for debug messages
-    void init(const char* name);
+    /// @param name The name of the object, output in debug messages.
+    FuzzSync(const char* name);
 
     /// @brief Waits for condition notification
     ///
@@ -78,21 +77,26 @@ private:
 
 class Fuzz {
 public:
-    /// @brief Initializes Kea fuzzing
+    /// @brief Constructor
     ///
-    /// This takes one parameter, which is a pointer to the shutdown flag. Kea
-    /// runs until something sets this flag to true, at which point it shuts
-    /// down.
+    /// Initializes member variables.
+    Fuzz();
+
+    /// @brief Constructor
     ///
-    /// In the case of fuzzing, the shutdown flag is set when a fixed number of
-    /// packets has been received from the fuzzer.  After Kea exits, the fuzzer
-    /// will restart it.
+    /// Initializes fuzzing object and starts the fuzzing thread.
     ///
     /// @param ipversion Either 4 or 6 depending on what IP version the
     ///                  server responds to.
     /// @param shutdown Pointer to boolean flag that will be set to true to
-    ///        trigger the shutdown procedure.
-    static void init(int ipversion, volatile bool* shutdown);
+    ///                 trigger the shutdown procedure.
+    Fuzz(int ipversion, volatile bool* shutdown);
+
+    /// @brief Destructor
+    ///
+    /// Does some basic checks when going out of scope.  The purpose of these
+    /// checks is to aid diagnosis in the event of problems with the fuzzing.
+    ~Fuzz();
 
     /// @brief Main Kea Fuzzing Function
     ///
@@ -109,7 +113,7 @@ public:
     /// any resource leaks (which are not caught by AFL) from getting too large
     /// and interfering with the fuzzing.  AFL will automatically restart the
     /// program to continue fuzzing.
-    static void run(void);
+    void run(void);
 
     /// @brief Notify fuzzing thread that processing is complete
     ///
@@ -122,7 +126,7 @@ public:
     ///
     /// If a shutdown has been initiated, this method waits for the fuzzing
     /// thread to exit before allowing the shutdown to continue.
-    static void packetProcessed(void);
+    void packetProcessed(void);
 
     /// @brief Populate address structures
     ///
@@ -134,7 +138,7 @@ public:
     ///
     /// @throws FuzzInitFail Thrown if the address is not in the expected
     ///                      format.
-    static void setAddress(int ipversion);
+    void setAddress(int ipversion);
 
     /// @brief size of the buffer used to transfer data between AFL and Kea.
     static constexpr size_t BUFFER_SIZE = 65536;
@@ -149,19 +153,24 @@ public:
     /// processing packets properly.
     static constexpr long LOOP_COUNT = 1000;
 
-    // Condition/mutext variables.  The fuzz_XX_ variables are set by the
+    // Condition/mutex variables.  The fuzz_XX_ variables are set by the
     // fuzzing thread and waited on by the main thread.  The main_XX_ variables
     // are set by the main thread and waited on by the fuzzing thread.
-    static FuzzSynch        fuzz_sync_;     // Set by fuzzing thread
-    static FuzzSynch        main_sync_;     // Set by main thread
+    FuzzSync            fuzz_sync_;     // Set by fuzzing thread
+    FuzzSync            main_sync_;     // Set by main thread
 
     // Other member variables.
-    static std::thread          fuzzing_thread_;//< Holds the thread ID
-    static struct sockaddr*     sockaddr_ptr;   //< Pointer to structure used
-    static size_t               sockaddr_len;   //< Length of the structure
-    static struct sockaddr_in   servaddr4_;     //< IPv6 address information
-    static struct sockaddr_in6  servaddr6_;     //< IPv6 address information
-    static volatile bool*       shutdown_ptr_;  //< Pointer to shutdown flag
+    const char*         address_;       //< Pointer to address string
+    std::thread         fuzzing_thread_;//< Holds the thread ID
+    const char*         interface_;     //< Pointer to interface string
+    long                loop_max_;      //< Maximum number of loop iterations
+    uint16_t            port_;          //< Port number to use
+    volatile bool       running_;       //< Set if the thread is running
+    struct sockaddr*    sockaddr_ptr;   //< Pointer to structure used
+    size_t              sockaddr_len;   //< Length of the structure
+    struct sockaddr_in  servaddr4_;     //< IPv6 address information
+    struct sockaddr_in6 servaddr6_;     //< IPv6 address information
+    volatile bool*      shutdown_ptr_;  //< Pointer to shutdown flag
 };
 
 

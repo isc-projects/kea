@@ -37,37 +37,16 @@ constexpr size_t        Fuzz::BUFFER_SIZE;
 constexpr useconds_t    Fuzz::SLEEP_INTERVAL;
 constexpr long          Fuzz::LOOP_COUNT;
 
-// Variables needed to synchronize between main and fuzzing threads.  The
-// fuzz_sync_ condition is notified by the fuzzing thread and waited for by the
-// main thread.  The main_sync_ condition is notified by the main thread and
-// waited for by the fuzzing thread.
-FuzzSynch               Fuzz::fuzz_sync_;
-FuzzSynch               Fuzz::main_sync_;
-std::thread             Fuzz::fuzzing_thread_;
-
-// Address structure used to define the address/port used to send
-// fuzzing data to the Kea server.
-struct sockaddr_in6     Fuzz::servaddr6_;
-struct sockaddr_in      Fuzz::servaddr4_;
-sockaddr*               Fuzz::sockaddr_ptr = NULL;
-size_t                  Fuzz::sockaddr_len = 0;
-
-// Pointer to the shutdown flag used by Kea.  The fuzzing code will set this
-// after the appropriate number of packets have been fuzzed.
-volatile bool*          Fuzz::shutdown_ptr_ = NULL;
-
-// FuzzSynch methods.  FuzSynch is the class that encapsulates the
+// FuzzSync methods.  FuzSynch is the class that encapsulates the
 // synchronization process between the main and fuzzing threads.
 
-// init - just set the predicate as false.
-void FuzzSynch::init(const char* name) {
-    name_ = name;
-    ready_ = false;
+// Constructor
+FuzzSync::FuzzSync(const char* name) : ready_(false), name_(name) {
 }
 
 // Wait to be notified when the predicate is true
 void
-FuzzSynch::wait(void) {
+FuzzSync::wait(void) {
     LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_WAITING).arg(name_);
     unique_lock<mutex>   lock(mutex_);
     cond_.wait(lock, [=]() { return this->ready_; });
@@ -77,7 +56,7 @@ FuzzSynch::wait(void) {
 
 // Set predicate and notify the waiting thread to continue
 void
-FuzzSynch::notify(void) {
+FuzzSync::notify(void) {
     LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SETTING).arg(name_);
     unique_lock<mutex>  lock(mutex_);
     ready_ = true;
@@ -87,110 +66,48 @@ FuzzSynch::notify(void) {
 
 // Fuzz methods.
 
-void
-Fuzz::setAddress(int ipversion) {
-    stringstream reason;    // Used in error messages
+// Constructor
+Fuzz::Fuzz(int ipversion, volatile bool* shutdown) :
+    fuzz_sync_("fuzz_sync"), main_sync_("main_sync"), address_(nullptr),
+    interface_(nullptr), loop_max_(LOOP_COUNT), port_(0), running_(false),
+    sockaddr_ptr(nullptr), sockaddr_len(0), shutdown_ptr_(nullptr) {
 
-    // Get the environment for the fuzzing: interface, address and port.
-    const char *iface = getenv("KEA_AFL_INTERFACE");
-    if (! iface) {
-        isc_throw(FuzzInitFail, "no fuzzing interface has been set");
-    }
-
-    // Now the address.
-    const char *address = getenv("KEA_AFL_ADDRESS");
-    if (address == 0) {
-        isc_throw(FuzzInitFail, "no fuzzing address has been set");
-    }
-
-    // ... and the port.
-    unsigned short port = 0;
-    const char *port_ptr = getenv("KEA_AFL_PORT");
-    if (port_ptr == 0) {
-        isc_throw(FuzzInitFail, "no fuzzing port has been set");
-    }
     try {
-        port = boost::lexical_cast<uint16_t>(port_ptr);
-    } catch (const boost::bad_lexical_cast&) {
-        reason << "cannot convert port number specification "
-               << port_ptr << " to an integer";
-        isc_throw(FuzzInitFail, reason.str());
-    }
-
-    // Decide if the address is an IPv4 or IPv6 address.
-    if ((strstr(address, ".") != NULL) && (ipversion == 4)) {
-        // Assume an IPv4 address
-        memset(&servaddr4_, 0, sizeof(servaddr4_));
-
-        servaddr4_.sin_family = AF_INET;
-        if (inet_pton(AF_INET, address, &servaddr4_.sin_addr) != 1) {
-            reason << "inet_pton() failed: can't convert "
-                   << address << " to an IPv6 address" << endl;
-            isc_throw(FuzzInitFail, reason.str());
-        }
-        servaddr4_.sin_port = htons(port);
-
-        sockaddr_ptr = reinterpret_cast<sockaddr*>(&servaddr4_);
-        sockaddr_len = sizeof(servaddr4_);
-
-    } else if ((strstr(address, ":") != NULL) && (ipversion == 6)) {
-
-        // Set up the IPv6 address structure.
-        memset(&servaddr6_, 0, sizeof (servaddr6_));
-
-        servaddr6_.sin6_family = AF_INET6;
-        if (inet_pton(AF_INET6, address, &servaddr6_.sin6_addr) != 1) {
-            reason << "inet_pton() failed: can't convert "
-                   << address << " to an IPv6 address" << endl;
-            isc_throw(FuzzInitFail, reason.str());
-        }
-        servaddr6_.sin6_port = htons(port);
-
-        // Interface ID is needed for IPv6 address structures.
-        servaddr6_.sin6_scope_id = if_nametoindex(iface);
-        if (servaddr6_.sin6_scope_id == 0) {
-            reason << "error retrieving interface ID for "
-                   << iface << ": " << strerror(errno);
-            isc_throw(FuzzInitFail, reason.str());
-        }
-
-        sockaddr_ptr = reinterpret_cast<sockaddr*>(&servaddr6_);
-        sockaddr_len = sizeof(servaddr6_);
-    } else {
-        reason << "Expected IP version (" << ipversion << ") is not "
-               << "4 or 6, or the given address " << address << " does not "
-               << "match the IP version expected";
-        isc_throw(FuzzInitFail, reason.str());
-    }
-
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_INTERFACE).arg(iface).arg(address).arg(port);
-}
-
-// Initialization: create the thread artifacts and start the fuzzing thread.
-void
-Fuzz::init(int ipversion, volatile bool* shutdown_flag) {
-    try {
-        stringstream reason;    //yy Used for exception messages
+        stringstream reason;    // Used to construct exception messages
 
         // Store reference to shutdown flag.  When the fuzzing loop has read
         // the set number of packets from AFL, it will set this flag to trigger
         // a Kea shutdown.
-        if (shutdown_flag) {
-            shutdown_ptr_ = shutdown_flag;
+        if (shutdown) {
+            shutdown_ptr_ = shutdown;
         } else {
             isc_throw(FuzzInitFail, "must pass shutdown flag to kea_fuzz_init");
         }
 
-        // Initialize synchronization variables.
-        fuzz_sync_.init("fuzz_synch");
-        main_sync_.init("main_synch");
-
         // Set up address structures.
         setAddress(ipversion);
 
+        // Check if the hard-coded maximum loop count is being overridden
+        const char *loop_max_ptr = getenv("KEA_AFL_LOOP_MAX");
+        if (loop_max_ptr != 0) {
+            try {
+                loop_max_ = boost::lexical_cast<long>(loop_max_ptr);
+            } catch (const boost::bad_lexical_cast&) {
+                reason << "cannot convert port number specification "
+                       << loop_max_ptr << " to an integer";
+                isc_throw(FuzzInitFail, reason.str());
+            }
+
+            if (loop_max_ <= 0) {
+                reason << "KEA_AFL_LOOP_MAX is " << loop_max_ << ". "
+                       << "It must be an integer greater than zero.";
+                isc_throw(FuzzInitFail, reason.str());
+            }
+        }
+
         // Start the thread that reads the packets sent by AFL from stdin and
         // passes them to the port on which Kea is listening.
-        fuzzing_thread_ = std::thread(Fuzz::run);
+        fuzzing_thread_ = std::thread(&Fuzz::run, this);
 
         // Wait for the fuzzing thread to read its first packet from AFL and
         // send it to the port on which Kea is listening.
@@ -203,8 +120,97 @@ Fuzz::init(int ipversion, volatile bool* shutdown_flag) {
         throw;
     }
 
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_INIT_COMPLETE);
+    LOG_INFO(fuzz_logger, FUZZ_INIT_COMPLETE).arg(interface_).arg(address_)
+             .arg(port_).arg(loop_max_);
 }
+
+// Destructor
+Fuzz::~Fuzz() {
+    // The fuzzing thread should not be running when the fuzzing object
+    // goes out of scope.
+    if (running_) {
+        LOG_ERROR(fuzz_logger, FUZZ_THREAD_NOT_TERMINATED);
+    }
+}
+
+// Parse IP address/port/interface and set up address structures.
+void
+Fuzz::setAddress(int ipversion) {
+    stringstream reason;    // Used in error messages
+
+    // Get the environment for the fuzzing: interface, address and port.
+    interface_ = getenv("KEA_AFL_INTERFACE");
+    if (! interface_) {
+        isc_throw(FuzzInitFail, "no fuzzing interface has been set");
+    }
+
+    // Now the address.
+    address_ = getenv("KEA_AFL_ADDRESS");
+    if (address_ == 0) {
+        isc_throw(FuzzInitFail, "no fuzzing address has been set");
+    }
+
+    // ... and the port.
+    const char *port_ptr = getenv("KEA_AFL_PORT");
+    if (port_ptr == 0) {
+        isc_throw(FuzzInitFail, "no fuzzing port has been set");
+    }
+    try {
+        port_ = boost::lexical_cast<uint16_t>(port_ptr);
+    } catch (const boost::bad_lexical_cast&) {
+        reason << "cannot convert port number specification "
+               << port_ptr << " to an integer";
+        isc_throw(FuzzInitFail, reason.str());
+    }
+
+    // Decide if the address is an IPv4 or IPv6 address.
+    if ((strstr(address_, ".") != NULL) && (ipversion == 4)) {
+        // Assume an IPv4 address
+        memset(&servaddr4_, 0, sizeof(servaddr4_));
+
+        servaddr4_.sin_family = AF_INET;
+        if (inet_pton(AF_INET, address_, &servaddr4_.sin_addr) != 1) {
+            reason << "inet_pton() failed: can't convert "
+                   << address_ << " to an IPv6 address" << endl;
+            isc_throw(FuzzInitFail, reason.str());
+        }
+        servaddr4_.sin_port = htons(port_);
+
+        sockaddr_ptr = reinterpret_cast<sockaddr*>(&servaddr4_);
+        sockaddr_len = sizeof(servaddr4_);
+
+    } else if ((strstr(address_, ":") != NULL) && (ipversion == 6)) {
+
+        // Set up the IPv6 address structure.
+        memset(&servaddr6_, 0, sizeof (servaddr6_));
+
+        servaddr6_.sin6_family = AF_INET6;
+        if (inet_pton(AF_INET6, address_, &servaddr6_.sin6_addr) != 1) {
+            reason << "inet_pton() failed: can't convert "
+                   << address_ << " to an IPv6 address" << endl;
+            isc_throw(FuzzInitFail, reason.str());
+        }
+        servaddr6_.sin6_port = htons(port_);
+
+        // Interface ID is needed for IPv6 address structures.
+        servaddr6_.sin6_scope_id = if_nametoindex(interface_);
+        if (servaddr6_.sin6_scope_id == 0) {
+            reason << "error retrieving interface ID for "
+                   << interface_ << ": " << strerror(errno);
+            isc_throw(FuzzInitFail, reason.str());
+        }
+
+        sockaddr_ptr = reinterpret_cast<sockaddr*>(&servaddr6_);
+        sockaddr_len = sizeof(servaddr6_);
+    } else {
+        reason << "Expected IP version (" << ipversion << ") is not "
+               << "4 or 6, or the given address " << address_ << " does not "
+               << "match the IP version expected";
+        isc_throw(FuzzInitFail, reason.str());
+    }
+
+}
+
 
 // This is the main fuzzing function. It receives data from fuzzing engine.
 // That data is received to stdin and then sent over the configured UDP socket.
@@ -212,6 +218,8 @@ Fuzz::init(int ipversion, volatile bool* shutdown_flag) {
 // that task being signalled by the main thread calling Fuzz::packetProcessed().
 void
 Fuzz::run(void) {
+    running_ = true;
+
     // Create the socket throw which packets read from stdin will be send
     // to the port on which Kea is listening.
     int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -226,10 +234,10 @@ Fuzz::run(void) {
     // inside the read loop in the server process using __AFL_LOOP) to ensure
     // that thread running this function shuts down properly between each
     // restart of Kea.
-    auto loop = Fuzz::LOOP_COUNT;
+    auto loop = loop_max_;
     while (loop-- > 0) {
         // Read from stdin and continue reading (albeit after a pause) even
-        // if there is an error.  Do the same with end of files.
+        // if there is an error.  Do the same if an EOF is received.
         char buf[BUFFER_SIZE];
         ssize_t length = read(0, buf, sizeof(buf));
         if (length <= 0) {
@@ -287,6 +295,8 @@ Fuzz::run(void) {
 
     // If the main thread is waiting, let it terminate as well.
     fuzz_sync_.notify();
+
+    running_ = false;
 
     return;
 }

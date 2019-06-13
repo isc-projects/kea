@@ -776,11 +776,11 @@ Dhcpv4Srv::run() {
     // send it as packets to Kea. Kea is supposed to process them and hopefully
     // not crash in the process. Once the packet processing is done, Kea should
     // let the know that it's ready for the next packet. This is done further
-    // down in this loop (see Fuzz::packetProcessed()).
-    Fuzz::init(4, &shutdown_);
+    // down in this loop by a call to the packetProcessed() method.
+    Fuzz fuzz_controller(4, &shutdown_);
     //
     // The next line is needed as a signature for AFL to recognise that we are
-    // running persistent fuzzing.
+    // running persistent fuzzing.  This has to be in the main image file.
     __AFL_LOOP(0);
 #endif // ENABLE_AFL
     while (!shutdown_) {
@@ -802,7 +802,7 @@ Dhcpv4Srv::run() {
 #ifdef ENABLE_AFL
         // Ok, this particular packet processing is done.  If we are fuzzing,
         // let AFL know about it.
-        Fuzz::packetProcessed();
+        fuzz_controller.packetProcessed();
 #endif // ENABLE_AFL
     }
 
