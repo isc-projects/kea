@@ -995,50 +995,49 @@ void
 TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr parent = getOption(pkt);
     std::string txt;
+    isc::log::MessageID msgid = EVAL_DEBUG_SUB_OPTION;
     if (!parent) {
-        // There's no parent option, give up.
-        txt = pushFailure(values);
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION_NO_OPTION)
-            .arg(option_code_)
-            .arg(sub_option_code_)
-            .arg(txt);
-        return;
-    }
-
-    OptionPtr sub = getSubOption(parent);
-    if (!sub) {
-        // Failed to find the sub-option
-        txt = pushFailure(values);
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION)
-            .arg(option_code_)
-            .arg(sub_option_code_)
-            .arg(txt);
-        return;
-    }
-
-    if (representation_type_ == TEXTUAL) {
-        txt = sub->toString();
-    } else if (representation_type_ == HEXADECIMAL) {
-        std::vector<uint8_t> binary = sub->toBinary();
-        txt.resize(binary.size());
-        if (!binary.empty()) {
-            memmove(&txt[0], &binary[0], binary.size());
+        // There's no parent option, notify that.
+        msgid = EVAL_DEBUG_SUB_OPTION_NO_OPTION;
+        if (representation_type_ == EXISTS) {
+            txt = "false";
         }
     } else {
-        txt = "true";
+        OptionPtr sub = getSubOption(parent);
+        if (!sub) {
+            // Failed to find the sub-option
+            if (representation_type_ == EXISTS) {
+                txt = "false";
+            }
+        } else {
+            if (representation_type_ == TEXTUAL) {
+                txt = sub->toString();
+            } else if (representation_type_ == HEXADECIMAL) {
+                std::vector<uint8_t> binary = sub->toBinary();
+                txt.resize(binary.size());
+                if (!binary.empty()) {
+                    memmove(&txt[0], &binary[0], binary.size());
+                }
+            } else {
+                txt = "true";
+            }
+        }
     }
+
+    // Push value of the sub-option or empty string if there was no
+    // such parent option in the packet or sub-option in the parent.
     values.push(txt);
 
     // Log what we pushed, both exists and textual are simple text
     // and can be output directly.  We also include the code numbers
     // of the requested parent option and sub-option.
     if (representation_type_ == HEXADECIMAL) {
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION)
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, msgid)
             .arg(option_code_)
             .arg(sub_option_code_)
             .arg(toHex(txt));
     } else {
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION)
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, msgid)
             .arg(option_code_)
             .arg(sub_option_code_)
             .arg('\'' + txt + '\'');
