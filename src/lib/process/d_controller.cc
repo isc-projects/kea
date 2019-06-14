@@ -628,6 +628,40 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
 }
 
 ConstElementPtr
+DControllerBase::serverTagGetHandler(const std::string&, ConstElementPtr) {
+    const std::string& tag = process_->getCfgMgr()->getContext()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(COMMAND_SUCCESS, response));
+}
+
+ConstElementPtr
+DControllerBase::serverTagSetHandler(const std::string&, ConstElementPtr args) {
+    std::string message;
+    ConstElementPtr tag;
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        tag = args->get("server-tag");
+        if (!tag) {
+            message = "Missing mandatory 'server-tag' parameter.";
+        } else if (tag->getType() != Element::string) {
+            message = "'server-tag' parameter expected to be a string.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Failure cases.
+        return (createAnswer(COMMAND_ERROR, message));
+    }
+
+    process_->getCfgMgr()->getContext()->setServerTag(tag->stringValue());
+    message = "'server-tag' successfully updated.";
+    return (createAnswer(COMMAND_SUCCESS, message));
+}
+
+ConstElementPtr
 DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ConstElementPtr answer;
 

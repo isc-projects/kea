@@ -307,7 +307,7 @@ public:
 
     /// @brief handler for config-set command
     ///
-    /// This method handles the config-set command, which checks
+    /// This method handles the config-set command, which loads
     /// configuration specified in args parameter.
     ///
     /// @param command (ignored)
@@ -327,6 +327,30 @@ public:
     isc::data::ConstElementPtr
     shutdownHandler(const std::string& command,
                     isc::data::ConstElementPtr args);
+
+    /// @brief handler for server-tag-get command
+    ///
+    /// This method handles the server-tag-get command, which retrieves
+    /// the current server tag and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    serverTagGetHandler(const std::string& command,
+                        isc::data::ConstElementPtr args);
+
+    /// @brief handler for server-tag-set command
+    ///
+    /// This method handles the server-tag-set command, which sets
+    /// the server tag specified in args parameter.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    serverTagSetHandler(const std::string& command,
+                        isc::data::ConstElementPtr args);
 
 protected:
     /// @brief Virtual method that provides derivations the opportunity to

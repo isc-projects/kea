@@ -292,6 +292,32 @@ private:
     commandLeasesReclaimHandler(const std::string& command,
                                 isc::data::ConstElementPtr args);
 
+    /// @brief Handler for processing 'server-tag-get' command
+    ///
+    /// This handler processes server-tag-get command, which retrieves
+    /// the current server tag and returns it in response.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args { "server-tag": "<new-value>" } argument map.
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandServerTagGetHandler(const std::string& command,
+                               isc::data::ConstElementPtr args);
+
+    /// @brief Handler for processing 'server-tag-set' command
+    ///
+    /// This handler processes server-tag-set command, which sets
+    /// the server tag to the specified value.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args { "server-tag": "<new-value>" } argument map.
+    ///
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    commandServerTagSetHandler(const std::string& command,
+                               isc::data::ConstElementPtr args);
+
     /// @brief Reclaims expired IPv4 leases and reschedules timer.
     ///
     /// This is a wrapper method for @c AllocEngine::reclaimExpiredLeases4.

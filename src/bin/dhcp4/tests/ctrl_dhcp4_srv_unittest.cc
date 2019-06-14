@@ -483,6 +483,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
+    EXPECT_FALSE(command_list.find("\"server-tag-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -602,6 +604,39 @@ TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
     sendUnixCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
+// This test verifies that the DHCP server handles server-tag-get command
+TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
+    createUnixChannelServer();
+
+    std::string response;
+    std::string expected;
+
+    // Send the server-tag-get command
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"\" }, \"result\": 0 }";
+    EXPECT_EQ(expected, response);
+
+    // Set a value to the server tag
+    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
+
+    // Retry...
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
+}
+
+// This test verifies that the DHCP server does not handles server-tag-set command
+TEST_F(CtrlChannelDhcpv4SrvTest, serverTagSet) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the server-tag-set command
+    sendUnixCommand("{ \"command\": \"server-tag-set\" }", response);
+    std::string expected = "{ \"result\": 2, "
+        "\"text\": \"'server-tag-set' command not supported.\" }";
+    EXPECT_EQ(expected, response);
 }
 
 // This test verifies that the DHCP server immediately removed expired
@@ -854,6 +889,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
+    checkListCommands(rsp, "server-tag-get");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
