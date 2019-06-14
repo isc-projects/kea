@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/eval/eval_messages.mes on Fri Feb 08 2019 20:17
+// File created from ../../../src/lib/eval/eval_messages.mes on Fri Jun 14 2019 20:35
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -27,6 +27,8 @@ extern const isc::log::MessageID EVAL_DEBUG_STRING = "EVAL_DEBUG_STRING";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING = "EVAL_DEBUG_SUBSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_EMPTY = "EVAL_DEBUG_SUBSTRING_EMPTY";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_RANGE = "EVAL_DEBUG_SUBSTRING_RANGE";
+extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION = "EVAL_DEBUG_SUB_OPTION";
+extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION_NO_OPTION = "EVAL_DEBUG_SUB_OPTION_NO_OPTION";
 extern const isc::log::MessageID EVAL_DEBUG_TOHEXSTRING = "EVAL_DEBUG_TOHEXSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_DATA = "EVAL_DEBUG_VENDOR_CLASS_DATA";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND = "EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND";
@@ -66,6 +68,8 @@ const char* values[] = {
     "EVAL_DEBUG_SUBSTRING", "Popping length %1, start %2, string %3 pushing result %4",
     "EVAL_DEBUG_SUBSTRING_EMPTY", "Popping length %1, start %2, string %3 pushing result %4",
     "EVAL_DEBUG_SUBSTRING_RANGE", "Popping length %1, start %2, string %3 pushing result %4",
+    "EVAL_DEBUG_SUB_OPTION", "Pushing option %1 sub-option %2 with value %3",
+    "EVAL_DEBUG_SUB_OPTION_NO_OPTION", "Requested option %1 sub-option %2, but the parent option is not present, pushing result %3",
     "EVAL_DEBUG_TOHEXSTRING", "Popping binary value %1 and separator %2, pushing result %3",
     "EVAL_DEBUG_VENDOR_CLASS_DATA", "Data %1 (out of %2 received) in vendor class found, pushing result '%3'",
     "EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND", "Requested data index %1, but option with enterprise-id %2 has only %3 data tuple(s), pushing result '%4'",

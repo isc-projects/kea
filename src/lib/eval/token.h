@@ -1057,6 +1057,68 @@ protected:
     uint16_t index_;
 };
 
+/// @brief Token that represents sub-options in DHCPv4 and DHCPv6.
+///
+/// It covers any options which encapsulate sub-options, for instance
+/// dhcp-agent-options (72, DHCPv4) or rsoo (66, DHCPv6).
+/// This class is derived from TokenOption and leverages its ability
+/// to operate on sub-options. It also adds additional capabilities.
+///
+/// It can represent the following expressions:
+/// option[149].exists - check if option 149 exists
+/// option[149].option[1].exists - check if suboption 1 exists in the option 149
+/// option[149].option[1].hex - return content of suboption 1 for option 149
+class TokenSubOption : public TokenOption {
+public:
+
+    /// @note Does not define its own representation type:
+    /// simply use the @c TokenOption::RepresentationType
+
+    /// @brief Constructor that takes an option and sub-option codes as parameter
+    ///
+    /// Note: There is no constructor that takes names.
+    ///
+    /// @param option_code code of the parent option.
+    /// @param sub_option_code code of the sub-option to be represented.
+    /// @param rep_type Token representation type.
+    TokenSubOption(const uint16_t option_code,
+                   const uint16_t sub_option_code,
+                   const RepresentationType& rep_type)
+        : TokenOption(option_code, rep_type), sub_option_code_(sub_option_code) {}
+
+    /// @brief This is a method for evaluating a packet.
+    ///
+    /// This token represents a value of the sub-option, so this method
+    /// attempts to extract the parent option from the packet and when
+    /// it succeeds to extract the sub-option from the option and
+    /// its value on the stack.
+    /// If the parent option or the sub-option is not there, an empty
+    /// string ("") is put on the stack.
+    ///
+    /// @param pkt specified parent option will be extracted from this packet
+    /// @param values value of the sub-option will be pushed here (or "")
+    virtual void evaluate(Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns sub-option-code
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenSubOption with correct parameters.
+    ///
+    /// @return option-code of the sub-option this token expects to extract.
+    uint16_t getSubCode() const {
+        return (sub_option_code_);
+    }
+
+protected:
+    /// @brief Attempts to retrieve a sub-option.
+    ///
+    /// @param parent the sub-option will be retrieved from here
+    /// @return sub-option instance (or NULL if not found)
+    virtual OptionPtr getSubOption(const OptionPtr& parent);
+
+    uint16_t sub_option_code_; ///< Code of the sub-option to be extracted
+};
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

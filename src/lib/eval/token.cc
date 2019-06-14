@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -984,4 +984,63 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
 TokenInteger::TokenInteger(const uint32_t value)
     :TokenString(EvalContext::fromUint32(value)), int_value_(value) {
 
+}
+
+OptionPtr
+TokenSubOption::getSubOption(const OptionPtr& parent) {
+    return (parent->getOption(sub_option_code_));
+}
+
+void
+TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
+    OptionPtr parent = getOption(pkt);
+    std::string txt;
+    if (!parent) {
+        // There's no parent option, give up.
+        txt = pushFailure(values);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION_NO_OPTION)
+            .arg(option_code_)
+            .arg(sub_option_code_)
+            .arg(txt);
+        return;
+    }
+
+    OptionPtr sub = getSubOption(parent);
+    if (!sub) {
+        // Failed to find the sub-option
+        txt = pushFailure(values);
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION)
+            .arg(option_code_)
+            .arg(sub_option_code_)
+            .arg(txt);
+        return;
+    }
+
+    if (representation_type_ == TEXTUAL) {
+        txt = sub->toString();
+    } else if (representation_type_ == HEXADECIMAL) {
+        std::vector<uint8_t> binary = sub->toBinary();
+        txt.resize(binary.size());
+        if (!binary.empty()) {
+            memmove(&txt[0], &binary[0], binary.size());
+        }
+    } else {
+        txt = "true";
+    }
+    values.push(txt);
+
+    // Log what we pushed, both exists and textual are simple text
+    // and can be output directly.  We also include the code numbers
+    // of the requested parent option and sub-option.
+    if (representation_type_ == HEXADECIMAL) {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION)
+            .arg(option_code_)
+            .arg(sub_option_code_)
+            .arg(toHex(txt));
+    } else {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUB_OPTION)
+            .arg(option_code_)
+            .arg(sub_option_code_)
+            .arg('\'' + txt + '\'');
+    }
 }

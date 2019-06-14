@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,6 +152,11 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr opt(new TokenOption($3, TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
                 }
+          | OPTION "[" option_code "]" "." OPTION "[" option_code "]" "." EXISTS
+                {
+                    TokenPtr opt(new TokenSubOption($3, $8, TokenOption::EXISTS));
+                    ctx.expression.push_back(opt);
+                }
           | RELAY4 "[" option_code "]" "." EXISTS
                 {
                    switch (ctx.getUniverse()) {
@@ -249,6 +254,11 @@ string_expr : STRING
             | OPTION "[" option_code "]" "." option_repr_type
                   {
                       TokenPtr opt(new TokenOption($3, $6));
+                      ctx.expression.push_back(opt);
+                  }
+            | OPTION "[" option_code "]" "." OPTION "[" option_code "]" "." option_repr_type
+                  {
+                      TokenPtr opt(new TokenSubOption($3, $8, $11));
                       ctx.expression.push_back(opt);
                   }
             | RELAY4 "[" option_code "]" "." option_repr_type
