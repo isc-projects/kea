@@ -409,6 +409,7 @@ namespace isc { namespace eval {
       char dummy7[sizeof (std::string)];
 
       // option_code
+      // sub_option_code
       char dummy8[sizeof (uint16_t)];
 
       // integer_expr
@@ -707,27 +708,27 @@ namespace isc { namespace eval {
         // Type destructor.
 switch (yytype)
     {
-      case 62: // option_repr_type
+      case 63: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 66: // pkt4_field
+      case 67: // pkt4_field
         value.template destroy< TokenPkt4::FieldType > ();
         break;
 
-      case 67: // pkt6_field
+      case 68: // pkt6_field
         value.template destroy< TokenPkt6::FieldType > ();
         break;
 
-      case 64: // pkt_metadata
+      case 65: // pkt_metadata
         value.template destroy< TokenPkt::MetadataType > ();
         break;
 
-      case 68: // relay6_field
+      case 69: // relay6_field
         value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
-      case 63: // nest_level
+      case 64: // nest_level
         value.template destroy< int8_t > ();
         break;
 
@@ -740,11 +741,12 @@ switch (yytype)
         break;
 
       case 61: // option_code
+      case 62: // sub_option_code
         value.template destroy< uint16_t > ();
         break;
 
       case 60: // integer_expr
-      case 65: // enterprise_id
+      case 66: // enterprise_id
         value.template destroy< uint32_t > ();
         break;
 
@@ -1987,8 +1989,8 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 228,     ///< Last index in yytable_.
-      yynnts_ = 16,  ///< Number of nonterminal symbols.
+      yylast_ = 217,     ///< Last index in yytable_.
+      yynnts_ = 17,  ///< Number of nonterminal symbols.
       yyfinal_ = 33, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -2063,27 +2065,27 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 62: // option_repr_type
+      case 63: // option_repr_type
         value.move< TokenOption::RepresentationType > (std::move (that.value));
         break;
 
-      case 66: // pkt4_field
+      case 67: // pkt4_field
         value.move< TokenPkt4::FieldType > (std::move (that.value));
         break;
 
-      case 67: // pkt6_field
+      case 68: // pkt6_field
         value.move< TokenPkt6::FieldType > (std::move (that.value));
         break;
 
-      case 64: // pkt_metadata
+      case 65: // pkt_metadata
         value.move< TokenPkt::MetadataType > (std::move (that.value));
         break;
 
-      case 68: // relay6_field
+      case 69: // relay6_field
         value.move< TokenRelay6Field::FieldType > (std::move (that.value));
         break;
 
-      case 63: // nest_level
+      case 64: // nest_level
         value.move< int8_t > (std::move (that.value));
         break;
 
@@ -2096,11 +2098,12 @@ switch (yytype)
         break;
 
       case 61: // option_code
+      case 62: // sub_option_code
         value.move< uint16_t > (std::move (that.value));
         break;
 
       case 60: // integer_expr
-      case 65: // enterprise_id
+      case 66: // enterprise_id
         value.move< uint32_t > (std::move (that.value));
         break;
 
@@ -2119,27 +2122,27 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 62: // option_repr_type
+      case 63: // option_repr_type
         value.copy< TokenOption::RepresentationType > (YY_MOVE (that.value));
         break;
 
-      case 66: // pkt4_field
+      case 67: // pkt4_field
         value.copy< TokenPkt4::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 67: // pkt6_field
+      case 68: // pkt6_field
         value.copy< TokenPkt6::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 64: // pkt_metadata
+      case 65: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (YY_MOVE (that.value));
         break;
 
-      case 68: // relay6_field
+      case 69: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (YY_MOVE (that.value));
         break;
 
-      case 63: // nest_level
+      case 64: // nest_level
         value.copy< int8_t > (YY_MOVE (that.value));
         break;
 
@@ -2152,11 +2155,12 @@ switch (yytype)
         break;
 
       case 61: // option_code
+      case 62: // sub_option_code
         value.copy< uint16_t > (YY_MOVE (that.value));
         break;
 
       case 60: // integer_expr
-      case 65: // enterprise_id
+      case 66: // enterprise_id
         value.copy< uint32_t > (YY_MOVE (that.value));
         break;
 
@@ -2182,27 +2186,27 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 62: // option_repr_type
+      case 63: // option_repr_type
         value.move< TokenOption::RepresentationType > (YY_MOVE (s.value));
         break;
 
-      case 66: // pkt4_field
+      case 67: // pkt4_field
         value.move< TokenPkt4::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 67: // pkt6_field
+      case 68: // pkt6_field
         value.move< TokenPkt6::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 64: // pkt_metadata
+      case 65: // pkt_metadata
         value.move< TokenPkt::MetadataType > (YY_MOVE (s.value));
         break;
 
-      case 68: // relay6_field
+      case 69: // relay6_field
         value.move< TokenRelay6Field::FieldType > (YY_MOVE (s.value));
         break;
 
-      case 63: // nest_level
+      case 64: // nest_level
         value.move< int8_t > (YY_MOVE (s.value));
         break;
 
@@ -2215,11 +2219,12 @@ switch (yytype)
         break;
 
       case 61: // option_code
+      case 62: // sub_option_code
         value.move< uint16_t > (YY_MOVE (s.value));
         break;
 
       case 60: // integer_expr
-      case 65: // enterprise_id
+      case 66: // enterprise_id
         value.move< uint32_t > (YY_MOVE (s.value));
         break;
 
@@ -2299,7 +2304,7 @@ switch (yytype)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2303 "parser.h"
+#line 2308 "parser.h"
 
 
 
