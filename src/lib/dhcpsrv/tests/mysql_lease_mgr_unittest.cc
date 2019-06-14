@@ -440,6 +440,14 @@ TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
     testLease6InvalidHostname();
 }
 
+/// @brief Verify that large IAID values work correctly.
+///
+/// Adds lease with a large IAID to the database and verifies it can
+/// fetched correclty.
+TEST_F(MySqlLeaseMgrTest, leases6LargeIaidCheck) {
+    testLease6LargeIaidCheck();
+}
+
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
 /// Adds leases to the database and checks that they can be accessed via

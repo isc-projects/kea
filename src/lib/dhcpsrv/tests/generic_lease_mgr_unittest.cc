@@ -1568,6 +1568,39 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
 }
 
 void
+GenericLeaseMgrTest::testLease6LargeIaidCheck() {
+
+    DuidPtr duid(new DUID(vector<uint8_t>(8, 0x77)));
+    IOAddress addr(std::string("2001:db8:1::111"));
+    SubnetID subnet_id = 8; // radom number
+
+    // Use a value we know is larger than 32-bit signed max.
+    uint32_t large_iaid = 0xFFFFFFFE;
+
+    // We should be able to add with no problems.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, large_iaid,
+                               100, 200, 0, 0, subnet_id));
+    ASSERT_TRUE(lmptr_->addLease(lease));
+
+    // Sanity check that we added it.
+    Lease6Ptr found_lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(found_lease);
+    EXPECT_TRUE(*found_lease == *lease);
+
+    // Verify getLease6() duid/iaid finds it.
+    found_lease = lmptr_->getLease6(Lease::TYPE_NA, *duid, large_iaid, subnet_id);
+    ASSERT_TRUE(found_lease);
+    EXPECT_TRUE(*found_lease == *lease);
+
+    // Verify getLeases6() duid/iaid finds it.
+    Lease6Collection found_leases = lmptr_->getLeases6(Lease::TYPE_NA,
+                                                       *duid, large_iaid);
+    // We should match the lease.
+    ASSERT_EQ(1, found_leases.size());
+    EXPECT_TRUE(*(found_leases[0]) == *lease);
+}
+
+void
 GenericLeaseMgrTest::testGetLease6DuidIaidSubnetId() {
     // Get the leases to be used for the test and add them to the database.
     vector<Lease6Ptr> leases = createLeases6();

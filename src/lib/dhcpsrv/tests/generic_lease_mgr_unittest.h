@@ -210,6 +210,9 @@ public:
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
+    /// @brief Test making/fetching leases with IAIDs > signed 32-bit max.
+    void testLease6LargeIaidCheck();
+
     /// @brief Test method which returns all IPv6 leases.
     void testGetLeases6();
 
@@ -272,7 +275,7 @@ public:
     /// Adds leases to the database and checks that they can be accessed via
     /// a combination of DIUID and IAID.
     void testGetLease6DuidIaidSubnetId();
-    
+
     /// @brief verifies getLeases6 method by DUID
     ///
     /// Adds 3 leases to backend and retrieves, verifes empty
