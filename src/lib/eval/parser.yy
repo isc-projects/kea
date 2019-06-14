@@ -95,6 +95,7 @@ using namespace isc::eval;
 %token <std::string> IP_ADDRESS "ip address"
 
 %type <uint16_t> option_code
+%type <uint16_t> sub_option_code
 %type <uint32_t> enterprise_id
 %type <uint32_t> integer_expr
 %type <TokenOption::RepresentationType> option_repr_type
