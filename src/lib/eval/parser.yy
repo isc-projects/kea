@@ -152,12 +152,12 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr opt(new TokenOption($3, TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
                 }
-          | OPTION "[" option_code "]" "." OPTION "[" option_code "]" "." EXISTS
+          | OPTION "[" option_code "]" "." OPTION "[" sub_option_code "]" "." EXISTS
                 {
                     TokenPtr opt(new TokenSubOption($3, $8, TokenOption::EXISTS));
                     ctx.expression.push_back(opt);
                 }
-          | RELAY4 "[" option_code "]" "." EXISTS
+          | RELAY4 "[" sub_option_code "]" "." EXISTS
                 {
                    switch (ctx.getUniverse()) {
                    case Option::V4:
@@ -177,7 +177,7 @@ bool_expr : "(" bool_expr ")"
                        error(@1, "relay4 can only be used in DHCPv4.");
                    }
                 }
-          | RELAY6 "[" nest_level "]" "." OPTION "[" option_code "]" "." EXISTS
+          | RELAY6 "[" nest_level "]" "." OPTION "[" sub_option_code "]" "." EXISTS
                 {
                     switch (ctx.getUniverse()) {
                     case Option::V6:
@@ -209,7 +209,7 @@ bool_expr : "(" bool_expr ")"
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS));
                   ctx.expression.push_back(exist);
               }
-          | VENDOR "[" enterprise_id "]" "." OPTION "[" option_code "]" "." EXISTS
+          | VENDOR "[" enterprise_id "]" "." OPTION "[" sub_option_code "]" "." EXISTS
               {
                   // Expression vendor[1234].option[123].exists
                   //
@@ -256,12 +256,12 @@ string_expr : STRING
                       TokenPtr opt(new TokenOption($3, $6));
                       ctx.expression.push_back(opt);
                   }
-            | OPTION "[" option_code "]" "." OPTION "[" option_code "]" "." option_repr_type
+            | OPTION "[" option_code "]" "." OPTION "[" sub_option_code "]" "." option_repr_type
                   {
                       TokenPtr opt(new TokenSubOption($3, $8, $11));
                       ctx.expression.push_back(opt);
                   }
-            | RELAY4 "[" option_code "]" "." option_repr_type
+            | RELAY4 "[" sub_option_code "]" "." option_repr_type
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V4:
@@ -282,7 +282,7 @@ string_expr : STRING
                      }
                   }
 
-            | RELAY6 "[" nest_level "]" "." OPTION "[" option_code "]" "." option_repr_type
+            | RELAY6 "[" nest_level "]" "." OPTION "[" sub_option_code "]" "." option_repr_type
                   {
                      switch (ctx.getUniverse()) {
                      case Option::V6:
@@ -384,7 +384,7 @@ string_expr : STRING
                                                          TokenVendor::ENTERPRISE_ID));
                     ctx.expression.push_back(vendor);
                 }
-            | VENDOR "[" enterprise_id "]" "." OPTION "[" option_code "]" "." option_repr_type
+            | VENDOR "[" enterprise_id "]" "." OPTION "[" sub_option_code "]" "." option_repr_type
                 {
                     // This token will search for vendor option with
                     // specified enterprise-id.  If found, will search
@@ -441,6 +441,12 @@ option_code : INTEGER
                      $$ = ctx.convertOptionName($1, @1);
                  }
             ;
+
+sub_option_code : INTEGER
+                 {
+                     $$ = ctx.convertOptionCode($1, @1);
+                 }
+                ;
 
 option_repr_type : TEXT
                       {
