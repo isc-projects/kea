@@ -575,11 +575,26 @@ public:
 
     /// @brief Creates input binding for 'require_client_classes' parameter.
     ///
-    /// @param network Pointer to a shared network or subnet for which binding
-    /// should be created.
+    /// @tparam T of pointer to objects with getRequiredClasses
+    /// method, e.g. shared network, subnet, pool or prefix delegation pool.
+    /// @param object Pointer to an object with getRequiredClasses method
     /// @return Pointer to the binding (possibly null binding if there are no
     /// required classes specified).
-    db::MySqlBindingPtr createInputRequiredClassesBinding(const NetworkPtr& network);
+    template<typename T>
+    db::MySqlBindingPtr createInputRequiredClassesBinding(const T& object) {
+        // Create JSON list of required classes.
+        data::ElementPtr required_classes_element = data::Element::createList();
+        const auto& required_classes = object->getRequiredClasses();
+        for (auto required_class = required_classes.cbegin();
+             required_class != required_classes.cend();
+             ++required_class) {
+            required_classes_element->add(data::Element::create(*required_class));
+        }
+
+        return (required_classes_element ?
+                db::MySqlBinding::createString(required_classes_element->str()) :
+                db::MySqlBinding::createNull());
+    }
 
     /// @brief Creates input binding for user context parameter.
     ///

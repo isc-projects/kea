@@ -709,6 +709,18 @@ EOF
     qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
 
+    # table: dhcp4_pool (should include three new columns)
+    qry="select client_class, require_client_classes, user_context from dhcp4_pool"
+    run_statement "dhcp4_pool" "$qry"
+
+    # table: dhcp6_pd_pool (should include five new columns)
+    qry="select excluded_prefix, excluded_prefix_length, client_class, require_client_classes, user_context from dhcp6_pd_pool"
+    run_statement "dhcp6_pd_pool" "$qry"
+
+    # table: dhcp6_pool (should include three new columns)
+    qry="select client_class, require_client_classes, user_context from dhcp6_pool"
+    run_statement "dhcp6_pool" "$qry"
+
     # Verify upgraded schema reports version 8.2
     version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "8.2" ${version} "Expected kea-admin to return %s, returned value was %s"

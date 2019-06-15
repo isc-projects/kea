@@ -106,6 +106,9 @@ namespace {
     "  s.authoritative," \
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -217,6 +220,14 @@ namespace {
     "  s.max_preferred_lifetime," \
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
+    "  d.excluded_prefix," \
+    "  d.excluded_prefix_length," \
+    "  d.client_class," \
+    "  d.require_client_classes," \
+    "  d.user_context," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -518,8 +529,11 @@ namespace {
     "  start_address," \
     "  end_address," \
     "  subnet_id," \
+    "  client_class," \
+    "  require_client_classes," \
+    "  user_context," \
     "  modification_ts" \
-    ") VALUES (?, ?, ?, ?)"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_PD_POOL
@@ -529,8 +543,13 @@ namespace {
     "  prefix_length," \
     "  delegated_prefix_length," \
     "  subnet_id," \
+    "  excluded_prefix," \
+    "  excluded_prefix_length," \
+    "  client_class," \
+    "  require_client_classes," \
+    "  user_context," \
     "  modification_ts" \
-    ") VALUES (?, ?, ?, ?, ?)"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_SHARED_NETWORK_SERVER

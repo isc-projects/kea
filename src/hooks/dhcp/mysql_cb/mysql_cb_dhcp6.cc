@@ -334,6 +334,14 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // max_preferred_lifetime
             MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
             MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
+            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pool: require_client_classes
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
+            MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pd pool: excluded_prefix
+            MySqlBinding::createInteger<uint8_t>(), // pd pool: excluded_prefix_length
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pd pool: client_class
+            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pd pool: require_client_classes
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pd pool: user_context
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -373,10 +381,10 @@ public:
                 // Reset last server tag as we're now starting to process new subnet.
                 last_tag.clear();
 
-                // subnet_id
+                // subnet_id (0)
                 SubnetID subnet_id(out_bindings[0]->getInteger<uint32_t>());
 
-                // subnet_prefix
+                // subnet_prefix (1)
                 std::string subnet_prefix = out_bindings[1]->getString();
                 auto prefix_pair = Subnet6::parsePrefix(subnet_prefix);
 
@@ -385,10 +393,10 @@ public:
                                                         out_bindings[69],
                                                         out_bindings[70]);
 
-                // renew_timer
+                // renew_timer (9)
                 auto renew_timer = createTriplet(out_bindings[9]);
 
-                // rebind_timer
+                // rebind_timer (7)
                 auto rebind_timer = createTriplet(out_bindings[7]);
 
                 // valid_lifetime  (and {min,max)_valid_lifetime)
@@ -402,28 +410,28 @@ public:
                                               preferred_lifetime,
                                               valid_lifetime, subnet_id);
 
-                // client_class
+                // client_class (2)
                 if (!out_bindings[2]->amNull()) {
                     last_subnet->allowClientClass(out_bindings[2]->getString());
                 }
 
-                // interface
+                // interface (3)
                 if (!out_bindings[3]->amNull()) {
                     last_subnet->setIface(out_bindings[3]->getString());
                 }
 
-                // modification_ts
+                // modification_ts (4)
                 last_subnet->setModificationTime(out_bindings[4]->getTimestamp());
                 // 5 is preferred_lifetime
 
-                // rapid_commit
+                // rapid_commit (6)
                 if (!out_bindings[6]->amNull()) {
                     last_subnet->setRapidCommit(out_bindings[6]->getBool());
                 }
 
                 // 7 is rebind_timer
 
-                // relay
+                // relay (8)
                 ElementPtr relay_element = out_bindings[8]->getJSON();
                 if (relay_element) {
                     if (relay_element->getType() != Element::list) {
@@ -441,7 +449,7 @@ public:
 
                 // 9 is renew_timer
 
-                // require_client_classes
+                // require_client_classes (10)
                 ElementPtr require_element = out_bindings[10]->getJSON();
                 if (require_element) {
                     if (require_element->getType() != Element::list) {
@@ -458,18 +466,18 @@ public:
                     }
                 }
 
-                // reservation_mode
+                // reservation_mode (11)
                 if (!out_bindings[11]->amNull()) {
                     last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
                         (out_bindings[11]->getInteger<uint8_t>()));
                 }
 
-                // shared_network_name
+                // shared_network_name (12)
                 if (!out_bindings[12]->amNull()) {
                     last_subnet->setSharedNetworkName(out_bindings[12]->getString());
                 }
 
-                // user_context
+                // user_context (13)
                 ElementPtr user_context = out_bindings[13]->getJSON();
                 if (user_context) {
                     last_subnet->setContext(user_context);
@@ -477,22 +485,22 @@ public:
 
                 // 14 is valid_lifetime
 
-                // calculate_tee_times
+                // calculate_tee_times (65)
                 if (!out_bindings[65]->amNull()) {
                     last_subnet->setCalculateTeeTimes(out_bindings[65]->getBool());
                 }
 
-                // t1_percent
+                // t1_percent (66)
                 if (!out_bindings[66]->amNull()) {
                     last_subnet->setT1Percent(out_bindings[66]->getFloat());
                 }
 
-                // t2_percent
+                // t2_percent (67)
                 if (!out_bindings[67]->amNull()) {
                     last_subnet->setT2Percent(out_bindings[67]->getFloat());
                 }
 
-                // interface_id
+                // interface_id (68)
                 if (!out_bindings[68]->amNull()) {
                     auto iface_id_data = out_bindings[68]->getBlob();
                     if (!iface_id_data.empty()) {
@@ -506,6 +514,10 @@ public:
 
                 // 71 and 72 are {min,max}_valid_lifetime
 
+                // 8 pool and pd pool fields
+
+                // server_tag (81 / last)
+
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.push_back(last_subnet);
 
@@ -518,15 +530,15 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[73]->amNull() &&
-                (last_tag != out_bindings[73]->getString())) {
-                last_tag = out_bindings[73]->getString();
+            if (!out_bindings[81]->amNull() &&
+                (last_tag != out_bindings[81]->getString())) {
+                last_tag = out_bindings[81]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
             }
 
-            // Pool is between 15 and 19
+            // Pool is between 15 and 19 with extra between 73 and 75
 
             // If the row contains information about the pool and it
             // appears to be new pool entry (checked by comparing pool
@@ -540,10 +552,38 @@ public:
                 last_pool = Pool6::create(Lease::TYPE_NA,
                                           IOAddress(out_bindings[16]->getString()),
                                           IOAddress(out_bindings[17]->getString()));
+                // pool client_class (73)
+                if (!out_bindings[73]->amNull()) {
+                    last_pool->allowClientClass(out_bindings[73]->getString());
+                }
+
+                // pool require_client_classes (74)
+                ElementPtr require_element = out_bindings[74]->getJSON();
+                if (require_element) {
+                    if (require_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid pool require_client_classes value "
+                                  << out_bindings[74]->getString());
+                    }
+                    for (auto i = 0; i < require_element->size(); ++i) {
+                        auto require_item = require_element->get(i);
+                        if (require_item->getType() != Element::string) {
+                            isc_throw(BadValue, "elements of pool require_client_classes list must"
+                                      "be valid strings");
+                        }
+                        last_pool->requireClientClass(require_item->stringValue());
+                    }
+                }
+
+                // pool user_context (75)
+                ElementPtr user_context = out_bindings[75]->getJSON();
+                if (user_context) {
+                    last_pool->setContext(user_context);
+                }
+
                 last_subnet->addPool(last_pool);
             }
 
-            // Pd Pool is between 20 and 25
+            // Pd Pool is between 20 and 25 with extra between 76 and 80
 
             // If the row contains information about the pd pool and
             // it appears to be new pd pool entry (checked by
@@ -555,10 +595,45 @@ public:
                 (out_bindings[23]->getInteger<uint8_t>() != 0) &&
                 (out_bindings[20]->getInteger<uint64_t>() > last_pd_pool_id)) {
                 last_pd_pool_id = out_bindings[20]->getInteger<uint64_t>();
-                last_pd_pool = Pool6::create(Lease::TYPE_PD,
-                                             IOAddress(out_bindings[21]->getString()),
+
+                // excluded_prefix (76) and excluded_prefix_length (77)
+                IOAddress excluded_prefix = IOAddress::IPV6_ZERO_ADDRESS();
+                if (!out_bindings[76]->amNull()) {
+                    excluded_prefix = IOAddress(out_bindings[76]->getString());
+                }
+                last_pd_pool = Pool6::create(IOAddress(out_bindings[21]->getString()),
                                              out_bindings[22]->getInteger<uint8_t>(),
-                                             out_bindings[23]->getInteger<uint8_t>());
+                                             out_bindings[23]->getInteger<uint8_t>(),
+                                             excluded_prefix,
+                                             out_bindings[77]->getInteger<uint8_t>());
+                // pd pool client_class (78)
+                if (!out_bindings[78]->amNull()) {
+                    last_pd_pool->allowClientClass(out_bindings[78]->getString());
+                }
+
+                // pd pool require_client_classes (79)
+                ElementPtr require_element = out_bindings[79]->getJSON();
+                if (require_element) {
+                    if (require_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid pd pool require_client_classes value "
+                                  << out_bindings[79]->getString());
+                    }
+                    for (auto i = 0; i < require_element->size(); ++i) {
+                        auto require_item = require_element->get(i);
+                        if (require_item->getType() != Element::string) {
+                            isc_throw(BadValue, "elements of pd pool require_client_classes list must"
+                                      "be valid strings");
+                        }
+                        last_pd_pool->requireClientClass(require_item->stringValue());
+                    }
+                }
+
+                // pd pool user_context (80)
+                ElementPtr user_context = out_bindings[80]->getJSON();
+                if (user_context) {
+                    last_pd_pool->setContext(user_context);
+                }
+
                 last_subnet->addPool(last_pd_pool);
             }
 
@@ -746,6 +821,9 @@ public:
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pool: start_address
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pool: end_address
             MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
+            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pool: require_client_classes
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
             MySqlBinding::createTimestamp(), // pool: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
             MySqlBinding::createInteger<uint16_t>(), // pool option: code
@@ -777,16 +855,46 @@ public:
                 last_pool = Pool6::create(Lease::TYPE_NA,
                                           IOAddress(out_bindings[1]->getString()),
                                           IOAddress(out_bindings[2]->getString()));
+                // pool client_class (4)
+                if (!out_bindings[4]->amNull()) {
+                    last_pool->allowClientClass(out_bindings[4]->getString());
+                }
+
+                // pool require_client_classes (5)
+                ElementPtr require_element = out_bindings[5]->getJSON();
+                if (require_element) {
+                    if (require_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid pool require_client_classes value "
+                                  << out_bindings[5]->getString());
+                    }
+                    for (auto i = 0; i < require_element->size(); ++i) {
+                        auto require_item = require_element->get(i);
+                        if (require_item->getType() != Element::string) {
+                            isc_throw(BadValue, "elements of pool require_client_classes list must"
+                                      "be valid strings");
+                        }
+                        last_pool->requireClientClass(require_item->stringValue());
+                    }
+                }
+
+                // pool user_context (6)
+                ElementPtr user_context = out_bindings[6]->getJSON();
+                if (user_context) {
+                    last_pool->setContext(user_context);
+                }
+
+                // pool: modification_ts (7)
+
                 pools.push_back(last_pool);
                 pool_ids.push_back(last_pool_id);
             }
 
-            // Parse pool specific option.
-            if (last_pool && !out_bindings[5]->amNull() &&
-                (last_pool_option_id < out_bindings[5]->getInteger<uint64_t>())) {
-                last_pool_option_id = out_bindings[5]->getInteger<uint64_t>();
+            // Parse pool specific option (8).
+            if (last_pool && !out_bindings[8]->amNull() &&
+                (last_pool_option_id < out_bindings[8]->getInteger<uint64_t>())) {
+                last_pool_option_id = out_bindings[8]->getInteger<uint64_t>();
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 5);
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 8);
                 if (desc) {
                     last_pool->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -817,6 +925,11 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // pd pool: prefix_length
             MySqlBinding::createInteger<uint8_t>(), // pd pool: delegated_prefix_length
             MySqlBinding::createInteger<uint32_t>(), // pd pool: subnet_id
+            MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pd pool: excluded_prefix
+            MySqlBinding::createInteger<uint8_t>(), // pd pool: excluded_prefix_length
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pd pool: client_class
+            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pd pool: require_client_classes
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pd pool: user_context
             MySqlBinding::createTimestamp(), // pd pool: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // pd pool option: option_id
             MySqlBinding::createInteger<uint16_t>(), // pd pool option: code
@@ -845,20 +958,58 @@ public:
 
                 last_pd_pool_id = out_bindings[0]->getInteger<uint64_t>();
 
-                last_pd_pool = Pool6::create(Lease::TYPE_PD,
-                                             IOAddress(out_bindings[1]->getString()),
+                // excluded_prefix (5) and excluded_prefix_length (6)
+                IOAddress excluded_prefix = IOAddress::IPV6_ZERO_ADDRESS();
+                if (!out_bindings[5]->amNull()) {
+                    excluded_prefix = IOAddress(out_bindings[5]->getString());
+                }
+
+                last_pd_pool = Pool6::create(IOAddress(out_bindings[1]->getString()),
                                              out_bindings[2]->getInteger<uint8_t>(),
-                                             out_bindings[3]->getInteger<uint8_t>());
+                                             out_bindings[3]->getInteger<uint8_t>(),
+                                             excluded_prefix,
+                                             out_bindings[6]->getInteger<uint8_t>());
+
+                // pd pool client_class (7)
+                if (!out_bindings[7]->amNull()) {
+                    last_pd_pool->allowClientClass(out_bindings[7]->getString());
+                }
+
+                // pd pool require_client_classes (8)
+                ElementPtr require_element = out_bindings[8]->getJSON();
+                if (require_element) {
+                    if (require_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid pd pool require_client_classes value "
+                                  << out_bindings[8]->getString());
+                    }
+                    for (auto i = 0; i < require_element->size(); ++i) {
+                        auto require_item = require_element->get(i);
+                        if (require_item->getType() != Element::string) {
+                            isc_throw(BadValue, "elements of pd pool require_client_classes list must"
+                                      "be valid strings");
+                        }
+                        last_pd_pool->requireClientClass(require_item->stringValue());
+                    }
+                }
+
+                // pool user_context (9)
+                ElementPtr user_context = out_bindings[9]->getJSON();
+                if (user_context) {
+                    last_pd_pool->setContext(user_context);
+                }
+
+                // pd pool user_context (10)
+
                 pd_pools.push_back(last_pd_pool);
                 pd_pool_ids.push_back(last_pd_pool_id);
             }
 
-            // Parse pool specific option between 6 and 19
-            if (last_pd_pool && !out_bindings[6]->amNull() &&
-                (last_pd_pool_option_id < out_bindings[6]->getInteger<uint64_t>())) {
-                last_pd_pool_option_id = out_bindings[6]->getInteger<uint64_t>();
+            // Parse pd pool specific option between 11 and 24
+            if (last_pd_pool && !out_bindings[11]->amNull() &&
+                (last_pd_pool_option_id < out_bindings[11]->getInteger<uint64_t>())) {
+                last_pd_pool_option_id = out_bindings[11]->getInteger<uint64_t>();
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 6);
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, out_bindings.begin() + 11);
                 if (desc) {
                     last_pd_pool->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -1104,6 +1255,9 @@ public:
             MySqlBinding::createString(pool->getFirstAddress().toText()),
             MySqlBinding::createString(pool->getLastAddress().toText()),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet->getID())),
+            MySqlBinding::condCreateString(pool->getClientClass()),
+            createInputRequiredClassesBinding(pool),
+            createInputContextBinding(pool),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
         };
 
@@ -1133,11 +1287,28 @@ public:
                        const Subnet6Ptr& subnet) {
         int plen = prefixLengthFromRange(pd_pool->getFirstAddress(),
                                          pd_pool->getLastAddress());
+
+        // Extract excluded prefix components.
+        Optional<std::string> xprefix_txt;
+        uint8_t xlen = 0;
+        const Option6PDExcludePtr& xopt = pd_pool->getPrefixExcludeOption();
+        if (xopt) {
+            const IOAddress& prefix = pd_pool->getFirstAddress();
+            const IOAddress& xprefix = xopt->getExcludedPrefix(prefix, plen);
+            xprefix_txt = xprefix.toText();
+            xlen = xopt->getExcludedPrefixLength();
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(pd_pool->getFirstAddress().toText()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(plen)),
             MySqlBinding::createInteger<uint8_t>(pd_pool->getLength()),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet->getID())),
+            MySqlBinding::condCreateString(xprefix_txt),
+            MySqlBinding::createInteger<uint8_t>(xlen),
+            MySqlBinding::condCreateString(pd_pool->getClientClass()),
+            createInputRequiredClassesBinding(pd_pool),
+            createInputContextBinding(pd_pool),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
         };
 
@@ -2453,6 +2624,9 @@ TaggedStatementArray tagged_statements = { {
       "  p.start_address,"
       "  p.end_address,"
       "  p.subnet_id,"
+      "  p.client_class,"
+      "  p.require_client_classes,"
+      "  p.user_context,"
       "  p.modification_ts,"
       "  x.option_id,"
       "  x.code,"
@@ -2481,6 +2655,11 @@ TaggedStatementArray tagged_statements = { {
       "  p.prefix_length,"
       "  p.delegated_prefix_length,"
       "  p.subnet_id,"
+      "  p.excluded_prefix,"
+      "  p.excluded_prefix_length,"
+      "  p.client_class,"
+      "  p.require_client_classes,"
+      "  p.user_context,"
       "  p.modification_ts,"
       "  x.option_id,"
       "  x.code,"
