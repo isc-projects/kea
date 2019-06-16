@@ -208,6 +208,14 @@ public:
                                    test_options_[4]->space_name_);
 
         pool2.reset(new Pool4(IOAddress("10.0.0.50"), IOAddress("10.0.0.60")));
+
+        pool2->allowClientClass("work");
+        pool2->requireClientClass("required-class3");
+        pool2->requireClientClass("required-class4");
+        user_context = Element::createMap();
+        user_context->set("bar", Element::create("foo"));
+        pool2->setContext(user_context);
+
         subnet->addPool(pool2);
 
         test_subnets_.push_back(subnet);

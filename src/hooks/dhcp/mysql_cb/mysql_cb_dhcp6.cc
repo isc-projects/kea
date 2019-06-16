@@ -992,13 +992,13 @@ public:
                     }
                 }
 
-                // pool user_context (9)
+                // pd pool user_context (9)
                 ElementPtr user_context = out_bindings[9]->getJSON();
                 if (user_context) {
                     last_pd_pool->setContext(user_context);
                 }
 
-                // pd pool user_context (10)
+                // pd pool modification_ts (10)
 
                 pd_pools.push_back(last_pd_pool);
                 pd_pool_ids.push_back(last_pd_pool_id);

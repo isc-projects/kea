@@ -222,8 +222,15 @@ public:
                               IOAddress("2001:db8:1::60")));
         subnet->addPool(pool2);
 
-        pdpool1.reset(new Pool6(Lease::TYPE_PD,
-                                IOAddress("2001:db8:c::"), 48, 64));
+        pool2->allowClientClass("work");
+        pool2->requireClientClass("required-class3");
+        pool2->requireClientClass("required-class4");
+        user_context = Element::createMap();
+        user_context->set("bar", Element::create("foo"));
+        pool2->setContext(user_context);
+
+        pdpool1.reset(new Pool6(IOAddress("2001:db8:c::"), 48, 64,
+                                IOAddress("2001:db8:c::1"), 96));
         subnet->addPool(pdpool1);
 
         pdpool1->getCfgOption()->add(test_options_[3]->option_,
@@ -237,6 +244,13 @@ public:
         pdpool2.reset(new Pool6(Lease::TYPE_PD,
                                 IOAddress("2001:db8:d::"), 48, 64));
         subnet->addPool(pdpool2);
+
+        pdpool2->allowClientClass("work");
+        pdpool2->requireClientClass("required-class3");
+        pdpool2->requireClientClass("required-class4");
+        user_context = Element::createMap();
+        user_context->set("bar", Element::create("foo"));
+        pdpool2->setContext(user_context);
 
         test_subnets_.push_back(subnet);
 
