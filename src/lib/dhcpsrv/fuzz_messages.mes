@@ -33,7 +33,7 @@ state after running for a long time.
 % FUZZ_LOOP_MAX fuzzing loop will run %1 time(s) before exiting
 A debug message noting how many loops (i.e. packets from the fuzzer) the code
 will process before Kea exits and the fuzzer restarts it.  The hard-coded
-value can be overridden by setting the environment variable KEA_AFL_LOOP_MAX.
+value can be overridden by setting the environment variable FUZZ_AFL_LOOP_MAX.
 
 % FUZZ_PACKET_PROCESSED_CALLED packetProcessed has been called
 A debug message indicating that the processing of a packet by Kea has
