@@ -1024,18 +1024,23 @@ public:
     /// @param pool_end_address Upper bound pool address.
     /// @param pool_id Pool identifier for the returned pool.
     /// @return Pointer to the pool or null if no such pool found.
-    Pool6Ptr getPool6(const ServerSelector& /* server_selector */,
+    Pool6Ptr getPool6(const ServerSelector& server_selector,
                       const IOAddress& pool_start_address,
                       const IOAddress& pool_end_address,
                       uint64_t& pool_id) {
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(pool_start_address.toText()),
-            MySqlBinding::createString(pool_end_address.toText())
-        };
-
         PoolCollection pools;
         std::vector<uint64_t> pool_ids;
-        getPools(GET_POOL6_RANGE, in_bindings, pools, pool_ids);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createString(pool_start_address.toText()),
+                MySqlBinding::createString(pool_end_address.toText())
+            };
+
+            getPools(GET_POOL6_RANGE, in_bindings, pools, pool_ids);
+        }
 
         if (!pools.empty()) {
             pool_id = pool_ids[0];
@@ -1054,18 +1059,23 @@ public:
     /// @param pd_pool_prefix_length Length of the pd pool prefix.
     /// @param pd_pool_id Pool identifier for the returned pool.
     /// @return Pointer to the pool or null if no such pool found.
-    Pool6Ptr getPdPool6(const ServerSelector& /* server_selector */,
+    Pool6Ptr getPdPool6(const ServerSelector& server_selector,
                         const asiolink::IOAddress& pd_pool_prefix,
                         const uint8_t pd_pool_prefix_length,
                         uint64_t& pd_pool_id) {
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(pd_pool_prefix.toText()),
-            MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
-        };
-
         PoolCollection pd_pools;
         std::vector<uint64_t> pd_pool_ids;
-        getPdPools(GET_PD_POOL, in_bindings, pd_pools, pd_pool_ids);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createString(pd_pool_prefix.toText()),
+                MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
+            };
+
+            getPdPools(GET_PD_POOL, in_bindings, pd_pools, pd_pool_ids);
+        }
 
         if (!pd_pools.empty()) {
             pd_pool_id = pd_pool_ids[0];
@@ -2642,8 +2652,12 @@ TaggedStatementArray tagged_statements = { {
       "  x.modification_ts,"
       "  x.pd_pool_id "
       "FROM dhcp6_pool AS p "
+      "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id "
+      "INNER JOIN dhcp6_server AS srv "
+      " ON (s.server_id = srv.id) OR (s.server_id = 1) "
       "LEFT JOIN dhcp6_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "WHERE p.start_address = ? AND p.end_address = ? "
+      "WHERE (srv.tag = ? OR srv.id = 1) "
+      " AND p.start_address = ? AND p.end_address = ? "
       "ORDER BY p.id, x.option_id"
     },
 
@@ -2675,8 +2689,12 @@ TaggedStatementArray tagged_statements = { {
       "  x.modification_ts,"
       "  x.pd_pool_id "
       "FROM dhcp6_pd_pool AS p "
+      "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id "
+      "INNER JOIN dhcp6_server AS srv "
+      " ON (s.server_id = srv.id) OR (s.server_id = 1) "
       "LEFT JOIN dhcp6_options AS x ON x.scope_id = 6 AND p.id = x.pd_pool_id "
-      "WHERE p.prefix = ? AND p.prefix_length = ? "
+      "WHERE (srv.tag = ? OR srv.id = 1) "
+      " AND p.prefix = ? AND p.prefix_length = ? "
       "ORDER BY p.id, x.option_id"
     },
 

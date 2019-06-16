@@ -811,18 +811,23 @@ public:
     /// @param pool_end_address Upper bound pool address.
     /// @param pool_id Pool identifier for the returned pool.
     /// @return Pointer to the pool or null if no such pool found.
-    Pool4Ptr getPool4(const ServerSelector& /* server_selector */,
+    Pool4Ptr getPool4(const ServerSelector& server_selector,
                       const IOAddress& pool_start_address,
                       const IOAddress& pool_end_address,
                       uint64_t& pool_id) {
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
-            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
-        };
-
         PoolCollection pools;
         std::vector<uint64_t> pool_ids;
-        getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+                MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
+            };
+
+            getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
+        }
 
         if (!pools.empty()) {
             pool_id = pool_ids[0];
@@ -2212,8 +2217,12 @@ TaggedStatementArray tagged_statements = { {
       "  x.pool_id,"
       "  x.modification_ts "
       "FROM dhcp4_pool AS p "
+      "INNER JOIN dhcp4_subnet_server AS s ON p.subnet_id = s.subnet_id "
+      "INNER JOIN dhcp4_server AS srv "
+      " ON (s.server_id = srv.id) OR (s.server_id = 1) "
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "WHERE p.start_address = ? AND p.end_address = ? "
+      "WHERE (srv.tag = ? OR srv.id = 1) "
+      " AND p.start_address = ? AND p.end_address = ? "
       "ORDER BY p.id, x.option_id"
     },
 
