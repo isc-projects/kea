@@ -5,7 +5,8 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-cc.la
-libkea_cc_la_SOURCES = data.cc data.h
+libkea_cc_la_SOURCES = base_stamped_element.cc base_stamped_element.h
+libkea_cc_la_SOURCES += data.cc data.h
 libkea_cc_la_SOURCES += element_value.h
 libkea_cc_la_SOURCES += cfg_to_element.h dhcp_config_error.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
@@ -26,6 +27,7 @@ libkea_cc_la_LDFLAGS = -no-undefined -version-info 8:0:0
 # Specify the headers for copying into the installation directory tree.
 libkea_cc_includedir = $(pkgincludedir)/cc
 libkea_cc_include_HEADERS = \
+	base_stamped_element.h \
 	cfg_to_element.h \
 	command_interpreter.h \
 	data.h \

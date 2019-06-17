@@ -23,8 +23,8 @@ TEST(StampedElementTest, create) {
     // Default identifier is 0.
     EXPECT_EQ(0, element.getId());
 
-    // Default server tag is 'all'.
-    EXPECT_EQ(ServerTag::ALL, element.getServerTag());
+    // By default there is no server tag.
+    EXPECT_TRUE(element.getServerTags().empty());
 
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.
@@ -70,11 +70,25 @@ TEST(StampedElementTest, update) {
     EXPECT_LT(delta.seconds(), 5);
 }
 
-// Tests that server tag can be overriden by a new value.
-TEST(StampedElementTest, setServerTag) {
+// Tests that one or more server tag can be specified.
+TEST(StampedElementTest, setServerTags) {
     StampedElement element;
     element.setServerTag("foo");
-    EXPECT_EQ("foo", element.getServerTag());
+    EXPECT_EQ(1, element.getServerTags().size());
+    EXPECT_EQ("foo", element.getServerTags()[0].get());
+
+    element.setServerTag("bar");
+    EXPECT_EQ(2, element.getServerTags().size());
+    EXPECT_EQ("foo", element.getServerTags()[0].get());
+    EXPECT_EQ("bar", element.getServerTags()[1].get());
+
+    EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
+    EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
+    EXPECT_FALSE(element.hasServerTag(ServerTag("xyz")));
+    EXPECT_FALSE(element.hasAllServerTag());
+
+    element.setServerTag(ServerTag::ALL);
+    EXPECT_TRUE(element.hasAllServerTag());
 }
 
 // Test that metadata can be created from the StampedElement.
@@ -85,7 +99,12 @@ TEST(StampedElementTest, getMetadata) {
     ASSERT_TRUE(metadata);
     ASSERT_EQ(Element::map, metadata->getType());
 
-    auto server_tag_element = metadata->get("server-tag");
+    auto server_tags_element = metadata->get("server-tags");
+    ASSERT_TRUE(server_tags_element);
+    EXPECT_EQ(Element::list, server_tags_element->getType());
+    EXPECT_EQ(1, server_tags_element->size());
+
+    auto server_tag_element = server_tags_element->get(0);
     ASSERT_TRUE(server_tag_element);
     EXPECT_EQ(Element::string, server_tag_element->getType());
     EXPECT_EQ("world", server_tag_element->stringValue());

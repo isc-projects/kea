@@ -15,14 +15,12 @@ namespace isc {
 namespace db {
 
 Server::Server(const ServerTag& tag, const std::string& description)
-    : StampedElement(), description_(description) {
+    : BaseStampedElement(), server_tag_(tag), description_(description) {
 
     if (description_.length() > 65536) {
         isc_throw(BadValue, "server description must not be longer than"
                   " 65536 characters");
     }
-
-    setServerTag(tag.get());
 }
 
 ServerPtr

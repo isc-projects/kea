@@ -24,7 +24,7 @@ TEST(ServerTest, constructor) {
         server = Server::create(ServerTag("xyz"), "my first server")
     );
     ASSERT_TRUE(server);
-    EXPECT_EQ("xyz", server->getServerTag());
+    EXPECT_EQ("xyz", server->getServerTagAsText());
     EXPECT_EQ("my first server", server->getDescription());
 }
 
@@ -47,17 +47,17 @@ TEST(ServerFetcherTest, getByTag) {
 
     auto alpha = ServerFetcher::get(servers, ServerTag("alpha"));
     ASSERT_TRUE(alpha);
-    EXPECT_EQ("alpha", alpha->getServerTag());
+    EXPECT_EQ("alpha", alpha->getServerTagAsText());
     EXPECT_EQ("alpha description", alpha->getDescription());
 
     auto beta = ServerFetcher::get(servers, ServerTag("beta"));
     ASSERT_TRUE(beta);
-    EXPECT_EQ("beta", beta->getServerTag());
+    EXPECT_EQ("beta", beta->getServerTagAsText());
     EXPECT_EQ("beta description", beta->getDescription());
 
     auto gamma = ServerFetcher::get(servers, ServerTag("gamma"));
     ASSERT_TRUE(gamma);
-    EXPECT_EQ("gamma", gamma->getServerTag());
+    EXPECT_EQ("gamma", gamma->getServerTagAsText());
     EXPECT_EQ("gamma description", gamma->getDescription());
 
     // Null pointer should be returned when a given server does not exist.

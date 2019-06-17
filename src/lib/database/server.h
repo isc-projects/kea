@@ -7,7 +7,8 @@
 #ifndef DB_SERVER_H
 #define DB_SERVER_H
 
-#include <cc/stamped_element.h>
+#include <cc/base_stamped_element.h>
+#include <cc/server_tag.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
 
@@ -27,7 +28,7 @@ typedef boost::shared_ptr<Server> ServerPtr;
 /// provided by the administrator and the metadata.
 ///
 /// This class extends the base class with the server description field.
-class Server : public data::StampedElement {
+class Server : public data::BaseStampedElement {
 public:
 
     /// @brief Constructor.
@@ -48,6 +49,18 @@ public:
     static ServerPtr create(const data::ServerTag& tag,
                             const std::string& description = "");
 
+    /// @brief Returns server tag.
+    data::ServerTag getServerTag() const {
+        return (server_tag_);
+    }
+
+    /// @brief Returns server tag as text.
+    ///
+    /// @return Server tag as text.
+    std::string getServerTagAsText() const {
+        return (server_tag_.get());
+    }
+
     /// @brief Returns the description of the server.
     ///
     /// @return Description of the server or an empty string if no
@@ -57,6 +70,9 @@ public:
     }
 
 private:
+
+    /// @brief Server tag.
+    data::ServerTag server_tag_;
 
     /// @brief Description of the server.
     std::string description_;

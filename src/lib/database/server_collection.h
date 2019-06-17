@@ -28,8 +28,8 @@ typedef boost::multi_index_container<
     boost::multi_index::indexed_by<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<ServerTagIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement, std::string,
-                                              &Server::getServerTag>
+            boost::multi_index::const_mem_fun<Server, std::string,
+                                              &Server::getServerTagAsText>
         >
     >
 > ServerCollection;

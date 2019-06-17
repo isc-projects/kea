@@ -232,8 +232,8 @@ typedef boost::multi_index_container<
         // Second index allows for access by shared network id.
         boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<SharedNetworkIdIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
-                                              &data::StampedElement::getId>
+            boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
+                                              &data::BaseStampedElement::getId>
         >,
         // Third index allows for access by shared network's name.
         boost::multi_index::ordered_unique<
@@ -251,9 +251,9 @@ typedef boost::multi_index_container<
         // Fifth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement,
+            boost::multi_index::const_mem_fun<data::BaseStampedElement,
                                               boost::posix_time::ptime,
-                                              &data::StampedElement::getModificationTime>
+                                              &data::BaseStampedElement::getModificationTime>
         >
     >
 > SharedNetwork4Collection;
@@ -436,8 +436,8 @@ typedef boost::multi_index_container<
         // Second index allows for access by shared network id.
         boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<SharedNetworkIdIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
-                                              &data::StampedElement::getId>
+            boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
+                                              &data::BaseStampedElement::getId>
         >,
         // Third index allows for access by shared network's name.
         boost::multi_index::ordered_unique<
@@ -448,9 +448,9 @@ typedef boost::multi_index_container<
         // Fourth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement,
+            boost::multi_index::const_mem_fun<data::BaseStampedElement,
                                               boost::posix_time::ptime,
-                                              &data::StampedElement::getModificationTime>
+                                              &data::BaseStampedElement::getModificationTime>
         >
     >
 > SharedNetwork6Collection;

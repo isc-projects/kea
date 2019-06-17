@@ -221,9 +221,9 @@ typedef boost::multi_index_container<
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<StampedValueModificationTimeIndexTag>,
             boost::multi_index::const_mem_fun<
-                StampedElement,
+                BaseStampedElement,
                 boost::posix_time::ptime,
-                &StampedElement::getModificationTime
+                &BaseStampedElement::getModificationTime
             >
         >
     >

@@ -796,9 +796,9 @@ typedef boost::multi_index_container<
         // Fifth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetModificationTimeIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement,
+            boost::multi_index::const_mem_fun<data::BaseStampedElement,
                                               boost::posix_time::ptime,
-                                              &data::StampedElement::getModificationTime>
+                                              &data::BaseStampedElement::getModificationTime>
         >
     >
 > Subnet4Collection;
@@ -848,9 +848,9 @@ typedef boost::multi_index_container<
         // Fourth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetModificationTimeIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement,
+            boost::multi_index::const_mem_fun<data::BaseStampedElement,
                                               boost::posix_time::ptime,
-                                              &data::StampedElement::getModificationTime>
+                                              &data::BaseStampedElement::getModificationTime>
         >
     >
 > Subnet6Collection;

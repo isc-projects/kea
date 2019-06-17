@@ -10,33 +10,35 @@ namespace isc {
 namespace data {
 
 StampedElement::StampedElement()
-    /// @todo Change it to microsec_clock once we transition to subsecond
-    /// precision.
-    : id_(0), timestamp_(boost::posix_time::second_clock::local_time()),
-      server_tag_() {
-}
-
-void
-StampedElement::updateModificationTime() {
-    /// @todo Change it to microsec_clock once we transition to subsecond
-    /// precision.
-    setModificationTime(boost::posix_time::second_clock::local_time());
-}
-
-std::string
-StampedElement:: getServerTag() const {
-    return (server_tag_.get());
+    : BaseStampedElement(), server_tags_() {
 }
 
 bool
-StampedElement::allServers() const {
-    return (server_tag_.amAll());
+StampedElement::hasServerTag(const ServerTag& server_tag) const {
+    for (auto tag : server_tags_) {
+        if (tag.get() == server_tag.get()) {
+            return (true);
+        }
+    }
+    return (false);
 }
+
+bool
+StampedElement::hasAllServerTag() const {
+    return (hasServerTag(ServerTag(ServerTag::ALL)));
+}
+
 
 ElementPtr
 StampedElement::getMetadata() const {
     ElementPtr metadata = Element::createMap();
-    metadata->set("server-tag", Element::create(getServerTag()));
+    ElementPtr tags = Element::createList();
+
+    for (auto server_tag : server_tags_) {
+        tags->add(Element::create(server_tag.get()));
+    }
+
+    metadata->set("server-tags", tags);
     return (metadata);
 }
 

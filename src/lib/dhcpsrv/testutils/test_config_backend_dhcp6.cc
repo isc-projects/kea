@@ -386,7 +386,7 @@ TestConfigBackendDHCPv6::createUpdateGlobalParameter6(const db::ServerSelector& 
 void
 TestConfigBackendDHCPv6::createUpdateServer6(const db::ServerPtr& server) {
     auto& index = servers_.get<ServerTagIndexTag>();
-    auto server_it = index.find(server->getServerTag());
+    auto server_it = index.find(server->getServerTagAsText());
 
     if (server_it != index.end()) {
         index.replace(server_it, server);
