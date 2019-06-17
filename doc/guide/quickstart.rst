@@ -1,8 +1,8 @@
 .. _quickstart:
 
-**********************
-Chapter 2. Quick Start
-**********************
+***********
+Quick Start
+***********
 
 This section describes the basic steps needed to get Kea up and running.
 For further details, full customizations, and troubleshooting, see the
@@ -10,15 +10,15 @@ respective chapters in the Kea Administrator Reference Manual (ARM).
 
 .. _quick-start:
 
-2.1 Quick Start Guide for DHCPv4 and DHCPv6 Services
-====================================================
+Quick Start Guide for DHCPv4 and DHCPv6 Services
+================================================
 
 1.  Install required run-time and build dependencies. See
-    `Section 3.3, “Building Requirements” <#build-requirements>`__ for details.
+    :ref:`Build Requirements <build-requirements>` for details.
 
-2.  Download the Kea source tarball from the `ISC.org downloads
-    page <https://www.isc.org/download/>`__ or the `ISC FTP
-    server <ftp://ftp.isc.org/isc/kea/>`__.
+2.  Download the Kea source tarball from the :ref:`ISC.org downloads
+    page <https://www.isc.org/download/>` or the :ref:`ISC FTP
+    server <ftp://ftp.isc.org/isc/kea/>`.
 
 3.  Extract the tarball. For example:
 
@@ -87,8 +87,8 @@ respective chapters in the Kea Administrator Reference Manual (ARM).
 
 10. If the server has been started successfully, test that it is
     responding to DHCP queries and that the client receives a
-    configuration from the server; for example, use the `ISC DHCP
-    client <https://www.isc.org/download/>`__.
+    configuration from the server; for example, use the :ref:`ISC DHCP
+    client <https://www.isc.org/download/>`.
 
 11. Stop running the server(s):
 
@@ -97,17 +97,17 @@ respective chapters in the Kea Administrator Reference Manual (ARM).
        # keactrl stop
 
 For instructions specific to your system, please read the
-`system-specific notes <https://kb.isc.org/docs/installing-kea>`__,
-available in the `Kea section of ISC's
-Knowledgebase <https://kb.isc.org/docs>`__.
+:ref:`system-specific notes <https://kb.isc.org/docs/installing-kea>`,
+available in the :ref:`Kea section of ISC's
+Knowledgebase <https://kb.isc.org/docs>`.
 
 The details of ``keactrl`` script usage can be found in
-`Chapter 6, "Managing Kea with keactrl" <#keactrl>`__.
+:ref:`Managing Kea with keactrl <#keactrl>`.
 
 .. _quick-start-direct-run:
 
-2.2 Running the Kea Servers Directly
-====================================
+Running the Kea Servers Directly
+================================
 
 The Kea servers can be started directly, without the need to use
 ``keactrl``. To start the DHCPv4 server run the following command:

@@ -40,11 +40,11 @@ The following is the directory layout of the complete Kea installation.
 
 .. _build-requirements:
 
-Building Requirements
+Build Requirements
 =====================
 
 In addition to the run-time requirements (listed in
-`??? <#required-software>`__), building Kea from source code requires
+:ref:`Required Software at Run-Time <required-software>`), building Kea from source code requires
 various development include headers and program development tools.
 
    **Note**
@@ -57,7 +57,7 @@ various development include headers and program development tools.
 Building from source code requires the following software installed on
 the system:
 
--  Boost C++ Libraries (http://www.boost.org/). The oldest Boost version
+-  Boost C++ libraries (https://www.boost.org/). The oldest Boost version
    used for testing is 1.57 (although it may also work with older
    versions). The Boost system library must also be installed.
    Installing a header-only version of Boost is no longer recommended.
@@ -69,10 +69,10 @@ the system:
 -  log4cplus (at least version 1.0.3) development include headers.
 
 -  A C++ compiler (with C++11 support) and standard development headers.
-   Kea building was checked with GCC g++ 4.8.5 and some later versions
+   The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
    and Clang 800.0.38 and some later versions.
 
--  The development tools automake, libtool, pkg-config.
+-  The development tools automake, libtool, and pkg-config.
 
 -  The MySQL client and the client development libraries, when using the
    --with-mysql configuration flag to build the Kea MySQL database
@@ -102,7 +102,7 @@ the system:
    later) are needed to connect to a Sysrepo database. (This is
    specified using the --with-sysrepo switch when running "configure".)
 
--  googletest (version 1.8 or later), when using the --with-gtest
+-  googletest (version 1.8 or later) is required when using the --with-gtest
    configuration option to build the unit tests.
 
 -  The documentation generation tools elinks, docbook-xsl, libxslt, and
@@ -121,7 +121,7 @@ Although Kea may be available in pre-compiled, ready-to-use packages
 from operating system vendors, it is open source software written in
 C++. As such, it is freely available in source code form from ISC as a
 downloadable tar file. The source code can also be obtained from the Kea
-Gitlab repository at (https://gitlab.isc.org/isc-projects/kea). This
+Gitlab repository at https://gitlab.isc.org/isc-projects/kea. This
 section describes how to build Kea from the source code.
 
 Download Tar File
@@ -139,11 +139,11 @@ not recommended.
 
    **Note**
 
-   When building from source code retrieved via Git, additional software
+   When building from source code retrieved via git, additional software
    will be required: automake (v1.11 or later), libtoolize, and autoconf
    (v2.69 or later). These may need to be installed.
 
-The latest development code is available on Gitlab (see
+The latest development code is available on GitLab (see
 https://gitlab.isc.org/isc-projects/kea). The Kea source is public and
 development is done in the “master” branch.
 
@@ -155,17 +155,17 @@ The code can be checked out from
    $ git clone https://gitlab.isc.org/isc-projects/kea.git
 
 The code checked out from the git repository does not include the
-generated configure script, Makefile.in files, nor their related build
+generated configure script, the Makefile.in files, nor their related build
 files. They can be created by running ``autoreconf`` with the
 ``--install`` switch. This will run ``autoconf``, ``aclocal``,
 ``libtoolize``, ``autoheader``, ``automake``, and related commands.
 
 Write access to the Kea repository is only granted to ISC staff. If you
 are a developer planning to contribute to Kea, please check our
-`Contributor's
-Guide <https://gitlab.isc.org/isc-projects/kea/wikis/contributor's-guide>`__.
-The `Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__ contains more
+:ref:`Contributor's
+Guide <https://gitlab.isc.org/isc-projects/kea/blob/master/contributors-guide.md>`.
+The :ref:`Kea Developer's
+Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>` contains more
 information about the process, as well as describes the requirements for
 contributed code to be accepted by ISC.
 
@@ -182,7 +182,7 @@ generate the makefiles using the defaults, simply run:
    $ ./configure
 
 Run ``./configure`` with the ``--help`` switch to view the different
-options. Some commonly-used options are:
+options. Some commonly used options are:
 
 --prefix
    Define the installation location (the default is ``/usr/local``).
@@ -209,7 +209,7 @@ options. Some commonly-used options are:
 
 --with-botan-config
    Specify the path to the botan-config script to build with Botan for
-   cryptographic functions. It is prefered to use OpenSSL (see below).
+   cryptographic functions. It is preferable to use OpenSSL (see below).
 
 --with-openssl
    Replace Botan by the OpenSSL the cryptographic library. By default
@@ -217,7 +217,7 @@ options. Some commonly-used options are:
    found, it searches for OpenSSL. Normally this is not necessary.
 
 --enable-shell
-   Build the optional ``kea-shell`` tool (more in `??? <#kea-shell>`__).
+   Build the optional ``kea-shell`` tool (more in :ref:`The Kea Shell" <kea-shell>`).
    The default is to not build it.
 
 --enable-perfdhcp
@@ -229,28 +229,28 @@ options. Some commonly-used options are:
    **Note**
 
    For instructions concerning the installation and configuration of
-   database backends for Kea, see `DHCP Database Installation and
-   Configuration <#dhcp-install-configure>`__.
+   database backends for Kea, see :ref:`DHCP Database Installation and
+   Configuration <dhcp-install-configure>`.
 
-There are also many additional options that are typically not used by
+There are also many additional options that are typically not necessary for
 regular users. However, they may be useful for package maintainers,
-developers or people who want to extend Kea code or send patches:
+developers, or people who want to extend Kea code or send patches:
 
 --with-gtest, --with-gtest-source
    Enable the building of the C++ Unit Tests using the Google Test
    framework. This option specifies the path to the gtest source. (If
    the framework is not installed on your system, it can be downloaded
-   from ` <https://github.com/google/googletest>`__.)
+   from https://github.com/google/googletest.)
 
 --enable-generate-docs
    Enable the rebuilding Kea documentation. ISC publishes Kea
-   documentation for each release. However, in some cases you may want
+   documentation for each release; however, in some cases you may want
    to rebuild it. For example, if you want to change something in the
-   docs, or want to generate new one from git sources that are not
+   docs, or want to generate new ones from git sources that are not
    released yet. The build procedure uses the xsltproc tool with the
    nonet argument which disables fetching missing sources, e.g
-   docbook.xsl, from the Internet. If you want anyway to use the
-   Internet please set the XSLTPROC_NET environment variable in
+   docbook.xsl, from the Internet. If you want to use the
+   Internet anyway, please set the XSLTPROC_NET environment variable in
    configure to any non-empty value, e.g.
 
    ::
@@ -262,7 +262,7 @@ developers or people who want to extend Kea code or send patches:
    and bison (.yy files). Kea sources have C++/h files generated out
    from them. By default Kea does not use flex or bison to avoid
    requiring installation of unnecessary dependencies for users.
-   However, if you change anything in the parses (such as add new
+   However, if you change anything in the parses (such as adding a new
    parameter), you will need to use flex and bison to regenerate
    parsers. This option lets you do that.
 
@@ -271,7 +271,7 @@ developers or people who want to extend Kea code or send patches:
    files, e.g. regenerate xxx_messages.h and xxx_messages.cc from
    xxx_messages.mes using the Kea message compiler. By default Kea is
    built using these .h and .cc files from the distribution. However, if
-   you change anything in a .mes file (such as add new message), you
+   you change anything in a .mes file (such as adding a new message), you
    will need to build and use the Kea message compiler. This option lets
    you do that.
 
@@ -279,7 +279,7 @@ developers or people who want to extend Kea code or send patches:
    Enable the building of the database backend benchmarks using the
    Google Benchmark framework. This option specifies the path to the
    gtest source. (If the framework is not installed on your system, it
-   can be downloaded from ` <https://github.com/google/benchmark>`__.)
+   can be downloaded from https://github.com/google/benchmark.)
    This support is experimental.
 
 For example, the following command configures Kea to find the Boost
@@ -365,7 +365,7 @@ DHCP Database Installation and Configuration
 
 Kea stores its leases in a lease database. The software has been written
 in a way that makes it possible to choose which database product should
-be used to store the lease information. At present, Kea supports four
+be used to store the lease information. Kea supports four
 database backends: MySQL, PostgreSQL, Cassandra, and Memfile. To limit
 external dependencies, MySQL, PostgreSQL, and Cassandra support are
 disabled by default and only Memfile is available. Support for the
@@ -375,11 +375,11 @@ optional backends and the creation of the lease database.
 
    **Note**
 
-   When unit tests are built with Kea (the --with-gtest configuration
+   When unit tests are built with Kea (i.e. the --with-gtest configuration
    option is specified), the databases must be manually pre-configured
    for the unit tests to run. The details of this configuration can be
-   found in the `Kea Developer's
-   Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__.
+   found in the :ref:`Kea Developer's
+   Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`.
 
 Building with MySQL Support
 ---------------------------
@@ -387,9 +387,9 @@ Building with MySQL Support
 Install MySQL according to the instructions for your system. The client
 development libraries must be installed.
 
-Build and install Kea as described in `Installation <#installation>`__,
+Build and install Kea as described in :ref:`Installation <installation>`,
 with the following modification. To enable the MySQL database code, at
-the "configure" step (see `Configure Before the Build <#configure>`__),
+the "configure" step (see :ref:`Configure Before the Build <configure>`),
 the --with-mysql switch should be specified:
 
 ::
@@ -404,7 +404,7 @@ switch, i.e.
 
    ./configure [other-options] --with-mysql=path-to-mysql_config
 
-See `??? <#mysql-database-create>`__ for details regarding MySQL
+See :ref:`First-Time Creation of the MySQL Database <mysql-database-create>` for details regarding MySQL
 database configuration.
 
 Building with PostgreSQL support
@@ -414,10 +414,10 @@ Install PostgreSQL according to the instructions for your system. The
 client development libraries must be installed. Client development
 libraries are often packaged as "libpq".
 
-Build and install Kea as described in `Installation <#installation>`__,
+Build and install Kea as described in :ref:`Installation <installation>`,
 with the following modification. To enable the PostgreSQL database code,
-at the "configure" step (see `Configure Before the
-Build <#configure>`__), the --with-pgsql switch should be specified:
+at the "configure" step (see :ref:`Configure Before the
+Build <configure>`), the --with-pgsql switch should be specified:
 
 ::
 
@@ -431,7 +431,7 @@ the switch, i.e.
 
    ./configure [other-options] --with-pgsql=path-to-pg_config
 
-See `??? <#pgsql-database-create>`__ for details regarding PostgreSQL
+See :ref:`First-Time Creation of the PostgreSQL Database <pgsql-database-create>` for details regarding PostgreSQL
 database configuration.
 
 Building with CQL (Cassandra) Support
@@ -439,13 +439,13 @@ Building with CQL (Cassandra) Support
 
 Install Cassandra according to the instructions for your system. The
 Cassandra project website contains useful pointers:
-http://cassandra.apache.org.
+https://cassandra.apache.org.
 
 If you have a cpp-driver package available as binary or as source,
 simply install or build and install the package. Then build and install
-Kea as described in `Installation <#installation>`__. To enable the
-Cassandra (CQL) database code, at the "configure" step (see `Configure
-Before the Build <#configure>`__), do:
+Kea as described in :ref:`Installation <installation>`. To enable the
+Cassandra (CQL) database code, at the "configure" step (see :ref:`Configure
+Before the Build <configure>`), enter:
 
 ::
 
@@ -475,18 +475,18 @@ As of January 2019, cpp-driver does not include cql_config script. Work
 is in progress to contribute such a script to the cpp-driver project
 but, until that is complete, intermediate steps need to be conducted. A
 cql_config script is present in the tools/ directory of the Kea sources.
-Before using it, please create a cql_config_defines.sh in the same
-directory (there is an example in cql_config_define.sh.sample available;
+Before using it, please create a cql_config_defines.sh file in the same
+directory (there is an example available in cql_config_define.sh.sample;
 you may copy it over to cql_config_defines.sh and edit the path
 specified in it) and change the environment variable CPP_DRIVER_PATH to
 point to the directory where the cpp-driver sources are located. Make
 sure that appropriate access rights are set on this file. It should be
 executable by the system user building Kea.
 
-Build and install Kea as described in `Installation <#installation>`__,
+Build and install Kea as described in :ref:`Installation <installation>`,
 with the following modification. To enable the Cassandra (CQL) database
-code, at the "configure" step (see `Configure Before the
-Build <#configure>`__), do:
+code, at the "configure" step (see :ref:`Configure Before the
+Build <configure>`), enter:
 
 ::
 

@@ -9,14 +9,14 @@ Kea Database Administration
 Databases and Database Version Numbers
 ======================================
 
-Kea may be configured to use a database as a storage for leases, a
+Kea may be configured to use a database as a storage for leases or as a
 source of servers' configurations and host reservations (i.e. static
-assignments of addresses, prefixes, options etc.). Subsequent Kea
-releases introduce changes to the database schemas to faciliate new
+assignments of addresses, prefixes, options, etc.). Kea
+updates introduce changes to the database schemas to faciliate new
 features and correct discovered issues with the existing schemas.
 
 A given version of Kea expects a particular structure in the backend and
-checks for this by examining the version of database it is using.
+checks for this by examining the version of the database it is using.
 Separate version numbers are maintained for backends, independent of the
 version of Kea itself. It is possible that the backend version will stay
 the same through several Kea revisions; similarly, it is possible that
@@ -26,12 +26,12 @@ the MySQL backend version does not imply an increment in that of
 PostgreSQL.
 
 Backend versions are specified in a major.minor format. The minor number
-is increased when there are backward-compatible changes introduced; for
+is increased when there are backwards-compatible changes introduced; for
 example, the addition of a new index. It is desirable but not mandatory
 to apply such a change; you can run an older backend version if you want
 to. (Although, in the example given, running without the new index may
-be at the expense of a performance penalty.) On the other hand, the
-major number is increased when an incompatible change is introduced: for
+introduce a performance penalty.) On the other hand, the
+major number is increased when an incompatible change is introduced; for
 example, an extra column is added to a table. If you try to run Kea on a
 backend that is too old (as signified by a mismatched backend major
 version number), Kea will refuse to run; administrative action will be
@@ -97,38 +97,38 @@ backend may be essential for the success of your deployment.
 
 .. table:: List of available backends
 
-   +-------------+-------------+-------------+-------------+-------------+
-   | Feature     | Memfile     | MySQL       | PostgreSQL  | CQL         |
-   |             |             |             |             | (Cassandra) |
-   +=============+=============+=============+=============+=============+
-   | Status      | Stable      | Stable      | Stable      | Experimenta |
-   |             |             |             |             | l           |
-   +-------------+-------------+-------------+-------------+-------------+
-   | Data format | CSV file    | SQL RMDB    | SQL RMDB    | NoSQL       |
-   |             |             |             |             | database    |
-   |             |             |             |             | (Cassandra) |
-   +-------------+-------------+-------------+-------------+-------------+
-   | Leases      | yes         | yes         | yes         | yes         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | Host        | no          | yes         | yes         | yes         |
-   | Reservation |             |             |             |             |
-   | s           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | Options     | no          | yes         | yes         | yes         |
-   | defined on  |             |             |             |             |
-   | per host    |             |             |             |             |
-   | basis       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | Configurati | no          | yes         | no          | no          |
-   | on          |             |             |             |             |
-   | Backend     |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
+   +---------------+----------------+----------------+---------------+--------------+
+   | Feature       | Memfile        | MySQL          | PostgreSQL    | CQL          |
+   |               |                |                |               | (Cassandra)  |
+   +===============+================+================+===============+==============+
+   | Status        | Stable         | Stable         | Stable        | Experimental |
+   |               |                |                |               |              |
+   +---------------+----------------+----------------+---------------+--------------+
+   | Data format   | CSV file       | SQL RMDB       | SQL RMDB      | NoSQL        |
+   |               |                |                |               | database     |
+   |               |                |                |               | (Cassandra)  |
+   +---------------+----------------+----------------+---------------+--------------+
+   | Leases        | yes            | yes            | yes           | yes          |
+   +---------------+----------------+----------------+---------------+--------------+
+   | Host          | no             | yes            | yes           | yes          |
+   | Reservations  |                |                |               |              |
+   |               |                |                |               |              |
+   +---------------+----------------+----------------+---------------+--------------+
+   | Options       | no             | yes            | yes           | yes          |
+   | defined on    |                |                |               |              |
+   | per host      |                |                |               |              |
+   | basis         |                |                |               |              |
+   +---------------+----------------+----------------+---------------+--------------+
+   | Configuration | no             | yes            | no            | no           |
+   | Backend       |                |                |               |              |
+   |               |                |                |               |              |
+   +---------------+----------------+----------------+---------------+--------------+
 
 memfile
 -------
 
-The memfile backend is able to store lease information, but is not able
-to store host reservation details; these must be stored in the
+The memfile backend is able to store lease information, but cannot
+store host reservation details; these must be stored in the
 configuration file. (There are no plans to add a host reservations
 storage capability to this backend.)
 
@@ -154,7 +154,7 @@ files will be assigned appropriate default values. When downgrading, any
 data present in the files but not in the server's schema will be
 dropped. If you wish to convert the files manually prior to starting the
 servers, you may do so by running the LFC process yourself. See
-`??? <#kea-lfc>`__ for more information.
+:ref:`The LFC Process <kea-lfc>` for more information.
 
 .. _mysql-database:
 
@@ -162,7 +162,7 @@ MySQL
 -----
 
 MySQL is able to store leases, host reservations, options defined on a
-per-host basis and a subset of the server configuration parameters
+per-host basis, and a subset of the server configuration parameters
 (serving as a configuration backend). This section can be safely ignored
 if you choose to store the data in other backends.
 
@@ -174,7 +174,7 @@ First-Time Creation of the MySQL Database
 If you are setting the MySQL database for the first time, you need to
 create the database area within MySQL and set up the MySQL user ID under
 which Kea will access the database. This needs to be done manually;
-``kea-admin`` is not able to do this for you.
+``kea-admin`` cannot do this for you.
 
 To create the database:
 
@@ -203,7 +203,7 @@ To create the database:
       mysql> GRANT ALL ON database-name.* TO 'user-name'@'localhost';
 
    (user-name and password are the user ID and password you are using to
-   allow Kea's access to the MySQL instance. All apostrophes in the
+   allow Kea access to the MySQL instance. All apostrophes in the
    command lines above are required.)
 
 4. At this point, you may elect to create the database tables.
@@ -232,7 +232,7 @@ running the ``kea-admin`` tool:
 
    $ kea-admin lease-init mysql -u database-user -p database-password -n database-name
 
-(Do not do this if you did create the tables in Step 4.) ``kea-admin``
+Do not do this if you did create the tables in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. If you want to start from scratch,
 you must remove all data manually. (This process is a manual operation
@@ -253,7 +253,7 @@ To check the current version of the database, use the following command:
 
    $ kea-admin lease-version mysql -u database-user -p database-password -n database-name
 
-(See `Databases and Database Version Numbers <#kea-database-version>`__
+(See :ref:`Databases and Database Version Numbers <kea-database-version>`
 for a discussion about versioning.) If the version does not match the
 minimum required for the new version of Kea (as described in the release
 notes), the database needs to be upgraded.
@@ -405,8 +405,8 @@ Upgrading a PostgreSQL Database from an Earlier Version of Kea
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The PostgreSQL database schema can be upgraded using the same tool and
-commands as described in `Upgrading a MySQL Database from an Earlier
-Version of Kea <#mysql-upgrade>`__, with the exception that the "pgsql"
+commands as described in :ref:`Upgrading a MySQL Database from an Earlier
+Version of Kea <mysql-upgrade>`, with the exception that the "pgsql"
 database backend type must be used in the commands.
 
 Use the following command to check the current schema version:
@@ -485,7 +485,7 @@ running the ``kea-admin`` tool:
 
    $ kea-admin lease-init cql -n database-name
 
-(Do not do this if you did create the tables in Step 4.) ``kea-admin``
+Do not do this if you did create the tables in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. If you want to start from scratch,
 you must remove all data manually. (This process is a manual operation
@@ -506,7 +506,7 @@ To check the current version of the database, use the following command:
 
    $ kea-admin lease-version cql -n database-name
 
-(See `Databases and Database Version Numbers <#kea-database-version>`__
+(See :ref:`Databases and Database Version Numbers <kea-database-version>`
 for a discussion about versioning.) If the version does not match the
 minimum required for the new version of Kea (as described in the release
 notes), the database needs to be upgraded.
@@ -525,9 +525,9 @@ Using Read-Only Databases with Host Reservations
 
 If a read-only database is used for storing host reservations, Kea must
 be explicitly configured to operate on the database in read-only mode.
-Sections `??? <#read-only-database-configuration4>`__ and
-`??? <#read-only-database-configuration6>`__ describe when such
-configuration may be required and how to configure Kea to operate in
+Sections :ref:`Using Read-Only Databases for Host Reservations (DHCPv4) <read-only-database-configuration4>` and
+:ref:`Using Read-Only Databases for Host Reservations (DHCPv6) <read-only-database-configuration6>` describe when such
+a configuration may be required, and how to configure Kea to operate in
 this way.
 
 Limitations Related to the Use of SQL Databases
@@ -538,7 +538,7 @@ Year 2038 Issue
 
 The lease expiration time is stored in the SQL database for each lease
 as a timestamp value. Kea developers observed that the MySQL database
-doesn't accept timestamps beyond 2147483647 seconds (maximum signed
+doesn't accept timestamps beyond 2147483647 seconds (the maximum signed
 32-bit number) from the beginning of the Unix epoch (00:00:00 on 1
 January 1970). Some versions of PostgreSQL do accept greater values, but
 the value is altered when it is read back. For this reason, the lease

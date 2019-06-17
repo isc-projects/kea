@@ -15,7 +15,7 @@ JSON Configuration
 
 JSON is the notation used throughout the Kea project. The most obvious
 usage is for the configuration file, but JSON is also used for sending
-commands over the Management API (see `??? <#ctrl-channel>`__) and for
+commands over the Management API (see :ref:`Management API <ctrl-channel>`) and for
 communicating between DHCP servers and the DDNS update daemon.
 
 Typical usage assumes that the servers are started from the command
@@ -29,8 +29,8 @@ JSON Syntax
 
 Configuration files for the DHCPv4, DHCPv6, DDNS, Control Agent, and
 Netconf modules are defined in an extended JSON format. Basic JSON is
-defined in `RFC 7159 <http://tools.ietf.org/html/rfc7159>`__ and `ECMA
-404 <http://www.ecma-international.org/publications/standards/Ecma-404.htm>`__.
+defined in :ref:`RFC 7159 <http://tools.ietf.org/html/rfc7159>` and :ref:`ECMA
+404 <http://www.ecma-international.org/publications/standards/Ecma-404.htm>`.
 In particular, the only boolean values allowed are true or false (all
 lowercase). The capitalized versions (True or False) are not accepted.
 
@@ -45,11 +45,11 @@ Kea components use an extended JSON with additional features allowed:
    commenting can span multiple lines.
 
 -  File inclusion: JSON files can include other JSON files by using a
-   statement of the form <?include "file.json"?>.
+   statement of the form \<?include "file.json"?\>.
 
 The configuration file consists of a single object (often colloquially
 called a map) started with a curly bracket. It comprises one or more of
-the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent" and "Netconf" objects.
+the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent", and "Netconf" objects.
 It is possible to define additional elements but they will be ignored.
 
 A very simple configuration for DHCPv4 could look like this:
@@ -88,11 +88,11 @@ directory.
    **Note**
 
    The "Logging" element is removed in Kea 1.6.0 and its contents (the
-   "loggers" object) moved inside the configuration objects (maps) for
+   "loggers" object) moved inside the configuration objects (maps) for the
    respective Kea modules. For example: the "Dhcp4" map contains the
    "loggers" object specifying logging configuration for the DHCPv4
    server. Backward compatibility is maintained until at least Kea 1.7.0
-   release: it will be possible to specify "Logging" object at the top
+   release; it will be possible to specify the "Logging" object at the top
    configuration level and "loggers" objects at the module configuration
    level. Ultimately, support for the top-level "Logging" object will be
    removed.

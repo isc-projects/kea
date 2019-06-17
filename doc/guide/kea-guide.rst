@@ -13,7 +13,8 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
 
 
 .. toctree::
-   :maxdepth: 2
+   :numbered:
+   :maxdepth: 3
 
    intro
    quickstart
@@ -37,7 +38,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    netconf
    api
 
-TODO: this is appendinx
+TODO: this is appendix
 
 Acknowledgments
 ===============
@@ -53,7 +54,7 @@ make quality open source software, please visit our donations page at
 ​\ https://www.isc.org/donate/.
 
 We thank all the organizations and individuals who have helped to make
-Kea possible. `Comcast <http://www.comcast.com/>`__ and the Comcast
+Kea possible. `Comcast <https://www.comcast.com/>`__ and the Comcast
 Innovation Fund provided major support for the development of Kea's
 DHCPv4, DHCPv6, and DDNS modules. Mozilla funded initial work on the
 REST API via a MOSS award.
@@ -62,12 +63,12 @@ Kea was initially implemented as a collection of applications within the
 BIND 10 framework. We thank the founding sponsors of the BIND 10
 project: `Afilias <https://www.afilias.info/>`__,
 `IIS.SE <https://www.iis.se/>`__,
-`Nominet <http://www.nominet.org.uk/>`__,
-`SIDN <https://www.sidn.nl/>`__, `JPRS <http://jprs.co.jp/>`__,
-`CIRA <http://cira.ca/>`__; and additional sponsors
+`Nominet <https://www.nominet.uk/>`__,
+`SIDN <https://www.sidn.nl/>`__, `JPRS <https://jprs.co.jp/>`__,
+`CIRA <https://cira.ca/>`__; and additional sponsors
 `AFNIC <https://www.afnic.fr/>`__,
 `CNNIC <https://www.cnnic.net.cn/>`__, `CZ.NIC <https://www.nic.cz/>`__,
-`DENIC eG <http://www.denic.de/>`__,
+`DENIC eG <https://www.denic.de/>`__,
 `Google <https://www.google.com/>`__, `RIPE
 NCC <https://www.ripe.net/>`__, `Registro.br <https://registro.br/>`__,
 `.nz Registry Services <https://nzrs.net.nz/>`__, and `Technical Center

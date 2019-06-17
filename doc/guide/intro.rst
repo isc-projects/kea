@@ -1,8 +1,8 @@
 .. _intro:
 
-***********************
-Chapter 1. Introduction
-***********************
+************
+Introduction
+************
 
 Kea is the next generation of DHCP software developed by ISC. It
 supports both DHCPv4 and DHCPv6 protocols along with their extensions,
@@ -10,8 +10,8 @@ e.g. prefix delegation and dynamic updates to DNS.
 
 This guide covers Kea version KEAVERSION.
 
-1.1 Supported Platforms
-=======================
+Supported Platforms
+===================
 
 Kea is officially supported on CentOS, Fedora, Ubuntu, Debian, and
 FreeBSD systems. It is also likely to work on many other platforms.
@@ -28,14 +28,13 @@ There are currently no plans to port Kea to Windows platforms.
 
 .. _required-software:
 
-1.2 Required Software at Run-time
-=================================
+Required Software at Run-Time
+=============================
 
 Running Kea uses various extra software packages which may not be
 provided in the default installation of some operating systems, nor in
 the standard package collections. You may need to install this required
-software separately. (For the build requirements, also see
-`Section 3.3, "Building Requirements" <#build-requirements>`__.)
+software separately. (For the build requirements, also see :ref:`Build Requirements <build-requirements>`.)
 
 -  Kea supports two cryptographic libraries: Botan and OpenSSL. Only one
    of them is required to be installed during compilation. Kea uses the
@@ -75,12 +74,12 @@ software separately. (For the build requirements, also see
    kea-netconf agent. This Kea module is built optionally and requires
    Sysrepo software when used. Building Kea with NETCONF support
    requires many dependencies to be installed, which are described in
-   more detail in `Section 20.2, “Installing NETCONF” <#netconf-install>`__.
+   more detail in :ref: `Installing NETCONF <netconf-install>`.
 
 .. _kea_software:
 
-1.3 Kea Software
-================
+Kea Software
+============
 
 Kea is modular. Part of this modularity is accomplished using multiple
 cooperating processes which, together, provide the server functionality.
