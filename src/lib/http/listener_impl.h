@@ -92,26 +92,13 @@ protected:
     /// This method is virtual so as it can be overriden when customized
     /// connections are to be used, e.g. in case of unit testing.
     ///
-    /// @param io_service IO service to be used by the connection.
-    /// @param acceptor Reference to the TCP acceptor object used to listen for
-    /// new HTTP connections.
-    /// @param connection_pool Connection pool in which this connection is
-    /// stored.
     /// @param response_creator Pointer to the response creator object used to
     /// create HTTP response from the HTTP request received.
     /// @param callback Callback invoked when new connection is accepted.
-    /// @param request_timeout Configured timeout for a HTTP request.
-    /// @param idle_timeout Timeout after which persistent HTTP connection is
-    /// closed by the server.
     ///
     /// @return Pointer to the created connection.
-    virtual HttpConnectionPtr createConnection(asiolink::IOService& io_service,
-                                               HttpAcceptor& acceptor,
-                                               HttpConnectionPool& connection_pool,
-                                               const HttpResponseCreatorPtr& response_creator,
-                                               const HttpAcceptorCallback& callback,
-                                               const long request_timeout,
-                                               const long idle_timeout);
+    virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
+                                               const HttpAcceptorCallback& callback);
 
     /// @brief Reference to the IO service.
     asiolink::IOService& io_service_;

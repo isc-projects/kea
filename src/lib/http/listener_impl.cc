@@ -89,13 +89,8 @@ HttpListenerImpl::accept() {
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
         boost::bind(&HttpListenerImpl::acceptHandler, this, _1);
-    HttpConnectionPtr conn = createConnection(io_service_,
-                                              acceptor_,
-                                              connections_,
-                                              response_creator,
-                                              acceptor_callback,
-                                              request_timeout_,
-                                              idle_timeout_);
+    HttpConnectionPtr conn = createConnection(response_creator,
+                                              acceptor_callback);
     // Add this new connection to the pool.
     connections_.start(conn);
 }
@@ -108,13 +103,8 @@ HttpListenerImpl::acceptHandler(const boost::system::error_code&) {
 }
 
 HttpConnectionPtr
-HttpListenerImpl::createConnection(IOService& io_service,
-                                   HttpAcceptor& acceptor,
-                                   HttpConnectionPool& connection_pool,
-                                   const HttpResponseCreatorPtr& response_creator,
-                                   const HttpAcceptorCallback& callback,
-                                   const long request_timeout,
-                                   const long idle_timeout) {
+HttpListenerImpl::createConnection(const HttpResponseCreatorPtr& response_creator,
+                                   const HttpAcceptorCallback& callback) {
     HttpConnectionPtr
         conn(new HttpConnection(io_service_, acceptor_, connections_,
                                 response_creator, callback,

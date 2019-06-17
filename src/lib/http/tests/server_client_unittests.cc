@@ -233,13 +233,8 @@ protected:
     /// closed by the server.
     ///
     /// @return Pointer to the created connection.
-    virtual HttpConnectionPtr createConnection(IOService& io_service,
-                                               HttpAcceptor& acceptor,
-                                               HttpConnectionPool& connection_pool,
-                                               const HttpResponseCreatorPtr& response_creator,
-                                               const HttpAcceptorCallback& callback,
-                                               const long request_timeout,
-                                               const long idle_timeout) {
+    virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
+                                               const HttpAcceptorCallback& callback) {
         HttpConnectionPtr
             conn(new HttpConnectionType(io_service_, acceptor_, connections_,
                                         response_creator, callback,
