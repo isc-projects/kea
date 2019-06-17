@@ -162,6 +162,10 @@ public:
 
     /// @brief Retrieves global parameter value.
     ///
+    /// Typically, the server selector used for this query should be set to
+    /// ONE. It is possible to use the MULTIPLE server selector but in that
+    /// case only the first found parameter is returned.
+    ///
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
     /// @return Value of the global parameter.
@@ -171,6 +175,33 @@ public:
                         const std::string& name) const;
 
     /// @brief Retrieves all global parameters.
+    ///
+    /// Using the server selector it is possible to fetch the parameters for
+    /// one or more servers. The following list describes what parameters are
+    /// returned depending on the server selector specified:
+    /// - ALL: only common parameters are returned which are associated with
+    ///   the logical server 'all'. No parameters associated with the explicit
+    ///    server tags are returned.
+    ///
+    /// - ONE: parameters used by the particular sever are returned. This includes
+    ///   parameters associated with the particular server (identified by tag)
+    ///   and parameters associated with the logical server 'all' when server
+    ///   specific parameters are not given. For example, if there is a
+    ///   renew-timer specified for 'server1' tag, different value of the
+    ///   renew-timer specified for 'all' servers and a rebind-timer specified
+    ///   for 'all' servers, the caller will receive renew-timer value associated
+    ///   with the server1 and the rebind-timer value associated with all servers,
+    ///   because there is no explicit rebind-timer specified for server1.
+    ///
+    /// - MULTIPLE: parameters used by multiple servers, but those associated
+    ///   with specific server tags take precedence over the values specified for
+    ///   'all' servers. This is similar to the case of ONE server described
+    ///   above. The effect of querying for parameters belonging to multiple
+    ///   servers is the same as issuing multiple queries with ONE server
+    ///   being selected multiple times.
+    ///
+    /// - UNASSIGNED: parameters not associated with any servers.
+    ///
     ///
     /// @param server_selector Server selector.
     virtual data::StampedValueCollection
