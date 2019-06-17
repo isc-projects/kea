@@ -122,7 +122,7 @@ HttpConnection::doRead(TransactionPtr transaction) {
     try {
         TCPEndpoint endpoint;
 
-        // Transaction is was not created if we are starting to read the
+        // Transaction hasn't been created if we are starting to read the
         // new request.
         if (!transaction) {
             transaction = Transaction::create(response_creator_);
@@ -380,11 +380,11 @@ HttpConnection::requestTimeoutCallback(TransactionPtr transaction) {
     // We need to differentiate the transactions between a normal response and the
     // timeout. We create new transaction from the current transaction. It is
     // to preserve the request we're responding to.
-    transaction = Transaction::spawn(response_creator_, transaction);
+    auto spawned_transaction = Transaction::spawn(response_creator_, transaction);
 
     // The new transaction inherits the request from the original transaction
     // if such transaction exists.
-    auto request = transaction->getRequest();
+    auto request = spawned_transaction->getRequest();
 
     // Depending on when the timeout occured, the HTTP version of the request
     // may or may not be available. Therefore we check if the HTTP version is
@@ -404,7 +404,7 @@ HttpConnection::requestTimeoutCallback(TransactionPtr transaction) {
                                                    HttpStatusCode::REQUEST_TIMEOUT);
 
     // Send the HTTP 408 status.
-    asyncSendResponse(response, transaction);
+    asyncSendResponse(response, spawned_transaction);
 }
 
 void

@@ -96,9 +96,25 @@ protected:
     /// parser (being in the particular state of parsing), input buffer
     /// and the output buffer.
     ///
-    /// A pointer to the @c Transaction object is passed to the ASIO
-    /// callbacks when the new message exchange begins. It is passed
-    /// between the callbacks until the message exchange is completed.
+    /// The new @c Transaction instance is created when the connection
+    /// is established and the server starts receiving the HTTP request.
+    /// The shared pointer to the created transaction is passed between
+    /// the asynchronous handlers. Therefore, as long as the asynchronous
+    /// communication is conducted the instance of the transaction is
+    /// held by the IO service which runs the handlers. The transaction
+    /// instance exists as long as the asynchronous handlers for the
+    /// given request/response exchange are executed. When the server
+    /// responds to the client and all corresponding IO handlers are
+    /// invoked the transaction is automatically destroyed.
+    ///
+    /// The timeout may occur anytime during the transaction. In such
+    /// cases, a new transaction instance is created to send the
+    /// HTTP 408 (timeout) response to the client. Creation of the
+    /// new transaction for the timeout response is necessary because
+    /// there may be some asynchronous handlers scheduled by the
+    /// original transaction which rely on the original transaction's
+    /// state. The timeout response's state is held within the new
+    /// transaction spawned from the original transaction.
     class Transaction {
     public:
 

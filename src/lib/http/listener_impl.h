@@ -81,7 +81,7 @@ protected:
 
     /// @brief Callback invoked when the new connection is accepted.
     ///
-    /// It calls @ref HttpListener::accept to create new @ref HttpConnection
+    /// It calls @c HttpListener::accept to create new @c HttpConnection
     /// instance.
     ///
     /// @param ec Error code passed to the handler. This is currently ignored.
