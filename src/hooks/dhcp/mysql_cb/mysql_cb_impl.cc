@@ -250,81 +250,68 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
         MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
     };
 
-    // This remembers id of the last entry processed.
-    uint64_t last_id = 0;
+    StampedValuePtr last_param;
+
+    StampedValueCollection local_parameters;
 
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&last_id, &parameters] (MySqlBindingCollection& out_bindings) {
+                      [&last_param, &local_parameters]
+                      (MySqlBindingCollection& out_bindings) {
 
-        // Store id of the current entry.
         uint64_t id = out_bindings[0]->getInteger<uint64_t>();
 
         // If we're starting or if this is new parameter being processed...
-        if ((last_id == 0) || (last_id != id)) {
+        if (!last_param || (last_param->getId() != id)) {
 
             // parameter name
             std::string name = out_bindings[1]->getString();
 
             if (!name.empty()) {
+                last_param = StampedValue::create(out_bindings[1]->getString(),
+                                                  out_bindings[2]->getString(),
+                                                  static_cast<Element::types>
+                                                  (out_bindings[3]->getInteger<uint8_t>()));
 
-                // Remember last processed entry.
-                last_id = id;
+                // id
+                last_param->setId(id);
 
-                // The server may use one of the two values present in the
-                // database, i.e. the value specified for the particular
-                // server tag or the value specified for all servers. The
-                // former takes precedence. Therefore, we check here if the
-                // value already present in the parameters collection is
-                // specified for all servers or selected server.
-                auto& index = parameters.get<StampedValueNameIndexTag>();
+                // modification_ts
+                last_param->setModificationTime(out_bindings[4]->getTimestamp());
+
+                // server_tag
+                ServerTag last_param_server_tag(out_bindings[5]->getString());
+                last_param->setServerTag(last_param_server_tag.get());
+                // If we're fetching parameters for a given server (explicit server
+                // tag is provided), it takes precedence over the same parameter
+                // specified for all servers. Therefore, we check if the given
+                // parameter already exists and belongs to 'all'.
+                auto& index = local_parameters.get<StampedValueNameIndexTag>();
                 auto existing = index.find(name);
-                if (existing != index.end()) {
-                    // The value of this parameter has been already seen.
-                    // Let's check if the value we stored is for all
-                    // servers or one server.
-                    try {
-                        ServerTag existing_tag((*existing)->getServerTag());
-                        ServerTag new_tag(out_bindings[5]->getString());
-                        if (!existing_tag.amAll() && new_tag.amAll()) {
-                            // The stored value is for one server and the
-                            // currently fetched value is for all servers,
-                            // so let's drop the currently processed value.
-                            return;
-                        }
-
-                    } catch (...) {
-                        // This shouldn't occur because the value comes
-                        // from the database and should have been validated.
+                if (existing != local_parameters.end()) {
+                    // This parameter was already fetched. Let's check if we should
+                    // replace it or not.
+                    if (!last_param_server_tag.amAll() && (*existing)->hasAllServerTag()) {
+                        // Replace parameter specified for 'all' with the one associated
+                        // with the particular server tag.
+                        local_parameters.replace(existing, last_param);
                         return;
                     }
+
                 }
 
-                // Convert value read as string from the database to the actual
-                // data type known from the database as binding #3.
-                StampedValuePtr stamped_value =
-                    StampedValue::create(out_bindings[1]->getString(),
-                                         out_bindings[2]->getString(),
-                                         static_cast<Element::types>
-                                         (out_bindings[3]->getInteger<uint8_t>()));
-
-                stamped_value->setId(id);
-                stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
-                stamped_value->setServerTag(out_bindings[5]->getString());
-
-                // If the parameter is already stored, it means that the
-                // stored value is for all servers and the one we're fetching
-                // is for a server tag. Let's replace the value.
-                if (existing != index.end()) {
-                    parameters.replace(existing, stamped_value);
-
-                } else {
-                    // The parameter doesn't exist, so insert it whether
-                    // it is for all or one server.
-                    parameters.insert(stamped_value);
+                // If there is no such parameter yet or the existing parameter
+                // belongs to a different server and the inserted parameter is
+                // not for all servers.
+                if ((existing == local_parameters.end()) ||
+                    (!(*existing)->hasServerTag(last_param_server_tag) &&
+                     !last_param_server_tag.amAll())) {
+                    local_parameters.insert(last_param);
                 }
             }
         }
     });
+
+    parameters.insert(local_parameters.begin(), local_parameters.end());
 }
 
 OptionDefinitionPtr
@@ -958,7 +945,7 @@ MySqlConfigBackendImpl::createUpdateServer(const int create_audit_revision_index
     MySqlTransaction transaction(conn_);
 
     MySqlBindingCollection in_bindings = {
-        MySqlBinding::createString(server->getServerTag()),
+        MySqlBinding::createString(server->getServerTagAsText()),
         MySqlBinding::createString(server->getDescription()),
         MySqlBinding::createTimestamp(server->getModificationTime())
     };
@@ -967,7 +954,7 @@ MySqlConfigBackendImpl::createUpdateServer(const int create_audit_revision_index
         conn_.insertQuery(create_index, in_bindings);
 
     } catch (const DuplicateEntry&) {
-        in_bindings.push_back(MySqlBinding::createString(server->getServerTag()));
+        in_bindings.push_back(MySqlBinding::createString(server->getServerTagAsText()));
         conn_.updateDeleteQuery(update_index, in_bindings);
     }
 

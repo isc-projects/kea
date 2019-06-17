@@ -478,7 +478,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteServer) {
     // Try to fetch the server which we expect to exist.
     EXPECT_NO_THROW(returned_server = cbptr_->getServer4(ServerTag("server1")));
     ASSERT_TRUE(returned_server);
-    EXPECT_EQ("server1", returned_server->getServerTag());
+    EXPECT_EQ("server1", returned_server->getServerTag().get());
     EXPECT_EQ("this is server 1", returned_server->getDescription());
     EXPECT_EQ(timestamps_["yesterday"], returned_server->getModificationTime());
 
@@ -495,7 +495,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteServer) {
     // Verify that the server has been updated. 
     EXPECT_NO_THROW(returned_server = cbptr_->getServer4(ServerTag("server1")));
     ASSERT_TRUE(returned_server);
-    EXPECT_EQ("server1", returned_server->getServerTag());
+    EXPECT_EQ("server1", returned_server->getServerTag().get());
     EXPECT_EQ("this is server 1 bis", returned_server->getDescription());
     EXPECT_EQ(timestamps_["today"], returned_server->getModificationTime());
 
@@ -586,7 +586,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     EXPECT_EQ("whale", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
-    EXPECT_EQ("all", returned_global_parameter->getServerTag());
+    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    EXPECT_EQ("all", returned_global_parameter->getServerTags()[0].get());
 
     // Because we have added the global parameter for all servers, it
     // should be also returned for the explicitly specified server.
@@ -597,7 +598,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     EXPECT_EQ("whale", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
-    EXPECT_EQ("all", returned_global_parameter->getServerTag());
+    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    EXPECT_EQ("all", returned_global_parameter->getServerTags()[0].get());
 
     // Check that the parameter is udpated when selector is specified correctly.
     global_parameter = StampedValue::create("global", "fish");
@@ -610,7 +612,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     EXPECT_EQ("fish", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
-    EXPECT_EQ("all", returned_global_parameter->getServerTag());
+    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    EXPECT_EQ("all", returned_global_parameter->getServerTags()[0].get());
 
     {
         SCOPED_TRACE("UPDATE audit entry for the global parameter");
@@ -678,7 +681,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     );
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    EXPECT_EQ("all", returned_global->getServerTag());
+    ASSERT_EQ(1, returned_global->getServerTags().size());
+    EXPECT_EQ("all", returned_global->getServerTags()[0].get());
 
     // Try to fetch the value specified for the server1. This should override the
     // value specified for all servers.
@@ -688,7 +692,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     );
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter1->getValue(), returned_global->getValue());
-    EXPECT_EQ("server1", returned_global->getServerTag());
+
+    ASSERT_EQ(1, returned_global->getServerTags().size());
+    EXPECT_EQ("server1", returned_global->getServerTags()[0].get());
 
     // The same in case of the server2.
     EXPECT_NO_THROW(
@@ -697,19 +703,33 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     );
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter2->getValue(), returned_global->getValue());
-    EXPECT_EQ("server2", returned_global->getServerTag());
+    ASSERT_EQ(1, returned_global->getServerTags().size());
+    EXPECT_EQ("server2", returned_global->getServerTags()[0].get());
 
     StampedValueCollection returned_globals;
 
-    // Try to fetch the collection of globals for the server2. It should contain
-    // server specific values.
+    // Try to fetch the collection of globals for the server1, server2 and server3.
+    // The server3 does not have an explicit value so for this server we should get
+    /// the value for 'all'.
     EXPECT_NO_THROW(
-        returned_globals = cbptr_->getAllGlobalParameters4(ServerSelector::ONE("server2"))
+        returned_globals = cbptr_->getAllGlobalParameters4(ServerSelector::
+                                                           MULTIPLE({ "server1", "server2",
+                                                                      "server3" }));
     );
-    ASSERT_EQ(1, returned_globals.size());
-    returned_global = *returned_globals.begin();
-    EXPECT_EQ(global_parameter2->getValue(), returned_global->getValue());
-    EXPECT_EQ("server2", returned_global->getServerTag());
+    ASSERT_EQ(3, returned_globals.size());
+
+    // Capture the returned values into the map so as we can check the
+    // values against the servers.
+    std::map<std::string, std::string> values;
+    for (auto g = returned_globals.begin(); g != returned_globals.end(); ++g) {
+        ASSERT_EQ(1, (*g)->getServerTags().size());
+        values[(*g)->getServerTags()[0].get()] = ((*g)->getValue());
+    }
+
+    ASSERT_EQ(3, values.size());
+    EXPECT_EQ(global_parameter1->getValue(), values["server1"]);
+    EXPECT_EQ(global_parameter2->getValue(), values["server2"]);
+    EXPECT_EQ(global_parameter3->getValue(), values["all"]);
 
     // Try to fetch the collection of global parameters specified for all servers.
     // This excludes the values specific to server1 and server2. It returns only the
@@ -720,7 +740,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     ASSERT_EQ(1, returned_globals.size());
     returned_global = *returned_globals.begin();
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    EXPECT_EQ("all", returned_global->getServerTag());
+    ASSERT_EQ(1, returned_global->getServerTags().size());
+    EXPECT_EQ("all", returned_global->getServerTags()[0].get());
 
     // Delete the server1. It should remove associations of this server with the
     // global parameters.
@@ -734,7 +755,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     // all servers, rather than the one dedicated for server1. The association of
     // the server1 specific value with the server1 should be gone.
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    EXPECT_EQ("all", returned_global->getServerTag());
+    ASSERT_EQ(1, returned_global->getServerTags().size());
+    EXPECT_EQ("all", returned_global->getServerTags()[0].get());
 
     // Attempt to delete global parameter for server1.
     uint64_t deleted_num = 0;
@@ -760,7 +782,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     // The common value for all servers should still be available because 'all'
     // logical server should not be deleted.
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    EXPECT_EQ("all", returned_global->getServerTag());
+    ASSERT_EQ(1, returned_global->getServerTags().size());
+    EXPECT_EQ("all", returned_global->getServerTags()[0].get());
 }
 
 // This test verifies that all global parameters can be retrieved and deleted.
@@ -792,7 +815,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
 
     for (auto param = parameters_index.begin(); param != parameters_index.end();
          ++param) {
-        EXPECT_EQ("all", (*param)->getServerTag());
+        ASSERT_EQ(1, (*param)->getServerTags().size());
+        EXPECT_EQ("all", (*param)->getServerTags()[0].get());
     }
 
     // Should be able to fetch these parameters when explicitly providing
@@ -861,7 +885,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
-    EXPECT_EQ("all", returned_subnet->getServerTag());
+    ASSERT_EQ(1, returned_subnet->getServerTags().size());
+    EXPECT_EQ("all", returned_subnet->getServerTags()[0].get());
 
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
@@ -996,7 +1021,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithOptionalUnspecified) {
     EXPECT_EQ(128, returned_subnet->get4o6().getSubnet4o6().get().second);
 
     // The easiest way to verify whether the returned subnet matches the inserted
-    // subnet is to convert both to text.
+   // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 }
 
@@ -1040,7 +1065,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4ByPrefix) {
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     "192.0.2.0/24");
     ASSERT_TRUE(returned_subnet);
-    EXPECT_EQ("all", returned_subnet->getServerTag());
+    ASSERT_EQ(1, returned_subnet->getServerTags().size());
+    EXPECT_EQ("all", returned_subnet->getServerTags()[0].get());
 
     // Verify subnet contents.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
@@ -1085,7 +1111,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
 
     // See if the subnets are returned ok.
     for (auto i = 0; i < subnets.size(); ++i) {
-        EXPECT_EQ("all", subnets[i]->getServerTag());
+        ASSERT_EQ(1, subnets[i]->getServerTags().size());
+        EXPECT_EQ("all", subnets[i]->getServerTags()[0].get());
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
                   subnets[i]->toElement()->str());
     }
@@ -1252,7 +1279,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
                              subnets[0]->toElement()));
 
     // Check server tag
-    EXPECT_EQ("all", subnets[0]->getServerTag());
+    ASSERT_EQ(1, subnets[0]->getServerTags().size());
+    EXPECT_EQ("all", subnets[0]->getServerTags()[0].get());
 
     // Fetch all subnets belonging to shared network level2.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ALL(), "level2");
@@ -1293,7 +1321,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
     ASSERT_TRUE(returned_network);
 
     EXPECT_GT(returned_network->getId(), 0);
-    EXPECT_EQ("all", returned_network->getServerTag());
+    ASSERT_EQ(1, returned_network->getServerTags().size());
+    EXPECT_EQ("all", returned_network->getServerTags()[0].get());
 
     // The easiest way to verify whether the returned shared network matches the
     // inserted shared network is to convert both to text.
@@ -1590,7 +1619,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
                               test_option_defs_[0]->getOptionSpaceName());
     ASSERT_TRUE(returned_option_def);
     EXPECT_GT(returned_option_def->getId(), 0);
-    EXPECT_EQ("all", returned_option_def->getServerTag());
+    ASSERT_EQ(1, returned_option_def->getServerTags().size());
+    EXPECT_EQ("all", returned_option_def->getServerTags()[0].get());
 
     EXPECT_TRUE(returned_option_def->equals(*option_def));
 
@@ -1663,7 +1693,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
 
     // See if option definitions are returned ok.
     for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
-        EXPECT_EQ("all", (*def)->getServerTag());
+        ASSERT_EQ(1, (*def)->getServerTags().size());
+        EXPECT_EQ("all", (*def)->getServerTags()[0].get());
         bool success = false;
         for (auto i = 1; i < test_option_defs_.size(); ++i) {
             if ((*def)->equals(*test_option_defs_[i])) {
@@ -1858,7 +1889,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
         ASSERT_FALSE(option0 == index.end());
         testOptionsEquivalent(*test_options_[0], *option0);
         EXPECT_GT(option0->getId(), 0);
-        EXPECT_EQ("all", option0->getServerTag());
+        ASSERT_EQ(1, option0->getServerTags().size());
+        EXPECT_EQ("all", option0->getServerTags()[0].get());
     }
 
     {
@@ -1867,7 +1899,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
         ASSERT_FALSE(option1 == index.end());
         testOptionsEquivalent(*test_options_[1], *option1);
         EXPECT_GT(option1->getId(), 0);
-        EXPECT_EQ("all", option1->getServerTag());
+        ASSERT_EQ(1, option1->getServerTags().size());
+        EXPECT_EQ("all", option1->getServerTags()[0].get());
     }
 
     {
@@ -1876,7 +1909,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
         ASSERT_FALSE(option5 == index.end());
         testOptionsEquivalent(*test_options_[5], *option5);
         EXPECT_GT(option5->getId(), 0);
-        EXPECT_EQ("all", option5->getServerTag());
+        ASSERT_EQ(1, option5->getServerTags().size());
+        EXPECT_EQ("all", option5->getServerTags()[0].get());
     }
 }
 

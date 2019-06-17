@@ -2658,7 +2658,7 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
 void
 MySqlConfigBackendDHCPv4::createUpdateServer4(const ServerPtr& server) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SERVER4)
-        .arg(server->getServerTag());
+        .arg(server->getServerTagAsText());
     impl_->createUpdateServer(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                               MySqlConfigBackendDHCPv4Impl::INSERT_SERVER4,
                               MySqlConfigBackendDHCPv4Impl::UPDATE_SERVER4,

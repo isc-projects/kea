@@ -3030,7 +3030,7 @@ MySqlConfigBackendDHCPv6::createUpdateGlobalParameter6(const ServerSelector& ser
 void
 MySqlConfigBackendDHCPv6::createUpdateServer6(const ServerPtr& server) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_CREATE_UPDATE_SERVER6)
-        .arg(server->getServerTag());
+        .arg(server->getServerTagAsText());
     impl_->createUpdateServer(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                               MySqlConfigBackendDHCPv6Impl::INSERT_SERVER6,
                               MySqlConfigBackendDHCPv6Impl::UPDATE_SERVER6,

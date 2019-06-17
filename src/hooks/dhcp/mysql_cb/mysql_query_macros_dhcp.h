@@ -42,9 +42,9 @@ namespace {
     "INNER JOIN " #table_prefix "_global_parameter_server AS a " \
     "  ON g.id = a.parameter_id " \
     "INNER JOIN " #table_prefix "_server AS s " \
-    "  ON (a.server_id = s.id) OR (a.server_id = 1) " \
+    "  ON (a.server_id = s.id) " \
     "WHERE (s.tag = ? OR s.id = 1) " #__VA_ARGS__ \
-    " ORDER BY g.id"
+    " ORDER BY g.id, s.id"
 
 #endif
 
