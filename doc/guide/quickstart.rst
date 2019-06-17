@@ -1,8 +1,8 @@
 .. _quickstart:
 
-***********
-Quick Start
-***********
+**********************
+Chapter 2. Quick Start
+**********************
 
 This section describes the basic steps needed to get Kea up and running.
 For further details, full customizations, and troubleshooting, see the
@@ -10,15 +10,15 @@ respective chapters in the Kea Administrator Reference Manual (ARM).
 
 .. _quick-start:
 
-Quick Start Guide for DHCPv4 and DHCPv6 Services
-================================================
+2.1 Quick Start Guide for DHCPv4 and DHCPv6 Services
+====================================================
 
 1.  Install required run-time and build dependencies. See
-    `??? <#build-requirements>`__ for details.
+    `Section 3.3, “Building Requirements” <#build-requirements>`__ for details.
 
 2.  Download the Kea source tarball from the `ISC.org downloads
-    page <https://www.isc.org/downloads/>`__ or the `ISC FTP
-    server <http://ftp.isc.org/isc/kea/>`__.
+    page <https://www.isc.org/download/>`__ or the `ISC FTP
+    server <ftp://ftp.isc.org/isc/kea/>`__.
 
 3.  Extract the tarball. For example:
 
@@ -88,7 +88,7 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 10. If the server has been started successfully, test that it is
     responding to DHCP queries and that the client receives a
     configuration from the server; for example, use the `ISC DHCP
-    client <http://www.isc.org/downloads/DHCP/>`__.
+    client <https://www.isc.org/download/>`__.
 
 11. Stop running the server(s):
 
@@ -102,14 +102,14 @@ available in the `Kea section of ISC's
 Knowledgebase <https://kb.isc.org/docs>`__.
 
 The details of ``keactrl`` script usage can be found in
-`??? <#keactrl>`__.
+`Chapter 6, "Managing Kea with keactrl" <#keactrl>`__.
 
 .. _quick-start-direct-run:
 
-Running the Kea Servers Directly
-================================
+2.2 Running the Kea Servers Directly
+====================================
 
-The Kea servers can be started directly, without the need to use the
+The Kea servers can be started directly, without the need to use
 ``keactrl``. To start the DHCPv4 server run the following command:
 
 ::

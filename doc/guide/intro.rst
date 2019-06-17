@@ -1,8 +1,8 @@
 .. _intro:
 
-************
-Introduction
-************
+***********************
+Chapter 1. Introduction
+***********************
 
 Kea is the next generation of DHCP software developed by ISC. It
 supports both DHCPv4 and DHCPv6 protocols along with their extensions,
@@ -10,8 +10,8 @@ e.g. prefix delegation and dynamic updates to DNS.
 
 This guide covers Kea version KEAVERSION.
 
-Supported Platforms
-===================
+1.1 Supported Platforms
+=======================
 
 Kea is officially supported on CentOS, Fedora, Ubuntu, Debian, and
 FreeBSD systems. It is also likely to work on many other platforms.
@@ -28,65 +28,65 @@ There are currently no plans to port Kea to Windows platforms.
 
 .. _required-software:
 
-Required Software at Run-time
-=============================
+1.2 Required Software at Run-time
+=================================
 
 Running Kea uses various extra software packages which may not be
 provided in the default installation of some operating systems, nor in
 the standard package collections. You may need to install this required
 software separately. (For the build requirements, also see
-`??? <#build-requirements>`__.)
+`Section 3.3, "Building Requirements" <#build-requirements>`__.)
 
 -  Kea supports two cryptographic libraries: Botan and OpenSSL. Only one
    of them is required to be installed during compilation. Kea uses the
-   Botan library for C++ (http://botan.randombit.net/), version 1.9 or
+   Botan library for C++ (https://botan.randombit.net/), version 1.9 or
    later. Note that support for Botan versions earlier than 2.0 will be
    removed in Kea 1.6.0 and later. As an alternative to Botan, Kea can
-   use the OpenSSL cryptographic library (http://www.openssl.org/),
+   use the OpenSSL cryptographic library (https://www.openssl.org/),
    version 1.0.2 or later.
 
 -  Kea uses the log4cplus C++ logging library
-   (http://log4cplus.sourceforge.net/). It requires log4cplus version
+   (https://sourceforge.net/p/log4cplus/wiki/Home/). It requires log4cplus version
    1.0.3 or later.
 
--  Kea requires the Boost system library (http://www.boost.org/).
+-  Kea requires the Boost system library (https://www.boost.org/).
    Building with the header-only version of Boost is no longer
    recommended.
 
--  In order to store lease information in a MySQL database, Kea requires
-   MySQL headers and libraries. This is an optional dependency in that
+-  To store lease information in a MySQL database, Kea requires
+   MySQL headers and libraries. This is an optional dependency;
    Kea can be built without MySQL support.
 
--  In order to store lease information in a PostgreSQL database, Kea
+-  To store lease information in a PostgreSQL database, Kea
    requires PostgreSQL headers and libraries. This is an optional
-   dependency in that Kea can be built without PostgreSQL support.
+   dependency; Kea can be built without PostgreSQL support.
 
--  In order to store lease information in a Cassandra database (CQL),
+-  To store lease information in a Cassandra database (CQL),
    Kea requires Cassandra headers and libraries. This is an optional
-   dependency in that Kea can be built without Cassandra support.
+   dependency; Kea can be built without Cassandra support.
 
 -  Integration with RADIUS is provided in Kea via the hooks library
    available to our paid support customers. Use of this library requires
    the FreeRadius-client library to be present on the system where Kea
-   is running. This is an optional dependency in that Kea can be built
+   is running. This is an optional dependency; Kea can be built
    without RADIUS support.
 
 -  As of the 1.5.0 release, Kea provides a NETCONF interface with the
    kea-netconf agent. This Kea module is built optionally and requires
    Sysrepo software when used. Building Kea with NETCONF support
    requires many dependencies to be installed, which are described in
-   more detail in `??? <#netconf-install>`__.
+   more detail in `Section 20.2, “Installing NETCONF” <#netconf-install>`__.
 
 .. _kea_software:
 
-Kea Software
-============
+1.3 Kea Software
+================
 
 Kea is modular. Part of this modularity is accomplished using multiple
 cooperating processes which, together, provide the server functionality.
 The following software is included with Kea:
 
--  ``keactrl`` — Tool to start, stop, reconfigure, and report status for
+-  ``keactrl`` — This tool starts, stops, reconfigures, and reports status for
    the Kea servers.
 
 -  ``kea-dhcp4`` — The DHCPv4 server process. This process responds to
@@ -101,7 +101,7 @@ The following software is included with Kea:
    update messages to the DNS servers.
 
 -  ``kea-admin`` — A useful tool for database backend maintenance
-   (creating a new database, checking versions, upgrading, etc.)
+   (creating a new database, checking versions, upgrading, etc.).
 
 -  ``kea-lfc`` — This process removes redundant information from the
    files used to provide persistent storage for the memfile database
@@ -111,7 +111,7 @@ The following software is included with Kea:
 -  ``kea-ctrl-agent`` — Kea Control Agent (CA) is a daemon that exposes
    a RESTful control interface for managing Kea servers.
 
--  ``kea-netconf`` - Kea netconf is an agent that provides a
+-  ``kea-netconf`` - Kea-netconf is an agent that provides a
    YANG/NETCONF interface for the Kea environment.
 
 -  ``kea-shell`` — This simple text client uses the REST interface to
