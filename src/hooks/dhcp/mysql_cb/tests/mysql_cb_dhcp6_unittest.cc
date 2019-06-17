@@ -642,7 +642,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteGlobalParameter6) {
     ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
     EXPECT_EQ("all", returned_global_parameter->getServerTags()[0].get());
 
-    // Check that the parameter is udpated when selector is specified correctly.
+    // Check that the parameter is updated when selector is specified correctly.
     global_parameter = StampedValue::create("global", "fish");
     cbptr_->createUpdateGlobalParameter6(ServerSelector::ALL(),
                                          global_parameter);
