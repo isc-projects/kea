@@ -184,7 +184,7 @@ public:
     /// returned depending on the server selector specified:
     /// - ALL: only common parameters are returned which are associated with
     ///   the logical server 'all'. No parameters associated with the explicit
-    ///    server tags are returned.
+    ///   server tags are returned.
     ///
     /// - ONE: parameters used by the particular sever are returned. This includes
     ///   parameters associated with the particular server (identified by tag)
