@@ -15,7 +15,7 @@ namespace isc {
 namespace data {
 
 /// @brief This class represents configuration element which is
-/// associated with database identifiee, modification timestamp
+/// associated with database identifier, modification timestamp
 /// and servers.
 ///
 /// Classes storing Kea configuration should derive from this object
