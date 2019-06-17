@@ -34,7 +34,7 @@ TEST(StampedElementTest, create) {
     EXPECT_LT(delta.seconds(), 5);
 }
 
-// Tests that default id can be overriden by a new value.
+// Tests that default id can be overridden by a new value.
 TEST(StampedElementTest, setId) {
     StampedElement element;
     element.setId(123);
