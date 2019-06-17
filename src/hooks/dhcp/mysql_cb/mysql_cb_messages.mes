@@ -101,6 +101,18 @@ Debug message issued when triggered an action to delete all shared networks
 % MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT deleted: %1 entries
 Debug message indicating the result of an action to delete all shared networks
 
+% MYSQL_CB_DELETE_ALL_SERVERS4 delete all DHCPv4 servers
+Debug message issued when triggered an action to delete all servers.
+
+% MYSQL_CB_DELETE_ALL_SERVERS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete all servers.
+
+% MYSQL_CB_DELETE_ALL_SERVERS6 delete all DHCPv6 servers
+Debug message issued when triggered an action to delete all servers.
+
+% MYSQL_CB_DELETE_ALL_SERVERS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete all servers.
+
 % MYSQL_CB_DELETE_ALL_SUBNETS4 delete all subnets
 Debug message issued when triggered an action to delete all subnets
 
@@ -202,6 +214,18 @@ Debug message issued when triggered an action to delete option definition
 
 % MYSQL_CB_DELETE_OPTION_DEF6_RESULT deleted: %1 entries
 Debug message indicating the result of an action to delete option definition
+
+% MYSQL_CB_DELETE_SERVER4 delete DHCPv4 server: %1
+Debug message issued when triggered an action to delete a server.
+
+% MYSQL_CB_DELETE_SERVER4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete a server.
+
+% MYSQL_CB_DELETE_SERVER6 delete DHCPv6 server: %1
+Debug message issued when triggered an action to delete a server.
+
+% MYSQL_CB_DELETE_SERVER6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete a server.
 
 % MYSQL_CB_DELETE_SHARED_NETWORK4 delete shared network: %1
 Debug message issued when triggered an action to delete shared network

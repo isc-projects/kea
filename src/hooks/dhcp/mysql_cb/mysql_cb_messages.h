@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Wed Jun 12 2019 14:09
+// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Mon Jun 17 2019 14:28
 
 #ifndef MYSQL_CB_MESSAGES_H
 #define MYSQL_CB_MESSAGES_H
@@ -36,6 +36,10 @@ extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS4;
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT;
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS6;
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT;
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS4;
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS4_RESULT;
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS6;
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS6_RESULT;
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4;
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT;
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6;
@@ -74,6 +78,10 @@ extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF4;
 extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF4_RESULT;
 extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF6;
 extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF6_RESULT;
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER4;
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER4_RESULT;
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER6;
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER6_RESULT;
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK4;
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT;
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK6;

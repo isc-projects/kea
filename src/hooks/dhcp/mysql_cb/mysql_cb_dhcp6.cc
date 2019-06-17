@@ -3229,16 +3229,23 @@ MySqlConfigBackendDHCPv6::deleteAllGlobalParameters6(const ServerSelector& serve
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteServer6(const ServerTag& server_tag) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER6)
+        .arg(server_tag.get());
     uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                                           MySqlConfigBackendDHCPv6Impl::DELETE_SERVER6,
                                           server_tag.get());
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER6_RESULT)
+        .arg(result);
     return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv6::deleteAllServers6() {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SERVERS6);
     uint64_t result = impl_->deleteAllServers(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                                               MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SERVERS6);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SERVERS6_RESULT)
+        .arg(result);
     return (result);
 }
 

@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Wed Jun 12 2019 14:09
+// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Mon Jun 17 2019 14:28
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -35,6 +35,10 @@ extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS4 = "MYSQL_CB_DE
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT = "MYSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS6 = "MYSQL_CB_DELETE_ALL_OPTION_DEFS6";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT = "MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT";
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS4 = "MYSQL_CB_DELETE_ALL_SERVERS4";
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS4_RESULT = "MYSQL_CB_DELETE_ALL_SERVERS4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS6 = "MYSQL_CB_DELETE_ALL_SERVERS6";
+extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SERVERS6_RESULT = "MYSQL_CB_DELETE_ALL_SERVERS6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4 = "MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT = "MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6 = "MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6";
@@ -73,6 +77,10 @@ extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF4 = "MYSQL_CB_DELETE_
 extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF4_RESULT = "MYSQL_CB_DELETE_OPTION_DEF4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF6 = "MYSQL_CB_DELETE_OPTION_DEF6";
 extern const isc::log::MessageID MYSQL_CB_DELETE_OPTION_DEF6_RESULT = "MYSQL_CB_DELETE_OPTION_DEF6_RESULT";
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER4 = "MYSQL_CB_DELETE_SERVER4";
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER4_RESULT = "MYSQL_CB_DELETE_SERVER4_RESULT";
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER6 = "MYSQL_CB_DELETE_SERVER6";
+extern const isc::log::MessageID MYSQL_CB_DELETE_SERVER6_RESULT = "MYSQL_CB_DELETE_SERVER6_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK4 = "MYSQL_CB_DELETE_SHARED_NETWORK4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT = "MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_SHARED_NETWORK6 = "MYSQL_CB_DELETE_SHARED_NETWORK6";
@@ -197,6 +205,10 @@ const char* values[] = {
     "MYSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_OPTION_DEFS6", "delete all option definitions",
     "MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT", "deleted: %1 entries",
+    "MYSQL_CB_DELETE_ALL_SERVERS4", "delete all DHCPv4 servers",
+    "MYSQL_CB_DELETE_ALL_SERVERS4_RESULT", "deleted: %1 entries",
+    "MYSQL_CB_DELETE_ALL_SERVERS6", "delete all DHCPv6 servers",
+    "MYSQL_CB_DELETE_ALL_SERVERS6_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4", "delete all shared networks",
     "MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6", "delete all shared networks",
@@ -235,6 +247,10 @@ const char* values[] = {
     "MYSQL_CB_DELETE_OPTION_DEF4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_OPTION_DEF6", "delete option definition code: %1 space: %2",
     "MYSQL_CB_DELETE_OPTION_DEF6_RESULT", "deleted: %1 entries",
+    "MYSQL_CB_DELETE_SERVER4", "delete DHCPv4 server: %1",
+    "MYSQL_CB_DELETE_SERVER4_RESULT", "deleted: %1 entries",
+    "MYSQL_CB_DELETE_SERVER6", "delete DHCPv6 server: %1",
+    "MYSQL_CB_DELETE_SERVER6_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_SHARED_NETWORK4", "delete shared network: %1",
     "MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_SHARED_NETWORK6", "delete shared network: %1",

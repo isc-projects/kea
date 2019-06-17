@@ -2842,16 +2842,23 @@ MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER4)
+        .arg(server_tag.get());
     uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                                           MySqlConfigBackendDHCPv4Impl::DELETE_SERVER4,
                                           server_tag.get());
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER4_RESULT)
+        .arg(result);
     return (result);
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllServers4() {
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SERVERS4);
     uint64_t result = impl_->deleteAllServers(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                                               MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SERVERS4);
+    LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SERVERS4_RESULT)
+        .arg(result);
     return (result);
 }
 
