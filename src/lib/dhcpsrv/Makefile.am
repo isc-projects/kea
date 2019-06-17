@@ -2,6 +2,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = . testutils tests benchmarks
 
+# DATA_DIR is the directory where to put default CSV files and the DHCPv6
+# server ID file (i.e. the file where the server finds its DUID at startup).
 dhcp_data_dir = @localstatedir@/lib/@PACKAGE@
 kea_lfc_location = @prefix@/sbin/kea-lfc
 
