@@ -408,6 +408,19 @@ public:
         }
     }
 
+    // Checks if the result of DHCP server configuration has
+    // expected code (0 for success, other for failures) and
+    // the text part. Also stores result in rcode_ and comment_.
+    void checkResult(ConstElementPtr status, int expected_code,
+                     string expected_txt) {
+        ASSERT_TRUE(status);
+        comment_ = parseAnswer(rcode_, status);
+        EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
+        ASSERT_TRUE(comment_);
+        ASSERT_EQ(Element::string, comment_->getType());
+        EXPECT_EQ(expected_txt, comment_->stringValue());
+    }
+
     /// @brief Convenience method for running configuration
     ///
     /// This method does not throw, but signals errors using gtest macros.
@@ -1003,24 +1016,58 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/32\" } ],"
-        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 1001 }";
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(too_small));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1);
+    string expected = "subnet configuration failed: "
+        "the value of min-valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + "," +
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/32\" } ],"
-        "\"valid-lifetime\": 4001, \"max-valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1);
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string before =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(before));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) valid-lifetime (1000) is not "
+        "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string after =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"valid-lifetime\": 5000, \"min-valid-lifetime\": 1000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(after));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) valid-lifetime (5000) is not "
+        "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
 }
 
 /// Check that preferred-lifetime must be between min-preferred-lifetime and
@@ -1032,24 +1079,58 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/32\" } ],"
-        "\"preferred-lifetime\": 1000, \"min-preferred-lifetime\": 1001 }";
+        "\"preferred-lifetime\": 1000, \"min-preferred-lifetime\": 2000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP6(too_small));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1);
+    string expected = "subnet configuration failed: "
+        "the value of min-preferred-lifetime (2000) is not "
+        "less than max-preferred-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + "," +
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "    \"subnet\": \"2001:db8::/32\" } ],"
-        "\"preferred-lifetime\": 4001, \"max-preferred-lifetime\": 4000 }";
+        "\"preferred-lifetime\": 2000, \"max-preferred-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1);
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string before =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"preferred-lifetime\": 1000, \"min-preferred-lifetime\": 2000, "
+        "\"max-preferred-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(before));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) preferred-lifetime (1000) is not between "
+        "min-preferred-lifetime (2000) and max-preferred-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string after =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"preferred-lifetime\": 5000, \"min-preferred-lifetime\": 1000, "
+        "\"max-preferred-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP6(after));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) preferred-lifetime (5000) is not between "
+        "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
+    checkResult(status, 1, expected);
 }
 
 /// The goal of this test is to verify if configuration without any

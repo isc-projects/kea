@@ -292,6 +292,19 @@ public:
         EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
     }
 
+    // Checks if the result of DHCP server configuration has
+    // expected code (0 for success, other for failures) and
+    // the text part. Also stores result in rcode_ and comment_.
+    void checkResult(ConstElementPtr status, int expected_code,
+                     string expected_txt) {
+        ASSERT_TRUE(status);
+        comment_ = parseAnswer(rcode_, status);
+        EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
+        ASSERT_TRUE(comment_);
+        ASSERT_EQ(Element::string, comment_->getType());
+        EXPECT_EQ(expected_txt, comment_->stringValue());
+    }
+
     /// @brief Convenience method for running configuration
     ///
     /// This method does not throw, but signals errors using gtest macros.
@@ -851,24 +864,58 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
-        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 1001 }";
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(too_small));
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    checkResult(status, 1);
+    string expected = "subnet configuration failed: "
+        "the value of min-valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + "," +
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
-        "\"valid-lifetime\": 4001, \"max-valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP4(too_large));
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    checkResult(status, 1);
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string before =  "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(before));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) valid-lifetime (1000) is not "
+        "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string after =  "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 5000, \"min-valid-lifetime\": 1000, "
+        "\"max-valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(json = parseDHCP4(after));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) valid-lifetime (5000) is not "
+        "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
+    checkResult(status, 1, expected);
 }
 
 /// Check that the renew-timer doesn't have to be specified, in which case
