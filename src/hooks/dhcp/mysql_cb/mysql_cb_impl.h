@@ -641,7 +641,7 @@ public:
     /// @param create_audit_revision Index of the query inserting audit
     /// revision.
     /// @param create_index Index of the INSERT query to be used.
-    /// @param update_index index of the UPDATE query to be used.
+    /// @param update_index Index of the UPDATE query to be used.
     /// @param server Pointer to the server to be inserted or updated.
     void createUpdateServer(const int create_audit_revision_index,
                             const int create_index,
