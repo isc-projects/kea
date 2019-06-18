@@ -552,7 +552,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
 
 // This test verifies that ADVERTISE returns default lifetimes when
 // the client does not add an IAADDR sub option.
-  TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
+TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
     NakedDhcpv6Srv srv(0);
 
     subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
