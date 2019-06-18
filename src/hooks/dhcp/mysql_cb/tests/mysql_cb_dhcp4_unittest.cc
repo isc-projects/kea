@@ -1021,7 +1021,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithOptionalUnspecified) {
     EXPECT_EQ(128, returned_subnet->get4o6().getSubnet4o6().get().second);
 
     // The easiest way to verify whether the returned subnet matches the inserted
-   // subnet is to convert both to text.
+    // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 }
 
