@@ -1,5 +1,5 @@
-// Generated 201903111303
-// A Bison parser, made by GNU Bison 3.3.2.
+// Generated 201906181714
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Locations for Bison parsers in C++
 
@@ -55,9 +55,10 @@
 #  endif
 # endif
 
-#line 14 "parser.yy" // location.cc:339
+#line 14 "parser.yy"
 namespace isc { namespace eval {
-#line 60 "location.hh" // location.cc:339
+#line 60 "location.hh"
+
   /// A point in a source file.
   class position
   {
@@ -317,7 +318,8 @@ namespace isc { namespace eval {
     return ostr;
   }
 
-#line 14 "parser.yy" // location.cc:339
+#line 14 "parser.yy"
 } } // isc::eval
-#line 322 "location.hh" // location.cc:339
+#line 323 "location.hh"
+
 #endif // !YY_EVAL_LOCATION_HH_INCLUDED

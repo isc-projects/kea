@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -44,7 +44,7 @@
 #ifndef YY_AGENT_AGENT_PARSER_H_INCLUDED
 # define YY_AGENT_AGENT_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "agent_parser.yy" // lalr1.cc:401
+#line 17 "agent_parser.yy"
 
 #include <string>
 #include <cc/data.h>
@@ -55,7 +55,7 @@ using namespace isc::agent;
 using namespace isc::data;
 using namespace std;
 
-#line 59 "agent_parser.h" // lalr1.cc:401
+#line 59 "agent_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -177,9 +177,10 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined AGENT_DEBUG */
 
-#line 14 "agent_parser.yy" // lalr1.cc:401
+#line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 183 "agent_parser.h" // lalr1.cc:401
+#line 183 "agent_parser.h"
+
 
 
 
@@ -2030,9 +2031,10 @@ switch (yytype)
     return token_type (yytoken_number_[type]);
   }
 
-#line 14 "agent_parser.yy" // lalr1.cc:401
+#line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2036 "agent_parser.h" // lalr1.cc:401
+#line 2037 "agent_parser.h"
+
 
 
 

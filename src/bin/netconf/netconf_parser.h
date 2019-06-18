@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -44,7 +44,7 @@
 #ifndef YY_NETCONF_NETCONF_PARSER_H_INCLUDED
 # define YY_NETCONF_NETCONF_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "netconf_parser.yy" // lalr1.cc:401
+#line 17 "netconf_parser.yy"
 
 #include <string>
 #include <cc/data.h>
@@ -55,7 +55,7 @@ using namespace isc::netconf;
 using namespace isc::data;
 using namespace std;
 
-#line 59 "netconf_parser.h" // lalr1.cc:401
+#line 59 "netconf_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -177,9 +177,10 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined NETCONF_DEBUG */
 
-#line 14 "netconf_parser.yy" // lalr1.cc:401
+#line 14 "netconf_parser.yy"
 namespace isc { namespace netconf {
-#line 183 "netconf_parser.h" // lalr1.cc:401
+#line 183 "netconf_parser.h"
+
 
 
 
@@ -2095,9 +2096,10 @@ switch (yytype)
     return token_type (yytoken_number_[type]);
   }
 
-#line 14 "netconf_parser.yy" // lalr1.cc:401
+#line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2101 "netconf_parser.h" // lalr1.cc:401
+#line 2102 "netconf_parser.h"
+
 
 
 
