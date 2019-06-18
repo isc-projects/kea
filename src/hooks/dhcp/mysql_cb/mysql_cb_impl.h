@@ -121,7 +121,7 @@ public:
     ///
     /// @param triplet Triplet value from which the binding should be created.
     /// @return Pointer to a null binding if the triplet is "unspecified" or
-    /// the max value is the same than the default value, or a pointer to
+    /// the max value is the same as the default value, or a pointer to
     /// a binding representing 32-bit unsigned integer value from the max
     /// value otherwise.
     static db::MySqlBindingPtr createMaxBinding(const Triplet<uint32_t>& triplet);
@@ -130,7 +130,7 @@ public:
     ///
     /// @param triplet Triplet value from which the binding should be created.
     /// @return Pointer to a null binding if the triplet is "unspecified" or
-    /// the min value is the same than the default value, or a pointer to
+    /// the min value is the same as the default value, or a pointer to
     /// a binding representing 32-bit unsigned integer value from the min
     /// value otherwise.
     static db::MySqlBindingPtr createMinBinding(const Triplet<uint32_t>& triplet);

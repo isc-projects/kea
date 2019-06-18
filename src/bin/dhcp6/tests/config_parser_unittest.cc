@@ -451,13 +451,13 @@ public:
     /// @param preferred expected preferred-lifetime value
     /// @param valid expected valid-lifetime value
     /// @param min_preferred expected min-preferred-lifetime value
-    ///        (0 (default) means same than preferred)
+    ///        (0 (default) means same as preferred)
     /// @param max_preferred expected max-preferred-lifetime value
-    ///        (0 (default) means same than preferred)
+    ///        (0 (default) means same as preferred)
     /// @param min_valid expected min-valid-lifetime value
-    ///        (0 (default) means same than valid)
+    ///        (0 (default) means same as valid)
     /// @param max_valid expected max-valid-lifetime value
-    ///        (0 (default) means same than valid)
+    ///        (0 (default) means same as valid)
     /// @return the subnet that was examined
     Subnet6Ptr
     checkSubnet(const Subnet6Collection& col, std::string subnet,

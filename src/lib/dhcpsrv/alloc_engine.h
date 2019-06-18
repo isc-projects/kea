@@ -289,8 +289,10 @@ public:
         ///
         /// @param address the address or prefix
         /// @param prefix_len the prefix length (128 for addresses)
-        /// @param preferred the optional preferred lifetime
-        /// @param valid the optional valid lifetime
+        /// @param preferred the optional preferred lifetime,
+        /// defaults to 0, meaning not specified
+        /// @param valid the optional valid lifetime,
+        /// defaults to 0, meaning not specified
         Resource(const isc::asiolink::IOAddress& address,
                  const uint8_t prefix_len,
                  const uint32_t preferred = 0,

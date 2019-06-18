@@ -173,11 +173,11 @@ Network::toElement() const {
     if (!valid_.unspecified()) {
         map->set("valid-lifetime",
                  Element::create(static_cast<long long>(valid_.get())));
-        if (valid_.get() != valid_.getMin()) {
+        if (valid_.getMin() < valid_.get()) {
             map->set("min-valid-lifetime",
                      Element::create(static_cast<long long>(valid_.getMin())));
         }
-        if (valid_.get() != valid_.getMax()) {
+        if (valid_.getMax() > valid_.get()) {
             map->set("max-valid-lifetime",
                      Element::create(static_cast<long long>(valid_.getMax())));
         }
@@ -301,11 +301,11 @@ Network6::toElement() const {
     if (!preferred_.unspecified()) {
         map->set("preferred-lifetime",
                  Element::create(static_cast<long long>(preferred_.get())));
-        if (preferred_.get() != preferred_.getMin()) {
+        if (preferred_.getMin() < preferred_.get()) {
             map->set("min-preferred-lifetime",
                      Element::create(static_cast<long long>(preferred_.getMin())));
         }
-        if (preferred_.get() != preferred_.getMax()) {
+        if (preferred_.getMax() > preferred_.get()) {
             map->set("max-preferred-lifetime",
                      Element::create(static_cast<long long>(preferred_.getMax())));
         }

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -678,7 +678,7 @@ TEST(TranslatorBasicTest, list) {
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 
-    // Not found: same than empty because sr_get_items_iter() translates
+    // Not found: same as empty because sr_get_items_iter() translates
     // SR_ERR_NOT_FOUND by SR_ERR_OK...
 }
 

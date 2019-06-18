@@ -727,9 +727,9 @@ public:
     /// @param t2 expected rebind-timer value
     /// @param valid expected valid-lifetime value
     /// @param min_valid expected min-valid-lifetime value
-    ///        (0 (default) means same than valid)
+    ///        (0 (default) means same as valid)
     /// @param max_valid expected max-valid-lifetime value
-    ///        (0 (default) means same than valid)
+    ///        (0 (default) means same as valid)
     /// @return the subnet that was examined
     Subnet4Ptr
     checkSubnet(const Subnet4Collection& col, std::string subnet,

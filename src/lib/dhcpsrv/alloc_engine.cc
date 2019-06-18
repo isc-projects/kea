@@ -1620,6 +1620,8 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.currentIA().iaid_;
     expired->duid_ = ctx.duid_;
+    // Use subnet's preferred triplet to conditionally determine
+    // preferred lifetime based on hint
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getPreferred()) {
         uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
@@ -1627,6 +1629,8 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     } else {
         expired->preferred_lft_ = ctx.subnet_->getPreferred();
     }
+    // Use subnet's valid triplet to conditionally determine
+    // valid lifetime based on hint
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();

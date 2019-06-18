@@ -2056,11 +2056,11 @@ should include options from the new option space:
       by combination of configuration parameters, two of which have already been
       mentioned.
       </para><para>
-      From Kea 1.6.0 lease preferred and valid lifetime are extended from
+      Beginning with Kea 1.6.0 lease preferred and valid lifetime are extended from
       single values to triplets with minimum, default and maximum values using:
       <itemizedlist>
         <listitem>
-         <simpara><command>min-preferred-lifetime</command> - specifies the minimal preferred lifetime (optional).
+         <simpara><command>min-preferred-lifetime</command> - specifies the minimum preferred lifetime (optional).
           </simpara>
         </listitem>
         <listitem>
@@ -2068,11 +2068,11 @@ should include options from the new option space:
           </simpara>
         </listitem>
         <listitem>
-         <simpara><command>max-preferred-lifetime</command> - specifies the maximal preferred lifetime (optional).
+         <simpara><command>max-preferred-lifetime</command> - specifies the maximum preferred lifetime (optional).
           </simpara>
         </listitem>
         <listitem>
-         <simpara><command>min-valid-lifetime</command> - specifies the minimal valid lifetime (optional).
+         <simpara><command>min-valid-lifetime</command> - specifies the minimum valid lifetime (optional).
           </simpara>
         </listitem>
         <listitem>
@@ -2080,14 +2080,14 @@ should include options from the new option space:
           </simpara>
         </listitem>
         <listitem>
-         <simpara><command>max-valid-lifetime</command> - specifies the maximal valid lifetime (optional).
+         <simpara><command>max-valid-lifetime</command> - specifies the maximum valid lifetime (optional).
           </simpara>
         </listitem>
       </itemizedlist>
       When the client does not specify lifetimes the default is used. When
       it specifies a lifetime using IAADDR or IAPREFIX sub option with not
       zero values these values are used when they are between configured
-      minimal (lower values are round up) and maximal (larger values are
+      minimum (lower values are round up) and maximum (larger values are
       round down) bounds.
       </para><para>
       To send specific, fixed values use the following two parameters:
