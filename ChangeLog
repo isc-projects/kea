@@ -1,3 +1,13 @@
+1594.	[bug]		fdupont
+	Kea no longer uses the .../var/kea directory, for instance pid
+	files are now in .../var/run/kea.
+	BEWARE this applies to the kea-dhcp6-serverid file so if the
+	server will not find the file at its new location it will believe
+	it is the first time it is being started and will generate a new
+	server DUID.  If that happens, clients will keep trying to get to
+	the old server and be confused.
+	(Gitlab #538,!334, git 928b9ae57452aae1dff92ad689ba180fa975381c)
+
 1593.	[bug]		marcin
 	Fixed a bug in the Kea Control Agent which caused a sporadic crash
 	after a tiemout while sending the HTTP response to the controlling
