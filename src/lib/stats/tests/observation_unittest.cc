@@ -439,6 +439,7 @@ TEST_F(ObservationTest, setAgeLimit) {
         EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, i));
         --i;
     }
+
 }
 
 // Test checks whether timing is reported properly.
