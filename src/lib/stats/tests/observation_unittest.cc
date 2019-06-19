@@ -266,6 +266,17 @@ TEST_F(ObservationTest, setCountLimit) {
     for (uint32_t i = 0; i < 21; ++i) {
         d.setValue(string_samples[i]);
     }
+    i = 2;
+    for (std::list<DurationSample>::iterator it=samples_dur.begin(); it != samples_dur.end(); ++it) {
+        EXPECT_EQ(duration_samples[i],(*it).first);
+        --i;
+    }
+    i = 2;
+    for (std::list<StringSample>::iterator it=samples_str.begin(); it != samples_str.end(); ++it) {
+        EXPECT_EQ(string_samples[i],(*it).first);
+        --i;
+    }
+}
 
     // Getting all 4 types of samples after inserting 21 values
     std::list<IntegerSample> samples_int = a.getIntegers();
@@ -428,6 +439,7 @@ TEST_F(ObservationTest, setAgeLimit) {
         EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, i));
         --i;
     }
+
 }
 
 // Test checks whether timing is reported properly.
