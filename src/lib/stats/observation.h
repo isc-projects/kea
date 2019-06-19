@@ -302,7 +302,7 @@ private:
     /// @brief Returns samples (internal version)
     ///
     /// @tparam SampleType type of samples (e.g. IntegerSample)
-    /// @tparam StorageType type of storage (e.g. list<IntegerSample>)
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
     /// @param observation storage
     /// @param exp_type expected observation type (used for sanity checking)
     /// @throw InvalidStatType if observation type mismatches
@@ -330,7 +330,6 @@ private:
     template<typename StorageType>
     void setMaxSampleCountInternal(StorageType& storage,
                                    uint32_t max_samples, Type exp_type);
-
 
     /// @brief Observation (statistic) name
     std::string name_;
