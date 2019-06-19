@@ -10,7 +10,7 @@ Starting and Stopping the DHCPv4 Server
 =======================================
 
 It is recommended that the Kea DHCPv4 server be started and stopped
-using ``keactrl`` (described in `??? <#keactrl>`__); however, it is also
+using ``keactrl`` (described in :ref:`keactrl`); however, it is also
 possible to run the server directly. It accepts the following
 command-line switches:
 
@@ -148,11 +148,11 @@ above this object is called ``Dhcp4``.
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended and support for it will be removed in the future
-   releases. The only object, besides the one specifying module
+   not recommended and support for it will be removed in a future
+   release. The only object, besides the one specifying module
    configuration, which can (and usually was) included in the same file
    is ``Logging``. However, we don't include this object in the example
-   above for clarity and its content, the list of loggers, should now be
+   above for clarity; its content, the list of loggers, should now be
    inside the ``Dhcp4`` object instead of the deprecated object.
 
 The Dhcp4 configuration starts with the ``"Dhcp4": {`` line and ends
@@ -163,7 +163,7 @@ considered to be the Dhcp4 configuration.
 In the general case, the order in which those parameters appear does not
 matter, but there are two caveats. The first one is to remember that the
 configuration file must be well-formed JSON. That means that the
-parameters for any given scope must be separated by a comma and there
+parameters for any given scope must be separated by a comma, and there
 must not be a comma after the last parameter. When reordering a
 configuration file, keep in mind that moving a parameter to or from the
 last position in a given scope may also require moving the comma. The
@@ -185,22 +185,18 @@ client will begin the renewal and rebind procedures.
 
    **Note**
 
-   Both
-   renew-timer
-   and
-   rebind-timer
-   are optional. The server will only send rebind-timer to the client,
-   via DHCPv4 option code 59, if it is less than valid-lifetime; and it
-   will only send renew-timer, via DHCPv4 option code 58, if it is less
-   than rebind-timer (or valid-lifetime if rebind-timer was not
+   Both ``renew-timer`` and ``rebind-timer``
+   are optional. The server will only send ``rebind-timer`` to the client,
+   via DHCPv4 option code 59, if it is less than ``valid-lifetime``; and it
+   will only send ``renew-timer``, via DHCPv4 option code 58, if it is less
+   than ``rebind-timer`` (or ``valid-lifetime`` if ``rebind-timer`` was not
    specified). In their absence, the client should select values for T1
-   and T2 timers according to
-   RFC 2131
-   . See section
+   and T2 timers according to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`. 
+   See section :ref:`dhcp4-t1-t2-times`
    for more details on generating T1 and T2.
 
 The ``interfaces-config`` map specifies the server configuration
-concerning the network interfaces, on which the server should listen to
+concerning the network interfaces on which the server should listen to
 the DHCP messages. The ``interfaces`` parameter specifies a list of
 network interfaces on which the server should listen. Lists are opened
 and closed with square brackets, with elements separated by commas. To
@@ -220,8 +216,8 @@ backend. It uses an in-memory database and stores leases on disk in a
 CSV file. This is a very simple configuration; usually the lease
 database configuration is more extensive and contains additional
 parameters. Note that ``lease-database`` is an object and opens up a new
-scope, using an opening brace. Its parameters (just one in this example
-- ``type``) follow. If there were more than one, they would be separated
+scope, using an opening brace. Its parameters (just one in this example:
+``type``) follow. If there were more than one, they would be separated
 by commas. This scope is closed with a closing brace. As more parameters
 for the Dhcp4 definition follow, a trailing comma is present.
 
@@ -263,7 +259,7 @@ Note that indentation is optional and is used for aesthetic purposes
 only. In some cases it may be preferable to use more compact notation.
 
 After all the parameters have been specified, we have two contexts open:
-global and Dhcp4, hence we need two closing curly brackets to close
+global and Dhcp4; thus, we need two closing curly brackets to close
 them.
 
 Lease Storage
@@ -277,9 +273,9 @@ Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The server is able to store lease data in different repositories. Larger
-deployments may elect to store leases in a database. `Lease Database
-Configuration <#database-configuration4>`__ describes this option. In
-typical smaller deployments though, the server will store lease
+deployments may elect to store leases in a database. 
+:ref:`database-configuration4` describes this option. In
+typical smaller deployments, though, the server will store lease
 information in a CSV file rather than a database. As well as requiring
 less administration, an advantage of using a file for storage is that it
 eliminates a dependency on third-party database software.
@@ -293,11 +289,11 @@ can be used to configure the Memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
    leases are written to the file. It is strongly recommended that the
-   value of this parameter is set to ``true`` at all times during the
+   value of this parameter be set to ``true`` at all times during the
    server's normal operation. Not writing leases to disk means that if a
    server is restarted (e.g. after a power failure), it will not know
-   what addresses have been assigned. As a result, it may hand out
-   addresses to new clients that are already in use. The value of
+   which addresses have been assigned. As a result, it may assign new clients
+   addresses that are already in use. The value of
    ``false`` is mostly useful for performance-testing purposes. The
    default value of the ``persist`` parameter is ``true``, which enables
    writing lease updates to the lease file.
@@ -310,7 +306,7 @@ can be used to configure the Memfile backend.
    server will perform a lease file cleanup (LFC). This removes
    redundant (historical) information from the lease file and
    effectively reduces the lease file size. The cleanup process is
-   described in more detailed fashion later in this section. The default
+   described in more detail later in this section. The default
    value of the ``lfc-interval`` is ``3600``. A value of 0 disables the
    LFC.
 
@@ -363,17 +359,17 @@ cleanups will be triggered more rarely than configured. Moreover,
 triggering a new cleanup adds overhead to the server, which will not be
 able to respond to new requests for a short period of time when the new
 cleanup process is spawned. Therefore, it is recommended that the
-``lfc-interval`` value is selected in a way that would allow for the LFC
+``lfc-interval`` value be selected in a way that allows the LFC
 to complete the cleanup before a new cleanup is triggered.
 
 Lease file cleanup is performed by a separate process (in the
 background) to avoid a performance impact on the server process. To
-avoid the conflicts between two processes both using the same lease
-files, the LFC process starts with Kea opening new lease file and the
+avoid conflicts between two processes both using the same lease
+files, the LFC process starts with Kea opening a new lease file; the
 actual LFC process operates on the lease file that is no longer used by
 the server. There are also other files created as a side effect of the
 lease file cleanup. The detailed description of the LFC is located later
-in this Kea Administrator's Reference Manual: `??? <#kea-lfc>`__.
+in this Kea Administrator's Reference Manual: :ref:`kea-lfc`.
 
 .. _database-configuration4:
 
@@ -388,7 +384,7 @@ Lease Database Configuration
    use a separate database or both servers can use the same database.
 
 Lease database configuration is controlled through the
-Dhcp4/lease-database parameters. The type of the database must be set to
+Dhcp4/lease-database parameters. The database type must be set to
 "memfile", "mysql", "postgresql", or "cql", e.g.:
 
 ::
@@ -397,8 +393,8 @@ Dhcp4/lease-database parameters. The type of the database must be set to
 
 Next, the name of the database to hold the leases must be set; this is
 the name used when the database was created (see
-`??? <#mysql-database-create>`__, `??? <#pgsql-database-create>`__, or
-`??? <#cql-database-create>`__).
+:ref:`mysql-database-create`, :ref:`pgsql-database-create`, or
+:ref:`cql-database-create`).
 
 ::
 
@@ -411,12 +407,13 @@ For Cassandra:
    "Dhcp4": { "lease-database": { "keyspace": "database-name" , ... }, ... }
 
 If the database is located on a different system from the DHCPv4 server,
-the database host name must also be specified. (It should be noted that
-this configuration may have a severe impact on server performance.):
+the database host name must also be specified:
 
 ::
 
    "Dhcp4": { "lease-database": { "host": "remote-host-name", ... }, ... }
+
+(It should be noted that this configuration may have a severe impact on server performance.)
 
 Normally, the database will be on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
@@ -452,10 +449,10 @@ specified:
    "Dhcp4": { "lease-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of zero (the
 default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres
-only). For Cassandra, Kea uses a Cassandra interface that connects to
+immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
+only). For Cassandra, Kea uses an interface that connects to
 all nodes in a cluster at the same time. Any connectivity issues should
 be handled by internal Cassandra mechanisms.
 
@@ -467,7 +464,7 @@ also be specified:
 
    "Dhcp4": { "lease-database": { "reconnect-wait-time" : number-of-milliseconds, ... }, ... }
 
-The default value for MySQL and Postgres is 0, which disables automatic
+The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
@@ -476,7 +473,7 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
    Automatic reconnection to database backends is configured
    individually per backend. This allows you to tailor the recovery
    parameters to each backend you use. We do suggest that you enable it
-   either for all backends or no backends so you have consistent
+   either for all backends or none, so you have consistent
    behavior. Losing connectivity to a backend for which reconnect is
    disabled will result in the server shutting itself down. This
    includes cases when the lease database backend and the hosts database
@@ -486,7 +483,7 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
    **Note**
 
-   Note that host parameter is used by MySQL and PostgreSQL backends.
+   Note that the host parameter is used by the MySQL and PostgreSQL backends.
    Cassandra has a concept of contact points that could be used to
    contact the cluster, instead of a single IP or hostname. It takes a
    list of comma-separated IP addresses, which may be specified as:
@@ -513,7 +510,7 @@ Cassandra-Specific Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Cassandra backend is configured slightly differently. Cassandra has
-a concept of contact points that could be used to contact the cluster,
+a concept of contact points that can be used to contact the cluster,
 instead of a single IP or hostname. It takes a list of comma-separated
 IP addresses, which may be specified as:
 
@@ -550,15 +547,15 @@ Cassandra also supports a number of optional parameters:
 -  ``consistency`` - configures consistency level. The default is
    "quorum". Supported values: any, one, two, three, quorum, all,
    local-quorum, each-quorum, serial, local-serial, local-one. See
-   `Cassandra
-   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`__
+   :ref:`Cassandra
+   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`
    for more details.
 
 -  ``serial-consistency`` - configures serial consistency level which
    manages lightweight transaction isolation. The default is "serial".
    Supported values: any, one, two, three, quorum, all, local-quorum,
-   each-quorum, serial, local-serial, local-one. See `Cassandra serial
-   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`__
+   each-quorum, serial, local-serial, local-one. See :ref:`Cassandra serial
+   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`
    for more details.
 
 For example, a complex Cassandra configuration with most parameters
@@ -607,7 +604,7 @@ checked first and external storage is checked later, if necessary.
 
 In fact, host information can be placed in multiple stores. Operations
 are performed on the stores in the order they are defined in the
-configuration file, although this leads to is a restriction in ordering
+configuration file, although this leads to a restriction in ordering
 in the case of a host reservation addition; read-only stores must be
 configured after a (required) read-write store, or the addition will
 fail.
@@ -627,20 +624,21 @@ be set to "mysql" or "postgresql".
 
 Next, the name of the database to hold the reservations must be set;
 this is the name used when the lease database was created (see
-`??? <#supported-databases>`__ for instructions on how to set up the
-desired database type).
+:ref:`supported-databases` for instructions on how to set up the
+desired database type):
 
 ::
 
    "Dhcp4": { "hosts-database": { "name": "database-name" , ... }, ... }
 
 If the database is located on a different system than the DHCPv4 server,
-the database host name must also be specified. (Again it should be noted
-that this configuration may have a severe impact on server performance.)
+the database host name must also be specified:
 
 ::
 
    "Dhcp4": { "hosts-database": { "host": remote-host-name, ... }, ... }
+
+(Again, it should be noted that this configuration may have a severe impact on server performance.)
 
 Normally, the database will be on the same machine as the DHCPv4 server.
 In this case, set the value to the empty string:
@@ -665,9 +663,9 @@ specified:
    "Dhcp4": { "hosts-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of zero (the
 default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres
+immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
 only).
 
 The number of milliseconds the server will wait between attempts to
@@ -678,7 +676,7 @@ be specified:
 
    "Dhcp4": { "hosts-database": { "reconnect-wait-time" : number-of-milliseconds, ... }, ... }
 
-The default value for MySQL and Postgres is 0, which disables automatic
+The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
@@ -687,7 +685,7 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
    Automatic reconnection to database backends is configured
    individually per backend. This allows you to tailor the recovery
    parameters to each backend you use. We do suggest that you enable it
-   either for all backends or no backends so you have consistent
+   either for all backends or none so you have consistent
    behavior. Losing connectivity to a backend for which reconnect is
    disabled will result in the server shutting itself down. This
    includes cases when the lease database backend and the hosts database
@@ -714,8 +712,8 @@ entry as in:
 
    "Dhcp4": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
 
-For additional Cassandra-specific parameters, see `Cassandra-Specific
-Parameters <#cassandra-database-configuration4>`__.
+For additional Cassandra-specific parameters, see 
+:ref:`cassandra-database-configuration4`.
 
 .. _read-only-database-configuration4:
 
@@ -736,7 +734,7 @@ Kea host database backends operate with an implicit configuration to
 both read from and write to the database. If the database user does not
 have write access to the host database, the backend will fail to start
 and the server will refuse to start (or reconfigure). However, if access
-to a read- only host database is required for retrieving reservations
+to a read-only host database is required for retrieving reservations
 for clients and/or assigning specific addresses and options, it is
 possible to explicitly configure Kea to start in "read-only" mode. This
 is controlled by the ``readonly`` boolean parameter as follows:
@@ -839,22 +837,26 @@ specified.
 
 Kea supports responding to directly connected clients which don't have
 an address configured. This requires the server to inject the hardware
-address of the destination into the data link layer of the packet being
-sent to the client. The DHCPv4 server uses raw sockets to achieve this,
-and builds the entire IP/UDP stack for the outgoing packets. The
-downside of raw socket use, however, is that incoming and outgoing
-packets bypass the firewalls (e.g. iptables). It is also troublesome to
-handle traffic on multiple IPv4 addresses assigned to the same
-interface, as raw sockets are bound to the interface; plus, advanced
-packet filtering techniques (e.g. using the BPF) have to be used to
-receive unicast traffic on the desired addresses assigned to the
-interface, rather than capturing whole traffic reaching the interface to
-which the raw socket is bound. Therefore, in deployments where the
-server doesn't have to provision the directly connected clients and only
-receives the unicast packets from the relay agents, the DHCP server
-should be configured to use IP/UDP datagram sockets instead of raw
-sockets. The following configuration demonstrates how this can be
-achieved:
+address of the destination into the data link layer of the packet
+being sent to the client. The DHCPv4 server uses raw sockets to
+achieve this, and builds the entire IP/UDP stack for the outgoing
+packets. The downside of raw socket use, however, is that incoming and
+outgoing packets bypass the firewalls (e.g. iptables). 
+
+Handling traffic on multiple IPv4 addresses assigned to the same
+interface can be a challenge, as raw sockets are bound to the
+interface. When the DHCP server is configured to use the raw socket on
+an interface to receive DHCP traffic, advanced packet filtering
+techniques (e.g. the BPF) must be used to receive unicast traffic on
+the desired addresses assigned to the interface. Whether clients use
+the raw socket or the UDP socket depends on whether they are directly
+connected (raw socket) or relayed (either raw or UDP socket).
+
+Therefore, in deployments where the server does not need to provision
+the directly connected clients and only receives the unicast packets
+from the relay agents, the DHCP server should be configured to use UDP
+sockets instead of raw sockets. The following configuration
+demonstrates how this can be achieved:
 
 ::
 
@@ -902,9 +904,9 @@ response on the same network interface on which the query was received.
 This is the default behavior. However, in some deployments it is desired
 that the outbound (response) packets will be sent as regular traffic and
 the outbound interface will be determined by the routing tables. This
-kind of asymmetric traffic is uncommon, but valid. Kea now supports a
+kind of asymmetric traffic is uncommon, but valid. Kea supports a
 parameter called ``outbound-interface`` that controls this behavior. It
-supports two values. The first one, ``same-as-inbound``, tells Kea to
+supports two values; the first one, ``same-as-inbound``, tells Kea to
 send back the response on the same interface where the query packet was
 received. This is the default behavior. The second one, ``use-routing``,
 tells Kea to send regular UDP packets and let the kernel's routing table
@@ -963,16 +965,16 @@ Issues with Unicast Responses to DHCPINFORM
 
 The use of UDP sockets has certain benefits in deployments where the
 server receives only relayed traffic; these benefits are mentioned in
-`Interface Configuration <#dhcp4-interface-configuration>`__. From the
+:ref:`dhcp4-interface-configuration`. From the
 administrator's perspective it is often desirable to configure the
-system's firewall to filter out the unwanted traffic, and the use of UDP
+system's firewall to filter out unwanted traffic, and the use of UDP
 sockets facilitates this. However, the administrator must also be aware
 of the implications related to filtering certain types of traffic, as it
 may impair the DHCP server's operation.
 
 In this section we are focusing on the case when the server receives the
-DHCPINFORM message from the client via a relay. According to `RFC
-2131 <http://tools.ietf.org/html/rfc2131>`__, the server should unicast
+DHCPINFORM message from the client via a relay. According to :ref:`RFC
+2131 <https://tools.ietf.org/html/rfc2131>`, the server should unicast
 the DHCPACK response to the address carried in the "ciaddr" field. When
 the UDP socket is in use, the DHCP server relies on the low-level
 functions of an operating system to build the data link, IP, and UDP
@@ -984,7 +986,7 @@ DHCP message can be unicast to the client, using the obtained address.
 
 Some system administrators block ARP messages in their network, which
 causes issues for the server when it responds to the DHCPINFORM
-messages, because the server is unable to send the DHCPACK if the
+messages because the server is unable to send the DHCPACK if the
 preceding ARP communication fails. Since the OS is entirely responsible
 for the ARP communication and then sending the DHCP packet over the
 wire, the DHCP server has no means to determine that the ARP exchange
@@ -996,7 +998,7 @@ will be called, even though the message never reaches its destination.
 Note that the issue described in this section is not observed when the
 raw sockets are in use, because, in this case, the DHCP server builds
 all the layers of the outgoing message on its own and does not use ARP.
-Instead, it inserts the value carried in the 'chaddr' field of the
+Instead, it inserts the value carried in the "chaddr" field of the
 DHCPINFORM message into the link layer.
 
 Server administrators willing to support DHCPINFORM messages via relays
@@ -1029,7 +1031,7 @@ manually specify a unique identifier for each subnet.
    Subnet IDs must be greater than zero and less than 4294967295.
 
 The following configuration will assign the specified subnet identifier
-to the newly configured subnet:
+to a newly configured subnet:
 
 ::
 
@@ -1150,13 +1152,12 @@ avoid this, please use the "min-max" notation.
 Sending T1 (Option 58) and T2 (Option 59)
 -----------------------------------------
 
-According to
-RFC 2131
-, servers should send values for T1 and T2 that are 50% and 87.5% of the
-lease life time, repsectively. By default, kea-dhcp4 does not send
+According to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`,
+servers should send values for T1 and T2 that are 50% and 87.5% of the
+lease lifetime, repsectively. By default, kea-dhcp4 does not send
 either value. It can be configured to send values that are specified
 explicitly or that are calculated as percentages of the lease time. The
-server's behavior is governed by combination of configuration
+server's behavior is governed by a combination of configuration
 parameters, two of which have already been mentioned.
 To send specific, fixed values use the following two parameters:
 
@@ -1164,8 +1165,8 @@ To send specific, fixed values use the following two parameters:
 
 -  ``rebind-timer`` - specifies the value of T2 in seconds.
 
-The server will only send T2 if it is less than valid lease time. T1
-will only be sent if a: T2 is being sent and T1 is less than T2 or b: T2
+The server will only send T2 if it is less than the valid lease time. T1
+will only be sent if: T2 is being sent and T1 is less than T2; or T2
 is not being sent and T1 is less than the valid lease time.
 
 Calculating the values is controlled by the following three parameters.
@@ -1209,13 +1210,13 @@ Server", and options which require special behavior, e.g. "Client FQDN",
 which is returned to the client if the client has included this option
 in its message to the server.
 
-`table_title <#dhcp4-std-options-list>`__ comprises the list of the
+:ref:`dhcp4-std-options-list` comprises the list of the
 standard DHCPv4 options whose values can be configured using the
 configuration structures described in this section. This table excludes
 the options which require special processing and thus cannot be
-configured with some fixed values. The last column of the table
+configured with fixed values. The last column of the table
 indicates which options can be sent by the server even when they are not
-requested in the Parameter Request list option, and those which are sent
+requested in the Parameter Request List option, and those which are sent
 only when explicitly requested.
 
 The following example shows how to configure the addresses of DNS
@@ -1239,11 +1240,11 @@ subnets.
    }
 
 
-Note that only one of name or code is required; you don't need to
-specify both. Space has a default value of "dhcp4", so you can skip this
-as well if you define a regular (not encapsulated) DHCPv4 option.
+Note that only one of name or code is required; there is no need to
+specify both. Space has a default value of "dhcp4", so this can be skipped
+as well if a regular (not encapsulated) DHCPv4 option is defined.
 Finally, csv-format defaults to true, so it too can be skipped, unless
-you want to specify the option value as a hexadecimal string. Therefore,
+the option value is specified as a hexadecimal string. Therefore,
 the above example can be simplified to:
 
 ::
@@ -1261,7 +1262,7 @@ the above example can be simplified to:
 
 Defined options are added to the response when the client requests them
 at a few exceptions, which are always added. To enforce the addition of
-a particular option set the always-send flag to true as in:
+a particular option, set the always-send flag to true as in:
 
 ::
 
@@ -1310,20 +1311,19 @@ Parameter Request List option (or its equivalent for vendor options):
 
 
 The Domain Name Servers option is always added to responses (the
-always-send is "sticky") but the value is the subnet one when the client
+always-send is "sticky"), but the value is the subnet one when the client
 is localized in the subnet.
 
 The ``name`` parameter specifies the option name. For a list of
-currently supported names, see `table_title <#dhcp4-std-options-list>`__
+currently supported names, see :ref:`dhcp4-std-options-list`
 below. The ``code`` parameter specifies the option code, which must
 match one of the values from that list. The next line specifies the
 option space, which must always be set to "dhcp4" as these are standard
 DHCPv4 options. For other option spaces, including custom option spaces,
-see `Nested DHCPv4 Options (Custom Option
-Spaces) <#dhcp4-option-spaces>`__. The next line specifies the format in
+see :ref:`dhcp4-option-spaces`. The next line specifies the format in
 which the data will be entered; use of CSV (comma-separated values) is
 recommended. The sixth line gives the actual value to be sent to
-clients. Data is specified as normal text, with values separated by
+clients. Data are specified as normal text, with values separated by
 commas if more than one value is allowed.
 
 Options can also be configured as hexadecimal values. If ``csv-format``
@@ -1363,17 +1363,15 @@ format. Kea's ability to validate data correctness in hexadecimal is
 limited.
 
 Most of the parameters in the "option-data" structure are optional and
-can be omitted in some circumstances as discussed in `Unspecified
-Parameters for DHCPv4 Option
-Configuration <#dhcp4-option-data-defaults>`__.
+can be omitted in some circumstances as discussed in :ref:`dhcp4-option-data-defaults`.
 
 It is possible to specify or override options on a per-subnet basis. If
-clients connected to most of your subnets are expected to get the same
-values of a given option, you should use global options; you can then
+clients connected to most subnets are expected to get the same
+values of a given option, administrators should use global options; it is possible to
 override specific values for a small number of subnets. On the other
-hand, if you use different values in each subnet, it does not make sense
-to specify global option values; rather, you should set only
-subnet-specific ones.
+hand, if different values are used in each subnet, it does not make sense
+to specify global option values; rather, only
+subnet-specific ones should be set.
 
 The following commands override the global DNS servers option for a
 particular subnet, setting a single DNS server with address 192.0.2.3:
@@ -1401,7 +1399,7 @@ particular subnet, setting a single DNS server with address 192.0.2.3:
    }
 
 In some cases it is useful to associate some options with an address
-pool from which a client is assigned a lease. Pool- specific option
+pool from which a client is assigned a lease. Pool-specific option
 values override subnet-specific and global option values. The server's
 administrator must not try to prioritize assignment of pool-specific
 options by trying to order pool declarations in the server
@@ -1442,17 +1440,17 @@ current Kea options precedence order is (from most important): host
 reservation, pool, subnet, shared network, class, global.
 
 The currently supported standard DHCPv4 options are listed in
-`table_title <#dhcp4-std-options-list>`__. "Name" and "Code" are the
+:ref:`dhcp4-std-options-list`. "Name" and "Code" are the
 values that should be used as a name/code in the option-data structures.
 "Type" designates the format of the data; the meanings of the various
-types is given in `table_title <#dhcp-types>`__.
+types are given in :ref:`dhcp-types`.
 
 When a data field is a string and that string contains the comma (,;
 U+002C) character, the comma must be escaped with two backslashes (\;
 U+005C). This double escape is required because both the routine
 splitting CSV data into fields and JSON use the same escape character; a
 single escape (\,) would make the JSON invalid. For example, the string
-"foo,bar" would be represented as:
+"foo,bar" must be represented as:
 
 ::
 
@@ -1482,338 +1480,226 @@ value is allowed in such an option. For example, the option time-servers
 allows the specification of more than one IPv4 address, enabling clients
 to obtain the addresses of multiple NTP servers.
 
-`Custom DHCPv4 Options <#dhcp4-custom-options>`__ describes the
+:ref:`dhcp4-custom-options` describes the
 configuration syntax to create custom option definitions (formats).
 Creation of custom definitions for standard options is generally not
 permitted, even if the definition being created matches the actual
 option format defined in the RFCs. There is an exception to this rule
 for standard options for which Kea currently does not provide a
 definition. In order to use such options, a server administrator must
-create a definition as described in `Custom DHCPv4
-Options <#dhcp4-custom-options>`__ in the 'dhcp4' option space. This
+create a definition as described in 
+:ref:`dhcp4-custom-options` in the "dhcp4" option space. This
 definition should match the option format described in the relevant RFC,
 but the configuration mechanism will allow any option format as it
 currently has no means to validate it.
 
 .. table:: List of Standard DHCPv4 Options
 
-   +-------------+-------------+-------------+-------------+-------------+
-   | Name        | Code        | Type        | Array?      | Returned if |
-   |             |             |             |             | not         |
-   |             |             |             |             | requested?  |
-   +=============+=============+=============+=============+=============+
-   | time-offset | 2           | int32       | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | routers     | 3           | ipv4-addres | true        | true        |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | time-server | 4           | ipv4-addres | true        | false       |
-   | s           |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | name-server | 5           | ipv4-addres | true        | false       |
-   | s           |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | domain-name | 6           | ipv4-addres | true        | true        |
-   | -servers    |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | log-servers | 7           | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | cookie-serv | 8           | ipv4-addres | true        | false       |
-   | ers         |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | lpr-servers | 9           | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | impress-ser | 10          | ipv4-addres | true        | false       |
-   | vers        |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | resource-lo | 11          | ipv4-addres | true        | false       |
-   | cation-serv |             | s           |             |             |
-   | ers         |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | boot-size   | 13          | uint16      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | merit-dump  | 14          | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | domain-name | 15          | fqdn        | false       | true        |
-   +-------------+-------------+-------------+-------------+-------------+
-   | swap-server | 16          | ipv4-addres | false       | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | root-path   | 17          | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | extensions- | 18          | string      | false       | false       |
-   | path        |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | ip-forwardi | 19          | boolean     | false       | false       |
-   | ng          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | non-local-s | 20          | boolean     | false       | false       |
-   | ource-routi |             |             |             |             |
-   | ng          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | policy-filt | 21          | ipv4-addres | true        | false       |
-   | er          |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | max-dgram-r | 22          | uint16      | false       | false       |
-   | eassembly   |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | default-ip- | 23          | uint8       | false       | false       |
-   | ttl         |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | path-mtu-ag | 24          | uint32      | false       | false       |
-   | ing-timeout |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | path-mtu-pl | 25          | uint16      | true        | false       |
-   | ateau-table |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | interface-m | 26          | uint16      | false       | false       |
-   | tu          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | all-subnets | 27          | boolean     | false       | false       |
-   | -local      |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | broadcast-a | 28          | ipv4-addres | false       | false       |
-   | ddress      |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | perform-mas | 29          | boolean     | false       | false       |
-   | k-discovery |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | mask-suppli | 30          | boolean     | false       | false       |
-   | er          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | router-disc | 31          | boolean     | false       | false       |
-   | overy       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | router-soli | 32          | ipv4-addres | false       | false       |
-   | citation-ad |             | s           |             |             |
-   | dress       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | static-rout | 33          | ipv4-addres | true        | false       |
-   | es          |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | trailer-enc | 34          | boolean     | false       | false       |
-   | apsulation  |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | arp-cache-t | 35          | uint32      | false       | false       |
-   | imeout      |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | ieee802-3-e | 36          | boolean     | false       | false       |
-   | ncapsulatio |             |             |             |             |
-   | n           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | default-tcp | 37          | uint8       | false       | false       |
-   | -ttl        |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | tcp-keepali | 38          | uint32      | false       | false       |
-   | ve-interval |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | tcp-keepali | 39          | boolean     | false       | false       |
-   | ve-garbage  |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nis-domain  | 40          | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nis-servers | 41          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | ntp-servers | 42          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | vendor-enca | 43          | empty       | false       | false       |
-   | psulated-op |             |             |             |             |
-   | tions       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | netbios-nam | 44          | ipv4-addres | true        | false       |
-   | e-servers   |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | netbios-dd- | 45          | ipv4-addres | true        | false       |
-   | server      |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | netbios-nod | 46          | uint8       | false       | false       |
-   | e-type      |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | netbios-sco | 47          | string      | false       | false       |
-   | pe          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | font-server | 48          | ipv4-addres | true        | false       |
-   | s           |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | x-display-m | 49          | ipv4-addres | true        | false       |
-   | anager      |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | dhcp-option | 52          | uint8       | false       | false       |
-   | -overload   |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | dhcp-server | 54          | ipv4-addres | false       | true        |
-   | -identifier |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | dhcp-messag | 56          | string      | false       | false       |
-   | e           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | dhcp-max-me | 57          | uint16      | false       | false       |
-   | ssage-size  |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | vendor-clas | 60          | string      | false       | false       |
-   | s-identifie |             |             |             |             |
-   | r           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nwip-domain | 62          | string      | false       | false       |
-   | -name       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nwip-subopt | 63          | binary      | false       | false       |
-   | ions        |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nisplus-dom | 64          | string      | false       | false       |
-   | ain-name    |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nisplus-ser | 65          | ipv4-addres | true        | false       |
-   | vers        |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | tftp-server | 66          | string      | false       | false       |
-   | -name       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | boot-file-n | 67          | string      | false       | false       |
-   | ame         |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | mobile-ip-h | 68          | ipv4-addres | true        | false       |
-   | ome-agent   |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | smtp-server | 69          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | pop-server  | 70          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nntp-server | 71          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | www-server  | 72          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | finger-serv | 73          | ipv4-addres | true        | false       |
-   | er          |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | irc-server  | 74          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | streettalk- | 75          | ipv4-addres | true        | false       |
-   | server      |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | streettalk- | 76          | ipv4-addres | true        | false       |
-   | directory-a |             | s           |             |             |
-   | ssistance-s |             |             |             |             |
-   | erver       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | user-class  | 77          | binary      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | slp-directo | 78          | record      | true        | false       |
-   | ry-agent    |             | (boolean,   |             |             |
-   |             |             | ipv4-addres |             |             |
-   |             |             | s)          |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | slp-service | 79          | record      | false       | false       |
-   | -scope      |             | (boolean,   |             |             |
-   |             |             | string)     |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nds-server  | 85          | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nds-tree-na | 86          | string      | false       | false       |
-   | me          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | nds-context | 87          | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | bcms-contro | 88          | fqdn        | true        | false       |
-   | ller-names  |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | bcms-contro | 89          | ipv4-addres | true        | false       |
-   | ller-addres |             | s           |             |             |
-   | s           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | client-syst | 93          | uint16      | true        | false       |
-   | em          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | client-ndi  | 94          | record      | false       | false       |
-   |             |             | (uint8,     |             |             |
-   |             |             | uint8,      |             |             |
-   |             |             | uint8)      |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | uuid-guid   | 97          | record      | false       | false       |
-   |             |             | (uint8,     |             |             |
-   |             |             | binary)     |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | uap-servers | 98          | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | geoconf-civ | 99          | binary      | false       | false       |
-   | ic          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | pcode       | 100         | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | tcode       | 101         | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | netinfo-ser | 112         | ipv4-addres | true        | false       |
-   | ver-address |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | netinfo-ser | 113         | string      | false       | false       |
-   | ver-tag     |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | default-url | 114         | string      | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | auto-config | 116         | uint8       | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | name-servic | 117         | uint16      | true        | false       |
-   | e-search    |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | subnet-sele | 118         | ipv4-addres | false       | false       |
-   | ction       |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | domain-sear | 119         | fqdn        | true        | false       |
-   | ch          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | vivco-subop | 124         | binary      | false       | false       |
-   | tions       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | vivso-subop | 125         | binary      | false       | false       |
-   | tions       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | pana-agent  | 136         | ipv4-addres | true        | false       |
-   |             |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | v4-lost     | 137         | fqdn        | false       | false       |
-   +-------------+-------------+-------------+-------------+-------------+
-   | capwap-ac-v | 138         | ipv4-addres | true        | false       |
-   | 4           |             | s           |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | sip-ua-cs-d | 141         | fqdn        | true        | false       |
-   | omains      |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | rdnss-selec | 146         | record      | true        | false       |
-   | tion        |             | (uint8,     |             |             |
-   |             |             | ipv4-addres |             |             |
-   |             |             | s,          |             |             |
-   |             |             | ipv4-addres |             |             |
-   |             |             | s,          |             |             |
-   |             |             | fqdn)       |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | v4-portpara | 159         | record      | false       | false       |
-   | ms          |             | (uint8,     |             |             |
-   |             |             | psid)       |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | v4-captive- | 160         | string      | false       | false       |
-   | portal      |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | option-6rd  | 212         | record      | true        | false       |
-   |             |             | (uint8,     |             |             |
-   |             |             | uint8,      |             |             |
-   |             |             | ipv6-addres |             |             |
-   |             |             | s,          |             |             |
-   |             |             | ipv4-addres |             |             |
-   |             |             | s)          |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | v4-access-d | 213         | fqdn        | false       | false       |
-   | omain       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | Name                                   | Code        | Type                                              | Array?      | Returned if |
+   |                                        |             |                                                   |             | not         |
+   |                                        |             |                                                   |             | requested?  |
+   +========================================+=============+===================================================+=============+=============+
+   | time-offset                            | 2           | int32                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | routers                                | 3           | ipv4-address                                      | true        | true        |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | time-servers                           | 4           | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | name-servers                           | 5           | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | domain-name-servers                    | 6           | ipv4-address                                      | true        | true        |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | log-servers                            | 7           | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | cookie-servers                         | 8           | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | lpr-servers                            | 9           | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | impress-servers                        | 10          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | resource-location-servers              | 11          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | boot-size                              | 13          | uint16                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | merit-dump                             | 14          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | domain-name                            | 15          | fqdn                                              | false       | true        |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | swap-server                            | 16          | ipv4-address                                      | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | root-path                              | 17          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | extensions-path                        | 18          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | ip-forwarding                          | 19          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | non-local-source-routing               | 20          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | policy-filter                          | 21          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | max-dgram-reassembly                   | 22          | uint16                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | default-ip-ttl                         | 23          | uint8                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | path-mtu-aging-timeout                 | 24          | uint32                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | path-mtu-plateau-table                 | 25          | uint16                                            | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | interface-mtu                          | 26          | uint16                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | all-subnets-local                      | 27          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | broadcast-address                      | 28          | ipv4-address                                      | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | perform-mask-discovery                 | 29          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | mask-supplier                          | 30          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | router-discovery                       | 31          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | router-solicitation-address            | 32          | ipv4-address                                      | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | static-routes                          | 33          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | trailer-encapsulation                  | 34          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | arp-cache-timeout                      | 35          | uint32                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | ieee802-3-encapsulation                | 36          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | default-tcp-ttl                        | 37          | uint8                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | tcp-keepalive-interval                 | 38          | uint32                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | tcp-keepalive-garbage                  | 39          | boolean                                           | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nis-domain                             | 40          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nis-servers                            | 41          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | ntp-servers                            | 42          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | vendor-encapsulated-options            | 43          | empty                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | netbios-name-servers                   | 44          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | netbios-dd-server                      | 45          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | netbios-node-type                      | 46          | uint8                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | netbios-scope                          | 47          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | font-servers                           | 48          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | x-display-manager                      | 49          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | dhcp-option-overload                   | 52          | uint8                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | dhcp-server-identifier                 | 54          | ipv4-address                                      | false       | true        |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | dhcp-message                           | 56          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | dhcp-max-message-size                  | 57          | uint16                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | vendor-class-identifier                | 60          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nwip-domain-name                       | 62          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nwip-suboptions                        | 63          | binary                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nisplus-domain-name                    | 64          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nisplus-servers                        | 65          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | tftp-server-name                       | 66          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | boot-file-name                         | 67          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | mobile-ip-home-agent                   | 68          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | smtp-server                            | 69          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | pop-server                             | 70          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nntp-server                            | 71          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | www-server                             | 72          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | finger-server                          | 73          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | irc-server                             | 74          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | streettalk-server                      | 75          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | streettalk-directory-assistance-server | 76          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | user-class                             | 77          | binary                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | slp-directory-agent                    | 78          | record (boolean, ipv4-address)                    | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | slp-service-scope                      | 79          | record (boolean, string)                          | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nds-server                             | 85          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nds-tree-name                          | 86          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | nds-context                            | 87          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | bcms-controller-names                  | 88          | fqdn                                              | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | bcms-controller-address                | 89          | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | client-system                          | 93          | uint16                                            | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | client-ndi                             | 94          | record (uint8, uint8, uint8)                      | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | uuid-guid                              | 97          | record (uint8, binary)                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | uap-servers                            | 98          | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | geoconf-civic                          | 99          | binary                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | pcode                                  | 100         | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | tcode                                  | 101         | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | netinfo-server-address                 | 112         | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | netinfo-server-tag                     | 113         | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | default-url                            | 114         | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | auto-config                            | 116         | uint8                                             | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | name-service-search                    | 117         | uint16                                            | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | subnet-selection                       | 118         | ipv4-address                                      | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | domain-search                          | 119         | fqdn                                              | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | vivco-suboptions                       | 124         | binary                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | vivso-suboptions                       | 125         | binary                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | pana-agent                             | 136         | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | v4-lost                                | 137         | fqdn                                              | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | capwap-ac-v4                           | 138         | ipv4-address                                      | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | sip-ua-cs-domains                      | 141         | fqdn                                              | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | rdnss-selection                        | 146         | record (uint8, ipv4-address, ipv4-address, fqdn)  | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | v4-portparams                          | 159         | record (uint8, psid)                              | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | v4-captive-portal                      | 160         | string                                            | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | option-6rd                             | 212         | record (uint8, uint8, ipv6-address, ipv4-address) | true        | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
+   | v4-access-domain                       | 213         | fqdn                                              | false       | false       |
+   +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
 
 .. table:: List of Standard DHCP Option Types
 

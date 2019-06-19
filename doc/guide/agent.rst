@@ -17,14 +17,14 @@ whether the command should be handled by the CA or forwarded is made by
 checking the value of the "service" parameter, which may be included in
 the command from the controlling client. The details of the supported
 commands, as well as their structures, are provided in
-`??? <#ctrl-channel>`__.
+:ref:`Management API <ctrl-channel>`.
 
 The CA can use hook libraries to provide support for additional commands
 or custom behavior of existing commands. Such hook libraries must
 implement callouts for the "control_command_receive" hook point. Details
 about creating new hook libraries and supported hook points can be found
-in the `Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__.
+in the :ref:`Kea Developer's
+Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`.
 
 The CA processes received commands according to the following algorithm:
 
@@ -89,15 +89,15 @@ provided above, the RESTful service will be available under the URL of
 ``http://10.20.30.40:8080/``. If these parameters are not specified, the
 default URL is http://127.0.0.1:8000/
 
-As mentioned in `Overview <#agent-overview>`__, the CA can forward
+As mentioned in :ref:`Overview <agent-overview>`, the CA can forward
 received commands to the Kea servers for processing. For example,
 ``config-get`` is sent to retrieve the configuration of one of the Kea
 services. When the CA receives this command, including a ``service``
-parameter indicating that the client desires to retrieve the
-configuration of the DHCPv4 server, the CA forwards this command to that
+parameter indicating that the client wishes to retrieve the
+configuration of the DHCPv4 server, the CA forwards the command to that
 server and passes the received response back to the client. More about
 the ``service`` parameter and the general structure of commands can be
-found in `??? <#ctrl-channel>`__.
+found in :ref:`Management API <ctrl-channel>`.
 
 The CA uses UNIX domain sockets to forward control commands and receive
 responses from other Kea services. The ``dhcp4``, ``dhcp6``, and ``d2``
@@ -107,14 +107,14 @@ configuration above, the CA will connect to the DHCPv4 server via
 Obviously, the DHCPv4 server must be configured to listen to connections
 via this same socket. In other words, the command socket configuration
 for the DHCPv4 server and the CA (for this server) must match. Consult
-`??? <#dhcp4-ctrl-channel>`__, `??? <#dhcp6-ctrl-channel>`__ and
-`??? <#d2-ctrl-channel>`__ to learn how the socket configuration is
-specified for the DHCPv4, DHCPv6 and D2 services.
+:ref:`Management API for the DHCPv4 Server <dhcp4-ctrl-channel>`, :ref:`Management API for the DHCPv6 Server <dhcp6-ctrl-channel>` and
+:ref:`Management API for the D2 Server <d2-ctrl-channel>` to learn how the socket configuration is
+specified for the DHCPv4, DHCPv6, and D2 services.
 
    **Warning**
 
-   "dhcp4-server", "dhcp6-server" and "d2-server" were renamed to
-   "dhcp4", "dhcp6" and "d2" respectively in Kea 1.2. If you are
+   "dhcp4-server", "dhcp6-server", and "d2-server" were renamed to
+   "dhcp4", "dhcp6", and "d2" respectively in Kea 1.2. If you are
    migrating from Kea 1.2, you must modify your CA configuration to use
    this new naming convention.
 
@@ -138,7 +138,7 @@ The ``hooks-libraries`` list contains the list of hooks libraries that
 should be loaded by the CA, along with their configuration information
 specified with ``parameters``.
 
-Please consult `??? <#logging>`__ for the details how to configure
+Please consult :ref:`Logging <logging>` for the details how to configure
 logging. The CA's root logger's name is ``kea-ctrl-agent``, as given in
 the example above.
 
@@ -198,7 +198,7 @@ server enables authentication of the clients using certificates.
    #   for the CA certificate.
    #
    #   The client certificate must be deployed on the client system.
-   #   In order to test the proxy configuration with 'curl' run
+   #   In order to test the proxy configuration with 'curl' run a
    #   command similar to the following:
    #
    #   curl -k --key kea-client.key --cert kea-client.crt -X POST \
@@ -263,7 +263,7 @@ file it should use. For example:
 
    $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 
-It can be started by keactrl as well (see `??? <#keactrl>`__).
+It can be started by keactrl as well (see :ref:`Managing Kea with keactrl <keactrl>`).
 
 .. _agent-clients:
 
@@ -271,4 +271,4 @@ Connecting to the Control Agent
 ===============================
 
 For an example of a tool that can take advantage of the RESTful API, see
-`??? <#kea-shell>`__.
+:ref:`The Kea Shell <kea-shell>`.

@@ -26,7 +26,7 @@ Command Line Options
 
    keactrl <command> [-c keactrl-config-file] [-s server[,server,...]]
 
-``<command>`` is the one of the commands described in
+``<command>`` is one of the commands described in
 `Commands <#keactrl-commands>`__.
 
 The optional ``-c keactrl-config-file`` switch allows specification of
@@ -107,20 +107,20 @@ The ``dhcp4``, ``dhcp6``, ``dhcp_ddns``, ``ctrl_agent``, and ``netconf``
 parameters set to "yes" will configure ``keactrl`` to manage (start,
 reconfigure) all servers, i.e. ``kea-dhcp4``, ``kea-dhcp6``,
 ``kea-dhcp-ddns``, ``kea-ctrl-agent``, and ``kea-netconf``. When any of
-these parameters is set to "no," the ``keactrl`` will ignore the
+these parameters is set to "no", the ``keactrl`` will ignore the
 corresponding server when starting or reconfiguring Kea. Some daemons
 (ddns and netconf) are disabled by default.
 
 By default, Kea servers managed by ``keactrl`` are located in
 ``[kea-install-dir]/sbin``. This should work for most installations. If
 the default location needs to be altered for any reason, the paths
-specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``
+specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``,
 ``ctrl_agent_srv``, and ``netconf_srv`` parameters should be modified.
 
 The ``kea_verbose`` parameter specifies the verbosity of the servers
 being started. When ``kea_verbose`` is set to "yes" the logging level of
 the server is set to DEBUG. Modification of the logging severity in a
-configuration file, as described in `??? <#logging>`__, will have no
+configuration file, as described in :ref:`Logging <logging>`, will have no
 effect as long as the ``kea_verbose`` is set to "yes." Setting it to
 "no" will cause the server to use the logging levels specified in the
 Kea configuration file. If no logging configuration is specified, the
@@ -183,7 +183,7 @@ be left over as remnants following a system crash. It is possible,
 though highly unlikely, that upon system restart the PIDs they contain
 may actually refer to processes unrelated to Kea. This condition will
 cause keactrl to decide that the servers are running, when in fact they
-are not. In such a case the PID files as listed in the keactrl output
+are not. In such a case the PID files listed in the keactrl output
 must be manually deleted.
 
 The following command stops all servers:
@@ -198,7 +198,7 @@ The following command stops all servers:
    INFO/keactrl: Stopping kea-netconf...
 
 Note that the ``stop`` command will attempt to stop all servers
-regardless of whether they are "enabled" in the ``keactrl.conf``. If any
+regardless of whether they are "enabled" in ``keactrl.conf``. If any
 of the servers are not running, an informational message is displayed as
 in the ``stop`` command output below.
 
@@ -213,8 +213,8 @@ in the ``stop`` command output below.
 
 As already mentioned, the reconfiguration of each Kea server is
 triggered by the SIGHUP signal. The ``reload`` command sends the SIGHUP
-signal to the servers that are enabled in the ``keactrl`` configuration
-file and are currently running. When a server receives the SIGHUP signal
+signal to any servers that are enabled in the ``keactrl`` configuration
+file and that are currently running. When a server receives the SIGHUP signal
 it re-reads its configuration file and, if the new configuration is
 valid, uses the new configuration. A reload is executed as follows:
 
@@ -260,7 +260,7 @@ take effect. This limitation will be removed in a future release.
    default, this is written to the syslog file.
 
 Sometimes it is useful to check which servers are running. The
-``status`` reports this, with typical output that looks like:
+``status`` command reports this, with typical output that looks like:
 
 ::
 
@@ -283,7 +283,7 @@ Sometimes it is useful to check which servers are running. The
 Overriding the Server Selection
 ===============================
 
-The optional ``-s`` switch allows the selection of the servers to which
+The optional ``-s`` switch allows the selection of the server(s) to which
 the ``keactrl`` command is issued. For example, the following instructs
 ``keactrl`` to stop the ``kea-dhcp4`` and ``kea-dhcp6`` servers and
 leave the ``kea-dhcp-ddns`` and ``kea-ctrl-agent`` running:
@@ -300,7 +300,7 @@ Similarly, the following will start only the ``kea-dhcp4`` and
    $ keactrl start -s dhcp4,dhcp_ddns
 
 Note that the behavior of the ``-s`` switch with the ``start`` and
-``reload`` commands is different to its behavior with the ``stop``
+``reload`` commands is different from its behavior with the ``stop``
 command. On ``start`` and ``reload``, ``keactrl`` will check if the
 servers given as parameters to the ``-s`` switch are enabled in the
 ``keactrl`` configuration file; if not, the server will be ignored. For
