@@ -1446,348 +1446,262 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
 }
 
-// This test verifies that renewal returns the default valid lifetime
-// when the client does not specify a value.
-TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
+// Renew*Lifetime common code.
+namespace {
+
+struct ctx {
+    Dhcpv4SrvTest* test;
+    NakedDhcpv4Srv* srv;
+    const IOAddress& addr;
+    const uint32_t temp_valid;
+    const time_t temp_timestamp;
+    OptionPtr clientid;
+    HWAddrPtr hwaddr;
+    Lease4Ptr used;
+    Lease4Ptr l;
+    OptionPtr opt;
+    Pkt4Ptr req;
+    Pkt4Ptr ack;
+};
+
+void prepare(struct ctx& c) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
-
-    const IOAddress addr("192.0.2.106");
-    const uint32_t temp_valid = 100;
-    const time_t temp_timestamp = time(NULL) - 10;
-
-    // Generate client-id also sets client_id_ member
-    OptionPtr clientid = generateClientId();
-
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+    ASSERT_TRUE(c.test->subnet_->inPool(Lease::TYPE_V4, c.addr));
 
     // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+    uint8_t hwaddr_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    c.hwaddr.reset(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+
+    c.used.reset(new Lease4(c.addr, c.hwaddr,
+                            &c.test->client_id_->getDuid()[0],
+                            c.test->client_id_->getDuid().size(),
+                            c.temp_valid, c.temp_timestamp,
+                            c.test->subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(c.used));
 
     // Check that the lease is really in the database
-    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
+    c.l = LeaseMgrFactory::instance().getLease4(c.addr);
+    ASSERT_TRUE(c.l);
 
     // Check that valid and cltt really set.
     // Constructed lease looks as if it was assigned 10 seconds ago
-    EXPECT_EQ(l->valid_lft_, temp_valid);
-    EXPECT_EQ(l->cltt_, temp_timestamp);
+    EXPECT_EQ(c.l->valid_lft_, c.temp_valid);
+    EXPECT_EQ(c.l->cltt_, c.temp_timestamp);
 
     // Set the valid lifetime interval.
-    subnet_->setValid(Triplet<uint32_t>(2000, 3000, 4000));
+    c.test->subnet_->setValid(Triplet<uint32_t>(2000, 3000, 4000));
 
     // Let's create a RENEW
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setRemoteAddr(IOAddress(addr));
-    req->setYiaddr(addr);
-    req->setCiaddr(addr); // client's address
-    req->setIface("eth0");
-    req->setHWAddr(hwaddr2);
+    c.req.reset(new Pkt4(DHCPREQUEST, 1234));
+    c.req->setRemoteAddr(IOAddress(c.addr));
+    c.req->setYiaddr(c.addr);
+    c.req->setCiaddr(c.addr); // client's address
+    c.req->setIface("eth0");
+    c.req->setHWAddr(c.hwaddr);
 
-    req->addOption(clientid);
-    req->addOption(srv->getServerID());
+    c.req->addOption(c.clientid);
+    c.req->addOption(c.srv->getServerID());
+
+    if (c.opt) {
+        c.req->addOption(c.opt);
+    }
+
+    // Pass it to the server and hope for a REPLY
+    c.ack = c.srv->processRequest(c.req);
+
+    // Check if we get response at all
+    c.test->checkResponse(c.ack, DHCPACK, 1234);
+    EXPECT_EQ(c.addr, c.ack->getYiaddr());
+
+    // Check identifiers
+    c.test->checkServerId(c.ack, c.srv->getServerID());
+    c.test->checkClientId(c.ack, c.clientid);
+
+    // Check that the lease is really in the database
+    c.l = c.test->checkLease(c.ack, c.clientid, c.req->getHWAddr(), c.addr);
+    ASSERT_TRUE(c.l);
+}
+
+// This test verifies that renewal returns the default valid lifetime
+// when the client does not specify a value.
+TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    struct ctx c = {
+        this,                           // test
+        srv.get(),                      // srv
+        IOAddress("192.0.2.106"),       // addr
+        100,                            // temp_valid
+        time(NULL) - 10,                // temp_timestamp
+        // Generate client-id also sets client_id_ member
+        generateClientId(),             // clientid
+        HWAddrPtr(),                    // hwaddr
+        Lease4Ptr(),                    // used
+        Lease4Ptr(),                    // l
+        OptionPtr(),                    // opt
+        Pkt4Ptr(),                      // req
+        Pkt4Ptr()                       // acka
+    };
+
+    prepare(c);
 
     // There is no valid lifetime hint so the default will be returned.
 
-    // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv->processRequest(req);
-
-    // Check if we get response at all
-    checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr, ack->getYiaddr());
-
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(ack, subnet_, true, true, subnet_->getValid());
-
-    // Check identifiers
-    checkServerId(ack, srv->getServerID());
-    checkClientId(ack, clientid);
-
-    // Check that the lease is really in the database
-    l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    checkAddressParams(c.ack, subnet_, true, true, subnet_->getValid());
 
     // Check that valid and cltt were really updated
-    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+    EXPECT_EQ(c.l->valid_lft_, subnet_->getValid());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
-    int32_t cltt = static_cast<int32_t>(l->cltt_);
+    int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
 }
 
 // This test verifies that renewal returns the specified valid lifetime
 // when the client adds an in-bound hint in the DISCOVER.
 TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
-    const IOAddress addr("192.0.2.106");
-    const uint32_t temp_valid = 100;
-    const time_t temp_timestamp = time(NULL) - 10;
-
-    // Generate client-id also sets client_id_ member
-    OptionPtr clientid = generateClientId();
-
-    // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
-
-    // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
-    // Check that the lease is really in the database
-    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
-
-    // Check that valid and cltt really set.
-    // Constructed lease looks as if it was assigned 10 seconds ago
-    EXPECT_EQ(l->valid_lft_, temp_valid);
-    EXPECT_EQ(l->cltt_, temp_timestamp);
-
-    // Set the valid lifetime interval.
-    subnet_->setValid(Triplet<uint32_t>(2000, 3000, 4000));
-
-    // Let's create a RENEW
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setRemoteAddr(IOAddress(addr));
-    req->setYiaddr(addr);
-    req->setCiaddr(addr); // client's address
-    req->setIface("eth0");
-    req->setHWAddr(hwaddr2);
-
-    req->addOption(clientid);
-    req->addOption(srv->getServerID());
+    struct ctx c = {
+        this,                           // test
+        srv.get(),                      // srv
+        IOAddress("192.0.2.106"),       // addr
+        100,                            // temp_valid
+        time(NULL) - 10,                // temp_timestamp
+        // Generate client-id also sets client_id_ member
+        generateClientId(),             // clientid
+        HWAddrPtr(),                    // hwaddr
+        Lease4Ptr(),                    // used
+        Lease4Ptr(),                    // l
+        OptionPtr(),                    // opt
+        Pkt4Ptr(),                      // req
+        Pkt4Ptr()                       // acka
+    };
 
     // Add a dhcp-lease-time with an in-bound valid lifetime hint
     // which will be returned in the OFFER.
     uint32_t hint = 3001;
-    OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, hint));
-    req->addOption(opt);
+    c.opt.reset(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, hint));
 
-    // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv->processRequest(req);
-
-    // Check if we get response at all
-    checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr, ack->getYiaddr());
+    prepare(c);
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(ack, subnet_, true, true, hint);
-
-    // Check identifiers
-    checkServerId(ack, srv->getServerID());
-    checkClientId(ack, clientid);
-
-    // Check that the lease is really in the database
-    l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    checkAddressParams(c.ack, subnet_, true, true, hint);
 
     // Check that valid and cltt were really updated
-    EXPECT_EQ(l->valid_lft_, hint);
+    EXPECT_EQ(c.l->valid_lft_, hint);
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
-    int32_t cltt = static_cast<int32_t>(l->cltt_);
+    int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
 }
 
 // This test verifies that renewal returns the min valid lifetime
 // when the client adds a too small hint in the DISCOVER.
 TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
-    const IOAddress addr("192.0.2.106");
-    const uint32_t temp_valid = 100;
-    const time_t temp_timestamp = time(NULL) - 10;
-
-    // Generate client-id also sets client_id_ member
-    OptionPtr clientid = generateClientId();
-
-    // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
-
-    // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
-    // Check that the lease is really in the database
-    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
-
-    // Check that valid and cltt really set.
-    // Constructed lease looks as if it was assigned 10 seconds ago
-    EXPECT_EQ(l->valid_lft_, temp_valid);
-    EXPECT_EQ(l->cltt_, temp_timestamp);
-
-    // Set the valid lifetime interval.
-    subnet_->setValid(Triplet<uint32_t>(2000, 3000, 4000));
-
-    // Let's create a RENEW
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setRemoteAddr(IOAddress(addr));
-    req->setYiaddr(addr);
-    req->setCiaddr(addr); // client's address
-    req->setIface("eth0");
-    req->setHWAddr(hwaddr2);
-
-    req->addOption(clientid);
-    req->addOption(srv->getServerID());
+    struct ctx c = {
+        this,                           // test
+        srv.get(),                      // srv
+        IOAddress("192.0.2.106"),       // addr
+        100,                            // temp_valid
+        time(NULL) - 10,                // temp_timestamp
+        // Generate client-id also sets client_id_ member
+        generateClientId(),             // clientid
+        HWAddrPtr(),                    // hwaddr
+        Lease4Ptr(),                    // used
+        Lease4Ptr(),                    // l
+        OptionPtr(),                    // opt
+        Pkt4Ptr(),                      // req
+        Pkt4Ptr()                       // acka
+    };
 
     // Add a dhcp-lease-time with too small valid lifetime hint.
     // The min valid lifetime will be returned in the OFFER.
-    OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1000));
-    req->addOption(opt);
+    c.opt.reset(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1000));
 
-    // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv->processRequest(req);
-
-    // Check if we get response at all
-    checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr, ack->getYiaddr());
+    prepare(c);
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
     // Note that T2 should be false for a reason which does not matter...
-    checkAddressParams(ack, subnet_, true, false, subnet_->getValid().getMin());
-
-    // Check identifiers
-    checkServerId(ack, srv->getServerID());
-    checkClientId(ack, clientid);
-
-    // Check that the lease is really in the database
-    l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    checkAddressParams(c.ack, subnet_, true, false, subnet_->getValid().getMin());
 
     // Check that valid and cltt were really updated
-    EXPECT_EQ(l->valid_lft_, subnet_->getValid().getMin());
+    EXPECT_EQ(c.l->valid_lft_, subnet_->getValid().getMin());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
-    int32_t cltt = static_cast<int32_t>(l->cltt_);
+    int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
 }
 
 // This test verifies that renewal returns the max valid lifetime
 // when the client adds a too large hint in the DISCOVER.
 TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
-    const IOAddress addr("192.0.2.106");
-    const uint32_t temp_valid = 100;
-    const time_t temp_timestamp = time(NULL) - 10;
-
-    // Generate client-id also sets client_id_ member
-    OptionPtr clientid = generateClientId();
-
-    // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
-
-    // let's create a lease and put it in the LeaseMgr
-    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
-    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_timestamp, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
-    // Check that the lease is really in the database
-    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
-    ASSERT_TRUE(l);
-
-    // Check that valid and cltt really set.
-    // Constructed lease looks as if it was assigned 10 seconds ago
-    EXPECT_EQ(l->valid_lft_, temp_valid);
-    EXPECT_EQ(l->cltt_, temp_timestamp);
-
-    // Set the valid lifetime interval.
-    subnet_->setValid(Triplet<uint32_t>(2000, 3000, 4000));
-
-    // Let's create a RENEW
-    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-    req->setRemoteAddr(IOAddress(addr));
-    req->setYiaddr(addr);
-    req->setCiaddr(addr); // client's address
-    req->setIface("eth0");
-    req->setHWAddr(hwaddr2);
-
-    req->addOption(clientid);
-    req->addOption(srv->getServerID());
+    struct ctx c = {
+        this,                           // test
+        srv.get(),                      // srv
+        IOAddress("192.0.2.106"),       // addr
+        100,                            // temp_valid
+        time(NULL) - 10,                // temp_timestamp
+        // Generate client-id also sets client_id_ member
+        generateClientId(),             // clientid
+        HWAddrPtr(),                    // hwaddr
+        Lease4Ptr(),                    // used
+        Lease4Ptr(),                    // l
+        OptionPtr(),                    // opt
+        Pkt4Ptr(),                      // req
+        Pkt4Ptr()                       // acka
+    };
 
     // Add a dhcp-lease-time with too large valid lifetime hint.
     // The max valid lifetime will be returned in the OFFER.
-    OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 5000));
-    req->addOption(opt);
+    c.opt.reset(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 5000));
 
-    // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv->processRequest(req);
-
-    // Check if we get response at all
-    checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr, ack->getYiaddr());
+    prepare(c);
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
-    checkAddressParams(ack, subnet_, true, true, subnet_->getValid().getMax());
-
-    // Check identifiers
-    checkServerId(ack, srv->getServerID());
-    checkClientId(ack, clientid);
-
-    // Check that the lease is really in the database
-    l = checkLease(ack, clientid, req->getHWAddr(), addr);
-    ASSERT_TRUE(l);
+    checkAddressParams(c.ack, subnet_, true, true, subnet_->getValid().getMax());
 
     // Check that valid and cltt were really updated
-    EXPECT_EQ(l->valid_lft_, subnet_->getValid().getMax());
+    EXPECT_EQ(c.l->valid_lft_, subnet_->getValid().getMax());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
-    int32_t cltt = static_cast<int32_t>(l->cltt_);
+    int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
 }
+
+} // end of Renew*Lifetime
 
 // This test verifies that the logic which matches server identifier in the
 // received message with server identifiers used by a server works correctly:
