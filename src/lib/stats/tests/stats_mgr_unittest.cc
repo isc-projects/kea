@@ -119,15 +119,47 @@ TEST_F(StatsMgrTest, stringStat) {
     EXPECT_EQ(exp, StatsMgr::instance().get("delta")->str());
 }
 
-// Setting limits is currently not implemented, so those methods should
-// throw.
-TEST_F(StatsMgrTest, setLimits) {
-    EXPECT_THROW(StatsMgr::instance().setMaxSampleAge("foo",
-                                                      time_duration(1,0,0,0)),
-                 NotImplemented);
+// Basic test of getSize function.
+TEST_F(StatsMgrTest, getSize) {
 
-    EXPECT_THROW(StatsMgr::instance().setMaxSampleCount("foo", 100),
-                 NotImplemented);
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", microsec::time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("alpha"));
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("beta"));
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("gamma"));
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("delta"));
+
+    EXPECT_EQ(StatsMgr::instance().getSize("alpha"),1);
+    EXPECT_EQ(StatsMgr::instance().getSize("beta"),1);
+    EXPECT_EQ(StatsMgr::instance().getSize("gamma"),1);
+    EXPECT_EQ(StatsMgr::instance().getSize("delta"),1);
+}
+
+// Test checks whether setting age limit and count limit works properly
+TEST_F(StatsMgrTest, setLimits) {
+    // Initializing of an integer type observation
+    StatsMgr::instance().setValue("foo", static_cast<int64_t>(1));
+
+    EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleAge("foo",
+                                                time_duration(0,0,1,0)));
+
+    for (uint32_t i = 0; i < 10; ++i) {
+        if (i == 5) {
+            sleep(1); // wait one second to force exceeding the time limit
+        }
+        StatsMgr::instance().setValue("foo", static_cast<int64_t>(i));
+    }
+
+    EXPECT_EQ(StatsMgr::instance().getSize("foo"), 5); // sth goes wrong
+    EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleCount("foo", 100));
+    for (int64_t i = 0; i < 200; ++i) {
+        StatsMgr::instance().setValue("foo", i);
+    }
+
+    EXPECT_EQ(StatsMgr::instance().getSize("foo"), 100);
 }
 
 // This test checks whether a single (get("foo")) and all (getAll())

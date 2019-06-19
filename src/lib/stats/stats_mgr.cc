@@ -144,6 +144,14 @@ void StatsMgr::resetAll() {
     }
 }
 
+size_t StatsMgr::getSize(const std::string& name) const {
+    ObservationPtr obs = getObservation(name);
+    size_t size = 0;
+    if (obs) {
+        size = obs->getSize();
+    }
+    return (size);
+}
 size_t StatsMgr::count() const {
     return (global_->stats_.size());
 }

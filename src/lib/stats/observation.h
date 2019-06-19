@@ -187,6 +187,11 @@ class Observation {
     /// @throw InvalidStatType if statistic is not a string
     void addValue(const std::string& value);
 
+    /// @brief Returns size of observed storage
+    ///
+    /// @return size of storage
+    size_t getSize() const;
+
     /// @brief Resets statistic.
     ///
     /// Sets statistic to a neutral (0, 0.0 or "") value.
@@ -252,6 +257,19 @@ class Observation {
     }
 
 private:
+
+    /// @brief Returns size of observed storage
+    ///
+    /// This method returns size of observed storage.
+    /// It is used by public methods to return size of
+    /// available storages.
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param storage storage which size will be returned
+    /// @param exp_type expected observation type (used for sanity checking)
+    /// @return Size of storage
+    template<typename StorageType>
+    size_t getSizeInternal( StorageType& storage, Type exp_type) const;
+
     /// @brief Records absolute sample (internal version)
     ///
     /// This method records an absolute value of an observation.
@@ -282,25 +300,34 @@ private:
     /// @brief Returns samples (internal version)
     ///
     /// @tparam SampleType type of samples (e.g. IntegerSample)
-    /// @tparam StorageType type of storage (e.g. list<IntegerSample>)
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
     /// @param observation storage
     /// @param exp_type expected observation type (used for sanity checking)
     /// @throw InvalidStatType if observation type mismatches
     /// @return List of observed samples
     template<typename SampleType, typename Storage>
-    std::list<SampleType> getValuesInternal(Storage& storage, Type exp_type) const;
+    std::list<SampleType> getValuesInternal(Storage& storage,
+        Type exp_type) const;
 
-    /// @brief
+    /// @brief Determines maximum age of samples.
+    ///
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param storage storage on which limit will be set
+    /// @param duration determines maximum age of samples
+    /// @param exp_type expected observation type (used for sanity checking)
     template<typename StorageType>
     void setMaxSampleAgeInternal(StorageType& storage,
         const StatsDuration& duration, Type exp_type);
 
-
-    /// @brief
+    /// @brief Determines how many samples of a given statistic should be kept.
+    ///
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param storage storage on which limit will be set
+    /// @param max_samples determines maximum number of samples
+    /// @param exp_type expected observation type (used for sanity checking)
     template<typename StorageType>
     void setMaxSampleCountInternal(StorageType& storage,
         uint32_t max_samples, Type exp_type);
-
 
     /// @brief Observation (statistic) name
     std::string name_;

@@ -62,7 +62,6 @@ void Observation::setMaxSampleAge(const StatsDuration& duration) {
         isc_throw(InvalidStatType, "Unknown statistic type: "
                   << typeToText(type_));
     };
-
 }
 
 void Observation::setMaxSampleCount(uint32_t max_samples) {
@@ -125,6 +124,45 @@ void Observation::setValue(const std::string& value) {
     setValueInternal(value, string_samples_, STAT_STRING);
 }
 
+size_t Observation::getSize() const {
+    size_t size = 0;
+    switch(type_) {
+    case STAT_INTEGER: {
+        size = getSizeInternal(integer_samples_, STAT_INTEGER);
+        return (size);
+    }
+    case STAT_FLOAT: {
+        size = getSizeInternal(float_samples_, STAT_FLOAT);
+        return (size);
+    }
+    case STAT_DURATION: {
+        size = getSizeInternal(duration_samples_, STAT_DURATION);
+        return (size);
+    }
+    case STAT_STRING: {
+        size = getSizeInternal(string_samples_, STAT_STRING);
+        return (size);
+    }
+    default:
+        isc_throw(InvalidStatType, "Unknown statistic type: "
+                  << typeToText(type_));
+    };
+    return (size);
+}
+
+template<typename StorageType>
+size_t Observation::getSizeInternal( StorageType& storage,Type exp_type) const {
+    if (type_ != exp_type) {
+        isc_throw(InvalidStatType, "Invalid statistic type requested: "
+                  << typeToText(exp_type) << ", but the actual type is "
+                  << typeToText(type_) );
+    }
+    else {
+        return (storage.size());
+    }
+    return (0); // to avoid compilation error
+}
+
 template<typename SampleType, typename StorageType>
 void Observation::setValueInternal(SampleType value, StorageType& storage,
     Type exp_type) {
@@ -145,7 +183,7 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
         if (max_sample_count.first) {
             // if max_sample_count is set to true
             // and size of storage is equal to max_sample_count
-            if (storage.size() >= max_sample_count.second) {
+            if (storage.size() > max_sample_count.second) {
                 storage.pop_back();    // removing the last element
             }
 
@@ -154,7 +192,7 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
                 storage.front().second - storage.back().second;
             // removing samples until the range_of_storage
             // stops exceeding the duration limit
-            while (range_of_storage >= max_sample_age.second) {
+            while (range_of_storage > max_sample_age.second) {
                 storage.pop_back();
                 range_of_storage =
                     storage.front().second - storage.back().second;

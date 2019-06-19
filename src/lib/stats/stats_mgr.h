@@ -185,6 +185,12 @@ class StatsMgr : public boost::noncopyable {
     /// @brief Removes all collected statistics.
     void removeAll();
 
+    /// @brief Returns size of specified statistic.
+    ///
+    /// @param name name of the statistic which size should be return.
+    /// @return size of specified statistic.
+    size_t getSize(const std::string& name) const;
+
     /// @brief Returns number of available statistics.
     ///
     /// @return number of recorded statistics.

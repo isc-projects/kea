@@ -128,7 +128,7 @@ TEST_F(ObservationTest, addValue) {
     EXPECT_NO_THROW(d.addValue("fiveSixSevenEight"));
 
     EXPECT_EQ(6912, a.getInteger().first);
-    EXPECT_EQ(69.12, b.getFloat().first);
+    EXPECT_EQ(69.12, b.getFloat().first);    // Check if size of storages is equal to 1
 
     EXPECT_EQ(millisec::time_duration(6,8,10,12), c.getDuration().first);
     EXPECT_EQ("1234fiveSixSevenEight", d.getString().first);
@@ -142,7 +142,8 @@ TEST_F(ObservationTest, moreThanOne){
     // Arrays of 4 types of samples
     int64_t int_samples[3] = {1234, 6912, 5678};
     double float_samples[3] = {12.34, 69.12, 56e+78};
-    millisec::time_duration duration_samples[3] = {millisec::time_duration(1,2,3,4), millisec::time_duration(6,8,10,12), millisec::time_duration(5,6,7,8)};
+    millisec::time_duration duration_samples[3] = {millisec::time_duration(1,2,3,4),
+        millisec::time_duration(6,8,10,12), millisec::time_duration(5,6,7,8)};
     std::string string_samples[3] = {"1234", "1234fiveSixSevenEight", "fiveSixSevenEight"};
 
     EXPECT_NO_THROW(a.addValue(static_cast<int64_t>(5678)));
@@ -156,44 +157,285 @@ TEST_F(ObservationTest, moreThanOne){
     EXPECT_NO_THROW(d.setValue("fiveSixSevenEight"));
 
     ASSERT_NO_THROW(a.getIntegers());
-
-    int i = 2; // Index pointed to the end of array of samples
+    ASSERT_NO_THROW(b.getFloats());
+    ASSERT_NO_THROW(c.getDurations());
+    ASSERT_NO_THROW(d.getStrings());
 
     std::list<IntegerSample> samples_int = a.getIntegers(); // List of all integer samples
-    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it){
+    std::list<FloatSample> samples_float = b.getFloats(); // List of all float samples
+    std::list<DurationSample> samples_dur = c.getDurations(); // List of all duration samples
+    std::list<StringSample> samples_str = d.getStrings(); // List of all string samples
+
+    uint32_t i = 2; // Index pointed to the end of array of samples
+
+
+    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
         EXPECT_EQ(int_samples[i],static_cast<int64_t>((*it).first));
         --i;
     }
-
-    ASSERT_NO_THROW(b.getFloats());
-
     i = 2;
-
-    std::list<FloatSample> samples_float = b.getFloats(); // List of all float samples
-    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it){
+    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
         EXPECT_EQ(float_samples[i],(*it).first);
         --i;
     }
-
-    ASSERT_NO_THROW(c.getDurations());
-
     i = 2;
-
-    std::list<DurationSample> samples_dur = c.getDurations(); // List of all duration samples
-    for (std::list<DurationSample>::iterator it=samples_dur.begin(); it != samples_dur.end(); ++it){
+    for (std::list<DurationSample>::iterator it=samples_dur.begin(); it != samples_dur.end(); ++it) {
         EXPECT_EQ(duration_samples[i],(*it).first);
         --i;
     }
-
-    ASSERT_NO_THROW(d.getStrings());
-
     i = 2;
-
-    std::list<StringSample> samples_str = d.getStrings(); // List of all string samples
-    for (std::list<StringSample>::iterator it=samples_str.begin(); it != samples_str.end(); ++it){
+    for (std::list<StringSample>::iterator it=samples_str.begin(); it != samples_str.end(); ++it) {
         EXPECT_EQ(string_samples[i],(*it).first);
         --i;
     }
+}
+
+// This test checks whether the size of storage
+// is equal to the true value
+TEST_F(ObservationTest, getSize) {
+    a.addValue(static_cast<int64_t>(5678));
+    b.addValue(56.78);
+    c.addValue(millisec::time_duration(5,6,7,8));
+    d.addValue("fiveSixSevenEight");
+
+    EXPECT_NO_THROW(a.getSize());
+    EXPECT_NO_THROW(b.getSize());
+    EXPECT_NO_THROW(c.getSize());
+    EXPECT_NO_THROW(d.getSize());
+
+    // Check if size of storages is equal to 2
+    ASSERT_EQ(a.getSize(),2);
+    ASSERT_EQ(b.getSize(),2);
+    ASSERT_EQ(c.getSize(),2);
+    ASSERT_EQ(d.getSize(),2);
+
+    a.setValue(static_cast<int64_t>(5678));
+    b.setValue(56e+78);
+    c.setValue(millisec::time_duration(5,6,7,8));
+    d.setValue("fiveSixSevenEight");
+
+    EXPECT_NO_THROW(a.getSize());
+    EXPECT_NO_THROW(b.getSize());
+    EXPECT_NO_THROW(c.getSize());
+    EXPECT_NO_THROW(d.getSize());
+    // Check if size of storages is equal to 3
+    ASSERT_EQ(a.getSize(),3);
+    ASSERT_EQ(b.getSize(),3);
+    ASSERT_EQ(c.getSize(),3);
+    ASSERT_EQ(d.getSize(),3);
+}
+
+// Checks whether setting amount limits works properly
+TEST_F(ObservationTest, setCountLimit) {
+    // Preparing of 21 test's samples for each type of storage
+    int64_t int_samples[21] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
+    double float_samples[21] = {0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,
+        12.0,13.0,14.0,15.0,16.0,17.0,18.0,19.0,20.0};
+    std::string string_samples[21] = {"a","b","c","d","e","f","g","h","i",
+    "j","k","l","m","n","o","p","q","r","s","t","u"};
+    millisec::time_duration duration_samples[21];
+    for (uint32_t i = 0;i<21;++i) {
+        duration_samples[i] = millisec::time_duration(0,0,0,i);
+    }
+
+    // By default the max_sample_count is set to 20 and max_sample_age
+    // is deactivated
+    // Adding 21 samples to each type of Observation
+    for (uint32_t i = 0;i<21;++i) {
+        a.setValue(int_samples[i]);
+    }
+    for (uint32_t i = 0;i<21;++i) {
+        b.setValue(float_samples[i]);
+    }
+    for (uint32_t i = 0;i<21;++i) {
+        c.setValue(duration_samples[i]);
+    }
+    for (uint32_t i = 0;i<21;++i) {
+        d.setValue(string_samples[i]);
+    }
+
+    // Getting all 4 types of samples after inserting 21 values
+    std::list<IntegerSample> samples_int = a.getIntegers();
+    std::list<FloatSample> samples_float = b.getFloats();
+    std::list<DurationSample> samples_duration = c.getDurations();
+    std::list<StringSample> samples_string = d.getStrings();
+
+    // Check if size of storages is equal to 20
+    ASSERT_EQ(a.getSize(),20);
+    ASSERT_EQ(b.getSize(),20);
+    ASSERT_EQ(c.getSize(),20);
+    ASSERT_EQ(d.getSize(),20);
+
+    // And whether storaged values are correct
+    uint32_t i = 20; // index of the last element in array of test's samples
+    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+        EXPECT_EQ((*it).first,int_samples[i]);
+        --i;
+    }
+    i = 20; // index of last element in array of test's samples
+    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+        EXPECT_EQ((*it).first,float_samples[i]);
+        --i;
+    }
+    i = 20; // index of last element in array of test's samples
+    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+        EXPECT_EQ((*it).first,duration_samples[i]);
+        --i;
+    }
+    i = 20; // index of last element in array of test's samples
+    for (std::list<StringSample>::iterator it=samples_string.begin(); it != samples_string.end(); ++it) {
+        EXPECT_EQ((*it).first,string_samples[i]);
+        --i;
+    }
+
+    // Change size of storage to smaller one
+    ASSERT_NO_THROW(a.setMaxSampleCount(10));
+    ASSERT_NO_THROW(b.setMaxSampleCount(10));
+    ASSERT_NO_THROW(c.setMaxSampleCount(10));
+    ASSERT_NO_THROW(d.setMaxSampleCount(10));
+
+    samples_int = a.getIntegers();
+    samples_float = b.getFloats();
+    samples_duration = c.getDurations();
+    samples_string = d.getStrings();
+
+    // Check if size of storages is equal to 10
+    ASSERT_EQ(a.getSize(),10);
+    ASSERT_EQ(b.getSize(),10);
+    ASSERT_EQ(c.getSize(),10);
+    ASSERT_EQ(d.getSize(),10);
+
+    // And whether storages contain only the 10 newest values
+    i = 20; // index of last element in array of test's samples
+    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+        EXPECT_EQ((*it).first,int_samples[i]);
+        --i;
+    }
+    i = 20; // index of last element in array of test's samples
+    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+        EXPECT_EQ((*it).first,float_samples[i]);
+        --i;
+    }
+    i = 20; // index of last element in array of test's samples
+    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+        EXPECT_EQ((*it).first,duration_samples[i]);
+        --i;
+    }
+    i = 20; // index of last element in array of test's samples
+    for (std::list<StringSample>::iterator it=samples_string.begin(); it != samples_string.end(); ++it) {
+        EXPECT_EQ((*it).first,string_samples[i]);
+        --i;
+    }
+
+    // Resize max_sample_count to greater
+    ASSERT_NO_THROW(a.setMaxSampleCount(50));
+    ASSERT_NO_THROW(b.setMaxSampleCount(50));
+    ASSERT_NO_THROW(c.setMaxSampleCount(50));
+    ASSERT_NO_THROW(d.setMaxSampleCount(50));
+
+    // Check if size of storages did not change without adding new value
+    ASSERT_EQ(a.getSize(),10);
+    ASSERT_EQ(b.getSize(),10);
+    ASSERT_EQ(c.getSize(),10);
+    ASSERT_EQ(d.getSize(),10);
+
+    // Add new values to each type of Observation
+    a.setValue(static_cast<int64_t>(21));
+    b.setValue(21.0);
+    c.setValue(millisec::time_duration(0,0,0,21));
+    d.setValue("v");
+
+    samples_int = a.getIntegers();
+    samples_float = b.getFloats();
+    samples_duration = c.getDurations();
+    samples_string = d.getStrings();
+
+    ASSERT_EQ(a.getSize(),11);
+    ASSERT_EQ(b.getSize(),11);
+    ASSERT_EQ(c.getSize(),11);
+    ASSERT_EQ(d.getSize(),11);
+
+    i = 21; // index of last element in array of test's samples
+    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+        if (i == 21) {
+            EXPECT_EQ((*it).first,21);
+        }
+        else {
+            EXPECT_EQ((*it).first,int_samples[i]);
+        }
+        --i;
+    }
+    i = 21; // index of last element in array of test's samples
+    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+        if (i == 21) {
+            EXPECT_EQ((*it).first,21.0);
+        }
+        else {
+            EXPECT_EQ((*it).first,float_samples[i]);
+        }
+        --i;
+    }
+    i = 21; // index of last element in array of test's samples
+    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+        if (i == 21) {
+            EXPECT_EQ((*it).first,millisec::time_duration(0,0,0,21));
+        }
+        else {
+            EXPECT_EQ((*it).first,duration_samples[i]);
+        }
+        --i;
+    }
+    i = 21; // index of last element in array of test's samples
+    for (std::list<StringSample>::iterator it=samples_string.begin(); it != samples_string.end(); ++it) {
+        if (i == 21) {
+            EXPECT_EQ((*it).first,"v");
+        }
+        else {
+            EXPECT_EQ((*it).first,string_samples[i]);
+        }
+        --i;
+    }
+
+}
+
+// Checks whether setting age limits works properly
+TEST_F(ObservationTest, setAgeLimit) {
+    // Set max_sample_age to 1 second
+    ASSERT_NO_THROW(c.setMaxSampleAge(millisec::time_duration(0,0,1,0)));
+    // Add some value
+    c.setValue(millisec::time_duration(0,0,0,5));
+    // Wait 1 second
+    sleep(1);
+    // and add new value
+    c.setValue(millisec::time_duration(0,0,0,3));
+
+    // get the list of all samples
+    std::list<DurationSample> samples_duration = c.getDurations();
+    // check whether the size of samples is equal to 1
+    ASSERT_EQ(c.getSize(),1);
+    // and whether it contains an expected value
+    EXPECT_EQ((*samples_duration.begin()).first,millisec::time_duration(0,0,0,3));
+
+    // Wait 1 second to ensure removing previously setted value
+    sleep(1);
+    // add 10 new values
+    for (uint32_t i = 0;i<10;++i) {
+        c.setValue(millisec::time_duration(0,0,0,i));
+    }
+    // change the max_sample_age to smaller
+    ASSERT_NO_THROW(c.setMaxSampleAge(millisec::time_duration(0,0,0,300)));
+
+    samples_duration = c.getDurations();
+    // check whether the size of samples is equal to 10
+    ASSERT_EQ(c.getSize(),10);
+
+    // and whether it contains expected values
+    uint32_t i = 9;
+    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+        EXPECT_EQ((*it).first,millisec::time_duration(0,0,0,i));
+        --i;
+    }
+
 }
 
 // Test checks whether timing is reported properly.
