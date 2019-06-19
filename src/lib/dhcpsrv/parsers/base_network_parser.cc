@@ -69,9 +69,21 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
     }
     // Check that min <= max.
     if (min_value > max_value) {
-        isc_throw(DhcpConfigError, "the value of min-" << name << " ("
-                  << min_value << ") is not less than max-" << name << " ("
-                  << max_value << ")");
+        if (has_min && has_max) {
+            isc_throw(DhcpConfigError, "the value of min-" << name << " ("
+                      << min_value << ") is not less than max-" << name << " ("
+                      << max_value << ")");
+        } else if (has_min) {
+            // Only min and default so min > default.
+            isc_throw(DhcpConfigError, "the value of min-" << name << " ("
+                      << min_value << ") is not less than (default) " << name
+                      << " (" << value << ")");
+        } else {
+            // Only default and max so default > max.
+            isc_throw(DhcpConfigError, "the value of (default) " << name
+                      << " (" << value << ") is not less than max-" << name
+                      << " (" << max_value << ")");
+        }
     }
     // Check that value is between min and max.
     if ((value < min_value) || (value > max_value)) {

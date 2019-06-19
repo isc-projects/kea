@@ -1025,7 +1025,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     string expected = "subnet configuration failed: "
         "the value of min-valid-lifetime (2000) is not "
-        "less than max-valid-lifetime (1000)";
+        "less than (default) valid-lifetime (1000)";
     checkResult(status, 1, expected);
     resetConfiguration();
 
@@ -1037,6 +1037,9 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
     checkResult(status, 1, expected);
     resetConfiguration();
 
@@ -1068,6 +1071,20 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
         "the value of (default) valid-lifetime (5000) is not "
         "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
     checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string crossed =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"valid-lifetime\": 1500, \"min-valid-lifetime\": 2000, "
+        "\"max-valid-lifetime\": 1000 }";
+    ASSERT_NO_THROW(json = parseDHCP6(crossed));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of min-valid-lifetime (2000) is not "
+        "less than max-valid-lifetime (1000)";
+    checkResult(status, 1, expected);
 }
 
 /// Check that preferred-lifetime must be between min-preferred-lifetime and
@@ -1088,7 +1105,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
     string expected = "subnet configuration failed: "
         "the value of min-preferred-lifetime (2000) is not "
-        "less than max-preferred-lifetime (1000)";
+        "less than (default) preferred-lifetime (1000)";
     checkResult(status, 1, expected);
     resetConfiguration();
 
@@ -1100,6 +1117,9 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
 
     ASSERT_NO_THROW(json = parseDHCP6(too_large));
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of (default) preferred-lifetime (2000) is not "
+        "less than max-preferred-lifetime (1000)";
     checkResult(status, 1, expected);
     resetConfiguration();
 
@@ -1130,6 +1150,20 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (5000) is not between "
         "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
+    checkResult(status, 1, expected);
+    resetConfiguration();
+
+    string crossed =  "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/32\" } ],"
+        "\"preferred-lifetime\": 1500, \"min-preferred-lifetime\": 2000, "
+        "\"max-preferred-lifetime\": 1000 }";
+    ASSERT_NO_THROW(json = parseDHCP6(crossed));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    expected = "subnet configuration failed: "
+        "the value of min-preferred-lifetime (2000) is not "
+        "less than max-preferred-lifetime (1000)";
     checkResult(status, 1, expected);
 }
 
