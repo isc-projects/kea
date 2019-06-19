@@ -1,3 +1,7 @@
+1595.	[func]		fdupont
+	Removed unused t1_ and t2_ members from internal lease class.
+	(Gitlab #567,!357, 6072db5f4ca6cfa9573152c255f97dd170acbd57)
+
 1594.	[bug]		fdupont
 	Kea no longer uses the .../var/kea directory, for instance pid
 	files are now in .../var/run/kea.
