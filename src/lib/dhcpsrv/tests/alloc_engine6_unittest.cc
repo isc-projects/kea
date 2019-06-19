@@ -933,7 +933,7 @@ TEST_F(AllocEngine6Test, defaultReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -979,7 +979,7 @@ TEST_F(AllocEngine6Test, hintReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -1025,7 +1025,7 @@ TEST_F(AllocEngine6Test, minReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -1071,7 +1071,7 @@ TEST_F(AllocEngine6Test, maxReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -1254,7 +1254,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
 TEST_F(AllocEngine6Test, defaultRenewLeaseLifetime) {
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -1289,7 +1289,7 @@ TEST_F(AllocEngine6Test, defaultRenewLeaseLifetime) {
 TEST_F(AllocEngine6Test, hintRenewLeaseLifetime) {
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -1324,7 +1324,7 @@ TEST_F(AllocEngine6Test, hintRenewLeaseLifetime) {
 TEST_F(AllocEngine6Test, minRenewLeaseLifetime) {
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.
@@ -1359,7 +1359,7 @@ TEST_F(AllocEngine6Test, minRenewLeaseLifetime) {
 TEST_F(AllocEngine6Test, maxRenewLeaseLifetime) {
     // Create a lease for the client.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
-                               duid_, iaid_, 300, 400, 100, 200,
+                               duid_, iaid_, 300, 400,
                                subnet_->getID(), HWAddrPtr(), 128));
 
     // Allocated 200 seconds ago - half of the lifetime.

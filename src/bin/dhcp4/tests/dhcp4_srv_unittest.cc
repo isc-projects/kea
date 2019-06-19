@@ -1522,9 +1522,7 @@ TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
+    // Check that valid and cltt were really updated
     EXPECT_EQ(l->valid_lft_, subnet_->getValid());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
@@ -1616,9 +1614,7 @@ TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
+    // Check that valid and cltt were really updated
     EXPECT_EQ(l->valid_lft_, hint);
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
@@ -1710,9 +1706,7 @@ TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
+    // Check that valid and cltt were really updated
     EXPECT_EQ(l->valid_lft_, subnet_->getValid().getMin());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
@@ -1803,9 +1797,7 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
+    // Check that valid and cltt were really updated
     EXPECT_EQ(l->valid_lft_, subnet_->getValid().getMax());
 
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
