@@ -62,7 +62,6 @@ void Observation::setMaxSampleAge(const StatsDuration& duration) {
         isc_throw(InvalidStatType, "Unknown statistic type: "
                   << typeToText(type_));
     };
-
 }
 
 void Observation::setMaxSampleCount(uint32_t max_samples) {
