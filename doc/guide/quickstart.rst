@@ -14,7 +14,7 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 ================================================
 
 1.  Install required run-time and build dependencies. See
-    :ref:`Build Requirements <build-requirements>` for details.
+    :ref:`build-requirements` for details.
 
 2.  Download the Kea source tarball from the :ref:`ISC.org downloads
     page <https://www.isc.org/download/>` or the :ref:`ISC FTP
@@ -102,7 +102,7 @@ available in the :ref:`Kea section of ISC's
 Knowledgebase <https://kb.isc.org/docs>`.
 
 The details of ``keactrl`` script usage can be found in
-:ref:`Managing Kea with keactrl <#keactrl>`.
+:ref:`keactrl`.
 
 .. _quick-start-direct-run:
 

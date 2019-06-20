@@ -15,7 +15,7 @@ JSON Configuration
 
 JSON is the notation used throughout the Kea project. The most obvious
 usage is for the configuration file, but JSON is also used for sending
-commands over the Management API (see :ref:`Management API <ctrl-channel>`) and for
+commands over the Management API (see :ref:`ctrl-channel`) and for
 communicating between DHCP servers and the DDNS update daemon.
 
 Typical usage assumes that the servers are started from the command

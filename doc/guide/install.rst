@@ -44,7 +44,7 @@ Build Requirements
 =====================
 
 In addition to the run-time requirements (listed in
-:ref:`Required Software at Run-Time <required-software>`), building Kea from source code requires
+:ref:`required-software`), building Kea from source code requires
 various development include headers and program development tools.
 
    **Note**
@@ -217,7 +217,7 @@ options. Some commonly used options are:
    found, it searches for OpenSSL. Normally this is not necessary.
 
 --enable-shell
-   Build the optional ``kea-shell`` tool (more in :ref:`The Kea Shell" <kea-shell>`).
+   Build the optional ``kea-shell`` tool (more in :ref:`kea-shell`).
    The default is to not build it.
 
 --enable-perfdhcp
@@ -229,8 +229,7 @@ options. Some commonly used options are:
    **Note**
 
    For instructions concerning the installation and configuration of
-   database backends for Kea, see :ref:`DHCP Database Installation and
-   Configuration <dhcp-install-configure>`.
+   database backends for Kea, see :ref:`dhcp-install-configure`.
 
 There are also many additional options that are typically not necessary for
 regular users. However, they may be useful for package maintainers,
@@ -387,9 +386,9 @@ Building with MySQL Support
 Install MySQL according to the instructions for your system. The client
 development libraries must be installed.
 
-Build and install Kea as described in :ref:`Installation <installation>`,
+Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the MySQL database code, at
-the "configure" step (see :ref:`Configure Before the Build <configure>`),
+the "configure" step (see :ref:`configure`),
 the --with-mysql switch should be specified:
 
 ::
@@ -404,7 +403,7 @@ switch, i.e.
 
    ./configure [other-options] --with-mysql=path-to-mysql_config
 
-See :ref:`First-Time Creation of the MySQL Database <mysql-database-create>` for details regarding MySQL
+See :ref:`mysql-database-create` for details regarding MySQL
 database configuration.
 
 Building with PostgreSQL support
@@ -414,10 +413,9 @@ Install PostgreSQL according to the instructions for your system. The
 client development libraries must be installed. Client development
 libraries are often packaged as "libpq".
 
-Build and install Kea as described in :ref:`Installation <installation>`,
+Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the PostgreSQL database code,
-at the "configure" step (see :ref:`Configure Before the
-Build <configure>`), the --with-pgsql switch should be specified:
+at the "configure" step (see :ref:`configure`), the --with-pgsql switch should be specified:
 
 ::
 
@@ -431,7 +429,7 @@ the switch, i.e.
 
    ./configure [other-options] --with-pgsql=path-to-pg_config
 
-See :ref:`First-Time Creation of the PostgreSQL Database <pgsql-database-create>` for details regarding PostgreSQL
+See :ref:`pgsql-database-create` for details regarding PostgreSQL
 database configuration.
 
 Building with CQL (Cassandra) Support
@@ -443,9 +441,8 @@ https://cassandra.apache.org.
 
 If you have a cpp-driver package available as binary or as source,
 simply install or build and install the package. Then build and install
-Kea as described in :ref:`Installation <installation>`. To enable the
-Cassandra (CQL) database code, at the "configure" step (see :ref:`Configure
-Before the Build <configure>`), enter:
+Kea as described in :ref:`installation`. To enable the
+Cassandra (CQL) database code, at the "configure" step (see :ref:`configure`), enter:
 
 ::
 
@@ -483,10 +480,9 @@ point to the directory where the cpp-driver sources are located. Make
 sure that appropriate access rights are set on this file. It should be
 executable by the system user building Kea.
 
-Build and install Kea as described in :ref:`Installation <installation>`,
+Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the Cassandra (CQL) database
-code, at the "configure" step (see :ref:`Configure Before the
-Build <configure>`), enter:
+code, at the "configure" step (see :ref:`configure`), enter:
 
 ::
 

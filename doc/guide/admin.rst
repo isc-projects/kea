@@ -154,7 +154,7 @@ files will be assigned appropriate default values. When downgrading, any
 data present in the files but not in the server's schema will be
 dropped. If you wish to convert the files manually prior to starting the
 servers, you may do so by running the LFC process yourself. See
-:ref:`The LFC Process <kea-lfc>` for more information.
+:ref:`kea-lfc` for more information.
 
 .. _mysql-database:
 
@@ -253,7 +253,7 @@ To check the current version of the database, use the following command:
 
    $ kea-admin lease-version mysql -u database-user -p database-password -n database-name
 
-(See :ref:`Databases and Database Version Numbers <kea-database-version>`
+(See :ref:`kea-database-version`
 for a discussion about versioning.) If the version does not match the
 minimum required for the new version of Kea (as described in the release
 notes), the database needs to be upgraded.
@@ -405,8 +405,7 @@ Upgrading a PostgreSQL Database from an Earlier Version of Kea
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The PostgreSQL database schema can be upgraded using the same tool and
-commands as described in :ref:`Upgrading a MySQL Database from an Earlier
-Version of Kea <mysql-upgrade>`, with the exception that the "pgsql"
+commands as described in :ref:`mysql-upgrade`, with the exception that the "pgsql"
 database backend type must be used in the commands.
 
 Use the following command to check the current schema version:
@@ -506,7 +505,7 @@ To check the current version of the database, use the following command:
 
    $ kea-admin lease-version cql -n database-name
 
-(See :ref:`Databases and Database Version Numbers <kea-database-version>`
+(See :ref:`kea-database-version`
 for a discussion about versioning.) If the version does not match the
 minimum required for the new version of Kea (as described in the release
 notes), the database needs to be upgraded.
@@ -525,10 +524,10 @@ Using Read-Only Databases with Host Reservations
 
 If a read-only database is used for storing host reservations, Kea must
 be explicitly configured to operate on the database in read-only mode.
-Sections :ref:`Using Read-Only Databases for Host Reservations (DHCPv4) <read-only-database-configuration4>` and
-:ref:`Using Read-Only Databases for Host Reservations (DHCPv6) <read-only-database-configuration6>` describe when such
+Sections :ref:`read-only-database-configuration4` and
+:ref:`read-only-database-configuration6` describe when such
 a configuration may be required, and how to configure Kea to operate in
-this way.
+this way for both DHCPv4 and DHCPv6.
 
 Limitations Related to the Use of SQL Databases
 -----------------------------------------------

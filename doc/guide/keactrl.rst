@@ -120,7 +120,7 @@ specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``,
 The ``kea_verbose`` parameter specifies the verbosity of the servers
 being started. When ``kea_verbose`` is set to "yes" the logging level of
 the server is set to DEBUG. Modification of the logging severity in a
-configuration file, as described in :ref:`Logging <logging>`, will have no
+configuration file, as described in :ref:`logging`, will have no
 effect as long as the ``kea_verbose`` is set to "yes." Setting it to
 "no" will cause the server to use the logging levels specified in the
 Kea configuration file. If no logging configuration is specified, the

@@ -34,7 +34,7 @@ Required Software at Run-Time
 Running Kea uses various extra software packages which may not be
 provided in the default installation of some operating systems, nor in
 the standard package collections. You may need to install this required
-software separately. (For the build requirements, also see :ref:`Build Requirements <build-requirements>`.)
+software separately. (For the build requirements, also see :ref:`build-requirements`.)
 
 -  Kea supports two cryptographic libraries: Botan and OpenSSL. Only one
    of them is required to be installed during compilation. Kea uses the
@@ -74,7 +74,7 @@ software separately. (For the build requirements, also see :ref:`Build Requireme
    kea-netconf agent. This Kea module is built optionally and requires
    Sysrepo software when used. Building Kea with NETCONF support
    requires many dependencies to be installed, which are described in
-   more detail in :ref: `Installing NETCONF <netconf-install>`.
+   more detail in :ref: `netconf-install`.
 
 .. _kea_software:
 

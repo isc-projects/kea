@@ -191,7 +191,7 @@ client will begin the renewal and rebind procedures.
    will only send ``renew-timer``, via DHCPv4 option code 58, if it is less
    than ``rebind-timer`` (or ``valid-lifetime`` if ``rebind-timer`` was not
    specified). In their absence, the client should select values for T1
-   and T2 timers according to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`. 
+   and T2 timers according to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`.
    See section :ref:`dhcp4-t1-t2-times`
    for more details on generating T1 and T2.
 
@@ -273,7 +273,7 @@ Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The server is able to store lease data in different repositories. Larger
-deployments may elect to store leases in a database. 
+deployments may elect to store leases in a database.
 :ref:`database-configuration4` describes this option. In
 typical smaller deployments, though, the server will store lease
 information in a CSV file rather than a database. As well as requiring
@@ -712,7 +712,7 @@ entry as in:
 
    "Dhcp4": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
 
-For additional Cassandra-specific parameters, see 
+For additional Cassandra-specific parameters, see
 :ref:`cassandra-database-configuration4`.
 
 .. _read-only-database-configuration4:
@@ -841,7 +841,7 @@ address of the destination into the data link layer of the packet
 being sent to the client. The DHCPv4 server uses raw sockets to
 achieve this, and builds the entire IP/UDP stack for the outgoing
 packets. The downside of raw socket use, however, is that incoming and
-outgoing packets bypass the firewalls (e.g. iptables). 
+outgoing packets bypass the firewalls (e.g. iptables).
 
 Handling traffic on multiple IPv4 addresses assigned to the same
 interface can be a challenge, as raw sockets are bound to the
@@ -1154,7 +1154,7 @@ Sending T1 (Option 58) and T2 (Option 59)
 
 According to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`,
 servers should send values for T1 and T2 that are 50% and 87.5% of the
-lease lifetime, repsectively. By default, kea-dhcp4 does not send
+lease lifetime, respectively. By default, kea-dhcp4 does not send
 either value. It can be configured to send values that are specified
 explicitly or that are calculated as percentages of the lease time. The
 server's behavior is governed by a combination of configuration
@@ -1487,7 +1487,7 @@ permitted, even if the definition being created matches the actual
 option format defined in the RFCs. There is an exception to this rule
 for standard options for which Kea currently does not provide a
 definition. In order to use such options, a server administrator must
-create a definition as described in 
+create a definition as described in
 :ref:`dhcp4-custom-options` in the "dhcp4" option space. This
 definition should match the option format described in the relevant RFC,
 but the configuration mechanism will allow any option format as it
@@ -1884,7 +1884,7 @@ defined in the following way:
 The ``type`` is set to "record" to indicate that the option contains
 multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
-from those listed in `table_title <#dhcp-types>`__.
+from those listed in :ref:`dhcp-types`.
 
 The values of the option are set as follows:
 
@@ -1904,7 +1904,7 @@ The values of the option are set as follows:
    }
 
 ``csv-format`` is set to ``true`` to indicate that the ``data`` field
-comprises a command-separated list of values. The values in ``data``
+comprises a comma-separated list of values. The values in ``data``
 must correspond to the types set in the ``record-types`` field of the
 option definition.
 
@@ -1934,7 +1934,7 @@ bit unsigned integers.
    **Note**
 
    In general, boolean values are specified as ``true`` or ``false``,
-   without quotes. Some specific boolean parameters may accept also
+   without quotes. Some specific boolean parameters may also accept
    ``"true"``, ``"false"``, ``0``, ``1``, ``"0"``, and ``"1"``.
 
 ..
@@ -1976,8 +1976,8 @@ PXEClient vendor:
        ...
    }
 
-As the Vendor-Specific Information option (code 43) has vendor- specific
-format, i.e. can carry either raw binary value or sub-options, this
+As the Vendor-Specific Information option (code 43) has vendor-specific
+format, i.e. can carry either raw binary value or suboptions, this
 mechanism is available for this option too.
 
 In the following example taken from a real configuration, two vendor
@@ -2061,17 +2061,16 @@ The definition used to decode a VSI option is:
 2. If none, the global definition;
 
 3. If none, the last-resort definition described in the next section
-   `DHCPv4 Vendor-Specific Options <#dhcp4-vendor-opts>`__
-   (backwards-compatible with previous Kea versions).
+   :ref:`dhcp4-vendor-opts` (backwards-compatible with previous Kea versions).
 
 ..
 
    **Note**
 
    This last-resort definition for the Vendor-Specific Information
-   option (code 43) is not compatible with a raw binary value. So when
-   there are some known cases where a raw binary value will be used, a
-   client class must be defined with a classification expression
+   option (code 43) is not compatible with a raw binary value. When
+   there are known cases where a raw binary value will be used, a
+   client class must be defined with both a classification expression
    matching these cases and an option definition for the VSI option with
    a binary type and no encapsulation.
 
@@ -2091,7 +2090,7 @@ Currently there are two option spaces defined for the DHCPv4 daemon:
 "vendor-encapsulated-options-space", which is empty by default but in
 which options can be defined. Such options will be carried in the
 Vendor-Specific Information option (code 43). The following examples
-show how to define an option "foo" in that space that has a code 1, and
+show how to define an option "foo" in that space that has a code 1, and that
 comprises an IPv4 address, an unsigned 16-bit integer, and a string. The
 "foo" option is conveyed in a Vendor-Specific Information option.
 
@@ -2134,7 +2133,7 @@ the next step is to define actual values for that option:
    }
 
 We also include the Vendor-Specific Information option, the option that
-conveys our sub-option "foo". This is required; otherwise the option
+conveys our suboption "foo". This is required; otherwise, the option
 will not be included in messages sent to the client.
 
 ::
@@ -2161,26 +2160,26 @@ Alternatively, the option can be specified using its code.
        ...
    }
 
-Another popular option that is often somewhat imprecisely called vendor
-option is option 125. It's proper name is vendor-independent
+Another popular option that is often somewhat imprecisely called "vendor
+option" is option 125. Its proper name is vendor-independent
 vendor-specific information option or vivso. The idea behind those
 options is that each vendor has its own unique set of options with their
-own custom formats. The vendor is identified by a 32 unsigned integer
+own custom formats. The vendor is identified by a 32-bit unsigned integer
 called enterprise-id or vendor-id. For example, vivso with vendor-id
-4491 repesents DOCSIS options and you are likely to see many of them
+4491 represents DOCSIS options, and you are likely to see many of them
 when dealing with cable modems.
 
 In Kea each vendor is represented by its own vendor space. Since there
 are hundreds of vendors and sometimes they use different option
 definitions for different hardware, it's impossible for Kea to support
 them all out of the box. Fortunately, it's easy to define support for
-new vendor options. Let's take an example of Genexis home gateway. This
-device requires sending vivso 125 option with a suboption 2 that
-contains a string with TFTP server URL. To support such a device, three
-steps are needed. First, we need to define option definitions that will
+new vendor options. Let's take an example of the Genexis home gateway. This
+device requires sending the vivso 125 option with a suboption 2 that
+contains a string with the TFTP server URL. To support such a device, three
+steps are needed: first, we need to define option definitions that will
 explain how the option is supposed to be formed. Second, we will need to
 define option values. Third, we will need to tell Kea when to send those
-specific options. This last step will be done with client
+specific options. This last step will be accomplished with client
 classification.
 
 An example snippet of a configuration could look similar to the
@@ -2189,13 +2188,13 @@ following:
 ::
 
    {
-       // First, we need to define that suboption 2 in vivso option for
-       // vendor-id 25167 has specific format (it's a plain string in this example).
+       // First, we need to define that the suboption 2 in vivso option for
+       // vendor-id 25167 has a specific format (it's a plain string in this example).
        // After this definition, we can specify values for option tftp.
        "option-def": [
        {
-           // We define a short name, so the option could be referenced by name.
-           // The option has code 2 and resides with vendor space 25167.
+           // We define a short name, so the option can be referenced by name.
+           // The option has code 2 and resides within vendor space 25167.
            // Its data is a plain string.
            "name": "tftp",
            "code": 2,
@@ -2206,17 +2205,17 @@ following:
        "client-classes": [
        {
            // We now need to tell Kea how to recognize when to use vendor space 25167.
-           // Usually we can use simple expression such as checking if the device
-           // sent a vivso option with specific vendor-id, e.g.  "vendor[4491].exists"
+           // Usually we can use a simple expression, such as checking if the device
+           // sent a vivso option with specific vendor-id, e.g. "vendor[4491].exists".
            // Unfortunately, Genexis is a bit unusual in this aspect, because it
-           // doesn't send vivso. In this case we need to look into vendor class
-           // (option code 60) and see if there's specific string that identifies
+           // doesn't send vivso. In this case we need to look into the vendor class
+           // (option code 60) and see if there's a specific string that identifies
            // the device.
            "name": "cpe_genexis",
            "test": "substring(option[60].hex,0,7) == 'HMC1000'",
 
            // Once the device is recognized, we want to send two options:
-           // the VIVSO option with vendor-id set to 25167 and a suboption 2.
+           // the vivso option with vendor-id set to 25167, and a suboption 2.
            "option-data": [
                {
                    "name": "vivso-suboptions",
@@ -2226,7 +2225,7 @@ following:
 
                // The suboption 2 value is defined as any other option. However,
                // we want to send this suboption 2, even when the client didn't
-               // explicitly requested it (often there is no way to do that for
+               // explicitly request it (often there is no way to do that for
                // vendor options). Therefore we use always-send to force Kea
                // to always send this option when 25167 vendor space is involved.
                {
@@ -2239,46 +2238,45 @@ following:
        } ]
    }
 
-One aspect requires a bit broader comment. By default Kea sends back
+By default Kea sends back
 only those options that are requested by a client, unless there are
-protocol rules that tell DHCP server to always send an option. This
+protocol rules that tell the DHCP server to always send an option. This
 approach works nicely for most cases and avoids problems with clients
 refusing responses with options they don't understand. Unfortunately,
-this is more blurry when we consider vendor options. Some vendors (such
-as docsis, identified by vendor options 4491) have a mechanism to
-request specific vendor options and Kea is able to honor that.
-Unfortunately, for many other vendors, such as Genexis (25167) discussed
-here, Kea does not have such a mechanism, so it can't sent any
-suboptions on its own. To solve this issue, we came up with a concept of
-persistent options. Kea can be told to always send options, even if
-client didn't request them. This can be achieved by adding
+this is more complex when we consider vendor options. Some vendors (such
+as docsis, identified by vendor option 4491) have a mechanism to
+request specific vendor options and Kea is able to honor those.
+Unfortunately, for many other vendors, such as Genexis (25167) as discussed
+above, Kea does not have such a mechanism, so it can't send any
+suboptions on its own. To solve this issue, we came up with the concept of
+persistent options. Kea can be told to always send options, even if the
+client did not request them. This can be achieved by adding
 "always-send": true to your option definition. Note that in this
-particular case an option is defined in a vendor space 25167. With the
+particular case an option is defined in vendor space 25167. With the
 "always-send" enabled, the option will be sent every time there is a
 need to deal with vendor space 25167.
 
-Another possibility is to redefine the option; see `DHCPv4 Private
-Options <#dhcp4-private-opts>`__.
+Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
 
 .. _dhcp4-option-spaces:
 
 Nested DHCPv4 Options (Custom Option Spaces)
 --------------------------------------------
 
-It is sometimes useful to define a completely new option space. This is
-the case when a user creates a new option in the standard option space
-("dhcp4") and wants this option to convey sub-options. Since they are in
-a separate space, sub-option codes will have a separate numbering scheme
+It is sometimes useful to define a completely new option space, such as
+when a user creates a new option in the standard option space
+("dhcp4") and wants this option to convey suboptions. Since they are in
+a separate space, suboption codes will have a separate numbering scheme
 and may overlap with the codes of standard options.
 
 Note that the creation of a new option space is not required when
-defining sub-options for a standard option, because it is created by
-default if the standard option is meant to convey any sub-options (see
-`DHCPv4 Vendor-Specific Options <#dhcp4-vendor-opts>`__).
+defining suboptions for a standard option, because it is created by
+default if the standard option is meant to convey any suboptions (see
+:ref:`dhcp4-vendor-opts`).
 
 Assume that we want to have a DHCPv4 option called "container" with code
-222 that conveys two sub-options with codes 1 and 2. First we need to
-define the new sub-options:
+222 that conveys two suboptions with codes 1 and 2. First we need to
+define the new suboptions:
 
 ::
 
@@ -2330,10 +2328,10 @@ and specify that it should include options from the new option space:
        ...
    }
 
-The name of the option space in which the sub-options are defined is set
+The name of the option space in which the suboptions are defined is set
 in the ``encapsulate`` field. The ``type`` field is set to ``empty``, to
 indicate that this option does not carry any data other than
-sub-options.
+suboptions.
 
 Finally, we can set values for the new options:
 
@@ -2363,12 +2361,12 @@ Finally, we can set values for the new options:
    }
 
 Note that it is possible to create an option which carries some data in
-addition to the sub-options defined in the encapsulated option space.
+addition to the suboptions defined in the encapsulated option space.
 For example, if the "container" option from the previous example were
-required to carry a uint16 value as well as the sub-options, the
+required to carry a uint16 value as well as the suboptions, the
 ``type`` value would have to be set to "uint16" in the option
 definition. (Such an option would then have the following data
-structure: DHCP header, uint16 value, sub-options.) The value specified
+structure: DHCP header, uint16 value, suboptions.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
 in quotes, e.g. "123" — would then be assigned to the uint16 field in
 the "container" option.
@@ -2385,11 +2383,11 @@ as it may result in configuration errors. The list below explains the
 behavior of the server when a particular parameter is not explicitly
 specified:
 
--  ``name`` - the server requires an option name or option code to
+-  ``name`` - the server requires either an option name or an option code to
    identify an option. If this parameter is unspecified, the option code
    must be specified.
 
--  ``code`` - the server requires an option name or option code to
+-  ``code`` - the server requires either an option name or an option code to
    identify an option. This parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
    particular option has its definition (it is either a standard option
@@ -2422,7 +2420,7 @@ Stateless Configuration of DHCPv4 Clients
 The DHCPv4 server supports the stateless client configuration whereby
 the client has an IP address configured (e.g. using manual
 configuration) and only contacts the server to obtain other
-configuration parameters, e.g. addresses of DNS servers. In order to
+configuration parameters, such as addresses of DNS servers. In order to
 obtain the stateless configuration parameters, the client sends the
 DHCPINFORM message to the server with the "ciaddr" set to the address
 that the client is currently using. The server unicasts the DHCPACK
@@ -2477,13 +2475,13 @@ Client Classification in DHCPv4
 -------------------------------
 
 The DHCPv4 server includes support for client classification. For a
-deeper discussion of the classification process see `??? <#classify>`__.
+deeper discussion of the classification process see :ref:`classify`.
 
 In certain cases it is useful to configure the server to differentiate
 between DHCP client types and treat them accordingly. Client
 classification can be used to modify the behavior of almost any part of
 the DHCP message processing. Kea currently offers client classification
-via: private options and option 43 deferred unpacking; subnet selection;
+via private options and option 43 deferred unpacking; subnet selection;
 pool selection; assignment of different options; and, for cable modems,
 specific options for use with the TFTP server address and the boot file
 field.
@@ -2497,24 +2495,24 @@ itself, which should be handed a lease from subnet A; and all other
 devices behind the modem, which should get a lease from subnet B. That
 segregation is essential to prevent overly curious users from playing
 with their cable modems. For details on how to set up class restrictions
-on subnets, see `??? <#classification-subnets>`__.
+on subnets, see :ref:`classification-subnets`.
 
 When subnets belong to a shared network, the classification applies to
-subnet selection but not to pools, e.g. a pool in a subnet limited to a
+subnet selection but not to pools; that is, a pool in a subnet limited to a
 particular class can still be used by clients which do not belong to the
 class, if the pool they are expected to use is exhausted. So the limit
 on access based on class information is also available at the pool
-level; see `??? <#classification-pools>`__, within a subnet. This is
+level; see :ref:`classification-pools`, within a subnet. This is
 useful when segregating clients belonging to the same subnet into
 different address ranges.
 
 In a similar way, a pool can be constrained to serve only known clients,
 i.e. clients which have a reservation, using the built-in "KNOWN" or
-"UNKNOWN" classes. One can assign addresses to registered clients
+"UNKNOWN" classes. Addresses can be assigned to registered clients
 without giving a different address per reservation, for instance when
 there are not enough available addresses. The determination whether
 there is a reservation for a given client is made after a subnet is
-selected, so it is not possible to use KNOWN/UNKNOWN classes to select a
+selected, so it is not possible to use "KNOWN"/"UNKNOWN" classes to select a
 shared network or a subnet.
 
 The process of classification is conducted in five steps. The first step
@@ -2527,7 +2525,7 @@ reservations. The list of required classes is then built and each class
 of the list has its expression evaluated; when it returns "true" the
 packet is added as a member of the class. The last step is to assign
 options, again possibly based on the class information. More complete
-and detailed information is available in `??? <#classify>`__.
+and detailed information is available in :ref:`classify`.
 
 There are two main methods of classification. The first is automatic and
 relies on examining the values in the vendor class options or the
@@ -2554,12 +2552,12 @@ the sname field) and ``boot-file-name`` (conveys the configuration file,
 can be up to 128 bytes long, and is sent using the file field).
 
 Obviously, there are many ways to assign clients to specific classes,
-but for the PXE clients the client architecture type option (code 93)
+but for PXE clients the client architecture type option (code 93)
 seems to be particularly suited to make the distinction. The following
-example checks if the client identifies itself as a PXE device with
+example checks whether the client identifies itself as a PXE device with
 architecture EFI x86-64, and sets several fields if it does. See
-`Section 2.1 of RFC
-4578 <https://tools.ietf.org/html/rfc4578#section-2.1>`__) or the
+:ref:`Section 2.1 of RFC
+4578 <https://tools.ietf.org/html/rfc4578#section-2.1>`) or the
 documentation of your client for specific values.
 
 ::
@@ -2579,7 +2577,7 @@ documentation of your client for specific values.
              }
 
 If there are multiple classes defined and an incoming packet is matched
-to multiple classes, the class which is evaluated first is used.
+to multiple classes, the class that is evaluated first is used.
 
    **Note**
 
@@ -2590,7 +2588,7 @@ Using Vendor Class Information in Classification
 
 The server checks whether an incoming packet includes the vendor class
 identifier option (60). If it does, the content of that option is
-prepended with "VENDOR_CLASS_", and it is interpreted as a class. For
+prepended with "VENDOR_CLASS\_", and it is interpreted as a class. For
 example, modern cable modems will send this option with value
 "docsis3.0" and as a result the packet will belong to class
 "VENDOR_CLASS_docsis3.0".
@@ -2602,7 +2600,7 @@ example, modern cable modems will send this option with value
    next-server and boot-file-name values appropriately.
 
 This example shows a configuration using an automatically generated
-"VENDOR_CLASS_" class. The administrator of the network has decided that
+"VENDOR_CLASS\_" class. The administrator of the network has decided that
 addresses from range 192.0.2.10 to 192.0.2.20 are going to be managed by
 the Dhcp4 server and only clients belonging to the docsis3.0 client
 class are allowed to use that pool.
@@ -2666,7 +2664,7 @@ Required Classification
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 In some cases it is useful to limit the scope of a class to a
-shared-network, subnet, or pool. There are two parameters for this,
+shared network, subnet, or pool. There are two parameters for this,
 which instruct the server to evaluate test expressions when required.
 
 The first one is the per-class ``only-if-required`` flag which is false
@@ -2677,7 +2675,7 @@ only if the class evaluation is required.
 The second is ``require-client-classes``, which takes a list of class
 names and is valid in shared-network, subnet, and pool scope. Classes in
 these lists are marked as required and evaluated after selection of this
-specific shared-network/subnet/pool and before output option processing.
+specific shared network/subnet/pool and before output option processing.
 
 In this example, a class is assigned to the incoming packet when the
 specified subnet is used:
@@ -2705,14 +2703,13 @@ specified subnet is used:
        ...
    }
 
-Required evaluation can be used to express complex dependencies, for
-example, subnet membership. It can also be used to reverse the
+Required evaluation can be used to express complex dependencies like subnet membership. It can also be used to reverse the
 precedence; if you set an option-data in a subnet, it takes precedence
 over an option-data in a class. When you move the option-data to a
 required class and require it in the subnet, a class evaluated earlier
 may take precedence.
 
-Required evaluation is also available at shared-network and pool levels.
+Required evaluation is also available at the shared-network and pool levels.
 The order in which required classes are considered is: shared-network,
 subnet, and pool, i.e. in the opposite order in which option-data is
 processed.
@@ -2801,25 +2798,25 @@ For NCRs to reach the D2 server, kea-dhcp4 must be able to communicate
 with it. kea-dhcp4 uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - determines whether kea-dhcp4 will generate NCRs.
+-  ``enable-updates`` - this determines whether kea-dhcp4 will generate NCRs.
    By default, this value is false, so DDNS updates are disabled. To
    enable DDNS updates set this value to true.
 
--  ``server-ip`` - IP address on which D2 listens for requests. The
+-  ``server-ip`` - the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1. You may
    specify either an IPv4 or IPv6 address.
 
--  ``server-port`` - port on which D2 listens for requests. The default
+-  ``server-port`` - the port on which D2 listens for requests. The default
    value is 53001.
 
--  ``sender-ip`` - IP address which kea-dhcp4 uses to send requests to
+-  ``sender-ip`` - the IP address which kea-dhcp4 uses to send requests to
    D2. The default value is blank, which instructs kea-dhcp4 to select a
    suitable address.
 
--  ``sender-port`` - port which kea-dhcp4 uses to send requests to D2.
+-  ``sender-port`` - the port which kea-dhcp4 uses to send requests to D2.
    The default value of 0 instructs kea-dhcp4 to select a suitable port.
 
--  ``max-queue-size`` - maximum number of requests allowed to queue
+-  ``max-queue-size`` - the maximum number of requests allowed to queue
    waiting to be sent to D2. This value guards against requests
    accumulating uncontrollably if they are being generated faster than
    they can be delivered. If the number of requests queued for
@@ -2829,10 +2826,10 @@ control this communication:
    running the risk that its memory usage grows without limit. The
    default value is 1024.
 
--  ``ncr-protocol`` - socket protocol to use when sending requests to
+-  ``ncr-protocol`` - the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.
 
--  ``ncr-format`` - packet format to use when sending requests to D2.
+-  ``ncr-format`` - the packet format to use when sending requests to D2.
    Currently only JSON format is supported.
 
 By default, kea-dhcp-ddns is assumed to be running on the same machine
@@ -2858,32 +2855,32 @@ following configuration is required:
 When Does the kea-dhcp4 Server Generate a DDNS Request?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-kea-dhcp4 follows the behavior prescribed for DHCP servers in `RFC
-4702 <http://tools.ietf.org/html/rfc4702>`__. It is important to keep in
+kea-dhcp4 follows the behavior prescribed for DHCP servers in :ref:`RFC
+4702 <http://tools.ietf.org/html/rfc4702>`. It is important to keep in
 mind that kea-dhcp4 makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
-(`??? <#dhcp-ddns-server>`__). This section describes when kea-dhcp4
+(see :ref:`dhcp-ddns-server`). This section describes when kea-dhcp4
 will generate NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that the ``enable-updates``
 parameter is true.
 
 In general, kea-dhcp4 will generate DDNS update requests when:
 
-1. A new lease is granted in response to a DHCPREQUEST
+1. A new lease is granted in response to a DHCPREQUEST;
 
 2. An existing lease is renewed but the FQDN associated with it has
-   changed
+   changed; or
 
-3. An existing lease is released in response to a DHCPRELEASE
+3. An existing lease is released in response to a DHCPRELEASE.
 
 In the second case, lease renewal, two DDNS requests will be issued: one
 request to remove entries for the previous FQDN, and a second request to
 add entries for the new FQDN. In the last case, a lease release, a
 single DDNS request to remove its entries will be made.
 
-The decisions involved when granting a new lease (the first case) are
+As for the first case, the decisions involved when granting a new lease are
 more complex. When a new lease is granted, kea-dhcp4 will generate a
 DDNS update request if the DHCPREQUEST contains either the FQDN option
 (code 81) or the Host Name option (code 12). If both are present, the
@@ -2914,7 +2911,7 @@ table:
    |                 |                 | request         |                 |
    +-----------------+-----------------+-----------------+-----------------+
 
-The first row in the table above represents "client delegation". Here
+The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
 the server should do the reverse updates. By default, kea-dhcp4 will
 honor the client's wishes and generate a DDNS request to the D2 server
@@ -2926,8 +2923,8 @@ DDNS request to update both forward and reverse DNS data. In this case,
 the N-S-O flags in the server's response to the client will be 0-1-1
 respectively.
 
-(Note that the flag combination N=1, S=1 is prohibited according to `RFC
-4702 <http://tools.ietf.org/html/rfc4702>`__. If such a combination is
+(Note that the flag combination N=1, S=1 is prohibited according to :ref:`RFC
+4702 <https://tools.ietf.org/html/rfc4702>`. If such a combination is
 received from the client, the packet will be dropped by kea-dhcp4.)
 
 To override client delegation, set the following values in the
@@ -2974,7 +2971,7 @@ will be the name submitted to D2 in the DDNS update request.
 kea-dhcp4 Name Generation for DDNS Update Requests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each NameChangeRequest must of course include the fully qualified domain
+Each Name Change Request must of course include the fully qualified domain
 name whose DNS entries are to be affected. kea-dhcp4 can be configured
 to supply a portion or all of that name, based upon what it receives
 from the client in the DHCPREQUEST.
@@ -2992,8 +2989,7 @@ entries are:
 3. If the candidate name provided is empty, generate an FQDN using a
    configurable prefix and suffix.
 
-4. If the client provided neither option, then no DNS action will be
-   taken.
+4. If the client provided neither option, then take no DNS action.
 
 These rules can be amended by setting the ``replace-client-name``
 parameter, which provides the following modes of behavior:
@@ -3079,8 +3075,8 @@ myhost-172-16-1-10.example.com.
 Sanitizing Client Host Name and FQDN Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It may be that some of your DHCP clients provide values in the Host Name
-option (Option code 12) or FQDN option (Option code 81) that contain
+Some DHCP clients may provide values in the Host Name
+option (option code 12) or FQDN option (option code 81) that contain
 undesirable characters. It is possible to configure kea-dhcp4 to
 sanitize these values. The most typical use case is ensuring that only
 characters that are permitted by RFC 1035 be included: A-Z, a-z, 0-9,
@@ -3115,6 +3111,7 @@ Thus, a client-supplied value of "myhost-$[123.org" would become
 "myhost-xx123.org". Sanitizing is performed only on the portion of the
 name supplied by the client, and it is performed before applying a
 qualifying suffix (if one is defined and needed).
+
    **Note**
 
    The following are some considerations to keep in mind:
@@ -3160,7 +3157,7 @@ define it in the global scope or for a given subnet only. If both are
 defined, the subnet value takes precedence. The value in subnet can be
 set to 0.0.0.0, which means that ``next-server`` should not be sent. It
 may also be set to an empty string, which means the same as if it were
-not defined at all, i.e. use the global value.
+not defined at all; that is, use the global value.
 
 The ``server-hostname`` (which conveys a server hostname, can be up to
 64 bytes long, and will be sent in the sname field) and
@@ -3189,18 +3186,18 @@ handled the same way as ``next-server``.
 Echoing Client-ID (RFC 6842)
 ----------------------------
 
-The original DHCPv4 specification (`RFC
-2131 <http://tools.ietf.org/html/rfc2131>`__) states that the DHCPv4
+The original DHCPv4 specification (:ref:`RFC
+2131 <https://tools.ietf.org/html/rfc2131>`) states that the DHCPv4
 server must not send back client-id options when responding to clients.
-However, in some cases that confused clients that did not have a MAC
-address or client-id; see `RFC
-6842 <http://tools.ietf.org/html/rfc6842>`__ for details. That behavior
-changed with the publication of `RFC
-6842 <http://tools.ietf.org/html/rfc6842>`__, which updated `RFC
-2131 <http://tools.ietf.org/html/rfc2131>`__. That update states that
+However, in some cases that result confused clients that did not have a MAC
+address or client-id; see :ref:`RFC
+6842 <https://tools.ietf.org/html/rfc6842>` for details. That behavior
+changed with the publication of :ref:`RFC
+6842 <https://tools.ietf.org/html/rfc6842>`, which updated :ref:`RFC
+2131 <https://tools.ietf.org/html/rfc2131>`. That update states that
 the server must send the client-id if the client sent it. That is Kea's
 default behavior. However, in some cases older devices that do not
-support `RFC 6842 <http://tools.ietf.org/html/rfc6842>`__ may refuse to
+support :ref:`RFC 6842 <http://tools.ietf.org/html/rfc6842>` may refuse to
 accept responses that include the client-id option. To enable backward
 compatibility, an optional configuration parameter has been introduced.
 To configure it, use the following configuration statement:
@@ -3247,32 +3244,32 @@ to the client: "chaddr" and "client identifier". The former was
 introduced as a part of the BOOTP specification and it is also used by
 DHCP to carry the hardware address of the interface used to send the
 query to the server (MAC address for the Ethernet). The latter is
-carried in the Client-identifier option, introduced in `RFC
-2132 <http://tools.ietf.org/html/rfc2132>`__.
+carried in the Client-identifier option, introduced in :ref:`RFC
+2132 <http://tools.ietf.org/html/rfc2132>`.
 
-`RFC 2131 <http://tools.ietf.org/html/rfc2131>`__ indicates that the
+:ref:`RFC 2131 <http://tools.ietf.org/html/rfc2131>` indicates that the
 server may use both of these identifiers to identify the client but the
 "client identifier", if present, takes precedence over "chaddr". One of
 the reasons for this is that "client identifier" is independent from the
 hardware used by the client to communicate with the server. For example,
 if the client obtained the lease using one network card and then the
 network card is moved to another host, the server will wrongly identify
-this host as the one which obtained the lease. Moreover, `RFC
-4361 <https://tools.ietf.org/html/rfc4361>`__ gives the recommendation
-to use a DUID (see `RFC 8415 <https://tools.ietf.org/html/rfc8415>`__,
-the DHCPv6 specification) carried as "client identifier" when dual-stack
+this host as the one which obtained the lease. Moreover, :ref:`RFC
+4361 <https://tools.ietf.org/html/rfc4361>` gives the recommendation
+to use a DUID (see :ref:`RFC 8415 <https://tools.ietf.org/html/rfc8415>`,
+the DHCPv6 specification) carried as a "client identifier" when dual-stack
 networks are in use to provide consistent identification information for
-the client, regardless of the protocol type it is using. Kea adheres to
+the client, regardless of the type of protocol it is using. Kea adheres to
 these specifications, and the "client identifier" by default takes
 precedence over the value carried in the "chaddr" field when the server
 searches, creates, updates, or removes the client's lease.
 
 When the server receives a DHCPDISCOVER or DHCPREQUEST message from the
 client, it will try to find out if the client already has a lease in the
-database and will hand out that lease rather than allocate a new one.
+database; if it does, the server will hand out that lease rather than allocate a new one.
 Each lease in the lease database is associated with the "client
 identifier" and/or "chaddr". The server will first use the "client
-identifier" (if present) to search the lease. If the lease is found, the
+identifier" (if present) to search for the lease. If the lease is found, the
 server will treat this lease as belonging to the client even if the
 current "chaddr" and the "chaddr" associated with the lease do not
 match. This facilitates the scenario when the network card on the client
@@ -3280,7 +3277,7 @@ system has been replaced and thus the new MAC address appears in the
 messages sent by the DHCP client. If the server fails to find the lease
 using the "client identifier", it will perform another lookup using the
 "chaddr". If this lookup returns no result, the client is considered as
-not having a lease and the new lease will be created.
+not having a lease and a new lease will be created.
 
 A common problem reported by network operators is that poor client
 implementations do not use stable client identifiers, instead generating
@@ -3293,10 +3290,9 @@ system is considered to be the same client, even though its "client
 identifier" changes.
 
 To address this problem, Kea includes a configuration option which
-enables client identification using "chaddr" only by instructing the
-server to disregard the server to "ignore" the "client identifier"
-during lease lookups and allocations for a particular subnet. Consider
-the following simplified server configuration:
+enables client identification using "chaddr" only. This instructs the
+server to "ignore" the "client identifier" during lease lookups and allocations
+for a particular subnet. Consider the following simplified server configuration:
 
 ::
 
@@ -3321,7 +3317,7 @@ The ``match-client-id`` is a boolean value which controls this behavior.
 The default value of ``true`` indicates that the server will use the
 "client identifier" for lease lookups and "chaddr" if the first lookup
 returns no results. The ``false`` means that the server will only use
-the "chaddr" to search for client's lease. Whether the DHCID for DNS
+the "chaddr" to search for the client's lease. Whether the DHCID for DNS
 updates is generated from the "client identifier" or "chaddr" is
 controlled through the same parameter.
 
@@ -3336,18 +3332,18 @@ parameter and the global setting is by default used for this subnet. In
 fact, the global entry for this parameter could be omitted in this case,
 because ``true`` is the default value.
 
-It is important to explain what happens when the client obtains its
-lease for one setting of the ``match-client-id`` and then renews when
+It is important to understand what happens when the client obtains its
+lease for one setting of the ``match-client-id`` and then renews it when
 the setting has been changed. First, consider the case when the client
-obtains the lease when the ``match-client-id`` is set to ``true``. The
+obtains the lease and the ``match-client-id`` is set to ``true``. The
 server will store the lease information, including "client identifier"
 (if supplied) and "chaddr", in the lease database. When the setting is
 changed and the client renews the lease, the server will determine that
 it should use the "chaddr" to search for the existing lease. If the
 client hasn't changed its MAC address, the server should successfully
 find the existing lease. The "client identifier" associated with the
-returned lease is ignored and the client is allowed to use this lease.
-When the lease is renewed only the "chaddr" is recorded for this lease,
+returned lease will be ignored and the client will be allowed to use this lease.
+When the lease is renewed only the "chaddr" will be recorded for this lease,
 according to the new server setting.
 
 In the second case the client has the lease with only a "chaddr" value
@@ -3368,17 +3364,17 @@ new lease will be allocated.
 Authoritative DHCPv4 Server Behavior
 ------------------------------------
 
-The original DHCPv4 specification (`RFC
-2131 <http://tools.ietf.org/html/rfc2131>`__) states that if a client
+The original DHCPv4 specification (:ref:`RFC
+2131 <http://tools.ietf.org/html/rfc2131>`) states that if a client
 requests an address in the INIT-REBOOT state, of which the server has no
 knowledge, the server must remain silent, except if the server knows
 that the client has requested an IP address from the wrong network. By
-default, Kea follows the behavior of the ISC dhcpd instead of the
-specification and also remains silent, if the client requests an IP
+default, Kea follows the behavior of the ISC dhcpd daemon instead of the
+specification and also remains silent if the client requests an IP
 address from the wrong network, because configuration information about
 a given network segment is not known to be correct. Kea only rejects a
 client's DHCPREQUEST with a DHCPNAK message if it already has a lease
-for the client, but with a different IP address. Administrators can
+for the client with a different IP address. Administrators can
 override this behavior through the boolean ``authoritative`` (``false``
 by default) setting.
 
@@ -3394,11 +3390,11 @@ shared-network must have the same ``authoritative`` setting.
 DHCPv4-over-DHCPv6: DHCPv4 Side
 -------------------------------
 
-The support of DHCPv4-over-DHCPv6 transport is described in `RFC
-7341 <http://tools.ietf.org/html/rfc7341>`__ and is implemented using
+The support of DHCPv4-over-DHCPv6 transport is described in :ref:`RFC
+7341 <http://tools.ietf.org/html/rfc7341>` and is implemented using
 cooperating DHCPv4 and DHCPv6 servers. This section is about the
 configuration of the DHCPv4 side (the DHCPv6 side is described in
-`??? <#dhcp6-dhcp4o6-config>`__).
+:ref:`dhcp6-dhcp4o6-config`).
 
    **Note**
 
@@ -3418,13 +3414,13 @@ address this issue, three new configuration entries have been added; the
 presence of any of these allows the subnet to be used with
 DHCPv4-over-DHCPv6. These entries are:
 
--  ``4o6-subnet``: Takes a prefix (i.e., an IPv6 address followed by a
+-  ``4o6-subnet``: takes a prefix (i.e., an IPv6 address followed by a
    slash and a prefix length) which is matched against the source
    address.
 
--  ``4o6-interface-id``: Takes a relay interface ID option value.
+-  ``4o6-interface-id``: takes a relay interface ID option value.
 
--  ``4o6-interface``: Takes an interface name which is matched against
+-  ``4o6-interface``: takes an interface name which is matched against
    the incoming interface name.
 
 The following configuration was used during some tests:
@@ -3473,7 +3469,7 @@ Sanity Checks in DHCPv4
 -----------------------
 
 An important aspect of a well-running DHCP system is an assurance that
-the data remains consistent. However, in some cases it may be convenient
+the data remain consistent. However, in some cases it may be convenient
 to tolerate certain inconsistent data. For example, a network
 administrator that temporarily removed a subnet from a configuration
 wouldn't want all the leases associated with it to disappear from the
@@ -3481,7 +3477,7 @@ lease database. Kea has a mechanism to better control sanity checks such
 as this.
 
 Kea supports a configuration scope called ``sanity-checks``. It
-currently allows only a single parameter called ``lease-checks``. It
+currently allows only a single parameter, called ``lease-checks``, which
 governs the verification that is done when a new lease is loaded from a
 lease file. With the sanity-checks mechanism, it is possible to tell Kea
 to try to correct inconsistent data.
@@ -3503,21 +3499,21 @@ There are five levels which are supported:
 
 -  ``none`` - do no special checks; accept the lease as is.
 
--  ``warn`` - if problems are detected, a warning will be displayed, but
-   the lease data will be accepted anyway. This is the default value. If
+-  ``warn`` - if problems are detected display a warning, but
+   accept the lease data anyway. This is the default value. If
    not explicitly configured to some other value, this level will be
    used.
 
--  ``fix`` - If a data inconsistency is discovered, Kea will try to
+-  ``fix`` - if a data inconsistency is discovered, try to
    correct it. If the correction is not successful, the incorrect data
    will be inserted anyway.
 
--  ``fix-del`` - If a data inconsistency is discovered, Kea will try to
+-  ``fix-del`` - if a data inconsistency is discovered, try to
    correct it. If the correction is not successful, the lease will be
    rejected. This setting ensures the data's correctness, but some
    incorrect data may be lost. Use with care.
 
--  ``del`` - This is the strictest mode. If any inconsistency is
+-  ``del`` - this is the strictest mode. If any inconsistency is
    detected, the lease is rejected. Use with care.
 
 This feature is currently implemented for the memfile backend.
@@ -3546,7 +3542,7 @@ clients will generally not receive that address. Note that there may be
 cases when a new reservation has been made for a client for an address
 currently in use by another client. We call this situation a "conflict."
 These conflicts get resolved automatically over time as described in
-subsequent sections. Once the conflict is resolved, the client will keep
+subsequent sections. Once the conflict is resolved, the correct client will keep
 receiving the reserved configuration when it renews.
 
 Another example when host reservations are applicable is when a host has
@@ -3555,14 +3551,14 @@ options. Yet another possible use case is to define unique names for
 hosts.
 
 Host reservations are defined as parameters for each subnet. Each host
-must be identified by an identifier, for example the hardware/MAC
+must have its own unique identifier, such as the hardware/MAC
 address. There is an optional ``reservations`` array in the ``subnet4``
-structure. Each element in that array is a structure that holds
+structure; each element in that array is a structure that holds
 information about reservations for a single host. In particular, the
-structure must have an identifier that uniquely identifies a host. In
+structure must have a unique host identifier. In
 the DHCPv4 context, the identifier is usually a hardware or MAC address.
 In most cases an IP address will be specified. It is also possible to
-specify a hostname, host specific options, or fields carried within
+specify a hostname, host-specific options, or fields carried within the
 DHCPv4 message such as siaddr, sname, or file.
 
 The following example shows how to reserve addresses for specific hosts
@@ -3600,18 +3596,17 @@ in a subnet:
 The first entry reserves the 192.0.2.202 address for the client that
 uses a MAC address of 1a:1b:1c:1d:1e:1f. The second entry reserves the
 address 192.0.2.100 and the hostname of alice-laptop for the client
-using a DUID 0a:0b:0c:0d:0e:0f. (Note that if you plan to do DNS
-updates, it is strongly recommended for the hostnames to be unique.) The
+using a DUID 0a:0b:0c:0d:0e:0f. (Note that if DNS updates are planned,
+it is strongly recommended that the hostnames be unique.) The
 third example reserves address 192.0.3.203 for a client whose request
 would be relayed by a relay agent that inserts a circuit-id option with
-the value 'charter950'. The fourth entry reserves address 192.0.2.204
+the value "charter950". The fourth entry reserves address 192.0.2.204
 for a client that uses a client identifier with value
 01:11:22:33:44:55:66.
 
-The above example is used for illustrational purposes only and in actual
+The above example is used for illustrational purposes only; in actual
 deployments it is recommended to use as few types as possible
-(preferably just one). See `Fine-Tuning DHCPv4 Host
-Reservation <#reservations4-tuning>`__ for a detailed discussion of this
+(preferably just one). See :ref:`reservations4-tuning` for a detailed discussion of this
 point.
 
 Making a reservation for a mobile host that may visit multiple subnets
@@ -3623,7 +3618,7 @@ the same hardware address are valid if each is in a different subnet.
 Adding host reservation incurs a performance penalty. In principle, when
 a server that does not support host reservation responds to a query, it
 needs to check whether there is a lease for a given address being
-considered for allocation or renewal. The server that also supports host
+considered for allocation or renewal. The server that does support host
 reservation has to perform additional checks: not only whether the
 address is currently used (i.e., if there is a lease for it), but also
 whether the address could be used by someone else (i.e., if there is a
@@ -3655,10 +3650,9 @@ another.
 
    **Note**
 
-   You can reserve any ip-address in a global reservation. Just keep in
-   mind that Kea will not do any sanity checking on the address and for
-   Kea 1.5.0, support for global reservations should be considered
-   experimental.
+   Global reservations, while useful in certain circumstances, have aspects
+   that must be given due consideration when using them, please see
+   :ref:`reservation4-conflict` for more details.
 
 .. _reservation4-conflict:
 
@@ -3699,7 +3693,7 @@ address, the server will detect that it has a valid lease, but will note
 that there is a reservation for a different address. The server will
 send DHCPNAK to inform Host B that its address is no longer usable, but
 will keep its lease (again, the DHCPNAK may be lost, so the server will
-keep it, until the client returns for a new address). Host B will revert
+keep it until the client returns for a new address). Host B will revert
 to the server discovery phase and will eventually send a DHCPREQUEST
 message. This time the server will find that there is a reservation for
 that host and that the reserved address 192.0.2.10 is not used, so it
@@ -3713,8 +3707,8 @@ reservation is made, the server will either offer a different address
 DHCPREQUEST).
 
 The recovery mechanism allows the server to fully recover from a case
-where reservations conflict with existing leases. This procedure takes
-time and will roughly take as long as the value set for renew-timer. The
+where reservations conflict with existing leases; however, this procedure
+will take roughly as long as the value set for renew-timer. The
 best way to avoid such recovery is not to define new reservations that
 conflict with existing leases. Another recommendation is to use
 out-of-pool reservations. If the reserved address does not belong to a
@@ -3723,10 +3717,11 @@ pool, there is no way that other clients can get it.
    **Note**
 
    The conflict-resolution mechanism does not work for global
-   reservations. As of Kea 1.5.0, it is generally recommended that you
-   not use global reservations for addresses. If you choose to use them
-   anyway, you must manually ensure that the reserved addresses are not
-   in the dynamic pools.
+   reservations. Although the global address reservations feature may be useful
+   in certain settings, it is generally recommended not to use
+   global reservations for addresses. Administrators who do choose
+   to use global reservations must manually ensure that the reserved
+   addresses are not in dynamic pools.
 
 .. _reservation4-hostname:
 
@@ -3735,10 +3730,10 @@ Reserving a Hostname
 
 When the reservation for a client includes the ``hostname``, the server
 will return this hostname to the client in the Client FQDN or Hostname
-options. The server responds with the Client FQDN option only if the
-client has included Client FQDN option in its message to the server. The
+option. The server responds with the Client FQDN option only if the
+client has included the Client FQDN option in its message to the server. The
 server will respond with the Hostname option if the client included
-Hostname option in its message to the server or when the client
+the Hostname option in its message to the server, or if the client
 requested the Hostname option using the Parameter Request List option.
 The server will return the Hostname option even if it is not configured
 to perform DNS updates. The reserved hostname always takes precedence
@@ -3806,10 +3801,9 @@ Including Specific DHCPv4 Options in Reservations
 
 Kea offers the ability to specify options on a per-host basis. These
 options follow the same rules as any other options. These can be
-standard options (see `Standard DHCPv4 Options <#dhcp4-std-options>`__),
-custom options (see `Custom DHCPv4 Options <#dhcp4-custom-options>`__),
-or vendor-specific options (see `DHCPv4 Vendor-Specific
-Options <#dhcp4-vendor-opts>`__). The following example demonstrates how
+standard options (see :ref:`dhcp4-std-options`),
+custom options (see :ref:`dhcp4-custom-options`),
+or vendor-specific options (see :ref:`dhcp4-vendor-opts`). The following example demonstrates how
 standard options can be defined.
 
 ::
@@ -3859,7 +3853,7 @@ Vendor-specific options can be reserved in a similar manner:
 
 Options defined at host level have the highest priority. In other words,
 if there are options defined with the same type on global, subnet,
-class, and host level, the host-specific values will be used.
+class, and host levels, the host-specific values will be used.
 
 .. _reservation4-message-fields:
 
@@ -3890,8 +3884,8 @@ message fields:
    }
 
 Note that those parameters can be specified in combination with other
-parameters for a reservation, e.g. a reserved IPv4 address. These
-parameters are optional, i.e. a subset of them can be specified, or all
+parameters for a reservation, such as a reserved IPv4 address. These
+parameters are optional; a subset of them can be specified, or all
 of them can be omitted.
 
 .. _reservation4-client-classes:
@@ -3899,7 +3893,7 @@ of them can be omitted.
 Reserving Client Classes in DHCPv4
 ----------------------------------
 
-`??? <#classification-using-expressions>`__ explains how to configure
+:ref:`classification-using-expressions` explains how to configure
 the server to assign classes to a client, based on the content of the
 options that this client sends to the server. Host reservations
 mechanisms also allow for the static assignment of classes to clients.
@@ -3964,12 +3958,12 @@ Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
 ------------------------------------------------------------
 
 It is possible to store host reservations in MySQL, PostgreSQL, or
-Cassandra. See `??? <#hosts6-storage>`__ for information on how to
+Cassandra. See :ref:`hosts6-storage` for information on how to
 configure Kea to use reservations stored in MySQL, PostgreSQL, or
 Cassandra. Kea provides a dedicated hook for managing reservations in a
-database; section `??? <#host-cmds>`__ provides detailed information.
-The Kea wiki
-https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management
+database; section :ref:`host-cmds` provides detailed information.
+The :ref:`Kea wiki
+<https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>``
 provides some examples of how to conduct common host reservation
 operations.
 
@@ -3995,7 +3989,7 @@ a host renews an address, the server must check whether there is a
 reservation for this host, so the existing (dynamically allocated)
 address should be revoked and the reserved one be used instead.
 
-Some of those checks may be unnecessary in certain deployments and not
+Some of those checks may be unnecessary in certain deployments, and not
 performing them may improve performance. The Kea server provides the
 ``reservation-mode`` configuration parameter to select the types of
 reservations allowed for a particular subnet. Each reservation type has
@@ -4073,10 +4067,9 @@ An example configuration using global reservations is shown below:
        ]
    }
 
-For more details regarding global reservations, see `Global Reservations
-in DHCPv4 <#global-reservations4>`__.
+For more details regarding global reservations, see :ref:`global-reservations4`.
 
-Another aspect of the host reservations is the different types of
+Another aspect of host reservations is the different types of
 identifiers. Kea currently supports four types of identifiers:
 hw-address, duid, client-id, and circuit-id. This is beneficial from a
 usability perspective; however, there is one drawback. For each incoming
@@ -4158,9 +4151,9 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          // Use of IP address is global reservation is risky. If used outside of
-          // matching subnet, such as 192.0.1.0/24, it will result in a broken
-          // configuration being handled to the client.
+          // Use of IP address in global reservation is risky. If used outside of
+          // a matching subnet, such as 192.0.1.0/24, it will result in a broken
+          // configuration being handed to the client.
           "ip-address": "192.0.1.77"
        },
        {
@@ -4185,7 +4178,7 @@ following can be used:
    }
 
 When using database backends, the global host reservations are
-distinguished from regular reservations by using subnet-id value of
+distinguished from regular reservations by using a subnet-id value of
 zero.
 
 .. _shared-network4:
@@ -4194,7 +4187,7 @@ Shared Networks in DHCPv4
 =========================
 
 DHCP servers use subnet information in two ways. First, it is used to
-determine the point of attachment, or simply put, where the client is
+determine the point of attachment, or where the client is
 connected to the network. Second, the subnet information is used to
 group information pertaining to a specific location in the network. This
 approach works well in general cases, but there are scenarios where the
@@ -4202,8 +4195,8 @@ boundaries are blurred. Sometimes it is useful to have more than one
 logical IP subnet deployed on the same physical link. The need to
 understand that two or more subnets are used on the same link requires
 additional logic in the DHCP server. This capability is called "shared
-networks" in Kea and ISC DHCP projects. It is sometimes also called
-"shared subnets." In Microsoft's nomenclature it is called "multinet."
+networks" in the Kea and ISC DHCP projects. (It is sometimes also called
+"shared subnets"; in Microsoft's nomenclature it is called "multinet.")
 
 There are many use cases where the feature is useful; this paragraph
 explains just a handful of the most common ones. The first and by far
@@ -4227,15 +4220,15 @@ any of the pools defined within the subnets belonging to the shared
 network. Internally, the server selects one of the subnets belonging to
 a shared network and tries to allocate an address from this subnet. If
 the server is unable to allocate an address from the selected subnet
-(e.g., due to address pools exhaustion), it will use another subnet from
-the same shared network and try to allocate an address from this subnet,
+(e.g., due to address-pool exhaustion), it will use another subnet from
+the same shared network and will try to allocate an address from this subnet,
 etc. Therefore, in the typical case, the server will allocate all
 addresses available in a given subnet before it starts allocating
 addresses from other subnets belonging to the same shared network.
 However, in certain situations the client can be allocated an address
-from the other subnets before the address pools in the first subnet get
-exhausted, e.g. when the client provides a hint that belongs to another
-subnet or the client has reservations in a subnet other than the
+from another subnet before the address pools in the first subnet get
+exhausted; this sometimes occurs when the client provides a hint that belongs to another
+subnet, or the client has reservations in a subnet other than the
 default.
 
    **Note**
@@ -4257,7 +4250,7 @@ introduced:
                // and it must be unique among all shared networks.
                "name": "my-secret-lair-level-1",
 
-               // The subnet selector can be specifed at the shared network level.
+               // The subnet selector can be specified at the shared network level.
                // Subnets from this shared network will be selected for directly
                // connected clients sending requests to server's "eth0" interface.
                "interface": "eth0",
@@ -4280,7 +4273,7 @@ introduced:
        // "plain" subnets and shared networks. It is perfectly valid to mix
        // them in the same configuration file.
        //
-       // This is regular subnet. It's not part of any shared-network.
+       // This is a regular subnet. It's not part of any shared network.
        "subnet4": [
            {
                "subnet": "192.0.3.0/24",
@@ -4370,7 +4363,7 @@ address for log-servers), but also adds its own option (router address).
 Assuming a client asking for router and log servers options is assigned
 a lease from this subnet, it will get a lease for 20 minutes and a
 log-servers and routers value of 10.0.0.254. If the same client is
-assigned to the second subnet, it will get a 10- minute lease, a
+assigned to the second subnet, it will get a 10-minute lease, a
 log-servers value of 1.2.3.4, and routers set to 192.0.2.1.
 
 Local and Relayed Traffic in Shared Networks
@@ -4393,7 +4386,7 @@ convenient to specify it once at the shared network level.
        {
            "name": "office-floor-2",
 
-           // This tells Kea that the whole shared networks is reachable over
+           // This tells Kea that the whole shared network is reachable over
            // local interface. This applies to all subnets in this network.
            "interface": "eth0",
 
@@ -4407,7 +4400,7 @@ convenient to specify it once at the shared network level.
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
 
-                    // Specifying a different interface name is configuration
+                    // Specifying a different interface name is a configuration
                     // error:
                     // "interface": "eth1"
                }
@@ -4415,7 +4408,7 @@ convenient to specify it once at the shared network level.
        } ]
 
 Somewhat similar to interface names, relay IP addresses can also be
-specified for the whole shared network. However, depending on your relay
+specified for the whole shared network. However, depending on the relay
 configuration, it may use different IP addresses depending on which
 subnet is being used. Thus there is no requirement to use the same IP
 relay address for each subnet. Here's an example:
@@ -4459,7 +4452,7 @@ Client Classification in Shared Networks
 
 Sometimes it is desirable to segregate clients into specific subnets
 based on certain properties. This mechanism is called client
-classification and is described in `??? <#classify>`__. Client
+classification and is described in :ref:`classify`. Client
 classification can be applied to subnets belonging to shared networks in
 the same way as it is used for subnets specified outside of shared
 networks. It is important to understand how the server selects subnets
@@ -4504,7 +4497,7 @@ following example:
 If the client belongs to the "b-devices" class (because it includes
 option 93 with a value of 0x0002), that doesn't guarantee that the
 subnet 10.0.0.0/24 will be used (or preferred) for this client. The
-server can use either of the two subnets because the subnet 192.0.2.0/26
+server can use either of the two subnets, because the subnet 192.0.2.0/26
 is also allowed for this client. The client classification used in this
 case should be perceived as a way to restrict access to certain subnets,
 rather than a way to express subnet preference. For example, if the
@@ -4627,7 +4620,7 @@ shared network.
 While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if you plan to use database storage for host
 reservations. If an ID is not specified, the values for it are
-autogenerated, i.e. it assigns increasing integer values starting from
+autogenerated, i.e. Kea assigns increasing integer values starting from
 1. Thus, the autogenerated IDs are not stable across configuration
 changes.
 
@@ -4645,8 +4638,8 @@ identifiers if it is receiving queries on multiple interfaces.
 
 It is possible to override the default server identifier values by
 specifying the "dhcp-server-identifier" option. This option is only
-supported at the global, shared network, and subnet levels. It must not
-be specified on the client class and host reservation levels.
+supported at the global, shared network, and subnet levels; it must not
+be specified on the client class or host reservation levels.
 
 The following example demonstrates how to override the server identifier
 for a subnet:
@@ -4681,7 +4674,7 @@ subnet, the message is discarded.
 Assuming that the server's interface is configured with the IPv4 address
 192.0.2.3, the server will only process messages received through this
 interface from a directly connected client if there is a subnet
-configured to which this IPv4 address belongs, e.g. 192.0.2.0/24. The
+configured to which this IPv4 address belongs, such as 192.0.2.0/24. The
 server will use this subnet to assign an IPv4 address for the client.
 
 The rule above does not apply when the client unicasts its message, i.e.
@@ -4696,8 +4689,7 @@ client.
 
 It is also possible to specify a relay IPv4 address for a given subnet.
 It can be used to match incoming packets into a subnet in uncommon
-configurations, e.g. shared networks. See `Using a Specific Relay Agent
-for a Subnet <#dhcp4-relay-override>`__ for details.
+configurations, e.g. shared networks. See :ref:`dhcp4-relay-override` for details.
 
    **Note**
 
@@ -4764,11 +4756,10 @@ mandatory.
 Segregating IPv4 Clients in a Cable Network
 -------------------------------------------
 
-In certain cases, it is useful to mix relay address information,
-introduced in `Using a Specific Relay Agent for a
-Subnet <#dhcp4-relay-override>`__, with client classification, explained
-in `??? <#classify>`__. One specific example is in a cable network,
-where typically modems get addresses from a different subnet than all
+In certain cases, it is useful to mix relay address information
+(introduced in :ref:`dhcp4-relay-override`), with client classification (explained
+in :ref:`classify`). One specific example is in a cable network,
+where modems typically get addresses from a different subnet than all
 the devices connected behind them.
 
 Let us assume that there is one CMTS (Cable Modem Termination System)
@@ -4827,10 +4818,10 @@ Unless otherwise configured, the probation period lasts 24 hours; after
 that period, the server will recover the lease (i.e. put it back into
 the available state) and the address will be available for assignment
 again. It should be noted that if the underlying issue of a
-misconfigured device is not resolved, the duplicate- address scenario
+misconfigured device is not resolved, the duplicate-address scenario
 will repeat. If reconfigured correctly, this mechanism provides an
 opportunity to recover from such an event automatically, without any
-sysadmin intervention.
+system administrator intervention.
 
 To configure the decline probation period to a value other than the
 default, the following syntax can be used:
@@ -4851,8 +4842,7 @@ handling procedure. The lease4_decline hook is triggered after the
 incoming DHCPDECLINE message has been sanitized and the server is about
 to decline the lease. The declined-addresses statistic is increased
 after the hook returns (both global and subnet-specific variants). (See
-`Statistics in the DHCPv4 Server <#dhcp4-stats>`__ and
-`??? <#hooks-libraries>`__ for more details on DHCPv4 statistics and Kea
+:ref:`dhcp4-stats` and :ref:`hooks-libraries` for more details on DHCPv4 statistics and Kea
 hook points.)
 
 Once the probation time elapses, the declined lease is recovered using
@@ -4862,7 +4852,7 @@ additional steps. In particular, both declined-addresses statistics
 reclaimed-declined-addresses statistics (again in two variants, global
 and subnet-specific) are increased.
 
-A note about statistics: The server does not decrease the
+A note about statistics: the server does not decrease the
 assigned-addresses statistics when a DHCPDECLINE is received and
 processed successfully. While technically a declined address is no
 longer assigned, the primary usage of the assigned-addresses statistic
@@ -4882,423 +4872,420 @@ Statistics in the DHCPv4 Server
    **Note**
 
    This section describes DHCPv4-specific statistics. For a general
-   overview and usage of statistics, see `??? <#stats>`__.
+   overview and usage of statistics, see :ref:`stats`.
 
 The DHCPv4 server supports the following statistics:
 
 .. table:: DHCPv4 Statistics
 
-   +-----------------------+-----------------------+-----------------------+
-   | Statistic             | Data Type             | Description           |
-   +=======================+=======================+=======================+
-   | pkt4-received         | integer               | Number of DHCPv4      |
-   |                       |                       | packets received.     |
-   |                       |                       | This includes all     |
-   |                       |                       | packets: valid,       |
-   |                       |                       | bogus, corrupted,     |
-   |                       |                       | rejected, etc. This   |
-   |                       |                       | statistic is expected |
-   |                       |                       | to grow rapidly.      |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-discover-receive | integer               | Number of             |
-   | d                     |                       | DHCPDISCOVER packets  |
-   |                       |                       | received. This        |
-   |                       |                       | statistic is expected |
-   |                       |                       | to grow; its increase |
-   |                       |                       | means that clients    |
-   |                       |                       | that just booted      |
-   |                       |                       | started their         |
-   |                       |                       | configuration process |
-   |                       |                       | and their initial     |
-   |                       |                       | packets reached your  |
-   |                       |                       | Kea server.           |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-offer-received   | integer               | Number of DHCPOFFER   |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to remain    |
-   |                       |                       | zero at all times, as |
-   |                       |                       | DHCPOFFER packets are |
-   |                       |                       | sent by the server    |
-   |                       |                       | and the server is     |
-   |                       |                       | never expected to     |
-   |                       |                       | receive them. A       |
-   |                       |                       | non-zero value        |
-   |                       |                       | indicates an error.   |
-   |                       |                       | One likely cause      |
-   |                       |                       | would be a            |
-   |                       |                       | misbehaving relay     |
-   |                       |                       | agent that            |
-   |                       |                       | incorrectly forwards  |
-   |                       |                       | DHCPOFFER messages    |
-   |                       |                       | towards the server,   |
-   |                       |                       | rather than back to   |
-   |                       |                       | the clients.          |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-request-received | integer               | Number of DHCPREQUEST |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to grow. Its |
-   |                       |                       | increase means that   |
-   |                       |                       | clients that just     |
-   |                       |                       | booted received the   |
-   |                       |                       | server's response     |
-   |                       |                       | (DHCPOFFER) and       |
-   |                       |                       | accepted it, and are  |
-   |                       |                       | now requesting an     |
-   |                       |                       | address               |
-   |                       |                       | (DHCPREQUEST).        |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-ack-received     | integer               | Number of DHCPACK     |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to remain    |
-   |                       |                       | zero at all times, as |
-   |                       |                       | DHCPACK packets are   |
-   |                       |                       | sent by the server    |
-   |                       |                       | and the server is     |
-   |                       |                       | never expected to     |
-   |                       |                       | receive them. A       |
-   |                       |                       | non-zero value        |
-   |                       |                       | indicates an error.   |
-   |                       |                       | One likely cause      |
-   |                       |                       | would be a            |
-   |                       |                       | misbehaving relay     |
-   |                       |                       | agent that            |
-   |                       |                       | incorrectly forwards  |
-   |                       |                       | DHCPACK messages      |
-   |                       |                       | towards the server,   |
-   |                       |                       | rather than back to   |
-   |                       |                       | the clients.          |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-nak-received     | integer               | Number of DHCPNAK     |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to remain    |
-   |                       |                       | zero at all times, as |
-   |                       |                       | DHCPNAK packets are   |
-   |                       |                       | sent by the server    |
-   |                       |                       | and the server is     |
-   |                       |                       | never expected to     |
-   |                       |                       | receive them. A       |
-   |                       |                       | non-zero value        |
-   |                       |                       | indicates an error.   |
-   |                       |                       | One likely cause      |
-   |                       |                       | would be a            |
-   |                       |                       | misbehaving relay     |
-   |                       |                       | agent that            |
-   |                       |                       | incorrectly forwards  |
-   |                       |                       | DHCPNAK messages      |
-   |                       |                       | towards the server,   |
-   |                       |                       | rather than back to   |
-   |                       |                       | the clients.          |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-release-received | integer               | Number of DHCPRELEASE |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to grow. Its |
-   |                       |                       | increase means that   |
-   |                       |                       | clients that had an   |
-   |                       |                       | address are shutting  |
-   |                       |                       | down or ceasing to    |
-   |                       |                       | use their addresses.  |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-decline-received | integer               | Number of DHCPDECLINE |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to remain    |
-   |                       |                       | close to zero. Its    |
-   |                       |                       | increase means that a |
-   |                       |                       | client leased an      |
-   |                       |                       | address, but          |
-   |                       |                       | discovered that the   |
-   |                       |                       | address is currently  |
-   |                       |                       | used by an unknown    |
-   |                       |                       | device in your        |
-   |                       |                       | network.              |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-inform-received  | integer               | Number of DHCPINFORM  |
-   |                       |                       | packets received.     |
-   |                       |                       | This statistic is     |
-   |                       |                       | expected to grow. Its |
-   |                       |                       | increase means that   |
-   |                       |                       | there are clients     |
-   |                       |                       | that either do not    |
-   |                       |                       | need an address or    |
-   |                       |                       | already have an       |
-   |                       |                       | address and are       |
-   |                       |                       | interested only in    |
-   |                       |                       | getting additional    |
-   |                       |                       | configuration         |
-   |                       |                       | parameters.           |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-unknown-received | integer               | Number of packets     |
-   |                       |                       | received of an        |
-   |                       |                       | unknown type. A       |
-   |                       |                       | non-zero value of     |
-   |                       |                       | this statistic        |
-   |                       |                       | indicates that the    |
-   |                       |                       | server received a     |
-   |                       |                       | packet that it wasn't |
-   |                       |                       | able to recognize,    |
-   |                       |                       | either with an        |
-   |                       |                       | unsupported type or   |
-   |                       |                       | possibly malformed    |
-   |                       |                       | (without message type |
-   |                       |                       | option).              |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-sent             | integer               | Number of DHCPv4      |
-   |                       |                       | packets sent. This    |
-   |                       |                       | statistic is expected |
-   |                       |                       | to grow every time    |
-   |                       |                       | the server transmits  |
-   |                       |                       | a packet. In general, |
-   |                       |                       | it should roughly     |
-   |                       |                       | match pkt4-received,  |
-   |                       |                       | as most incoming      |
-   |                       |                       | packets cause the     |
-   |                       |                       | server to respond.    |
-   |                       |                       | There are exceptions  |
-   |                       |                       | (e.g. DHCPRELEASE),   |
-   |                       |                       | so do not worry if it |
-   |                       |                       | is less than          |
-   |                       |                       | pkt4-received.        |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-offer-sent       | integer               | Number of DHCPOFFER   |
-   |                       |                       | packets sent. This    |
-   |                       |                       | statistic is expected |
-   |                       |                       | to grow in most cases |
-   |                       |                       | after a DHCPDISCOVER  |
-   |                       |                       | is processed. There   |
-   |                       |                       | are certain uncommon, |
-   |                       |                       | but valid, cases      |
-   |                       |                       | where incoming        |
-   |                       |                       | DHCPDISCOVER packets  |
-   |                       |                       | are dropped, but in   |
-   |                       |                       | general this          |
-   |                       |                       | statistic is expected |
-   |                       |                       | to be close to        |
-   |                       |                       | pkt4-discover-receive |
-   |                       |                       | d.                    |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-ack-sent         | integer               | Number of DHCPACK     |
-   |                       |                       | packets sent. This    |
-   |                       |                       | statistic is expected |
-   |                       |                       | to grow in most cases |
-   |                       |                       | after a DHCPREQUEST   |
-   |                       |                       | is processed. There   |
-   |                       |                       | are certain cases     |
-   |                       |                       | where DHCPNAK is sent |
-   |                       |                       | instead. In general,  |
-   |                       |                       | the sum of            |
-   |                       |                       | pkt4-ack-sent and     |
-   |                       |                       | pkt4-nak-sent should  |
-   |                       |                       | be close to           |
-   |                       |                       | pkt4-request-received |
-   |                       |                       | .                     |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-nak-sent         | integer               | Number of DHCPNAK     |
-   |                       |                       | packets sent. This    |
-   |                       |                       | statistic is expected |
-   |                       |                       | to grow when the      |
-   |                       |                       | server chooses not to |
-   |                       |                       | honor the address     |
-   |                       |                       | requested by a        |
-   |                       |                       | client. In general,   |
-   |                       |                       | the sum of            |
-   |                       |                       | pkt4-ack-sent and     |
-   |                       |                       | pkt4-nak-sent should  |
-   |                       |                       | be close to           |
-   |                       |                       | pkt4-request-received |
-   |                       |                       | .                     |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-parse-failed     | integer               | Number of incoming    |
-   |                       |                       | packets that could    |
-   |                       |                       | not be parsed. A      |
-   |                       |                       | non-zero value of     |
-   |                       |                       | this statistic        |
-   |                       |                       | indicates that the    |
-   |                       |                       | server received a     |
-   |                       |                       | malformed or          |
-   |                       |                       | truncated packet.     |
-   |                       |                       | This may indicate     |
-   |                       |                       | problems in your      |
-   |                       |                       | network, faulty       |
-   |                       |                       | clients, or a bug in  |
-   |                       |                       | the server.           |
-   +-----------------------+-----------------------+-----------------------+
-   | pkt4-receive-drop     | integer               | Number of incoming    |
-   |                       |                       | packets that were     |
-   |                       |                       | dropped. The exact    |
-   |                       |                       | reason for dropping   |
-   |                       |                       | packets is logged,    |
-   |                       |                       | but the most common   |
-   |                       |                       | reasons may be: an    |
-   |                       |                       | unacceptable packet   |
-   |                       |                       | type, direct          |
-   |                       |                       | responses are         |
-   |                       |                       | forbidden, or the     |
-   |                       |                       | server-id sent by the |
-   |                       |                       | client does not match |
-   |                       |                       | the server's          |
-   |                       |                       | server-id.            |
-   +-----------------------+-----------------------+-----------------------+
-   | subnet[id].total-addr | integer               | Total number of       |
-   | esses                 |                       | addresses available   |
-   |                       |                       | for DHCPv4            |
-   |                       |                       | management; in other  |
-   |                       |                       | words, this is the    |
-   |                       |                       | sum of all addresses  |
-   |                       |                       | in all configured     |
-   |                       |                       | pools. This statistic |
-   |                       |                       | changes only during   |
-   |                       |                       | configuration         |
-   |                       |                       | changes. Note it does |
-   |                       |                       | not take into account |
-   |                       |                       | any addresses that    |
-   |                       |                       | may be reserved due   |
-   |                       |                       | to host reservation.  |
-   |                       |                       | The *id* is the       |
-   |                       |                       | subnet-id of a given  |
-   |                       |                       | subnet. This          |
-   |                       |                       | statistic is exposed  |
-   |                       |                       | for each subnet       |
-   |                       |                       | separately, and is    |
-   |                       |                       | reset during a        |
-   |                       |                       | reconfiguration       |
-   |                       |                       | event.                |
-   +-----------------------+-----------------------+-----------------------+
-   | subnet[id].assigned-a | integer               | Number of assigned    |
-   | ddresses              |                       | addresses in a given  |
-   |                       |                       | subnet. It increases  |
-   |                       |                       | every time a new      |
-   |                       |                       | lease is allocated    |
-   |                       |                       | (as a result of       |
-   |                       |                       | receiving a           |
-   |                       |                       | DHCPREQUEST message)  |
-   |                       |                       | and is decreased      |
-   |                       |                       | every time a lease is |
-   |                       |                       | released (a           |
-   |                       |                       | DHCPRELEASE message   |
-   |                       |                       | is received) or       |
-   |                       |                       | expires. The *id* is  |
-   |                       |                       | the subnet-id of the  |
-   |                       |                       | subnet. This          |
-   |                       |                       | statistic is exposed  |
-   |                       |                       | for each subnet       |
-   |                       |                       | separately, and is    |
-   |                       |                       | reset during a        |
-   |                       |                       | reconfiguration       |
-   |                       |                       | event.                |
-   +-----------------------+-----------------------+-----------------------+
-   | reclaimed-leases      | integer               | Number of expired     |
-   |                       |                       | leases that have been |
-   |                       |                       | reclaimed since       |
-   |                       |                       | server startup. It is |
-   |                       |                       | incremented each time |
-   |                       |                       | an expired lease is   |
-   |                       |                       | reclaimed and is      |
-   |                       |                       | reset when the server |
-   |                       |                       | is reconfigured.      |
-   +-----------------------+-----------------------+-----------------------+
-   | subnet[id].reclaimed- | integer               | Number of expired     |
-   | leases                |                       | leases associated     |
-   |                       |                       | with a given subnet   |
-   |                       |                       | (*id* is the          |
-   |                       |                       | subnet-id) that have  |
-   |                       |                       | been reclaimed since  |
-   |                       |                       | server startup. It is |
-   |                       |                       | incremented each time |
-   |                       |                       | an expired lease is   |
-   |                       |                       | reclaimed and is      |
-   |                       |                       | reset when the server |
-   |                       |                       | is reconfigured.      |
-   +-----------------------+-----------------------+-----------------------+
-   | declined-addresses    | integer               | Number of IPv4        |
-   |                       |                       | addresses that are    |
-   |                       |                       | currently declined; a |
-   |                       |                       | count of the number   |
-   |                       |                       | of leases currently   |
-   |                       |                       | unavailable. Once a   |
-   |                       |                       | lease is recovered,   |
-   |                       |                       | this statistic will   |
-   |                       |                       | be decreased;         |
-   |                       |                       | ideally, this         |
-   |                       |                       | statistic should be   |
-   |                       |                       | zero. If this         |
-   |                       |                       | statistic is non-zero |
-   |                       |                       | or increasing, a      |
-   |                       |                       | network administrator |
-   |                       |                       | should investigate    |
-   |                       |                       | whether there is a    |
-   |                       |                       | misbehaving device in |
-   |                       |                       | the network. This is  |
-   |                       |                       | a global statistic    |
-   |                       |                       | that covers all       |
-   |                       |                       | subnets.              |
-   +-----------------------+-----------------------+-----------------------+
-   | subnet[id].declined-a | integer               | Number of IPv4        |
-   | ddresses              |                       | addresses that are    |
-   |                       |                       | currently declined in |
-   |                       |                       | a given subnet; a     |
-   |                       |                       | count of the number   |
-   |                       |                       | of leases currently   |
-   |                       |                       | unavailable. Once a   |
-   |                       |                       | lease is recovered,   |
-   |                       |                       | this statistic will   |
-   |                       |                       | be decreased;         |
-   |                       |                       | ideally, this         |
-   |                       |                       | statistic should be   |
-   |                       |                       | zero. If this         |
-   |                       |                       | statistic is non-zero |
-   |                       |                       | or increasing, a      |
-   |                       |                       | network administrator |
-   |                       |                       | should investigate    |
-   |                       |                       | whether there is a    |
-   |                       |                       | misbehaving device in |
-   |                       |                       | the network. The *id* |
-   |                       |                       | is the subnet-id of a |
-   |                       |                       | given subnet. This    |
-   |                       |                       | statistic is exposed  |
-   |                       |                       | for each subnet       |
-   |                       |                       | separately.           |
-   +-----------------------+-----------------------+-----------------------+
-   | reclaimed-declined-ad | integer               | Number of IPv4        |
-   | dresses               |                       | addresses that were   |
-   |                       |                       | declined, but have    |
-   |                       |                       | now been recovered.   |
-   |                       |                       | Unlike                |
-   |                       |                       | declined-addresses,   |
-   |                       |                       | this statistic never  |
-   |                       |                       | decreases. It can be  |
-   |                       |                       | used as a long-term   |
-   |                       |                       | indicator of how many |
-   |                       |                       | actual valid Declines |
-   |                       |                       | were processed and    |
-   |                       |                       | recovered from. This  |
-   |                       |                       | is a global statistic |
-   |                       |                       | that covers all       |
-   |                       |                       | subnets.              |
-   +-----------------------+-----------------------+-----------------------+
-   | subnet[id].reclaimed- | integer               | Number of IPv4        |
-   | declined-addresses    |                       | addresses that were   |
-   |                       |                       | declined, but have    |
-   |                       |                       | now been recovered.   |
-   |                       |                       | Unlike                |
-   |                       |                       | declined-addresses,   |
-   |                       |                       | this statistic never  |
-   |                       |                       | decreases. It can be  |
-   |                       |                       | used as a long-term   |
-   |                       |                       | indicator of how many |
-   |                       |                       | actual valid Declines |
-   |                       |                       | were processed and    |
-   |                       |                       | recovered from. The   |
-   |                       |                       | *id* is the subnet-id |
-   |                       |                       | of a given subnet.    |
-   |                       |                       | This statistic is     |
-   |                       |                       | exposed for each      |
-   |                       |                       | subnet separately.    |
-   +-----------------------+-----------------------+-----------------------+
+   +-----------------------------------------+-----------------------+-------------------------+
+   | Statistic                               | Data Type             | Description             |
+   +=========================================+=======================+=========================+
+   | pkt4-received                           | integer               | Number of DHCPv4        |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This includes all       |
+   |                                         |                       | packets: valid,         |
+   |                                         |                       | bogus, corrupted,       |
+   |                                         |                       | rejected, etc. This     |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to grow rapidly.        |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-discover-received                  | integer               | Number of               |
+   |                                         |                       | DHCPDISCOVER packets    |
+   |                                         |                       | received. This          |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to grow; its increase   |
+   |                                         |                       | means that clients      |
+   |                                         |                       | that just booted        |
+   |                                         |                       | started their           |
+   |                                         |                       | configuration process   |
+   |                                         |                       | and their initial       |
+   |                                         |                       | packets reached your    |
+   |                                         |                       | Kea server.             |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-offer-received                     | integer               | Number of DHCPOFFER     |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to remain      |
+   |                                         |                       | zero at all times, as   |
+   |                                         |                       | DHCPOFFER packets are   |
+   |                                         |                       | sent by the server      |
+   |                                         |                       | and the server is       |
+   |                                         |                       | never expected to       |
+   |                                         |                       | receive them. A         |
+   |                                         |                       | non-zero value          |
+   |                                         |                       | indicates an error.     |
+   |                                         |                       | One likely cause        |
+   |                                         |                       | would be a              |
+   |                                         |                       | misbehaving relay       |
+   |                                         |                       | agent that              |
+   |                                         |                       | incorrectly forwards    |
+   |                                         |                       | DHCPOFFER messages      |
+   |                                         |                       | towards the server,     |
+   |                                         |                       | rather than back to     |
+   |                                         |                       | the clients.            |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-request-received                   | integer               | Number of DHCPREQUEST   |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to grow. Its   |
+   |                                         |                       | increase means that     |
+   |                                         |                       | clients that just       |
+   |                                         |                       | booted received the     |
+   |                                         |                       | server's response       |
+   |                                         |                       | (DHCPOFFER) and         |
+   |                                         |                       | accepted it, and are    |
+   |                                         |                       | now requesting an       |
+   |                                         |                       | address                 |
+   |                                         |                       | (DHCPREQUEST).          |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-ack-received                       | integer               | Number of DHCPACK       |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to remain      |
+   |                                         |                       | zero at all times, as   |
+   |                                         |                       | DHCPACK packets are     |
+   |                                         |                       | sent by the server      |
+   |                                         |                       | and the server is       |
+   |                                         |                       | never expected to       |
+   |                                         |                       | receive them. A         |
+   |                                         |                       | non-zero value          |
+   |                                         |                       | indicates an error.     |
+   |                                         |                       | One likely cause        |
+   |                                         |                       | would be a              |
+   |                                         |                       | misbehaving relay       |
+   |                                         |                       | agent that              |
+   |                                         |                       | incorrectly forwards    |
+   |                                         |                       | DHCPACK messages        |
+   |                                         |                       | towards the server,     |
+   |                                         |                       | rather than back to     |
+   |                                         |                       | the clients.            |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-nak-received                       | integer               | Number of DHCPNAK       |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to remain      |
+   |                                         |                       | zero at all times, as   |
+   |                                         |                       | DHCPNAK packets are     |
+   |                                         |                       | sent by the server      |
+   |                                         |                       | and the server is       |
+   |                                         |                       | never expected to       |
+   |                                         |                       | receive them. A         |
+   |                                         |                       | non-zero value          |
+   |                                         |                       | indicates an error.     |
+   |                                         |                       | One likely cause        |
+   |                                         |                       | would be a              |
+   |                                         |                       | misbehaving relay       |
+   |                                         |                       | agent that              |
+   |                                         |                       | incorrectly forwards    |
+   |                                         |                       | DHCPNAK messages        |
+   |                                         |                       | towards the server,     |
+   |                                         |                       | rather than back to     |
+   |                                         |                       | the clients.            |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-release-received                   | integer               | Number of DHCPRELEASE   |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to grow. Its   |
+   |                                         |                       | increase means that     |
+   |                                         |                       | clients that had an     |
+   |                                         |                       | address are shutting    |
+   |                                         |                       | down or ceasing to      |
+   |                                         |                       | use their addresses.    |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-decline-received                   | integer               | Number of DHCPDECLINE   |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to remain      |
+   |                                         |                       | close to zero. Its      |
+   |                                         |                       | increase means that a   |
+   |                                         |                       | client leased an        |
+   |                                         |                       | address, but            |
+   |                                         |                       | discovered that the     |
+   |                                         |                       | address is currently    |
+   |                                         |                       | used by an unknown      |
+   |                                         |                       | device in your          |
+   |                                         |                       | network.                |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-inform-received                    | integer               | Number of DHCPINFORM    |
+   |                                         |                       | packets received.       |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | expected to grow. Its   |
+   |                                         |                       | increase means that     |
+   |                                         |                       | there are clients       |
+   |                                         |                       | that either do not      |
+   |                                         |                       | need an address or      |
+   |                                         |                       | already have an         |
+   |                                         |                       | address and are         |
+   |                                         |                       | interested only in      |
+   |                                         |                       | getting additional      |
+   |                                         |                       | configuration           |
+   |                                         |                       | parameters.             |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-unknown-received                   | integer               | Number of packets       |
+   |                                         |                       | received of an          |
+   |                                         |                       | unknown type. A         |
+   |                                         |                       | non-zero value of       |
+   |                                         |                       | this statistic          |
+   |                                         |                       | indicates that the      |
+   |                                         |                       | server received a       |
+   |                                         |                       | packet that it wasn't   |
+   |                                         |                       | able to recognize,      |
+   |                                         |                       | either with an          |
+   |                                         |                       | unsupported type or     |
+   |                                         |                       | possibly malformed      |
+   |                                         |                       | (without message type   |
+   |                                         |                       | option).                |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-sent                               | integer               | Number of DHCPv4        |
+   |                                         |                       | packets sent. This      |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to grow every time      |
+   |                                         |                       | the server transmits    |
+   |                                         |                       | a packet. In general,   |
+   |                                         |                       | it should roughly       |
+   |                                         |                       | match pkt4-received,    |
+   |                                         |                       | as most incoming        |
+   |                                         |                       | packets cause the       |
+   |                                         |                       | server to respond.      |
+   |                                         |                       | There are exceptions    |
+   |                                         |                       | (e.g. DHCPRELEASE),     |
+   |                                         |                       | so do not worry if it   |
+   |                                         |                       | is less than            |
+   |                                         |                       | pkt4-received.          |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-offer-sent                         | integer               | Number of DHCPOFFER     |
+   |                                         |                       | packets sent. This      |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to grow in most cases   |
+   |                                         |                       | after a DHCPDISCOVER    |
+   |                                         |                       | is processed. There     |
+   |                                         |                       | are certain uncommon,   |
+   |                                         |                       | but valid, cases        |
+   |                                         |                       | where incoming          |
+   |                                         |                       | DHCPDISCOVER packets    |
+   |                                         |                       | are dropped, but in     |
+   |                                         |                       | general this            |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to be close to          |
+   |                                         |                       | pkt4-discover-received. |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-ack-sent                           | integer               | Number of DHCPACK       |
+   |                                         |                       | packets sent. This      |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to grow in most cases   |
+   |                                         |                       | after a DHCPREQUEST     |
+   |                                         |                       | is processed. There     |
+   |                                         |                       | are certain cases       |
+   |                                         |                       | where DHCPNAK is sent   |
+   |                                         |                       | instead. In general,    |
+   |                                         |                       | the sum of              |
+   |                                         |                       | pkt4-ack-sent and       |
+   |                                         |                       | pkt4-nak-sent should    |
+   |                                         |                       | be close to             |
+   |                                         |                       | pkt4-request-received.  |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-nak-sent                           | integer               | Number of DHCPNAK       |
+   |                                         |                       | packets sent. This      |
+   |                                         |                       | statistic is expected   |
+   |                                         |                       | to grow when the        |
+   |                                         |                       | server chooses not to   |
+   |                                         |                       | honor the address       |
+   |                                         |                       | requested by a          |
+   |                                         |                       | client. In general,     |
+   |                                         |                       | the sum of              |
+   |                                         |                       | pkt4-ack-sent and       |
+   |                                         |                       | pkt4-nak-sent should    |
+   |                                         |                       | be close to             |
+   |                                         |                       | pkt4-request-received.  |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-parse-failed                       | integer               | Number of incoming      |
+   |                                         |                       | packets that could      |
+   |                                         |                       | not be parsed. A        |
+   |                                         |                       | non-zero value of       |
+   |                                         |                       | this statistic          |
+   |                                         |                       | indicates that the      |
+   |                                         |                       | server received a       |
+   |                                         |                       | malformed or            |
+   |                                         |                       | truncated packet.       |
+   |                                         |                       | This may indicate       |
+   |                                         |                       | problems in your        |
+   |                                         |                       | network, faulty         |
+   |                                         |                       | clients, or a bug in    |
+   |                                         |                       | the server.             |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | pkt4-receive-drop                       | integer               | Number of incoming      |
+   |                                         |                       | packets that were       |
+   |                                         |                       | dropped. The exact      |
+   |                                         |                       | reason for dropping     |
+   |                                         |                       | packets is logged,      |
+   |                                         |                       | but the most common     |
+   |                                         |                       | reasons may be: an      |
+   |                                         |                       | unacceptable packet     |
+   |                                         |                       | type, direct            |
+   |                                         |                       | responses are           |
+   |                                         |                       | forbidden, or the       |
+   |                                         |                       | server-id sent by the   |
+   |                                         |                       | client does not match   |
+   |                                         |                       | the server's            |
+   |                                         |                       | server-id.              |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | subnet[id].total-addresses              | integer               | Total number of         |
+   |                                         |                       | addresses available     |
+   |                                         |                       | for DHCPv4              |
+   |                                         |                       | management; in other    |
+   |                                         |                       | words, this is the      |
+   |                                         |                       | sum of all addresses    |
+   |                                         |                       | in all configured       |
+   |                                         |                       | pools. This statistic   |
+   |                                         |                       | changes only during     |
+   |                                         |                       | configuration           |
+   |                                         |                       | changes. Note it does   |
+   |                                         |                       | not take into account   |
+   |                                         |                       | any addresses that      |
+   |                                         |                       | may be reserved due     |
+   |                                         |                       | to host reservation.    |
+   |                                         |                       | The *id* is the         |
+   |                                         |                       | subnet-id of a given    |
+   |                                         |                       | subnet. This            |
+   |                                         |                       | statistic is exposed    |
+   |                                         |                       | for each subnet         |
+   |                                         |                       | separately, and is      |
+   |                                         |                       | reset during a          |
+   |                                         |                       | reconfiguration         |
+   |                                         |                       | event.                  |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | subnet[id].assigned-addresses           | integer               | Number of assigned      |
+   |                                         |                       | addresses in a given    |
+   |                                         |                       | subnet. It increases    |
+   |                                         |                       | every time a new        |
+   |                                         |                       | lease is allocated      |
+   |                                         |                       | (as a result of         |
+   |                                         |                       | receiving a             |
+   |                                         |                       | DHCPREQUEST message)    |
+   |                                         |                       | and is decreased        |
+   |                                         |                       | every time a lease is   |
+   |                                         |                       | released (a             |
+   |                                         |                       | DHCPRELEASE message     |
+   |                                         |                       | is received) or         |
+   |                                         |                       | expires. The *id* is    |
+   |                                         |                       | the subnet-id of the    |
+   |                                         |                       | subnet. This            |
+   |                                         |                       | statistic is exposed    |
+   |                                         |                       | for each subnet         |
+   |                                         |                       | separately, and is      |
+   |                                         |                       | reset during a          |
+   |                                         |                       | reconfiguration         |
+   |                                         |                       | event.                  |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | reclaimed-leases                        | integer               | Number of expired       |
+   |                                         |                       | leases that have been   |
+   |                                         |                       | reclaimed since         |
+   |                                         |                       | server startup. It is   |
+   |                                         |                       | incremented each time   |
+   |                                         |                       | an expired lease is     |
+   |                                         |                       | reclaimed and is        |
+   |                                         |                       | reset when the server   |
+   |                                         |                       | is reconfigured.        |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | subnet[id].reclaimed-leases             | integer               | Number of expired       |
+   |                                         |                       | leases associated       |
+   |                                         |                       | with a given subnet     |
+   |                                         |                       | (*id* is the            |
+   |                                         |                       | subnet-id) that have    |
+   |                                         |                       | been reclaimed since    |
+   |                                         |                       | server startup. It is   |
+   |                                         |                       | incremented each time   |
+   |                                         |                       | an expired lease is     |
+   |                                         |                       | reclaimed and is        |
+   |                                         |                       | reset when the server   |
+   |                                         |                       | is reconfigured.        |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | declined-addresses                      | integer               | Number of IPv4          |
+   |                                         |                       | addresses that are      |
+   |                                         |                       | currently declined; a   |
+   |                                         |                       | count of the number     |
+   |                                         |                       | of leases currently     |
+   |                                         |                       | unavailable. Once a     |
+   |                                         |                       | lease is recovered,     |
+   |                                         |                       | this statistic will     |
+   |                                         |                       | be decreased;           |
+   |                                         |                       | ideally, this           |
+   |                                         |                       | statistic should be     |
+   |                                         |                       | zero. If this           |
+   |                                         |                       | statistic is non-zero   |
+   |                                         |                       | or increasing, a        |
+   |                                         |                       | network administrator   |
+   |                                         |                       | should investigate      |
+   |                                         |                       | whether there is a      |
+   |                                         |                       | misbehaving device in   |
+   |                                         |                       | the network. This is    |
+   |                                         |                       | a global statistic      |
+   |                                         |                       | that covers all         |
+   |                                         |                       | subnets.                |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | subnet[id].declined-addresses           | integer               | Number of IPv4          |
+   |                                         |                       | addresses that are      |
+   |                                         |                       | currently declined in   |
+   |                                         |                       | a given subnet; a       |
+   |                                         |                       | count of the number     |
+   |                                         |                       | of leases currently     |
+   |                                         |                       | unavailable. Once a     |
+   |                                         |                       | lease is recovered,     |
+   |                                         |                       | this statistic will     |
+   |                                         |                       | be decreased;           |
+   |                                         |                       | ideally, this           |
+   |                                         |                       | statistic should be     |
+   |                                         |                       | zero. If this           |
+   |                                         |                       | statistic is non-zero   |
+   |                                         |                       | or increasing, a        |
+   |                                         |                       | network administrator   |
+   |                                         |                       | should investigate      |
+   |                                         |                       | whether there is a      |
+   |                                         |                       | misbehaving device in   |
+   |                                         |                       | the network. The *id*   |
+   |                                         |                       | is the subnet-id of a   |
+   |                                         |                       | given subnet. This      |
+   |                                         |                       | statistic is exposed    |
+   |                                         |                       | for each subnet         |
+   |                                         |                       | separately.             |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | reclaimed-declined-addresses            | integer               | Number of IPv4          |
+   |                                         |                       | addresses that were     |
+   |                                         |                       | declined, but have      |
+   |                                         |                       | now been recovered.     |
+   |                                         |                       | Unlike                  |
+   |                                         |                       | declined-addresses,     |
+   |                                         |                       | this statistic never    |
+   |                                         |                       | decreases. It can be    |
+   |                                         |                       | used as a long-term     |
+   |                                         |                       | indicator of how many   |
+   |                                         |                       | actual valid Declines   |
+   |                                         |                       | were processed and      |
+   |                                         |                       | recovered from. This    |
+   |                                         |                       | is a global statistic   |
+   |                                         |                       | that covers all         |
+   |                                         |                       | subnets.                |
+   +-----------------------------------------+-----------------------+-------------------------+
+   | subnet[id].reclaimed-declined-addresses | integer               | Number of IPv4          |
+   |                                         |                       | addresses that were     |
+   |                                         |                       | declined, but have      |
+   |                                         |                       | now been recovered.     |
+   |                                         |                       | Unlike                  |
+   |                                         |                       | declined-addresses,     |
+   |                                         |                       | this statistic never    |
+   |                                         |                       | decreases. It can be    |
+   |                                         |                       | used as a long-term     |
+   |                                         |                       | indicator of how many   |
+   |                                         |                       | actual valid Declines   |
+   |                                         |                       | were processed and      |
+   |                                         |                       | recovered from. The     |
+   |                                         |                       | *id* is the subnet-id   |
+   |                                         |                       | of a given subnet.      |
+   |                                         |                       | This statistic is       |
+   |                                         |                       | exposed for each        |
+   |                                         |                       | subnet separately.      |
+   +-----------------------------------------+-----------------------+-------------------------+
 
 .. _dhcp4-ctrl-channel:
 
@@ -5307,7 +5294,7 @@ Management API for the DHCPv4 Server
 
 The management API allows the issuing of specific management commands,
 such as statistics retrieval, reconfiguration, or shutdown. For more
-details, see `??? <#ctrl-channel>`__. Currently, the only supported
+details, see :ref:`ctrl-channel`. Currently, the only supported
 communication channel type is UNIX stream socket. By default there are
 no sockets open; to instruct Kea to open a socket, the following entry
 in the configuration file can be used:
@@ -5335,7 +5322,8 @@ values are 107 on Linux and 103 on FreeBSD.
 
 Communication over the control channel is conducted using JSON
 structures. See the
-`Control Channel section in the Kea Developer's Guide <Control Channel section in the Kea Developer's Guide>`__
+:ref:`Control Channel section in the Kea Developer's Guide
+<https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html>`
 for more details.
 
 The DHCPv4 server supports the following operational commands:
@@ -5353,7 +5341,7 @@ The DHCPv4 server supports the following operational commands:
 -  shutdown
 -  version-get
 
-as described in `??? <#commands-common>`__. In addition, it supports the
+as described in :ref:`commands-common`. In addition, it supports the
 following statistics-related commands:
 
 -  statistic-get
@@ -5363,20 +5351,20 @@ following statistics-related commands:
 -  statistic-reset-all
 -  statistic-remove-all
 
-as described in `??? <#command-stats>`__.
+as described in :ref:`command-stats`.
 
 .. _dhcp4-user-contexts:
 
 User Contexts in IPv4
 =====================
 
-Kea allows loading hook libraries that sometimes could benefit from
+Kea allows loading hook libraries that can sometimes benefit from
 additional parameters. If such a parameter is specific to the whole
 library, it is typically defined as a parameter for the hook library.
 However, sometimes there is a need to specify parameters that are
 different for each pool.
 
-User contexts can store arbitrary data as long as it has valid JSON
+User contexts can store an arbitrary data file as long as it has valid JSON
 syntax and its top level element is a map (i.e. the data must be
 enclosed in curly brackets). However, some hook libraries may expect
 specific formatting; please consult the specific hook library
@@ -5384,16 +5372,16 @@ documentation for details.
 
 User contexts can be specified at global scope, shared network, subnet,
 pool, client class, option data, or definition level, and via host
-reservation. One other useful usage is the ability to store comments or
+reservation. One other useful feature is the ability to store comments or
 descriptions.
 
-Let's consider an imaginary case of devices that have color LED lights.
+Let's consider an imaginary case of devices that have colored LED lights.
 Depending on their location, they should glow red, blue, or green. It
 would be easy to write a hook library that would send specific values as
 maybe a vendor option. However, the server has to have some way to
 specify that value for each pool. This need is addressed by user
 contexts. In essence, any user data can be specified in the user context
-as long as it is a valid JSON map. For example, the forementioned case
+as long as it is a valid JSON map. For example, the aforementioned case
 of LED devices could be configured in the following way:
 
 ::
@@ -5408,7 +5396,7 @@ of LED devices could be configured in the following way:
                    "user-context": { "color": "red" }
                } ],
 
-               // This is a subnet specific user context. You can put whatever type
+               // This is a subnet-specific user context. You can put whatever type
                // of information you want as long as it is a valid JSON.
                "user-context": {
                    "comment": "network on the second floor",
@@ -5430,7 +5418,7 @@ extract that information and use it. The parser translates a "comment"
 entry into a user context with the entry, which allows a comment to be
 attached inside the configuration itself.
 
-For more background information, see `??? <#user-context>`__.
+For more background information, see :ref:`user-context`.
 
 .. _dhcp4-std:
 
@@ -5440,30 +5428,29 @@ Supported DHCP Standards
 The following standards are currently supported:
 
 -  *Dynamic Host Configuration Protocol*, `RFC
-   2131 <http://tools.ietf.org/html/rfc2131>`__: Supported messages are
+   2131 <https://tools.ietf.org/html/rfc2131>`__: Supported messages are
    DHCPDISCOVER (1), DHCPOFFER (2), DHCPREQUEST (3), DHCPRELEASE (7),
    DHCPINFORM (8), DHCPACK (5), and DHCPNAK(6).
 
 -  *DHCP Options and BOOTP Vendor Extensions*, `RFC
-   2132 <http://tools.ietf.org/html/rfc2132>`__: Supported options are:
+   2132 <https://tools.ietf.org/html/rfc2132>`__: Supported options are:
    PAD (0), END(255), Message Type(53), DHCP Server Identifier (54),
    Domain Name (15), DNS Servers (6), IP Address Lease Time (51), Subnet
    mask (1), and Routers (3).
 
 -  *DHCP Relay Agent Information Option*, `RFC
-   3046 <http://tools.ietf.org/html/rfc3046>`__: Relay Agent Information
+   3046 <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information
    option is supported.
 
 -  *Vendor-Identifying Vendor Options for Dynamic Host Configuration
    Protocol version 4*, `RFC
-   3925 <http://tools.ietf.org/html/rfc3925>`__: Vendor-Identifying
+   3925 <https://tools.ietf.org/html/rfc3925>`__: Vendor-Identifying
    Vendor Class and Vendor-Identifying Vendor-Specific Information
    options are supported.
 
 -  *Client Identifier Option in DHCP Server Replies*, `RFC
-   6842 <http://tools.ietf.org/html/rfc6842>`__: Server by default sends
-   back client-id option. That capability may be disabled. See `Echoing
-   Client-ID (RFC 6842) <#dhcp4-echo-client-id>`__ for details.
+   6842 <https://tools.ietf.org/html/rfc6842>`__: Server by default sends
+   back client-id option. That capability may be disabled. See :ref:`dhcp4-echo-client-id` for details.
 
 .. _dhcp4-limit:
 
@@ -5472,12 +5459,12 @@ DHCPv4 Server Limitations
 
 These are the current limitations of the DHCPv4 server software. Most of
 them are reflections of the current stage of development and should be
-treated as “not implemented yet”, rather than actual limitations.
+treated as “not implemented yet,” rather than as actual limitations.
 However, some of them are implications of the design choices made. Those
 are clearly marked as such.
 
 -  BOOTP (`RFC 951 <http://tools.ietf.org/html/rfc951>`__) is not
-   supported. This is a design choice: BOOTP support is not planned.
+   supported. This is a design choice; BOOTP support is not planned.
 
 -  On Linux and BSD system families the DHCP messages are sent and
    received over the raw sockets (using LPF and BPF) and all packet
@@ -5485,7 +5472,7 @@ are clearly marked as such.
    and parsed by Kea, rather than by the system kernel. Currently, Kea
    can only parse the data link layer headers with a format adhering to
    the IEEE 802.3 standard and assumes this data link layer header
-   format for all interfaces. Hence, Kea will fail to work on interfaces
+   format for all interfaces. Thus, Kea will fail to work on interfaces
    which use different data link layer header formats (e.g. Infiniband).
 
 -  The DHCPv4 server does not verify that an assigned address is unused.
@@ -5507,12 +5494,12 @@ directory.
 Configuration Backend in DHCPv4
 ===============================
 
-In the `??? <#config-backend>`__ we have described the Configuration
-Backend feature, its applicability and limitations. This section focuses
+In the :ref:`config-backend` section we have described the Configuration
+Backend feature, its applicability, and its limitations. This section focuses
 on the usage of the CB with the DHCPv4 server. It lists the supported
-parameters, describes limitations and gives examples of the DHCPv4
+parameters, describes limitations, and gives examples of the DHCPv4
 server configuration to take advantage of the CB. Please also refer to
-the sibling section `??? <#dhcp6-cb>`__ for the DHCPv6 specific usage of
+the sibling section :ref:`dhcp6-cb` for the DHCPv6-specific usage of
 the CB.
 
 .. _dhcp4-cb-parameters:
@@ -5522,109 +5509,90 @@ Supported Parameters
 
 The ultimate goal for the CB is to serve as a central configuration
 repository for one or multiple Kea servers connected to the database. In
-the future it will be possible to store the most of the server's
-configuration in the database and reduce the configuration file to bare
-minimum, i.e. the only mandatory parameter will be the
-``config-control`` which includes the necessary information to connect
-to the database. In the Kea 1.6.0 release, however, only the subset of
+the future it will be possible to store most of the server's
+configuration in the database and reduce the configuration file to a bare
+minimum; the only mandatory parameter will be
+``config-control``, which includes the necessary information to connect
+to the database. In the Kea 1.6.0 release, however, only a subset of
 the DHCPv4 server parameters can be stored in the database. All other
 parameters must be specified in the JSON configuration file, if
 required.
 
 The following table lists DHCPv4 specific parameters supported by the
-Configuration Backend with an indication on which level of the hierarchy
-it is currently supported. The "n/a" is used in cases when the
-particular parameter is not applicable on the particular level of the
-hierarchy or in cases when the parameter is not supported by the server
-on this level of hierarchy. The "no" is used when the parameter is
-supported by the server on the particular level of hierarchy but is not
+Configuration Backend, with an indication on which level of the hierarchy
+it is currently supported. "n/a" is used in cases when a
+given parameter is not applicable on a particular level of the
+hierarchy, or in cases when the parameter is not supported by the server
+at this level of the hierarchy. "no" is used when the parameter is
+supported by the server on the given level of the hierarchy, but is not
 configurable via the Configuration Backend.
 
-All supported parameters can be configured via ``cb_cmds`` hooks library
-described in the `??? <#cb-cmds-library>`__. The general rule is that
-the scalar global parameters are set using the
-``remote-global-parameter4-set``. The shared network specific parameters
-are set using the ``remote-network4-set``. Finally, the subnet and pool
-level parameters are set using the ``remote-subnet4-set``. Whenever
-there is an exception from this general rule, it is highlighted in the
-table. The non-scalar global parameters have dedicated commands, e.g.
-modifying the global DHCPv4 options (``option-data``) is performed using
-the ``remote-option4-global-set``.
+All supported parameters can be configured via the ``cb_cmds`` hooks library
+described in the :ref:`cb-cmds-library` section. The general rule is that
+the scalar global parameters are set using
+``remote-global-parameter4-set``; the shared network specific parameters
+are set using ``remote-network4-set``; and the subnet and pool
+level parameters are set using ``remote-subnet4-set``. Whenever
+there is an exception to this general rule, it is highlighted in the
+table. The non-scalar global parameters have dedicated commands; for example,
+the global DHCPv4 options (``option-data``) are modified using
+``remote-option4-global-set``.
 
 .. table:: List of DHCPv4 Parameters Supported by the Configuration
 Backend
 
-   +-------------+-------------+-------------+-------------+-------------+
-   | Parameter   | Global      | Shared      | Subnet      | Pool        |
-   |             |             | Network     |             |             |
-   +=============+=============+=============+=============+=============+
-   | 4o6-interfa | n/a         | n/a         | yes         | n/a         |
-   | ce          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | 4o6-interfa | n/a         | n/a         | yes         | n/a         |
-   | ce-id       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | 4o6-subnet  | n/a         | n/a         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | boot-file-n | yes         | yes         | yes         | n/a         |
-   | ame         |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | calculate-t | yes         | yes         | yes         | n/a         |
-   | ee-times    |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | client-clas | n/a         | yes         | yes         | no          |
-   | s           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | decline-pro | yes         | n/a         | n/a         | n/a         |
-   | bation-peri |             |             |             |             |
-   | od          |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | dhcp4o6-por | yes         | n/a         | n/a         | n/a         |
-   | t           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | echo-client | yes         | n/a         | n/a         | n/a         |
-   | -id         |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | interface   | n/a         | yes         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | match-clien | yes         | yes         | yes         | n/a         |
-   | t-id        |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | next-server | yes         | yes         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | option-data | yes (via    | yes         | yes         | yes         |
-   |             | remote-opti |             |             |             |
-   |             | on4-global- |             |             |             |
-   |             | set)        |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | option-def  | yes (via    | n/a         | n/a         | n/a         |
-   |             | remote-opti |             |             |             |
-   |             | on-def4-set |             |             |             |
-   |             | )           |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | rebind-time | yes         | yes         | yes         | n/a         |
-   | r           |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | renew-timer | yes         | yes         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | server-host | yes         | yes         | yes         | n/a         |
-   | name        |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | valid-lifet | yes         | yes         | yes         | n/a         |
-   | ime         |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | relay       | n/a         | yes         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | require-cli | no          | yes         | yes         | no          |
-   | ent-classes |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | reservation | yes         | yes         | yes         | n/a         |
-   | -mode       |             |             |             |             |
-   +-------------+-------------+-------------+-------------+-------------+
-   | t1-percent  | yes         | yes         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
-   | t2-percent  | yes         | yes         | yes         | n/a         |
-   +-------------+-------------+-------------+-------------+-------------+
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | Parameter                | Global                     | Shared      | Subnet      | Pool        |
+   |                          |                            | Network     |             |             |
+   +==========================+============================+=============+=============+=============+
+   | 4o6-interface            | n/a                        | n/a         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | 4o6-interface-id         | n/a                        | n/a         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | 4o6-subnet               | n/a                        | n/a         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | boot-file-name           | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | calculate-tee-times      | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | client-class             | n/a                        | yes         | yes         | no          |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | decline-probation-period | yes                        | n/a         | n/a         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | dhcp4o6-port             | yes                        | n/a         | n/a         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | echo-client-id           | yes                        | n/a         | n/a         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | interface                | n/a                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | match-client-id          | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | next-server              | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | option-data              | yes (via                   | yes         | yes         | yes         |
+   |                          | remote-option4-global-set) |             |             |             |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | option-def               | yes (via                   | n/a         | n/a         | n/a         |
+   |                          | remote-option-def4-set)    |             |             |             |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | rebind-timer             | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | renew-timer              | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | server-hostname          | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | valid-lifetime           | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | relay                    | n/a                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | require-client-classes   | no                         | yes         | yes         | no          |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | reservation-mode         | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | t1-percent               | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
+   | t2-percent               | yes                        | yes         | yes         | n/a         |
+   +--------------------------+----------------------------+-------------+-------------+-------------+
 
 .. _dhcp4-cb-json:
 
@@ -5662,11 +5630,11 @@ Consider the following configuration snippet:
        }
    }
 
-The ``config-control`` contains two parameters. The ``config-databases``
-is a list which contains one element comprising database type, location
-and the credentials to be used to connect to this database. Note that
+The ``config-control`` command contains two parameters. ``config-databases``
+is a list which contains one element comprising database type, location,
+and the credentials to be used to connect to this database. (Note that
 the parameters specified here correspond to the database specification
-for the lease database backend and hosts database backend. Currently
+for the lease database backend and hosts database backend.) Currently
 only one database connection can be specified on the
 ``config-databases`` list. The server will connect to this database
 during the startup or reconfiguration, and will fetch the configuration
@@ -5677,43 +5645,43 @@ merged into the configuration read from the configuration file.
 
    Whenever there is a conflict between the parameters specified in the
    configuration file and the database, the parameters from the database
-   take precedence. We strongly recommend to avoid duplicating
-   parameters in the file and the database but this recommendation is
+   take precedence. We strongly recommend avoiding the duplication of
+   parameters in the file and the database, but this recommendation is
    not enforced by the Kea servers. In particular, if the subnets'
    configuration is sourced from the database, we recommend that all
-   subnets are specified in the database and no subnets are specified in
+   subnets be specified in the database and that no subnets be specified in
    the configuration file. It is possible to specify the subnets in both
-   places, but that must be done with care. The subnets in the
+   places, but the subnets in the
    configuration file with overlapping ids and/or prefixes with the
    subnets from the database will be superseded by those from the
    database.
 
 Once the Kea server is configured, it starts periodically polling for
 the configuration changes in the database. The frequency of polling is
-controlled by the ``config-fetch-wait-time`` parameter. It is expressed
-in seconds and it is the period between the time when the server
+controlled by the ``config-fetch-wait-time`` parameter, expressed
+in seconds; it is the period between the time when the server
 completed last polling (and possibly the local configuration update) and
-the time when it begins polling again. In the example above, this period
+the time when it will begin polling again. In the example above, this period
 is set to 20 seconds. This means that after adding a new configuration
-into the database (e.g. added new subnet), it will take up to 20 seconds
+into the database (e.g. adding new subnet), it will take up to 20 seconds
 (plus the time needed to fetch and apply the new configuration) before
 the server starts using this subnet. The lower the
 ``config-fetch-wait-time`` value, the shorter the time for the server to
 react to the incremental configuration updates in the database. On the
 other hand, polling the database too frequently may impact the DHCP
-server's performance because the server needs to make at least one query
-to the database to discover the pending configuration updates.The
+server's performance, because the server needs to make at least one query
+to the database to discover the pending configuration updates. The
 default value of the ``config-fetch-wait-time`` is 30 seconds.
 
 Finally, in the configuration example above, two hooks libraries are
-loaded. The former, ``libdhcp_mysql_cb.so``, is the implementation of
+loaded. The first, ``libdhcp_mysql_cb.so``, is the implementation of
 the Configuration Backend for MySQL. It must be always present when the
 server uses MySQL as the configuration repository. Failing to load this
 library will result in an error during the server configuration if the
 "mysql" database is selected with the ``config-control`` parameter.
 
-The latter hooks library, ``libdhcp_cb_cmds.so``, is optional. It should
+The second hooks library, ``libdhcp_cb_cmds.so``, is optional. It should
 be loaded when the Kea server instance is to be used for managing the
-configuration in the database. See the `??? <#cb-cmds-library>`__ for
-the details. Note that this hooks library is only available to the ISC
+configuration in the database. See the :ref:`cb-cmds-library` section for
+details. Note that this hooks library is only available to ISC
 customers with a support contract.
