@@ -1,3 +1,4 @@
+.. _hooks-libraries:
 
 ***************
 Hooks Libraries

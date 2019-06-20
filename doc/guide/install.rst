@@ -162,10 +162,10 @@ files. They can be created by running ``autoreconf`` with the
 
 Write access to the Kea repository is only granted to ISC staff. If you
 are a developer planning to contribute to Kea, please check our
-:ref:`Contributor's
-Guide <https://gitlab.isc.org/isc-projects/kea/blob/master/contributors-guide.md>`.
-The :ref:`Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>` contains more
+`Contributor's
+Guide <https://gitlab.isc.org/isc-projects/kea/blob/master/contributors-guide.md>`__.
+The `Kea Developer's
+Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__ contains more
 information about the process, as well as describes the requirements for
 contributed code to be accepted by ISC.
 
@@ -377,8 +377,8 @@ optional backends and the creation of the lease database.
    When unit tests are built with Kea (i.e. the --with-gtest configuration
    option is specified), the databases must be manually pre-configured
    for the unit tests to run. The details of this configuration can be
-   found in the :ref:`Kea Developer's
-   Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`.
+   found in the `Kea Developer's
+   Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__.
 
 Building with MySQL Support
 ---------------------------

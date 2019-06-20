@@ -19,7 +19,7 @@ command-line switches:
 
 -  ``-d`` - specifies whether the server logging should be switched to
    debug/verbose mode. In verbose mode, the logging severity and
-   debuglevel specified in the configuration file are ignored and
+   debuglevel specified in the configuration file are ignored;
    "debug" severity and the maximum debuglevel (99) are assumed. The
    flag is convenient for temporarily switching the server into maximum
    verbosity, e.g. when debugging.
@@ -55,7 +55,7 @@ command-line switches:
 On startup, the server will detect available network interfaces and will
 attempt to open UDP sockets on all interfaces mentioned in the
 configuration file. Since the DHCPv4 server opens privileged ports, it
-requires root access. Make sure you run this daemon as root.
+requires root access. This daemon must be run as root.
 
 During startup, the server will attempt to create a PID file of the
 form: [localstatedir]/[conf name].kea-dhcp4.pid where:
@@ -90,13 +90,13 @@ Introduction
 ------------
 
 This section explains how to configure the DHCPv4 server using a
-configuration file. Before DHCPv4 is started, its configuration file has
-to be created. The basic configuration is as follows:
+configuration file. Before DHCPv4 is started, its configuration file must
+be created. The basic configuration is as follows:
 
 ::
 
    {
-   # DHCPv4 configuration starts in this line
+   # DHCPv4 configuration starts on the next line
    "Dhcp4": {
 
    # First we set up global values
@@ -104,7 +104,7 @@ to be created. The basic configuration is as follows:
        "renew-timer": 1000,
        "rebind-timer": 2000,
 
-   # Next we setup the interfaces to be used by the server.
+   # Next we set up the interfaces to be used by the server.
        "interfaces-config": {
            "interfaces": [ "eth0" ]
        },
@@ -150,7 +150,7 @@ above this object is called ``Dhcp4``.
    of multiple modules within a single configuration file, but this is
    not recommended and support for it will be removed in a future
    release. The only object, besides the one specifying module
-   configuration, which can (and usually was) included in the same file
+   configuration, which can be (and usually was) included in the same file
    is ``Logging``. However, we don't include this object in the example
    above for clarity; its content, the list of loggers, should now be
    inside the ``Dhcp4`` object instead of the deprecated object.
@@ -160,7 +160,7 @@ with the corresponding closing brace (in the above example, the brace
 after the last comment). Everything defined between those lines is
 considered to be the Dhcp4 configuration.
 
-In the general case, the order in which those parameters appear does not
+In general, the order in which those parameters appear does not
 matter, but there are two caveats. The first one is to remember that the
 configuration file must be well-formed JSON. That means that the
 parameters for any given scope must be separated by a comma, and there
@@ -174,7 +174,7 @@ instances are ignored. This is unlikely to cause any confusion as there
 are no real-life reasons to keep multiple copies of the same parameter
 in your configuration file.
 
-Moving onto the DHCPv4 configuration elements, the first few elements
+The first few DHCPv4 configuration elements
 define some global parameters. ``valid-lifetime`` defines how long the
 addresses (leases) given out by the server are valid. If nothing
 changes, a client that got an address is allowed to use it for 4000
@@ -191,7 +191,7 @@ client will begin the renewal and rebind procedures.
    will only send ``renew-timer``, via DHCPv4 option code 58, if it is less
    than ``rebind-timer`` (or ``valid-lifetime`` if ``rebind-timer`` was not
    specified). In their absence, the client should select values for T1
-   and T2 timers according to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`.
+   and T2 timers according to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`_.
    See section :ref:`dhcp4-t1-t2-times`
    for more details on generating T1 and T2.
 
@@ -213,7 +213,7 @@ The next couple of lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
 server to use ``memfile``, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a
-CSV file. This is a very simple configuration; usually the lease
+CSV (comma-separated values) file. This is a very simple configuration; usually the lease
 database configuration is more extensive and contains additional
 parameters. Note that ``lease-database`` is an object and opens up a new
 scope, using an opening brace. Its parameters (just one in this example:
@@ -353,8 +353,8 @@ the renewals, the smaller the value of ``lfc-interval`` should be. Note,
 however, that the LFC takes time and thus it is possible (although
 unlikely) that, if the ``lfc-interval`` is too short, a new cleanup may
 be started while the previous one is still running. The server would
-recover from this by skipping the new cleanup when it detects that the
-previous cleanup is still in progress. But it implies that the actual
+recover from this by skipping the new cleanup when it detected that the
+previous cleanup was still in progress. But it implies that the actual
 cleanups will be triggered more rarely than configured. Moreover,
 triggering a new cleanup adds overhead to the server, which will not be
 able to respond to new requests for a short period of time when the new
@@ -368,7 +368,7 @@ avoid conflicts between two processes both using the same lease
 files, the LFC process starts with Kea opening a new lease file; the
 actual LFC process operates on the lease file that is no longer used by
 the server. There are also other files created as a side effect of the
-lease file cleanup. The detailed description of the LFC is located later
+lease file cleanup. The detailed description of the LFC process is located later
 in this Kea Administrator's Reference Manual: :ref:`kea-lfc`.
 
 .. _database-configuration4:
@@ -422,7 +422,7 @@ In this case, set the value to the empty string:
 
    "Dhcp4": { "lease-database": { "host" : "", ... }, ... }
 
-Should the database use a port different than the default, it may be
+Should the database use a port other than the default, it may be
 specified as well:
 
 ::
@@ -471,10 +471,10 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
    **Note**
 
    Automatic reconnection to database backends is configured
-   individually per backend. This allows you to tailor the recovery
-   parameters to each backend you use. We do suggest that you enable it
-   either for all backends or none, so you have consistent
-   behavior. Losing connectivity to a backend for which reconnect is
+   individually per backend. This allows users to tailor the recovery
+   parameters to each backend they use. We do suggest that users enable it
+   either for all backends or none, so behavior is consistent.
+   Losing connectivity to a backend for which reconnect is
    disabled will result in the server shutting itself down. This
    includes cases when the lease database backend and the hosts database
    backend are connected to the same database instance.
@@ -484,7 +484,7 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
    **Note**
 
    Note that the host parameter is used by the MySQL and PostgreSQL backends.
-   Cassandra has a concept of contact points that could be used to
+   Cassandra has a concept of contact points that can be used to
    contact the cluster, instead of a single IP or hostname. It takes a
    list of comma-separated IP addresses, which may be specified as:
    ::
@@ -547,15 +547,15 @@ Cassandra also supports a number of optional parameters:
 -  ``consistency`` - configures consistency level. The default is
    "quorum". Supported values: any, one, two, three, quorum, all,
    local-quorum, each-quorum, serial, local-serial, local-one. See
-   :ref:`Cassandra
-   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`
+   `Cassandra
+   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigConsistency.html>`__
    for more details.
 
 -  ``serial-consistency`` - configures serial consistency level which
    manages lightweight transaction isolation. The default is "serial".
    Supported values: any, one, two, three, quorum, all, local-quorum,
-   each-quorum, serial, local-serial, local-one. See :ref:`Cassandra serial
-   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`
+   each-quorum, serial, local-serial, local-one. See `Cassandra serial
+   consistency <https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html>`__
    for more details.
 
 For example, a complex Cassandra configuration with most parameters
@@ -683,10 +683,10 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
    **Note**
 
    Automatic reconnection to database backends is configured
-   individually per backend. This allows you to tailor the recovery
-   parameters to each backend you use. We do suggest that you enable it
-   either for all backends or none so you have consistent
-   behavior. Losing connectivity to a backend for which reconnect is
+   individually per backend. This allows users to tailor the recovery
+   parameters to each backend they use. We do suggest that users enable it
+   either for all backends or none, so behavior is consistent.
+   Losing connectivity to a backend for which reconnect is
    disabled will result in the server shutting itself down. This
    includes cases when the lease database backend and the hosts database
    backend are connected to the same database instance.
@@ -706,7 +706,7 @@ string "". (This is also the default.)
 
 The multiple storage extension uses a similar syntax; a configuration is
 placed into a "hosts-databases" list instead of into a "hosts-database"
-entry as in:
+entry, as in:
 
 ::
 
@@ -973,8 +973,8 @@ of the implications related to filtering certain types of traffic, as it
 may impair the DHCP server's operation.
 
 In this section we are focusing on the case when the server receives the
-DHCPINFORM message from the client via a relay. According to :ref:`RFC
-2131 <https://tools.ietf.org/html/rfc2131>`, the server should unicast
+DHCPINFORM message from the client via a relay. According to `RFC
+2131 <https://tools.ietf.org/html/rfc2131>`__, the server should unicast
 the DHCPACK response to the address carried in the "ciaddr" field. When
 the UDP socket is in use, the DHCP server relies on the low-level
 functions of an operating system to build the data link, IP, and UDP
@@ -1145,14 +1145,14 @@ can use a given pool, it will also be able to allocate the first
 address) address from that pool. In the aforementioned example of pool
 192.0.3.0/24, both the 192.0.3.0 and 192.0.3.255 addresses may be
 assigned as well. This may be invalid in some network configurations. To
-avoid this, please use the "min-max" notation.
+avoid this, use the "min-max" notation.
 
 .. _dhcp4-t1-t2-times:
 
 Sending T1 (Option 58) and T2 (Option 59)
 -----------------------------------------
 
-According to :ref:`RFC 2131 <https://tools.ietf.org/html/rfc2131>`,
+According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__,
 servers should send values for T1 and T2 that are 50% and 87.5% of the
 lease lifetime, respectively. By default, kea-dhcp4 does not send
 either value. It can be configured to send values that are specified
@@ -1201,7 +1201,7 @@ Calculating the values is controlled by the following three parameters.
 Standard DHCPv4 Options
 -----------------------
 
-One of the major features of the DHCPv4 server is to provide
+One of the major features of the DHCPv4 server is the ability to provide
 configuration options to clients. Most of the options are sent by the
 server only if the client explicitly requests them using the Parameter
 Request List option. Those that do not require inclusion in the
@@ -1323,7 +1323,7 @@ DHCPv4 options. For other option spaces, including custom option spaces,
 see :ref:`dhcp4-option-spaces`. The next line specifies the format in
 which the data will be entered; use of CSV (comma-separated values) is
 recommended. The sixth line gives the actual value to be sent to
-clients. Data are specified as normal text, with values separated by
+clients. The data parameter is specified as normal text, with values separated by
 commas if more than one value is allowed.
 
 Options can also be configured as hexadecimal values. If ``csv-format``
@@ -1350,20 +1350,20 @@ subnets with the following addresses: 192.0.3.1 and 192.0.3.2. Note that
 
 Kea supports the following formats when specifying hexadecimal data:
 
--  ``Delimited octets`` One or more octets separated by either colons or
+-  ``Delimited octets`` - one or more octets separated by either colons or
    spaces (':' or ' '). While each octet may contain one or two digits,
    we strongly recommend always using two digits. Valid examples are
    "ab:cd:ef" and "ab cd ef".
 
--  ``String of digits`` A continuous string of hexadecimal digits with
+-  ``String of digits`` - a continuous string of hexadecimal digits with
    or without a "0x" prefix. Valid examples are "0xabcdef" and "abcdef".
 
 Care should be taken to use proper encoding when using hexadecimal
-format. Kea's ability to validate data correctness in hexadecimal is
+format; Kea's ability to validate data correctness in hexadecimal is
 limited.
 
 Most of the parameters in the "option-data" structure are optional and
-can be omitted in some circumstances as discussed in :ref:`dhcp4-option-data-defaults`.
+can be omitted in some circumstances, as discussed in :ref:`dhcp4-option-data-defaults`.
 
 It is possible to specify or override options on a per-subnet basis. If
 clients connected to most subnets are expected to get the same
@@ -1492,6 +1492,8 @@ create a definition as described in
 definition should match the option format described in the relevant RFC,
 but the configuration mechanism will allow any option format as it
 currently has no means to validate it.
+
+.. _dhcp4-std-options-list:
 
 .. table:: List of Standard DHCPv4 Options
 
@@ -1701,95 +1703,95 @@ currently has no means to validate it.
    | v4-access-domain                       | 213         | fqdn                                              | false       | false       |
    +----------------------------------------+-------------+---------------------------------------------------+-------------+-------------+
 
+.. _dhcp-types:
+
 .. table:: List of Standard DHCP Option Types
 
-   +-----------------------------------+-----------------------------------+
-   | Name                              | Meaning                           |
-   +===================================+===================================+
-   | binary                            | An arbitrary string of bytes,     |
-   |                                   | specified as a set of hexadecimal |
-   |                                   | digits.                           |
-   +-----------------------------------+-----------------------------------+
-   | boolean                           | A boolean value with allowed      |
-   |                                   | values true or false.             |
-   +-----------------------------------+-----------------------------------+
-   | empty                             | No value; data is carried in      |
-   |                                   | suboptions.                       |
-   +-----------------------------------+-----------------------------------+
-   | fqdn                              | Fully qualified domain name (e.g. |
-   |                                   | www.example.com).                 |
-   +-----------------------------------+-----------------------------------+
-   | ipv4-address                      | IPv4 address in the usual         |
-   |                                   | dotted-decimal notation (e.g.     |
-   |                                   | 192.0.2.1).                       |
-   +-----------------------------------+-----------------------------------+
-   | ipv6-address                      | IPv6 address in the usual colon   |
-   |                                   | notation (e.g. 2001:db8::1).      |
-   +-----------------------------------+-----------------------------------+
-   | ipv6-prefix                       | IPv6 prefix and prefix length     |
-   |                                   | specified using CIDR notation,    |
-   |                                   | e.g. 2001:db8:1::/64. This data   |
-   |                                   | type is used to represent an      |
-   |                                   | 8-bit field conveying a prefix    |
-   |                                   | length and the variable length    |
-   |                                   | prefix value.                     |
-   +-----------------------------------+-----------------------------------+
-   | psid                              | PSID and PSID length separated by |
-   |                                   | a slash, e.g. 3/4 specifies       |
-   |                                   | PSID=3 and PSID length=4. In the  |
-   |                                   | wire format it is represented by  |
-   |                                   | an 8-bit field carrying PSID      |
-   |                                   | length (in this case equal to 4)  |
-   |                                   | and the 16-bits-long PSID value   |
-   |                                   | field (in this case equal to      |
-   |                                   | "0011000000000000b" using binary  |
-   |                                   | notation). Allowed values for a   |
-   |                                   | PSID length are 0 to 16. See `RFC |
-   |                                   | 7597 <http://tools.ietf.org/html/ |
-   |                                   | rfc7597>`__                       |
-   |                                   | for details about the PSID wire   |
-   |                                   | representation.                   |
-   +-----------------------------------+-----------------------------------+
-   | record                            | Structured data that may be       |
-   |                                   | comprised of any types (except    |
-   |                                   | "record" and "empty"). The array  |
-   |                                   | flag applies to the last field    |
-   |                                   | only.                             |
-   +-----------------------------------+-----------------------------------+
-   | string                            | Any text. Please note that Kea    |
-   |                                   | will silently discard any         |
-   |                                   | terminating/trailing nulls from   |
-   |                                   | the end of 'string' options when  |
-   |                                   | unpacking received packets. This  |
-   |                                   | is keeping with `RFC 2132,        |
-   |                                   | Section                           |
-   |                                   | 2 <https://tools.ietf.org/html/rf |
-   |                                   | c2132#section-2>`__               |
-   +-----------------------------------+-----------------------------------+
-   | tuple                             | A length encoded as an 8- (16-    |
-   |                                   | for DHCPv6) bit unsigned integer  |
-   |                                   | followed by a string of this      |
-   |                                   | length.                           |
-   +-----------------------------------+-----------------------------------+
-   | uint8                             | 8-bit unsigned integer with       |
-   |                                   | allowed values 0 to 255.          |
-   +-----------------------------------+-----------------------------------+
-   | uint16                            | 16-bit unsigned integer with      |
-   |                                   | allowed values 0 to 65535.        |
-   +-----------------------------------+-----------------------------------+
-   | uint32                            | 32-bit unsigned integer with      |
-   |                                   | allowed values 0 to 4294967295.   |
-   +-----------------------------------+-----------------------------------+
-   | int8                              | 8-bit signed integer with allowed |
-   |                                   | values -128 to 127.               |
-   +-----------------------------------+-----------------------------------+
-   | int16                             | 16-bit signed integer with        |
-   |                                   | allowed values -32768 to 32767.   |
-   +-----------------------------------+-----------------------------------+
-   | int32                             | 32-bit signed integer with        |
-   |                                   | allowed values -2147483648 to     |
-   |                                   | 2147483647.                       |
-   +-----------------------------------+-----------------------------------+
+   +-----------------------------------+-------------------------------------------------------+
+   | Name                              | Meaning                                               |
+   +===================================+=======================================================+
+   | binary                            | An arbitrary string of bytes,                         |
+   |                                   | specified as a set of hexadecimal                     |
+   |                                   | digits.                                               |
+   +-----------------------------------+-------------------------------------------------------+
+   | boolean                           | A boolean value with allowed                          |
+   |                                   | values true or false.                                 |
+   +-----------------------------------+-------------------------------------------------------+
+   | empty                             | No value; data is carried in                          |
+   |                                   | suboptions.                                           |
+   +-----------------------------------+-------------------------------------------------------+
+   | fqdn                              | Fully qualified domain name (e.g.                     |
+   |                                   | www.example.com).                                     |
+   +-----------------------------------+-------------------------------------------------------+
+   | ipv4-address                      | IPv4 address in the usual                             |
+   |                                   | dotted-decimal notation (e.g.                         |
+   |                                   | 192.0.2.1).                                           |
+   +-----------------------------------+-------------------------------------------------------+
+   | ipv6-address                      | IPv6 address in the usual colon                       |
+   |                                   | notation (e.g. 2001:db8::1).                          |
+   +-----------------------------------+-------------------------------------------------------+
+   | ipv6-prefix                       | IPv6 prefix and prefix length                         |
+   |                                   | specified using CIDR notation,                        |
+   |                                   | e.g. 2001:db8:1::/64. This data                       |
+   |                                   | type is used to represent an                          |
+   |                                   | 8-bit field conveying a prefix                        |
+   |                                   | length and the variable length                        |
+   |                                   | prefix value.                                         |
+   +-----------------------------------+-------------------------------------------------------+
+   | psid                              | PSID and PSID length separated by                     |
+   |                                   | a slash, e.g. 3/4 specifies                           |
+   |                                   | PSID=3 and PSID length=4. In the                      |
+   |                                   | wire format it is represented by                      |
+   |                                   | an 8-bit field carrying PSID                          |
+   |                                   | length (in this case equal to 4)                      |
+   |                                   | and the 16-bits-long PSID value                       |
+   |                                   | field (in this case equal to                          |
+   |                                   | "0011000000000000b" using binary                      |
+   |                                   | notation). Allowed values for a                       |
+   |                                   | PSID length are 0 to 16. See `RFC                     |
+   |                                   | 7597 <https://tools.ietf.org/html/rfc7597>`__         |
+   |                                   | for details about the PSID wire                       |
+   |                                   | representation.                                       |
+   +-----------------------------------+-------------------------------------------------------+
+   | record                            | Structured data that may be                           |
+   |                                   | comprised of any types (except                        |
+   |                                   | "record" and "empty"). The array                      |
+   |                                   | flag applies to the last field                        |
+   |                                   | only.                                                 |
+   +-----------------------------------+-------------------------------------------------------+
+   | string                            | Any text. Please note that Kea                        |
+   |                                   | will silently discard any                             |
+   |                                   | terminating/trailing nulls from                       |
+   |                                   | the end of 'string' options when                      |
+   |                                   | unpacking received packets. This                      |
+   |                                   | is in keeping with `RFC 2132,                         |
+   |                                   | Section                                               |
+   |                                   | 2 <https://tools.ietf.org/html/rfc2132#section-2>`__. |
+   +-----------------------------------+-------------------------------------------------------+
+   | tuple                             | A length encoded as an 8- (16-                        |
+   |                                   | for DHCPv6) bit unsigned integer                      |
+   |                                   | followed by a string of this                          |
+   |                                   | length.                                               |
+   +-----------------------------------+-------------------------------------------------------+
+   | uint8                             | 8-bit unsigned integer with                           |
+   |                                   | allowed values 0 to 255.                              |
+   +-----------------------------------+-------------------------------------------------------+
+   | uint16                            | 16-bit unsigned integer with                          |
+   |                                   | allowed values 0 to 65535.                            |
+   +-----------------------------------+-------------------------------------------------------+
+   | uint32                            | 32-bit unsigned integer with                          |
+   |                                   | allowed values 0 to 4294967295.                       |
+   +-----------------------------------+-------------------------------------------------------+
+   | int8                              | 8-bit signed integer with allowed                     |
+   |                                   | values -128 to 127.                                   |
+   +-----------------------------------+-------------------------------------------------------+
+   | int16                             | 16-bit signed integer with                            |
+   |                                   | allowed values -32768 to 32767.                       |
+   +-----------------------------------+-------------------------------------------------------+
+   | int32                             | 32-bit signed integer with                            |
+   |                                   | allowed values -2147483648 to                         |
+   |                                   | 2147483647.                                           |
+   +-----------------------------------+-------------------------------------------------------+
 
 .. _dhcp4-custom-options:
 
@@ -2061,7 +2063,7 @@ The definition used to decode a VSI option is:
 2. If none, the global definition;
 
 3. If none, the last-resort definition described in the next section
-   :ref:`dhcp4-vendor-opts` (backwards-compatible with previous Kea versions).
+   :ref:`dhcp4-vendor-opts` (backward-compatible with previous Kea versions).
 
 ..
 
@@ -2556,8 +2558,8 @@ but for PXE clients the client architecture type option (code 93)
 seems to be particularly suited to make the distinction. The following
 example checks whether the client identifies itself as a PXE device with
 architecture EFI x86-64, and sets several fields if it does. See
-:ref:`Section 2.1 of RFC
-4578 <https://tools.ietf.org/html/rfc4578#section-2.1>`) or the
+`Section 2.1 of RFC
+4578 <https://tools.ietf.org/html/rfc4578#section-2.1>`__) or the
 documentation of your client for specific values.
 
 ::
@@ -2855,8 +2857,8 @@ following configuration is required:
 When Does the kea-dhcp4 Server Generate a DDNS Request?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-kea-dhcp4 follows the behavior prescribed for DHCP servers in :ref:`RFC
-4702 <http://tools.ietf.org/html/rfc4702>`. It is important to keep in
+kea-dhcp4 follows the behavior prescribed for DHCP servers in `RFC
+4702 <https://tools.ietf.org/html/rfc4702>`__. It is important to keep in
 mind that kea-dhcp4 makes the initial decision of when and what to
 update and forwards that information to D2 in the form of NCRs. Carrying
 out the actual DNS updates and dealing with such things as conflict
@@ -2923,8 +2925,8 @@ DDNS request to update both forward and reverse DNS data. In this case,
 the N-S-O flags in the server's response to the client will be 0-1-1
 respectively.
 
-(Note that the flag combination N=1, S=1 is prohibited according to :ref:`RFC
-4702 <https://tools.ietf.org/html/rfc4702>`. If such a combination is
+(Note that the flag combination N=1, S=1 is prohibited according to `RFC
+4702 <https://tools.ietf.org/html/rfc4702>`__. If such a combination is
 received from the client, the packet will be dropped by kea-dhcp4.)
 
 To override client delegation, set the following values in the
@@ -3186,18 +3188,18 @@ handled the same way as ``next-server``.
 Echoing Client-ID (RFC 6842)
 ----------------------------
 
-The original DHCPv4 specification (:ref:`RFC
-2131 <https://tools.ietf.org/html/rfc2131>`) states that the DHCPv4
+The original DHCPv4 specification (`RFC
+2131 <https://tools.ietf.org/html/rfc2131>`__) states that the DHCPv4
 server must not send back client-id options when responding to clients.
 However, in some cases that result confused clients that did not have a MAC
-address or client-id; see :ref:`RFC
-6842 <https://tools.ietf.org/html/rfc6842>` for details. That behavior
-changed with the publication of :ref:`RFC
-6842 <https://tools.ietf.org/html/rfc6842>`, which updated :ref:`RFC
-2131 <https://tools.ietf.org/html/rfc2131>`. That update states that
+address or client-id; see `RFC
+6842 <https://tools.ietf.org/html/rfc6842>`__ for details. That behavior
+changed with the publication of `RFC
+6842 <https://tools.ietf.org/html/rfc6842>`__, which updated `RFC
+2131 <https://tools.ietf.org/html/rfc2131>`__. That update states that
 the server must send the client-id if the client sent it. That is Kea's
 default behavior. However, in some cases older devices that do not
-support :ref:`RFC 6842 <http://tools.ietf.org/html/rfc6842>` may refuse to
+support `RFC 6842 <https://tools.ietf.org/html/rfc6842>`__ may refuse to
 accept responses that include the client-id option. To enable backward
 compatibility, an optional configuration parameter has been introduced.
 To configure it, use the following configuration statement:
@@ -3244,19 +3246,19 @@ to the client: "chaddr" and "client identifier". The former was
 introduced as a part of the BOOTP specification and it is also used by
 DHCP to carry the hardware address of the interface used to send the
 query to the server (MAC address for the Ethernet). The latter is
-carried in the Client-identifier option, introduced in :ref:`RFC
-2132 <http://tools.ietf.org/html/rfc2132>`.
+carried in the Client-identifier option, introduced in `RFC
+2132 <https://tools.ietf.org/html/rfc2132>`__.
 
-:ref:`RFC 2131 <http://tools.ietf.org/html/rfc2131>` indicates that the
+`RFC 2131 <https://tools.ietf.org/html/rfc2131>`__ indicates that the
 server may use both of these identifiers to identify the client but the
 "client identifier", if present, takes precedence over "chaddr". One of
 the reasons for this is that "client identifier" is independent from the
 hardware used by the client to communicate with the server. For example,
 if the client obtained the lease using one network card and then the
 network card is moved to another host, the server will wrongly identify
-this host as the one which obtained the lease. Moreover, :ref:`RFC
-4361 <https://tools.ietf.org/html/rfc4361>` gives the recommendation
-to use a DUID (see :ref:`RFC 8415 <https://tools.ietf.org/html/rfc8415>`,
+this host as the one which obtained the lease. Moreover, `RFC
+4361 <https://tools.ietf.org/html/rfc4361>`__ gives the recommendation
+to use a DUID (see `RFC 8415 <https://tools.ietf.org/html/rfc8415>`__,
 the DHCPv6 specification) carried as a "client identifier" when dual-stack
 networks are in use to provide consistent identification information for
 the client, regardless of the type of protocol it is using. Kea adheres to
@@ -3364,8 +3366,8 @@ new lease will be allocated.
 Authoritative DHCPv4 Server Behavior
 ------------------------------------
 
-The original DHCPv4 specification (:ref:`RFC
-2131 <http://tools.ietf.org/html/rfc2131>`) states that if a client
+The original DHCPv4 specification (`RFC
+2131 <https://tools.ietf.org/html/rfc2131>`__) states that if a client
 requests an address in the INIT-REBOOT state, of which the server has no
 knowledge, the server must remain silent, except if the server knows
 that the client has requested an IP address from the wrong network. By
@@ -3390,8 +3392,8 @@ shared-network must have the same ``authoritative`` setting.
 DHCPv4-over-DHCPv6: DHCPv4 Side
 -------------------------------
 
-The support of DHCPv4-over-DHCPv6 transport is described in :ref:`RFC
-7341 <http://tools.ietf.org/html/rfc7341>` and is implemented using
+The support of DHCPv4-over-DHCPv6 transport is described in `RFC
+7341 <https://tools.ietf.org/html/rfc7341>`__ and is implemented using
 cooperating DHCPv4 and DHCPv6 servers. This section is about the
 configuration of the DHCPv4 side (the DHCPv6 side is described in
 :ref:`dhcp6-dhcp4o6-config`).
@@ -3962,8 +3964,8 @@ Cassandra. See :ref:`hosts6-storage` for information on how to
 configure Kea to use reservations stored in MySQL, PostgreSQL, or
 Cassandra. Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`host-cmds` provides detailed information.
-The :ref:`Kea wiki
-<https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>``
+The `Kea wiki
+<https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
 provides some examples of how to conduct common host reservation
 operations.
 
@@ -5322,8 +5324,8 @@ values are 107 on Linux and 103 on FreeBSD.
 
 Communication over the control channel is conducted using JSON
 structures. See the
-:ref:`Control Channel section in the Kea Developer's Guide
-<https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html>`
+`Control Channel section in the Kea Developer's Guide
+<https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html>`__
 for more details.
 
 The DHCPv4 server supports the following operational commands:
@@ -5463,7 +5465,7 @@ treated as “not implemented yet,” rather than as actual limitations.
 However, some of them are implications of the design choices made. Those
 are clearly marked as such.
 
--  BOOTP (`RFC 951 <http://tools.ietf.org/html/rfc951>`__) is not
+-  BOOTP (`RFC 951 <https://tools.ietf.org/html/rfc951>`__) is not
    supported. This is a design choice; BOOTP support is not planned.
 
 -  On Linux and BSD system families the DHCP messages are sent and
@@ -5476,7 +5478,7 @@ are clearly marked as such.
    which use different data link layer header formats (e.g. Infiniband).
 
 -  The DHCPv4 server does not verify that an assigned address is unused.
-   According to `RFC 2131 <http://tools.ietf.org/html/rfc2131>`__, the
+   According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, the
    allocating server should verify that an address is not used by
    sending an ICMP echo request.
 

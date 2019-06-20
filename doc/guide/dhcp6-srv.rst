@@ -10,7 +10,7 @@ Starting and Stopping the DHCPv6 Server
 =======================================
 
 It is recommended that the Kea DHCPv6 server be started and stopped
-using ``keactrl`` (described in `??? <#keactrl>`__); however, it is also
+using ``keactrl`` (described in :ref:`keactrl`); however, it is also
 possible to run the server directly. It accepts the following
 command-line switches:
 
@@ -18,8 +18,8 @@ command-line switches:
    mandatory switch.
 
 -  ``-d`` - specifies whether the server logging should be switched to
-   verbose mode. In verbose mode, the logging severity and debuglevel
-   specified in the configuration file are ignored and "debug" severity
+   debug/verbose mode. In verbose mode, the logging severity and debuglevel
+   specified in the configuration file are ignored; "debug" severity
    and the maximum debuglevel (99) are assumed. The flag is convenient
    for temporarily switching the server into maximum verbosity, e.g.
    when debugging.
@@ -55,7 +55,7 @@ command-line switches:
 On startup, the server will detect available network interfaces and will
 attempt to open UDP sockets on all interfaces mentioned in the
 configuration file. Since the DHCPv6 server opens privileged ports, it
-requires root access. Make sure you run this daemon as root.
+requires root access. This daemon must be run as root.
 
 During startup, the server will attempt to create a PID file of the
 form: localstatedir]/[conf name].kea-dhcp6.pid where:
@@ -90,8 +90,8 @@ Introduction
 ------------
 
 This section explains how to configure the DHCPv6 server using a
-configuration file. Before DHCPv6 is started, its configuration file has
-to be created. The basic configuration is as follows:
+configuration file. Before DHCPv6 is started, its configuration file must
+be created. The basic configuration is as follows:
 
 ::
 
@@ -105,7 +105,7 @@ to be created. The basic configuration is as follows:
        "rebind-timer": 2000,
        "preferred-lifetime": 3000,
 
-   # Next we setup the interfaces to be used by the server.
+   # Next we set up the interfaces to be used by the server.
        "interfaces-config": {
            "interfaces": [ "eth0" ]
        },
@@ -149,22 +149,22 @@ above this object is called ``Dhcp6``.
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
-   not recommended and support for it will be removed in the future
-   releases. The only object, besides the one specifying module
-   configuration, which can (and usually was) included in the same file
+   not recommended and support for it will be removed in a future
+   release. The only object, besides the one specifying module
+   configuration, which can be (and usually was) included in the same file
    is ``Logging``. However, we don't include this object in the example
-   above for clarity and its content, the list of loggers, should now be
-   inside the ``Dhcp4`` object instead of this deprecated object.
+   above for clarity; its content, the list of loggers, should now be
+   inside the ``Dhcp6`` object instead of this deprecated object.
 
 The Dhcp6 configuration starts with the ``"Dhcp6": {`` line and ends
 with the corresponding closing brace (in the above example, the brace
 after the last comment). Everything defined between those lines is
 considered to be the Dhcp6 configuration.
 
-In the general case, the order in which those parameters appear does not
+In general, the order in which those parameters appear does not
 matter, but there are two caveats. The first one is to remember that the
 configuration file must be well-formed JSON. That means that the
-parameters for any given scope must be separated by a comma and there
+parameters for any given scope must be separated by a comma, and there
 must not be a comma after the last parameter. When reordering a
 configuration file, keep in mind that moving a parameter to or from the
 last position in a given scope may also require moving the comma. The
@@ -175,7 +175,7 @@ instances are ignored. This is unlikely to cause any confusion as there
 are no real-life reasons to keep multiple copies of the same parameter
 in your configuration file.
 
-Moving onto the DHCPv6 configuration elements, the first few elements
+The first few DHCPv6 configuration elements
 define some global parameters. ``valid-lifetime`` defines how long the
 addresses (leases) given out by the server are valid. If nothing
 changes, a client that got an address is allowed to use it for 4000
@@ -183,11 +183,11 @@ seconds. (Note that integer numbers are specified as is, without any
 quotes around them.) The address will become deprecated in 3000 seconds,
 i.e. clients are allowed to keep old connections, but can't use this
 address for creating new connections. ``renew-timer`` and
-``rebind-timer`` are values that define T1 and T2 timers that govern
+``rebind-timer`` are values (also in seconds) that define T1 and T2 timers that govern
 when the client will begin the renewal and rebind procedures.
 
 The ``interfaces-config`` map specifies the server configuration
-concerning the network interfaces, on which the server should listen to
+concerning the network interfaces on which the server should listen to
 the DHCP messages. The ``interfaces`` parameter specifies a list of
 network interfaces on which the server should listen. Lists are opened
 and closed with square brackets, with elements separated by commas. To
@@ -204,16 +204,16 @@ The next couple of lines define the lease database, the place where the
 server stores its lease information. This particular example tells the
 server to use ``memfile``, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a
-CSV file. This is a very simple configuration; usually the lease
+CSV (comma-separated values) file. This is a very simple configuration; usually the lease
 database configuration is more extensive and contains additional
 parameters. Note that ``lease-database`` is an object and opens up a new
-scope, using an opening brace. Its parameters (just one in this example
-- ``type``) follow. If there were more than one, they would be separated
+scope, using an opening brace. Its parameters (just one in this example:
+``type``) follow. If there were more than one, they would be separated
 by commas. This scope is closed with a closing brace. As more parameters
 for the Dhcp6 definition follow, a trailing comma is present.
 
 Finally, we need to define a list of IPv6 subnets. This is the most
-important DHCPv6 configuration structure as the server uses that
+important DHCPv6 configuration structure, as the server uses that
 information to process clients' requests. It defines all subnets from
 which the server is expected to receive DHCP requests. The subnets are
 specified with the ``subnet6`` parameter. It is a list, so it starts and
@@ -245,8 +245,8 @@ syntax would be used:
 Note that indentation is optional and is used for aesthetic purposes
 only. In some cases in may be preferable to use more compact notation.
 
-After all parameters are specified, we have two contexts open: global
-and Dhcp6, hence we need two closing curly brackets to close them.
+After all the parameters are specified, we have two contexts open: global
+and Dhcp6; thus, we need two closing curly brackets to close them.
 
 Lease Storage
 -------------
@@ -259,9 +259,9 @@ Memfile - Basic Storage for Leases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The server is able to store lease data in different repositories. Larger
-deployments may elect to store leases in a database. `Lease Database
-Configuration <#database-configuration6>`__ describes this option. In
-typical smaller deployments though, the server will store lease
+deployments may elect to store leases in a database.
+:ref:`database-configuration6` describes this option. In
+typical smaller deployments, though, the server will store lease
 information in a CSV file rather than a database. As well as requiring
 less administration, an advantage of using a file for storage is that it
 eliminates a dependency on third-party database software.
@@ -275,11 +275,11 @@ can be used to configure the Memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
    leases are written to the file. It is strongly recommended that the
-   value of this parameter is set to ``true`` at all times, during the
+   value of this parameter be set to ``true`` at all times during the
    server's normal operation. Not writing leases to disk means that if a
    server is restarted (e.g. after a power failure), it will not know
-   what addresses have been assigned. As a result, it may hand out
-   addresses to new clients that are already in use. The value of
+   which addresses have been assigned. As a result, it may assign new clients
+   addresses that are already in use. The value of
    ``false`` is mostly useful for performance-testing purposes. The
    default value of the ``persist`` parameter is ``true``, which enables
    writing lease updates to the lease file.
@@ -292,7 +292,7 @@ can be used to configure the Memfile backend.
    server will perform a lease file cleanup (LFC). This removes
    redundant (historical) information from the lease file and
    effectively reduces the lease file size. The cleanup process is
-   described in more detailed fashion further in this section. The
+   described in more detail later in this section. The
    default value of the ``lfc-interval`` is ``3600``. A value of 0
    disables the LFC.
 
@@ -339,23 +339,23 @@ the renewals, the smaller the value of ``lfc-interval`` should be. Note,
 however, that the LFC takes time and thus it is possible (although
 unlikely) that, if the ``lfc-interval`` is too short, a new cleanup may
 be started while the previous one is still running. The server would
-recover from this by skipping the new cleanup when it detects that the
-previous cleanup is still in progress. But it implies that the actual
+recover from this by skipping the new cleanup when it detected that the
+previous cleanup was still in progress. But it implies that the actual
 cleanups will be triggered more rarely than configured. Moreover,
 triggering a new cleanup adds overhead to the server, which will not be
 able to respond to new requests for a short period of time when the new
 cleanup process is spawned. Therefore, it is recommended that the
-``lfc-interval`` value is selected in a way that would allow for the LFC
+``lfc-interval`` value be selected in a way that allows the LFC
 to complete the cleanup before a new cleanup is triggered.
 
 Lease file cleanup is performed by a separate process (in the
 background) to avoid a performance impact on the server process. To
-avoid the conflicts between two processes both using the same lease
-files, the LFC process starts with Kea opening new lease file and the
+avoid conflicts between two processes both using the same lease
+files, the LFC process starts with Kea opening a new lease file; the
 actual LFC process operates on the lease file that is no longer used by
 the server. There are also other files created as a side effect of the
-lease file cleanup. The detailed description of the LFC is located later
-in this Kea Administrator's Reference Manual: `??? <#kea-lfc>`__.
+lease file cleanup. The detailed description of the LFC process is located later
+in this Kea Administrator's Reference Manual: :ref:`kea-lfc`.
 
 .. _database-configuration6:
 
@@ -370,7 +370,7 @@ Lease Database Configuration
    use a separate database or both servers can use the same database.
 
 Lease database configuration is controlled through the
-Dhcp6/lease-database parameters. The type of the database must be set to
+Dhcp6/lease-database parameters. The database type must be set to
 "memfile", "mysql", "postgresql", or "cql", e.g.:
 
 ::
@@ -379,8 +379,8 @@ Dhcp6/lease-database parameters. The type of the database must be set to
 
 Next, the name of the database to hold the leases must be set; this is
 the name used when the database was created (see
-`??? <#mysql-database-create>`__, `??? <#pgsql-database-create>`__, or
-`??? <#cql-database-create>`__).
+:ref:`mysql-database-create`, :ref:`pgsql-database-create`, or
+:ref:`cql-database-create`).
 
 ::
 
@@ -393,12 +393,13 @@ For Cassandra:
    "Dhcp6": { "lease-database": { "keyspace": "database-name" , ... }, ... }
 
 If the database is located on a different system from the DHCPv6 server,
-the database host name must also be specified. (It should be noted that
-this configuration may have a severe impact on server performance.):
+the database host name must also be specified:
 
 ::
 
    "Dhcp6": { "lease-database": { "host": "remote-host-name", ... }, ... }
+
+(It should be noted that this configuration may have a severe impact on server performance.)
 
 For Cassandra, multiple contact points can be provided:
 
@@ -419,7 +420,7 @@ For Cassandra:
 
    "Dhcp6": { "lease-database": { "contact-points": "", ... }, ... }
 
-Should the database use a port different than the default, it may be
+Should the database use a port other than the default, it may be
 specified as well:
 
 ::
@@ -437,7 +438,7 @@ The default value of five seconds should be more than adequate for local
 connections. If a timeout is given, though, it should be an integer
 greater than zero.
 
-The maxiumum number of times the server will automatically attempt to
+The maximum number of times the server will automatically attempt to
 reconnect to the lease database after connectivity has been lost may be
 specified:
 
@@ -446,12 +447,12 @@ specified:
    "Dhcp6": { "lease-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of zero (the
 default) disables automatic recovery and the server will exit
 immediately upon detecting a loss of connectivity (MySQL and Postgres
 only).
 
-The number of milliseconds the server will wait in between attempts to
+The number of milliseconds the server will wait between attempts to
 reconnect to the lease database after connectivity has been lost may
 also be specified:
 
@@ -459,17 +460,17 @@ also be specified:
 
    "Dhcp6": { "lease-database": { "reconnect-wait-time" : number-of-milliseconds, ... }, ... }
 
-The default value for MySQL and Postgres is 0, which disables automatic
+The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
    **Note**
 
    Automatic reconnection to database backends is configured
-   individually per backend. This allows you to tailor the recovery
-   parameters to each backend you use. We do suggest that you enable it
-   either for all backends or no backends so you have consistent
-   behavior. Losing connectivity to a backend for which reconnect is
+   individually per backend. This allows users to tailor the recovery
+   parameters to each backend they use. We do suggest that users enable it
+   either for all backends or none, so behavior is consistent.
+   Losing connectivity to a backend for which reconnect is
    disabled will result in the server shutting itself down. This
    includes cases when the lease database backend and the hosts database
    backend are connected to the same database instance.
@@ -478,8 +479,8 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
    **Note**
 
-   Note that host parameter is used by MySQL and PostgreSQL backends.
-   Cassandra has a concept of contact points that could be used to
+   Note that the host parameter is used by the MySQL and PostgreSQL backends.
+   Cassandra has a concept of contact points that can be used to
    contact the cluster, instead of a single IP or hostname. It takes a
    list of comma-separated IP addresses, which may be specified as:
    ::
@@ -504,8 +505,8 @@ string "". (This is also the default.)
 Cassandra-Specific Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The parameters are the same for DHCPv4 and DHCPv6. See
-`??? <#cassandra-database-configuration4>`__ for details.
+The parameters are the same for both DHCPv4 and DHCPv6. See
+:ref:`cassandra-database-configuration4` for details.
 
 .. _hosts6-storage:
 
@@ -518,9 +519,9 @@ lease database. In fact, a Kea server opens independent connections for
 each purpose, be it lease or hosts information. This arrangement gives
 the most flexibility. Kea can keep leases and host reservations
 separately, but can also point to the same database. Currently the
-supported hosts database types are MySQL, PostgreSQL and Cassandra.
+supported hosts database types are MySQL, PostgreSQL, and Cassandra.
 
-For example, the following configuration can be used to configure
+For example, the following configuration can be used to configure a
 connection to MySQL:
 
 ::
@@ -536,7 +537,7 @@ connection to MySQL:
        }
    }
 
-Note that depending on your database configuration, many of the
+Note that depending on the database configuration, many of the
 parameters may be optional.
 
 Please note that usage of hosts storage is optional. A user can define
@@ -569,21 +570,22 @@ be set to "mysql" or "postgresql".
    "Dhcp6": { "hosts-database": { "type": "mysql", ... }, ... }
 
 Next, the name of the database to hold the reservations must be set;
-this is the name used when the database was created (see
-`??? <#supported-databases>`__ for instructions on how to set up the
-desired database type).
+this is the name used when the lease database was created (see
+`:ref:`supported-databases` for instructions on how to set up the
+desired database type):
 
 ::
 
    "Dhcp6": { "hosts-database": { "name": "database-name" , ... }, ... }
 
 If the database is located on a different system than the DHCPv6 server,
-the database host name must also be specified. (Again it should be noted
-that this configuration may have a severe impact on server performance.)
+the database host name must also be specified:
 
 ::
 
    "Dhcp6": { "hosts-database": { "host": remote-host-name, ... }, ... }
+
+(Again, it should be noted that this configuration may have a severe impact on server performance.)
 
 Normally, the database will be on the same machine as the DHCPv6 server.
 In this case, set the value to the empty string:
@@ -605,9 +607,9 @@ specified:
    "Dhcp6": { "host-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
 
 If the server is unable to reconnect to the database after making the
-maximum number of attempts the server will exit. A value of zero (the
+maximum number of attempts, the server will exit. A value of zero (the
 default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres
+immediately upon detecting a loss of connectivity (MySQL and PostgreSQL
 only). For Cassandra, Kea uses a Cassandra interface that connects to
 all nodes in a cluster at the same time. Any connectivity issues should
 be handled by internal Cassandra mechanisms.
@@ -627,10 +629,10 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
    **Note**
 
    Automatic reconnection to database backends is configured
-   individually per backend. This allows you to tailor the recovery
-   parameters to each backend you use. We do suggest that you enable it
-   either for all backends or no backends so you have consistent
-   behavior. Losing connectivity to a backend for which reconnect is
+   individually per backend. This allows users to tailor the recovery
+   parameters to each backend they use. We do suggest that users enable it
+   either for all backends or none, so behavior is consistent.
+   Losing connectivity to a backend for which reconnect is
    disabled will result in the server shutting itself down. This
    includes cases when the lease database backend and the hosts database
    backend are connected to the same database instance.
@@ -648,16 +650,16 @@ access the database should be set:
 If there is no password to the account, set the password to the empty
 string "". (This is also the default.)
 
-The multiple store extension uses a similar syntax; a configuration is
+The multiple storage extension uses a similar syntax; a configuration is
 placed into a "hosts-databases" list instead of into a "hosts-database"
-entry as in:
+entry, as in:
 
 ::
 
    "Dhcp6": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
 
 For additional Cassandra-specific parameters, see
-`??? <#cassandra-database-configuration4>`__.
+:ref:`cassandra-database-configuration4`.
 
 .. _read-only-database-configuration6:
 
@@ -678,7 +680,7 @@ Kea host database backends operate with an implicit configuration to
 both read from and write to the database. If the database user does not
 have write access to the host database, the backend will fail to start
 and the server will refuse to start (or reconfigure). However, if access
-to a read- only host database is required for retrieving reservations
+to a read-only host database is required for retrieving reservations
 for clients and/or assigning specific addresses and options, it is
 possible to explicitly configure Kea to start in "read-only" mode. This
 is controlled by the ``readonly`` boolean parameter as follows:
@@ -701,8 +703,8 @@ the parameter is not specified.
 Interface Configuration
 -----------------------
 
-The DHCPv6 server has to be configured to listen on specific network
-interfaces. The simplest network interface configuration instructs the
+The DHCPv6 server must be configured to listen on specific network
+interfaces. The simplest network interface configuration tells the
 server to listen on all available interfaces:
 
 ::
@@ -747,7 +749,7 @@ all interfaces.
 
 As with the DHCPv4 server, binding to specific addresses and disabling
 re-detection of interfaces are supported. But ``dhcp-socket-type`` is
-not because DHCPv6 uses UDP/IPv6 sockets only. The following example
+not supported, because DHCPv6 uses UDP/IPv6 sockets only. The following example
 shows how to disable the interface detection:
 
 ::
@@ -762,9 +764,9 @@ shows how to disable the interface detection:
 
 
 The loopback interfaces (i.e. the "lo" or "lo0" interface) are not
-configured by default, unless explicitely mentioned in the
+configured by default, unless explicitly mentioned in the
 configuration. Note that Kea requires a link-local address (which does
-not exist on all systems), or a specified unicast address as in:
+not exist on all systems) or a specified unicast address, as in:
 
 ::
 
@@ -802,7 +804,7 @@ manually specify a unique identifier for each subnet.
    Subnet IDs must be greater than zero and less than 4294967295.
 
 The following configuration will assign the specified subnet identifier
-to the newly configured subnet:
+to a newly configured subnet:
 
 ::
 
@@ -827,14 +829,13 @@ Unicast Traffic Support
 
 When the DHCPv6 server starts, by default it listens to the DHCP traffic
 sent to multicast address ff02::1:2 on each interface that it is
-configured to listen on (see `Interface
-Configuration <#dhcp6-interface-configuration>`__). In some cases it is
+configured to listen on (see :ref:`dhcp6-interface-configuration`). In some cases it is
 useful to configure a server to handle incoming traffic sent to global
-unicast addresses as well. The most common reason for this is to have
+unicast addresses as well; the most common reason for this is to have
 relays send their traffic to the server directly. To configure the
-server to listen on a specific unicast address, the interface name can
-be optionally followed by a slash, followed by the global unicast
-address on which the server should listen. The server listens to this
+server to listen on a specific unicast address, add a slash after the interface name,
+followed by the global unicast
+address on which the server should listen. The server will listen to this
 address in addition to normal link-local binding and listening on the
 ff02::1:2 address. The sample configuration below shows how to listen on
 2001:db8::1 (a global address) configured on the eth1 interface.
@@ -869,7 +870,7 @@ to specify more than one unicast address on a given interface.
 
 Care should be taken to specify proper unicast addresses. The server
 will attempt to bind to the addresses specified without any additional
-checks. This approach was selected on purpose to allow the software to
+checks. This approach was selected on purpose, to allow the software to
 communicate over uncommon addresses if so desired.
 
 .. _dhcp6-address-config:
@@ -973,7 +974,7 @@ When configuring a DHCPv6 server using prefix/length notation, please
 pay attention to the boundary values. When specifying that the server
 can use a given pool, it will also be able to allocate the first
 (typically a network address) address from that pool. For example, for
-pool 2001:db8:2::/64 the 2001:db8:2:: address may be assigned as well.
+pool 2001:db8:2::/64, the 2001:db8:2:: address may be assigned as well.
 To avoid this, use the "min-max" notation.
 
 Subnet and Prefix Delegation Pools
@@ -1025,8 +1026,8 @@ exchanges DHCPv6 messages with the requesting router. The configuration
 example below demonstrates how to specify an excluded prefix within a
 prefix pool definition. The excluded prefix
 "2001:db8:1:babe:cafe:80::/72" will be sent to a requesting router which
-includes the Prefix Exclude option in the ORO, and which is delegated a
-prefix from this pool.
+includes the Prefix Exclude option in the Option Request option (ORO),
+and which is delegated a prefix from this pool.
 
 ::
 
@@ -1052,13 +1053,12 @@ prefix from this pool.
 Standard DHCPv6 Options
 -----------------------
 
-One of the major features of a DHCPv6 server is the ability to provide
+One of the major features of the DHCPv6 server is the ability to provide
 configuration options to clients. Although there are several options
 that require special behavior, most options are sent by the server only
 if the client explicitly requests them. The following example shows how
-to configure one of the most frequently used options, which supplies the
-address of DNS servers. Options specified in this way are considered
-global and apply to all configured subnets.
+to configure the addresses of DNS servers, one of the most frequently used options.
+Options specified in this way are considered global and apply to all configured subnets.
 
 ::
 
@@ -1079,15 +1079,14 @@ The ``option-data`` line creates a new entry in the option-data table.
 This table contains information on all global options that the server is
 supposed to configure in all subnets. The ``name`` line specifies the
 option name. (For a complete list of currently supported names, see
-`table_title <#dhcp6-std-options-list>`__.) The next line specifies the
+:ref:`dhcp6-std-options-list`.) The next line specifies the
 option code, which must match one of the values from that list. The line
 beginning with ``space`` specifies the option space, which must always
 be set to "dhcp6" as these are standard DHCPv6 options. For other name
-spaces, including custom option spaces, see `Nested DHCPv6 Options
-(Custom Option Spaces) <#dhcp6-option-spaces>`__. The following line
+spaces, including custom option spaces, see :ref:`dhcp6-option-spaces`. The following line
 specifies the format in which the data will be entered; use of CSV
 (comma-separated values) is recommended. Finally, the ``data`` line
-gives the actual value to be sent to clients. Data is specified as
+gives the actual value to be sent to clients. The data parameter is specified as
 normal text, with values separated by commas if more than one value is
 allowed.
 
@@ -1123,27 +1122,26 @@ with the following addresses: 2001:db8:1::cafe and 2001:db8:1::babe.
 
 Kea supports the following formats when specifying hexadecimal data:
 
--  ``Delimited octets`` One or more octets separated by either colons or
+-  ``Delimited octets`` - one or more octets separated by either colons or
    spaces (':' or ' '). While each octet may contain one or two digits,
    we strongly recommend always using two digits. Valid examples are
    "ab:cd:ef" and "ab cd ef".
 
--  ``String of digits`` A continuous string of hexadecimal digits with
+-  ``String of digits`` - a continuous string of hexadecimal digits with
    or without a "0x" prefix. Valid examples are "0xabcdef" and "abcdef".
 
 Care should be taken to use proper encoding when using hexadecimal
-format. Kea's ability to validate data correctness in hexadecimal is
+format; Kea's ability to validate data correctness in hexadecimal is
 limited.
 
 Most of the parameters in the "option-data" structure are optional and
-can be omitted in some circumstances as discussed in `Unspecified
-Parameters for DHCPv6 Option
-Configuration <#dhcp6-option-data-defaults>`__. Only one of name or code
-is required; you don't need to specify both. Space has a default value
+can be omitted in some circumstances, as discussed in :ref:`dhcp6-option-data-defaults`.
+Only one of name or code
+is required; it is not necessary to specify both. Space has a default value
 of "dhcp6", so you can skip this as well if you define a regular (not
-encapsulated) DHCPv6 option. Finally, csv-format defaults to true, so it
+encapsulated) DHCPv6 option. Finally, csv-format defaults to "true", so it
 too can be skipped, unless you want to specify the option value as
-hexstring. Therefore the above example can be simplified to:
+hexstring. Therefore, the above example can be simplified to:
 
 ::
 
@@ -1179,7 +1177,7 @@ set the "always-send" flag to true as in:
 
 
 The effect is the same as if the client added the option code in the
-Option Request Option (or its equivalent for vendor options) so in:
+Option Request option (or its equivalent for vendor options), as in:
 
 ::
 
@@ -1211,15 +1209,15 @@ Option Request Option (or its equivalent for vendor options) so in:
 
 
 The DNS servers option is always added to responses (the always-send is
-"sticky") but the value is the subnet one when the client is localized
+"sticky"), but the value is the subnet one when the client is localized
 in the subnet.
 
 It is possible to override options on a per-subnet basis. If clients
-connected to most of your subnets are expected to get the same values of
-a given option, you should use global options; you can then override
-specific values for a small number of subnets. On the other hand, if you
-use different values in each subnet, it does not make sense to specify
-global option values; rather, you should set only subnet-specific ones.
+connected to most subnets are expected to get the same values of
+a given option, administrators should use global options; it is possible to override
+specific values for a small number of subnets. On the other hand, if
+different values are used in each subnet, it does not make sense to specify
+global option values; rather, only subnet-specific ones should be set.
 
 The following commands override the global DNS servers option for a
 particular subnet, setting a single DNS server with address
@@ -1248,7 +1246,7 @@ particular subnet, setting a single DNS server with address
    }
 
 In some cases it is useful to associate some options with an address or
-prefix pool from which a client is assigned a lease. Pool- specific
+prefix pool from which a client is assigned a lease. Pool-specific
 option values override subnet-specific and global option values. If the
 client is assigned multiple leases from different pools, the server will
 assign options from all pools from which the leases have been obtained.
@@ -1284,22 +1282,22 @@ obtains an address from the given pool:
        ...
    }
 
-Options can also be specified in a class of host reservation scope. The
+Options can also be specified in class or host reservation scope. The
 current Kea options precedence order is (from most important): host
 reservation, pool, subnet, shared network, class, global.
 
 The currently supported standard DHCPv6 options are listed in
-`table_title <#dhcp6-std-options-list>`__. "Name" and "Code" are the
+:ref:`dhcp6-std-options-list`. "Name" and "Code" are the
 values that should be used as a name/code in the option-data structures.
 "Type" designates the format of the data; the meanings of the various
-types is given in `??? <#dhcp-types>`__.
+types is given in :ref:`dhcp-types`.
 
-When a data field is a string, and that string contains the comma (,;
-U+002C) character, the comma must be escaped with double backslashes (\;
-U+005C). This double escape is required, because both the routine
+When a data field is a string and that string contains the comma (,;
+U+002C) character, the comma must be escaped with two backslashes (\;
+U+005C). This double escape is required because both the routine
 splitting CSV data into fields and JSON use the same escape character; a
 single escape (\,) would make the JSON invalid. For example, the string
-"EST5EDT4,M3.2.0/02:00,M11.1.0/02:00" would be represented as:
+"EST5EDT4,M3.2.0/02:00,M11.1.0/02:00" must be represented as:
 
 ::
 
@@ -1329,18 +1327,19 @@ value is allowed in such an option. For example, the option dns-servers
 allows the specification of more than one IPv6 address, enabling clients
 to obtain the addresses of multiple DNS servers.
 
-`Custom DHCPv6 Options <#dhcp6-custom-options>`__ describes the
+:ref:`dhcp6-custom-options` describes the
 configuration syntax to create custom option definitions (formats).
 Creation of custom definitions for standard options is generally not
 permitted, even if the definition being created matches the actual
 option format defined in the RFCs. There is an exception to this rule
 for standard options for which Kea currently does not provide a
 definition. In order to use such options, a server administrator must
-create a definition as described in `Custom DHCPv6
-Options <#dhcp6-custom-options>`__ in the 'dhcp6' option space. This
+create a definition as described in :ref:`dhcp6-custom-options` in the 'dhcp6' option space. This
 definition should match the option format described in the relevant RFC,
 but the configuration mechanism would allow any option format as it
 currently has no means to validate it.
+
+.. _dhcp6-std-options-list:
 
 .. table:: List of Standard DHCPv6 Options
 

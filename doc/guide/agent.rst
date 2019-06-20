@@ -23,8 +23,8 @@ The CA can use hook libraries to provide support for additional commands
 or custom behavior of existing commands. Such hook libraries must
 implement callouts for the "control_command_receive" hook point. Details
 about creating new hook libraries and supported hook points can be found
-in the :ref:`Kea Developer's
-Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`.
+in the `Kea Developer's
+Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/>`__.
 
 The CA processes received commands according to the following algorithm:
 
@@ -87,7 +87,7 @@ The ``http-host`` and ``http-port`` parameters specify an IP address and
 port to which HTTP service will be bound. In the example configuration
 provided above, the RESTful service will be available under the URL of
 ``http://10.20.30.40:8080/``. If these parameters are not specified, the
-default URL is http://127.0.0.1:8000/
+default URL is ``http://127.0.0.1:8000/``.
 
 As mentioned in :ref:`agent-overview`, the CA can forward
 received commands to the Kea servers for processing. For example,
