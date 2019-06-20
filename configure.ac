@@ -1536,6 +1536,11 @@ if test "x$runstatedir" = "x"; then
     runstatedir="$localstatedir/run"
 fi
 
+# Expand runstatedir to remove ${localstatedir} from it
+if (echo ${runstatedir} | grep -q localstatedir); then
+    runstatedir="$(eval echo ${runstatedir})"
+fi
+
 AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  doc/Makefile
