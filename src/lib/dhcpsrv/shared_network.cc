@@ -375,6 +375,11 @@ SharedNetwork4::getSubnet(const SubnetID& subnet_id) const {
 }
 
 Subnet4Ptr
+SharedNetwork4::getSubnet(const std::string& subnet_prefix) const {
+    return (Impl::getSubnet<Subnet4Ptr>(subnets_, subnet_prefix));
+}
+
+Subnet4Ptr
 SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
                               const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
@@ -474,9 +479,15 @@ SharedNetwork6::delAll() {
     }
     subnets_.clear();
 }
+
 Subnet6Ptr
 SharedNetwork6::getSubnet(const SubnetID& subnet_id) const {
     return (Impl::getSubnet<Subnet6Ptr>(subnets_, subnet_id));
+}
+
+Subnet6Ptr
+SharedNetwork6::getSubnet(const std::string& subnet_prefix) const {
+    return (Impl::getSubnet<Subnet6Ptr>(subnets_, subnet_prefix));
 }
 
 Subnet6Ptr
