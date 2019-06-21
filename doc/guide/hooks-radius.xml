@@ -179,7 +179,6 @@ total 952
 -rw-r--r--   1 thomson  staff     645 Apr 25 17:38 INSTALL
 -rw-r--r--   1 thomson  staff    5015 Apr 25 17:38 Makefile.am
 -rw-r--r--   1 thomson  staff     587 Apr 25 17:38 README
-drwxr-xr-x   5 thomson  staff     170 Apr 26 19:04 compatcheck
 -rw-r--r--   1 thomson  staff   62323 Apr 25 17:38 configure.ac
 drwxr-xr-x  12 thomson  staff     408 Apr 26 19:04 doc
 drwxr-xr-x   7 thomson  staff     238 Apr 25 17:38 examples

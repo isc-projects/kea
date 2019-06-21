@@ -1542,7 +1542,6 @@ if (echo ${runstatedir} | grep -q localstatedir); then
 fi
 
 AC_CONFIG_FILES([Makefile
-                 compatcheck/Makefile
                  doc/Makefile
                  doc/guide/Makefile
                  doc/version.ent

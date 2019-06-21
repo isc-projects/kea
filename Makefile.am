@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 
 # We now build doc after src/, because docgen, a tool to generate API
 # documentation requires libkea-exceptions and libkea-cc.
-SUBDIRS = compatcheck tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
+SUBDIRS = tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
