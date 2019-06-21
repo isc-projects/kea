@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the End User License
 // Agreement. See COPYING file in the premium/ directory.
@@ -42,6 +42,17 @@ int lease4_add(CalloutHandle& handle) {
 int lease6_add(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
     return(lease_cmds.leaseAddHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-bulk-apply' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease6_bulk_apply(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.lease6BulkApplyHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-get' command.
@@ -183,6 +194,7 @@ int lease6_wipe(CalloutHandle& handle) {
 int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease4-add", lease4_add);
     handle.registerCommandCallout("lease6-add", lease6_add);
+    handle.registerCommandCallout("lease6-bulk-apply", lease6_bulk_apply);
     handle.registerCommandCallout("lease4-get", lease4_get);
     handle.registerCommandCallout("lease6-get", lease6_get);
     handle.registerCommandCallout("lease4-get-all", lease4_get_all);
