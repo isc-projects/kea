@@ -1,3 +1,8 @@
+1596.	[func]		marcin
+	Implemented lease6-bulk-apply command in the lease_cmds hooks
+	library.
+	(Gitlab #683,!390, git 122473c18b632ddfa22b8a48f6d9399bc18e2598)
+
 1595.	[func]		fdupont
 	Removed unused t1_ and t2_ members from internal lease class.
 	(Gitlab #567,!357, 6072db5f4ca6cfa9573152c255f97dd170acbd57)
