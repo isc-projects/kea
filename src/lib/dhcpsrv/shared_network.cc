@@ -56,7 +56,7 @@ public:
                       " duplicated subnet identifier " << subnet->getID());
         } else if (getSubnet<SubnetPtrType>(subnets, subnet->toText())) {
             isc_throw(DuplicateSubnetID, "attempted to add subnet with a"
-                      " duplicated subnet pre3fix " << subnet->toText());
+                      " duplicated subnet prefix " << subnet->toText());
         }
 
         // Check if the subnet is already associated with some network.
