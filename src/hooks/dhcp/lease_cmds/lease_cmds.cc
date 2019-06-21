@@ -11,6 +11,7 @@
 #include <cc/data.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
@@ -124,7 +125,8 @@ public:
 
     /// @brief lease6-bulk-apply command handler
     ///
-    /// Provides the implementation for the @ref isc::lease_cmds::LeaseCmds::lease6BulkHandler.
+    /// Provides the implementation for the
+    /// @ref isc::lease_cmds::LeaseCmds::lease6BulkApplyHandler.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// add command JSON text in the "command" argument
@@ -271,10 +273,10 @@ public:
     /// @param lease_type lease type.
     /// @param lease_address lease address.
     /// @param duid DUID of the client.
-    ElementPtr getFailedLeaseMap(const SubnetID& subnet_id,
-                                 const Lease::Type& lease_type,
-                                 const IOAddress& lease_address,
-                                 const DuidPtr&duid) const;
+    ElementPtr createFailedLeaseMap(const SubnetID& subnet_id,
+                                    const Lease::Type& lease_type,
+                                    const IOAddress& lease_address,
+                                    const DuidPtr&duid) const;
 };
 
 int
@@ -919,8 +921,8 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                     if (!failed_deleted_list) {
                          failed_deleted_list = Element::createList();
                     }
-                    failed_deleted_list->add(getFailedLeaseMap(p.subnet_id, p.lease_type,
-                                                               p.addr, p.duid));
+                    failed_deleted_list->add(createFailedLeaseMap(p.subnet_id, p.lease_type,
+                                                                  p.addr, p.duid));
                 }
             }
         }
@@ -934,20 +936,17 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             for (auto lease : parsed_leases_list) {
 
                 Lease6Parser parser;
-                bool force_update;
 
                 try {
-                    // Check if the lease already exists.
-                    auto existing_lease = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                                                lease->addr_);
-                    // If the lease exists, we should update it. Otherwise, we add
-                    // the new lease.
-                    if (existing_lease) {
+                    try {
+                        // Try to update.
                         LeaseMgrFactory::instance().updateLease6(lease);
 
-                    } else {
+                    } catch (const NoSuchLease& ex) {
+                        // Lease to be updated not found, so add it.
                         LeaseMgrFactory::instance().addLease(lease);
                     }
+
                     ++success_count;
 
                 } catch (...) {
@@ -955,10 +954,10 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                     if (!failed_leases_list) {
                          failed_leases_list = Element::createList();
                     }
-                    failed_leases_list->add(getFailedLeaseMap(lease->subnet_id_,
-                                                              lease->type_,
-                                                              lease->addr_,
-                                                              lease->duid_));
+                    failed_leases_list->add(createFailedLeaseMap(lease->subnet_id_,
+                                                                 lease->type_,
+                                                                 lease->addr_,
+                                                                 lease->duid_));
                 }
             }
         }
@@ -1264,10 +1263,10 @@ LeaseCmdsImpl::getIPv6AddressForDelete(const Parameters& parameters) const {
 }
 
 ElementPtr
-LeaseCmdsImpl::getFailedLeaseMap(const SubnetID& subnet_id,
-                                 const Lease::Type& lease_type,
-                                 const IOAddress& lease_address,
-                                 const DuidPtr&duid) const {
+LeaseCmdsImpl::createFailedLeaseMap(const SubnetID& subnet_id,
+                                    const Lease::Type& lease_type,
+                                    const IOAddress& lease_address,
+                                    const DuidPtr&duid) const {
     auto failed_lease_map = Element::createMap();
     failed_lease_map->set("subnet-id",
                           Element::create(static_cast<long int>(subnet_id)));

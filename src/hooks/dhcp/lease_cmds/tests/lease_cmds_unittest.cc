@@ -3999,7 +3999,7 @@ TEST_F(LeaseCmdsTest, Lease6BulkApply) {
 // with the lease6-bulk-apply.
 TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnly) {
 
-    initLeaseMgr(true, true); // (true = v6, true = create leases)
+    initLeaseMgr(true, false); // (true = v6, true = create leases)
 
     // Now send the command.
     string cmd =
@@ -4030,6 +4030,49 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnly) {
     //  Check that the leases we inserted are stored.
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
     EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
+}
+
+// This test verifies that it is possible to update leases with
+// the lease6-bulk-apply.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyUpdatesOnly) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create leases)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::1\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::2\",\n"
+        "                \"duid\": \"22:22:22:22:22:22\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 2 IPv6 leases completed.";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    //  Check that the leases we inserted are stored.
+    Lease6Ptr lease1 = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    Lease6Ptr lease2 = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease1);
+    ASSERT_TRUE(lease2);
+
+    // The IAIDs should have been updated for the existing leases.
+    EXPECT_EQ(1234, lease1->iaid_);
+    EXPECT_EQ(1234, lease2->iaid_);
 }
 
 // This test verifies that it is possible to only delete leases
@@ -4091,7 +4134,18 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyDeleteNonExiting) {
     string exp_rsp = "Bulk apply of 0 IPv6 leases completed.";
 
     // The status expected is success.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+    auto resp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(Element::map, resp->getType());
+
+    auto args = resp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    auto failed_deleted_leases = args->get("failed-deleted-leases");
+    ASSERT_TRUE(failed_deleted_leases);
+    ASSERT_EQ(Element::list, failed_deleted_leases->getType());
+    ASSERT_EQ(2, failed_deleted_leases->size());
 }
 
 // Check that changes for other leases are not applied if one of
