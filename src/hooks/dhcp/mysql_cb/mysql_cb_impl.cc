@@ -367,12 +367,9 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             last_def->setServerTag(out_bindings[10]->getString());
 
             // Store created option definition.
-            auto ret = option_defs.push_back(last_def);
-            if (!ret.second) {
-                // option_defs is a multi-index container so push_back()
-                // can in theory fails. Now it has no unique indexes...
-                isc_throw(Unexpected, "can't store the option definition");
-            }
+            // (option_defs is a multi-index container with no unique
+            //  indexes so push_back can't fail).
+            static_cast<void>(option_defs.push_back(last_def));
         }
     });
 }

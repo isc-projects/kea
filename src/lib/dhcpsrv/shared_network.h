@@ -133,6 +133,14 @@ public:
     /// if such subnet doesn't exist within shared network.
     Subnet4Ptr getSubnet(const SubnetID& subnet_id) const;
 
+    /// @brief Returns a subnet for a specified subnet prefix.
+    ///
+    /// @param subnet_prefix Subnet prefix.
+    ///
+    /// @return Shared pointer to a subnet using this prefix or null pointer
+    /// if such subnet doesn't exist within shared network.
+    Subnet4Ptr getSubnet(const std::string& subnet_prefix) const;
+
     /// @brief Retrieves next available IPv4 subnet within shared network.
     ///
     /// See documentation for @ref SharedNetwork4::getNextSubnet.

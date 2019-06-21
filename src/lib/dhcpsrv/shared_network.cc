@@ -54,6 +54,9 @@ public:
         if (getSubnet<SubnetPtrType>(subnets, subnet->getID())) {
             isc_throw(DuplicateSubnetID, "attempted to add subnet with a"
                       " duplicated subnet identifier " << subnet->getID());
+        } else if (getSubnet<SubnetPtrType>(subnets, subnet->toText())) {
+            isc_throw(DuplicateSubnetID, "attempted to add subnet with a"
+                      " duplicated subnet pre3fix " << subnet->toText());
         }
 
         // Check if the subnet is already associated with some network.
@@ -157,6 +160,31 @@ public:
                                    const SubnetID& subnet_id) {
         const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
         auto subnet_it = index.find(subnet_id);
+        if (subnet_it != index.cend()) {
+            return (*subnet_it);
+        }
+
+        // Subnet not found.
+        return (SubnetPtrType());
+    }
+
+    /// @brief Returns a subnet belonging to this network for a given subnet
+    /// prefix.
+    ///
+    /// @param subnets Container holding subnets for this shared network.
+    /// @param subnet_prefix Prefix of a subnet being retrieved.
+    ///
+    /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
+    /// or @ref Subnet6Ptr.
+    /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
+    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    ///
+    /// @return Pointer to the subnet or null if the subnet doesn't exist.
+    template<typename SubnetPtrType, typename SubnetCollectionType>
+    static SubnetPtrType getSubnet(const SubnetCollectionType& subnets,
+                                   const std::string& subnet_prefix) {
+        const auto& index = subnets.template get<SubnetPrefixIndexTag>();
+        auto subnet_it = index.find(subnet_prefix);
         if (subnet_it != index.cend()) {
             return (*subnet_it);
         }

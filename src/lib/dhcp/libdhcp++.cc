@@ -1024,11 +1024,8 @@ void initOptionSpace(OptionDefContainerPtr& defs,
             throw;
         }
 
-        auto ret = defs->push_back(definition);
-        if (!ret.second) {
-            // defs points to a multi index container with only not unique
-            // indexes so this is for sanity only.
-            isc_throw(isc::Unexpected, "can't store option definition");
-        }
+        // option_defs is a multi-index container with no unique indexes
+        // so push_back can't fail).
+        static_cast<void>(defs->push_back(definition));
     }
 }
