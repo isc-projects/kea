@@ -3944,5 +3944,204 @@ TEST_F(LeaseCmdsTest, brokenUpdate) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+// This test verifies that it is possible to add two leases and delete
+// two leases as a result of the single lease6-bulk-apply command.
+TEST_F(LeaseCmdsTest, Lease6BulkApply) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create leases)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"deleted-leases\": ["
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::1\","
+        "                \"type\": \"IA_NA\""
+        "            },"
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::2\","
+        "                \"type\": \"IA_NA\""
+        "            }"
+        "        ],"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": 99,\n"
+        "                \"ip-address\": \"2001:db8:2::123\",\n"
+        "                \"duid\": \"22:22:22:22:22:22\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 4 IPv6 leases completed.";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    //  Check that the leases we inserted are stored.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
+
+    // Check that the leases we deleted are gone,
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+}
+
+// This test verifies that it is possible to send new leases only
+// with the lease6-bulk-apply.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyAddsOnly) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create leases)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": 99,\n"
+        "                \"ip-address\": \"2001:db8:2::123\",\n"
+        "                \"duid\": \"22:22:22:22:22:22\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 2 IPv6 leases completed.";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    //  Check that the leases we inserted are stored.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
+}
+
+// This test verifies that it is possible to only delete leases
+// with the lease6-bulk-apply.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyDeletesOnly) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create leases)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"deleted-leases\": ["
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::1\","
+        "                \"type\": \"IA_NA\""
+        "            },"
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::2\","
+        "                \"type\": \"IA_NA\""
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 2 IPv6 leases completed.";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Check that the leases we deleted are gone,
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+}
+
+// This test verifies that deleting non existing leases returns an
+// 'empty' result.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyDeleteNonExiting) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create leases)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"deleted-leases\": ["
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::123\","
+        "                \"type\": \"IA_NA\""
+        "            },"
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::234\","
+        "                \"type\": \"IA_NA\""
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 0 IPv6 leases completed.";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Check that changes for other leases are not applied if one of
+// the leases is malformed.
+TEST_F(LeaseCmdsTest, Lease6BulkApplyRollback) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create leases)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"deleted-leases\": ["
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::1\","
+        "                \"type\": \"IA_NA\""
+        "            },"
+        "            {"
+        "                \"ip-address\": \"2001:db8:1::2\","
+        "                \"type\": \"IA_NA\""
+        "            }"
+        "        ],"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\","
+        "                \"duid\": \"11:11:11:11:11:11\","
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": -1,"
+        "                \"ip-address\": \"2001:db8:2::123\","
+        "                \"duid\": \"22:22:22:22:22:22\","
+        "                \"iaid\": 1234"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "out of range value (-1) specified for parameter 'subnet-id' (<string>:5:57)";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::123")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::123")));
+
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+}
+
 
 } // end of anonymous namespace
