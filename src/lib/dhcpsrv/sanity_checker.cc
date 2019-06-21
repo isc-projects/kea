@@ -9,6 +9,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
@@ -63,6 +64,14 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
     // of found it, but it wasn't the right subnet.
     SubnetID id = findSubnetId(lease, subnets);
 
+    // Prepare a message in the case the check fails.
+    std::ostringstream msg;
+    if (id != 0) {
+        msg << "the lease should have subnet-id " << id;
+    } else {
+        msg << "the lease IP address did not belong to a configured subnet";
+    }
+
     switch (checks->getLeaseSanityCheck()) {
     case CfgConsistency::LEASE_CHECK_NONE:
         // No checks whatsoever, just return the lease as-is.
@@ -71,7 +80,9 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
         if (lease->subnet_id_ != id) {
             // Print a warning, but return the lease as is.
             LOG_WARN(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL)
-                .arg(lease->addr_.toText()).arg(lease->subnet_id_);
+                .arg(lease->addr_.toText())
+                .arg(lease->subnet_id_)
+                .arg(msg.str());
         }
         break;
 
@@ -81,12 +92,16 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
             // If there is a better subnet, use it.
             if (id != 0) {
                 LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FIXED)
-                    .arg(lease->addr_.toText()).arg(lease->subnet_id_).arg(id);
+                    .arg(lease->addr_.toText())
+                    .arg(lease->subnet_id_)
+                    .arg(id);
                 lease->subnet_id_ = id;
             } else {
                 // If not, return the lease as is.
                 LOG_WARN(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL)
-                    .arg(lease->addr_.toText()).arg(lease->subnet_id_);
+                    .arg(lease->addr_.toText())
+                    .arg(lease->subnet_id_)
+                    .arg(msg.str());
             }
         }
         break;
@@ -97,13 +112,17 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
             // If there is a better subnet, use it.
             if (id != 0) {
                 LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FIXED)
-                    .arg(lease->addr_.toText()).arg(lease->subnet_id_).arg(id);
+                    .arg(lease->addr_.toText())
+                    .arg(lease->subnet_id_)
+                    .arg(id);
                 lease->subnet_id_ = id;
                 break;
             } else {
                 // If not, delete the lease.
                 LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL_DISCARD)
-                    .arg(lease->addr_.toText()).arg(lease->subnet_id_);
+                    .arg(lease->addr_.toText())
+                    .arg(lease->subnet_id_)
+                    .arg(msg.str());
                 lease.reset();
             }
 
@@ -112,7 +131,9 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
     case CfgConsistency::LEASE_CHECK_DEL:
         if (lease->subnet_id_ != id) {
             LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL_DISCARD)
-                .arg(lease->addr_.toText()).arg(lease->subnet_id_);
+                .arg(lease->addr_.toText())
+                .arg(lease->subnet_id_)
+                .arg(msg.str());
             lease.reset();
         }
         break;
