@@ -63,15 +63,15 @@ pgsql_wipe() {
     assert_eq 0 $?  "pgsql_wipe drop failed, expected exit code: %d, actual: %d"
 }
 
-pgsql_lease_init_test() {
-    test_start "pgsql.lease-init"
+pgsql_db_init_test() {
+    test_start "pgsql.db-init"
 
     # Let's wipe the whole database
     pgsql_wipe
 
     # Create the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 0 $? "kea-admin lease-init pgsql failed, expected exit code: %d, actual: %d"
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "kea-admin db-init pgsql failed, expected exit code: %d, actual: %d"
 
     # Verify that all the expected tables exist
 
@@ -99,8 +99,8 @@ pgsql_lease_init_test() {
     # check
     echo ""
     echo "DB created successfully, make sure we aren't allowed to try it again:"
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 2 $? "kea-admin failed to deny lease-init, expected exit code: %d, actual: %d"
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 2 $? "kea-admin failed to deny db-init, expected exit code: %d, actual: %d"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -108,18 +108,18 @@ pgsql_lease_init_test() {
     test_finish 0
 }
 
-pgsql_lease_version_test() {
-    test_start "pgsql.lease-version"
+pgsql_db_version_test() {
+    test_start "pgsql.db-version"
 
     # Wipe the whole database
     pgsql_wipe
 
     # Create the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    # Verify that kea-admin lease-version returns the correct version
-    version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
+    # Verify that kea-admin db-version returns the correct version
+    version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name)
     assert_str_eq "5.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
@@ -230,9 +230,9 @@ pgsql_upgrade_2_0_to_3_0() {
     assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 }
 
-pgsql_upgrade_3_0_to_5_1() {
+<pgsql_upgrade_3_0_to_5_1() {
     # Verify upgraded schema reports version 5.1.
-    version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "5.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Added user_context to lease4
@@ -261,8 +261,8 @@ pgsql_upgrade_test() {
     pgsql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 0 $? "lease-upgrade failed, expected exit code: %d, actual: %d"
+    ${keaadmin} db-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "db-upgrade failed, expected exit code: %d, actual: %d"
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0
@@ -333,7 +333,7 @@ pgsql_lease4_dump_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
 
@@ -428,7 +428,7 @@ pgsql_lease6_dump_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database,  status code %d"
 
@@ -532,9 +532,9 @@ pgsql_lease4_stat_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "kea-admin lease-init pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
 
     # Verify lease4 stat table is present
     qry="select count(subnet_id) from lease4_stat"
@@ -624,10 +624,10 @@ pgsql_lease6_stat_test() {
     pgsql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
-    assert_eq 0 $ERRCODE "kea-admin lease-init pgsql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-init pgsql returned non-zero status code %d, expected %d"
 
     # verify lease6 stat table is present
     qry="select count(subnet_id) from lease6_stat"
@@ -684,7 +684,7 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "insert v6 leases" "$qry"
 
     # Ok, we have a 2.0 database with leases. Let's upgrade it to 4.0
-    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     #
@@ -834,7 +834,7 @@ pgsql_unused_subnet_id_test() {
     run_statement "insert options" "$qry"
 
     # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
-    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     # Upgrade should succeed
@@ -877,8 +877,8 @@ pgsql_unused_subnet_id_test() {
 }
 
 
-pgsql_lease_init_test
-pgsql_lease_version_test
+pgsql_db_init_test
+pgsql_db_version_test
 pgsql_upgrade_test
 pgsql_lease4_dump_test
 pgsql_lease6_dump_test

@@ -19,7 +19,7 @@
 #
 # source dhcpdb_create.mysql
 #
-# This script is also called from kea-admin, see kea-admin lease-init mysql
+# This script is also called from kea-admin, see kea-admin db-init mysql
 #
 # Over time, Kea database schema will evolve. Each version is marked with
 # major.minor version. This file is organized sequentially, i.e. database

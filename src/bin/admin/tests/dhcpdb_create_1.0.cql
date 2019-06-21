@@ -1,3 +1,4 @@
+-- Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 -- Copyright (C) 2015-2017 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -31,7 +32,7 @@
 
 -- SOURCE dhcpdb_create.cql
 
--- This script is also called from kea-admin, see kea-admin lease-init cql
+-- This script is also called from kea-admin, see kea-admin db-init cql
 
 -- Over time, Kea database schema will evolve. Each version is marked with
 -- major.minor version. This file is organized sequentially, i.e. database

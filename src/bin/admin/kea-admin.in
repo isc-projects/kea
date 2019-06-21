@@ -9,9 +9,10 @@
 # This is kea-admin script that conducts administrative tasks on the Kea
 # installation. Currently supported operations are:
 #
-# - lease database init
-# - lease database version check
-# - lease database version upgrade
+# - database init
+# - database version check
+# - database version upgrade
+# - lease database dump
 
 
 # Get the location of the kea-admin scripts
@@ -53,10 +54,10 @@ usage() {
     printf "\n"
     printf "COMMAND: Currently supported operations are:\n"
     printf "\n"
-    printf " - lease-init: Initializes new lease database. Useful for first time installation.\n"
-    printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
-    printf " -                for checking lease DB version when preparing for an upgrade.\n"
-    printf " - lease-upgrade: Upgrades your lease database scheme\n"
+    printf " - db-init: Initializes new database. Useful for first time installation.\n"
+    printf " - db-version: Checks version of the existing database scheme. Useful\n"
+    printf " -             for checking databaseB version when preparing for an upgrade.\n"
+    printf " - dn-upgrade: Upgrades your database scheme\n"
     printf " - lease-dump: Dump current leases to a CSV file\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|cql\n"
@@ -124,7 +125,7 @@ is_in_list() {
 ### Functions that implement database initialization commands
 
 memfile_init() {
-    # @todo Implement this as part of #3601
+    # Useless as Kea converts CSV versions at startup.
     log_error "NOT IMPLEMENTED"
     exit 1
 }
@@ -165,7 +166,7 @@ mysql_init() {
     printf "mysql returned status code %s\n" "$ERRCODE"
 
     if [ "$ERRCODE" -eq 0 ]; then
-        printf "Lease DB version reported after initialization: "
+        printf "Database version reported after initialization: "
         mysql_version
         printf "\n"
     fi
@@ -202,7 +203,7 @@ pgsql_init() {
     fi
 
     version=$(pgsql_version)
-    printf "Lease DB version reported after initialization: %s\n" "$version"
+    printf "Database version reported after initialization: %s\n" "$version"
     exit 0
 }
 
@@ -222,21 +223,21 @@ cql_init() {
     fi
 
     version=$(cql_version)
-    printf "Lease DB version reported after initialization: %s\n" "$version"
+    printf "Database version reported after initialization: %s\n" "$version"
 
     exit 0
 }
 
 ### Functions that implement database version checking commands
 memfile_version() {
-    # @todo Implement this as part of #3601
+    # @todo Implement this?
     log_error "NOT IMPLEMENTED"
     exit 1
 }
 
 ### Functions used for upgrade
 memfile_upgrade() {
-    # @todo Implement this as part of #3601
+    # Useless as Kea converts CSV versions at startup.
     log_error "NOT IMPLEMENTED"
     exit 1
 }
@@ -249,7 +250,7 @@ memfile_upgrade() {
 # This function prints version before and after upgrade.
 mysql_upgrade() {
 
-    printf "Lease DB version reported before upgrade: "
+    printf "Database version reported before upgrade: "
     mysql_version
     printf "\n"
 
@@ -272,14 +273,14 @@ mysql_upgrade() {
         sh "${script}" --host="${db_host}" --user="${db_user}" --password="${db_password}" "${db_name}"
     done
 
-    printf "Lease DB version reported after upgrade: "
+    printf "Database version reported after upgrade: "
     mysql_version
     printf "\n"
 }
 
 pgsql_upgrade() {
     version=$(pgsql_version)
-    printf "Lease DB version reported before upgrade: %s\n" "$version"
+    printf "Database version reported before upgrade: %s\n" "$version"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${scripts_dir}/pgsql ]; then
@@ -305,13 +306,13 @@ pgsql_upgrade() {
     done
 
     version=$(pgsql_version)
-    printf "Lease DB version reported after upgrade: %s\n" "$version"
+    printf "Database version reported after upgrade: %s\n" "$version"
     exit 0
 }
 
 cql_upgrade() {
     version=$(cql_version)
-    printf "Lease DB version reported before upgrade: %s\n" "$version"
+    printf "Database version reported before upgrade: %s\n" "$version"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${scripts_dir}/cql ]; then
@@ -339,7 +340,7 @@ cql_upgrade() {
     fi
 
     version=$(cql_version)
-    printf "Lease DB version reported after upgrade: %s\n" "$version"
+    printf "Database version reported after upgrade: %s\n" "$version"
     exit 0
 }
 
@@ -553,7 +554,7 @@ if test "${command}" = "-v" || test "${command}" = "--version" ; then
     exit 0
 fi
 
-is_in_list "${command}" "lease-init lease-version lease-upgrade lease-dump"
+is_in_list "${command}" "db-init db-version db-upgrade lease-dump"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     exit 1
@@ -666,7 +667,7 @@ done
 
 case ${command} in
     # Initialize the database
-    lease-init)
+    db-init)
         case ${backend} in
             memfile)
                 memfile_init
@@ -682,7 +683,7 @@ case ${command} in
                 ;;
             esac
         ;;
-    lease-version)
+    db-version)
         case ${backend} in
             memfile)
                 memfile_version
@@ -699,7 +700,7 @@ case ${command} in
                 ;;
             esac
         ;;
-    lease-upgrade)
+    db-upgrade)
         case ${backend} in
             memfile)
                 memfile_upgrade

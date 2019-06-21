@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,27 +75,27 @@
 
           <variablelist>
             <varlistentry>
-              <term>lease-init</term>
+              <term>db-init</term>
               <listitem>
-                <para>Initializes a new lease database. Useful during first Kea
+                <para>Initializes a new database. Useful during first Kea
                 installation. The database is initialized to the latest version
                 supported by the version of the software.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
-              <term>lease-version</term>
+              <term>db-version</term>
               <listitem>
-                <para>Reports lease database version. This is not necessarily
+                <para>Reports database version. This is not necessarily
                 equal to Kea version as each backend has its own versioning
                 scheme.</para>
               </listitem>
             </varlistentry>
 
             <varlistentry>
-              <term>lease-upgrade</term>
+              <term>db-upgrade</term>
               <listitem>
-                <para>Conducts lease database upgrade. This is useful when
+                <para>Conducts database upgrade. This is useful when
                 migrating between old and new Kea versions.</para>
               </listitem>
             </varlistentry>
