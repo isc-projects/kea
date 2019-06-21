@@ -172,7 +172,7 @@ the same parameter multiple times. If that happens, the last occurrence
 of a given parameter in a given scope is used, while all previous
 instances are ignored. This is unlikely to cause any confusion as there
 are no real-life reasons to keep multiple copies of the same parameter
-in your configuration file.
+in the configuration file.
 
 The first few DHCPv4 configuration elements
 define some global parameters. ``valid-lifetime`` defines how long the
@@ -429,7 +429,7 @@ specified as well:
 
    "Dhcp4": { "lease-database": { "port" : 12345, ... }, ... }
 
-Should the database be located on a different system, you may need to
+Should the database be located on a different system, the administrator may need to
 specify a longer interval for the connection timeout:
 
 ::
@@ -896,7 +896,7 @@ that link. To use a single address on such interface, the
    that the raw sockets will be used! The use of raw sockets to handle
    the traffic from the directly connected clients is currently
    supported on Linux and BSD systems only. If the raw sockets are not
-   supported on your particular OS, the server will issue a warning and
+   supported on the particular OS in use, the server will issue a warning and
    fall back to using IP/UDP sockets.
 
 In a typical environment, the DHCP server is expected to send back a
@@ -1188,10 +1188,10 @@ Calculating the values is controlled by the following three parameters.
 
    In the event that both explicit values are specified and
    calculate-tee-times is true, the server will use the explicit values.
-   If you plan on having a mixture where some subnets or share-networks
-   will use explicit values and some will use calculated values you must
+   Administrators with a setup where some subnets or share-networks
+   will use explicit values and some will use calculated values must
    not define the explicit values at any level higher than where they
-   will be used. Inheriting them from too high of a scope, such as
+   will be used. Inheriting them from too high a scope, such as
    global, will cause them to have values at every level underneath
    (shared-networks and subnets), effectively disabling calculated
    values.
@@ -1718,7 +1718,7 @@ currently has no means to validate it.
    |                                   | values true or false.                                 |
    +-----------------------------------+-------------------------------------------------------+
    | empty                             | No value; data is carried in                          |
-   |                                   | suboptions.                                           |
+   |                                   | sub-options.                                          |
    +-----------------------------------+-------------------------------------------------------+
    | fqdn                              | Fully qualified domain name (e.g.                     |
    |                                   | www.example.com).                                     |
@@ -1799,9 +1799,9 @@ Custom DHCPv4 Options
 ---------------------
 
 Kea supports custom (non-standard) DHCPv4 options. Assume that we want
-to define a new DHCPv4 option called "foo" which will have a code 222
+to define a new DHCPv4 option called "foo" which will have code 222
 and will convey a single, unsigned, 32-bit integer value. We can define
-such an option by using the following entry in the configuration file:
+such an option by putting the following entry in the configuration file:
 
 ::
 
@@ -1829,7 +1829,7 @@ record of data fields. The ``record-types`` value should be non-empty if
 ``type`` is set to "record"; otherwise it must be left blank. The latter
 parameter specifies the name of the option space being encapsulated by
 the particular option. If the particular option does not encapsulate any
-option space, it should be left blank. Note that the ``option-def``
+option space, the parameter should be left blank. Note that the ``option-def``
 configuration statement only defines the format of an option and does
 not set its value(s).
 
@@ -1858,7 +1858,7 @@ global value that applies to all subnets.
    }
 
 New options can take more complex forms than simple use of primitives
-(uint8, string, ipv4-address, etc); it is possible to define an option
+(uint8, string, ipv4-address, etc.); it is possible to define an option
 comprising a number of existing primitives.
 
 For example, assume we want to define a new option that will consist of
@@ -1888,7 +1888,7 @@ multiple values of different types. These types are given as a
 comma-separated list in the ``record-types`` field and should be ones
 from those listed in :ref:`dhcp-types`.
 
-The values of the option are set as follows:
+The values of the option are set in an ``option-data`` statement as follows:
 
 ::
 
@@ -1979,7 +1979,7 @@ PXEClient vendor:
    }
 
 As the Vendor-Specific Information option (code 43) has vendor-specific
-format, i.e. can carry either raw binary value or suboptions, this
+format, i.e. can carry either raw binary value or sub-options, this
 mechanism is available for this option too.
 
 In the following example taken from a real configuration, two vendor
@@ -2090,9 +2090,9 @@ DHCPv4 Vendor-Specific Options
 Currently there are two option spaces defined for the DHCPv4 daemon:
 "dhcp4" (for the top-level DHCPv4 options) and
 "vendor-encapsulated-options-space", which is empty by default but in
-which options can be defined. Such options will be carried in the
+which options can be defined. Those options are carried in the
 Vendor-Specific Information option (code 43). The following examples
-show how to define an option "foo" in that space that has a code 1, and that
+show how to define an option "foo" with code 1 that
 comprises an IPv4 address, an unsigned 16-bit integer, and a string. The
 "foo" option is conveyed in a Vendor-Specific Information option.
 
@@ -2116,7 +2116,7 @@ The first step is to define the format of the option:
    }
 
 (Note that the option space is set to
-"vendor-encapsulated-options-space".) Once the option format is defined,
+``vendor-encapsulated-options-space``.) Once the option format is defined,
 the next step is to define actual values for that option:
 
 ::
@@ -2168,7 +2168,7 @@ vendor-specific information option or vivso. The idea behind those
 options is that each vendor has its own unique set of options with their
 own custom formats. The vendor is identified by a 32-bit unsigned integer
 called enterprise-id or vendor-id. For example, vivso with vendor-id
-4491 represents DOCSIS options, and you are likely to see many of them
+4491 represents DOCSIS options, and they are often seen
 when dealing with cable modems.
 
 In Kea each vendor is represented by its own vendor space. Since there
@@ -2250,10 +2250,10 @@ as docsis, identified by vendor option 4491) have a mechanism to
 request specific vendor options and Kea is able to honor those.
 Unfortunately, for many other vendors, such as Genexis (25167) as discussed
 above, Kea does not have such a mechanism, so it can't send any
-suboptions on its own. To solve this issue, we came up with the concept of
+sub-options on its own. To solve this issue, we came up with the concept of
 persistent options. Kea can be told to always send options, even if the
 client did not request them. This can be achieved by adding
-"always-send": true to your option definition. Note that in this
+``"always-send": true`` to the option definition. Note that in this
 particular case an option is defined in vendor space 25167. With the
 "always-send" enabled, the option will be sent every time there is a
 need to deal with vendor space 25167.
@@ -2267,18 +2267,18 @@ Nested DHCPv4 Options (Custom Option Spaces)
 
 It is sometimes useful to define a completely new option space, such as
 when a user creates a new option in the standard option space
-("dhcp4") and wants this option to convey suboptions. Since they are in
-a separate space, suboption codes will have a separate numbering scheme
+("dhcp4") and wants this option to convey sub-options. Since they are in
+a separate space, sub-option codes will have a separate numbering scheme
 and may overlap with the codes of standard options.
 
 Note that the creation of a new option space is not required when
-defining suboptions for a standard option, because it is created by
-default if the standard option is meant to convey any suboptions (see
+defining sub-options for a standard option, because one is created by
+default if the standard option is meant to convey any sub-options (see
 :ref:`dhcp4-vendor-opts`).
 
 Assume that we want to have a DHCPv4 option called "container" with code
-222 that conveys two suboptions with codes 1 and 2. First we need to
-define the new suboptions:
+222 that conveys two sub-options with codes 1 and 2. First we need to
+define the new sub-options:
 
 ::
 
@@ -2309,7 +2309,7 @@ define the new suboptions:
 Note that we have defined the options to belong to a new option space
 (in this case, "isc").
 
-The next step is to define a regular DHCPv4 option with our desired code
+The next step is to define a regular DHCPv4 option with the desired code
 and specify that it should include options from the new option space:
 
 ::
@@ -2330,10 +2330,10 @@ and specify that it should include options from the new option space:
        ...
    }
 
-The name of the option space in which the suboptions are defined is set
+The name of the option space in which the sub-options are defined is set
 in the ``encapsulate`` field. The ``type`` field is set to ``empty``, to
 indicate that this option does not carry any data other than
-suboptions.
+sub-options.
 
 Finally, we can set values for the new options:
 
@@ -2363,12 +2363,12 @@ Finally, we can set values for the new options:
    }
 
 Note that it is possible to create an option which carries some data in
-addition to the suboptions defined in the encapsulated option space.
+addition to the sub-options defined in the encapsulated option space.
 For example, if the "container" option from the previous example were
-required to carry a uint16 value as well as the suboptions, the
+required to carry a uint16 value as well as the sub-options, the
 ``type`` value would have to be set to "uint16" in the option
 definition. (Such an option would then have the following data
-structure: DHCP header, uint16 value, suboptions.) The value specified
+structure: DHCP header, uint16 value, sub-options.) The value specified
 with the ``data`` parameter — which should be a valid integer enclosed
 in quotes, e.g. "123" — would then be assigned to the uint16 field in
 the "container" option.
@@ -2379,7 +2379,7 @@ Unspecified Parameters for DHCPv4 Option Configuration
 ------------------------------------------------------
 
 In many cases it is not required to specify all parameters for an option
-configuration and the default values can be used. However, it is
+configuration, and the default values can be used. However, it is
 important to understand the implications of not specifying some of them,
 as it may result in configuration errors. The list below explains the
 behavior of the server when a particular parameter is not explicitly
@@ -2392,22 +2392,22 @@ specified:
 -  ``code`` - the server requires either an option name or an option code to
    identify an option. This parameter may be left unspecified if the
    ``name`` parameter is specified. However, this also requires that the
-   particular option has its definition (it is either a standard option
-   or an administrator created a definition for the option using an
+   particular option have a definition (either as a standard option
+   or an administrator-created definition for the option using an
    'option-def' structure), as the option definition associates an
    option with a particular name. It is possible to configure an option
    for which there is no definition (unspecified option format).
    Configuration of such options requires the use of the option code.
 
 -  ``space`` - if the option space is unspecified it will default to
-   'dhcp4', which is an option space holding the standard DHCPv4
+   'dhcp4', which is an option space holding standard DHCPv4
    options.
 
 -  ``data`` - if the option data is unspecified it defaults to an empty
    value. The empty value is mostly used for the options which have no
    payload (boolean options), but it is legal to specify empty values
-   for some options which carry variable-length data and which the
-   specification allows to have a length of 0. For such options, the
+   for some options which carry variable-length data and for which the
+   specification allows a length of 0. For such options, the
    data parameter may be omitted in the configuration.
 
 -  ``csv-format`` - if this value is not specified, the server will
@@ -2560,7 +2560,7 @@ example checks whether the client identifies itself as a PXE device with
 architecture EFI x86-64, and sets several fields if it does. See
 `Section 2.1 of RFC
 4578 <https://tools.ietf.org/html/rfc4578#section-2.1>`__) or the
-documentation of your client for specific values.
+client documentation for specific values.
 
 ::
 
@@ -2666,10 +2666,11 @@ Required Classification
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 In some cases it is useful to limit the scope of a class to a
-shared network, subnet, or pool. There are two parameters for this,
-which instruct the server to evaluate test expressions when required.
+shared network, subnet, or pool. There are two parameters which are used
+to limit the scope of the class by instructing the server to evaluate test
+expressions when required.
 
-The first one is the per-class ``only-if-required`` flag which is false
+The first one is the per-class ``only-if-required`` flag, which is false
 by default. When it is set to ``true``, the test expression of the class
 is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
@@ -2706,9 +2707,9 @@ specified subnet is used:
    }
 
 Required evaluation can be used to express complex dependencies like subnet membership. It can also be used to reverse the
-precedence; if you set an option-data in a subnet, it takes precedence
-over an option-data in a class. When you move the option-data to a
-required class and require it in the subnet, a class evaluated earlier
+precedence; if an option-data is set in a subnet, it takes precedence
+over an option-data in a class. If the option-data is moved to a
+required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
 Required evaluation is also available at the shared-network and pool levels.
@@ -2805,8 +2806,8 @@ control this communication:
    enable DDNS updates set this value to true.
 
 -  ``server-ip`` - the IP address on which D2 listens for requests. The
-   default is the local loopback interface at address 127.0.0.1. You may
-   specify either an IPv4 or IPv6 address.
+   default is the local loopback interface at address 127.0.0.1.
+   Either an IPv4 or IPv6 address may be specified.
 
 -  ``server-port`` - the port on which D2 listens for requests. The default
    value is 53001.
@@ -2919,7 +2920,7 @@ the server should do the reverse updates. By default, kea-dhcp4 will
 honor the client's wishes and generate a DDNS request to the D2 server
 to update only reverse DNS data. The parameter
 ``override-client-update`` can be used to instruct the server to
-override client delegation requests. When this parameter is true,
+override client delegation requests. When this parameter is "true",
 kea-dhcp4 will disregard requests for client delegation and generate a
 DDNS request to update both forward and reverse DNS data. In this case,
 the N-S-O flags in the server's response to the client will be 0-1-1
@@ -2991,30 +2992,30 @@ entries are:
 3. If the candidate name provided is empty, generate an FQDN using a
    configurable prefix and suffix.
 
-4. If the client provided neither option, then take no DNS action.
+4. If the client provides neither option, then take no DNS action.
 
 These rules can be amended by setting the ``replace-client-name``
 parameter, which provides the following modes of behavior:
 
--  ``never`` - Use the name the client sent. If the client sent no name,
+-  ``never`` - use the name the client sent. If the client sent no name,
    do not generate one. This is the default mode.
 
--  ``always`` - Replace the name the client sent. If the client sent no
+-  ``always`` - replace the name the client sent. If the client sent no
    name, generate one for the client.
 
--  ``when-present`` - Replace the name the client sent. If the client
+-  ``when-present`` - replace the name the client sent. If the client
    sent no name, do not generate one.
 
--  ``when-not-present`` - Use the name the client sent. If the client
+-  ``when-not-present`` - use the name the client sent. If the client
    sent no name, generate one for the client.
 
 ..
 
    **Note**
 
-   Note that formerly, this parameter was a boolean and permitted only
+   Note that in early versions of Kea, this parameter was a boolean and permitted only
    values of ``true`` and ``false``. Boolean values have been deprecated
-   and are no longer accepted. If you are currently using booleans, you
+   and are no longer accepted. Administrators currently using booleans
    must replace them with the desired mode name. A value of ``true``
    maps to ``"when-present"``, while ``false`` maps to ``"never"``.
 
@@ -3048,7 +3049,7 @@ its value, simply set it to the desired string:
 
 The suffix used when generating an FQDN, or when qualifying a partial
 name, is specified by the ``qualifying-suffix`` parameter. This
-parameter has no default value, thus it is mandatory when DDNS updates
+parameter has no default value; thus, it is mandatory when DDNS updates
 are enabled. To set its value simply set it to the desired string:
 
 ::
@@ -3068,7 +3069,7 @@ When generating a name, kea-dhcp4 will construct the name in the format:
 where address-text is simply the lease IP address converted to a
 hyphenated string. For example, if the lease address is 172.16.1.10, the
 qualifying suffix "example.com", and the default value is used for
-``generated-prefix``, the generated FQDN would be:
+``generated-prefix``, the generated FQDN is:
 
 myhost-172-16-1-10.example.com.
 
@@ -3120,22 +3121,22 @@ qualifying suffix (if one is defined and needed).
    Name sanitizing is meant to catch the more common cases of invalid
    characters through a relatively simple character-replacement scheme.
    It is difficult to devise a scheme that works well in all cases, for
-   both Host Name and FQDN options. If you find you have clients that
-   are using odd corner cases of character combinations that cannot be
-   readily handled with this mechanism, you should consider writing a
-   hook that can carry out sufficiently complex logic to address your
+   both Host Name and FQDN options. Administrators who find they have clients
+   with odd corner cases of character combinations that cannot be
+   readily handled with this mechanism should consider writing a
+   hook that can carry out sufficiently complex logic to address their
    needs.
 
-   If your clients include domain names in the Host Name option and you
-   want these preserved, you will need to make sure that the dot, '.',
+   If clients include domain names in the Host Name option and the administrator
+   wants these preserved, they will need to make sure that the dot, '.',
    is considered a valid character by the hostname-char-set expression,
    such as this: "[^A-Za-z0-9.-]". This will not affect dots in FQDN
    Option values. When scrubbing FQDNs, dots are treated as delimiters
    and used to separate the option value into individual domain labels
    that are scrubbed and then re-assembled.
 
-   If your clients are sending values that differ only by characters
-   considered as invalid by your hostname-char-set, be aware that
+   If clients are sending values that differ only by characters
+   considered as invalid by the hostname-char-set, be aware that
    scrubbing them will yield identical values. In such cases, DDNS
    conflict rules will permit only one of them to register the name.
 
@@ -3407,8 +3408,8 @@ configuration of the DHCPv4 side (the DHCPv6 side is described in
 
 The ``dhcp4o6-port`` global parameter specifies the first of the two
 consecutive ports of the UDP sockets used for the communication between
-the DHCPv6 and DHCPv4 servers (the DHCPv4 server is bound to ::1 on
-``port`` + 1 and connected to ::1 on ``port``).
+the DHCPv6 and DHCPv4 servers. The DHCPv4 server is bound to ::1 on
+``port`` + 1 and connected to ::1 on ``port``.
 
 With DHCPv4-over-DHCPv6, the DHCPv4 server does not have access to
 several of the identifiers it would normally use to select a subnet. To
@@ -3474,15 +3475,14 @@ An important aspect of a well-running DHCP system is an assurance that
 the data remain consistent. However, in some cases it may be convenient
 to tolerate certain inconsistent data. For example, a network
 administrator that temporarily removed a subnet from a configuration
-wouldn't want all the leases associated with it to disappear from the
-lease database. Kea has a mechanism to better control sanity checks such
+would not want all the leases associated with it to disappear from the
+lease database. Kea has a mechanism to control sanity checks such
 as this.
 
 Kea supports a configuration scope called ``sanity-checks``. It
 currently allows only a single parameter, called ``lease-checks``, which
-governs the verification that is done when a new lease is loaded from a
-lease file. With the sanity-checks mechanism, it is possible to tell Kea
-to try to correct inconsistent data.
+governs the verification carried out when a new lease is loaded from a
+lease file. This mechanism permits Kea to attempt to correct inconsistent data.
 
 Every subnet has a subnet-id value; this is how Kea internally
 identifies subnets. Each lease has a subnet-id parameter as well, which
@@ -3511,12 +3511,12 @@ There are five levels which are supported:
    will be inserted anyway.
 
 -  ``fix-del`` - if a data inconsistency is discovered, try to
-   correct it. If the correction is not successful, the lease will be
-   rejected. This setting ensures the data's correctness, but some
+   correct it. If the correction is not successful, reject the lease.
+   This setting ensures the data's correctness, but some
    incorrect data may be lost. Use with care.
 
 -  ``del`` - this is the strictest mode. If any inconsistency is
-   detected, the lease is rejected. Use with care.
+   detected, reject the lease. Use with care.
 
 This feature is currently implemented for the memfile backend.
 
@@ -3540,17 +3540,18 @@ There are many cases where it is useful to provide a configuration on a
 per-host basis. The most obvious one is to reserve a specific, static
 address for exclusive use by a given client (host); the returning client
 will receive the same address from the server every time, and other
-clients will generally not receive that address. Note that there may be
-cases when a new reservation has been made for a client for an address
-currently in use by another client. We call this situation a "conflict."
-These conflicts get resolved automatically over time as described in
-subsequent sections. Once the conflict is resolved, the correct client will keep
-receiving the reserved configuration when it renews.
-
-Another example when host reservations are applicable is when a host has
+clients will generally not receive that address. Another situation when
+host reservations are applicable is when a host has
 specific requirements, e.g. a printer that needs additional DHCP
 options. Yet another possible use case is to define unique names for
 hosts.
+
+Note that there may be
+cases when a new reservation has been made for a client for an address
+currently in use by another client. We call this situation a "conflict."
+These conflicts get resolved automatically over time as described in
+subsequent sections. Once the conflict is resolved, the correct client will
+receive the reserved configuration when it renews.
 
 Host reservations are defined as parameters for each subnet. Each host
 must have its own unique identifier, such as the hardware/MAC
@@ -3612,12 +3613,12 @@ deployments it is recommended to use as few types as possible
 point.
 
 Making a reservation for a mobile host that may visit multiple subnets
-requires a separate host definition in each subnet it is expected to
+requires a separate host definition in each subnet that host is expected to
 visit. It is not possible to define multiple host definitions with the
 same hardware address in a single subnet. Multiple host definitions with
 the same hardware address are valid if each is in a different subnet.
 
-Adding host reservation incurs a performance penalty. In principle, when
+Adding host reservations incurs a performance penalty. In principle, when
 a server that does not support host reservation responds to a query, it
 needs to check whether there is a lease for a given address being
 considered for allocation or renewal. The server that does support host
@@ -3675,14 +3676,14 @@ requests an address, the server is not able to assign the reserved
 address 192.0.2.10. A naive approach would to be immediately remove the
 existing lease for Host A and create a new one for Host B. That would
 not solve the problem, though, because as soon as Host B gets the
-address, it will detect that the address is already in use by Host A and
+address, it will detect that the address is already in use (by Host A) and
 will send a DHCPDECLINE message. Therefore, in this situation, the
 server has to temporarily assign a different address from the dynamic
 pool (not matching what has been reserved) to Host B.
 
 When Host A renews its address, the server will discover that the
 address being renewed is now reserved for another host - Host B.
-Therefore the server will inform Host A that it is no longer allowed to
+The server will inform Host A that it is no longer allowed to
 use it by sending a DHCPNAK message. The server will not remove the
 lease, though, as there's a small chance that the DHCPNAK may be lost if
 the network is lossy. If that happens, the client will not receive any
@@ -3805,8 +3806,8 @@ Kea offers the ability to specify options on a per-host basis. These
 options follow the same rules as any other options. These can be
 standard options (see :ref:`dhcp4-std-options`),
 custom options (see :ref:`dhcp4-custom-options`),
-or vendor-specific options (see :ref:`dhcp4-vendor-opts`). The following example demonstrates how
-standard options can be defined.
+or vendor-specific options (see :ref:`dhcp4-vendor-opts`). The following
+example demonstrates how standard options can be defined.
 
 ::
 
@@ -3902,7 +3903,7 @@ mechanisms also allow for the static assignment of classes to clients.
 The definitions of these classes are placed in the Kea configuration.
 The following configuration snippet shows how to specify that a client
 belongs to classes ``reserved-class1`` and ``reserved-class2``. Those
-classes are associated with specific options being sent to the clients
+classes are associated with specific options that are sent to the clients
 which belong to them.
 
 ::
@@ -3949,9 +3950,9 @@ indirectly) and not only-if-required is evaluated.
 
    **Note**
 
-   If you want to force the evaluation of a class expression after the
+   To force the evaluation of a class expression after the
    host reservation lookup, for instance because of a dependency on
-   "reserved-class1" from the previous example, you should add a
+   "reserved-class1" from the previous example, add a
    "member('KNOWN')" statement in the expression.
 
 .. _reservations4-mysql-pgsql-cql:
@@ -3999,23 +4000,23 @@ different constraints for the checks to be performed by the server when
 allocating or renewing a lease for the client. Allowed values are:
 
 -  ``all`` - enables both in-pool and out-of-pool host reservation
-   types. This is the default value. This setting is the safest and the
-   most flexible. As all checks are conducted, it is also the slowest.
-   This does not check against global reservations.
+   types. This setting is the default value, and is the safest and
+   most flexible. However, as all checks are conducted, it is also the slowest.
+   It does not check against global reservations.
 
 -  ``out-of-pool`` - allows only out-of- pool host reservations. With
    this setting in place, the server may assume that all host
    reservations are for addresses that do not belong to the dynamic
    pool. Therefore, it can skip the reservation checks when dealing with
    in-pool addresses, thus improving performance. Do not use this mode
-   if any of your reservations use in-pool addresses. Caution is advised
+   if any reservations use in-pool addresses. Caution is advised
    when using this setting; Kea does not sanity-check the reservations
    against ``reservation-mode`` and misconfiguration may cause problems.
 
 -  ``global`` - allows only global host reservations. With this setting
    in place, the server searches for reservations for a client only
    among the defined global reservations. If an address is specified,
-   the server will skip the reservation checks done when dealing in
+   the server skips the reservation checks carried out when dealing in
    other modes, thus improving performance. Caution is advised when
    using this setting; Kea does not sanity-check the reservations when
    ``global`` and misconfiguration may cause problems.
@@ -4088,7 +4089,7 @@ To address this problem, a parameter called
 identifier types as a parameter. Kea will check only those identifier
 types enumerated in host-reservation-identifiers. From a performance
 perspective, the number of identifier types should be kept to a minimum,
-ideally one. If your deployment uses several reservation types, please
+ideally one. If the deployment uses several reservation types, please
 enumerate them from most- to least-frequently used, as this increases
 the chances of Kea finding the reservation using the fewest queries. An
 example of host reservation identifiers looks as follows:
@@ -4133,7 +4134,7 @@ If global reservations are used in both subnets and a device matching
 global host reservations visits part of the network that is serviced by
 192.0.5.0/24, it will get an IP address 192.0.2.100, a subnet 192.0.5.0
 and a default router 192.0.5.1. Obviously, such a configuration is
-unusable, as the client won't be able to reach its default gateway.
+unusable, as the client will not be able to reach its default gateway.
 
 To use global host reservations, a configuration similar to the
 following can be used:
@@ -4192,10 +4193,10 @@ DHCP servers use subnet information in two ways. First, it is used to
 determine the point of attachment, or where the client is
 connected to the network. Second, the subnet information is used to
 group information pertaining to a specific location in the network. This
-approach works well in general cases, but there are scenarios where the
+approach works well in general, but there are scenarios where the
 boundaries are blurred. Sometimes it is useful to have more than one
-logical IP subnet deployed on the same physical link. The need to
-understand that two or more subnets are used on the same link requires
+logical IP subnet deployed on the same physical link.
+Understanding that two or more subnets are used on the same link requires
 additional logic in the DHCP server. This capability is called "shared
 networks" in the Kea and ISC DHCP projects. (It is sometimes also called
 "shared subnets"; in Microsoft's nomenclature it is called "multinet.")
@@ -4215,7 +4216,7 @@ types of devices in cable networks: cable modems and the end-user
 devices behind them. It is a common practice to use different subnets
 for cable modems to prevent users from tinkering with them. In this
 case, the distinction is based on the type of device, rather than
-address-space exhaustion.
+on address-space exhaustion.
 
 A client connected to a shared network may be assigned an address from
 any of the pools defined within the subnets belonging to the shared
@@ -4224,7 +4225,7 @@ a shared network and tries to allocate an address from this subnet. If
 the server is unable to allocate an address from the selected subnet
 (e.g., due to address-pool exhaustion), it will use another subnet from
 the same shared network and will try to allocate an address from this subnet,
-etc. Therefore, in the typical case, the server will allocate all
+etc. Therefore, the server will typically allocate all
 addresses available in a given subnet before it starts allocating
 addresses from other subnets belonging to the same shared network.
 However, in certain situations the client can be allocated an address
@@ -4271,11 +4272,11 @@ introduced:
                ],
            } ], // end of shared-networks
 
-       // It is likely that in your network you will have a mix of regular,
+       // It is likely that in the network there will be a mix of regular,
        // "plain" subnets and shared networks. It is perfectly valid to mix
        // them in the same configuration file.
        //
-       // This is a regular subnet. It's not part of any shared network.
+       // This is a regular subnet. It is not part of any shared network.
        "subnet4": [
            {
                "subnet": "192.0.3.0/24",
@@ -4287,7 +4288,7 @@ introduced:
    } // end of Dhcp4
    }
 
-As you see in the example, it is possible to mix shared and regular
+As demonstrated in the example, it is possible to mix shared and regular
 ("plain") subnets. Each shared network must have a unique name. This is
 similar to the ID for subnets, but gives administrators more
 flexibility. It is used for logging, but also internally for identifying
@@ -4302,8 +4303,8 @@ To avoid unnecessary performance degradation, the shared subnets should
 only be defined when required by the deployment.
 
 Shared networks provide an ability to specify many parameters in the
-shared network scope that will apply to all subnets within it. If
-necessary, you can specify a parameter in the shared network scope and
+shared network scope that apply to all subnets within it. If
+necessary, it is possible to specify a parameter in the shared network scope and
 then override its value in the subnet scope. For example:
 
 ::
@@ -4388,7 +4389,7 @@ convenient to specify it once at the shared network level.
        {
            "name": "office-floor-2",
 
-           // This tells Kea that the whole shared network is reachable over
+           // This tells Kea that the whole shared network is reachable over a
            // local interface. This applies to all subnets in this network.
            "interface": "eth0",
 
@@ -4497,13 +4498,13 @@ following example:
    }
 
 If the client belongs to the "b-devices" class (because it includes
-option 93 with a value of 0x0002), that doesn't guarantee that the
+option 93 with a value of 0x0002), that does not guarantee that the
 subnet 10.0.0.0/24 will be used (or preferred) for this client. The
 server can use either of the two subnets, because the subnet 192.0.2.0/26
 is also allowed for this client. The client classification used in this
 case should be perceived as a way to restrict access to certain subnets,
 rather than a way to express subnet preference. For example, if the
-client doesn't belong to the "b-devices" class it may only use the
+client does not belong to the "b-devices" class it may only use the
 subnet 192.0.2.0/26 and will never use the subnet 10.0.0.0/24.
 
 A typical use case for client classification is in a cable network,
@@ -4615,12 +4616,12 @@ selected subnet, Kea looks through all subnets in a shared network for a
 reservation. This is one of the reasons why defining a shared network
 may impact performance. If there is a reservation for a client in any
 subnet, that particular subnet will be picked for the client. Although
-it's technically not an error, it is considered a bad practice to define
+it is technically not an error, it is considered a bad practice to define
 reservations for the same host in multiple subnets belonging to the same
 shared network.
 
 While not strictly mandatory, it is strongly recommended to use explicit
-"id" values for subnets if you plan to use database storage for host
+"id" values for subnets if database storage will be used for host
 reservations. If an ID is not specified, the values for it are
 autogenerated, i.e. Kea assigns increasing integer values starting from
 1. Thus, the autogenerated IDs are not stable across configuration
@@ -4862,7 +4863,7 @@ is to monitor pool utilization. Most people would forget to include
 declined-addresses in the calculation, and simply use
 assigned-addresses/total-addresses. This would cause a bias towards
 under-representing pool utilization. As this has a potential for major
-issues, we decided not to decrease assigned-addresses immediately after
+issues, ISC decided not to decrease assigned-addresses immediately after
 receiving DHCPDECLINE, but to do it later when Kea recovers the address
 back to the available pool.
 
@@ -4902,7 +4903,7 @@ The DHCPv4 server supports the following statistics:
    |                                         |                       | started their           |
    |                                         |                       | configuration process   |
    |                                         |                       | and their initial       |
-   |                                         |                       | packets reached your    |
+   |                                         |                       | packets reached the     |
    |                                         |                       | Kea server.             |
    +-----------------------------------------+-----------------------+-------------------------+
    | pkt4-offer-received                     | integer               | Number of DHCPOFFER     |
@@ -5006,7 +5007,7 @@ The DHCPv4 server supports the following statistics:
    |                                         |                       | discovered that the     |
    |                                         |                       | address is currently    |
    |                                         |                       | used by an unknown      |
-   |                                         |                       | device in your          |
+   |                                         |                       | device in the           |
    |                                         |                       | network.                |
    +-----------------------------------------+-----------------------+-------------------------+
    | pkt4-inform-received                    | integer               | Number of DHCPINFORM    |
@@ -5111,7 +5112,7 @@ The DHCPv4 server supports the following statistics:
    |                                         |                       | malformed or            |
    |                                         |                       | truncated packet.       |
    |                                         |                       | This may indicate       |
-   |                                         |                       | problems in your        |
+   |                                         |                       | problems in the         |
    |                                         |                       | network, faulty         |
    |                                         |                       | clients, or a bug in    |
    |                                         |                       | the server.             |
@@ -5316,7 +5317,7 @@ in the configuration file can be used:
    }
 
 The length of the path specified by the ``socket-name`` parameter is
-restricted by the maximum length for the UNIX socket name on your
+restricted by the maximum length for the UNIX socket name on the administrator's
 operating system, i.e. the size of the ``sun_path`` field in the
 ``sockaddr_un`` structure, decreased by 1. This value varies on
 different operating systems between 91 and 107 characters. Typical
@@ -5367,7 +5368,7 @@ However, sometimes there is a need to specify parameters that are
 different for each pool.
 
 User contexts can store an arbitrary data file as long as it has valid JSON
-syntax and its top level element is a map (i.e. the data must be
+syntax and its top-level element is a map (i.e. the data must be
 enclosed in curly brackets). However, some hook libraries may expect
 specific formatting; please consult the specific hook library
 documentation for details.
@@ -5398,12 +5399,12 @@ of LED devices could be configured in the following way:
                    "user-context": { "color": "red" }
                } ],
 
-               // This is a subnet-specific user context. You can put whatever type
-               // of information you want as long as it is a valid JSON.
+               // This is a subnet-specific user context. Any type
+               // of information can be entered here as long as it is valid JSON.
                "user-context": {
                    "comment": "network on the second floor",
                    "last-modified": "2017-09-04 13:32",
-                   "description": "you can put here anything you like",
+                   "description": "you can put anything you like here",
                    "phones": [ "x1234", "x2345" ],
                    "devices-registered": 42,
                    "billing": false
@@ -5414,7 +5415,7 @@ of LED devices could be configured in the following way:
        ...
    }
 
-Kea does not use that information; it simply stores it and makes it
+Kea does not interpret or use the user context information; it simply stores it and makes it
 available to the hook libraries. It is up to each hook library to
 extract that information and use it. The parser translates a "comment"
 entry into a user context with the entry, which allows a comment to be
@@ -5532,16 +5533,15 @@ configurable via the Configuration Backend.
 All supported parameters can be configured via the ``cb_cmds`` hooks library
 described in the :ref:`cb-cmds-library` section. The general rule is that
 the scalar global parameters are set using
-``remote-global-parameter4-set``; the shared network specific parameters
-are set using ``remote-network4-set``; and the subnet and pool
-level parameters are set using ``remote-subnet4-set``. Whenever
+``remote-global-parameter4-set``; the shared network-specific parameters
+are set using ``remote-network4-set``; and the subnet- and pool-level
+parameters are set using ``remote-subnet4-set``. Whenever
 there is an exception to this general rule, it is highlighted in the
 table. The non-scalar global parameters have dedicated commands; for example,
 the global DHCPv4 options (``option-data``) are modified using
 ``remote-option4-global-set``.
 
-.. table:: List of DHCPv4 Parameters Supported by the Configuration
-Backend
+.. table:: List of DHCPv4 Parameters Supported by the Configuration Backend
 
    +--------------------------+----------------------------+-------------+-------------+-------------+
    | Parameter                | Global                     | Shared      | Subnet      | Pool        |
