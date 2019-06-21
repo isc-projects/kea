@@ -30,6 +30,7 @@ lease4-get-all
 lease4-update
 lease4-wipe
 lease6-add
+lease6-bulk-apply
 lease6-del
 lease6-get
 lease6-get-all

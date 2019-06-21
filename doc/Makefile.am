@@ -98,6 +98,7 @@ EXTRA_DIST += api/ha-sync.json api/lease4-add.json
 EXTRA_DIST += api/lease4-del.json api/lease4-get-all.json
 EXTRA_DIST += api/lease4-get.json api/lease4-update.json
 EXTRA_DIST += api/lease4-wipe.json api/lease6-add.json
+EXTRA_DIST += api/lease6-bulk-apply.json
 EXTRA_DIST += api/lease6-del.json api/lease6-get-all.json
 EXTRA_DIST += api/lease6-get.json api/lease6-update.json
 EXTRA_DIST += api/lease6-wipe.json api/leases-reclaim.json
