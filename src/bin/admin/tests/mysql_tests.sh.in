@@ -258,7 +258,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 8.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 8.1
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -689,6 +689,8 @@ EOF
     qry="SELECT COUNT(*) FROM parameter_data_type";
     run_statement "parameter_data_type count" "$qry" 4;
 
+    # Schema upgrade from 8.0 to 8.1
+
     # New lifetime bounds.
 
     # table: dhcp4_shared_network
@@ -707,9 +709,9 @@ EOF
     qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
 
-    # Verify upgraded schema reports version 8.0
+    # Verify upgraded schema reports version 8.1
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "8.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "8.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe

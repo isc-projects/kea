@@ -2286,6 +2286,12 @@ CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
     END $$
 DELIMITER ;
 
+# Update the schema version number
+UPDATE schema_version
+SET version = '8', minor = '0';
+
+# This line concludes database upgrade to version 8.0.
+
 # Add lifetime bounds
 ALTER TABLE dhcp4_shared_network
     ADD COLUMN min_valid_lifetime INT(10) DEFAULT NULL,
@@ -2309,10 +2315,9 @@ ALTER TABLE dhcp6_subnet
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '8', minor = '0';
+SET version = '8', minor = '1';
 
-# This line concludes database upgrade to version 8.0.
-
+# This line concludes database upgrade to version 8.1.
 
 # Notes:
 #

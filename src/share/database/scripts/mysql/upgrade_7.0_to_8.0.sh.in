@@ -969,27 +969,6 @@ CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
     END $$
 DELIMITER ;
 
-# Add lifetime bounds
-ALTER TABLE dhcp4_shared_network
-    ADD COLUMN min_valid_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN max_valid_lifetime INT(10) DEFAULT NULL;
-
-ALTER TABLE dhcp4_subnet
-    ADD COLUMN min_valid_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN max_valid_lifetime INT(10) DEFAULT NULL;
-
-ALTER TABLE dhcp6_shared_network
-    ADD COLUMN min_preferred_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN max_preferred_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN min_valid_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN max_valid_lifetime INT(10) DEFAULT NULL;
-
-ALTER TABLE dhcp6_subnet
-    ADD COLUMN min_preferred_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN max_preferred_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN min_valid_lifetime INT(10) DEFAULT NULL,
-    ADD COLUMN max_valid_lifetime INT(10) DEFAULT NULL;
-
 # Update the schema version number
 UPDATE schema_version
 SET version = '8', minor = '0';
