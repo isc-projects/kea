@@ -70,7 +70,7 @@
       <itemizedlist>
         <listitem>
           <simpara>
-            <command>lease-init</command> —
+            <command>db-init</command> —
             Initializes a new database schema. This is useful during a new
             Kea installation. The database is initialized to the
             latest version supported by the version of the software being
@@ -80,7 +80,7 @@
 
         <listitem>
           <simpara>
-            <command>lease-version</command> —
+            <command>db-version</command> —
             Reports the database backend version number. This is
             not necessarily equal to the Kea version number as
             each backend has its own versioning scheme.
@@ -89,7 +89,7 @@
 
         <listitem>
           <simpara>
-            <command>lease-upgrade</command> —
+            <command>db-upgrade</command> —
             Conducts a database schema upgrade. This is useful when
             upgrading Kea.
           </simpara>
@@ -367,7 +367,7 @@ $
           If you elected not to create the tables in Step 4, you can do
           so now by running the <command>kea-admin</command> tool:
 <screen>
-$ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-init mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           (Do not do this if you did create the tables in Step 4.)
           <command>kea-admin</command> implements rudimentary checks;
@@ -385,14 +385,14 @@ $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceab
         <para>
           Sometimes a new Kea version may use a newer database schema, so
           the existing database will need to be upgraded. This can
-          be done using the <command>kea-admin lease-upgrade</command>
+          be done using the <command>kea-admin db-upgrade</command>
           command.
         </para>
 
         <para>
           To check the current version of the database, use the following command:
 <screen>
-$ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-version mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           (See <xref linkend="kea-database-version"/> for a discussion
           about versioning.) If the version does not match the minimum
@@ -407,7 +407,7 @@ $ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replac
           to subsequently downgrade to an earlier version. To perform
           an upgrade, issue the following command:
 <screen>
-$ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-upgrade mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
         </para>
       </section>
@@ -427,7 +427,7 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
         <title>First-Time Creation of the PostgreSQL Database</title>
 
         <para>
-          The first task is to create both the lease database and the
+          The first task is to create both the database and the
           user under which the servers will access it. A number of steps
           are required:
 
@@ -561,7 +561,7 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
           If you elected not to create the tables manually, you can do
           so now by running the <command>kea-admin</command> tool:
 <screen>
-$ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-init pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           Do not do this if you already created the tables manually.
           <command>kea-admin</command> implements rudimentary checks;
@@ -583,11 +583,11 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
         <para>
           Use the following command to check the current schema version:
 <screen>
-$ <userinput>kea-admin lease-version pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-version pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           Use the following command to perform an upgrade:
 <screen>
-$ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-upgrade pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
         </para>
       </section>
@@ -598,7 +598,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
 
       <para>
         Cassandra (sometimes for historical reasons referred to in documentation and commands as CQL) is the newest backend
-        added to Kea; initial development was contributed by Deutsche Telekom. 
+        added to Kea; initial development was contributed by Deutsche Telekom.
         The Cassandra backend is able to store leases,
         host reservations, and options defined on a per-host basis.
       </para>
@@ -668,7 +668,7 @@ cql&gt; <userinput>CREATE KEYSPACE keyspace-name WITH replication = {'class' : '
         If you elected not to create the tables in Step 4, you can do
         so now by running the <command>kea-admin</command> tool:
 <screen>
-$ <userinput>kea-admin lease-init cql -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-init cql -n <replaceable>database-name</replaceable></userinput>
 </screen>
         (Do not do this if you did create the tables in Step 4.)
         <command>kea-admin</command> implements rudimentary checks;
@@ -686,14 +686,14 @@ $ <userinput>kea-admin lease-init cql -n <replaceable>database-name</replaceable
       <para>
         Sometimes a new Kea version may use a newer database schema, so
         the existing database will need to be upgraded. This can
-        be done using the <command>kea-admin lease-upgrade</command>
+        be done using the <command>kea-admin db-upgrade</command>
         command.
       </para>
 
       <para>
         To check the current version of the database, use the following command:
 <screen>
-$ <userinput>kea-admin lease-version cql -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-version cql -n <replaceable>database-name</replaceable></userinput>
 </screen>
         (See <xref linkend="kea-database-version"/> for a discussion
         about versioning.) If the version does not match the minimum
@@ -708,7 +708,7 @@ $ <userinput>kea-admin lease-version cql -n <replaceable>database-name</replacea
         to subsequently downgrade to an earlier version. To perform
         an upgrade, issue the following command:
 <screen>
-$ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replaceable></userinput>
+$ <userinput>kea-admin db-upgrade cql -n <replaceable>database-name</replaceable></userinput>
 </screen>
       </para>
     </section>
