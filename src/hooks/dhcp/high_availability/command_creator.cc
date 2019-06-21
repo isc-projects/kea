@@ -97,6 +97,34 @@ CommandCreator::createLease4GetPage(const Lease4Ptr& last_lease4,
 }
 
 ConstElementPtr
+CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
+                                      const Lease6CollectionPtr& deleted_leases) {
+    ElementPtr deleted_leases_list = Element::createList();
+    for (auto lease = deleted_leases->begin(); lease != deleted_leases->end();
+         ++lease) {
+        ElementPtr lease_as_json = (*lease)->toElement();
+        insertLeaseExpireTime(lease_as_json);
+        deleted_leases_list->add(lease_as_json);
+    }
+
+    ElementPtr leases_list = Element::createList();
+    for (auto lease = leases->begin(); lease != leases->end();
+         ++lease) {
+        ElementPtr lease_as_json = (*lease)->toElement();
+        insertLeaseExpireTime(lease_as_json);
+        leases_list->add(lease_as_json);
+    }
+
+    ElementPtr args = Element::createMap();
+    args->set("deleted-leases", deleted_leases_list);
+    args->set("leases", leases_list);
+
+    ConstElementPtr command = config::createCommand("lease6-bulk-apply", args);
+    insertService(command, HAServerType::DHCPv6);
+    return (command);
+}
+
+ConstElementPtr
 CommandCreator::createLease6Update(const Lease6& lease6) {
     ElementPtr lease_as_json = lease6.toElement();
     insertLeaseExpireTime(lease_as_json);

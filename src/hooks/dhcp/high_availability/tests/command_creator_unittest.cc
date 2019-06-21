@@ -303,6 +303,39 @@ TEST(CommandCreatorTest, createLease6Delete) {
     EXPECT_EQ(lease_as_json->str(), arguments->str());
 }
 
+// This test verifies that the lease6-bulk-apply command is correct.
+TEST(CommandCreatorTest, createLease6BulkApply) {
+    Lease6Ptr lease = createLease6();
+    Lease6Ptr deleted_lease = createLease6();
+
+    Lease6CollectionPtr leases(new Lease6Collection());
+    Lease6CollectionPtr deleted_leases(new Lease6Collection());
+
+    leases->push_back(lease);
+    deleted_leases->push_back(lease);
+
+    ConstElementPtr command = CommandCreator::createLease6BulkApply(leases, deleted_leases);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-bulk-apply",
+                                              "dhcp6", arguments));
+
+    // Verify deleted-leases.
+    auto deleted_leases_json = arguments->get("deleted-leases");
+    ASSERT_TRUE(deleted_leases_json);
+    ASSERT_EQ(Element::list, deleted_leases_json->getType());
+    ASSERT_EQ(1, deleted_leases_json->size());
+    auto lease_as_json = deleted_leases_json->get(0);
+    EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+
+    // Verify leases.
+    auto leases_json = arguments->get("leases");
+    ASSERT_TRUE(leases_json);
+    ASSERT_EQ(Element::list, leases_json->getType());
+    ASSERT_EQ(1, leases_json->size());
+    lease_as_json = leases_json->get(0);
+    EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+}
+
 // This test verifies that the lease6-get-all command is correct.
 TEST(CommandCreatorTest, createLease6GetAll) {
     ConstElementPtr command = CommandCreator::createLease6GetAll();

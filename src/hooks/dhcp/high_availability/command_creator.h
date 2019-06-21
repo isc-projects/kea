@@ -80,6 +80,17 @@ public:
     createLease4GetPage(const dhcp::Lease4Ptr& lease4,
                         const uint32_t limit);
 
+    /// @brief Creates lease6-bulk-update command.
+    ///
+    /// @param leases Pointer to the collection of leases to be created
+    /// or/and updated.
+    /// @param deleted_leases Pointer to the collection of leases to be
+    /// deleted.
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createLease6BulkApply(const dhcp::Lease6CollectionPtr& leases,
+                          const dhcp::Lease6CollectionPtr& deleted_leases);
+
     /// @brief Creates lease6-update command.
     ///
     /// It adds "force-create" parameter to the lease information to force

@@ -732,17 +732,9 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
         // Count contacted servers.
         ++sent_num;
 
-        // Lease updates for deleted leases.
-        for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6Delete(**l),
-                                 parking_lot);
-        }
-
-        // Lease updates for new allocations and updated leases.
-        for (auto l = leases->begin(); l != leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6Update(**l),
-                                 parking_lot);
-        }
+        // Send new/updated leases and deleted leases in one command.
+        asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6BulkApply(leases, deleted_leases),
+                             parking_lot);
     }
 
     return (sent_num);
