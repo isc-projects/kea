@@ -1,3 +1,10 @@
+1597.	[func]		fdupont
+	Added new configuration parameters for handling user lease 
+	time hints to kea-dhcp4: min-valid-lifetime and max-valid-lifetime;
+	and to kea-dhcp6: min-preferred-lifetime, max-preferred-lifetime, 
+	min-valid-lifetime, and max-valid-lifetime.
+	(Gitlab #295,!325, git 8641448c4106bf28ea32df72e5e0ad520d3946ae)
+
 1596.	[func]		marcin
 	Implemented lease6-bulk-apply command in the lease_cmds hooks
 	library.
