@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,9 +86,18 @@ public:
     ///
     /// Returned boolean value indicates whether the client should continue
     /// connecting to the server (if true) or not (false).
+    /// It is passed the IO error code along with the  native socket handle of
+    /// the connection's TCP socket.  This always the socket's event readiness
+    /// to be monitored via select() or epoll.
+    ///
     /// @note Beware that the IO error code can be set to "in progress"
     /// so a not null error code does not always mean the connect failed.
-    typedef std::function<bool(const boost::system::error_code&)> ConnectHandler;
+    typedef std::function<bool(const boost::system::error_code&, const int)> ConnectHandler;
+
+    /// @brief Optional handler invoked when client closes the connection to the server.
+    ///
+    /// It is passed the native socket handler of the connection's TCP socket.
+    typedef std::function<void(const int)> CloseHandler;
 
     /// @brief Constructor.
     ///
@@ -167,7 +176,9 @@ public:
                           const RequestTimeout& request_timeout =
                           RequestTimeout(10000),
                           const ConnectHandler& connect_callback =
-                          ConnectHandler());
+                          ConnectHandler(),
+                          const CloseHandler& close_callback =
+                          CloseHandler());
 
     /// @brief Closes all connections.
     void stop();

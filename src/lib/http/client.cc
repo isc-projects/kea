@@ -124,9 +124,12 @@ public:
     /// transaction completes.
     /// @param connect_callback Pointer to the callback function to be invoked when
     /// the client connects to the server.
+    /// @param close_callback Pointer to the callback function to be invoked when
+    /// the client closes the socket to the server.
     void doTransaction(const HttpRequestPtr& request, const HttpResponsePtr& response,
                        const long request_timeout, const HttpClient::RequestHandler& callback,
-                       const HttpClient::ConnectHandler& connect_callback);
+                       const HttpClient::ConnectHandler& connect_callback,
+                       const HttpClient::CloseHandler& close_callback);
 
     /// @brief Closes the socket and cancels the request timer.
     void close();
@@ -265,6 +268,9 @@ private:
 
     /// @brief Identifier of the current transaction.
     uint64_t current_transid_;
+
+    /// @brief User supplied callback.
+    HttpClient::CloseHandler close_callback_;
 };
 
 /// @brief Shared pointer to the connection.
@@ -305,6 +311,8 @@ public:
     /// @param callback Pointer to the user callback for this request.
     /// @param connect_callback Pointer to the user callback invoked when
     /// the client connects to the server.
+    /// @param close_callback Pointer to the user callback invoked when
+    /// the client closes the connection to the server.
     ///
     /// @return true if the request for the given URL has been retrieved,
     /// false if there are no more requests queued for this URL.
@@ -313,7 +321,8 @@ public:
                         HttpResponsePtr& response,
                         long& request_timeout,
                         HttpClient::RequestHandler& callback,
-                        HttpClient::ConnectHandler& connect_callback) {
+                        HttpClient::ConnectHandler& connect_callback,
+                        HttpClient::CloseHandler& close_callback) {
         // Check if there is a queue for this URL. If there is no queue, there
         // is no request queued either.
         auto it = queue_.find(url);
@@ -327,6 +336,7 @@ public:
                 request_timeout = desc.request_timeout_,
                 callback = desc.callback_;
                 connect_callback = desc.connect_callback_;
+                close_callback = desc.close_callback_;
                 return (true);
             }
         }
@@ -349,12 +359,15 @@ public:
     /// transaction ends.
     /// @param connect_callback Pointer to the user callback to be invoked when the
     /// client connects to the server.
+    /// @param close_callback Pointer to the user callback to be invoked when the
+    /// client closes the connection to the server.
     void queueRequest(const Url& url,
                       const HttpRequestPtr& request,
                       const HttpResponsePtr& response,
                       const long request_timeout,
                       const HttpClient::RequestHandler& request_callback,
-                      const HttpClient::ConnectHandler& connect_callback) {
+                      const HttpClient::ConnectHandler& connect_callback,
+                      const HttpClient::CloseHandler& close_callback) {
         auto it = conns_.find(url);
         if (it != conns_.end()) {
             ConnectionPtr conn = it->second;
@@ -364,12 +377,13 @@ public:
                 queue_[url].push(RequestDescriptor(request, response,
                                                    request_timeout,
                                                    request_callback,
-                                                   connect_callback));
+                                                   connect_callback,
+                                                   close_callback));
 
             } else {
                 // Connection is idle, so we can start the transaction.
                 conn->doTransaction(request, response, request_timeout,
-                                    request_callback, connect_callback);
+                                    request_callback, connect_callback, close_callback);
             }
 
         } else {
@@ -378,7 +392,7 @@ public:
             ConnectionPtr conn(new Connection(io_service_, shared_from_this(),
                                               url));
             conn->doTransaction(request, response, request_timeout, request_callback,
-                                connect_callback);
+                                connect_callback, close_callback);
             conns_[url] = conn;
         }
     }
@@ -434,15 +448,19 @@ private:
         /// @param callback Pointer to the user callback.
         /// @param connect_callback pointer to the user callback to be invoked
         /// when the client connects to the server.
+        /// @param close_callback pointer to the user callback to be invoked
+        /// when the client closes the connection to the server.
         RequestDescriptor(const HttpRequestPtr& request,
                           const HttpResponsePtr& response,
                           const long request_timeout,
                           const HttpClient::RequestHandler& callback,
-                          const HttpClient::ConnectHandler& connect_callback)
+                          const HttpClient::ConnectHandler& connect_callback,
+                          const HttpClient::CloseHandler& close_callback)
             : request_(request), response_(response),
               request_timeout_(request_timeout),
               callback_(callback),
-              connect_callback_(connect_callback) {
+              connect_callback_(connect_callback),
+              close_callback_(close_callback) {
         }
 
         /// @brief Holds pointer to the request.
@@ -455,6 +473,9 @@ private:
         HttpClient::RequestHandler callback_;
         /// @brief Holds pointer to the user callback for connect.
         HttpClient::ConnectHandler connect_callback_;
+
+        /// @brief Holds pointer to the user callback for close.
+        HttpClient::CloseHandler close_callback_;
     };
 
     /// @brief Holds the queue of requests for different URLs.
@@ -466,7 +487,7 @@ Connection::Connection(IOService& io_service,
                        const Url& url)
     : conn_pool_(conn_pool), url_(url), socket_(io_service), timer_(io_service),
       current_request_(), current_response_(), parser_(), current_callback_(),
-      buf_(), input_buf_(), current_transid_(0) {
+      buf_(), input_buf_(), current_transid_(0), close_callback_() {
 }
 
 Connection::~Connection() {
@@ -486,13 +507,15 @@ Connection::doTransaction(const HttpRequestPtr& request,
                           const HttpResponsePtr& response,
                           const long request_timeout,
                           const HttpClient::RequestHandler& callback,
-                          const HttpClient::ConnectHandler& connect_callback) {
+                          const HttpClient::ConnectHandler& connect_callback,
+                          const HttpClient::CloseHandler& close_callback) {
     try {
         current_request_ = request;
         current_response_ = response;
         parser_.reset(new HttpResponseParser(*current_response_));
         parser_->initModel();
         current_callback_ = callback;
+        close_callback_ = close_callback;
 
         // Starting new transaction. Generate new transaction id.
         ++current_transid_;
@@ -506,6 +529,9 @@ Connection::doTransaction(const HttpRequestPtr& request,
         // data over this socket, when the peer may close the connection. In this
         // case we'll need to re-transmit but we don't handle it here.
         if (socket_.getASIOSocket().is_open() && !socket_.isUsable()) {
+            if (close_callback) {
+                close_callback(socket_.getNative());
+            }
             socket_.close();
         }
 
@@ -542,6 +568,10 @@ Connection::doTransaction(const HttpRequestPtr& request,
 
 void
 Connection::close() {
+    if (close_callback_) {
+        close_callback_(socket_.getNative());
+    }
+    
     timer_.cancel();
     socket_.close();
     resetState();
@@ -632,10 +662,12 @@ Connection::terminate(const boost::system::error_code& ec,
     long request_timeout;
     HttpClient::RequestHandler callback;
     HttpClient::ConnectHandler connect_callback;
+    HttpClient::CloseHandler close_callback;
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
     if (conn_pool && conn_pool->getNextRequest(url_, request, response, request_timeout,
-                                               callback, connect_callback)) {
-        doTransaction(request, response, request_timeout, callback, connect_callback);
+                                               callback, connect_callback, close_callback)) {
+        doTransaction(request, response, request_timeout, callback, 
+                      connect_callback, close_callback);
     }
 }
 
@@ -685,7 +717,7 @@ Connection::connectCallback(HttpClient::ConnectHandler connect_callback,
     if (connect_callback) {
         // If the user defined callback indicates that the connection
         // should not be continued.
-        if (!connect_callback(ec)) {
+        if (!connect_callback(ec, socket_.getNative())) {
             return;
         }
     }
@@ -844,7 +876,8 @@ HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
                              const HttpResponsePtr& response,
                              const HttpClient::RequestHandler& request_callback,
                              const HttpClient::RequestTimeout& request_timeout,
-                             const HttpClient::ConnectHandler& connect_callback) {
+                             const HttpClient::ConnectHandler& connect_callback,
+                             const HttpClient::CloseHandler& close_callback) {
     if (!url.isValid()) {
         isc_throw(HttpClientError, "invalid URL specified for the HTTP client");
     }
@@ -862,7 +895,7 @@ HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
     }
 
     impl_->conn_pool_->queueRequest(url, request, response, request_timeout.value_,
-                                    request_callback, connect_callback);
+                                    request_callback, connect_callback, close_callback);
 }
 
 void

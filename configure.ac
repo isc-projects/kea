@@ -1327,7 +1327,7 @@ fi
 
 #
 # Doesn't seem to be required?
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
+#CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
 # Disable threads: they seems to break things on some systems
 # As now we use threads in boost ASIO this is commented out...

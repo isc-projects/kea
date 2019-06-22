@@ -724,7 +724,7 @@ public:
             "Content-Length: 3\r\n\r\n"
             "{ }";
 
-        // Use custom listener and the specialized connection object. 
+        // Use custom listener and the specialized connection object.
         HttpListenerCustom<HttpConnectionType>
             listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
                      factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
@@ -1375,6 +1375,123 @@ public:
         ASSERT_NO_THROW(runIOService());
     }
 
+    /// @brief Tests that underlying TCP socket can be registered and
+    /// unregsitered via connection and close callbacks.
+    ///
+    /// It conducts to consequetive requests over the same client.
+    ///
+    /// @param version HTTP version to be used.
+    void testConnectCloseCallbacks(const HttpVersion& version) {
+        // Start the server.
+        ASSERT_NO_THROW(listener_.start());
+
+        // Create a client and specify the URL on which the server can be reached.
+        HttpClient client(io_service_);
+        Url url("http://127.0.0.1:18123");
+
+        // Initiate request to the server.
+        PostHttpRequestJsonPtr request1 = createRequest("sequence", 1, version);
+        HttpResponseJsonPtr response1(new HttpResponseJson());
+        unsigned resp_num = 0;
+        ExternalMonitor monitor;
+        ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
+            [this, &resp_num](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num > 1) {
+                io_service_.stop();
+            }
+            EXPECT_FALSE(ec);
+        },
+            HttpClient::RequestTimeout(10000),
+            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
+            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+        ));
+
+        // Initiate another request to the destination.
+        PostHttpRequestJsonPtr request2 = createRequest("sequence", 2, version);
+        HttpResponseJsonPtr response2(new HttpResponseJson());
+        ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
+            [this, &resp_num](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num > 1) {
+                io_service_.stop();
+            }
+            EXPECT_FALSE(ec);
+        },
+            HttpClient::RequestTimeout(10000),
+            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
+            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+        ));
+
+        // Actually trigger the requests. The requests should be handlded by the
+        // server one after another. While the first request is being processed
+        // the server should queue another one.
+        ASSERT_NO_THROW(runIOService());
+
+        // Make sure that the received responses are different. We check that by
+        // comparing value of the sequence parameters.
+        ASSERT_TRUE(response1);
+        ConstElementPtr sequence1 = response1->getJsonElement("sequence");
+        ASSERT_TRUE(sequence1);
+
+        ASSERT_TRUE(response2);
+        ConstElementPtr sequence2 = response2->getJsonElement("sequence");
+        ASSERT_TRUE(sequence2);
+
+        EXPECT_NE(sequence1->intValue(), sequence2->intValue());
+    }
+
+    /// @brief Simulates external registery of Connection TCP sockets
+    ///
+    /// Provides methods compatible with Connection callbacks for connnect
+    /// and close operations.
+    class ExternalMonitor {
+    public:
+        /// @breif Constructor
+        ExternalMonitor() : registered_fd_(-1) {};
+
+        /// @brief Connect callback handler
+        /// @param ec Error status of the ASIO connect
+        /// @param tcp_native_fd socket descriptor to register
+        bool connectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
+            if (!ec || ec.value() == boost::asio::error::in_progress) {
+                if (tcp_native_fd >= 0) {
+                    registered_fd_ = tcp_native_fd;
+                    return (true);
+                }
+
+                // Invalid fd?, this really should not be possible.  EXPECT makes
+                // sure we log it.
+                EXPECT_TRUE (tcp_native_fd >= 0) << "no ec error but invalid fd?";
+                return (false);
+
+            } else if (ec.value() == boost::asio::error::already_connected) {
+                if (registered_fd_ != tcp_native_fd) {
+                    return (false);
+                }
+            }
+
+            // ec indicates an error, return true, so that error can be handled
+            // by Connection logic.
+            return (true);
+        }
+
+        /// @brief Close callback handler
+        ///
+        /// @param tcp_native_fd socket descriptor to register
+        void closeHandler(int tcp_native_fd) {
+            EXPECT_EQ(tcp_native_fd, registered_fd_) << "closeHandler fd mismatch";
+            if (tcp_native_fd >= 0) {
+                registered_fd_ = -1;
+            }
+        }
+
+        /// @brief Keeps track of socket currently "registered" for external monitoring.
+        int registered_fd_;
+    };
+
     /// @brief Instance of the listener used in the tests.
     HttpListener listener_;
 
@@ -1384,6 +1501,7 @@ public:
     /// @brief Instance of the third listener used in the tests (with short idle
     /// timeout).
     HttpListener listener3_;
+
 };
 
 // Test that two conscutive requests can be sent over the same (persistent)
@@ -1671,7 +1789,7 @@ TEST_F(HttpClientTest, clientConnectTimeout) {
        // try to send a request to the server. This simulates the
        // case of connect() taking very long and should eventually
        // cause the transaction to time out.
-       [](const boost::system::error_code& /*ec*/) {
+       [](const boost::system::error_code& /*ec*/, int) {
            return (false);
     }));
 
@@ -1688,5 +1806,9 @@ TEST_F(HttpClientTest, clientConnectTimeout) {
     ASSERT_NO_THROW(runIOService());
 }
 
+/// Tests that connect and close callbacks work correctly.
+TEST_F(HttpClientTest, connectCloseCallbacks) {
+    ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
+}
 
 }
