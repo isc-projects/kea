@@ -57,7 +57,7 @@ usage() {
     printf " - db-init: Initializes new database. Useful for first time installation.\n"
     printf " - db-version: Checks version of the existing database scheme. Useful\n"
     printf " -             for checking databaseB version when preparing for an upgrade.\n"
-    printf " - dn-upgrade: Upgrades your database scheme\n"
+    printf " - db-upgrade: Upgrades your database scheme\n"
     printf " - lease-dump: Dump current leases to a CSV file\n"
     printf "\n"
     printf "BACKEND - one of the supported backends: memfile|mysql|pgsql|cql\n"
