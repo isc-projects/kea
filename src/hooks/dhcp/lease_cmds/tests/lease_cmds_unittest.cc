@@ -494,6 +494,64 @@ public:
                   static_cast<uint32_t>(l->get("valid-lft")->intValue()));
         EXPECT_EQ(DEC_2030_TIME, l->get("cltt")->intValue());
     }
+
+    /// @brief This function checks that the JSON list contains an entry
+    /// indicating lease deletion, creation or update failure.
+    ///
+    /// @param failed_leases_list JSON list containing list of leases.
+    /// @param expected_type Expected lease type as text.
+    /// @param expected_ip_address Expected IP address.
+    /// @oaram expected_control_result Expected control result for the lease.
+    /// @param expected_error_msg Expected error message. Default is an empty
+    /// string which indicates that the error message should not be checked.
+    /// @param expected_subnet_id Expected subnet id. Default is -1 which means
+    /// that the subnet_id is not required and should not be checked.
+    void checkFailedLease(const ConstElementPtr& failed_leases_list,
+                          const std::string& expected_type,
+                          const std::string& expected_ip_address,
+                          const int expected_control_result,
+                          const std::string& expected_error_msg = "",
+                          const SubnetID& expected_subnet_id = -1) {
+        ASSERT_TRUE(failed_leases_list);
+
+        for (auto i = 0; i < failed_leases_list->size(); ++i) {
+
+            auto failed_lease = failed_leases_list->get(i);
+            ASSERT_TRUE(failed_lease);
+            ASSERT_EQ(Element::map, failed_lease->getType());
+
+            auto ip_address = failed_lease->get("ip-address");
+            ASSERT_TRUE(ip_address);
+            ASSERT_EQ(Element::string, ip_address->getType());
+
+            if (ip_address->stringValue() == expected_ip_address) {
+
+                auto lease_type = failed_lease->get("type");
+                ASSERT_TRUE(lease_type);
+                ASSERT_EQ(Element::string, lease_type->getType());
+
+                auto control_result = failed_lease->get("result");
+                ASSERT_TRUE(control_result);
+                ASSERT_EQ(Element::integer, control_result->getType());
+
+                if (!expected_error_msg.empty()) {
+                    auto error_msg = failed_lease->get("error-message");
+                    ASSERT_TRUE(error_msg);
+                    ASSERT_EQ(Element::string, error_msg->getType());
+                }
+
+                if (expected_subnet_id > 0) {
+                    auto subnet_id = failed_lease->get("subnet-id");
+                    ASSERT_TRUE(subnet_id);
+                    ASSERT_EQ(Element::integer, subnet_id->getType());
+                }
+
+                return;
+            }
+        }
+
+        ADD_FAILURE() << "expected lease not found";
+    }
 };
 
 // Simple test that checks the library really registers the commands.
@@ -4146,6 +4204,18 @@ TEST_F(LeaseCmdsTest, Lease6BulkApplyDeleteNonExiting) {
     ASSERT_TRUE(failed_deleted_leases);
     ASSERT_EQ(Element::list, failed_deleted_leases->getType());
     ASSERT_EQ(2, failed_deleted_leases->size());
+
+    {
+        SCOPED_TRACE("lease address 2001:db8:1::123");
+        checkFailedLease(failed_deleted_leases, "IA_NA", "2001:db8:1::123",
+                         CONTROL_RESULT_EMPTY, "lease not found");
+    }
+
+    {
+        SCOPED_TRACE("lease address 2001:db8:1::234");
+        checkFailedLease(failed_deleted_leases, "IA_NA", "2001:db8:1::234",
+                         CONTROL_RESULT_EMPTY, "lease not found");
+    }
 }
 
 // Check that changes for other leases are not applied if one of

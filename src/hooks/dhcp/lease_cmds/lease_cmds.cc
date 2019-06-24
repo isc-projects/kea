@@ -273,10 +273,15 @@ public:
     /// @param lease_type lease type.
     /// @param lease_address lease address.
     /// @param duid DUID of the client.
+    /// @param control_result Control result: "empty" of the lease was
+    /// not found, "error" otherwise.
+    /// @param error_message Error message.
     ElementPtr createFailedLeaseMap(const SubnetID& subnet_id,
                                     const Lease::Type& lease_type,
                                     const IOAddress& lease_address,
-                                    const DuidPtr&duid) const;
+                                    const DuidPtr& duid,
+                                    const int control_result,
+                                    const std::string& error_message) const;
 };
 
 int
@@ -907,22 +912,31 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                             ++success_count;
 
                         } else {
+                            // Lazy creation of the list of leases which failed to delete.
+                            if (!failed_deleted_list) {
+                                failed_deleted_list = Element::createList();
+                            }
+
                             // If the lease doesn't exist we also want to put it
                             // on the list of leases which failed to delete. That
                             // corresponds to the lease6-del command which returns
                             // an error when the lease doesn't exist.
-                            isc_throw(InvalidOperation, "no such lease for address "
-                                      << lease_addr.toText());
+                            failed_deleted_list->add(createFailedLeaseMap(p.subnet_id, p.lease_type,
+                                                                          p.addr, p.duid,
+                                                                          CONTROL_RESULT_EMPTY,
+                                                                          "lease not found"));
                         }
                     }
 
-                } catch (...) {
+                } catch (const std::exception& ex) {
                     // Lazy creation of the list of leases which failed to delete.
                     if (!failed_deleted_list) {
                          failed_deleted_list = Element::createList();
                     }
                     failed_deleted_list->add(createFailedLeaseMap(p.subnet_id, p.lease_type,
-                                                                  p.addr, p.duid));
+                                                                  p.addr, p.duid,
+                                                                  CONTROL_RESULT_ERROR,
+                                                                  ex.what()));
                 }
             }
         }
@@ -949,7 +963,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
                     ++success_count;
 
-                } catch (...) {
+                } catch (const std::exception& ex) {
                     // Lazy creation of the list of leases which failed to add/update.
                     if (!failed_leases_list) {
                          failed_leases_list = Element::createList();
@@ -957,7 +971,9 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                     failed_leases_list->add(createFailedLeaseMap(lease->subnet_id_,
                                                                  lease->type_,
                                                                  lease->addr_,
-                                                                 lease->duid_));
+                                                                 lease->duid_,
+                                                                 CONTROL_RESULT_ERROR,
+                                                                 ex.what()));
                 }
             }
         }
@@ -1266,7 +1282,9 @@ ElementPtr
 LeaseCmdsImpl::createFailedLeaseMap(const SubnetID& subnet_id,
                                     const Lease::Type& lease_type,
                                     const IOAddress& lease_address,
-                                    const DuidPtr&duid) const {
+                                    const DuidPtr& duid,
+                                    const int control_result,
+                                    const std::string& error_message) const {
     auto failed_lease_map = Element::createMap();
     failed_lease_map->set("subnet-id",
                           Element::create(static_cast<long int>(subnet_id)));
@@ -1278,6 +1296,10 @@ LeaseCmdsImpl::createFailedLeaseMap(const SubnetID& subnet_id,
     } else if (duid) {
         failed_lease_map->set("duid", Element::create(duid->toText()));
     }
+
+    // Associate the result with the lease.
+    failed_lease_map->set("result", Element::create(control_result));
+    failed_lease_map->set("error-message", Element::create(error_message));
 
     return (failed_lease_map);
 }
