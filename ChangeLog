@@ -1,3 +1,10 @@
+1599.	[perf]		marcin
+	Improved performance of the DHCPv6 server running with High
+	Availability by aggregating multiple lease updates in a single
+	lease6-bulk-apply command instead of generating multiple
+	lease6-update commands, one for each allocated lease.
+	(Gitlab #689,!394, git 65021b840b94da3d118e541fba5469c8ed15175b)
+
 1598.	[bug]		razvan
 	Added unittests for long (> 65536 chars) tokens in parsed configs
 	so any crash related to parsers could be detected.
