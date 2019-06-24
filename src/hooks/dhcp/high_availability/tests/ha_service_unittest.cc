@@ -1490,6 +1490,74 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError6) {
     EXPECT_TRUE(update_request3);
 }
 
+// This test verifies that the server accepts the response to the lease6-bulk-apply
+// command including failed-deleted-leases and failed-leases parameters.
+TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
+    // Create a dummy lease which failed to be deleted.
+    auto failed_deleted_lease = Element::createMap();
+    failed_deleted_lease->set("type", Element::create("IA_NA"));
+    failed_deleted_lease->set("ip-address", Element::create("2001:db8:1::1"));
+    failed_deleted_lease->set("subnet-id", Element::create(1));
+
+    // Crate a dummy lease which failed to be created.
+    auto failed_lease = Element::createMap();
+    failed_lease->set("type", Element::create("IA_PD"));
+    failed_lease->set("ip-address", Element::create("2001:db8:1::"));
+    failed_lease->set("subnet-id", Element::create(2));
+
+    // Create the "failed-deleted-leases" list.
+    auto failed_deleted_leases = Element::createList();
+    failed_deleted_leases->add(failed_deleted_lease);
+
+    // Create the "failed-leases" list.
+    auto failed_leases = Element::createList();
+    failed_leases->add(failed_lease);
+
+    // Add both lists to the arguments.
+    ElementPtr arguments = Element::createMap();
+    arguments->set("failed-deleted-leases", failed_deleted_leases);
+    arguments->set("failed-leases", failed_leases);
+
+    // Configure the server to return this response.
+    factory2_->getResponseCreator()->setArguments("lease6-bulk-apply",
+                                                  arguments);
+
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, true, 2);
+
+    // Expecting that the packet was unparked because lease updates are expected
+    // to be successful.
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
+
+    // Lease updates should be successfully sent to server3.
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request3);
+}
+
 // This test verifies that the heartbeat command is processed successfully.
 TEST_F(HAServiceTest, processHeartbeat) {
     // Create HA configuration for 3 servers. This server is

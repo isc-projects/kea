@@ -450,6 +450,18 @@ protected:
                               const data::ConstElementPtr& command,
                               const hooks::ParkingLotHandlePtr& parking_lot);
 
+    /// @brief Log failed lease updates.
+    ///
+    /// Logs failed lease updates included in the "failed-deleted-leases"
+    /// and/or "failed-leases" carried in the response to the
+    /// @c lease6-bulk-apply command.
+    ///
+    /// @param query Pointer to the DHCP client's query.
+    /// @param args Arguments of the response. It may be null, in which
+    /// case the function simply returns.
+    void logFailedLeaseUpdates(const dhcp::PktPtr& query,
+                               const data::ConstElementPtr& args) const;
+
     /// @brief Checks if the lease updates should be sent as result of leases
     /// allocation or release.
     ///

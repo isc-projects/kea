@@ -800,7 +800,10 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
                 // Handle third group of errors.
                 try {
-                    verifyAsyncResponse(response);
+                    auto args = verifyAsyncResponse(response);
+                    // In the v6 case the server may return a list of failed lease
+                    // updates and we should log them.
+                    logFailedLeaseUpdates(query, args);
 
                 } catch (const std::exception& ex) {
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_FAILED)
@@ -889,6 +892,62 @@ HAService::shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) co
     }
 
     return (false);
+}
+
+void
+HAService::logFailedLeaseUpdates(const PktPtr& query,
+                                 const ConstElementPtr& args) const {
+    // If there are no arguments, it means that the update was successful.
+    if (!args || (args->getType() != Element::map)) {
+        return;
+    }
+
+    // Instead of duplicating the code between the failed-deleted-leases and
+    // failed-leases, let's just have one function that does it for both.
+    auto log_proc = [](const PktPtr query, const ConstElementPtr& args,
+                       const std::string& param_name, const log::MessageID& mesid) {
+
+        // Check if there are any failed leases.
+        auto failed_leases = args->get(param_name);
+
+        // The failed leases must be a list.
+        if (failed_leases && (failed_leases->getType() == Element::list)) {
+            // Go over the failed leases and log each of them.
+            for (int i = 0; i < failed_leases->size(); ++i) {
+                auto lease = failed_leases->get(i);
+                if (lease->getType() == Element::map) {
+                    // subnet-id
+                    auto subnet_id = lease->get("subnet-id");
+                    std::ostringstream subnet_id_text;
+                    if (subnet_id && subnet_id->getType() == Element::integer) {
+                        subnet_id_text << subnet_id->intValue();
+
+                    } else {
+                        subnet_id_text << "(unknown)";
+                    }
+
+                    // ip-address
+                    auto ip_address = lease->get("ip-address");
+                    // lease type
+                    auto lease_type = lease->get("type");
+
+                    LOG_INFO(ha_logger, mesid)
+                        .arg(query->getLabel())
+                        .arg(lease_type && (lease_type->getType() == Element::string) ?
+                             lease_type->stringValue() : "(uknown)")
+                        .arg(ip_address && (ip_address->getType() == Element::string) ?
+                             ip_address->stringValue() : "(unknown)")
+                        .arg(subnet_id_text.str());
+                }
+            }
+        }
+    };
+
+    // Process "failed-deleted-leases"
+    log_proc(query, args, "failed-deleted-leases", HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER);
+
+    // Process "failed-leases".
+    log_proc(query, args, "failed-leases", HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER);
 }
 
 ConstElementPtr

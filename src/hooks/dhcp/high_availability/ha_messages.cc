@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Feb 08 2019 20:34
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon Jun 24 2019 12:19
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -51,6 +51,8 @@ extern const isc::log::MessageID HA_LEASE_SYNC_STALE_LEASE6_SKIP = "HA_LEASE_SYN
 extern const isc::log::MessageID HA_LEASE_UPDATES_DISABLED = "HA_LEASE_UPDATES_DISABLED";
 extern const isc::log::MessageID HA_LEASE_UPDATES_ENABLED = "HA_LEASE_UPDATES_ENABLED";
 extern const isc::log::MessageID HA_LEASE_UPDATE_COMMUNICATIONS_FAILED = "HA_LEASE_UPDATE_COMMUNICATIONS_FAILED";
+extern const isc::log::MessageID HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER = "HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER";
+extern const isc::log::MessageID HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER = "HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER";
 extern const isc::log::MessageID HA_LEASE_UPDATE_FAILED = "HA_LEASE_UPDATE_FAILED";
 extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING = "HA_LOAD_BALANCING_DUID_MISSING";
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING = "HA_LOAD_BALANCING_IDENTIFIER_MISSING";
@@ -118,6 +120,8 @@ const char* values[] = {
     "HA_LEASE_UPDATES_DISABLED", "lease updates will not be sent to the partner while in %1 state",
     "HA_LEASE_UPDATES_ENABLED", "lease updates will be sent to the partner while in %1 state",
     "HA_LEASE_UPDATE_COMMUNICATIONS_FAILED", "%1: failed to communicate with %2: %3",
+    "HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER", "%1: failed to create or update the lease having type %2 for address %3 in subnet %4",
+    "HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER", "%1: failed to delete the lease having type %2 for address %3 in subnet %4",
     "HA_LEASE_UPDATE_FAILED", "%1: lease update to %2 failed: %3",
     "HA_LOAD_BALANCING_DUID_MISSING", "load balancing failed for the DHCPv6 message (transaction id: %1) because DUID is missing",
     "HA_LOAD_BALANCING_IDENTIFIER_MISSING", "load balancing failed for the DHCPv4 message (transaction id: %1) because HW address and client identifier are missing",
