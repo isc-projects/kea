@@ -916,20 +916,15 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
             for (int i = 0; i < failed_leases->size(); ++i) {
                 auto lease = failed_leases->get(i);
                 if (lease->getType() == Element::map) {
-                    // subnet-id
-                    auto subnet_id = lease->get("subnet-id");
-                    std::ostringstream subnet_id_text;
-                    if (subnet_id && subnet_id->getType() == Element::integer) {
-                        subnet_id_text << subnet_id->intValue();
-
-                    } else {
-                        subnet_id_text << "(unknown)";
-                    }
 
                     // ip-address
                     auto ip_address = lease->get("ip-address");
+
                     // lease type
                     auto lease_type = lease->get("type");
+
+                    // error-message
+                    auto error_message = lease->get("error-message");
 
                     LOG_INFO(ha_logger, mesid)
                         .arg(query->getLabel())
@@ -937,7 +932,8 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
                              lease_type->stringValue() : "(uknown)")
                         .arg(ip_address && (ip_address->getType() == Element::string) ?
                              ip_address->stringValue() : "(unknown)")
-                        .arg(subnet_id_text.str());
+                        .arg(error_message && (error_message->getType() == Element::string) ?
+                             error_message->stringValue() : "(unknown)");
                 }
             }
         }

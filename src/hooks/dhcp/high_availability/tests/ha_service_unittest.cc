@@ -1498,12 +1498,16 @@ TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
     failed_deleted_lease->set("type", Element::create("IA_NA"));
     failed_deleted_lease->set("ip-address", Element::create("2001:db8:1::1"));
     failed_deleted_lease->set("subnet-id", Element::create(1));
+    failed_deleted_lease->set("result", Element::create(CONTROL_RESULT_EMPTY));
+    failed_deleted_lease->set("error-message", Element::create("no lease found"));
 
     // Crate a dummy lease which failed to be created.
     auto failed_lease = Element::createMap();
     failed_lease->set("type", Element::create("IA_PD"));
     failed_lease->set("ip-address", Element::create("2001:db8:1::"));
     failed_lease->set("subnet-id", Element::create(2));
+    failed_lease->set("result", Element::create(CONTROL_RESULT_ERROR));
+    failed_lease->set("error-message", Element::create("failed to create lease"));
 
     // Create the "failed-deleted-leases" list.
     auto failed_deleted_leases = Element::createList();
