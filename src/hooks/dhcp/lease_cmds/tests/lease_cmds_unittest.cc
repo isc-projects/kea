@@ -526,15 +526,18 @@ public:
                 auto lease_type = failed_lease->get("type");
                 ASSERT_TRUE(lease_type);
                 ASSERT_EQ(Element::string, lease_type->getType());
+                EXPECT_EQ(expected_type, lease_type->stringValue());
 
                 auto control_result = failed_lease->get("result");
                 ASSERT_TRUE(control_result);
                 ASSERT_EQ(Element::integer, control_result->getType());
+                EXPECT_EQ(expected_control_result, control_result->intValue());
 
                 if (!expected_error_msg.empty()) {
                     auto error_msg = failed_lease->get("error-message");
                     ASSERT_TRUE(error_msg);
                     ASSERT_EQ(Element::string, error_msg->getType());
+                    EXPECT_EQ(expected_error_msg, error_msg->stringValue());
                 }
 
                 return;
