@@ -504,14 +504,11 @@ public:
     /// @oaram expected_control_result Expected control result for the lease.
     /// @param expected_error_msg Expected error message. Default is an empty
     /// string which indicates that the error message should not be checked.
-    /// @param expected_subnet_id Expected subnet id. Default is -1 which means
-    /// that the subnet_id is not required and should not be checked.
     void checkFailedLease(const ConstElementPtr& failed_leases_list,
                           const std::string& expected_type,
                           const std::string& expected_ip_address,
                           const int expected_control_result,
-                          const std::string& expected_error_msg = "",
-                          const SubnetID& expected_subnet_id = -1) {
+                          const std::string& expected_error_msg = "") {
         ASSERT_TRUE(failed_leases_list);
 
         for (auto i = 0; i < failed_leases_list->size(); ++i) {
@@ -538,12 +535,6 @@ public:
                     auto error_msg = failed_lease->get("error-message");
                     ASSERT_TRUE(error_msg);
                     ASSERT_EQ(Element::string, error_msg->getType());
-                }
-
-                if (expected_subnet_id > 0) {
-                    auto subnet_id = failed_lease->get("subnet-id");
-                    ASSERT_TRUE(subnet_id);
-                    ASSERT_EQ(Element::integer, subnet_id->getType());
                 }
 
                 return;
