@@ -1700,13 +1700,11 @@ Result is an integer representation of the status. Currently supported statuses 
         "arguments": {
             "deleted-leases": [
                 {
-                    "subnet-id": 66,
                     "ip-address": "2001:db8:abcd::",
                     "type": "IA_PD",
                     ...
                 },
                 {
-                    "subnet-id": 66,
                     "ip-address": "2001:db8:abcd::234",
                     "type": "IA_NA",
                     ...
@@ -1738,23 +1736,24 @@ If any of the leases is malformed, all changes are rolled back. If the leases ar
         "arguments": {
             "failed-deleted-leases": [
                 {
-                    "subnet-id": 66,
                     "ip-address": "2001:db8:abcd::",
-                    "type": "IA_PD"
+                    "type": "IA_PD",
+                    "result": &lt;control result&gt;,
+                    "error-message": &lt;error message&gt;
                 }
             ],
             "failed-leases": [
                 {
-                    "subnet-id": 66,
                     "ip-address": "2001:db8:cafe::",
                     "type": "IA_PD",
-                    ...
+                    "result" &lt;control result&gt;,
+                    "error-message": &lt;error message&gt;
                 }
             ]
         }
     }
 }</screen>
-The "failed-deleted-leases" holds the list of leases which failed to delete. This includes leases which were not found in the database. The "failed-leases" includes the list of leases which failed to create or update.</para>
+The "failed-deleted-leases" holds the list of leases which failed to delete. This includes leases which were not found in the database. The "failed-leases" includes the list of leases which failed to create or update. For each lease for which there was an error while processing the lease, inserting it into the database etc. the result is set to 1. For each lease which was not deleted because the server didn't find it in the database the result of 3 is returned.</para>
 
 </section>
 <!-- end of lease6-bulk-apply -->
