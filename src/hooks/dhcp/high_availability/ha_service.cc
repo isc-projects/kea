@@ -12,6 +12,7 @@
 #include <ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <http/date_time.h>
@@ -270,7 +271,7 @@ HAService::readyStateHandler() {
     case HA_HOT_STANDBY_ST:
         verboseTransition(HA_HOT_STANDBY_ST);
         break;
-        
+
     case HA_LOAD_BALANCING_ST:
         verboseTransition(HA_LOAD_BALANCING_ST);
         break;
@@ -852,7 +853,11 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 // Then it returns control to the DHCP server.
                 runModel(HA_LEASE_UPDATES_COMPLETE_EVT);
             }
-        });
+        },
+        HttpClient::RequestTimeout(10000),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 
     // Request scheduled, so update the request counters for the query.
     if (pending_requests_.count(query) == 0) {
@@ -1051,7 +1056,11 @@ HAService::asyncSendHeartbeat() {
             // asynchronous tasks etc. Then it returns control to the DHCP server.
             startHeartbeat();
             runModel(HA_HEARTBEAT_COMPLETE_EVT);
-      });
+        },
+        HttpClient::RequestTimeout(10000),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 }
 
 void
@@ -1137,7 +1146,11 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
                  post_request_action(error_message.empty(),
                                      error_message);
              }
-    });
+        },
+        HttpClient::RequestTimeout(10000),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 }
 
 void
@@ -1204,7 +1217,11 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
                  post_request_action(error_message.empty(),
                                      error_message);
              }
-    });
+        },
+        HttpClient::RequestTimeout(10000),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 }
 
 void
@@ -1440,7 +1457,12 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                  error_message,
                                  dhcp_disabled);
             }
-    }, HttpClient::RequestTimeout(config_->getSyncTimeout()));
+        },
+        HttpClient::RequestTimeout(config_->getSyncTimeout()),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
+
 }
 
 ConstElementPtr
@@ -1596,6 +1618,30 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
     return (args);
 }
 
+bool
+HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
+    if (!ec || ec.value() == boost::asio::error::in_progress) {
+        IfaceMgr::instance().addExternalSocket(tcp_native_fd,
+            [this]() {
+                    // Callback is a NOP. Ready events handlers are run by an explicit
+                    // call IOService ready in kea-dhcp<n> code. We are registering
+                    // the socket to interrupt main-thread select().
+        });
+    }
+
+    // If ec.value() == boost::asio::error::already_connected, we should already
+    // be registered, so nothing to do.  If it is any other value, than connect
+    // failed and Connection logic should handle that, not us, so no matter
+    // what happens we're returning true.
+    return (true);
+}
+
+void
+HAService::clientCloseHandler(int tcp_native_fd) {
+    if (tcp_native_fd >= 0) {
+        IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
+    }
+};
 
 } // end of namespace isc::ha
 } // end of namespace isc

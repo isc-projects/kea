@@ -727,6 +727,26 @@ protected:
     /// @throw CtrlChannelError if response is invalid or contains an error.
     data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response);
 
+    /// @brief HttpClient connect callback handler
+    ///
+    /// Passed into HttpClient calls to allow registration of client's TCP socket
+    /// with an external monitor (such as IfaceMgr's  main-thread select()).
+    ///
+    /// @param ec Error status of the ASIO connect
+    /// @param tcp_native_fd socket descriptor to register
+    /// @param returns true. Registeration cannot fail, and if ec indicates a real
+    /// error we want Connection logic to process it.
+    virtual bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
+
+    /// @brief HttpClient close callback handler
+    ///
+    /// Passed into HttpClient calls to allow unregistration of client's
+    /// TCP socket with an external monitor (such as IfaceMgr's
+    /// main-thread select()).
+    ///
+    /// @param tcp_native_fd socket descriptor to register
+    virtual void clientCloseHandler(int tcp_native_fd);
+
     /// @brief Pointer to the IO service object shared between this hooks
     /// library and the DHCP server.
     asiolink::IOServicePtr io_service_;

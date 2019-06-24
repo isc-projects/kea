@@ -500,6 +500,7 @@ Connection::resetState() {
     current_response_.reset();
     parser_.reset();
     current_callback_ = HttpClient::RequestHandler();
+    close_callback_ = HttpClient::CloseHandler();
 }
 
 void
@@ -529,8 +530,8 @@ Connection::doTransaction(const HttpRequestPtr& request,
         // data over this socket, when the peer may close the connection. In this
         // case we'll need to re-transmit but we don't handle it here.
         if (socket_.getASIOSocket().is_open() && !socket_.isUsable()) {
-            if (close_callback) {
-                close_callback(socket_.getNative());
+            if (close_callback_) {
+                close_callback_(socket_.getNative());
             }
             socket_.close();
         }
