@@ -1,3 +1,8 @@
+1598.	[bug]		razvan
+	Added unittests for long (> 65536 chars) tokens in parsed configs
+	so any crash related to parsers could be detected.
+	(Gitlab #604,!376, git 811735b67fcdb5592c3e020792c154f2f454259c)
+
 1597.	[func]		fdupont
 	Added new configuration parameters for handling user lease
 	time hints to kea-dhcp4: min-valid-lifetime and max-valid-lifetime;
