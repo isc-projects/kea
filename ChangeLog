@@ -1,3 +1,7 @@
+1600.	[bug]		fdupont
+	Fixed prefixLengthFromRange() routine.
+	(Gitlab #583.!377, git 10bd31217d8a0a77345c4cba7a59314f70c1b509)
+
 1599.	[perf]		marcin
 	Improved performance of the DHCPv6 server running with High
 	Availability by aggregating multiple lease updates in a single
