@@ -643,6 +643,8 @@ public:
     /// @param create_index Index of the INSERT query to be used.
     /// @param update_index Index of the UPDATE query to be used.
     /// @param server Pointer to the server to be inserted or updated.
+    /// @throw InvalidOperation when trying to create a duplicate or
+    /// update the logical server 'all'.
     void createUpdateServer(const int& create_audit_revision,
                             const int& create_index,
                             const int& update_index,

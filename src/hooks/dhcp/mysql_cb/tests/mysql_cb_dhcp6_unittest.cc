@@ -509,6 +509,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteServer) {
                           "server set");
     }
 
+    // It should not be possible to create a duplicate of the logical
+    // server 'all'.
+    auto all_server = Server::create(ServerTag("all"), "this is logical server all");
+    EXPECT_THROW(cbptr_->createUpdateServer6(all_server), isc::InvalidOperation);
+
     ServerPtr returned_server;
 
     // An attempt to fetch the server that hasn't been inserted should return

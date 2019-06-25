@@ -344,6 +344,8 @@ public:
     /// @brief Creates or updates a server.
     ///
     /// @param server Instance of the server to be stored.
+    /// @throw InvalidOperation when trying to create a duplicate or
+    /// update the logical server 'all'.
     virtual void
     createUpdateServer6(const db::ServerPtr& server);
 

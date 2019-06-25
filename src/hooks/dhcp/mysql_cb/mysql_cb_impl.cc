@@ -934,6 +934,13 @@ MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
                                            const int& create_index,
                                            const int& update_index,
                                            const ServerPtr& server) {
+    // The server tag 'all' is reserved.
+    if (server->getServerTag().amAll()) {
+        isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
+                  " associates the configuration elements with all servers connecting"
+                  " to the database and a server with this name can't be created");
+    }
+
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
     ScopedAuditRevision audit_revision(this,
