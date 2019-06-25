@@ -926,6 +926,16 @@ public:
     /// @brief Deletes external socket
     void deleteExternalSocket(int socketfd);
 
+    /// @brief Scans registered socket set and removes any that are invalid.
+    ///
+    /// Walks the list of regiseterd external sockets and test each for
+    /// validity.  If any are found to be invalid they are removed.  This
+    /// primarily a self-defense mechanism against hook libs or other users
+    /// of external sockets, leaving a closed socket registered by mistake.
+    ///
+    /// @return A count of the sockets purged.
+    int purgeBadSockets();
+
     /// @brief Deletes all external sockets.
     void deleteAllExternalSockets();
 

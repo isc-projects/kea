@@ -346,6 +346,23 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
     }
 }
 
+int
+IfaceMgr::purgeBadSockets() {
+    std::vector<int> bad_fds;
+    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+        errno = 0;
+        if (fcntl(s.socket_, F_GETFD) < 0 && errno == EBADF) {
+            bad_fds.push_back(s.socket_);
+        }
+    }
+
+    for (auto bad_fd : bad_fds) {
+        deleteExternalSocket(bad_fd);
+    }
+
+    return (bad_fds.size());
+}
+
 void
 IfaceMgr::deleteAllExternalSockets() {
     callbacks_.clear();
@@ -1042,6 +1059,11 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            int cnt = purgeBadSockets();
+            isc_throw(SocketReadError,
+                      "SELECT interrupted by one invalid sockets, purged "
+                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1141,6 +1163,11 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            int cnt = purgeBadSockets();
+            isc_throw(SocketReadError,
+                      "SELECT interrupted by one invalid sockets, purged "
+                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1265,6 +1292,11 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            int cnt = purgeBadSockets();
+            isc_throw(SocketReadError,
+                      "SELECT interrupted by one invalid sockets, purged "
+                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1368,6 +1400,11 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            int cnt = purgeBadSockets();
+            isc_throw(SocketReadError,
+                      "SELECT interrupted by one invalid sockets, purged "
+                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }

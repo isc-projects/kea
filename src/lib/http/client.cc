@@ -500,7 +500,6 @@ Connection::resetState() {
     current_response_.reset();
     parser_.reset();
     current_callback_ = HttpClient::RequestHandler();
-    close_callback_ = HttpClient::CloseHandler();
 }
 
 void
@@ -571,6 +570,7 @@ void
 Connection::close() {
     if (close_callback_) {
         close_callback_(socket_.getNative());
+        close_callback_ = HttpClient::CloseHandler();
     }
     
     timer_.cancel();
