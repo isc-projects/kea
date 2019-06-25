@@ -7,13 +7,13 @@ Client Classification
 Client Classification Overview
 ==============================
 
-In certain cases it is useful to differentiate between different types
+In certain cases it is useful to differentiate among different types
 of clients and treat them accordingly. Common reasons include:
 
 -  The clients represent different pieces of topology, e.g. a cable
    modem is not the same as the clients behind that modem.
 
--  The clients have different behavior, e.g. a smart phone behaves
+-  The clients have different behavior, e.g. a smartphone behaves
    differently from a laptop.
 
 -  The clients require different values for some options, e.g. a
@@ -34,7 +34,7 @@ ways:
 
 -  Using a hook.
 
-It is envisaged that client classification will be used for changing the
+It is envisaged that client classification will be used to change the
 behavior of almost any part of the DHCP message processing. There are
 currently five mechanisms that take advantage of client classification:
 subnet selection, pool selection, definition of DHCPv4 private (codes
@@ -48,9 +48,9 @@ The classification process is conducted in several steps:
 
 2.  Vendor class options are processed.
 
-3.  Classes with matching expressions and not marked for later ("on
+3.  Classes with matching expressions and not marked for later evaluation ("on
     request" or depending on the KNOWN/UNKNOWN builtin classes)
-    evaluation are processed in the order they are defined in the
+    are processed in the order they are defined in the
     configuration; the boolean expression is evaluated and, if it
     returns true ("match"), the incoming packet is associated with the
     class.
@@ -63,7 +63,7 @@ The classification process is conducted in several steps:
     some subnets are reserved. More precisely: when choosing a subnet,
     the server iterates over all of the subnets that are feasible given
     the information found in the packet (client address, relay address,
-    etc). It uses the first subnet it finds that either doesn't have a
+    etc.). It uses the first subnet it finds that either doesn't have a
     class associated with it, or has a class which matches one of the
     packet's classes.
 
@@ -73,9 +73,9 @@ The classification process is conducted in several steps:
     classes of the host reservation. If a reservation is not found, the
     packet is assigned to the UNKNOWN class.
 
-7.  Classes with matching expressions - directly or indirectly using the
-    KNOWN/UNKNOWN builtin classes and not marked for later ("on
-    request") evaluation - are processed in the order they are defined
+7.  Classes with matching expressions - directly, or indirectly using the
+    KNOWN/UNKNOWN builtin classes and not marked for later evaluation ("on
+    request") - are processed in the order they are defined
     in the configuration; the boolean expression is evaluated and, if it
     returns true ("match"), the incoming packet is associated with the
     class. After a subnet is selected, the server determines whether
@@ -122,7 +122,7 @@ value is obtained is unspecified.
 
    **Note**
 
-   Care should be taken with client classification as it is easy for
+   Care should be taken with client classification, as it is easy for
    clients that do not meet any class criteria to be denied service
    altogether.
 
@@ -132,7 +132,7 @@ Builtin Client Classes
 ======================
 
 Some classes are builtin, so they do not need to be defined. The main
-example uses Vendor Class information: The server checks whether an
+example uses Vendor Class information: the server checks whether an
 incoming DHCPv4 packet includes the vendor class identifier option (60)
 or an incoming DHCPv6 packet includes the vendor class option (16). If
 it does, the content of that option is prepended with "VENDOR_CLASS_"
@@ -144,16 +144,16 @@ The "HA_" prefix is used by the High Availability hooks library to
 designate certain servers to process DHCP packets as a result of load
 balancing. The class name is constructed by prepending the "HA_" prefix
 to the name of the server which should process the DHCP packet. This
-server will use an appropriate pool or subnet to allocate IP addresses
+server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
-be found in `??? <#high-availability-library>`__.
+be found in :ref:`high-availability-library`.
 
-Other examples are: the ALL class, which all incoming packets belong to,
+Other examples are the ALL class, which all incoming packets belong to,
 and the KNOWN class, assigned when host reservations exist for a
 particular client. By convention, builtin classes' names begin with all
 capital letters.
 
-Currently recognized builtin class names are ALL, KNOWN and UNKNOWN, and
+Currently recognized builtin class names are ALL, KNOWN and UNKNOWN, and the
 prefixes VENDOR_CLASS_, HA_, AFTER_, and EXTERNAL_. Although the AFTER\_
 prefix is a provision for an as-yet-unwritten hook, the EXTERNAL\_
 prefix can be freely used; builtin classes are implicitly defined so
@@ -180,7 +180,7 @@ operator. The evaluation code also checks for this class of error and
 generally throws an exception, though this should not occur in a
 normally functioning system.
 
-Other issues, for example the starting position of a substring being
+Other issues, such as the starting position of a substring being
 outside of the substring or an option not existing in the packet, result
 in the operator returning an empty string.
 
@@ -192,123 +192,120 @@ This does not apply to the KNOWN or UNKNOWN classes.
 
 .. table:: List of Classification Values
 
-   +-----------------------+-----------------------+-----------------------+
-   | Name                  | Example expression    | Example value         |
-   +=======================+=======================+=======================+
-   | String literal        | 'example'             | 'example'             |
-   +-----------------------+-----------------------+-----------------------+
-   | Hexadecimal string    | 0x5a7d                | 'Z}'                  |
-   | literal               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | IP address literal    | 10.0.0.1              | 0x0a000001            |
-   +-----------------------+-----------------------+-----------------------+
-   | Integer literal       | 123                   | '123'                 |
-   +-----------------------+-----------------------+-----------------------+
-   |                       |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Binary content of the | option[123].hex       | '(content of the      |
-   | option                |                       | option)'              |
-   +-----------------------+-----------------------+-----------------------+
-   | Option existence      | option[123].exists    | 'true'                |
-   +-----------------------+-----------------------+-----------------------+
-   | Client class          | member('foobar')      | 'true'                |
-   | membership            |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Known client          | known                 | member('KNOWN')       |
-   +-----------------------+-----------------------+-----------------------+
-   | Unknown client        | unknown               | not member('KNOWN')   |
-   +-----------------------+-----------------------+-----------------------+
-   | DHCPv4 relay agent    | relay4[123].hex       | '(content of the RAI  |
-   | sub-option            |                       | sub-option)'          |
-   +-----------------------+-----------------------+-----------------------+
-   | DHCPv6 Relay Options  | relay6[nest].option[c | (value of the option) |
-   |                       | ode].hex              |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | DHCPv6 Relay Peer     | relay6[nest].peeraddr | 2001:DB8::1           |
-   | Address               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | DHCPv6 Relay Link     | relay6[nest].linkaddr | 2001:DB8::1           |
-   | Address               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Interface name of     | pkt.iface             | eth0                  |
-   | packet                |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Source address of     | pkt.src               | 10.1.2.3              |
-   | packet                |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Destination address   | pkt.dst               | 10.1.2.3              |
-   | of packet             |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Length of packet      | pkt.len               | 513                   |
-   +-----------------------+-----------------------+-----------------------+
-   | Hardware address in   | pkt4.mac              | 0x010203040506        |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Hardware length in    | pkt4.hlen             | 6                     |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Hardware type in      | pkt4.htype            | 6                     |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | ciaddr field in       | pkt4.ciaddr           | 192.0.2.1             |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | giaddr field in       | pkt4.giaddr           | 192.0.2.1             |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | yiaddr field in       | pkt4.yiaddr           | 192.0.2.1             |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | siaddr field in       | pkt4.siaddr           | 192.0.2.1             |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Message type in       | pkt4.msgtype          | 1                     |
-   | DHCPv4 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Transaction ID (xid)  | pkt4.transid          | 12345                 |
-   | in DHCPv4 packet      |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Message type in       | pkt6.msgtype          | 1                     |
-   | DHCPv6 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Transaction ID in     | pkt6.transid          | 12345                 |
-   | DHCPv6 packet         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Vendor option         | vendor[*].exists      | true                  |
-   | existence (any        |                       |                       |
-   | vendor)               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Vendor option         | vendor[4491].exists   | true                  |
-   | existence (specific   |                       |                       |
-   | vendor)               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Enterprise-id from    | vendor.enterprise     | 4491                  |
-   | vendor option         |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Vendor sub-option     | vendor[4491].option[1 | true                  |
-   | existence             | ].exists              |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Vendor sub-option     | vendor[4491].option[1 | docsis3.0             |
-   | content               | ].hex                 |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Vendor class option   | vendor-class[*].exist | true                  |
-   | existence (any        | s                     |                       |
-   | vendor)               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Vendor class option   | vendor-class[4491].ex | true                  |
-   | existence (specific   | ists                  |                       |
-   | vendor)               |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Enterprise-id from    | vendor-class.enterpri | 4491                  |
-   | vendor class option   | se                    |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | First data chunk from | vendor-class[4491].da | docsis3.0             |
-   | vendor class option   | ta                    |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Specific data chunk   | vendor-class[4491].da | docsis3.0             |
-   | from vendor class     | ta[3]                 |                       |
-   | option                |                       |                       |
-   +-----------------------+-----------------------+-----------------------+
+   +-----------------------+-------------------------------+-----------------------+
+   | Name                  | Example expression            | Example value         |
+   +=======================+===============================+=======================+
+   | String literal        | 'example'                     | 'example'             |
+   +-----------------------+-------------------------------+-----------------------+
+   | Hexadecimal string    | 0x5a7d                        | 'Z}'                  |
+   | literal               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | IP address literal    | 10.0.0.1                      | 0x0a000001            |
+   +-----------------------+-------------------------------+-----------------------+
+   | Integer literal       | 123                           | '123'                 |
+   +-----------------------+-------------------------------+-----------------------+
+   | Binary content of the | option[123].hex               | '(content of the      |
+   | option                |                               | option)'              |
+   +-----------------------+-------------------------------+-----------------------+
+   | Option existence      | option[123].exists            | 'true'                |
+   +-----------------------+-------------------------------+-----------------------+
+   | Client class          | member('foobar')              | 'true'                |
+   | membership            |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Known client          | known                         | member('KNOWN')       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Unknown client        | unknown                       | not member('KNOWN')   |
+   +-----------------------+-------------------------------+-----------------------+
+   | DHCPv4 relay agent    | relay4[123].hex               | '(content of the RAI  |
+   | sub-option            |                               | sub-option)'          |
+   +-----------------------+-------------------------------+-----------------------+
+   | DHCPv6 Relay Options  | relay6[nest].option[code].hex | (value of the option) |
+   +-----------------------+-------------------------------+-----------------------+
+   | DHCPv6 Relay Peer     | relay6[nest].peeraddr         | 2001:DB8::1           |
+   | Address               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | DHCPv6 Relay Link     | relay6[nest].linkaddr         | 2001:DB8::1           |
+   | Address               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Interface name of     | pkt.iface                     | eth0                  |
+   | packet                |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Source address of     | pkt.src                       | 10.1.2.3              |
+   | packet                |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Destination address   | pkt.dst                       | 10.1.2.3              |
+   | of packet             |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Length of packet      | pkt.len                       | 513                   |
+   +-----------------------+-------------------------------+-----------------------+
+   | Hardware address in   | pkt4.mac                      | 0x010203040506        |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Hardware length in    | pkt4.hlen                     | 6                     |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Hardware type in      | pkt4.htype                    | 6                     |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | ciaddr field in       | pkt4.ciaddr                   | 192.0.2.1             |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | giaddr field in       | pkt4.giaddr                   | 192.0.2.1             |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | yiaddr field in       | pkt4.yiaddr                   | 192.0.2.1             |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | siaddr field in       | pkt4.siaddr                   | 192.0.2.1             |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Message type in       | pkt4.msgtype                  | 1                     |
+   | DHCPv4 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Transaction ID (xid)  | pkt4.transid                  | 12345                 |
+   | in DHCPv4 packet      |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Message type in       | pkt6.msgtype                  | 1                     |
+   | DHCPv6 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Transaction ID in     | pkt6.transid                  | 12345                 |
+   | DHCPv6 packet         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Vendor option         | vendor[*].exists              | true                  |
+   | existence (any        |                               |                       |
+   | vendor)               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Vendor option         | vendor[4491].exists           | true                  |
+   | existence (specific   |                               |                       |
+   | vendor)               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Enterprise-id from    | vendor.enterprise             | 4491                  |
+   | vendor option         |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Vendor sub-option     | vendor[4491].option[1].exists | true                  |
+   | existence             |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Vendor sub-option     | vendor[4491].option[1].hex    | docsis3.0             |
+   | content               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Vendor class option   | vendor-class[*].exist         | true                  |
+   | existence (any        | s                             |                       |
+   | vendor)               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Vendor class option   | vendor-class[4491].exists     | true                  |
+   | existence (specific   |                               |                       |
+   | vendor)               |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Enterprise-id from    | vendor-class.enterprise       | 4491                  |
+   | vendor class option   |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | First data chunk from | vendor-class[4491].data       | docsis3.0             |
+   | vendor class option   |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
+   | Specific data chunk   | vendor-class[4491].data[3]    | docsis3.0             |
+   | from vendor class     |                               |                       |
+   | option                |                               |                       |
+   +-----------------------+-------------------------------+-----------------------+
 
 Notes:
 
@@ -317,7 +314,7 @@ Notes:
    of characters a "0" is prepended to it.
 
 -  IP addresses are converted into strings of length 4 or 16. IPv4,
-   IPv6, and IPv4-embedded IPv6 (e.g., IPv4-mapped IPv6) addresses are
+   IPv6, and IPv4-embedded IPv6 (e.g. IPv4-mapped IPv6) addresses are
    supported.
 
 -  Integers in an expression are converted to 32-bit unsigned integers
@@ -342,12 +339,12 @@ Notes:
 -  "member('foobar')" checks whether the packet belongs to the client
    class "foobar". To avoid dependency loops, the configuration file
    parser verifies whether client classes were already defined or are
-   builtin, i.e., beginning by "VENDOR_CLASS_", "AFTER__" (for the to
-   come "after" hook) and "EXTERNAL_" or equal to "ALL", "KNOWN",
-   "UNKNOWN"etc.
+   builtin, i.e., beginning by "VENDOR_CLASS_", "AFTER__" (for the
+   to-come "after" hook) and "EXTERNAL_" or equal to "ALL", "KNOWN",
+   "UNKNOWN", etc.
 
-   "known" and "unknown" are short hands for "member('KNOWN')" and "not
-   member('KNOWN')". Note the evaluation of any expression using
+   "known" and "unknown" are shorthand for "member('KNOWN')" and "not
+   member('KNOWN')". Note that the evaluation of any expression using
    directly or indirectly the "KNOWN" class is deferred after the host
    reservation lookup (i.e. when the "KNOWN" or "UNKNOWN" partition is
    determined).
@@ -360,105 +357,107 @@ Notes:
    the option payload without the type code or length fields. This
    expression is allowed in DHCPv4 only.
 
--  "relay4" shares the same representation types as "option", for
-   instance "relay4[code].exists" is supported.
+-  "relay4" shares the same representation types as "option"; for
+   instance, "relay4[code].exists" is supported.
 
 -  "relay6[nest]" allows access to the encapsulations used by any DHCPv6
    relays that forwarded the packet. The "nest" level specifies the
    relay from which to extract the information, with a value of 0
    indicating the relay closest to the DHCPv6 server. Negative values
-   allow to specify relays counted from the DHCPv6 client, -1 indicating
-   the relay closest to the client. In general negative "nest" level is
+   allow specifying relays counted from the DHCPv6 client, -1 indicating
+   the relay closest to the client. In general, negative "nest" level is
    the same as the number of relays + "nest" level. If the requested
-   encapsulation doesn't exist an empty string "" is returned. This
+   encapsulation doesn't exist, an empty string "" is returned. This
    expression is allowed in DHCPv6 only.
 
 -  "relay6[nest].option[code]" shares the same representation types as
-   "option", for instance "relay6[nest].option[code].exists" is
+   "option"; for instance, "relay6[nest].option[code].exists" is
    supported.
 
 -  Expressions starting with "pkt4" can be used only in DHCPv4. They
-   allows access to DHCPv4 message fields.
+   allow access to DHCPv4 message fields.
 
 -  "pkt6" refers to information from the client request. To access any
    information from an intermediate relay use "relay6". "pkt6.msgtype"
-   and "pkt6.transid" output a 4 byte binary string for the message type
+   and "pkt6.transid" output a 4-byte binary string for the message type
    or transaction id. For example the message type SOLICIT will be
    "0x00000001" or simply 1 as in "pkt6.msgtype == 1".
 
--  Vendor option means Vendor-Identifying Vendor-specific Information
-   option in DHCPv4 (code 125, see `Section 4 of RFC
-   3925 <http://tools.ietf.org/html/rfc3925#section-4>`__) and
-   Vendor-specific Information Option in DHCPv6 (code 17, defined in
+-  Vendor option means the Vendor-Identifying Vendor-Specific Information
+   option in DHCPv4 (code 125; see `Section 4 of RFC
+   3925 <https://tools.ietf.org/html/rfc3925#section-4>`__) and
+   Vendor-Specific Information Option in DHCPv6 (code 17, defined in
    `Section 21.17 of RFC
    8415 <https://tools.ietf.org/html/rfc8415#section-21.17>`__). Vendor
    class option means Vendor-Identifying Vendor Class Option in DHCPv4
-   (code 124, see `Section 3 of RFC
-   3925 <http://tools.ietf.org/html/rfc3925#section-3>`__) in DHCPv4 and
-   Class Option in DHCPv6 (code 16, see `Section 21.16 of RFC
+   (code 124; see `Section 3 of RFC
+   3925 <https://tools.ietf.org/html/rfc3925#section-3>`__) in DHCPv4 and
+   Class Option in DHCPv6 (code 16; see `Section 21.16 of RFC
    8415 <https://tools.ietf.org/html/rfc8415#section-21.16>`__). Vendor
    options may have sub-options that are referenced by their codes.
    Vendor class options do not have sub-options, but rather data chunks,
    which are referenced by index value. Index 0 means the first data
-   chunk, Index 1 is for the second data chunk (if present), etc.
+   chunk, index 1 is for the second data chunk (if present), etc.
 
--  In the vendor and vendor-class constructs Asterisk (*) or 0 can be
+-  In the vendor and vendor-class constructs an asterisk (*) or 0 can be
    used to specify a wildcard enterprise-id value, i.e. it will match
    any enterprise-id value.
 
--  Vendor Class Identifier (option 60 in DHCPv4) can be accessed using
+-  Vendor Class Identifier (option 60 in DHCPv4) can be accessed using the
    option[60] expression.
 
--  `RFC 3925 <http://tools.ietf.org/html/rfc3925>`__ and `RFC
-   8415 <http://tools.ietf.org/html/rfc8415>`__ allow for multiple
+-  `RFC 3925 <https://tools.ietf.org/html/rfc3925>`__ and `RFC
+   8415 <https://tools.ietf.org/html/rfc8415>`__ allow for multiple
    instances of vendor options to appear in a single message. The client
    classification code currently examines the first instance if more
-   than one appear. For vendor.enterprise and vendor-class.enterprise
+   than one appear. For the vendor.enterprise and vendor-class.enterprise
    expressions, the value from the first instance is returned. Please
-   submit a feature request on Kea website if you need support for
-   multiple instances.
+   submit a feature request on the
+   `Kea GitLab site <https://gitlab.isc.org/isc-projects/kea>`__ if you need
+   support for multiple instances.
 
 .. table:: List of Classification Expressions
 
-   +-----------------------+-----------------------+-----------------------+
-   | Name                  | Example               | Description           |
-   +=======================+=======================+=======================+
-   | Equal                 | 'foo' == 'bar'        | Compare the two       |
-   |                       |                       | values and return     |
-   |                       |                       | "true" or "false"     |
-   +-----------------------+-----------------------+-----------------------+
-   | Not                   | not ('foo' == 'bar')  | Logical negation      |
-   +-----------------------+-----------------------+-----------------------+
-   | And                   | ('foo' == 'bar') and  | Logical and           |
-   |                       | ('bar' == 'foo')      |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Or                    | ('foo' == 'bar') or   | Logical or            |
-   |                       | ('bar' == 'foo')      |                       |
-   +-----------------------+-----------------------+-----------------------+
-   | Substring             | substring('foobar',0, | Return the requested  |
-   |                       | 3)                    | substring             |
-   +-----------------------+-----------------------+-----------------------+
-   | Concat                | concat('foo','bar')   | Return the            |
-   |                       |                       | concatenation of the  |
-   |                       |                       | strings               |
-   +-----------------------+-----------------------+-----------------------+
-   | Ifelse                | ifelse('foo' ==       | Return the branch     |
-   |                       | 'bar','us','them')    | value according to    |
-   |                       |                       | the condition         |
-   +-----------------------+-----------------------+-----------------------+
-   | Hexstring             | hexstring('foo', '-') | Converts the value to |
-   |                       |                       | a hexadecimal string, |
-   |                       |                       | e.g. 0a:1b:2c:3e      |
-   +-----------------------+-----------------------+-----------------------+
+   +-----------------------+-------------------------+-----------------------+
+   | Name                  | Example                 | Description           |
+   +=======================+=========================+=======================+
+   | Equal                 | 'foo' == 'bar'          | Compare the two       |
+   |                       |                         | values and return     |
+   |                       |                         | "true" or "false"     |
+   +-----------------------+-------------------------+-----------------------+
+   | Not                   | not ('foo' == 'bar')    | Logical negation      |
+   +-----------------------+-------------------------+-----------------------+
+   | And                   | ('foo' == 'bar') and    | Logical and           |
+   |                       | ('bar' == 'foo')        |                       |
+   +-----------------------+-------------------------+-----------------------+
+   | Or                    | ('foo' == 'bar') or     | Logical or            |
+   |                       | ('bar' == 'foo')        |                       |
+   +-----------------------+-------------------------+-----------------------+
+   | Substring             | substring('foobar',0,3) | Return the requested  |
+   |                       |                         | substring             |
+   +-----------------------+-------------------------+-----------------------+
+   | Concat                | concat('foo','bar')     | Return the            |
+   |                       |                         | concatenation of the  |
+   |                       |                         | strings               |
+   +-----------------------+-------------------------+-----------------------+
+   | Ifelse                | ifelse('foo' ==         | Return the branch     |
+   |                       | 'bar','us','them')      | value according to    |
+   |                       |                         | the condition         |
+   +-----------------------+-------------------------+-----------------------+
+   | Hexstring             | hexstring('foo', '-')   | Converts the value to |
+   |                       |                         | a hexadecimal string, |
+   |                       |                         | e.g. 0a:1b:2c:3e      |
+   +-----------------------+-------------------------+-----------------------+
 
 Logical operators
 -----------------
 
-The Not, And and Or logical operators are the common operators. Not has
+The Not, And, and Or logical operators are the common operators. Not has
 the highest precedence and Or the lowest. And and Or are (left)
-associative, parentheses around a logical expression can be used to
-enforce a specific grouping, for instance in "A and (B or C)" (without
+associative. Parentheses around a logical expression can be used to
+enforce a specific grouping; for instance, in "A and (B or C)" (without
 parentheses "A and B or C" means "(A and B) or C").
+
 Substring
 ---------
 
@@ -468,9 +467,9 @@ For "start", a value of 0 is the first byte in the string while -1 is
 the last byte. If the starting point is outside of the original string
 an empty string is returned. "length" is the number of bytes to extract.
 A negative number means to count towards the beginning of the string but
-doesn't include the byte pointed to by "start". The special value "all"
-means to return all bytes from start to the end of the string. If length
-is longer than the remaining portion of the string then the entire
+does not include the byte pointed to by "start". The special value "all"
+means to return all bytes from start to the end of the string. If the length
+is longer than the remaining portion of the string, then the entire
 remaining portion is returned. Some examples may be helpful:
 ::
 
@@ -522,9 +521,9 @@ digits separated by the separator, e.g ':', '-', '' (empty separator).
 
    The expression for each class is executed on each packet received. If
    the expressions are overly complex, the time taken to execute them
-   may impact the performance of the server. If you need complex or time
-   consuming expressions you should write a `hook <#hooks-libraries>`__
-   to perform the necessary work.
+   may impact the performance of the server. Administrators who need complex or
+   time-consuming expressions should consider writing a
+   `hook <#hooks-libraries>`__ to perform the necessary work.
 
 .. _classification-configuring:
 
@@ -532,8 +531,8 @@ Configuring Classes
 ===================
 
 A class contains five items: a name, a test expression, option data,
-option definition and only-if-required flag. The name must exist and
-must be unique amongst all classes. The test expression, option data and
+an option definition, and an only-if-required flag. The name must exist and
+must be unique among all classes. The test expression, option data and
 definition, and only-if-required flag are optional.
 
 The test expression is a string containing the logical expression used
@@ -544,27 +543,27 @@ The option data is a list which defines any options that should be
 assigned to members of this class.
 
 The option definition is for DHCPv4 option 43
-(`??? <#dhcp4-vendor-opts>`__ and DHCPv4 private options
-(`??? <#dhcp4-private-opts>`__).
+(:ref:`dhcp4-vendor-opts` and DHCPv4 private options
+(:ref:`dhcp4-private-opts`).
 
-Usually the test expression is evaluated before subnet selection but in
+Usually the test expression is evaluated before subnet selection, but in
 some cases it is useful to evaluate it later when the subnet,
-shared-network or pools are known but output option processing not yet
-done. The only-if-required flag, false by default, allows to perform the
-evaluation of the test expression only when it was required, i.e. in a
-require-client-classes list of the selected subnet, shared-network or
+shared network, or pools are known but output option processing has not yet
+been done. The only-if-required flag, false by default, allows the
+evaluation of the test expression only when it is required, i.e. in a
+require-client-classes list of the selected subnet, shared network, or
 pool.
 
 The require-client-classes list which is valid for shared-network,
-subnet and pool scope specifies the classes which are evaluated in the
+subnet, and pool scope specifies the classes which are evaluated in the
 second pass before output option processing. The list is built in the
-reversed precedence order of option data, i.e. an option data in a
-subnet takes precedence on one in a shared-network but required class in
-a subnet is added after one in a shared-network. The mechanism is
+reversed precedence order of option data, i.e. an option data item in a
+subnet takes precedence over one in a shared network, but required class in
+a subnet is added after one in a shared network. The mechanism is
 related to the only-if-required flag but it is not mandatory that the
-flag was set to true.
+flag be set to true.
 
-In the following example the class named "Client_foo" is defined. It is
+In the following example, the class named "Client_foo" is defined. It is
 comprised of all clients whose client ids (option 61) start with the
 string "foo". Members of this class will be given 192.0.2.1 and
 192.0.2.2 as their domain name servers.
@@ -593,7 +592,7 @@ string "foo". Members of this class will be given 192.0.2.1 and
 
 This example shows a client class being defined for use by the DHCPv6
 server. In it the class named "Client_enterprise" is defined. It is
-comprised of all clients who's client identifiers start with the given
+comprised of all clients whose client identifiers start with the given
 hex string (which would indicate a DUID based on an enterprise id of
 0xAABBCCDD). Members of this class will be given an 2001:db8:0::1 and
 2001:db8:2::1 as their domain name servers.
@@ -626,21 +625,21 @@ Using Static Host Reservations In Classification
 ================================================
 
 Classes can be statically assigned to the clients using techniques
-described in `??? <#reservation4-client-classes>`__ and
-`??? <#reservation6-client-classes>`__.
+described in :ref:`reservation4-client-classes` and
+:ref:`reservation6-client-classes`.
 
 .. _classification-subnets:
 
 Configuring Subnets With Class Information
 ==========================================
 
-In certain cases it beneficial to restrict access to certain subnets
+In certain cases it is beneficial to restrict access to certain subnets
 only to clients that belong to a given class, using the "client-class"
 keyword when defining the subnet.
 
 Let's assume that the server is connected to a network segment that uses
-the 192.0.2.0/24 prefix. The Administrator of that network has decided
-that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+the 192.0.2.0/24 prefix. The administrator of that network has decided
+that addresses from the range 192.0.2.10 to 192.0.2.20 are going to be
 managed by the DHCP4 server. Only clients belonging to client class
 Client_foo are allowed to use this subnet. Such a configuration can be
 achieved in the following way:
@@ -675,7 +674,7 @@ achieved in the following way:
        ...
    }
 
-The following example shows restricting access to a DHCPv6 subnet. This
+The following example shows how to restrict access to a DHCPv6 subnet. This
 configuration will restrict use of the addresses 2001:db8:1::1 to
 2001:db8:1::FFFF to members of the "Client_enterprise" class.
 
@@ -713,13 +712,13 @@ configuration will restrict use of the addresses 2001:db8:1::1 to
 Configuring Pools With Class Information
 ========================================
 
-Similar to subnets in certain cases access to certain address or prefix
+Similar to subnets, in certain cases access to certain address or prefix
 pools must be restricted to only clients that belong to a given class,
 using the "client-class" when defining the pool.
 
 Let's assume that the server is connected to a network segment that uses
-the 192.0.2.0/24 prefix. The Administrator of that network has decided
-that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+the 192.0.2.0/24 prefix. The administrator of that network has decided
+that addresses from the range 192.0.2.10 to 192.0.2.20 are going to be
 managed by the DHCP4 server. Only clients belonging to client class
 Client_foo are allowed to use this pool. Such a configuration can be
 achieved in the following way:
@@ -758,7 +757,7 @@ achieved in the following way:
 
    }
 
-The following example shows restricting access to an address pool. This
+The following example shows how to restrict access to an address pool. This
 configuration will restrict use of the addresses 2001:db8:1::1 to
 2001:db8:1::FFFF to members of the "Client_enterprise" class.
 
@@ -800,51 +799,49 @@ configuration will restrict use of the addresses 2001:db8:1::1 to
 Using Classes
 =============
 
-Currently classes can be used for two functions. They can supply options
-to the members of the class and they can be used to choose a subnet from
-which an address will be assigned to the class member.
+Currently classes can be used for two functions: they can supply options
+to members of the class, and they can be used to choose a subnet from
+which an address will be assigned to a class member.
 
 When supplying options, options defined as part of the class definition
-are considered "class globals". They will override any global options
+are considered "class globals." They will override any global options
 that may be defined and in turn will be overridden by any options
 defined for an individual subnet.
 
 Classes and Hooks
 =================
 
-You may use a hook to classify your packets. This may be useful if the
-expression would either be complex or time consuming and be easier or
-better to write as code. Once the hook has added the proper class name
-to the packet the rest of the classification system will work as normal
-in choosing a subnet and selecting options. For a description of hooks
-see `??? <#hooks-libraries>`__, for a description on configuring classes
-see `Configuring Classes <#classification-configuring>`__ and
-`Configuring Subnets With Class
-Information <#classification-subnets>`__.
+Hooks may be used to classify packets. This may be useful if the
+expression would be complex or time-consuming to write, and could be
+better or more easily written as code. Once the hook has added the proper class name
+to the packet, the rest of the classification system will work as expected
+in choosing a subnet and selecting options. For a description of hooks,
+see :ref:`hooks-libraries>`__; for information on configuring classes,
+see :ref:`classification-configuring` and :ref:`classification-subnets`.
 
 Debugging Expressions
 =====================
 
-While you are constructing your classification expressions you may find
-it useful to enable logging see `??? <#logging>`__ for a more complete
+While constructing classification expressions, administrators may find
+it useful to enable logging; see :ref:`logging` for a more complete
 description of the logging facility.
 
-To enable the debug statements in the classification system you will
-need to set the severity to "DEBUG" and the debug level to at least 55.
+To enable the debug statements in the classification system,
+the severity must be set to "DEBUG" and the debug level to at least 55.
 The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
 
-In order to understand the logging statements, one must understand a bit
-about how expressions are evaluated; for a more complete description
+To understand the logging statements, it is essential to understand a bit
+about how expressions are evaluated; for a more complete description,
 refer to the design document at
 https://gitlab.isc.org/isc-projects/kea/wikis/design%20documents. In
-brief there are two structures used during the evaluation of an
-expression: a list of tokens which represent the expressions and a value
+brief, there are two structures used during the evaluation of an
+expression: a list of tokens which represent the expressions, and a value
 stack which represents the values being manipulated.
 
-The list of tokens is created when the configuration file is processed
+The list of tokens is created when the configuration file is processed,
 with most expressions and values being converted to a token. The list is
 organized in reverse Polish notation. During execution, the list will be
-traversed in order. As each token is executed it will be able to pop
+traversed in order; as each token is executed it will be able to pop
 values from the top of the stack and eventually push its result on the
 top of the stack. Imagine the following expression:
 
@@ -871,13 +868,13 @@ emit a log message indicating the values of any objects that were popped
 off of the value stack and any objects that were pushed onto the value
 stack.
 
-The values will be displayed as either text if the command is known to
-use text values or hexadecimal if the command either uses binary values
+The values will be displayed as either text, if the command is known to
+use text values, or hexadecimal, if the command either uses binary values
 or can manipulate either text or binary values. For expressions that pop
 multiple values off the stack, the values will be displayed in the order
-they were popped. For most expressions this won't matter but for the
-concat expression the values are displayed in reverse order from how
-they are written in the expression.
+they were popped. For most expressions this will not matter, but for the
+concat expression the values are displayed in reverse order from their
+written order in the expression.
 
 Let us assume that the following test has been entered into the
 configuration. This example skips most of the configuration to
@@ -904,13 +901,13 @@ The logging might then resemble this:
 
    **Note**
 
-   The debug logging may be quite verbose if you have a number of
-   expressions to evaluate. It is intended as an aid in helping you
-   create and debug your expressions. You should plan to disable debug
-   logging when you have your expressions working correctly. You also
-   may wish to include only one set of expressions at a time in the
-   configuration file while debugging them in order to limit the log
-   statements. For example when adding a new set of expressions you
+   The debug logging may be quite verbose if there are a number of
+   expressions to evaluate; that is intended as an aid in helping
+   create and debug expressions. Administrators should plan to disable debug
+   logging when the expressions are working correctly. Users may also
+   wish to include only one set of expressions at a time in the
+   configuration file while debugging them, to limit the log
+   statements. For example, when adding a new set of expressions, an administrator
    might find it more convenient to create a configuration file that
-   only includes the new expressions until you have them working
-   correctly and then add the new set to the main configuration file.
+   only includes the new expressions until they are working
+   correctly, and then add the new set to the main configuration file.
