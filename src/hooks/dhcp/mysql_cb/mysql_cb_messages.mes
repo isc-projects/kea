@@ -35,6 +35,14 @@ Debug message issued when triggered an action to create or update option definit
 % MYSQL_CB_CREATE_UPDATE_OPTION_DEF6 create or update option definition: %1 code: %2
 Debug message issued when triggered an action to create or update option definition
 
+% MYSQL_CB_CREATE_UPDATE_SERVER4 create or update server: %1
+Debug message issued when triggered an action to create or update a DHCPv4
+server information.
+
+% MYSQL_CB_CREATE_UPDATE_SERVER6 create or update server: %1
+Debug message issued when triggered an action to create or update a DHCPv6
+server information.
+
 % MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4 create or update shared network: %1
 Debug message issued when triggered an action to create or update shared network
 
@@ -53,15 +61,7 @@ Debug message issued when triggered an action to create or update subnet
 % MYSQL_CB_CREATE_UPDATE_SUBNET6 create or update subnet: %1
 Debug message issued when triggered an action to create or update subnet
 
-% MYSQL_CB_CREATE_UPDATE_SERVER4 create or update server: %1
-Debug message issued when triggered an action to create or update a DHCPv4
-server information.
-
-% MYSQL_CB_CREATE_UPDATE_SERVER6 create or update server: %1
-Debug message issued when triggered an action to create or update a DHCPv6
-server information.
-
-% MYSQL_CB_DEINIT_OK unloading MYSQAL CB hooks library successful
+% MYSQL_CB_DEINIT_OK unloading MYSQL CB hooks library successful
 This informational message indicates that the MySQL Configuration Backend hooks
 library has been unloaded successfully.
 
@@ -89,18 +89,6 @@ Debug message issued when triggered an action to delete all option definitions
 % MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT deleted: %1 entries
 Debug message indicating the result of an action to delete all option definitions
 
-% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4 delete all shared networks
-Debug message issued when triggered an action to delete all shared networks
-
-% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT deleted: %1 entries
-Debug message indicating the result of an action to delete all shared networks
-
-% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6 delete all shared networks
-Debug message issued when triggered an action to delete all shared networks
-
-% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT deleted: %1 entries
-Debug message indicating the result of an action to delete all shared networks
-
 % MYSQL_CB_DELETE_ALL_SERVERS4 delete all DHCPv4 servers
 Debug message issued when triggered an action to delete all servers.
 
@@ -112,6 +100,18 @@ Debug message issued when triggered an action to delete all servers.
 
 % MYSQL_CB_DELETE_ALL_SERVERS6_RESULT deleted: %1 entries
 Debug message indicating the result of an action to delete all servers.
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4 delete all shared networks
+Debug message issued when triggered an action to delete all shared networks
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete all shared networks
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6 delete all shared networks
+Debug message issued when triggered an action to delete all shared networks
+
+% MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT deleted: %1 entries
+Debug message indicating the result of an action to delete all shared networks
 
 % MYSQL_CB_DELETE_ALL_SUBNETS4 delete all subnets
 Debug message issued when triggered an action to delete all subnets

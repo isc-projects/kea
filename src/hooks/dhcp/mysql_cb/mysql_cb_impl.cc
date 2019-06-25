@@ -267,7 +267,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
             std::string name = out_bindings[1]->getString();
 
             if (!name.empty()) {
-                last_param = StampedValue::create(out_bindings[1]->getString(),
+                last_param = StampedValue::create(name,
                                                   out_bindings[2]->getString(),
                                                   static_cast<Element::types>
                                                   (out_bindings[3]->getInteger<uint8_t>()));
@@ -287,7 +287,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
                 // parameter already exists and belongs to 'all'.
                 auto& index = local_parameters.get<StampedValueNameIndexTag>();
                 auto existing = index.find(name);
-                if (existing != local_parameters.end()) {
+                if (existing != index.end()) {
                     // This parameter was already fetched. Let's check if we should
                     // replace it or not.
                     if (!last_param_server_tag.amAll() && (*existing)->hasAllServerTag()) {
@@ -302,7 +302,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
                 // If there is no such parameter yet or the existing parameter
                 // belongs to a different server and the inserted parameter is
                 // not for all servers.
-                if ((existing == local_parameters.end()) ||
+                if ((existing == index.end()) ||
                     (!(*existing)->hasServerTag(last_param_server_tag) &&
                      !last_param_server_tag.amAll())) {
                     local_parameters.insert(last_param);
@@ -930,14 +930,14 @@ MySqlConfigBackendImpl::getServers(const int index,
 }
 
 void
-MySqlConfigBackendImpl::createUpdateServer(const int create_audit_revision_index,
-                                           const int create_index,
-                                           const int update_index,
+MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
+                                           const int& create_index,
+                                           const int& update_index,
                                            const ServerPtr& server) {
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
     ScopedAuditRevision audit_revision(this,
-                                       create_audit_revision_index,
+                                       create_audit_revision,
                                        ServerSelector::ALL(),
                                        "server set",
                                        true);
@@ -962,8 +962,8 @@ MySqlConfigBackendImpl::createUpdateServer(const int create_audit_revision_index
 }
 
 uint64_t
-MySqlConfigBackendImpl::deleteServer(const int create_audit_revision_index,
-                                     const int delete_index,
+MySqlConfigBackendImpl::deleteServer(const int& create_audit_revision,
+                                     const int& delete_index,
                                      const std::string& server_tag) {
 
     MySqlTransaction transaction(conn_);
@@ -971,7 +971,7 @@ MySqlConfigBackendImpl::deleteServer(const int create_audit_revision_index,
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
     ScopedAuditRevision
-        audit_revision(this, create_audit_revision_index,
+        audit_revision(this, create_audit_revision,
                        ServerSelector::ALL(), "deleting a server", false);
 
     // Specify which server should be deleted.
@@ -987,16 +987,16 @@ MySqlConfigBackendImpl::deleteServer(const int create_audit_revision_index,
 }
 
 uint64_t
-MySqlConfigBackendImpl::deleteAllServers(const int create_audit_revision_index,
-                                         const int delete_index) {
+MySqlConfigBackendImpl::deleteAllServers(const int& create_audit_revision,
+                                         const int& delete_index) {
 
     MySqlTransaction transaction(conn_);
 
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
     ScopedAuditRevision
-        audit_revision(this, create_audit_revision_index,
-                       ServerSelector::ALL(), "deleting a server", false);
+        audit_revision(this, create_audit_revision,
+                       ServerSelector::ALL(), "deleting all servers", false);
 
     MySqlBindingCollection in_bindings;
 

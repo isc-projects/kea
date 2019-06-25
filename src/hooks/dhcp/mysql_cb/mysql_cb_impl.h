@@ -643,9 +643,9 @@ public:
     /// @param create_index Index of the INSERT query to be used.
     /// @param update_index Index of the UPDATE query to be used.
     /// @param server Pointer to the server to be inserted or updated.
-    void createUpdateServer(const int create_audit_revision_index,
-                            const int create_index,
-                            const int update_index,
+    void createUpdateServer(const int& create_audit_revision,
+                            const int& create_index,
+                            const int& update_index,
                             const db::ServerPtr& server);
 
     /// @brief Attempts to delete a server having a given tag.
@@ -655,7 +655,7 @@ public:
     /// @param create_index Index of the DELETE query to be executed.
     /// @param server_tag Tag of the server to be deleted.
     /// @return Number of deleted servers.
-    uint64_t deleteServer(const int create_audit_revision_index, const int index,
+    uint64_t deleteServer(const int& create_audit_revision, const int& index,
                           const std::string& server_tag);
 
     /// @brief Attempts to delete all servers.
@@ -667,8 +667,8 @@ public:
     /// revision.
     /// @param server_tag Tag of the server to be deleted.
     /// @return Number of deleted servers.
-    uint64_t deleteAllServers(const int create_audit_revision_index,
-                              const int index);
+    uint64_t deleteAllServers(const int& create_audit_revision,
+                              const int& index);
 
     /// @brief Returns backend type in the textual format.
     ///

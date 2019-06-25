@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Mon Jun 17 2019 14:28
+// File created from ../../../../src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes on Tue Jun 25 2019 16:12
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -196,7 +196,7 @@ const char* values[] = {
     "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6", "create or update shared network: %1 option",
     "MYSQL_CB_CREATE_UPDATE_SUBNET4", "create or update subnet: %1",
     "MYSQL_CB_CREATE_UPDATE_SUBNET6", "create or update subnet: %1",
-    "MYSQL_CB_DEINIT_OK", "unloading MYSQAL CB hooks library successful",
+    "MYSQL_CB_DEINIT_OK", "unloading MYSQL CB hooks library successful",
     "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4", "delete all global parameters",
     "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6", "delete all global parameters",

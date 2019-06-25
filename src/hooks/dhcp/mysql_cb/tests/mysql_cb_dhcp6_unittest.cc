@@ -533,7 +533,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteServer) {
                           "server set");
     }
 
-    // Verify that the server has been updated. 
+    // Verify that the server has been updated.
     EXPECT_NO_THROW(returned_server = cbptr_->getServer6(ServerTag("server1")));
     ASSERT_TRUE(returned_server);
     EXPECT_EQ("server1", returned_server->getServerTag().get());

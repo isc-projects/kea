@@ -38,6 +38,60 @@ ALTER TABLE dhcp6_subnet
     ADD COLUMN min_valid_lifetime INT(10) DEFAULT NULL,
     ADD COLUMN max_valid_lifetime INT(10) DEFAULT NULL;
 
+# Create dhcp4_server insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_server_AINS AFTER INSERT ON dhcp4_server
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_server', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_server update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_server_AUPD AFTER UPDATE ON dhcp4_server
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_server', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_server delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_server_ADEL AFTER DELETE ON dhcp4_server
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_server', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_server insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_server_AINS AFTER INSERT ON dhcp6_server
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_server', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_server update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_server_AUPD AFTER UPDATE ON dhcp6_server
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_server', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_server delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_server_ADEL AFTER DELETE ON dhcp6_server
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_server', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '8', minor = '1';
