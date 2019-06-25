@@ -1,3 +1,10 @@
+15xx.	[perf]		tmark
+	High Availability now registers its HTTP sockets with Interface
+	Manager's main thread allowing the thread can monitor them for
+	IO readiness. This should improve the responsiveness of HA peers
+	to each other.
+	(Gitlab #691,!395, git TBD)
+
 1602.	[func]		fdupont
 	Added more information to sanity-checker log messages.
 	(Gitlab #685,!392, git 5367cd1196662739bbff5e99072ab6a55cfb0489)
