@@ -166,8 +166,8 @@ public:
     long                loop_max_;      //< Maximum number of loop iterations
     uint16_t            port_;          //< Port number to use
     volatile bool       running_;       //< Set if the thread is running
-    struct sockaddr*    sockaddr_ptr;   //< Pointer to structure used
-    size_t              sockaddr_len;   //< Length of the structure
+    struct sockaddr*    sockaddr_ptr_;  //< Pointer to structure used
+    size_t              sockaddr_len_;  //< Length of the structure
     struct sockaddr_in  servaddr4_;     //< IPv6 address information
     struct sockaddr_in6 servaddr6_;     //< IPv6 address information
     volatile bool*      shutdown_ptr_;  //< Pointer to shutdown flag

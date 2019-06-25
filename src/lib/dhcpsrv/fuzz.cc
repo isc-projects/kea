@@ -70,7 +70,7 @@ FuzzSync::notify(void) {
 Fuzz::Fuzz(int ipversion, volatile bool* shutdown) :
     fuzz_sync_("fuzz_sync"), main_sync_("main_sync"), address_(nullptr),
     interface_(nullptr), loop_max_(LOOP_COUNT), port_(0), running_(false),
-    sockaddr_ptr(nullptr), sockaddr_len(0), shutdown_ptr_(nullptr) {
+    sockaddr_ptr_(nullptr), sockaddr_len_(0), shutdown_ptr_(nullptr) {
 
     try {
         stringstream reason;    // Used to construct exception messages
@@ -176,8 +176,8 @@ Fuzz::setAddress(int ipversion) {
         }
         servaddr4_.sin_port = htons(port_);
 
-        sockaddr_ptr = reinterpret_cast<sockaddr*>(&servaddr4_);
-        sockaddr_len = sizeof(servaddr4_);
+        sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr4_);
+        sockaddr_len_ = sizeof(servaddr4_);
 
     } else if ((strstr(address_, ":") != NULL) && (ipversion == 6)) {
 
@@ -200,8 +200,8 @@ Fuzz::setAddress(int ipversion) {
             isc_throw(FuzzInitFail, reason.str());
         }
 
-        sockaddr_ptr = reinterpret_cast<sockaddr*>(&servaddr6_);
-        sockaddr_len = sizeof(servaddr6_);
+        sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr6_);
+        sockaddr_len_ = sizeof(servaddr6_);
     } else {
         reason << "Expected IP version (" << ipversion << ") is not "
                << "4 or 6, or the given address " << address_ << " does not "
@@ -262,8 +262,8 @@ Fuzz::run(void) {
         // some form of synchronization, this approach does not work.
 
         // Send the data to the main Kea thread.
-        ssize_t sent = sendto(sockfd, buf, length, 0, sockaddr_ptr,
-                              sockaddr_len);
+        ssize_t sent = sendto(sockfd, buf, length, 0, sockaddr_ptr_,
+                              sockaddr_len_);
         if (sent < 0) {
             LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
             continue;
