@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed May 22 2019 18:21
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Jun 25 2019 10:19
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -210,7 +210,7 @@ const char* values[] = {
     "DHCP4_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP4_INIT_REBOOT", "%1: client is in INIT-REBOOT state and requests address %2",
     "DHCP4_LEASE_ADVERT", "%1: lease %2 will be advertised",
-    "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated",
+    "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated for %3",
     "DHCP4_NCR_CREATE", "%1: DDNS updates enabled, therefore sending name change requests",
     "DHCP4_NCR_CREATION_FAILED", "%1: failed to generate name change requests for DNS: %2",
     "DHCP4_NOT_RUNNING", "DHCPv4 server is not running",

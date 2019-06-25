@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 22 2019 18:12
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Jun 25 2019 10:19
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -217,7 +217,7 @@ const char* values[] = {
     "DHCP6_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP6_LEASE_ADVERT", "%1: lease for address %2 and iaid=%3 will be advertised",
     "DHCP6_LEASE_ADVERT_FAIL", "%1: failed to advertise an address lease for iaid=%2",
-    "DHCP6_LEASE_ALLOC", "%1: lease for address %2 and iaid=%3 has been allocated",
+    "DHCP6_LEASE_ALLOC", "%1: lease for address %2 and iaid=%3 has been allocated for %4",
     "DHCP6_LEASE_ALLOC_FAIL", "%1: failed to grant an address lease for iaid=%2",
     "DHCP6_LEASE_DATA", "%1: detailed lease information for iaid=%2: %3",
     "DHCP6_LEASE_NA_WITHOUT_DUID", "%1: address lease for address %2 does not have a DUID",
@@ -246,7 +246,7 @@ const char* values[] = {
     "DHCP6_PARSER_FAIL", "failed to create or run parser for configuration element %1: %2",
     "DHCP6_PD_LEASE_ADVERT", "%1: lease for prefix %2/%3 and iaid=%4 will be advertised",
     "DHCP6_PD_LEASE_ADVERT_FAIL", "%1: failed to advertise a prefix lease for iaid=%2",
-    "DHCP6_PD_LEASE_ALLOC", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated",
+    "DHCP6_PD_LEASE_ALLOC", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated for %5",
     "DHCP6_PD_LEASE_ALLOC_FAIL", "%1: failed to grant a prefix lease for iaid=%2",
     "DHCP6_PD_LEASE_RENEW", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated",
     "DHCP6_PROCESS_IA_NA_EXTEND", "%1: extending lease lifetime for IA_NA option with iaid=%2",

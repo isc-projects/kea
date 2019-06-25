@@ -429,13 +429,13 @@ be many reasons for such failure. Each failure is logged in a separate
 log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
 
-% DHCP6_LEASE_ALLOC %1: lease for address %2 and iaid=%3 has been allocated
+% DHCP6_LEASE_ALLOC %1: lease for address %2 and iaid=%3 has been allocated for %4
 This informational message indicates that in response to a client's REQUEST
 message, the server successfully granted a non-temporary address
 lease. This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
-information. The remaining arguments hold the allocated address and
-IAID.
+information. The remaining arguments hold the allocated address,
+IAID and validity lifetime.
 
 % DHCP6_LEASE_ALLOC_FAIL %1: failed to grant an address lease for iaid=%2
 This message indicates that in response to a received REQUEST, the server
@@ -612,13 +612,13 @@ be many reasons for such failure. Each failure is logged in a separate
 log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
 
-% DHCP6_PD_LEASE_ALLOC %1: lease for prefix %2/%3 and iaid=%4 has been allocated
+% DHCP6_PD_LEASE_ALLOC %1: lease for prefix %2/%3 and iaid=%4 has been allocated for %5
 This informational message indicates that in response to a client's REQUEST
 message, the server successfully granted a prefix lease.
 This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated prefix,
-prefix length and and IAID.
+prefix length, IAID and validity lifetime.
 
 % DHCP6_PD_LEASE_ALLOC_FAIL %1: failed to grant a prefix lease for iaid=%2
 This message indicates that in response to a received REQUEST, the server

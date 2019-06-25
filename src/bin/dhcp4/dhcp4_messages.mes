@@ -399,12 +399,13 @@ those which offered leases and continue allocation with that server.
 The first argument specifies the client and the transaction identification
 information. The second argument specifies the IPv4 address to be offered.
 
-% DHCP4_LEASE_ALLOC %1: lease %2 has been allocated
+% DHCP4_LEASE_ALLOC %1: lease %2 has been allocated for %3
 This informational message indicates that the server successfully granted a
 lease in response to client's DHCPREQUEST message. The lease information will
 be sent to the client in the DHCPACK message. The first argument contains the
 client and the transaction identification information. The second argument
-contains the allocated IPv4 address.
+contains the allocated IPv4 address. The third argument is the validity
+lifetime.
 
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
 This debug message is issued when the server is starting to send

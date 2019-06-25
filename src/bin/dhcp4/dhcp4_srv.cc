@@ -2120,9 +2120,16 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
-        LOG_INFO(lease4_logger, fake_allocation ? DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
-            .arg(query->getLabel())
-            .arg(lease->addr_.toText());
+        if (fake_allocation) {
+            LOG_INFO(lease4_logger, DHCP4_LEASE_ADVERT)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText());
+        } else {
+            LOG_INFO(lease4_logger, DHCP4_LEASE_ALLOC)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(lease->valid_lft_);
+        }
 
         // We're logging this here, because this is the place where we know
         // which subnet has been actually used for allocation. If the

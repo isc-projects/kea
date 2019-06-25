@@ -1835,10 +1835,18 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     if (lease) {
         // We have a lease! Let's wrap its content into IA_NA option
         // with IAADDR suboption.
-        LOG_INFO(lease6_logger, ctx.fake_allocation_ ? DHCP6_LEASE_ADVERT : DHCP6_LEASE_ALLOC)
-            .arg(query->getLabel())
-            .arg(lease->addr_.toText())
-            .arg(ia->getIAID());
+        if (ctx.fake_allocation_) {
+            LOG_INFO(lease6_logger, DHCP6_LEASE_ADVERT)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ia->getIAID());
+        } else {
+            LOG_INFO(lease6_logger, DHCP6_LEASE_ALLOC)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ia->getIAID())
+                .arg(lease->valid_lft_);
+        }
         LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_LEASE_DATA)
             .arg(query->getLabel())
             .arg(ia->getIAID())
@@ -1948,12 +1956,20 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_INFO(lease6_logger, ctx.fake_allocation_ ?
-                      DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
-                .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
-                .arg(static_cast<int>((*l)->prefixlen_))
-                .arg(ia->getIAID());
+            if (ctx.fake_allocation_) {
+                LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ADVERT)
+                    .arg(query->getLabel())
+                    .arg((*l)->addr_.toText())
+                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(ia->getIAID());
+            } else {
+                LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ALLOC)
+                    .arg(query->getLabel())
+                    .arg((*l)->addr_.toText())
+                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(ia->getIAID())
+                    .arg((*l)->valid_lft_);
+            }
 
             boost::shared_ptr<Option6IAPrefix>
                 addr(new Option6IAPrefix(D6O_IAPREFIX, (*l)->addr_,
