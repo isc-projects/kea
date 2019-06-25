@@ -964,7 +964,14 @@ MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
 uint64_t
 MySqlConfigBackendImpl::deleteServer(const int& create_audit_revision,
                                      const int& delete_index,
-                                     const std::string& server_tag) {
+                                     const ServerTag& server_tag) {
+
+    // It is not allowed to delete 'all' logical server.
+    if (server_tag.amAll()) {
+        isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
+                  " associates the configuration elements with all servers connecting"
+                  " to the database and can't be deleted");
+    }
 
     MySqlTransaction transaction(conn_);
 
@@ -976,7 +983,7 @@ MySqlConfigBackendImpl::deleteServer(const int& create_audit_revision,
 
     // Specify which server should be deleted.
     MySqlBindingCollection in_bindings = {
-        MySqlBinding::createString(server_tag)
+        MySqlBinding::createString(server_tag.get())
     };
 
     // Attempt to delete the server.

@@ -234,6 +234,9 @@ public:
 
     /// @brief Retrieves all servers from the particular backend.
     ///
+    /// This method returns the list of servers excluding the logical server
+    /// 'all'.
+    ///
     /// @param backend_selector Backend selector.
     /// @return Collection of servers from the backend.
     virtual db::ServerCollection

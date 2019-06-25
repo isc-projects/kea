@@ -3233,7 +3233,7 @@ MySqlConfigBackendDHCPv6::deleteServer6(const ServerTag& server_tag) {
         .arg(server_tag.get());
     uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                                           MySqlConfigBackendDHCPv6Impl::DELETE_SERVER6,
-                                          server_tag.get());
+                                          server_tag);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER6_RESULT)
         .arg(result);
     return (result);

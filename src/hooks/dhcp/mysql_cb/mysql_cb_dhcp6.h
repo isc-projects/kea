@@ -227,6 +227,9 @@ public:
 
     /// @brief Retrieves all servers.
     ///
+    /// This method returns the list of servers excluding the logical server
+    /// 'all'.
+    ///
     /// @return Collection of servers from the backend.
     virtual db::ServerCollection
     getAllServers6() const;
@@ -513,6 +516,8 @@ public:
     ///
     /// @param server_tag Tag of the server to be deleted.
     /// @return Number of deleted servers.
+    /// @throw isc::InvalidOperation when trying to delete the logical
+    /// server 'all'.
     virtual uint64_t
     deleteServer6(const data::ServerTag& server_tag);
 

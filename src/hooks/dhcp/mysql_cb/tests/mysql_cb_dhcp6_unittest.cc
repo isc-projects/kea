@@ -547,6 +547,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteServer) {
     EXPECT_NO_THROW(servers_deleted = cbptr_->deleteServer6(ServerTag("server2")));
     EXPECT_EQ(0, servers_deleted);
 
+    // Make sure that the server1 wasn't deleted.
+    EXPECT_NO_THROW(returned_server = cbptr_->getServer6(ServerTag("server1")));
+    EXPECT_TRUE(returned_server);
+
+    // Deleting logical server 'all' is not allowed.
+    EXPECT_THROW(cbptr_->deleteServer6(ServerTag()), isc::InvalidOperation);
 
     // Delete the existing server.
     EXPECT_NO_THROW(servers_deleted = cbptr_->deleteServer6(ServerTag("server1")));

@@ -2846,7 +2846,7 @@ MySqlConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
         .arg(server_tag.get());
     uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                                           MySqlConfigBackendDHCPv4Impl::DELETE_SERVER4,
-                                          server_tag.get());
+                                          server_tag);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER4_RESULT)
         .arg(result);
     return (result);
