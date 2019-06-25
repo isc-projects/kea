@@ -141,7 +141,18 @@ public:
     void setAddress(int ipversion);
 
     /// @brief size of the buffer used to transfer data between AFL and Kea.
-    static constexpr size_t BUFFER_SIZE = 65536;
+    ///
+    /// This is much larger than the data that will be sent to Kea (so AFL
+    /// data being trimmed).  However, it does allow for AFL to send quite
+    /// large packets without resulting in timeouts or synchronization
+    /// problems with the fuzzing thread.
+    static constexpr size_t BUFFER_SIZE = 128000;
+
+    /// @brief maximum size of packets fuzzing thread will send to Kea
+    ///
+    /// This is below the maximum size of data that can be put into a
+    /// single UDP datagram.
+    static constexpr size_t MAX_SEND_SIZE = 64000;
 
     /// @brief Delay before rereading if read from stdin returns an error (us)
     static constexpr  useconds_t SLEEP_INTERVAL = 50000;

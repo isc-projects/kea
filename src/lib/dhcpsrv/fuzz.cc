@@ -34,6 +34,7 @@ using namespace std;
 
 // Constants defined in the Fuzz class definition.
 constexpr size_t        Fuzz::BUFFER_SIZE;
+constexpr size_t        Fuzz::MAX_SEND_SIZE;
 constexpr useconds_t    Fuzz::SLEEP_INTERVAL;
 constexpr long          Fuzz::LOOP_COUNT;
 
@@ -264,10 +265,16 @@ Fuzz::run(void) {
         // and AFL seems to get confused in this case.  At any rate, without
         // some form of synchronization, this approach does not work.
 
-        // Send the data to the main Kea thread.
-        ssize_t sent = sendto(sockfd, buf, length, 0, sockaddr_ptr_,
+        // Send the data to the main Kea thread.  Limit the size of the
+        // packets that can be sent.
+        size_t send_len = (length < MAX_SEND_SIZE) ? length : MAX_SEND_SIZE;
+        ssize_t sent = sendto(sockfd, buf, send_len, 0, sockaddr_ptr_,
                               sockaddr_len_);
         if (sent < 0) {
+            // TODO:  If we get here, we may well hang: AFL has sent us a
+            // packet but by continuing, we are not letting Kea process it
+            // and trigger AFL to send another.  For the time being, we
+            // are restricting the size of packets Kea can send us.
             LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
             continue;
         } else if (sent != length) {
