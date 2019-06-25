@@ -359,6 +359,9 @@ fi
 # Need to disable a false positive from shellcheck. Yes, prefix is used.
 # shellcheck disable=SC2034
 prefix=@prefix@
+# Avoid problem with localstatedir / runstatedir
+# shellcheck disable=SC2034
+localstatedir=@localstatedir@
 keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
 
 servers="all"
