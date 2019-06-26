@@ -11,20 +11,20 @@ list client classes configured for a given server.
 
    **Note**
 
-   This library may only be loaded by the ``kea-dhcp4`` or the
+   This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
-The Class Commands hooks library is available to premium Kea customers
-only.
+The Class Commands hooks library is currently available only to ISC
+customers with a paid support contract.
 
 .. _command-class-add:
 
-class-add Command
------------------
+The class-add Command
+---------------------
 
 The ``class-add`` command adds a new client class to the DHCP server
 configuration. This class is appended at the end of the list of classes
-used by the server and may depend on any of the already configured
+used by the server and may depend on any of the already-configured
 client classes.
 
 The following example demonstrates how to add a new client class to the
@@ -61,12 +61,12 @@ Here is the response to the ``class-add`` command in our example:
 
 .. _command-class-update:
 
-class-update Command
---------------------
+The class-update Command
+------------------------
 
 The ``class-update`` command updates an existing client class in the
 DHCP server configuration. If the client class with the given name
-doesn't exist, the server returns the result code of 3, which means that
+does not exist, the server returns the result code of 3, which means that
 the server configuration is not modified and the client class does not
 exist. The ``class-add`` command must be used instead to create the new
 client class.
@@ -110,10 +110,10 @@ the new name will be added at the end of the list of configured classes.
 
 .. _command-class-del:
 
-class-del Command
------------------
+The class-del Command
+---------------------
 
-The ``class-del`` is used to remove a particular class from the server
+The ``class-del`` command is used to remove a particular class from the server
 configuration. The class to be removed is identified by name. The class
 is not removed if there are other classes depending on it; to remove
 such a class, the dependent classes must be removed first.
@@ -145,8 +145,8 @@ If the class doesn't exist, the result of 3 is returned.
 
 .. _command-class-list:
 
-class-list Command
-------------------
+The class-list Command
+----------------------
 
 ``class-list`` is used to retrieve a list of all client classes. This
 command includes no arguments:
@@ -183,8 +183,8 @@ merely class names. To retrieve full class information, the
 
 .. _command-class-get:
 
-class-get Command
------------------
+The class-get Command
+---------------------
 
 ``class-get`` is used to retrieve detailed information about a specified
 class. The command structure is very simple:

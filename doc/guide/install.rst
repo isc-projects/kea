@@ -1,3 +1,5 @@
+.. _installation:
+
 ************
 Installation
 ************
@@ -365,9 +367,9 @@ DHCP Database Installation and Configuration
 Kea stores its leases in a lease database. The software has been written
 in a way that makes it possible to choose which database product should
 be used to store the lease information. Kea supports four
-database backends: MySQL, PostgreSQL, Cassandra, and Memfile. To limit
+database backends: MySQL, PostgreSQL, Cassandra, and memfile. To limit
 external dependencies, MySQL, PostgreSQL, and Cassandra support are
-disabled by default and only Memfile is available. Support for the
+disabled by default and only memfile is available. Support for the
 optional external database backend must be explicitly included when Kea
 is built. This section covers the building of Kea with one of the
 optional backends and the creation of the lease database.

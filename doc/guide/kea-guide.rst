@@ -14,7 +14,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
 
 .. toctree::
    :numbered:
-   :maxdepth: 3
+   :maxdepth: 5
 
    intro
    quickstart

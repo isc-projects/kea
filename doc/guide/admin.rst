@@ -124,7 +124,7 @@ backend may be essential for the success of your deployment.
    |               |                |                |               |              |
    +---------------+----------------+----------------+---------------+--------------+
 
-memfile
+Memfile
 -------
 
 The memfile backend is able to store lease information, but cannot
@@ -538,7 +538,7 @@ Year 2038 Issue
 The lease expiration time is stored in the SQL database for each lease
 as a timestamp value. Kea developers observed that the MySQL database
 doesn't accept timestamps beyond 2147483647 seconds (the maximum signed
-32-bit number) from the beginning of the Unix epoch (00:00:00 on 1
+32-bit number) from the beginning of the UNIX epoch (00:00:00 on 1
 January 1970). Some versions of PostgreSQL do accept greater values, but
 the value is altered when it is read back. For this reason, the lease
 database backends put a restriction on the maximum timestamp to be

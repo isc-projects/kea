@@ -26,7 +26,7 @@ client class to receive common options.
 An incoming packet can be associated with a client class in several
 ways:
 
--  Implicitly, using a vendor class option or another builtin condition.
+-  Implicitly, using a vendor class option or another built-in condition.
 
 -  Using an expression which evaluates to true.
 
@@ -49,7 +49,7 @@ The classification process is conducted in several steps:
 2.  Vendor class options are processed.
 
 3.  Classes with matching expressions and not marked for later evaluation ("on
-    request" or depending on the KNOWN/UNKNOWN builtin classes)
+    request" or depending on the KNOWN/UNKNOWN built-in classes)
     are processed in the order they are defined in the
     configuration; the boolean expression is evaluated and, if it
     returns true ("match"), the incoming packet is associated with the
@@ -74,7 +74,7 @@ The classification process is conducted in several steps:
     packet is assigned to the UNKNOWN class.
 
 7.  Classes with matching expressions - directly, or indirectly using the
-    KNOWN/UNKNOWN builtin classes and not marked for later evaluation ("on
+    KNOWN/UNKNOWN built-in classes and not marked for later evaluation ("on
     request") - are processed in the order they are defined
     in the configuration; the boolean expression is evaluated and, if it
     returns true ("match"), the incoming packet is associated with the
@@ -128,10 +128,10 @@ value is obtained is unspecified.
 
 .. _classification-using-vendor:
 
-Builtin Client Classes
+Built-in Client Classes
 ======================
 
-Some classes are builtin, so they do not need to be defined. The main
+Some classes are built-in, so they do not need to be defined. The main
 example uses Vendor Class information: the server checks whether an
 incoming DHCPv4 packet includes the vendor class identifier option (60)
 or an incoming DHCPv6 packet includes the vendor class option (16). If
@@ -150,13 +150,13 @@ be found in :ref:`high-availability-library`.
 
 Other examples are the ALL class, which all incoming packets belong to,
 and the KNOWN class, assigned when host reservations exist for a
-particular client. By convention, builtin classes' names begin with all
+particular client. By convention, built-in classes' names begin with all
 capital letters.
 
-Currently recognized builtin class names are ALL, KNOWN and UNKNOWN, and the
+Currently recognized built-in class names are ALL, KNOWN and UNKNOWN, and the
 prefixes VENDOR_CLASS_, HA_, AFTER_, and EXTERNAL_. Although the AFTER\_
 prefix is a provision for an as-yet-unwritten hook, the EXTERNAL\_
-prefix can be freely used; builtin classes are implicitly defined so
+prefix can be freely used; built-in classes are implicitly defined so
 they never raise warnings if they do not appear in the configuration.
 
 .. _classification-using-expressions:
@@ -186,7 +186,7 @@ in the operator returning an empty string.
 
 Dependencies between classes are also checked. For instance, forward
 dependencies are rejected when the configuration is parsed; an
-expression can only depend on already-defined classes (including builtin
+expression can only depend on already-defined classes (including built-in
 classes) which are evaluated in a previous or the same evaluation phase.
 This does not apply to the KNOWN or UNKNOWN classes.
 
@@ -339,7 +339,7 @@ Notes:
 -  "member('foobar')" checks whether the packet belongs to the client
    class "foobar". To avoid dependency loops, the configuration file
    parser verifies whether client classes were already defined or are
-   builtin, i.e., beginning by "VENDOR_CLASS_", "AFTER__" (for the
+   built-in, i.e., beginning by "VENDOR_CLASS_", "AFTER__" (for the
    to-come "after" hook) and "EXTERNAL_" or equal to "ALL", "KNOWN",
    "UNKNOWN", etc.
 

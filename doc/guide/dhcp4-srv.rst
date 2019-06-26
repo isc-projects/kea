@@ -280,12 +280,12 @@ information in a CSV file rather than a database. As well as requiring
 less administration, an advantage of using a file for storage is that it
 eliminates a dependency on third-party database software.
 
-The configuration of the file backend (Memfile) is controlled through
+The configuration of the file backend (memfile) is controlled through
 the Dhcp4/lease-database parameters. The ``type`` parameter is mandatory
 and it specifies which storage for leases the server should use. The
 value of ``"memfile"`` indicates that the file should be used as the
 storage. The following list gives additional optional parameters that
-can be used to configure the Memfile backend.
+can be used to configure the memfile backend.
 
 -  ``persist``: controls whether the new leases and updates to existing
    leases are written to the file. It is strongly recommended that the
@@ -310,7 +310,7 @@ can be used to configure the Memfile backend.
    value of the ``lfc-interval`` is ``3600``. A value of 0 disables the
    LFC.
 
-An example configuration of the Memfile backend is presented below:
+An example configuration of the memfile backend is presented below:
 
 ::
 
@@ -3944,7 +3944,7 @@ which belong to them.
    }
 
 Static class assignments, as shown above, can be used in conjunction
-with classification, using expressions. The "KNOWN" or "UNKNOWN" builtin
+with classification, using expressions. The "KNOWN" or "UNKNOWN" built-in
 class is added to the packet and any class depending on it (directly or
 indirectly) and not only-if-required is evaluated.
 
