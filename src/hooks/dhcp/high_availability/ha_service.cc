@@ -1622,9 +1622,6 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
 bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
     if (!ec || (ec.value() == boost::asio::error::in_progress)) {
-        if (ec && (ec.value() == boost::asio::error::in_progress)) {
-            std::cout << "connect in_progress : " << tcp_native_fd << std::endl;
-        }
 
         if (tcp_native_fd < 0) {
             // This really should not be possible, but just in case.
