@@ -581,7 +581,7 @@
                         // clients.
                         "pd-pools": [
                             {
-                                // Restricts this prefix pool to be only used for the client
+                                // Restricts this prefix pool to be used only for the client
                                 // requests belonging to a particular client class.
                                 "client-class": "phones_server1",
 
