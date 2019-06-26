@@ -61,7 +61,7 @@ class HttpClientImpl;
 ///
 /// This classes exposes the underlying TCP socket's descriptor for each
 /// connection via connect and close callbacks.  This is done to permit the
-/// sockets to be monitored for IO readiness by external code that something
+/// sockets to be monitored for IO readiness by external code that's something
 /// other than boost::asio (e.g.select() or epoll()), and would thus otherwise
 /// starve the client's IOService and cause a backlog of ready event handlers.
 ///
