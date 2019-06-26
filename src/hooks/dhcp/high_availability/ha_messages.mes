@@ -116,11 +116,6 @@ failure.
 This informational message indicates that the High Availability hooks library
 has been unloaded successfully.
 
-% HA_SERVICE_CONNECT_INVALID_SOCKET Attempted to register an invalid socket, error code: %1
-This is an error message that indicates that the server attempted to
-register an invalid socket with the Interface Manager. This is an internal
-server error and a bug report should be created.
-
 % HA_DHCP4_START_SERVICE_FAILED failed to start DHCPv4 HA service in dhcp4_srv_configured callout: %1
 This error message is issued when an attempt to start High Availability service
 for the DHCPv4 server failed in the dhcp4_srv_configured callout. This

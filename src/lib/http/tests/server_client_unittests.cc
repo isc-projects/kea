@@ -1473,21 +1473,13 @@ public:
         /// @param tcp_native_fd socket descriptor to register
         bool connectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
             ++connect_cnt_;
-            if (!ec || ec.value() == boost::asio::error::in_progress) {
-                if (tcp_native_fd >= 0) {
-                    registered_fd_ = tcp_native_fd;
-                    return (true);
-                }
-
-                // Invalid fd?, this really should not be possible.  EXPECT makes
-                // sure we log it.
-                EXPECT_TRUE (tcp_native_fd >= 0) << "no ec error but invalid fd?";
+            if ((!ec || (ec.value() == boost::asio::error::in_progress))
+                && (tcp_native_fd >= 0)) {
+                registered_fd_ = tcp_native_fd;
+                return (true);
+            } else if ((ec.value() == boost::asio::error::already_connected)
+                       && (registered_fd_ != tcp_native_fd)) {
                 return (false);
-
-            } else if (ec.value() == boost::asio::error::already_connected) {
-                if (registered_fd_ != tcp_native_fd) {
-                    return (false);
-                }
             }
 
             // ec indicates an error, return true, so that error can be handled

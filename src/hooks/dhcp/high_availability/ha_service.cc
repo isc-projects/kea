@@ -1621,19 +1621,17 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
 
 bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
-    if (!ec || (ec.value() == boost::asio::error::in_progress)) {
 
-        if (tcp_native_fd < 0) {
-            // This really should not be possible, but just in case.
-            LOG_ERROR(ha_logger, HA_SERVICE_CONNECT_INVALID_SOCKET)
-                      .arg(ec.value());
-            return (false);
-        }
-   
-        // Register the socket with Interface Manager. 
-        // External socket callback is a NOP. Ready events handlers are run by an
-        // explicit call IOService ready in kea-dhcp<n> code. We are registering
-        // the socket only to interrupt main-thread select().
+    // If things look ok register the socket with Interface Manager. Note
+    // we don't register if the FD is < 0 to avoid an expection throw.
+    // It is unlikely that this will occur but we want to be liberal
+    // and avoid issues.
+    if ((!ec || (ec.value() == boost::asio::error::in_progress))
+        && (tcp_native_fd >= 0)) {
+        // External socket callback is a NOP. Ready events handlers are
+        // run by an explicit call IOService ready in kea-dhcp<n> code.
+        // We are registerin the socket only to interrupt main-thread
+        // select().
         IfaceMgr::instance().addExternalSocket(tcp_native_fd, 0);
     }
 

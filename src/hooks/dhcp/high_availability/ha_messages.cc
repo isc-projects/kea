@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jun 26 2019 09:25
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jun 26 2019 15:13
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -60,7 +60,6 @@ extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE = "HA_LOCAL_DHCP_DISABLE"
 extern const isc::log::MessageID HA_LOCAL_DHCP_ENABLE = "HA_LOCAL_DHCP_ENABLE";
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION = "HA_MISSING_CONFIGURATION";
 extern const isc::log::MessageID HA_SCOPES_HANDLER_FAILED = "HA_SCOPES_HANDLER_FAILED";
-extern const isc::log::MessageID HA_SERVICE_CONNECT_INVALID_SOCKET = "HA_SERVICE_CONNECT_INVALID_SOCKET";
 extern const isc::log::MessageID HA_SERVICE_STARTED = "HA_SERVICE_STARTED";
 extern const isc::log::MessageID HA_STATE_MACHINE_CONTINUED = "HA_STATE_MACHINE_CONTINUED";
 extern const isc::log::MessageID HA_STATE_MACHINE_PAUSED = "HA_STATE_MACHINE_PAUSED";
@@ -130,7 +129,6 @@ const char* values[] = {
     "HA_LOCAL_DHCP_ENABLE", "local DHCP service is enabled while the %1 is in the %2 state",
     "HA_MISSING_CONFIGURATION", "high-availability parameter not specified for High Availability hooks library",
     "HA_SCOPES_HANDLER_FAILED", "ha-scopes command failed: %1",
-    "HA_SERVICE_CONNECT_INVALID_SOCKET", "Attempted to register an invalid socket, error code: %1",
     "HA_SERVICE_STARTED", "started high availability service in %1 mode as %2 server",
     "HA_STATE_MACHINE_CONTINUED", "state machine is un-paused",
     "HA_STATE_MACHINE_PAUSED", "state machine paused in state %1",

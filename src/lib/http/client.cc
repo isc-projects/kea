@@ -594,6 +594,7 @@ Connection::doTransaction(const HttpRequestPtr& request,
 
 void
 Connection::close() {
+    // Pass in true to discard the callback.
     closeCallback(true);
 
     timer_.cancel();
