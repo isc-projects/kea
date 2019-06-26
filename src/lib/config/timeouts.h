@@ -30,6 +30,14 @@ constexpr long TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT = 30000;
 /// to generate large responses, e.g. dump whole lease databse.
 constexpr long TIMEOUT_AGENT_FORWARD_COMMAND = 60000;
 
+/// @brief Timeout for the HTTP clients awaiting a response to a request.
+///
+/// This value is high to ensure that the client waits long enough
+/// for the fulfilling server to generate a response.  Specified
+/// milliseconds. 
+constexpr long TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST = 10000;
+
+
 } // end of namespace isc::config
 } // end of namespace isc
 

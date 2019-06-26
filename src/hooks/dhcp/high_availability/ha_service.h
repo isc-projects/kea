@@ -736,7 +736,7 @@ protected:
     /// @param tcp_native_fd socket descriptor to register
     /// @param returns true. Registeration cannot fail, and if ec indicates a real
     /// error we want Connection logic to process it.
-    virtual bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
+    bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
 
     /// @brief HttpClient close callback handler
     ///
@@ -745,7 +745,7 @@ protected:
     /// main-thread select()).
     ///
     /// @param tcp_native_fd socket descriptor to register
-    virtual void clientCloseHandler(int tcp_native_fd);
+    void clientCloseHandler(int tcp_native_fd);
 
     /// @brief Pointer to the IO service object shared between this hooks
     /// library and the DHCP server.

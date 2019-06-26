@@ -12,6 +12,7 @@
 #include <ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/timeouts.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -854,7 +855,7 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 runModel(HA_LEASE_UPDATES_COMPLETE_EVT);
             }
         },
-        HttpClient::RequestTimeout(10000),
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         boost::bind(&HAService::clientConnectHandler, this, _1, _2),
         boost::bind(&HAService::clientCloseHandler, this, _1)
     );
@@ -1057,7 +1058,7 @@ HAService::asyncSendHeartbeat() {
             startHeartbeat();
             runModel(HA_HEARTBEAT_COMPLETE_EVT);
         },
-        HttpClient::RequestTimeout(10000),
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         boost::bind(&HAService::clientConnectHandler, this, _1, _2),
         boost::bind(&HAService::clientCloseHandler, this, _1)
     );
@@ -1147,7 +1148,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
                                      error_message);
              }
         },
-        HttpClient::RequestTimeout(10000),
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         boost::bind(&HAService::clientConnectHandler, this, _1, _2),
         boost::bind(&HAService::clientCloseHandler, this, _1)
     );
@@ -1218,7 +1219,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
                                      error_message);
              }
         },
-        HttpClient::RequestTimeout(10000),
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
         boost::bind(&HAService::clientConnectHandler, this, _1, _2),
         boost::bind(&HAService::clientCloseHandler, this, _1)
     );
@@ -1621,12 +1622,10 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
 bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
     if (!ec || ec.value() == boost::asio::error::in_progress) {
-        IfaceMgr::instance().addExternalSocket(tcp_native_fd,
-            [this]() {
-                    // Callback is a NOP. Ready events handlers are run by an explicit
-                    // call IOService ready in kea-dhcp<n> code. We are registering
-                    // the socket to interrupt main-thread select().
-        });
+        // External socket callback is a NOP. Ready events handlers are run by an
+        // explicit call IOService ready in kea-dhcp<n> code. We are registering
+        // the socket only to interrupt main-thread select().
+        IfaceMgr::instance().addExternalSocket(tcp_native_fd, 0);
     }
 
     // If ec.value() == boost::asio::error::already_connected, we should already
