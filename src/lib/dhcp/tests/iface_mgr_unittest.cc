@@ -52,6 +52,9 @@ const uint16_t PORT2 = 10548;   // V4 socket
 // tolerance to 0.01s.
 const uint32_t TIMEOUT_TOLERANCE = 10000;
 
+// Macro for making select wait time arguments for receive functions
+#define RECEIVE_WAIT_MS(m) 0,(m*1000)
+
 /// This test verifies that the socket read buffer can be used to
 /// receive the data and that the data can be read from it.
 TEST(IfaceTest, readBuffer) {
@@ -692,18 +695,18 @@ public:
         int pipefd[2];
         EXPECT_TRUE(pipe(pipefd) == 0);
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
-                        [this, &callback_ok](){ callback_ok = true; }));
+                        [&callback_ok](){ callback_ok = true; }));
 
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
-                        [this, &callback2_ok](){ callback2_ok = true; }));
+                        [&callback2_ok](){ callback2_ok = true; }));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt4Ptr pkt4;
-        ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+        ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10)));
 
         // No callback invocations and no DHCPv4 pkt.
         EXPECT_FALSE(callback_ok);
@@ -716,7 +719,7 @@ public:
 
         // We call receive4() which should detect and remove the invalid socket.
         try {
-            pkt4 = ifacemgr->receive4(1);
+            pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10));
             ADD_FAILURE() << "receive4 should have failed";
         } catch (const SocketReadError& ex) {
             EXPECT_EQ(std::string("SELECT interrupted by one invalid sockets,"
@@ -735,7 +738,7 @@ public:
         EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
 
         // Call recevie4 again, this should work.
-        ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+        ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10)));
 
         // Should have callback2 data only.
         EXPECT_FALSE(callback_ok);
@@ -775,18 +778,18 @@ public:
         int pipefd[2];
         EXPECT_TRUE(pipe(pipefd) == 0);
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
-                        [this, &callback_ok](){ callback_ok = true; }));
+                        [&callback_ok](){ callback_ok = true; }));
 
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
-                        [this, &callback2_ok](){ callback2_ok = true; }));
+                        [&callback2_ok](){ callback2_ok = true; }));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt6Ptr pkt6;
-        ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+        ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10)));
 
         // No callback invocations and no DHCPv6 pkt.
         EXPECT_FALSE(callback_ok);
@@ -799,7 +802,7 @@ public:
 
         // We call receive6() which should detect and remove the invalid socket.
         try {
-            pkt6 = ifacemgr->receive6(1);
+            pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10));
             ADD_FAILURE() << "receive6 should have failed";
         } catch (const SocketReadError& ex) {
             EXPECT_EQ(std::string("SELECT interrupted by one invalid sockets,"
@@ -818,7 +821,7 @@ public:
         EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
 
         // Call recevie6 again, this should work.
-        ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+        ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10)));
 
         // Should have callback2 data only.
         EXPECT_FALSE(callback_ok);
@@ -2928,16 +2931,18 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and purged, without affecting other sockets.
-// Tests uses receive4().
-TEST_F(IfaceMgrTest, purgeExternalSockets4) {
-    // Run purge test without packet queuing.
+// Tests uses receive4() without queuing..
+TEST_F(IfaceMgrTest, purgeExternalSockets4Direct) {
     purgeExternalSockets4Test();
-
-    // Run purge test with packet queuing.
-    purgeExternalSockets4Test(true);
 }
 
 
+// Tests that an existing external socket that becomes invalid
+// is detected and purged, without affecting other sockets.
+// Tests uses receive4() with queuing..
+TEST_F(IfaceMgrTest, purgeExternalSockets4Indirect) {
+    purgeExternalSockets4Test(true);
+}
 
 // Tests if a single external socket and its callback can be passed and
 // it is supported properly by receive6() method.
@@ -3107,13 +3112,18 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
     close(secondpipe[0]);
 }
 
-// Tests if existing external socket become invalid and be purged and not
-// not affect any other existing sockets. Tests uses receive6()
-TEST_F(IfaceMgrTest, purgeExternalSockets6) {
-    // Run purge test without packet queuing.
+// Tests that an existing external socket that becomes invalid
+// is detected and purged, without affecting other sockets.
+// Tests uses receive6() without queuing..
+TEST_F(IfaceMgrTest, purgeExternalSockets6Direct) {
     purgeExternalSockets6Test();
+}
 
-    // Run purge test with packet queuing.
+
+// Tests that an existing external socket that becomes invalid
+// is detected and purged, without affecting other sockets.
+// Tests uses receive6() with queuing..
+TEST_F(IfaceMgrTest, purgeExternalSockets6Indirect) {
     purgeExternalSockets6Test(true);
 }
 

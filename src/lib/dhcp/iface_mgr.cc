@@ -349,7 +349,7 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 int
 IfaceMgr::purgeBadSockets() {
     std::vector<int> bad_fds;
-    BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+    for (SocketCallbackInfo s : callbacks_) {
         errno = 0;
         if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
             bad_fds.push_back(s.socket_);
