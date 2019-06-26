@@ -1464,7 +1464,7 @@ public:
     /// and close operations.
     class ExternalMonitor {
     public:
-        /// @breif Constructor
+        /// @brief Constructor
         ExternalMonitor()
             : registered_fd_(-1), connect_cnt_(0), close_cnt_(0) {};
 
