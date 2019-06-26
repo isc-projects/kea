@@ -1,3 +1,8 @@
+1601.	[func]		fdupont
+	Kea servers now add the lease validity lifetime to informational
+	lease allocation log messages.
+	(Gitlan #694,!399, git cb29b532cf1f8790f9752d7e8253b0aa31ce05e6)
+
 1600.	[bug]		fdupont
 	Fixed prefixLengthFromRange() routine.
 	(Gitlab #583.!377, git 10bd31217d8a0a77345c4cba7a59314f70c1b509)
