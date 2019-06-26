@@ -341,10 +341,6 @@ Observation::getJSON() const {
     ElementPtr value;
     ElementPtr timestamp;
 
-    /// @todo: Add support for retrieving more than one sample for a given
-    /// observation
-
-
     // Support for retrieving more than one sample
     // retrieving all samples of indicated observation
     switch (type_) {
