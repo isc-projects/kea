@@ -377,10 +377,12 @@ public:
     /// @brief Logs audit entries in the @c audit_entries_ member.
     ///
     /// This function is called in case of an error.
-    std::string logExistingAuditEntries() {
+    ///
+    /// @param server_tag Server tag for which the audit entries should be logged.
+    std::string logExistingAuditEntries(const std::string& server_tag) {
         std::ostringstream s;
 
-        auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
+        auto& mod_time_idx = audit_entries_[server_tag].get<AuditEntryModificationTimeTag>();
 
         for (auto audit_entry_it = mod_time_idx.begin();
              audit_entry_it != mod_time_idx.end();
@@ -407,31 +409,57 @@ public:
     /// @param exp_object_type Expected object type.
     /// @param exp_modification_time Expected modification time.
     /// @param exp_log_message Expected log message.
+    /// @param server_selector Server selector to be used for next query.
     /// @param new_entries_num Number of the new entries expected to be inserted.
+    /// @param max_tested_entries Maximum number of entries tested.
     void testNewAuditEntry(const std::string& exp_object_type,
                            const AuditEntry::ModificationType& exp_modification_type,
                            const std::string& exp_log_message,
-                           const size_t new_entries_num = 1) {
-        auto audit_entries_size_save = audit_entries_.size();
-        audit_entries_ = cbptr_->getRecentAuditEntries(ServerSelector::ALL(),
-                                                       timestamps_["two days ago"]);
-        ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_.size())
-            << logExistingAuditEntries();
+                           const ServerSelector& server_selector = ServerSelector::ALL(),
+                           const size_t new_entries_num = 1,
+                           const size_t max_tested_entries = 65535) {
+        // Get the server tag for which the entries are fetched.
+        std::string tag;
+        if (server_selector.getType() == ServerSelector::Type::ALL) {
+            // Server tag is 'all'.
+            tag = "all";
 
-        auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
+        } else {
+            auto tags = server_selector.getTags();
+            // This test is not meant to handle multiple server tags all at once.
+            if (tags.size() > 1) {
+                ADD_FAILURE() << "Test error: do not use multiple server tags";
+
+            } else if (tags.size() == 1) {
+                // Get the server tag for which we run the current test.
+                tag = *tags.begin();
+            }
+        }
+
+        auto audit_entries_size_save = audit_entries_[tag].size();
+
+        // Audit entries for different server tags are stored in separate
+        // containers.
+        audit_entries_[tag] = cbptr_->getRecentAuditEntries(server_selector,
+                                                            timestamps_["two days ago"]);
+        ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_[tag].size())
+            << logExistingAuditEntries(tag);
+
+        auto& mod_time_idx = audit_entries_[tag].get<AuditEntryModificationTimeTag>();
 
         // Iterate over specified number of entries starting from the most recent
         // one and check they have correct values.
         for (auto audit_entry_it = mod_time_idx.rbegin();
-             std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num;
+             ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num) &&
+              (std::distance(mod_time_idx.rbegin(), audit_entry_it) < max_tested_entries));
              ++audit_entry_it) {
             auto audit_entry = *audit_entry_it;
             EXPECT_EQ(exp_object_type, audit_entry->getObjectType())
-                << logExistingAuditEntries();
+                << logExistingAuditEntries(tag);
             EXPECT_EQ(exp_modification_type, audit_entry->getModificationType())
-                << logExistingAuditEntries();
+                << logExistingAuditEntries(tag);
             EXPECT_EQ(exp_log_message, audit_entry->getLogMessage())
-                << logExistingAuditEntries();
+                << logExistingAuditEntries(tag);
         }
     }
 
@@ -457,7 +485,7 @@ public:
     boost::shared_ptr<ConfigBackendDHCPv6> cbptr_;
 
     /// @brief Holds the most recent audit entries.
-    AuditEntryCollection audit_entries_;
+    std::map<std::string, AuditEntryCollection> audit_entries_;
 };
 
 // This test verifies that the expected backend type is returned.
@@ -700,27 +728,66 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     StampedValuePtr global_parameter2 = StampedValue::create("global", "value2");
     StampedValuePtr global_parameter3 = StampedValue::create("global", "value3");
 
-    // Try to insert one of them and associate with non-existing server.
-    // This should fail because the server must be inserted first.
-    EXPECT_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
-                                                      global_parameter1),
-                 DbOperationError);
-
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[1]));
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
     EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("server2 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
 
     // This time inserting the global parameters for the server1 and server2 should
     // be successful.
     EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
                                                          global_parameter1));
+    {
+        SCOPED_TRACE("Global parameter for server1 is set");
+        // The value of 3 means there should be 3 audit entries available for the
+        // server1, two that indicate creation of the servers and one that we
+        // validate, which sets the global value.
+        testNewAuditEntry("dhcp6_global_parameter",
+                          AuditEntry::ModificationType::CREATE,
+                          "global parameter set",
+                          ServerSelector::ONE("server1"),
+                          3, 1);
+    }
+
 
     EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server2"),
                                                          global_parameter2));
+    {
+        SCOPED_TRACE("Global parameter for server2 is set");
+        // Same as in case of the server2, there should be 3 audit entries of
+        // which one we validate.
+        testNewAuditEntry("dhcp6_global_parameter",
+                          AuditEntry::ModificationType::CREATE,
+                          "global parameter set",
+                          ServerSelector::ONE("server2"),
+                          3, 1);
+    }
 
     // The last parameter is associated with all servers.
     EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ALL(),
                                                          global_parameter3));
+    {
+        SCOPED_TRACE("Global parameter for all servers is set");
+        // There should be one new audit entry for all servers. It indicates
+        // the insertion of the global value.
+        testNewAuditEntry("dhcp6_global_parameter",
+                          AuditEntry::ModificationType::CREATE,
+                          "global parameter set",
+                          ServerSelector::ALL(),
+                          1, 1);
+    }
 
     StampedValuePtr returned_global;
 
@@ -742,6 +809,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     );
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter1->getValue(), returned_global->getValue());
+
     ASSERT_EQ(1, returned_global->getServerTags().size());
     EXPECT_EQ("server1", returned_global->getServerTags()[0].get());
 
@@ -763,7 +831,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     EXPECT_NO_THROW(
         returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::
                                                            MULTIPLE({ "server1", "server2",
-                                                                       "server3"}));
+                                                                      "server3" }));
     );
     ASSERT_EQ(3, returned_globals.size());
 
@@ -793,7 +861,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     EXPECT_EQ("all", returned_global->getServerTags()[0].get());
 
     // Delete the server1. It should remove associations of this server with the
-    // global parameters.
+    // global parameter and the global parameter itself.
     EXPECT_NO_THROW(cbptr_->deleteServer6(ServerTag("server1")));
     EXPECT_NO_THROW(
         returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ONE("server1"))
@@ -806,6 +874,17 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
     ASSERT_EQ(1, returned_global->getServerTags().size());
     EXPECT_EQ("all", returned_global->getServerTags()[0].get());
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the global parameter after server deletion");
+        // We expect two new audit entries for the server1, one indicating that the
+        // server has been deleted and another one indicating that the corresponding
+        // global value has been deleted. We check the latter entry.
+        testNewAuditEntry("dhcp6_global_parameter",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting a server", ServerSelector::ONE("server1"),
+                          2, 1);
+    }
 
     // Attempt to delete global parameter for server1.
     uint64_t deleted_num = 0;
@@ -820,8 +899,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
                                                                  "global"));
     EXPECT_EQ(1, deleted_num);
 
+    // Create it again to test that deletion of all server removes this too.
+    EXPECT_NO_THROW(cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server2"),
+                                                         global_parameter2));
+
     // Delete all servers, except 'all'.
-    EXPECT_NO_THROW(cbptr_->deleteAllServers6());
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteAllServers6());
     EXPECT_NO_THROW(
         returned_globals = cbptr_->getAllGlobalParameters6(ServerSelector::ALL())
     );
@@ -833,6 +916,18 @@ TEST_F(MySqlConfigBackendDHCPv6Test, globalParameters6WithServerTags) {
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
     ASSERT_EQ(1, returned_global->getServerTags().size());
     EXPECT_EQ("all", returned_global->getServerTags()[0].get());
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the global parameter after deletion of"
+                     " all servers");
+        // There should be 4 new audit entries. One for deleting the global, one for
+        // re-creating it, one for deleting the server2 and one for deleting the
+        // global again as a result of deleting the server2.
+        testNewAuditEntry("dhcp6_global_parameter",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting all servers", ServerSelector::ONE("server2"),
+                          4, 1);
+    }
 }
 
 // This test verifies that all global parameters can be retrieved and deleted.
@@ -1449,7 +1544,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
 
         // That shared network overrides the first one so the audit entry should
         // indicate an update.
-        if ((network->getName() == "level1") && (!audit_entries_.empty())) {
+        if ((network->getName() == "level1") && (!audit_entries_["all"].empty())) {
             SCOPED_TRACE("UPDATE audit entry for the shared network " +
                          network->getName());
             testNewAuditEntry("dhcp6_shared_network",
@@ -1501,7 +1596,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
         SCOPED_TRACE("CREATE audit entry for subnets");
         testNewAuditEntry("dhcp6_subnet",
                           AuditEntry::ModificationType::CREATE,
-                          "subnet set", 3);
+                          "subnet set", ServerSelector::ALL(), 3);
     }
 
     // Deleting non-existing shared network should return 0.
@@ -1559,7 +1654,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
         // The last parameter indicates that we expect two new audit entries.
         testNewAuditEntry("dhcp6_shared_network",
                           AuditEntry::ModificationType::DELETE,
-                          "deleted all shared networks", 2);
+                          "deleted all shared networks",
+                          ServerSelector::ALL(), 2);
     }
 
     // Check that subnets are still there but detached.
@@ -1781,7 +1877,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
         // The last parameter indicates that we expect two new audit entries.
         testNewAuditEntry("dhcp6_option_def",
                           AuditEntry::ModificationType::DELETE,
-                          "deleted all option definitions", 2);
+                          "deleted all option definitions",
+                          ServerSelector::ALL(), 2);
     }
 }
 

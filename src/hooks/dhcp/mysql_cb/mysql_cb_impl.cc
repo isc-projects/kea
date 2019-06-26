@@ -968,59 +968,6 @@ MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
     transaction.commit();
 }
 
-uint64_t
-MySqlConfigBackendImpl::deleteServer(const int& create_audit_revision,
-                                     const int& delete_index,
-                                     const ServerTag& server_tag) {
-
-    // It is not allowed to delete 'all' logical server.
-    if (server_tag.amAll()) {
-        isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
-                  " associates the configuration elements with all servers connecting"
-                  " to the database and can't be deleted");
-    }
-
-    MySqlTransaction transaction(conn_);
-
-    // Create scoped audit revision. As long as this instance exists
-    // no new audit revisions are created in any subsequent calls.
-    ScopedAuditRevision
-        audit_revision(this, create_audit_revision,
-                       ServerSelector::ALL(), "deleting a server", false);
-
-    // Specify which server should be deleted.
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createString(server_tag.get())
-    };
-
-    // Attempt to delete the server.
-    auto count = conn_.updateDeleteQuery(delete_index, in_bindings);
-    transaction.commit();
-
-    return (count);
-}
-
-uint64_t
-MySqlConfigBackendImpl::deleteAllServers(const int& create_audit_revision,
-                                         const int& delete_index) {
-
-    MySqlTransaction transaction(conn_);
-
-    // Create scoped audit revision. As long as this instance exists
-    // no new audit revisions are created in any subsequent calls.
-    ScopedAuditRevision
-        audit_revision(this, create_audit_revision,
-                       ServerSelector::ALL(), "deleting all servers", false);
-
-    MySqlBindingCollection in_bindings;
-
-    // Attempt to delete the servers.
-    auto count = conn_.updateDeleteQuery(delete_index, in_bindings);
-    transaction.commit();
-
-    return (count);
-}
-
 std::string
 MySqlConfigBackendImpl::getType() const {
     return ("mysql");

@@ -650,30 +650,6 @@ public:
                             const int& update_index,
                             const db::ServerPtr& server);
 
-    /// @brief Attempts to delete a server having a given tag.
-    ///
-    /// @param create_audit_revision Index of the query inserting audit
-    /// revision.
-    /// @param create_index Index of the DELETE query to be executed.
-    /// @param server_tag Tag of the server to be deleted.
-    /// @return Number of deleted servers.
-    /// @throw isc::InvalidOperation when trying to delete the logical
-    /// server 'all'.
-    uint64_t deleteServer(const int& create_audit_revision, const int& index,
-                          const data::ServerTag& server_tag);
-
-    /// @brief Attempts to delete all servers.
-    ///
-    /// This method deletes all servers added by the user. It does not
-    /// delete the logical server 'all'.
-    ///
-    /// @param create_audit_revision Index of the query inserting audit
-    /// revision.
-    /// @param server_tag Tag of the server to be deleted.
-    /// @return Number of deleted servers.
-    uint64_t deleteAllServers(const int& create_audit_revision,
-                              const int& index);
-
     /// @brief Returns backend type in the textual format.
     ///
     /// @return "mysql".

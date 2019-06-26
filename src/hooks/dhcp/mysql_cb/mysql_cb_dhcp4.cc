@@ -104,6 +104,7 @@ public:
         UPDATE_SERVER4,
         DELETE_GLOBAL_PARAMETER4,
         DELETE_ALL_GLOBAL_PARAMETERS4,
+        DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED,
         DELETE_SUBNET4_ID,
         DELETE_SUBNET4_PREFIX,
         DELETE_ALL_SUBNETS4,
@@ -1893,6 +1894,86 @@ public:
                                     in_bindings));
     }
 
+    /// @brief Attempts to delete a server having a given tag.
+    ///
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    /// @throw isc::InvalidOperation when trying to delete the logical
+    /// server 'all'.
+    uint64_t deleteServer4(const data::ServerTag& server_tag) {
+        // It is not allowed to delete 'all' logical server.
+        if (server_tag.amAll()) {
+            isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
+                      " associates the configuration elements with all servers connecting"
+                      " to the database and can't be deleted");
+        }
+
+        MySqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           ServerSelector::ALL(), "deleting a server", false);
+
+        // Specify which server should be deleted.
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(server_tag.get())
+        };
+
+        // Attempt to delete the server.
+        auto count = conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::DELETE_SERVER4,
+                                             in_bindings);
+
+        // If we have deleted any servers we have to remove any dangling global
+        // parameters.
+        if (count > 0) {
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::
+                                    DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED,
+                                    MySqlBindingCollection());
+            /// @todo delete dangling options and option definitions.
+        }
+
+        transaction.commit();
+
+        return (count);
+    }
+
+    /// @brief Attempts to delete all servers.
+    ///
+    /// This method deletes all servers added by the user. It does not
+    /// delete the logical server 'all'.
+    ///
+    /// @return Number of deleted servers.
+    uint64_t deleteAllServers4() {
+        MySqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           ServerSelector::ALL(), "deleting all servers",
+                           false);
+
+        MySqlBindingCollection in_bindings;
+
+        // Attempt to delete the servers.
+        auto count = conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SERVERS4,
+                                             in_bindings);
+
+        // If we have deleted any servers we have to remove any dangling global
+        // parameters.
+        if (count > 0) {
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::
+                                    DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED,
+                                    MySqlBindingCollection());
+            /// @todo delete dangling options and option definitions.
+        }
+
+        transaction.commit();
+
+        return (count);
+    }
 };
 
 namespace {
@@ -2258,6 +2339,11 @@ TaggedStatementArray tagged_statements = { {
     // Delete all global parameters.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
       MYSQL_DELETE_GLOBAL_PARAMETER(dhcp4)
+    },
+
+    // Delete all global parameters which are unassigned to any servers.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED,
+      MYSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED(dhcp4)
     },
 
     // Delete subnet by id.
@@ -2844,9 +2930,7 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER4)
         .arg(server_tag.get());
-    uint64_t result = impl_->deleteServer(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
-                                          MySqlConfigBackendDHCPv4Impl::DELETE_SERVER4,
-                                          server_tag);
+    uint64_t result = impl_->deleteServer4(server_tag);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SERVER4_RESULT)
         .arg(result);
     return (result);
@@ -2855,8 +2939,7 @@ MySqlConfigBackendDHCPv4::deleteServer4(const ServerTag& server_tag) {
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllServers4() {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SERVERS4);
-    uint64_t result = impl_->deleteAllServers(MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
-                                              MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SERVERS4);
+    uint64_t result = impl_->deleteAllServers4();
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SERVERS4_RESULT)
         .arg(result);
     return (result);

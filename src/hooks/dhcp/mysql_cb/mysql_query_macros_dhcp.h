@@ -607,6 +607,14 @@ namespace {
     "WHERE s.tag = ? " #__VA_ARGS__
 #endif
 
+#ifndef MYSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED
+#define MYSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED(table_prefix, ...) \
+    "DELETE g FROM " #table_prefix "_global_parameter AS g " \
+    "LEFT JOIN " #table_prefix "_global_parameter_server AS a " \
+    "  ON g.id = a.parameter_id " \
+    "WHERE a.parameter_id IS NULL " #__VA_ARGS__
+#endif
+
 #ifndef MYSQL_DELETE_SUBNET
 #define MYSQL_DELETE_SUBNET(table_prefix, ...) \
     "DELETE s FROM " #table_prefix "_subnet AS s " \
