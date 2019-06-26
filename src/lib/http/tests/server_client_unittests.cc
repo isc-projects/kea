@@ -1394,6 +1394,7 @@ public:
         HttpResponseJsonPtr response1(new HttpResponseJson());
         unsigned resp_num = 0;
         ExternalMonitor monitor;
+
         ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
             [this, &resp_num](const boost::system::error_code& ec,
                               const HttpResponsePtr&,
@@ -1430,6 +1431,12 @@ public:
         // the server should queue another one.
         ASSERT_NO_THROW(runIOService());
 
+        // We should have had 2 connect invocations, no closes
+        // and a valid registered fd
+        EXPECT_EQ(2, monitor.connect_cnt_);
+        EXPECT_EQ(0, monitor.close_cnt_);
+        EXPECT_GT(monitor.registered_fd_, -1);
+
         // Make sure that the received responses are different. We check that by
         // comparing value of the sequence parameters.
         ASSERT_TRUE(response1);
@@ -1439,8 +1446,16 @@ public:
         ASSERT_TRUE(response2);
         ConstElementPtr sequence2 = response2->getJsonElement("sequence");
         ASSERT_TRUE(sequence2);
-
         EXPECT_NE(sequence1->intValue(), sequence2->intValue());
+
+        // Stopping the client the close the connection.
+        client.stop();
+
+        // We should have had 2 connect invocations, 1 closes
+        // and an invalid registered fd
+        EXPECT_EQ(2, monitor.connect_cnt_);
+        EXPECT_EQ(1, monitor.close_cnt_);
+        EXPECT_EQ(-1, monitor.registered_fd_);
     }
 
     /// @brief Simulates external registery of Connection TCP sockets
@@ -1450,12 +1465,14 @@ public:
     class ExternalMonitor {
     public:
         /// @breif Constructor
-        ExternalMonitor() : registered_fd_(-1) {};
+        ExternalMonitor()
+            : registered_fd_(-1), connect_cnt_(0), close_cnt_(0) {};
 
         /// @brief Connect callback handler
         /// @param ec Error status of the ASIO connect
         /// @param tcp_native_fd socket descriptor to register
         bool connectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
+            ++connect_cnt_;
             if (!ec || ec.value() == boost::asio::error::in_progress) {
                 if (tcp_native_fd >= 0) {
                     registered_fd_ = tcp_native_fd;
@@ -1482,6 +1499,7 @@ public:
         ///
         /// @param tcp_native_fd socket descriptor to register
         void closeHandler(int tcp_native_fd) {
+            ++close_cnt_;
             EXPECT_EQ(tcp_native_fd, registered_fd_) << "closeHandler fd mismatch";
             if (tcp_native_fd >= 0) {
                 registered_fd_ = -1;
@@ -1490,6 +1508,12 @@ public:
 
         /// @brief Keeps track of socket currently "registered" for external monitoring.
         int registered_fd_;
+
+        /// @brief Tracks how many times the connect callback is invoked.
+        int connect_cnt_;
+
+        /// @brief Tracks how many times the close callback is invoked.
+        int close_cnt_;
     };
 
     /// @brief Instance of the listener used in the tests.
