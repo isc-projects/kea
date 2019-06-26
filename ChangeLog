@@ -1,3 +1,7 @@
+1602.	[func]		fdupont
+	Added more information to sanity-checker log messages.
+	(Gitlab #685,!392, git 5367cd1196662739bbff5e99072ab6a55cfb0489)
+
 1601.	[func]		fdupont
 	Kea servers now add the lease validity lifetime to informational
 	lease allocation log messages.
