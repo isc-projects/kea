@@ -399,7 +399,7 @@ those which offered leases and continue allocation with that server.
 The first argument specifies the client and the transaction identification
 information. The second argument specifies the IPv4 address to be offered.
 
-% DHCP4_LEASE_ALLOC %1: lease %2 has been allocated for %3
+% DHCP4_LEASE_ALLOC %1: lease %2 has been allocated for %3 seconds
 This informational message indicates that the server successfully granted a
 lease in response to client's DHCPREQUEST message. The lease information will
 be sent to the client in the DHCPACK message. The first argument contains the
