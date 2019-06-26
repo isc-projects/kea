@@ -1502,6 +1502,9 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
 
     elif system in ['ubuntu', 'debian']:
+        if system == 'debian' and revision == '9':
+            # debian 9 does not support apt-installing over https, so install proper transport
+            install_pkgs('apt-transport-https', env=env, check_times=check_times)
         # install our freeradius-client but now from deb
         execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
         key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
