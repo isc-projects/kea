@@ -1621,7 +1621,19 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
 
 bool
 HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
-    if (!ec || ec.value() == boost::asio::error::in_progress) {
+    if (!ec || (ec.value() == boost::asio::error::in_progress)) {
+        if (ec && (ec.value() == boost::asio::error::in_progress)) {
+            std::cout << "connect in_progress : " << tcp_native_fd << std::endl;
+        }
+
+        if (tcp_native_fd < 0) {
+            // This really should not be possible, but just in case.
+            LOG_ERROR(ha_logger, HA_SERVICE_CONNECT_INVALID_SOCKET)
+                      .arg(ec.value());
+            return (false);
+        }
+   
+        // Register the socket with Interface Manager. 
         // External socket callback is a NOP. Ready events handlers are run by an
         // explicit call IOService ready in kea-dhcp<n> code. We are registering
         // the socket only to interrupt main-thread select().
@@ -1629,7 +1641,7 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
     }
 
     // If ec.value() == boost::asio::error::already_connected, we should already
-    // be registered, so nothing to do.  If it is any other value, than connect
+    // be registered, so nothing to do.  If it is any other value, then connect
     // failed and Connection logic should handle that, not us, so no matter
     // what happens we're returning true.
     return (true);

@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon Jun 24 2019 17:05
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jun 26 2019 09:25
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
@@ -61,6 +61,7 @@ extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE;
 extern const isc::log::MessageID HA_LOCAL_DHCP_ENABLE;
 extern const isc::log::MessageID HA_MISSING_CONFIGURATION;
 extern const isc::log::MessageID HA_SCOPES_HANDLER_FAILED;
+extern const isc::log::MessageID HA_SERVICE_CONNECT_INVALID_SOCKET;
 extern const isc::log::MessageID HA_SERVICE_STARTED;
 extern const isc::log::MessageID HA_STATE_MACHINE_CONTINUED;
 extern const isc::log::MessageID HA_STATE_MACHINE_PAUSED;

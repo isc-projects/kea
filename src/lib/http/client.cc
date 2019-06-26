@@ -233,6 +233,17 @@ private:
     /// @brief Local callback invoked when request timeout occurs.
     void timerCallback();
 
+    /// @brief Local callback invoked when the connection is closed.
+    ///
+    /// Invokes the close callback (if one), passing in the socket's
+    /// descriptor, when the connection's socket about to be closed.
+    /// The callback invocation is wrapped in a try-catch to ensure
+    /// exception safety.
+    ///
+    /// @param clear dictates whether or not the callback is discarded
+    /// after invocation. Defaults to false.
+    void closeCallback(const bool clear = false);
+
     /// @brief Pointer to the connection pool owning this connection.
     ///
     /// This is a weak pointer to avoid circular dependency between the
@@ -502,6 +513,23 @@ Connection::resetState() {
     current_callback_ = HttpClient::RequestHandler();
 }
 
+
+void
+Connection::closeCallback(const bool clear) {
+    if (close_callback_) {
+        try {
+            close_callback_(socket_.getNative());
+        } catch (...) {
+            LOG_ERROR(http_logger, HTTP_CONNECTION_CLOSE_CALLBACK_FAILED);
+        }
+    }
+
+    if (clear) {
+        close_callback_ = HttpClient::CloseHandler();
+    }
+}
+
+
 void
 Connection::doTransaction(const HttpRequestPtr& request,
                           const HttpResponsePtr& response,
@@ -529,9 +557,7 @@ Connection::doTransaction(const HttpRequestPtr& request,
         // data over this socket, when the peer may close the connection. In this
         // case we'll need to re-transmit but we don't handle it here.
         if (socket_.getASIOSocket().is_open() && !socket_.isUsable()) {
-            if (close_callback_) {
-                close_callback_(socket_.getNative());
-            }
+            closeCallback();
             socket_.close();
         }
 
@@ -568,11 +594,8 @@ Connection::doTransaction(const HttpRequestPtr& request,
 
 void
 Connection::close() {
-    if (close_callback_) {
-        close_callback_(socket_.getNative());
-        close_callback_ = HttpClient::CloseHandler();
-    }
-    
+    closeCallback(true);
+
     timer_.cancel();
     socket_.close();
     resetState();
@@ -667,7 +690,7 @@ Connection::terminate(const boost::system::error_code& ec,
     ConnectionPoolPtr conn_pool = conn_pool_.lock();
     if (conn_pool && conn_pool->getNextRequest(url_, request, response, request_timeout,
                                                callback, connect_callback, close_callback)) {
-        doTransaction(request, response, request_timeout, callback, 
+        doTransaction(request, response, request_timeout, callback,
                       connect_callback, close_callback);
     }
 }
