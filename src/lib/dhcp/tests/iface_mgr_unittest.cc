@@ -2931,7 +2931,7 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and purged, without affecting other sockets.
-// Tests uses receive4() without queuing..
+// Tests uses receive4() without queuing.
 TEST_F(IfaceMgrTest, purgeExternalSockets4Direct) {
     purgeExternalSockets4Test();
 }
@@ -2939,7 +2939,7 @@ TEST_F(IfaceMgrTest, purgeExternalSockets4Direct) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and purged, without affecting other sockets.
-// Tests uses receive4() with queuing..
+// Tests uses receive4() with queuing.
 TEST_F(IfaceMgrTest, purgeExternalSockets4Indirect) {
     purgeExternalSockets4Test(true);
 }
@@ -3114,7 +3114,7 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and purged, without affecting other sockets.
-// Tests uses receive6() without queuing..
+// Tests uses receive6() without queuing.
 TEST_F(IfaceMgrTest, purgeExternalSockets6Direct) {
     purgeExternalSockets6Test();
 }
@@ -3122,7 +3122,7 @@ TEST_F(IfaceMgrTest, purgeExternalSockets6Direct) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and purged, without affecting other sockets.
-// Tests uses receive6() with queuing..
+// Tests uses receive6() with queuing.
 TEST_F(IfaceMgrTest, purgeExternalSockets6Indirect) {
     purgeExternalSockets6Test(true);
 }
