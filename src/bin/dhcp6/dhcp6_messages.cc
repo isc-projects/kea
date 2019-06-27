@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 27 2019 19:57
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 27 2019 20:26
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -97,6 +97,7 @@ extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL = "DHCP6_PACKET_PROCE
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION = "DHCP6_PACKET_PROCESS_STD_EXCEPTION";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED = "DHCP6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL = "DHCP6_PACKET_RECEIVE_FAIL";
+extern const isc::log::MessageID DHCP6_PACKET_SEND = "DHCP6_PACKET_SEND";
 extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL = "DHCP6_PACKET_SEND_FAIL";
 extern const isc::log::MessageID DHCP6_PACK_FAIL = "DHCP6_PACK_FAIL";
 extern const isc::log::MessageID DHCP6_PARSER_COMMIT_EXCEPTION = "DHCP6_PARSER_COMMIT_EXCEPTION";
@@ -238,6 +239,7 @@ const char* values[] = {
     "DHCP6_PACKET_PROCESS_STD_EXCEPTION", "exception occurred during packet processing: %1",
     "DHCP6_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP6_PACKET_RECEIVE_FAIL", "error on attempt to receive packet: %1",
+    "DHCP6_PACKET_SEND", "%1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8",
     "DHCP6_PACKET_SEND_FAIL", "failed to send DHCPv6 packet: %1",
     "DHCP6_PACK_FAIL", "failed to assemble response correctly",
     "DHCP6_PARSER_COMMIT_EXCEPTION", "parser failed to commit changes",

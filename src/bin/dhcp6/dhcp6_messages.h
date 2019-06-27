@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 27 2019 19:57
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 27 2019 20:26
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -98,6 +98,7 @@ extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL;
+extern const isc::log::MessageID DHCP6_PACKET_SEND;
 extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL;
 extern const isc::log::MessageID DHCP6_PACK_FAIL;
 extern const isc::log::MessageID DHCP6_PARSER_COMMIT_EXCEPTION;

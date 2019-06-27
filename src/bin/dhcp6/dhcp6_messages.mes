@@ -555,6 +555,12 @@ The IPv6 DHCP server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
 
+% DHCP6_PACKET_SEND %1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8
+The arguments specify the client identification information (HW address
+and client identifier), DHCP message name and type, source IPv6
+address and port, destination IPv6 address and port and the
+interface name.
+
 % DHCP6_PACKET_SEND_FAIL failed to send DHCPv6 packet: %1
 This error is output if the IPv6 DHCP server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the

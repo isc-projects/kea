@@ -997,6 +997,16 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
             callout_handle->getArgument("response6", rsp);
         }
 
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_SEND)
+          .arg(rsp->getLabel())
+          .arg(rsp->getName())
+          .arg(static_cast<int>(rsp->getType()))
+          .arg(rsp->getLocalAddr().isV6Zero() ? "*" : rsp->getLocalAddr().toText())
+          .arg(rsp->getLocalPort())
+          .arg(rsp->getRemoteAddr())
+          .arg(rsp->getRemotePort())
+          .arg(rsp->getIface());
+
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
             .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
