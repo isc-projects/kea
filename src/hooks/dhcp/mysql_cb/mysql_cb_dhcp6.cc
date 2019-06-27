@@ -2219,7 +2219,7 @@ public:
         if (server_tag.amAll()) {
             isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
                       " associates the configuration elements with all servers connecting"
-                      " to the database and can't be deleted");
+                      " to the database and may not be deleted");
         }
 
         MySqlTransaction transaction(conn_);
