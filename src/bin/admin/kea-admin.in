@@ -15,9 +15,7 @@
 
 
 # Get the location of the kea-admin scripts
-prefix=@prefix@
-export prefix
-SCRIPTS_DIR_DEFAULT=@datarootdir@/@PACKAGE@/scripts
+SCRIPTS_DIR_DEFAULT=@x_datarootdir@/@PACKAGE@/scripts
 scripts_dir=${SCRIPTS_DIR_DEFAULT}
 VERSION=@PACKAGE_VERSION@
 
@@ -35,9 +33,8 @@ dump_qry=""
 
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
-# shellcheck disable=SC1091
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+if [ -e @x_datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @x_datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
     . @abs_top_srcdir@/src/bin/admin/admin-utils.sh
 fi

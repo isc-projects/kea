@@ -2,8 +2,8 @@
 
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+if [ -e @x_datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @x_datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
     . @abs_top_builddir@/src/bin/admin/admin-utils.sh
 fi
@@ -28,7 +28,7 @@ dhcp4_client_classes VARCHAR(255) NULL ,
 dhcp6_client_classes VARCHAR(255) NULL ,
 PRIMARY KEY (host_id) ,
 INDEX key_dhcp4_identifier_subnet_id (dhcp_identifier ASC, dhcp_identifier_type ASC) ,
-INDEX key_dhcp6_identifier_subnet_id (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC) 
+INDEX key_dhcp6_identifier_subnet_id (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
 ) ENGINE = INNODB;
 
 CREATE TABLE IF NOT EXISTS ipv6_reservations (

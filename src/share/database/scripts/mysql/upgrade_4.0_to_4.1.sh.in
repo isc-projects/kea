@@ -2,8 +2,8 @@
 
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+if [ -e @x_datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @x_datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
 else
     . @abs_top_builddir@/src/bin/admin/admin-utils.sh
 fi
@@ -22,7 +22,7 @@ mysql "$@" <<EOF
 INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 #
-# Add order by lease address to lease4DumpData 
+# Add order by lease address to lease4DumpData
 #
 DROP PROCEDURE IF EXISTS lease4DumpData;
 DELIMITER $$
@@ -47,7 +47,7 @@ END $$
 DELIMITER ;
 
 #
-# Add order by lease address to lease6DumpData 
+# Add order by lease address to lease6DumpData
 #
 DROP PROCEDURE IF EXISTS lease6DumpData;
 DELIMITER $$

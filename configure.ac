@@ -1536,10 +1536,15 @@ if test "x$runstatedir" = "x"; then
     runstatedir="$localstatedir/run"
 fi
 
-# Expand runstatedir to remove ${localstatedir} from it
-if (echo ${runstatedir} | grep -q localstatedir); then
-    runstatedir="$(eval echo ${runstatedir})"
-fi
+adl_RECURSIVE_EVAL([${runstatedir}], [x_runstatedir])
+AC_SUBST(x_runstatedir)
+adl_RECURSIVE_EVAL([${datarootdir}], [x_datarootdir])
+AC_SUBST(x_datarootdir)
+adl_RECURSIVE_EVAL([${localstatedir}], [x_localstatedir])
+AC_SUBST(x_localstatedir)
+adl_RECURSIVE_EVAL([${sysconfdir}], [x_sysconfdir])
+AC_SUBST(x_sysconfdir)
+
 
 AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile

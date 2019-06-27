@@ -101,7 +101,7 @@ get_pid_from_file() {
 
     # Default the directory to --localstatedir / run
     local pid_file_dir
-    pid_file_dir=@runstatedir@/@PACKAGE@
+    pid_file_dir=@x_runstatedir@/@PACKAGE@
 
     # Use directory override if set (primarily for testing only)
     if [ -n "$KEA_PIDFILE_DIR" ]; then
@@ -332,8 +332,7 @@ run_conditional() {
 # altered and only the handful of initial messages will be logged
 # to the default file.
 if [ -z "${KEA_LOGGER_DESTINATION}" ]; then
-    prefix=@prefix@
-    export KEA_LOGGER_DESTINATION=@localstatedir@/log/kea.log
+    export KEA_LOGGER_DESTINATION=@x_localstatedir@/log/kea.log
 fi
 
 command=${1}
@@ -356,13 +355,7 @@ if [ ${_inlist} -eq 0 ]; then
 fi
 
 # Get the location of the keactrl configuration file.
-# Need to disable a false positive from shellcheck. Yes, prefix is used.
-# shellcheck disable=SC2034
-prefix=@prefix@
-# Avoid problem with localstatedir / runstatedir
-# shellcheck disable=SC2034
-localstatedir=@localstatedir@
-keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
+keactrl_conf=@x_sysconfdir@/@PACKAGE@/keactrl.conf
 
 servers="all"
 
