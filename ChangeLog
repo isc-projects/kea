@@ -1,3 +1,8 @@
+1604.	[bug]		fdupont
+	Improved configuration failure messages when the problem is
+	from the configuration backend and not the configuration file.
+	(Gitlab #616,!379, git 637e9f03cc502068822ab0310f2e070d4a4da339)
+
 1603.	[perf]		tmark
 	High Availability now registers its HTTP sockets with Interface
 	Manager's main thread allowing the thread can monitor them for
