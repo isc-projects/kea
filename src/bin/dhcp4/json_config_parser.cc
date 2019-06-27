@@ -674,7 +674,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         catch (const isc::Exception& ex) {
             std::ostringstream err;
             err << "during update from config backend database: " << ex.what();
-            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg((err.str()));
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
             rollback = true;
         } catch (...) {
@@ -682,7 +682,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             std::ostringstream err;
             err << "during update from config backend database: "
                 << "undefined configuration parsing error";
-            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL);
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
             rollback = true;
         }
