@@ -938,7 +938,7 @@ MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
     if (server->getServerTag().amAll()) {
         isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
                   " associates the configuration elements with all servers connecting"
-                  " to the database and a server with this name nay not be created");
+                  " to the database and a server with this name may not be created");
     }
 
     // Create scoped audit revision. As long as this instance exists
