@@ -1,3 +1,10 @@
+1605.	[func]		marcin
+	Extended mysql_cb hooks library to support new API calls for
+	managing the DHCP servers in the database. In addition, added
+	support for associating the global parameters with the server
+	tags.
+	(Gitlab #642,!373, git 8ca1021809a6c44cf8a6589a959e94ca9ca76c29)
+
 1604.	[bug]		fdupont
 	Improved configuration failure messages when the problem is
 	from the configuration backend and not the configuration file.
