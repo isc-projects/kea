@@ -3,7 +3,7 @@
 	Manager's main thread allowing the thread can monitor them for
 	IO readiness. This should improve the responsiveness of HA peers
 	to each other.
-	(Gitlab #691,!395, git TBD)
+	(Gitlab #691,!395, git 4a0b024bc6d83b26fe702d95ee7ce0c914b37d8e)
 
 1602.	[func]		fdupont
 	Added more information to sanity-checker log messages.
