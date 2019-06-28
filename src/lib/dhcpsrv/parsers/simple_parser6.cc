@@ -146,6 +146,18 @@ const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
     { "re-detect", Element::boolean, "true" }
 };
 
+/// @brief This table defines default values for dhcp-queue-control in DHCPv4.
+const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
+    { "enable-queue",   Element::boolean, "false"},
+    { "queue-type", Element::string,  "kea-ring6"},
+    { "capacity",  Element::integer, "500"}
+};
+
+/// @brief This defines default values for sanity checking for DHCPv6.
+const SimpleDefaults SimpleParser6::SANITY_CHECKS6_DEFAULTS = {
+    { "lease-checks", Element::string, "warn" }
+};
+
 /// @brief List of parameters that can be inherited from the global to subnet6 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp6) and
@@ -174,14 +186,6 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "t1-percent",
     "t2-percent"
 };
-
-/// @brief This table defines default values for dhcp-queue-control in DHCPv4.
-const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
-    { "enable-queue",   Element::boolean, "false"},
-    { "queue-type", Element::string,  "kea-ring6"},
-    { "capacity",  Element::integer, "500"}
-};
-
 
 /// @}
 
@@ -250,6 +254,18 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
     }
 
     cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL6_DEFAULTS);
+
+    // Set the defaults for sanity-checks.  If the element isn't
+    // there we'll add it.
+    ConstElementPtr sanity_checks = global->get("sanity-checks");
+    if (sanity_checks) {
+        mutable_cfg = boost::const_pointer_cast<Element>(sanity_checks);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("sanity-checks", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, SANITY_CHECKS6_DEFAULTS);
 
     return (cnt);
 }

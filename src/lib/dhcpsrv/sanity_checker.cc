@@ -5,7 +5,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <dhcpsrv/sanity_checker.h>
 #include <dhcpsrv/cfg_consistency.h>
-#include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -14,6 +13,22 @@
 namespace isc {
 namespace dhcp {
 
+bool SanityChecker::leaseCheckingEnabled(bool current) {
+    SrvConfigPtr cfg;
+    if (current) {
+        cfg = CfgMgr::instance().getCurrentCfg();
+    } else {
+        cfg = CfgMgr::instance().getStagingCfg();
+    }
+
+    if (cfg) {
+        CfgConsistencyPtr sanity = cfg->getConsistency();
+        return (sanity && (sanity->getLeaseSanityCheck() != CfgConsistency::LEASE_CHECK_NONE));
+    }
+
+    return (false);
+}
+
 void SanityChecker::checkLease(Lease4Ptr& lease, bool current) {
     SrvConfigPtr cfg;
     if (current) {
@@ -21,7 +36,13 @@ void SanityChecker::checkLease(Lease4Ptr& lease, bool current) {
     } else {
         cfg = CfgMgr::instance().getStagingCfg();
     }
+
     CfgConsistencyPtr sanity = cfg->getConsistency();
+    if (sanity->getLeaseSanityCheck() == CfgConsistency::LEASE_CHECK_NONE) {
+        // No sense going farther.
+        return;
+    }
+
     CfgSubnets4Ptr subnets = cfg->getCfgSubnets4();
     checkLeaseInternal(lease, sanity, subnets);
 }
@@ -39,6 +60,11 @@ void SanityChecker::checkLease(Lease6Ptr& lease, bool current) {
         cfg = CfgMgr::instance().getStagingCfg();
     }
     CfgConsistencyPtr sanity = cfg->getConsistency();
+    if (sanity->getLeaseSanityCheck() == CfgConsistency::LEASE_CHECK_NONE) {
+        // No sense going farther.
+        return;
+    }
+
     CfgSubnets6Ptr subnets = cfg->getCfgSubnets6();
     checkLeaseInternal(lease, sanity, subnets);
 }
@@ -47,12 +73,7 @@ template<typename LeasePtrType, typename SubnetsType>
 void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistencyPtr& checks,
                                const SubnetsType& subnets) {
 
-    if (checks->getLeaseSanityCheck() == CfgConsistency::LEASE_CHECK_NONE) {
-        return;
-    }
-
     auto subnet = subnets->getBySubnetId(lease->subnet_id_);
-
     if (subnet && subnet->inRange(lease->addr_)) {
 
         // If the subnet is defined and the address is in range, we're good.
@@ -147,8 +168,6 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
 
 template<typename LeaseType, typename SubnetsType>
 SubnetID SanityChecker::findSubnetId(const LeaseType& lease, const SubnetsType& subnets) {
-    //CfgSubnets4Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-
     auto subnet = subnets->selectSubnet(lease->addr_);
     if (!subnet) {
         return (0);

@@ -47,6 +47,7 @@ public:
     static const isc::data::SimpleDefaults SHARED_NETWORK6_DEFAULTS;
     static const isc::data::SimpleDefaults IFACE6_DEFAULTS;
     static const isc::data::SimpleDefaults DHCP_QUEUE_CONTROL6_DEFAULTS;
+    static const isc::data::SimpleDefaults SANITY_CHECKS6_DEFAULTS;
     static const isc::data::ParamsList INHERIT_TO_SUBNET6;
 };
 

@@ -44,6 +44,14 @@ class SanityChecker {
     ///                config
     void checkLease(Lease6Ptr& lease, bool current = true);
 
+    /// @brief Indicates the specified configuration enables lease sanity checking.
+    ///
+    /// @param current specifies whether to use current (true) or staging(false)
+    /// server configuration
+    /// @return true if the sanity-checks/lease-checks parameter value (see
+    /// @ref CfgConsistency for details) is not CfgConsistency::LEASE_CHECK_NONE.
+    static bool leaseCheckingEnabled(bool current = true);
+
  private:
 
     /// @brief Internal implementation for checkLease command

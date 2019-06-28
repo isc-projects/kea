@@ -159,9 +159,9 @@ TEST_F(SanityChecksTest, leaseCheck) {
 
     SrvConfig cfg;
 
-    // The default should be to warn about inconsistency.
+    // The default should be to none.
     EXPECT_EQ(cfg.getConsistency()->getLeaseSanityCheck(),
-              CfgConsistency::LEASE_CHECK_WARN);
+              CfgConsistency::LEASE_CHECK_NONE);
 
     parserCheck(cfg, valid1, false, CfgConsistency::LEASE_CHECK_NONE);
     parserCheck(cfg, valid2, false, CfgConsistency::LEASE_CHECK_WARN);

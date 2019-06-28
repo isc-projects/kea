@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <util/versioned_csv_file.h>
 #include <dhcpsrv/sanity_checker.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -86,7 +87,14 @@ public:
         lease_file.close();
         lease_file.open();
 
-        SanityChecker lease_checker;
+        // Create lease sanity checker if checking is enabled.
+        boost::scoped_ptr<SanityChecker> lease_checker;
+        if (SanityChecker::leaseCheckingEnabled(false)) {
+            // Since lease file is loaded during the configuration,
+            // we have to use staging config, rather than current
+            // config for this (false = staging).
+            lease_checker.reset(new SanityChecker());
+        }
 
         boost::shared_ptr<LeaseObjectType> lease;
         // Track the number of corrupted leases.
@@ -125,12 +133,15 @@ public:
                           DHCPSRV_MEMFILE_LEASE_LOAD)
                     .arg(lease->toText());
 
-                // Now see if we need to sanitize this lease. As lease file is
-                // loaded during the configuration, we have to use staging config,
-                // rather than current config for this (false = staging).
-                lease_checker.checkLease(lease, false);
-                if (!lease) {
-                    continue;
+                if (lease_checker)  {
+                    // If the lease is insane the checker will rese the lease pointer.
+                    // As lease file is loaded during the configuration, we have
+                    // to use staging config, rather than current config for this
+                    // (false = staging).
+                    lease_checker->checkLease(lease, false);
+                    if (!lease) {
+                        continue;
+                    }
                 }
 
                 // Check if this lease exists.
