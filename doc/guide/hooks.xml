@@ -1027,7 +1027,7 @@ Examples:
           To use this functionality the hook library must be included in the
           configuration of the desired DHCP server modules. The legal_log
           library is installed alongside the Kea libraries in
-          <filename>[kea-install-dir]/lib</filename> where
+          <filename>[kea-install-dir]/var/lib/kea</filename> where
           <filename>kea-install-dir</filename> is determined by the
           "--prefix" option of the configure script.  It defaults to
           <filename>/usr/local</filename>.  Assuming the
@@ -1037,7 +1037,7 @@ Examples:
 "Dhcp4": { <userinput>
     "hooks-libraries": [
         {
-            "library": "/usr/local/lib/libdhcp_legal_log.so",
+            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
                 "path": "/var/lib/kea/log",
                 "base-name": "kea-forensic4"
@@ -1054,7 +1054,7 @@ Examples:
 "Dhcp6": { <userinput>
     "hooks-libraries": [
         {
-            "library": "/usr/local/lib/libdhcp_legal_log.so",
+            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
                 "path": "/var/lib/kea/log",
                 "base-name": "kea-forensic6"
@@ -1071,7 +1071,7 @@ Examples:
             <listitem><para>
             path - the directory in which the forensic file(s) will be written.  The
             default value is
-            <filename>[prefix]/kea/var</filename>.  The directory must exist.
+            <filename>[prefix]/var/lib/kea</filename>.  The directory must exist.
             </para></listitem>
             <listitem><para>
             base-name - an arbitrary value which is used in conjunction with
