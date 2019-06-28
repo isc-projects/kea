@@ -524,7 +524,7 @@ TEST_F(CBControlBaseTest, fetchFromServer) {
     // correct.
     auto tags = cb_ctl_.getServerSelector().getTags();
     ASSERT_EQ(1, tags.size());
-    EXPECT_EQ("a-tag", *tags.begin());
+    EXPECT_EQ("a-tag", tags.begin()->get());
 }
 
 // This test verifies that incremental configuration changes can be

@@ -50,11 +50,29 @@ public:
         return (tag_);
     }
 
+    /// @brief Overload of the less operator for using @c ServerTag in sets.
+    ///
+    /// @param other other server tag to compare to.
+    /// @return true if this server tag is less than the other server tag.
+    bool operator<(const ServerTag& other) const {
+        return (tag_ < other.tag_);
+    }
+
 private:
 
     /// @brief Holds server tag as string.
     std::string tag_;
 };
+
+/// @brief Insert the @c ServerTag as a string into stream.
+///
+/// @param os stream to insert server tag into.
+/// @param server_tag server tag to be converted to text and
+/// inserted into a stream.
+/// @return Reference to the stream object with inserted server
+/// tag.
+std::ostream&
+operator<<(std::ostream& os, const ServerTag& server_tag);
 
 } // end of namespace isc::data
 } // end of namespace isc

@@ -143,10 +143,10 @@ public:
                                         const std::string& name) {
         StampedValueCollection parameters;
 
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(name)
             };
 
@@ -529,10 +529,10 @@ public:
                           const SubnetID& subnet_id) {
         Subnet4Collection subnets;
 
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createInteger<uint32_t>(subnet_id)
             };
 
@@ -555,10 +555,10 @@ public:
                           const std::string& subnet_prefix) {
         Subnet4Collection subnets;
 
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(subnet_prefix)
             };
 
@@ -575,11 +575,11 @@ public:
     /// subnets should be inserted.
     void getAllSubnets4(const ServerSelector& server_selector,
                         Subnet4Collection& subnets) {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
 
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag)
+                MySqlBinding::createString(tag.get())
             };
 
             getSubnets4(GET_ALL_SUBNETS4, in_bindings, subnets);
@@ -595,11 +595,11 @@ public:
     void getModifiedSubnets4(const ServerSelector& server_selector,
                              const boost::posix_time::ptime& modification_ts,
                              Subnet4Collection& subnets) {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
 
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createTimestamp(modification_ts)
             };
 
@@ -617,11 +617,11 @@ public:
     void getSharedNetworkSubnets4(const ServerSelector& server_selector,
                                   const std::string& shared_network_name,
                                   Subnet4Collection& subnets) {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
 
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(shared_network_name)
             };
 
@@ -1252,11 +1252,11 @@ public:
     /// structure where shared networks should be inserted.
     void getAllSharedNetworks4(const ServerSelector& server_selector,
                                SharedNetwork4Collection& shared_networks) {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
 
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag)
+                MySqlBinding::createString(tag.get())
             };
 
             getSharedNetworks4(GET_ALL_SHARED_NETWORKS4, in_bindings, shared_networks);
@@ -1272,11 +1272,11 @@ public:
     void getModifiedSharedNetworks4(const ServerSelector& server_selector,
                                     const boost::posix_time::ptime& modification_ts,
                                     SharedNetwork4Collection& shared_networks) {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
 
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createTimestamp(modification_ts)
             };
 
@@ -1407,7 +1407,7 @@ public:
         // a server into the dhcp4_options_server table.
         MySqlBindingCollection in_server_bindings = {
             MySqlBinding::createInteger<uint64_t>(id), // option_id
-            MySqlBinding::createString(*getServerTags(server_selector).begin()), // server_tag
+            MySqlBinding::createString(server_selector.getTags().begin()->get()), // server_tag
             in_bindings[11] // copy modification timestamp from option
         };
 
@@ -2609,9 +2609,9 @@ StampedValueCollection
 MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_selector) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4);
     StampedValueCollection parameters;
-    auto tags = impl_->getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
-        MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag) };
+        MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag.get()) };
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
                                    in_bindings, parameters);
     }
@@ -2626,10 +2626,10 @@ MySqlConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector&
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4)
         .arg(util::ptimeToText(modification_time));
     StampedValueCollection parameters;
-    auto tags = impl_->getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
         impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,

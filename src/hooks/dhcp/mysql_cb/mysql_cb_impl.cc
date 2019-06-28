@@ -193,13 +193,13 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
         MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH) // log_message
     };
 
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
 
     for (auto tag : tags) {
 
         // There is only one input binding, modification time.
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
 
@@ -341,10 +341,10 @@ void
 MySqlConfigBackendImpl::getAllOptionDefs(const int index,
                      const ServerSelector& server_selector,
                      OptionDefContainer& option_defs) {
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag)
+            MySqlBinding::createString(tag.get())
         };
         getOptionDefs(index, in_bindings, option_defs);
     }
@@ -355,10 +355,10 @@ MySqlConfigBackendImpl::getModifiedOptionDefs(const int index,
                                               const ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time,
                                               OptionDefContainer& option_defs) {
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
         getOptionDefs(index, in_bindings, option_defs);
@@ -587,10 +587,10 @@ MySqlConfigBackendImpl::getAllOptions(const int index,
                                       const ServerSelector& server_selector) {
     OptionContainer options;
 
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag)
+            MySqlBinding::createString(tag.get())
         };
         getOptions(index, in_bindings, universe, options);
     }
@@ -605,10 +605,10 @@ MySqlConfigBackendImpl::getModifiedOptions(const int index,
                                            const boost::posix_time::ptime& modification_time) {
     OptionContainer options;
 
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
         getOptions(index, in_bindings, universe, options);

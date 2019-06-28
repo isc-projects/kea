@@ -185,11 +185,26 @@ TestConfigBackendDHCPv6::getModifiedOptions6(const db::ServerSelector& /* server
 }
 
 StampedValuePtr
-TestConfigBackendDHCPv6::getGlobalParameter6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::getGlobalParameter6(const db::ServerSelector& server_selector,
                                              const std::string& name) const {
     const auto& index = globals_.get<StampedValueNameIndexTag>();
-    auto global_it = index.find(name);
-    return ((global_it != index.cend()) ? (*global_it) : StampedValuePtr());
+    auto global_range = index.equal_range(name);
+    for (auto global_it = global_range.first; global_it != global_range.second;
+         ++global_it) {
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if ((*global_it)->hasServerTag(ServerTag(tag))) {
+                return (*global_it);
+            }
+        }
+    }
+
+    auto global_all_it = index.find(name);
+    if ((global_all_it != index.end()) && ((*global_all_it)->hasAllServerTag())) {
+        return (*global_all_it);
+    }
+
+    return (StampedValuePtr());
 }
 
 
@@ -373,14 +388,18 @@ TestConfigBackendDHCPv6::createUpdateGlobalParameter6(const db::ServerSelector& 
     value->setServerTag(getServerTag(server_selector));
 
     auto& index = globals_.get<StampedValueNameIndexTag>();
-    auto global_it = index.find(value->getName());
+    auto global_it_pair = index.equal_range(value->getName());
 
-    if (global_it != index.end()) {
-        index.replace(global_it, value);
-
-    } else {
-        index.insert(value);
+    for (auto global_it = global_it_pair.first; global_it != global_it_pair.second;
+         ++global_it) {
+        auto existing_value = *global_it;
+        if (existing_value->hasServerTag(ServerTag(getServerTag(server_selector)))) {
+            index.replace(global_it, value);
+            return;
+        }
     }
+
+    index.insert(value);
 }
 
 void
@@ -573,10 +592,20 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& /* server_selec
 }
 
 uint64_t
-TestConfigBackendDHCPv6::deleteGlobalParameter6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::deleteGlobalParameter6(const db::ServerSelector& server_selector,
                                                 const std::string& name) {
     auto& index = globals_.get<StampedValueNameIndexTag>();
-    return (index.erase(name));
+    auto global_it_pair = index.equal_range(name);
+
+    for (auto global_it = global_it_pair.first; global_it != global_it_pair.second;
+         ++global_it) {
+        auto value = *global_it;
+        if (value->hasServerTag(ServerTag(getServerTag(server_selector)))) {
+            index.erase(global_it);
+            return (1);
+        }
+    }
+    return (0);
 }
 
 uint64_t

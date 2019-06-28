@@ -164,25 +164,6 @@ public:
                                            const db::MySqlBindingPtr& min_binding,
                                            const db::MySqlBindingPtr& max_binding);
 
-    /// @brief Returns server tags associated with the particular selector.
-    ///
-    /// @param server_selector Server selector.
-    /// @return Set of server tags.
-    std::set<std::string> getServerTags(const db::ServerSelector& server_selector) const {
-        std::set<std::string> tags;
-        switch (server_selector.getType()) {
-        case db::ServerSelector::Type::ALL:
-            tags.insert("all");
-            return (tags);
-
-        default:
-            return (server_selector.getTags());
-        }
-
-        // Unassigned server case.
-        return (tags);
-    }
-
     /// @brief Returns server tag associated with the particular selector.
     ///
     /// This method expects that there is exactly one server tag associated with
@@ -196,14 +177,14 @@ public:
     /// is more than one server tag associated with the selector.
     std::string getServerTag(const db::ServerSelector& server_selector,
                              const std::string& operation) const {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         if (tags.size() != 1) {
             isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
                       " while " << operation << ". Got: "
                       << getServerTagsAsText(server_selector));
         }
 
-        return (*tags.begin());
+        return (tags.begin()->get());
     }
 
     /// @brief Returns server tags associated with the particular selector
@@ -212,12 +193,12 @@ public:
     /// This method is useful for logging purposes.
     std::string getServerTagsAsText(const db::ServerSelector& server_selector) const {
         std::ostringstream s;
-        auto server_tags = getServerTags(server_selector);
+        auto server_tags = server_selector.getTags();
         for (auto tag : server_tags) {
             if (s.tellp() != 0) {
                 s << ", ";
             }
-            s << tag;
+            s << tag.get();
         }
 
         return (s.str());

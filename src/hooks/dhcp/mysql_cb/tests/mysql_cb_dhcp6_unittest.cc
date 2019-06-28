@@ -432,7 +432,7 @@ public:
 
             } else if (tags.size() == 1) {
                 // Get the server tag for which we run the current test.
-                tag = *tags.begin();
+                tag = tags.begin()->get();
             }
         }
 

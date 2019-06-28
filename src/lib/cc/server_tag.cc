@@ -35,5 +35,11 @@ ServerTag::amAll() const {
     return (tag_ == ALL);
 }
 
+std::ostream&
+operator<<(std::ostream& os, const ServerTag& server_tag) {
+    os << server_tag.get();
+    return (os);
+}
+
 } // end of namespace isc::data
 } // end of namespace isc

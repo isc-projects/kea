@@ -20,7 +20,7 @@ libkea_database_la_SOURCES += db_log.cc db_log.h
 libkea_database_la_SOURCES += db_messages.cc db_messages.h
 libkea_database_la_SOURCES += server.cc server.h
 libkea_database_la_SOURCES += server_collection.cc server_collection.h
-libkea_database_la_SOURCES += server_selector.h
+libkea_database_la_SOURCES += server_selector.cc server_selector.h
 
 libkea_database_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

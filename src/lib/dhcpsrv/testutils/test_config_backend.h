@@ -79,9 +79,9 @@ public:
             return ("all");
         }
         // Return first tag found.
-        std::set<std::string> tags = server_selector.getTags();
+        auto tags = server_selector.getTags();
         if (!tags.empty()) {
-            return (*tags.begin());
+            return (tags.begin()->get());
         }
         return ("");
     }
