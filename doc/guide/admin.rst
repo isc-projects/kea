@@ -28,11 +28,11 @@ PostgreSQL.
 Backend versions are specified in a major.minor format. The minor number
 is increased when there are backwards-compatible changes introduced; for
 example, the addition of a new index. It is desirable but not mandatory
-to apply such a change; you can run an older backend version if you want
-to. (Although, in the example given, running without the new index may
+to apply such a change; running an older backend version is possible.
+(Although, in the example given, running without the new index may
 introduce a performance penalty.) On the other hand, the
 major number is increased when an incompatible change is introduced; for
-example, an extra column is added to a table. If you try to run Kea on a
+example, an extra column is added to a table. If Kea is run on a
 backend that is too old (as signified by a mismatched backend major
 version number), Kea will refuse to run; administrative action will be
 required to upgrade the backend.
@@ -80,7 +80,7 @@ supported types are:
 
 -  ``cql`` — Information is stored in an Apache Cassandra database.
 
-Additional parameters may be needed, depending on your setup and
+Additional parameters may be needed, depending on the setup and
 specific operation: username, password, and database name or the
 directory where specific files are located. See the appropriate manual
 page for details (``man 8 kea-admin``).
@@ -93,7 +93,7 @@ Supported Backends
 The following table presents the capabilities of available backends.
 Please refer to the specific sections dedicated to each backend to
 better understand their capabilities and limitations. Choosing the right
-backend may be essential for the success of your deployment.
+backend may be essential for the success of the deployment.
 
 .. table:: List of available backends
 
@@ -152,9 +152,8 @@ newer versions of Kea, it can also be used for downgrading should the
 need arise. When upgrading, any values not present in the original lease
 files will be assigned appropriate default values. When downgrading, any
 data present in the files but not in the server's schema will be
-dropped. If you wish to convert the files manually prior to starting the
-servers, you may do so by running the LFC process yourself. See
-:ref:`kea-lfc` for more information.
+dropped. To convert the files manually prior to starting the
+servers, run the LFC process. See :ref:`kea-lfc` for more information.
 
 .. _mysql-database:
 
@@ -164,17 +163,17 @@ MySQL
 MySQL is able to store leases, host reservations, options defined on a
 per-host basis, and a subset of the server configuration parameters
 (serving as a configuration backend). This section can be safely ignored
-if you choose to store the data in other backends.
+if the data will be stored in other backends.
 
 .. _mysql-database-create:
 
 First-Time Creation of the MySQL Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you are setting the MySQL database for the first time, you need to
-create the database area within MySQL and set up the MySQL user ID under
-which Kea will access the database. This needs to be done manually;
-``kea-admin`` cannot do this for you.
+When setting up the MySQL database for the first time, the
+database area must be created within MySQL, and the MySQL user ID under
+which Kea will access the database must be set up. This needs to be done manually,
+rather than via ``kea-admin``.
 
 To create the database:
 
@@ -192,7 +191,7 @@ To create the database:
 
       mysql> CREATE DATABASE database-name;
 
-   (database-name is the name you have chosen for the database.)
+   (database-name is the name chosen for the database.)
 
 3. Create the user under which Kea will access the database (and give it
    a password), then grant it access to the database tables:
@@ -202,12 +201,12 @@ To create the database:
       mysql> CREATE USER 'user-name'@'localhost' IDENTIFIED BY 'password';
       mysql> GRANT ALL ON database-name.* TO 'user-name'@'localhost';
 
-   (user-name and password are the user ID and password you are using to
+   (user-name and password are the user ID and password being used to
    allow Kea access to the MySQL instance. All apostrophes in the
    command lines above are required.)
 
-4. At this point, you may elect to create the database tables.
-   (Alternatively, you can exit MySQL and create the tables using the
+4. At this point, administrators may elect to create the database tables.
+   (Alternatively, the tables can be created by exiting MySQL and using the
    ``kea-admin`` tool, as explained below.) To do this:
 
    ::
@@ -215,7 +214,7 @@ To create the database:
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_create.mysql
 
-   (path-to-kea is the location where you installed Kea.)
+   (path-to-kea is the location where Kea is installed.)
 
 5. Exit MySQL:
 
@@ -225,17 +224,17 @@ To create the database:
       Bye
       $
 
-If you elected not to create the tables in Step 4, you can do so now by
-running the ``kea-admin`` tool:
+If the tables were not created in Step 4, run the ``kea-admin`` tool
+to create them now:
 
 ::
 
    $ kea-admin lease-init mysql -u database-user -p database-password -n database-name
 
-Do not do this if you did create the tables in Step 4. ``kea-admin``
+Do not do this if the tables were created in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
-that contains any existing tables. If you want to start from scratch,
-you must remove all data manually. (This process is a manual operation
+that contains any existing tables. To start from scratch,
+all must be removed data manually. (This process is a manual operation
 on purpose, to avoid possibly irretrievable mistakes by ``kea-admin``.)
 
 .. _mysql-upgrade:
@@ -273,8 +272,8 @@ PostgreSQL
 ----------
 
 PostgreSQL is able to store leases, host reservations, and options
-defined on a per-host basis. This step can be safely ignored if you are
-using other database backends.
+defined on a per-host basis. This step can be safely ignored if
+other database backends will be used.
 
 .. _pgsql-database-create:
 
@@ -300,7 +299,7 @@ which the servers will access it. A number of steps are required:
       CREATE DATABASE
       postgres=#
 
-   (database-name is the name you have chosen for the database.)
+   (database-name is the name chosen for the database.)
 
 3. Create the user under which Kea will access the database (and give it
    a password), then grant it access to the database:
@@ -321,13 +320,13 @@ which the servers will access it. A number of steps are required:
       Bye
       $
 
-5. At this point you are ready to create the database tables. This can
-   be done using the ``kea-admin`` tool as explained in the next section
+5. At this point, create the database tables either
+   using the ``kea-admin`` tool, as explained in the next section
    (recommended), or manually. To create the tables manually, enter the
-   following command. Note that PostgreSQL will prompt you to enter the
-   new user's password you specified in Step 3. When the command
-   completes, you will be returned to the shell prompt. You should see
-   output similar to the following:
+   following command. Note that PostgreSQL will prompt the administrator to enter the
+   new user's password that was specified in Step 3. When the command
+   completes, Kea will return to the shell prompt. The
+   output should be similar to the following:
 
    ::
 
@@ -350,19 +349,19 @@ which the servers will access it. A number of steps are required:
       COMMIT
       $
 
-   (path-to-kea is the location where you installed Kea.)
+   (path-to-kea is the location where Kea is installed.)
 
-   If instead you encounter an error like:
+   If instead an error is encountered, such as:
 
    ::
 
       psql: FATAL:  no pg_hba.conf entry for host "[local]", user "user-name", database "database-name", SSL off
 
-   ... you will need to alter the PostgreSQL configuration. Kea uses
+   ... the PostgreSQL configuration will need to be altered. Kea uses
    password authentication when connecting to the database and must have
    the appropriate entries added to PostgreSQL's pg_hba.conf file. This
-   file is normally located in the primary data directory for your
-   PostgreSQL server. The precise path may vary depending on your
+   file is normally located in the primary data directory for the
+   PostgreSQL server. The precise path may vary depending on the
    operating system and version, but the default location for PostgreSQL
    9.3 on Centos 6.5 is: ``/var/lib/pgsql/9.3/data/pg_hba.conf``.
 
@@ -378,25 +377,25 @@ which the servers will access it. A number of steps are required:
 
    These edits are primarily intended as a starting point, and are not a
    definitive reference on PostgreSQL administration or database
-   security. Please consult your PostgreSQL user manual before making
-   these changes, as they may expose other databases that you run. It
+   security. Please consult the PostgreSQL user manual before making
+   these changes, as they may expose other databases that are running. It
    may be necessary to restart PostgreSQL in order for the changes to
    take effect.
 
 Initialize the PostgreSQL Database Using kea-admin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you elected not to create the tables manually, you can do so now by
+If the tables were not created manually, do so now by
 running the ``kea-admin`` tool:
 
 ::
 
    $ kea-admin lease-init pgsql -u database-user -p database-password -n database-name
 
-Do not do this if you already created the tables manually. ``kea-admin``
+Do not do this if the tables were already created manually. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
-that contains any existing tables. If you want to start from scratch,
-you must remove all data manually. (This process is a manual operation
+that contains any existing tables. To start from scratch,
+all data must be removed manually. (This process is a manual operation
 on purpose, to avoid possibly irretrievable mistakes by ``kea-admin``.)
 
 .. _pgsql-upgrade:
@@ -431,18 +430,18 @@ development was contributed by Deutsche Telekom. The Cassandra backend
 is able to store leases, host reservations, and options defined on a
 per-host basis.
 
-Cassandra must be properly set up if you want Kea to store information
-in it. This section can be safely ignored if you choose to store the
-data in other backends.
+Cassandra must be properly set up if Kea is to store information
+in it. This section can be safely ignored if the
+data will be stored in other backends.
 
 .. _cql-database-create:
 
 First-Time Creation of the Cassandra Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you are setting up the Cassandra database for the first time, you
-need to create the keyspace area within it. This needs to be done
-manually; ``kea-admin`` cannot do this for you.
+When setting up the Cassandra database for the first time,
+the keyspace area within it must be created. This needs to be done
+manually; it cannot be performed by ``kea-admin``.
 
 To create the database:
 
@@ -465,29 +464,29 @@ To create the database:
 
       cql> CREATE KEYSPACE keyspace-name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};
 
-   (keyspace-name is the name you have chosen for the keyspace)
+   (keyspace-name is the name chosen for the keyspace.)
 
-4. At this point, you may elect to create the database tables.
-   (Alternatively, you can exit Cassandra and create the tables using
+4. At this point, the database tables can be created.
+   (It is also possible to exit Cassandra and create the tables using
    the ``kea-admin`` tool, as explained below.) To do this:
 
    ::
 
       cqslh -k keyspace-name -f path-to-kea/share/kea/scripts/cql/dhcpdb_create.cql
 
-   (path-to-kea is the location where you installed Kea)
+   (path-to-kea is the location where Kea is installed.)
 
-If you elected not to create the tables in Step 4, you can do so now by
+If the tables were not created in Step 4, do so now by
 running the ``kea-admin`` tool:
 
 ::
 
    $ kea-admin lease-init cql -n database-name
 
-Do not do this if you did create the tables in Step 4. ``kea-admin``
+Do not do this if the tables were created in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
-that contains any existing tables. If you want to start from scratch,
-you must remove all data manually. (This process is a manual operation
+that contains any existing tables. To start from scratch,
+all data must be removed manually. (This process is a manual operation
 on purpose, to avoid possibly irretrievable mistakes by ``kea-admin``.)
 
 .. _cql-upgrade:

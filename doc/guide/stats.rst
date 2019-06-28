@@ -10,10 +10,10 @@ Statistics Overview
 Both Kea DHCP servers support statistics gathering. A working DHCP
 server encounters various events that can cause certain statistics to be
 collected. For example, a DHCPv4 server may receive a packet
-(pkt4-received statistic increases by one) that after parsing is
+(the pkt4-received statistic increases by one) that after parsing is
 identified as a DHCPDISCOVER (pkt4-discover-received). The server
 processes it and decides to send a DHCPOFFER representing its answer
-(pkt4-offer-sent and pkt4-sent statistics increase by one). Such events
+(the pkt4-offer-sent and pkt4-sent statistics increase by one). Such events
 happen frequently, so it is not uncommon for the statistics to have
 values in the high thousands. They can serve as an easy and powerful
 tool for observing a server's and a network's health. For example, if
@@ -24,7 +24,7 @@ There are four types of statistics:
 
 -  *integer* - this is the most common type. It is implemented as a
    64-bit integer (int64_t in C++), so it can hold any value between
-   -2^63 to 2^63 -1.
+   -2^63 to 2^63-1.
 
 -  *floating point* - this type is intended to store floating-point
    precision. It is implemented as a C++ double type.
@@ -38,15 +38,14 @@ There are four types of statistics:
 
 During normal operation, the DHCPv4 and DHCPv6 servers gather
 statistics. For a list of DHCPv4 and DHCPv6 statistics, see
-`??? <#dhcp4-stats>`__ and `??? <#dhcp6-stats>`__, respectively.
+:ref:`dhcp4-stats` and :ref:`dhcp6-stats`, respectively.
 
 To extract data from the statistics module, the control channel can be
-used. See `??? <#ctrl-channel>`__ for details. It is possible to
+used. See :ref:`ctrl-channel` for details. It is possible to
 retrieve a single statistic or all statistics, reset statistics (i.e.
-set to neutral value, typically zero), or even remove completely a
-single statistic or all statistics. See section `Commands for
-Manipulating Statistics <#command-stats>`__ for a list of
-statistics-oriented commands.
+set to a neutral value, typically zero), or even completely remove a
+single statistic or all statistics. See the section :ref:`command-stats`
+for a list of statistics-oriented commands.
 
 .. _stats-lifecycle:
 
@@ -55,7 +54,7 @@ Statistics Lifecycle
 
 It is useful to understand how the Statistics Manager module works. When
 the server starts operation, the manager is empty and contains no
-statistics. When ``statistic-get-all`` is executed, an empty list is
+statistics. If the ``statistic-get-all`` command is executed at that point, an empty list is
 returned. Once the server performs an operation that causes a statistic
 to change, the related statistic will be created. In general, once a
 statistic is recorded even once, it is kept in the manager until
@@ -74,8 +73,8 @@ the near future. For example, a misconfigured device in a network may
 cause clients to report duplicate addresses, so the server will report
 increasing values of pkt4-decline-received. Once the problem is found
 and the device is removed, the system administrator may want to remove
-the pkt4-decline-received statistic, so it won't be reported anymore. If
-a duplicate address is detected ever again, the server will add this
+the pkt4-decline-received statistic, so it will not be reported anymore. If
+a duplicate address is ever detected again, the server will add this
 statistic back.
 
 .. _command-stats:
@@ -84,14 +83,14 @@ Commands for Manipulating Statistics
 ====================================
 
 There are several commands defined that can be used for accessing
-(-get), resetting to zero or neutral value (-reset), or even removing a
+(-get), resetting to zero or a neutral value (-reset), or removing a
 statistic completely (-remove). The difference between reset and remove
 is somewhat subtle. The reset command sets the value of the statistic to
 zero or a neutral value, so after this operation, the statistic will
 have a value of 0 (integer), 0.0 (float), 0h0m0s0us (duration), or ""
 (string). When requested, a statistic with the values mentioned will be
 returned. ``Remove`` removes a statistic completely, so the statistic
-will not be reported anymore. Please note that the server code may add
+will no longer be reported. Please note that the server code may add
 it back if there is a reason to record it.
 
    **Note**
@@ -99,14 +98,14 @@ it back if there is a reason to record it.
    The following sections describe commands that can be sent to the
    server; the examples are not fragments of a configuration file. For
    more information on sending commands to Kea, see
-   `??? <#ctrl-channel>`__.
+   :ref:`ctrl-channel`.
 
 .. _command-statistic-get:
 
-statistic-get Command
----------------------
+The statistic-get Command
+-------------------------
 
-The *statistic-get* command retrieves a single statistic. It takes a
+The ``statistic-get`` command retrieves a single statistic. It takes a
 single-string parameter called ``name``, which specifies the statistic
 name. An example command may look like this:
 
@@ -127,10 +126,10 @@ the status code will still indicate success (0).
 
 .. _command-statistic-reset:
 
-statistic-reset Command
------------------------
+The statistic-reset Command
+---------------------------
 
-The *statistic-reset* command sets the specified statistic to its
+The ``statistic-reset`` command sets the specified statistic to its
 neutral value: 0 for integer, 0.0 for float, 0h0m0s0us for time
 duration, and "" for string type. It takes a single-string parameter
 called ``name``, which specifies the statistic name. An example command
@@ -153,10 +152,10 @@ and the text field contains the error description.
 
 .. _command-statistic-remove:
 
-statistic-remove Command
-------------------------
+The statistic-remove Command
+----------------------------
 
-The *statistic-remove* command attempts to delete a single statistic. It
+The ``statistic-remove`` command attempts to delete a single statistic. It
 takes a single-string parameter called ``name``, which specifies the
 statistic name. An example command may look like this:
 
@@ -177,10 +176,10 @@ and the text field contains the error description.
 
 .. _command-statistic-get-all:
 
-statistic-get-all Command
--------------------------
+The statistic-get-all Command
+-----------------------------
 
-The *statistic-get-all* command retrieves all statistics recorded. An
+The ``statistic-get-all`` command retrieves all statistics recorded. An
 example command may look like this:
 
 ::
@@ -196,10 +195,10 @@ when the total number of statistics is zero).
 
 .. _command-statistic-reset-all:
 
-statistic-reset-all Command
----------------------------
+The statistic-reset-all Command
+-------------------------------
 
-The *statistic-reset* command sets all statistics to their neutral
+The ``statistic-reset`` command sets all statistics to their neutral
 values: 0 for integer, 0.0 for float, 0h0m0s0us for time duration, and
 "" for string type. An example command may look like this:
 
@@ -217,10 +216,10 @@ field contains the error description.
 
 .. _command-statistic-remove-all:
 
-statistic-remove-all Command
-----------------------------
+The statistic-remove-all Command
+--------------------------------
 
-The *statistic-remove-all* command attempts to delete all statistics. An
+The ``statistic-remove-all`` command attempts to delete all statistics. An
 example command may look like this:
 
 ::
@@ -233,4 +232,4 @@ example command may look like this:
 If the removal of all statistics is successful, the server responds with
 a status of 0, indicating success, and an empty parameters field. If an
 error is encountered, the server returns a status code of 1 (error) and
-the text field will contain the error description.
+the text field contains the error description.

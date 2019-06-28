@@ -248,8 +248,8 @@ take effect. This limitation will be removed in a future release.
    NETCONF is an optional feature that is disabled by default and can be
    enabled during compilation. If Kea was compiled without NETCONF
    support, keactrl will do its best to not bother the user with
-   information about it. The netconf entries will still be present in
-   the keactrl.conf file, but netconf status will not be shown and other
+   information about it. The NETCONF entries will still be present in
+   the keactrl.conf file, but NETCONF status will not be shown and other
    commands will ignore it.
 
    **Note**

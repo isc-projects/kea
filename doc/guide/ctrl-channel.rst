@@ -12,28 +12,28 @@ traffic is not handled. Another risk is that if the new configuration is
 invalid for any reason, the server may refuse to start, which will
 further extend the downtime period until the issue is resolved.
 
-To avoid such problems, the DHCPv4, DHCPv6 and D2 servers in Kea include
+To avoid such problems, the DHCPv4, DHCPv6, and D2 servers in Kea include
 support for a mechanism that allows online reconfiguration without
 requiring server shutdown. Both servers can be instructed to open
 control sockets, which is a communications channel. The server is able
 to receive commands on that channel, act on them, and report back
 status.
 
-The DHCPv4, DHCPv6 and D2 servers receive commands over the UNIX domain
-sockets. The details how to configure these sockets, see
-`??? <#dhcp4-ctrl-channel>`__ and `??? <#dhcp6-ctrl-channel>`__. While
-it is possible to control the servers directly using unix domain sockets
-it requires that the controlling client be running on the same machine
+The DHCPv4, DHCPv6, and D2 servers receive commands over the UNIX domain
+sockets. For details on how to configure these sockets, see
+:ref:`dhcp4-ctrl-channel` and :ref:`dhcp6-ctrl-channel`. While
+it is possible to control the servers directly using UNIX domain sockets,
+that requires that the controlling client be running on the same machine
 as the server. SSH is usually used to connect remotely to the controlled
 machine.
 
 Network administrators usually prefer using some form of a RESTful API
 to control the servers, rather than using UNIX domain sockets directly.
-Therefore, Kea includes a component called Control Agent (or CA), which
+Therefore, Kea includes a component called the Control Agent (or CA), which
 exposes a RESTful API to the controlling clients and can forward
 commands to the respective Kea services over the UNIX domain sockets.
-The CA configuration has been described in
-`??? <#agent-configuration>`__.
+The CA configuration is described in
+:ref:`agent-configuration`.
 
 The HTTP requests received by the CA contain the control commands
 encapsulated within HTTP requests. Simply speaking, the CA is
@@ -48,7 +48,7 @@ will assume that the control command is targeted at the CA itself and
 will try to handle it on its own.
 
 Control connections over both HTTP and UNIX domain sockets are guarded
-with timeouts. The default timeout value is set to 10s and is not
+with timeouts. The default timeout value is set to 10 seconds and is not
 configurable.
 
 .. _ctrl-channel-syntax:
@@ -92,8 +92,8 @@ following structure:
        }
 
 ``command`` is the name of the command to execute and is mandatory.
-``arguments`` is a map of parameters required to carry out the given
-command. The exact content and format of the map is command-specific.
+``arguments`` is a map of the parameters required to carry out the given
+command. The exact content and format of the map are command-specific.
 
 ``service`` is a list of the servers at which the control command is
 targeted. In the example above, the control command is targeted at the
@@ -118,7 +118,7 @@ If the command received by the CA does not include a ``service``
 parameter or this list is empty, the CA simply processes this message on
 its own. For example, a ``config-get`` command which includes no service
 parameter returns the Control Agent's own configuration. The
-``config-get`` with a service value "dhcp4" is forwarded to the DHCPv4
+``config-get`` command with a service value "dhcp4" is forwarded to the DHCPv4
 server and returns the DHCPv4 server's configuration.
 
 The following list shows the mapping of the values carried within the
@@ -167,7 +167,7 @@ that depends on the specific command.
 
    **Note**
 
-   When sending commands via Control Agent, it is possible to specify
+   When sending commands via the Control Agent, it is possible to specify
    multiple services at which the command is targeted. CA forwards this
    command to each service individually. Thus, the CA response to the
    controlling client contains an array of individual responses.
@@ -180,7 +180,7 @@ Using the Control Channel
 The easiest way to start interacting with the control API is to use
 common UNIX/Linux tools such as ``socat`` and ``curl``.
 
-In order to control the given Kea service via UNIX domain socket, use
+In order to control the given Kea service via a UNIX domain socket, use
 ``socat`` in interactive mode as follows:
 
 ::
@@ -188,7 +188,7 @@ In order to control the given Kea service via UNIX domain socket, use
    $ socat UNIX:/path/to/the/kea/socket -
 
 or in batch mode, include the "ignoreeof" option as shown below to
-ensure socat waits long enough for the server to respond:
+ensure ``socat`` waits long enough for the server to respond:
 
 ::
 
@@ -202,10 +202,11 @@ the specific server directly and bypasses the Control Agent.
 
 It is also easy to open a UNIX socket programmatically. An example of a
 simple client written in C is available in the Kea Developer's Guide, in
-the Control Channel Overview chapter, in the Using Control Channel
+the Control Channel Overview chapter, in the
+`Using Control Channel <https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html#ctrlSocketClient>`__
 section.
 
-To use Kea's RESTful API with ``curl``, you may use the following:
+To use Kea's RESTful API with ``curl``, use the following:
 
 ::
 
@@ -221,10 +222,10 @@ Commands Supported by Both the DHCPv4 and DHCPv6 Servers
 
 .. _command-build-report:
 
-build-report
-------------
+The build-report Command
+------------------------
 
-The *build-report* command returns on the control channel what the
+The ``build-report`` command returns on the control channel what the
 command line ``-W`` argument displays, i.e. the embedded content of the
 ``config.report`` file. This command does not take any parameters.
 
@@ -236,14 +237,14 @@ command line ``-W`` argument displays, i.e. the embedded content of the
 
 .. _command-config-get:
 
-config-get
-----------
+The config-get Command
+----------------------
 
-The *config-get* command retrieves the current configuration used by the
+The ``config-get`` command retrieves the current configuration used by the
 server. This command does not take any parameters. The configuration
 returned is roughly equal to the configuration that was loaded using the
--c command line option during server start-up or later set using
-config-set command. However, there may be certain differences, as
+-c command line option during server start-up or later set using the
+``config-set`` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
 inclusion, the returned configuration will include all parameters from
 all the included files.
@@ -263,23 +264,23 @@ An example command invocation looks like this:
 
 .. _command-config-reload:
 
-config-reload
--------------
+The config-reload Command
+-------------------------
 
-The *config-reload* command instructs Kea to load again the
+The ``config-reload`` command instructs Kea to load again the
 configuration file that was used previously. This operation is useful if
 the configuration file has been changed by some external source; for
 example, a sysadmin can tweak the configuration file and use this
 command to force Kea pick up the changes.
 
-Caution should be taken when mixing this with config-set commands. Kea
+Caution should be taken when mixing this with ``config-set`` commands. Kea
 remembers the location of the configuration file it was started with,
-and this configuration can be significantly changed using config-set
-command. When config-reload is issued after config-set, Kea will attempt
+and this configuration can be significantly changed using the ``config-set``
+command. When ``config-reload`` is issued after ``config-set``, Kea will attempt
 to reload its original configuration from the file, possibly losing all
-changes introduced using config-set or other commands.
+changes introduced using ``config-set`` or other commands.
 
-*config-reload* does not take any parameters. An example command
+``config-reload`` does not take any parameters. An example command
 invocation looks like this:
 
 ::
@@ -290,14 +291,14 @@ invocation looks like this:
 
 .. _command-config-test:
 
-config-test
------------
+The config-test Command
+-----------------------
 
-The *config-test* command instructs the server to check whether the new
+The ``config-test`` command instructs the server to check whether the new
 configuration supplied in the command's arguments can be loaded. The
 supplied configuration is expected to be the full configuration for the
 target server, along with an optional Logger configuration. As for the
-``-t`` command, some sanity checks are not performed so it is possible a
+``-t`` command, some sanity checks are not performed, so it is possible a
 configuration which successfully passes this command will still fail in
 the ``config-set`` command or at launch time. The structure of the
 command is as follows:
@@ -340,12 +341,12 @@ outcome:
 
 .. _command-config-write:
 
-config-write
-------------
+The config-write Command
+------------------------
 
-The *config-write* command instructs the Kea server to write its current
-configuration to a file on disk. It takes one optional argument called
-*filename* that specifies the name of the file to write the
+The ``config-write`` command instructs the Kea server to write its current
+configuration to a file on disk. It takes one optional argument, called
+"filename", that specifies the name of the file to write the
 configuration to. If not specified, the name used when starting Kea
 (passed as a -c argument) will be used. If a relative path is specified,
 Kea will write its files only in the directory it is running.
@@ -363,10 +364,10 @@ An example command invocation looks like this:
 
 .. _command-leases-reclaim:
 
-leases-reclaim
---------------
+The leases-reclaim Command
+--------------------------
 
-The *leases-reclaim* command instructs the server to reclaim all expired
+The ``leases-reclaim`` command instructs the server to reclaim all expired
 leases immediately. The command has the following JSON syntax:
 
 ::
@@ -378,23 +379,23 @@ leases immediately. The command has the following JSON syntax:
        }
    }
 
-The *remove* boolean parameter is mandatory and indicates whether the
+The ``remove`` boolean parameter is mandatory and indicates whether the
 reclaimed leases should be removed from the lease database (if true), or
-left in the *expired-reclaimed* state (if false). The latter facilitates
+left in the "expired-reclaimed" state (if false). The latter facilitates
 lease affinity, i.e. the ability to re-assign an expired lease to the
-same client which used this lease before. See `??? <#lease-affinity>`__
-for the details. Also, see `??? <#lease-reclamation>`__ for general
-information about the processing of expired leases (leases reclamation).
+same client that used this lease before. See :ref:`lease-affinity`
+for the details. Also, see :ref:`lease-reclamation` for general
+information about the processing of expired leases (lease reclamation).
 
 .. _command-libreload:
 
-libreload
----------
+The libreload Command
+---------------------
 
-The *libreload* command first unloads and then loads all currently
-loaded hook libraries. This is primarily intended to allow one or more
-hook libraries to be replaced with newer versions without requiring Kea
-servers to be reconfigured or restarted. Note that the hook libraries
+The ``libreload`` command first unloads and then loads all currently
+loaded hooks libraries. This is primarily intended to allow one or more
+hooks libraries to be replaced with newer versions without requiring Kea
+servers to be reconfigured or restarted. Note that the hooks libraries
 are passed the same parameter values (if any) that were passed when they
 originally loaded.
 
@@ -410,10 +411,10 @@ or 1, indicating failure.
 
 .. _command-list-commands:
 
-list-commands
--------------
+The list-commands Command
+-------------------------
 
-The *list-commands* command retrieves a list of all commands supported
+The ``list-commands`` command retrieves a list of all commands supported
 by the server. It does not take any arguments. An example command may
 look like this:
 
@@ -430,10 +431,10 @@ command.
 
 .. _command-config-set:
 
-config-set
-----------
+The config-set Command
+----------------------
 
-The *config-set* command instructs the server to replace its current
+The ``config-set`` command instructs the server to replace its current
 configuration with the new configuration supplied in the command's
 arguments. The supplied configuration is expected to be the full
 configuration for the target server, along with an optional Logger
@@ -483,10 +484,10 @@ string, "text", describing the outcome:
 
 .. _command-shutdown:
 
-shutdown
---------
+The shutdown Command
+--------------------
 
-The *shutdown* command instructs the server to initiate its shutdown
+The ``shutdown`` command instructs the server to initiate its shutdown
 procedure. It is the equivalent of sending a SIGTERM signal to the
 process. This command does not take any arguments. An example command
 may look like this:
@@ -502,18 +503,18 @@ been initiated.
 
 .. _command-dhcp-disable:
 
-dhcp-disable
-------------
+The dhcp-disable Command
+------------------------
 
-The *dhcp-disable* command globally disables the DHCP service. The
+The ``dhcp-disable`` command globally disables the DHCP service. The
 server continues to operate, but it drops all received DHCP messages.
 This command is useful when the server's maintenance requires that the
 server temporarily stop allocating new leases and renew existing leases.
 It is also useful in failover-like configurations during a
 synchronization of the lease databases at startup, or recovery after a
-failure. The optional parameter *max-period* specifies the time in
+failure. The optional parameter "max-period" specifies the time in
 seconds after which the DHCP service should be automatically re-enabled,
-if the *dhcp-enable* command is not sent before this time elapses.
+if the ``dhcp-enable`` command is not sent before this time elapses.
 
 ::
 
@@ -526,10 +527,10 @@ if the *dhcp-enable* command is not sent before this time elapses.
 
 .. _command-dhcp-enable:
 
-dhcp-enable
------------
+The dhcp-enable Command
+-----------------------
 
-The *dhcp-enable* command globally enables the DHCP service.
+The ``dhcp-enable`` command globally enables the DHCP service.
 
 ::
 
@@ -539,10 +540,10 @@ The *dhcp-enable* command globally enables the DHCP service.
 
 .. _command-version-get:
 
-version-get
------------
+The version-get Command
+-----------------------
 
-The *version-get* command returns extended information about the Kea
+The ``version-get`` command returns extended information about the Kea
 version. It is the same information available via the ``-V``
 command-line argument. This command does not take any parameters.
 
@@ -552,8 +553,8 @@ command-line argument. This command does not take any parameters.
        "command": "version-get"
    }
 
-Commands Supported by D2 Server
-===============================
+Commands Supported by the D2 Server
+===================================
 
 The D2 server supports only a subset of DHCPv4 / DHCPv6 server commands:
 
@@ -577,11 +578,10 @@ The D2 server supports only a subset of DHCPv4 / DHCPv6 server commands:
 
 .. _agent-commands:
 
-Commands Supported by Control Agent
-===================================
+Commands Supported by the Control Agent
+=======================================
 
-The following commands listed in `Commands Supported by Both the DHCPv4
-and DHCPv6 Servers <#commands-common>`__ are also supported by the
+The following commands listed in :ref:`commands-common` are also supported by the
 Control Agent, i.e. when the ``service`` parameter is blank, the
 commands are handled by the CA and they relate to the CA process itself:
 

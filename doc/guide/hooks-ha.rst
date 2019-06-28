@@ -957,7 +957,7 @@ the Kea source at: ``src/lib/config/timeouts.h``.
 Pausing HA State Machine
 ------------------------
 
-The high-availability state machine includes many different states
+The high availability state machine includes many different states
 described in detail in :ref:`ha-server-states`. The server
 enters each state when certain conditions are met, most often taking
 into account the partner server's state. In some states the server

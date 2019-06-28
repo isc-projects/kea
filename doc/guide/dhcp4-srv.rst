@@ -717,8 +717,8 @@ For additional Cassandra-specific parameters, see
 
 .. _read-only-database-configuration4:
 
-Using Read-Only Databases for Host Reservations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using Read-Only Databases for Host Reservations with DHCPv4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some deployments the database user whose name is specified in the
 database backend configuration may not have write privileges to the
@@ -2062,7 +2062,7 @@ The definition used to decode a VSI option is:
 
 2. If none, the global definition;
 
-3. If none, the last-resort definition described in the next section
+3. If none, the last-resort definition described in the next section,
    :ref:`dhcp4-vendor-opts` (backward-compatible with previous Kea versions).
 
 ..

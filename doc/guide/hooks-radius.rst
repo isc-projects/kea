@@ -20,7 +20,7 @@ intends to fulfill.
    This library may only be loaded by the ``kea-dhcp4`` or the
    ``kea-dhcp6`` process.
 
-The major feature of the hook library is the ability to use RADIUS
+The major feature of this hooks library is the ability to use RADIUS
 authorization. When a DHCP packet is received, the Kea server sends an
 Access-Request to the RADIUS server and waits for a response. The server
 then sends back either an Access-Accept with specific client attributes,
@@ -32,10 +32,10 @@ effectively means RADIUS can act as an address-reservation database.
 
 The second case supported is the ability to assign clients to specific
 pools based on a RADIUS response. In this case, the RADIUS server sends
-back an Access-Accept with Framed-Pool (IPv4) or Framed-IPv6-Pool
+back an Access-Accept with a Framed-Pool (IPv4) or Framed-IPv6-Pool
 (IPv6). In both cases, Kea interprets those attributes as client
 classes. With the addition of the ability to limit access to pools to
-specific classes (see `??? <#classification-pools>`__), RADIUS can be
+specific classes (see :ref:`classification-pools`), RADIUS can be
 used to force the client to be assigned a dynamic address from a
 specific pool. Furthermore, the same mechanism can be used to control
 what kind of options the client will get if there are DHCP options
@@ -51,7 +51,7 @@ on CentOS 7.0. Other systems may differ slightly.
 
 STEP 1: Install dependencies
 
-Several tools are needed to build dependencies and Kea itself. The
+Several tools are needed to build the dependencies and Kea itself. The
 following commands should install them:
 
 ::
@@ -59,11 +59,11 @@ following commands should install them:
    $ sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
    $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
 
-STEP 2: FreeRADIUS installation
+STEP 2: Install FreeRADIUS
 
-The Kea RADIUS hook library uses the FreeRADIUS client library to
+The Kea RADIUS hooks library uses the FreeRADIUS client library to
 conduct RADIUS communication. Unfortunately, the standard 1.1.7 release
-available from the project website http://freeradius.org/sub_projects/
+available from the project website https://freeradius.org/sub_projects/
 has several serious deficiencies; ISC engineers observed a segmentation
 fault during testing. Also, the base version of the library does not
 offer asynchronous transmissions, which are essential for effective
@@ -83,11 +83,11 @@ version, please use the following steps:
    $ make
    $ sudo make install
 
-You may pass additional parameters to the configure script, if you need
-to. Once installed, the FreeRADIUS client will be installed in
+Additional parameters may be passed to the configure script, if needed.
+Once installed, the FreeRADIUS client will be installed in
 /usr/local. This is the default path where Kea will be looking for it.
-You may install it in a different directory; if you choose to do so,
-make sure you add that path to the configure script when compiling Kea.
+It can be installed in a different directory; if so,
+make sure to add that path to the configure script when compiling Kea.
 
 STEP 3: Install recent BOOST version
 
@@ -159,10 +159,10 @@ Once this is done, verify that the Kea sources look similar to this:
    drwxr-xr-x  10 thomson  staff     340 Apr 26 19:04 src
    drwxr-xr-x  14 thomson  staff     476 Apr 26 19:04 tools
 
-The makefiles must be regenerated using autoreconf.
+The makefiles must be regenerated using ``autoreconf``.
 
 The next step is to configure Kea, and there are several essential steps
-necessary here. Running autoreconf -if is necessary to compile the
+necessary here. Running ``autoreconf -if`` is necessary to compile the
 premium package that contains RADIUS. Also, the --with-freeradius option
 is necessary to tell Kea where the FreeRADIUS client sources can be
 found. Also, since the non-standard Boost is used, the path to it must
@@ -268,7 +268,7 @@ the following:
      Kea-shell:              no
      Perfdhcp:               no
 
-Please make sure that your compilation has the following:
+Please make sure that the compilation includes the following:
 
 -  RADIUS listed in Included Hooks;
 -  FreeRADIUS client directories printed and pointing to the right
@@ -276,9 +276,9 @@ Please make sure that your compilation has the following:
 -  Boost version at least 1.65.1. The versions available in CentOS 7
    (1.48 and and 1.53) are too old.
 
-Once your configuration is complete, compile Kea using make. If your
-system has more than one core, it is recommended that you use the "-j N"
-option to speed up the build.
+Once the configuration is complete, compile Kea using make. If the
+system has more than one core, using the "-j N"
+option is recommended to speed up the build.
 
 ::
 
@@ -291,7 +291,7 @@ RADIUS Hook Configuration
 -------------------------
 
 The RADIUS hook is a library that has to be loaded by either DHCPv4 or
-DHCPv6 Kea servers. Unlike some other available hook libraries, this one
+DHCPv6 Kea servers. Unlike some other available hooks libraries, this one
 takes many parameters. For example, this configuration could be used:
 
 ::
@@ -320,28 +320,28 @@ takes many parameters. For example, this configuration could be used:
          }
      } ]
 
-RADIUS is a complicated environment. As such, it's not really possible
-to provide a default configuration that would work out of the box.
+RADIUS is a complicated environment. As such, it is not feasible
+to provide a default configuration that works for everyone.
 However, we do have one example that showcases some of the more common
-features. Please see doc/examples/kea4/hooks-radius.json in your Kea
+features. Please see doc/examples/kea4/hooks-radius.json in the Kea
 sources.
 
 The RADIUS hook library supports the following global configuration
 flags, which correspond to FreeRADIUS client library options:
 
--  ``bindaddr`` (default "*") specifies the address to be used by the
-   hook library in communication with RADIUS servers. The "*" special
+-  ``bindaddr`` (default "*") - specifies the address to be used by the
+   hooks library in communication with RADIUS servers. The "*" special
    value tells the kernel to choose the address.
 
--  ``canonical-mac-address`` (default false) specifies whether MAC
+-  ``canonical-mac-address`` (default false) - specifies whether MAC
    addresses in attributes follow the canonical RADIUS format (lowercase
    pairs of hexadecimal digits separated by '-').
 
--  ``client-id-pop0`` (default false), used with flex-id, removes the
+-  ``client-id-pop0`` (default false) - used with flex-id, removes the
    leading zero (or pair of zeroes in DHCPv6) type in client-id (aka
    duid in DHCPv6). Implied by client-id-printable.
 
--  ``client-id-printable`` (default false) checks whether the
+-  ``client-id-printable`` (default false) - checks whether the
    client-id/duid content is printable and uses it as is instead of in
    hexadecimal. Implies client-id-pop0 and extract-duid as 0 and 255 are
    not printable.
@@ -353,42 +353,42 @@ flags, which correspond to FreeRADIUS client library options:
    use locks or atomics, it is recommended that you do not use this
    feature when running in this mode.
 
--  ``dictionary`` (default set by configure at build time) is the
+-  ``dictionary`` (default set by configure at build time) - is the
    attribute and value dictionary. Note that it is a critical parameter.
 
--  ``extract-duid`` (default true) extracts the embedded duid from an
+-  ``extract-duid`` (default true) - extracts the embedded duid from an
    RFC 4361-compliant DHCPv4 client-id. Implied by client-id-printable.
 
--  ``identifier-type4`` (default client-id) specifies the identifier
+-  ``identifier-type4`` (default client-id) - specifies the identifier
    type to build the User-Name attribute. It should be the same as the
    host identifier, and when the flex-id hook library is used the
    replace-client-id must be set to true; client-id will be used with
    client-id-pop0.
 
--  ``identifier-type6`` (default duid) specifies the identifier type to
+-  ``identifier-type6`` (default duid) - specifies the identifier type to
    build the User-Name attribute. It should be the same as the host
    identifier, and when the flex-id hook library is used the
    replace-client-id must be set to true; duid will be used with
    client-id-pop0.
 
--  ``realm`` (default "") is the default realm.
+-  ``realm`` (default "") - is the default realm.
 
--  ``reselect-subnet-address`` (default false) uses the Kea reserved
+-  ``reselect-subnet-address`` (default false) - uses the Kea reserved
    address/RADIUS Framed-IP-Address or Framed-IPv6-Address to reselect
    subnets where the address is not in the subnet range.
 
--  ``reselect-subnet-pool`` (default false) uses the Kea
+-  ``reselect-subnet-pool`` (default false) - uses the Kea
    client-class/RADIUS Frame-Pool to reselect subnets where no available
    pool can be found.
 
--  ``retries`` (default 3) is the number of retries before trying the
+-  ``retries`` (default 3) - is the number of retries before trying the
    next server. Note that it is not supported for asynchronous
    communication.
 
--  ``session-history`` (default "") is the name of the file providing
+-  ``session-history`` (default "") - is the name of the file providing
    persistent storage for accounting session history.
 
--  ``timeout`` (default 10) is the number of seconds during which a
+-  ``timeout`` (default 10) - is the number of seconds during which a
    response is awaited.
 
 When ``reselect-subnet-pool`` or ``reselect-subnet-address`` is set to
@@ -398,54 +398,54 @@ does not match, another subnet is selected among matching subnets.
 
 Two services are supported:
 
--  ``access`` - the authentication service
+-  ``access`` - the authentication service.
 
--  ``accounting`` - the accounting service
+-  ``accounting`` - the accounting service.
 
 Configuration of services is divided into two parts:
 
--  servers that define RADIUS servers the library is expected to
+-  Servers that define RADIUS servers that the library is expected to
    contact. Each server may have the following items specified:
 
-   -  ``name``, which specifies the IP address of the server (it is
+   -  ``name`` - specifies the IP address of the server (it is
       possible to use a name which will be resolved, but it is not
       recommended).
 
-   -  ``port`` (default RADIUS authentication or accounting service),
-      which specifies the UDP port of the server. Note that the
+   -  ``port`` (default RADIUS authentication or accounting service) -
+      specifies the UDP port of the server. Note that the
       FreeRADIUS client library by default uses ports 1812
       (authorization) and 1813 (accounting). Some server implementations
-      use 1645 (authorization) and 1646 (accounting). You may use the
-      "port" parameter to adjust as needed.
+      use 1645 (authorization) and 1646 (accounting). The
+      "port" parameter may be used to adjust as needed.
 
-   -  ``secret``, which authenticates messages.
+   -  ``secret`` - authenticates messages.
 
    There may be up to eight servers. Note that when no server is
    specified, the service is disabled.
 
--  attributes which define additional information that the Kea server
+-  Attributes which define additional information that the Kea server
    will send to a RADIUS server. The parameter must be identified either
    by a name or type. Its value can be specified in one of three
    possible ways: data (which defines a plain text value), raw (which
    defines the value in hex), or expr (which defines an expression,
    which will be evaluated for each incoming packet independently).
 
-   -  ``name`` of the attribute.
+   -  ``name`` - the name of the attribute.
 
-   -  ``type`` of the attribute. Either the type or the name must be
+   -  ``type`` - the type of the attribute. Either the type or the name must be
       provided, and the attribute must be defined in the dictionary.
 
-   -  ``data`` is the first of three ways to specify the attribute
+   -  ``data`` - the first of three ways to specify the attribute
       content. The data entry is parsed by the FreeRADIUS library, so
       values defined in the dictionary of the attribute may be used.
 
-   -  ``raw`` is the second of three ways to specify the attribute
+   -  ``raw`` - the second of three ways to specify the attribute
       content; it specifies the content in hexadecimal. Note that it
       does not work with integer-content attributes (date, integer, and
       IPv4 address); a string-content attribute (string, IPv6 address,
       and IPv6 prefix) is required.
 
-   -  ``expr`` is the last way to specify the attribute content. It
+   -  ``expr`` - the last way to specify the attribute content. It
       specifies an evaluation expression which must return a not-empty
       string when evaluated with the DHCP query packet. Currently this
       is restricted to the access service.
@@ -485,7 +485,7 @@ following snippet could be used:
                "data": "mysecretpassword"
            },
            {
-               // It's also possible to specify an attribute using its type,
+               // It is also possible to specify an attribute using its type,
                // rather than a name. 77 is Connect-Info. The value is specified
                // using hex. Again, this is a static value. It will be sent the
                // same for every packet and to every server.
@@ -519,8 +519,8 @@ following snippet could be used:
 
    }
 
-For the RADIUS hook library to operate properly in DHCPv4, it is
-necessary to also load the Host Cache hook library. The reason for this
+For the RADIUS hooks library to operate properly in DHCPv4,
+the Host Cache hooks library must also be loaded. The reason for this
 is somewhat complex. In a typical deployment, the DHCP clients send
 their packets via DHCP relay which inserts certain Relay Agent
 Information options, such as circuit-id or remote-id. The values of
@@ -528,16 +528,16 @@ those options are then used by the Kea DHCP server to formulate the
 necessary attributes in the Access-Request message sent to the RADIUS
 server. However, once the DHCP client gets its address, it then renews
 by sending packets directly to the DHCP server. As a result, the relays
-are not able to insert their RAI options and the DHCP server can't send
+are not able to insert their RAI options, and the DHCP server cannot send
 the Access-Request queries to the RADIUS server by using just the
 information from incoming packets. Kea needs to keep the information
 received during the initial Discover/Offer exchanges and use it again
 later when sending accounting messages.
 
 This mechanism is implemented based on user context in host
-reservations. (See `??? <#user-context>`__ for details about user
+reservations. (See :ref:`user-context` for details about user
 context). The host cache mechanism allows the information retrieved by
 RADIUS to be stored and later used for sending accounting and access
 queries to the RADIUS server. In other words, the host-cache mechanism
-is mandatory, unless you do not want RADIUS communication for messages
+is mandatory, unless administrators do not want RADIUS communication for messages
 other than Discover and the first Request from each client.

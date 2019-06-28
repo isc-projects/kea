@@ -50,15 +50,15 @@ Kea currently supports 121 commands: ``build-report`` , ``cache-clear``
 ``subnet6-add`` , ``subnet6-del`` , ``subnet6-get`` , ``subnet6-list`` ,
 ``subnet6-update`` , ``version-get`` .
 
-Commands supported by kea-ctrl-agent daemon: ``build-report`` ,
+Commands supported by the kea-ctrl-agent daemon: ``build-report`` ,
 ``config-get`` , ``config-reload`` , ``config-set`` , ``config-test`` ,
 ``config-write`` , ``list-commands`` , ``shutdown`` , ``version-get`` .
 
-Commands supported by kea-dhcp-ddns daemon: ``build-report`` ,
+Commands supported by the kea-dhcp-ddns daemon: ``build-report`` ,
 ``config-get`` , ``config-reload`` , ``config-set`` , ``config-test`` ,
 ``config-write`` , ``list-commands`` , ``shutdown`` , ``version-get`` .
 
-Commands supported by kea-dhcp4 daemon: ``build-report`` ,
+Commands supported by the kea-dhcp4 daemon: ``build-report`` ,
 ``cache-clear`` , ``cache-get`` , ``cache-get-by-id`` , ``cache-insert``
 , ``cache-load`` , ``cache-remove`` , ``cache-size`` , ``cache-write`` ,
 ``class-add`` , ``class-del`` , ``class-get`` , ``class-list`` ,
@@ -88,7 +88,7 @@ Commands supported by kea-dhcp4 daemon: ``build-report`` ,
 ``subnet4-del`` , ``subnet4-get`` , ``subnet4-list`` ,
 ``subnet4-update`` , ``version-get`` .
 
-Commands supported by kea-dhcp6 daemon: ``build-report`` ,
+Commands supported by the kea-dhcp6 daemon: ``build-report`` ,
 ``cache-clear`` , ``cache-get`` , ``cache-get-by-id`` , ``cache-insert``
 , ``cache-load`` , ``cache-remove`` , ``cache-size`` , ``cache-write`` ,
 ``class-add`` , ``class-del`` , ``class-get`` , ``class-list`` ,
@@ -118,7 +118,9 @@ Commands supported by kea-dhcp6 daemon: ``build-report`` ,
 ``subnet6-del`` , ``subnet6-get`` , ``subnet6-list`` ,
 ``subnet6-update`` , ``version-get`` .
 
-Commands supported by cb_cmds hook library:
+.. _commands-cb_cmds-lib:
+
+Commands supported by the Configuration Backend Commands (cb_cmds) hooks library:
 ``remote-global-parameter4-del`` , ``remote-global-parameter4-get`` ,
 ``remote-global-parameter4-get-all`` , ``remote-global-parameter4-set``
 , ``remote-global-parameter6-del`` , ``remote-global-parameter6-get`` ,
@@ -142,29 +144,43 @@ Commands supported by cb_cmds hook library:
 ``remote-subnet6-get-by-id`` , ``remote-subnet6-get-by-prefix`` ,
 ``remote-subnet6-list`` , ``remote-subnet6-set`` .
 
-Commands supported by class_cmds hook library: ``class-add`` ,
+.. _commands-class_cmds-lib:
+
+Commands supported by the Class Commands (class_cmds) hooks library: ``class-add`` ,
 ``class-del`` , ``class-get`` , ``class-list`` , ``class-update`` .
 
-Commands supported by high_availability hook library: ``ha-continue`` ,
+.. _commands-high_availability-lib:
+
+Commands supported by the High Availability (high_availability) hooks library: ``ha-continue`` ,
 ``ha-heartbeat`` , ``ha-scopes`` , ``ha-sync`` .
 
-Commands supported by host_cache hook library: ``cache-clear`` ,
+.. _commands-host_cache-lib:
+
+Commands supported by the Host Cache (host_cache) hooks library: ``cache-clear`` ,
 ``cache-get`` , ``cache-get-by-id`` , ``cache-insert`` , ``cache-load``
 , ``cache-remove`` , ``cache-size`` , ``cache-write`` .
 
-Commands supported by host_cmds hook library: ``reservation-add`` ,
+.. _commands-host_cmds-lib:
+
+Commands supported by the Host Commands (host_cmds) hooks library: ``reservation-add`` ,
 ``reservation-del`` , ``reservation-get`` , ``reservation-get-all`` ,
 ``reservation-get-page`` .
 
-Commands supported by lease_cmds hook library: ``lease4-add`` ,
+.. _commands-lease_cmds-lib:
+
+Commands supported by the Lease Commands (lease_cmds) hooks library: ``lease4-add`` ,
 ``lease4-del`` , ``lease4-get`` , ``lease4-get-all`` , ``lease4-update``
 , ``lease4-wipe`` , ``lease6-add`` , ``lease6-del`` , ``lease6-get`` ,
 ``lease6-get-all`` , ``lease6-update`` , ``lease6-wipe`` .
 
-Commands supported by stat_cmds hook library: ``stat-lease4-get`` ,
+.. _commands-stat_cmds-lib:
+
+Commands supported by the Supplemental Statistics Commands (stat_cmds) hooks library: ``stat-lease4-get`` ,
 ``stat-lease6-get`` .
 
-Commands supported by subnet_cmds hook library: ``network4-add`` ,
+.. _commands-subnet_cmds-lib:
+
+Commands supported by the Subnet Commands (subnet_cmds) hooks library: ``network4-add`` ,
 ``network4-del`` , ``network4-get`` , ``network4-list`` ,
 ``network4-subnet-add`` , ``network4-subnet-del`` , ``network6-add`` ,
 ``network6-del`` , ``network6-get`` , ``network6-list`` ,
@@ -178,15 +194,15 @@ Commands supported by subnet_cmds hook library: ``network4-add`` ,
 build-report reference
 ======================
 
-``build-report`` - Returns a list of compilation options that this
-particular binary was built with
+``build-report`` - returns a list of compilation options that this
+particular binary was built with.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 ``kea-ctrl-agent``
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-build-report>`__
+Description and examples: see :ref:`command-build-report`
 
 Command syntax:
 
@@ -210,13 +226,13 @@ Response syntax:
 cache-clear reference
 =====================
 
-``cache-clear`` - This command removes all cached host reservations.
+``cache-clear`` - removes all cached host reservations.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-clear>`__
+Description and examples: see :ref:`command-cache-clear`
 
 Command syntax:
 
@@ -235,7 +251,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -244,7 +260,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-get:
@@ -252,13 +268,13 @@ statuses are:
 cache-get reference
 ===================
 
-``cache-get`` - Returns full content of the host cache.
+``cache-get`` - returns full content of the host cache.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-get>`__
+Description and examples: see :ref:`command-cache-get`
 
 Command syntax:
 
@@ -278,7 +294,7 @@ Response syntax:
        "arguments": <list of host reservations>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -287,7 +303,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-get-by-id:
@@ -295,14 +311,14 @@ statuses are:
 cache-get-by-id reference
 =========================
 
-``cache-get-by-id`` - Returns entries matching the given identifier from
+``cache-get-by-id`` - returns entries matching the given identifier from
 the host cache.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.6.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-get-by-id>`__
+Description and examples: see :ref:`command-cache-get-by-id`
 
 Command syntax:
 
@@ -324,7 +340,7 @@ Response syntax:
        "arguments": <list of host reservations>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -333,7 +349,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-insert:
@@ -341,14 +357,13 @@ statuses are:
 cache-insert reference
 ======================
 
-``cache-insert`` - This command may be used to manually insert a host
-into the cache.
+``cache-insert`` - manually inserts a host into the cache.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-insert>`__
+Description and examples: see :ref:`command-cache-insert`
 
 Command syntax:
 
@@ -401,7 +416,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -410,7 +425,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-load:
@@ -418,14 +433,14 @@ statuses are:
 cache-load reference
 ====================
 
-``cache-load`` - This command allows load the contents of a file on disk
+``cache-load`` - allows the contents of a file on disk to be loaded
 into an in-memory cache.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-load>`__
+Description and examples: see :ref:`command-cache-load`
 
 Command syntax:
 
@@ -445,7 +460,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -454,7 +469,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-remove:
@@ -462,14 +477,13 @@ statuses are:
 cache-remove reference
 ======================
 
-``cache-remove`` - The cache-remove command works similarly to
-reservation-get command.
+``cache-remove`` - works similarly to the reservation-get command.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-remove>`__
+Description and examples: see :ref:`command-cache-remove`
 
 Command syntax:
 
@@ -483,7 +497,7 @@ Command syntax:
        }
    }
 
-   Another example that removes IPv6 host identifier by DUID and specific subnet-id is:
+   Another example that removes the IPv6 host identifier by DUID and specific subnet-id is:
    {
        "command": "cache-remove",
        "arguments": {
@@ -501,7 +515,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -510,7 +524,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-size:
@@ -518,13 +532,13 @@ statuses are:
 cache-size reference
 ====================
 
-``cache-size`` - Returns number of entries of the host cache.
+``cache-size`` - returns the number of entries in the host cache.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.6.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-size>`__
+Description and examples: see :ref:`command-cache-size`
 
 Command syntax:
 
@@ -544,7 +558,7 @@ Response syntax:
        "arguments": { "size": 123 }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -553,7 +567,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-cache-write:
@@ -561,13 +575,13 @@ statuses are:
 cache-write reference
 =====================
 
-``cache-write`` - Instructs Kea to write its host cache content to disk.
+``cache-write`` - instructs Kea to write its host cache content to disk.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0 (`host_cache <#commands-host_cache-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Host Cache hooks library<commands-host_cache-lib>`)
 
-Description and examples: See `??? <#command-cache-write>`__
+Description and examples: see :ref:`command-cache-write`
 
 Command syntax:
 
@@ -590,7 +604,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -599,7 +613,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-class-add:
@@ -607,14 +621,14 @@ statuses are:
 class-add reference
 ===================
 
-``class-add`` - This command is used to create and add a new class to
+``class-add`` - creates and adds a new class to
 the existing server configuration.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.5.0 (`class_cmds <#commands-class_cmds-lib>`__ hook)
+Availability: 1.5.0 (:ref:`The Class Commands hooks library<commands-class_cmds-lib>`)
 
-Description and examples: See `??? <#command-class-add>`__
+Description and examples: see :ref:`command-class-add`
 
 Command syntax:
 
@@ -635,8 +649,8 @@ Command syntax:
        }
    }
 
-The ``next-server``, ``server-hostname`` and ``boot-file-name`` are
-DHCPv4 specific. Only one client class can be added with a single
+The ``next-server``, ``server-hostname``, and ``boot-file-name`` commands are
+DHCPv4-specific. Only one client class can be added with a single
 command.
 
 Response syntax:
@@ -656,14 +670,13 @@ duplicate or another error occurs (result 1).
 class-del reference
 ===================
 
-``class-del`` - This command is used to remove a client class from the
-server configuration.
+``class-del`` - removes a client class from the server configuration.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.5.0 (`class_cmds <#commands-class_cmds-lib>`__ hook)
+Availability: 1.5.0 (:ref:`The Class Commands hooks library<commands-class_cmds-lib>`)
 
-Description and examples: See `??? <#command-class-del>`__
+Description and examples: see :ref:`command-class-del`
 
 Command syntax:
 
@@ -686,7 +699,7 @@ Response syntax:
    }
 
 The command will return a result of 3 (empty) if the client class
-doesn't exist. If the client class exists, the retured result is 0 if
+does not exist. If the client class exists, the returned result is 0 if
 the deletion was successful and the result is 1 if the deletion is
 unsuccessful.
 
@@ -695,14 +708,13 @@ unsuccessful.
 class-get reference
 ===================
 
-``class-get`` - This command is used to return detailed information
-about an existing client class.
+``class-get`` - returns detailed information about an existing client class.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.5.0 (`class_cmds <#commands-class_cmds-lib>`__ hook)
+Availability: 1.5.0 (:ref:`The Class Commands hooks library<commands-class_cmds-lib>`)
 
-Description and examples: See `??? <#command-class-get>`__
+Description and examples: see :ref:`command-class-get`
 
 Command syntax:
 
@@ -740,8 +752,8 @@ Response syntax:
 
 The returned information depends on the DHCP server type, i.e. some
 parameters are specific to DHCPv4 server. Also, some parameters may not
-be returned if they are not set for the client class. If the class with
-specified name doesn't exist a result of 3 (empty) is returned. If the
+be returned if they are not set for the client class. If a class with the
+specified name does not exist, a result of 3 (empty) is returned. If the
 client class is found, the result of 0 is returned. If there is an error
 while processing the command, the result of 1 is returned.
 
@@ -750,14 +762,14 @@ while processing the command, the result of 1 is returned.
 class-list reference
 ====================
 
-``class-list`` - This command is used to retrieve a list of all client
+``class-list`` - retrieves a list of all client
 classes from the server configuration.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.5.0 (`class_cmds <#commands-class_cmds-lib>`__ hook)
+Availability: 1.5.0 (:ref:`The Class Commands hooks library<commands-class_cmds-lib>`)
 
-Description and examples: See `??? <#command-class-list>`__
+Description and examples: see :ref:`command-class-list`
 
 Command syntax:
 
@@ -790,7 +802,7 @@ Response syntax:
 
 The returned list of classes merely contains their names. In order to
 retrieve full information about one of these classes use
-`??? <#command-class-get>`__. The returned result is 3 (empty) if no
+:ref:`command-class-get`. The returned result is 3 (empty) if no
 classes are found. If the command is processed successfully and the list
 of client classes is not empty, the result of 0 is returned. If there is
 an error while processing the command, the result of 1 is returned.
@@ -800,14 +812,14 @@ an error while processing the command, the result of 1 is returned.
 class-update reference
 ======================
 
-``class-update`` - This command is used to update an existing client
+``class-update`` - updates an existing client
 class in the server configuration.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.5.0 (`class_cmds <#commands-class_cmds-lib>`__ hook)
+Availability: 1.5.0 (:ref:`The Class Commands hooks library<commands-class_cmds-lib>`)
 
-Description and examples: See `??? <#command-class-update>`__
+Description and examples: see :ref:`command-class-update`
 
 Command syntax:
 
@@ -828,8 +840,8 @@ Command syntax:
        }
    }
 
-The ``next-server``, ``server-hostname`` and ``boot-file-name`` are
-DHCPv4 specific. Only one client class can be updated with a single
+The ``next-server``, ``server-hostname``, and ``boot-file-name`` commands are
+DHCPv4-specific. Only one client class can be updated with a single
 command.
 
 Response syntax:
@@ -842,17 +854,16 @@ Response syntax:
    }
 
 The command will return the result of 3 (empty) if the client class
-doesn't exist. If the client class exists, the retured result is 0 if
-the update was successful and the result is 1 if the update is
-unsuccessful.
+does not exist. If the client class exists, the returned result is 0 if
+the update was successful and 1 if the update is unsuccessful.
 
 .. _reference-config-get:
 
 config-get reference
 ====================
 
-``config-get`` - Retrieves the current configuration used by the server.
-The configuration is roughtly equal to the configuration file, but
+``config-get`` - retrieves the current configuration used by the server.
+The configuration is roughly equal to the configuration file, but
 includes additional changes made by other commands and due to parameters
 inheritance.
 
@@ -861,7 +872,7 @@ Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-config-get>`__
+Description and examples: see :ref:`command-config-get`
 
 Command syntax:
 
@@ -884,7 +895,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -893,7 +904,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-config-reload:
@@ -901,7 +912,7 @@ statuses are:
 config-reload reference
 =======================
 
-``config-reload`` - The config-reload command instructs Kea to load
+``config-reload`` - instructs Kea to load
 again the configuration file that was used previously.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
@@ -909,7 +920,7 @@ Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-config-reload>`__
+Description and examples: see :ref:`command-config-reload`
 
 Command syntax:
 
@@ -928,7 +939,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -937,7 +948,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-config-set:
@@ -945,7 +956,7 @@ statuses are:
 config-set reference
 ====================
 
-``config-set`` - The config-set command instructs the server to replace
+``config-set`` - instructs the server to replace
 its current configuration with the new configuration supplied in the
 command's arguments.
 
@@ -954,7 +965,7 @@ Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-config-set>`__
+Description and examples: see :ref:`command-config-set`
 
 Command syntax:
 
@@ -968,7 +979,7 @@ Command syntax:
         }
    }
 
-where <server> is the configuration element name for a given server such
+where <server> is the configuration element name for a given server, such
 as "Dhcp4" or "Dhcp6"
 
 Response syntax:
@@ -981,7 +992,7 @@ Response syntax:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -990,7 +1001,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-config-test:
@@ -998,7 +1009,7 @@ statuses are:
 config-test reference
 =====================
 
-``config-test`` - The config-test command instructs the server to check
+``config-test`` - instructs the server to check
 whether the new configuration supplied in the command's arguments can be
 loaded.
 
@@ -1007,7 +1018,7 @@ Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-config-test>`__
+Description and examples: see :ref:`command-config-test`
 
 Command syntax:
 
@@ -1021,7 +1032,7 @@ Command syntax:
         }
    }
 
-where >server< is the configuration element name for a given server such
+where <server> is the configuration element name for a given server, such
 as "Dhcp4" or "Dhcp6"
 
 Response syntax:
@@ -1034,7 +1045,7 @@ Response syntax:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1043,7 +1054,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-config-write:
@@ -1051,7 +1062,7 @@ statuses are:
 config-write reference
 ======================
 
-``config-write`` - The config-write command instructs the Kea server to
+``config-write`` - instructs the Kea server to
 write its current configuration to a file on disk.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
@@ -1059,7 +1070,7 @@ Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-config-write>`__
+Description and examples: see :ref:`command-config-write`
 
 Command syntax:
 
@@ -1081,7 +1092,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1090,7 +1101,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-dhcp-disable:
@@ -1098,14 +1109,13 @@ statuses are:
 dhcp-disable reference
 ======================
 
-``dhcp-disable`` - The dhcp-disable command globally disables the DHCP
-service.
+``dhcp-disable`` - globally disables the DHCP service.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.4.0 (built-in)
 
-Description and examples: See `??? <#command-dhcp-disable>`__
+Description and examples: see :ref:`command-dhcp-disable`
 
 Command syntax:
 
@@ -1127,7 +1137,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1136,7 +1146,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-dhcp-enable:
@@ -1144,14 +1154,13 @@ statuses are:
 dhcp-enable reference
 =====================
 
-``dhcp-enable`` - The dhcp-enable command globally enables the DHCP
-service.
+``dhcp-enable`` - globally enables the DHCP service.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.4.0 (built-in)
 
-Description and examples: See `??? <#command-dhcp-enable>`__
+Description and examples: see :ref:`command-dhcp-enable`
 
 Command syntax:
 
@@ -1170,7 +1179,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1179,7 +1188,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-ha-continue:
@@ -1187,15 +1196,14 @@ statuses are:
 ha-continue reference
 =====================
 
-``ha-continue`` - This command is used to resume the operation of the
+``ha-continue`` - resumes the operation of the
 paused HA state machine.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0
-(`high_availability <#commands-high_availability-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The High Availability hooks library<commands-high_availability-lib>`)
 
-Description and examples: See `??? <#command-ha-continue>`__
+Description and examples: see :ref:`command-ha-continue`
 
 Command syntax:
 
@@ -1214,7 +1222,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1223,7 +1231,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-ha-heartbeat:
@@ -1231,16 +1239,15 @@ statuses are:
 ha-heartbeat reference
 ======================
 
-``ha-heartbeat`` - This command is sent internally by Kea partner when
-operating in High Availability (HA) mode. It will retrieve the server HA
+``ha-heartbeat`` - is sent internally by a Kea partner when
+operating in High Availability (HA) mode; it retrieves the server HA
 state and clock value.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0
-(`high_availability <#commands-high_availability-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The High Availability hooks library<commands-high_availability-lib>`)
 
-Description and examples: See `??? <#command-ha-heartbeat>`__
+Description and examples: see :ref:`ha-server-states`
 
 Command syntax:
 
@@ -1260,23 +1267,22 @@ Response syntax:
    }
 
 The response to this command is different from the typical command
-response. The response will include server state (see
-`??? <#ha-server-states>`__ plus the current clock value.
+response. The response will include the server state (see
+:ref:`ha-server-states` plus the current clock value.
 
 .. _reference-ha-scopes:
 
 ha-scopes reference
 ===================
 
-``ha-scopes`` - This command modifies the scope that the server is
+``ha-scopes`` - modifies the scope that the server is
 responsible for serving when operating in High Availability (HA) mode.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0
-(`high_availability <#commands-high_availability-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The High Availability hooks library<commands-high_availability-lib>`)
 
-Description and examples: See `??? <#command-ha-scopes>`__
+Description and examples: see :ref:`command-ha-scopes`
 
 Command syntax:
 
@@ -1301,7 +1307,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1310,7 +1316,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-ha-sync:
@@ -1318,15 +1324,14 @@ statuses are:
 ha-sync reference
 =================
 
-``ha-sync`` - The command is issued to instruct the server running in HA
+``ha-sync`` - instructs the server running in HA
 mode to synchronize its local lease database with the selected peer.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.4.0
-(`high_availability <#commands-high_availability-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The High Availability hooks library<commands-high_availability-lib>`)
 
-Description and examples: See `??? <#command-ha-sync>`__
+Description and examples: see :ref:`command-ha-sync`
 
 Command syntax:
 
@@ -1334,7 +1339,7 @@ Command syntax:
 
    {
        "command": "ha-sync",
-       "service": [ <service affected: "dhcp4" or "dhcp6" ],
+       "service": [ <service affected:> "dhcp4" or "dhcp6" ],
        "arguments": {
            "server-name": <name of the partner server>,
            "max-period": <integer, in seconds>
@@ -1350,7 +1355,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1359,7 +1364,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease4-add:
@@ -1367,14 +1372,13 @@ statuses are:
 lease4-add reference
 ====================
 
-``lease4-add`` - The lease4-add command adds a new IPv4 lease
-administratively.
+``lease4-add`` - adds a new IPv4 lease administratively.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease4-add>`__
+Description and examples: see :ref:`command-lease4-add`
 
 Command syntax:
 
@@ -1401,7 +1405,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1410,7 +1414,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease4-del:
@@ -1418,14 +1422,13 @@ statuses are:
 lease4-del reference
 ====================
 
-``lease4-del`` - lease4-del can be used to delete a lease from the lease
-database.
+``lease4-del`` - deletes a lease from the lease database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease4-del>`__
+Description and examples: see :ref:`command-lease4-del`
 
 Command syntax:
 
@@ -1451,7 +1454,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1460,7 +1463,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease4-get:
@@ -1468,14 +1471,13 @@ statuses are:
 lease4-get reference
 ====================
 
-``lease4-get`` - lease4-get can be used to query the lease database and
-retrieve existing leases.
+``lease4-get`` - queries the lease database and retrieves existing leases.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease4-get>`__
+Description and examples: see :ref:`command-lease4-get`
 
 Command syntax:
 
@@ -1509,23 +1511,23 @@ Response syntax:
      "text": "IPv4 lease found."
    }
 
-lease4-get returns a result that indicates a result of the operation and
+``lease4-get`` returns a result that indicates a result of the operation and
 lease details, if found. It has one of the following values: 0
-(success), 1 (error) or 2 (empty).
+(success), 1 (error), or 2 (empty).
 
 .. _reference-lease4-get-all:
 
 lease4-get-all reference
 ========================
 
-``lease4-get-all`` - lease4-get-all is used to retrieve all IPv4 leases
+``lease4-get-all`` - retrieves all IPv4 leases
 or all leases for the specified set of subnets.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.4.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease4-get-all>`__
+Description and examples: see :ref:`command-lease4-get-all`
 
 Command syntax:
 
@@ -1536,7 +1538,7 @@ Command syntax:
        "arguments": "subnets"
    }
 
-The lease4-get-all command may result in very large responses.
+The ``lease4-get-all`` command may result in very large responses.
 
 Response syntax:
 
@@ -1547,7 +1549,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1556,7 +1558,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease4-update:
@@ -1564,14 +1566,13 @@ statuses are:
 lease4-update reference
 =======================
 
-``lease4-update`` - The lease4-update command can be used to update
-existing leases.
+``lease4-update`` - updates existing leases.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease4-update>`__
+Description and examples: see :ref:`command-lease4-update`
 
 Command syntax:
 
@@ -1597,7 +1598,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1606,7 +1607,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease4-wipe:
@@ -1614,14 +1615,13 @@ statuses are:
 lease4-wipe reference
 =====================
 
-``lease4-wipe`` - lease4-wipe is designed to remove all leases
-associated with a given subnet.
+``lease4-wipe`` - removes all leases associated with a given subnet.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease4-wipe>`__
+Description and examples: see :ref:`command-lease4-wipe`
 
 Command syntax:
 
@@ -1643,7 +1643,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1652,7 +1652,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease6-add:
@@ -1660,14 +1660,13 @@ statuses are:
 lease6-add reference
 ====================
 
-``lease6-add`` - The lease6-add command creates a new lease
-administratively.
+``lease6-add`` - creates a new lease administratively.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease6-add>`__
+Description and examples: see :ref:`command-lease4-add`
 
 Command syntax:
 
@@ -1683,7 +1682,7 @@ Command syntax:
        }
    }
 
-lease6-add can be also used to add leases for IPv6 prefixes..
+``lease6-add`` can be also used to add leases for IPv6 prefixes.
 
 Response syntax:
 
@@ -1692,7 +1691,7 @@ Response syntax:
    { "result": 0, "text": "Lease added." }
        { "result": 1, "text": "missing parameter 'ip-address' (<string>:3:19)" }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1701,7 +1700,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease6-del:
@@ -1709,14 +1708,13 @@ statuses are:
 lease6-del reference
 ====================
 
-``lease6-del`` - lease6-del can be used to delete a lease from the lease
-database.
+``lease6-del`` - deletes a lease from the lease database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease6-del>`__
+Description and examples: see :ref:`command-lease4-del`
 
 Command syntax:
 
@@ -1729,8 +1727,8 @@ Command syntax:
        }
    }
 
-lease6-del returns a result that indicates a outcome of the operation.
-It has one of the following values: 0 (success), 1 (error) or 3 (empty).
+``lease6-del`` returns a result that indicates a outcome of the operation.
+It has one of the following values: 0 (success), 1 (error), or 3 (empty).
 
 Response syntax:
 
@@ -1741,7 +1739,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1750,7 +1748,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease6-get:
@@ -1758,14 +1756,13 @@ statuses are:
 lease6-get reference
 ====================
 
-``lease6-get`` - lease6-get can be used to query the lease database and
-retrieve existing leases.
+``lease6-get`` - queries the lease database and retrieves existing leases.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease6-get>`__
+Description and examples: see :ref:`command-lease4-get`
 
 Command syntax:
 
@@ -1779,9 +1776,9 @@ Command syntax:
      }
    }
 
-lease6-get returns a result that indicates a result of the operation and
+``lease6-get`` returns a result that indicates a result of the operation and
 lease details, if found. It has one of the following values: 0
-(success), 1 (error) or 2 (empty).
+(success), 1 (error), or 2 (empty).
 
 Response syntax:
 
@@ -1792,7 +1789,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1801,7 +1798,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease6-get-all:
@@ -1809,14 +1806,14 @@ statuses are:
 lease6-get-all reference
 ========================
 
-``lease6-get-all`` - lease6-get-all is used to retrieve all IPv6 leases
+``lease6-get-all`` - retrieves all IPv6 leases
 or all leases for the specified set of subnets.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease6-get-all>`__
+Description and examples: see :ref:`command-lease4-get-all`
 
 Command syntax:
 
@@ -1872,21 +1869,20 @@ Response syntax:
        "text": "2 IPv6 lease(s) found."
    }
 
-The lease6-get-all command may result in very large responses.
+The ``lease6-get-all`` command may result in very large responses.
 
 .. _reference-lease6-update:
 
 lease6-update reference
 =======================
 
-``lease6-update`` - The lease6-update command can be used to update
-existing leases.
+``lease6-update`` - updates existing leases.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease6-update>`__
+Description and examples: see :ref:`command-lease4-update`
 
 Command syntax:
 
@@ -1913,7 +1909,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1922,7 +1918,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-lease6-wipe:
@@ -1930,14 +1926,13 @@ statuses are:
 lease6-wipe reference
 =====================
 
-``lease6-wipe`` - lease6-wipe is designed to remove all leases
-associated with a given subnet.
+``lease6-wipe`` - removes all leases associated with a given subnet.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`lease_cmds <#commands-lease_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Lease Commands hooks library<commands-lease_cmds-lib>`)
 
-Description and examples: See `??? <#command-lease6-wipe>`__
+Description and examples: see :ref:`command-lease4-wipe`
 
 Command syntax:
 
@@ -1961,7 +1956,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -1970,7 +1965,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-leases-reclaim:
@@ -1978,14 +1973,14 @@ statuses are:
 leases-reclaim reference
 ========================
 
-``leases-reclaim`` - The leases-reclaim command instructs the server to
+``leases-reclaim`` - instructs the server to
 reclaim all expired leases immediately.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-leases-reclaim>`__
+Description and examples: see :ref:`command-leases-reclaim`
 
 Command syntax:
 
@@ -2007,7 +2002,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2016,7 +2011,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-libreload:
@@ -2024,14 +2019,13 @@ statuses are:
 libreload reference
 ===================
 
-``libreload`` - The libreload command will first unload and then load
-all currently loaded hook libraries.
+``libreload`` - unloads and then loads all currently loaded hook libraries.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-libreload>`__
+Description and examples: see :ref:`command-libreload`
 
 Command syntax:
 
@@ -2054,7 +2048,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2063,7 +2057,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-list-commands:
@@ -2071,15 +2065,14 @@ statuses are:
 list-commands reference
 =======================
 
-``list-commands`` - The list-commands command retrieves a list of all
-commands supported by the server.
+``list-commands`` - retrieves a list of all commands supported by the server.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 ``kea-ctrl-agent``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-list-commands>`__
+Description and examples: see :ref:`command-list-commands`
 
 Command syntax:
 
@@ -2101,7 +2094,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2110,7 +2103,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network4-add:
@@ -2118,14 +2111,13 @@ statuses are:
 network4-add reference
 ======================
 
-``network4-add`` - The network4-add command is used to add a new shared
-network.
+``network4-add`` - adds a new shared network.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network4-add>`__
+Description and examples: see :ref:`command-network4-add`
 
 Command syntax:
 
@@ -2175,7 +2167,7 @@ Response syntax:
        "text": "A new IPv4 shared network 'floor13' added"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2184,7 +2176,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network4-del:
@@ -2192,14 +2184,13 @@ statuses are:
 network4-del reference
 ======================
 
-``network4-del`` - The network4-del command is used to delete existing
-shared networks.
+``network4-del`` - deletes existing shared networks.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network4-del>`__
+Description and examples: see :ref:`command-network4-del`
 
 Command syntax:
 
@@ -2228,7 +2219,7 @@ Response syntax:
        "text": "IPv4 shared network 'floor13' deleted"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2237,7 +2228,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network4-get:
@@ -2245,15 +2236,15 @@ statuses are:
 network4-get reference
 ======================
 
-``network4-get`` - The network4-get command is used to retrieve detailed
+``network4-get`` - retrieves detailed
 information about shared networks, including subnets currently being
 part of a given network.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network4-get>`__
+Description and examples: see :ref:`command-network4-get`
 
 Command syntax:
 
@@ -2311,14 +2302,13 @@ omitted here for clarity.
 network4-list reference
 =======================
 
-``network4-list`` - The network4-list command is used to retrieve full
-list of currently configured shared networks.
+``network4-list`` - retrieves the full list of currently configured shared networks.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network4-list>`__
+Description and examples: see :ref:`command-network4-list`
 
 Command syntax:
 
@@ -2343,7 +2333,7 @@ Response syntax:
        "text": "2 IPv4 network(s) found"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2352,7 +2342,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network4-subnet-add:
@@ -2360,14 +2350,13 @@ statuses are:
 network4-subnet-add reference
 =============================
 
-``network4-subnet-add`` - The network4-subnet-add command is used to add
-existing subnets to existing shared networks.
+``network4-subnet-add`` - adds existing subnets to existing shared networks.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network4-subnet-add>`__
+Description and examples: see :ref:`command-network4-subnet-add`
 
 Command syntax:
 
@@ -2390,7 +2379,7 @@ Response syntax:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor1'"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2399,7 +2388,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network4-subnet-del:
@@ -2407,15 +2396,14 @@ statuses are:
 network4-subnet-del reference
 =============================
 
-``network4-subnet-del`` - The network4-subnet-del command is used to
-remove a subnet that is part of an existing shared network and demote it
-to a plain, stand-alone subnet.
+``network4-subnet-del`` - removes a subnet that is part of an existing shared
+network and demotes it to a plain, stand-alone subnet.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network4-subnet-del>`__
+Description and examples: see :ref:`command-network4-subnet-del`
 
 Command syntax:
 
@@ -2438,7 +2426,7 @@ Response syntax:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2447,7 +2435,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network6-add:
@@ -2455,14 +2443,13 @@ statuses are:
 network6-add reference
 ======================
 
-``network6-add`` - The network6-add command is used to add a new shared
-network.
+``network6-add`` - adds a new shared network.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network6-add>`__
+Description and examples: see :ref:`command-network4-add`
 
 Command syntax:
 
@@ -2500,9 +2487,9 @@ Command syntax:
        }
    }
 
-The network6-add uses the same syntax for both the query and the
+The ``network6-add`` command uses the same syntax for both the query and the
 response. However, there are some parameters that are IPv4-only (e.g.
-match-client-id) and some are IPv6-only (e.g. interface-id).
+match-client-id) and some that are IPv6-only (e.g. interface-id).
 
 Response syntax:
 
@@ -2516,7 +2503,7 @@ Response syntax:
        "text": "A new IPv4 shared network 'floor13' added"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2525,7 +2512,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network6-del:
@@ -2533,14 +2520,13 @@ statuses are:
 network6-del reference
 ======================
 
-``network6-del`` - The network6-del command is used to delete existing
-shared networks.
+``network6-del`` - deletes existing shared networks.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network6-del>`__
+Description and examples: see :ref:`command-network4-del`
 
 Command syntax:
 
@@ -2553,8 +2539,8 @@ Command syntax:
        }
    }
 
-The network6-del command uses exactly the same syntax for both the
-command and the response.
+The ``network6-del`` command uses exactly the same syntax as ``network4-del``
+for both the command and the response.
 
 Response syntax:
 
@@ -2568,7 +2554,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2577,7 +2563,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network6-get:
@@ -2585,15 +2571,15 @@ statuses are:
 network6-get reference
 ======================
 
-``network6-get`` - The network6-get command is used to retrieve detailed
-information about shared networks, including subnets currently being
+``network6-get`` - retrieves detailed
+information about shared networks, including subnets that are currently
 part of a given network.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network6-get>`__
+Description and examples: see :ref:`command-network4-get`
 
 Command syntax:
 
@@ -2651,14 +2637,13 @@ omitted here for clarity.
 network6-list reference
 =======================
 
-``network6-list`` - The network6-list command is used to retrieve full
-list of currently configured shared networks.
+``network6-list`` - retrieves the full list of currently configured shared networks.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network6-list>`__
+Description and examples: see :ref:`command-network4-list`
 
 Command syntax:
 
@@ -2668,8 +2653,8 @@ Command syntax:
        "command": "network4-list"
    }
 
-network6-list follows exactly the same syntax for both the query and the
-response.
+The ``network6-list`` command follows exactly the same syntax as ``network4-list`` for
+both the query and the response.
 
 Response syntax:
 
@@ -2686,7 +2671,7 @@ Response syntax:
        "text": "2 IPv4 network(s) found"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2695,7 +2680,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network6-subnet-add:
@@ -2703,14 +2688,13 @@ statuses are:
 network6-subnet-add reference
 =============================
 
-``network6-subnet-add`` - The network6-subnet-add command is used to add
-existing subnets to existing shared networks.
+``network6-subnet-add`` - adds existing subnets to existing shared networks.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network6-subnet-add>`__
+Description and examples: see :ref:`command-network4-subnet-add`
 
 Command syntax:
 
@@ -2724,8 +2708,8 @@ Command syntax:
        }
    }
 
-The network6-subnet-add command uses exactly the same syntax for both
-the command and the response.
+The ``network6-subnet-add`` command uses exactly the same syntax as
+``network4-subnet-add`` for both the command and the response.
 
 Response syntax:
 
@@ -2736,7 +2720,7 @@ Response syntax:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor1'"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2745,7 +2729,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-network6-subnet-del:
@@ -2753,15 +2737,14 @@ statuses are:
 network6-subnet-del reference
 =============================
 
-``network6-subnet-del`` - The network6-subnet-del command is used to
-remove a subnet that is part of existing shared network and demote it to
-a plain, stand-alone subnet.
+``network6-subnet-del`` - removes a subnet that is part of an existing shared
+network and demotes it to a plain, stand-alone subnet.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-network6-subnet-del>`__
+Description and examples: see :ref:`command-network4-subnet-del`
 
 Command syntax:
 
@@ -2775,8 +2758,8 @@ Command syntax:
        }
     }
 
-The network6-subnet-del command uses exactly the same syntax for both
-the command and the response.
+The ``network6-subnet-del`` command uses exactly the same syntax as
+``network4-subnet-del`` for both the command and the response.
 
 Response syntax:
 
@@ -2787,7 +2770,7 @@ Response syntax:
        "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'"
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2796,7 +2779,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-global-parameter4-del:
@@ -2804,7 +2787,7 @@ statuses are:
 remote-global-parameter4-del reference
 ======================================
 
-``remote-global-parameter4-del`` - This command is used to delete a
+``remote-global-parameter4-del`` - deletes a
 global DHCPv4 parameter from the configuration database. The server will
 use the value specified in the configuration file or a default value (if
 the parameter is not specified in the configuration file) after deleting
@@ -2812,10 +2795,9 @@ the parameter from the database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter4-del>`__
+Description and examples: see :ref:`command-remote-global-parameter4-del`
 
 Command syntax:
 
@@ -2846,7 +2828,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -2855,7 +2837,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-global-parameter4-get:
@@ -2863,15 +2845,14 @@ statuses are:
 remote-global-parameter4-get reference
 ======================================
 
-``remote-global-parameter4-get`` - This command is used to fetch
+``remote-global-parameter4-get`` - fetches the
 selected global parameter for the server from the specified database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter4-get>`__
+Description and examples: see :ref:`command-remote-global-parameter4-get`
 
 Command syntax:
 
@@ -2909,8 +2890,8 @@ Response syntax:
    }
 
 The returned response contains a map with a global parameter name/value
-pair. The value may be a JSON string, integer, real or boolean. The
-metadata is included and it provides database specific information
+pair. The value may be a JSON string, integer, real, or boolean. The
+metadata is included and provides database-specific information
 associated with the returned object.
 
 .. _reference-remote-global-parameter4-get-all:
@@ -2918,15 +2899,14 @@ associated with the returned object.
 remote-global-parameter4-get-all reference
 ==========================================
 
-``remote-global-parameter4-get-all`` - This command is used to fetch all
+``remote-global-parameter4-get-all`` - fetches all
 global parameters for the server from the specified database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter4-get-all>`__
+Description and examples: see :ref:`command-remote-global-parameter4-get-all`
 
 Command syntax:
 
@@ -2971,8 +2951,8 @@ Response syntax:
 
 The returned response contains a list of maps. Each map contains a
 global parameter name/value pair. The value may be a JSON string,
-integer, real or boolean. The metadata is appended to each parameter and
-it provides database specific information associated with the returned
+integer, real, or boolean. The metadata is appended to each parameter and
+provides database-specific information associated with the returned
 objects.
 
 .. _reference-remote-global-parameter4-set:
@@ -2980,15 +2960,14 @@ objects.
 remote-global-parameter4-set reference
 ======================================
 
-``remote-global-parameter4-set`` - This command is used to create or
-update one more global parameters in the configuration database.
+``remote-global-parameter4-set`` - creates or
+updates one or more global parameters in the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter4-set>`__
+Description and examples: see :ref:`command-remote-global-parameter4-set`
 
 Command syntax:
 
@@ -3008,10 +2987,10 @@ Command syntax:
    }
 
 This command carries multiple global parameters with their values. Care
-should be taken when specifying more than one parameter because in some
+should be taken when specifying more than one parameter, because in some
 cases only a subset of the parameters may be successfully stored in the
 database and other parameters may fail to be stored. In such cases the
-``remote-global-parameter4-get-all`` may be useful to verify the
+``remote-global-parameter4-get-all`` command may be useful to verify the
 contents of the database after the update.
 
 Response syntax:
@@ -3023,7 +3002,7 @@ Response syntax:
        "text": "DHCPv4 global parameter(s) successfully set."
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3032,7 +3011,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-global-parameter6-del:
@@ -3040,7 +3019,7 @@ statuses are:
 remote-global-parameter6-del reference
 ======================================
 
-``remote-global-parameter6-del`` - This command is used to delete a
+``remote-global-parameter6-del`` - deletes a
 global DHCPv6 parameter from the configuration database. The server will
 use the value specified in the configuration file or a default value (if
 the parameter is not specified in the configuration file) after deleting
@@ -3048,10 +3027,9 @@ the parameter from the database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter6-del>`__
+Description and examples: see :ref:`command-remote-global-parameter4-del`
 
 Command syntax:
 
@@ -3081,7 +3059,7 @@ Response syntax:
            "count": 1
        }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3090,7 +3068,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-global-parameter6-get:
@@ -3098,15 +3076,14 @@ statuses are:
 remote-global-parameter6-get reference
 ======================================
 
-``remote-global-parameter6-get`` - This command is used to fetch
+``remote-global-parameter6-get`` - fetches the
 selected global parameter for the server from the specified database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter6-get>`__
+Description and examples: see :ref:`command-remote-global-parameter4-get`
 
 Command syntax:
 
@@ -3144,8 +3121,8 @@ Response syntax:
    }
 
 The returned response contains a map with a global parameter name/value
-pair. The value may be a JSON string, integer, real or boolean. The
-metadata is included and it provides database specific information
+pair. The value may be a JSON string, integer, real, or boolean. The
+metadata is included and provides database-specific information
 associated with the returned object.
 
 .. _reference-remote-global-parameter6-get-all:
@@ -3153,15 +3130,14 @@ associated with the returned object.
 remote-global-parameter6-get-all reference
 ==========================================
 
-``remote-global-parameter6-get-all`` - This command is used to fetch all
+``remote-global-parameter6-get-all`` - fetches all
 global parameters for the server from the specified database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter6-get-all>`__
+Description and examples: see :ref:`command-remote-global-parameter4-get-all`
 
 Command syntax:
 
@@ -3206,8 +3182,8 @@ Response syntax:
 
 The returned response contains a list of maps. Each map contains a
 global parameter name/value pair. The value may be a JSON string,
-integer, real or boolean. The metadata is appended to each parameter and
-it provides database specific information associated with the returned
+integer, real, or boolean. The metadata is appended to each parameter and
+provides database-specific information associated with the returned
 objects.
 
 .. _reference-remote-global-parameter6-set:
@@ -3215,15 +3191,14 @@ objects.
 remote-global-parameter6-set reference
 ======================================
 
-``remote-global-parameter6-set`` - This command is used to create or
-update one more global DHCP parameters in the configuration database.
+``remote-global-parameter6-set`` - creates or
+updates one or more global DHCP parameters in the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-global-parameter6-set>`__
+Description and examples: see :ref:`command-remote-global-parameter4-set`
 
 Command syntax:
 
@@ -3243,10 +3218,10 @@ Command syntax:
    }
 
 This command carries multiple global parameters with their values. Care
-should be taken when specifying more than one parameter because in some
+should be taken when specifying more than one parameter, because in some
 cases only a subset of the parameters may be successfully stored in the
 database and other parameters may fail to be stored. In such cases the
-``remote-global-parameter6-get-all`` may be useful to verify the
+``remote-global-parameter6-get-all`` command may be useful to verify the
 contents of the database after the update.
 
 Response syntax:
@@ -3258,7 +3233,7 @@ Response syntax:
        "text": "DHCPv6 global parameter(s) successfully set."
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3267,7 +3242,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-network4-del:
@@ -3275,14 +3250,14 @@ statuses are:
 remote-network4-del reference
 =============================
 
-``remote-network4-del`` - This command is used to delete an IPv4 shared
+``remote-network4-del`` - deletes an IPv4 shared
 network from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network4-del>`__
+Description and examples: see :ref:`command-remote-network4-del`
 
 Command syntax:
 
@@ -3304,7 +3279,7 @@ Command syntax:
    }
 
 This command includes a list with exactly one name of the shared network
-to be deleted. The ``subnets-action`` denotes whether the subnets in
+to be deleted. The ``subnets-action`` command denotes whether the subnets in
 this shared network should be deleted or not.
 
 Response syntax:
@@ -3319,7 +3294,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3328,7 +3303,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-network4-get:
@@ -3336,14 +3311,14 @@ statuses are:
 remote-network4-get reference
 =============================
 
-``remote-network4-get`` - This command is used to fetch selected IPv4
+``remote-network4-get`` - fetches the selected IPv4
 shared network for the server from the specified database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network4-get>`__
+Description and examples: see :ref:`command-remote-network4-get`
 
 Command syntax:
 
@@ -3365,8 +3340,8 @@ Command syntax:
    }
 
 This command includes a list with exactly one name of the shared network
-to be returned. The ``subnets-include`` optional parameter allows for
-specifying whether the subnets belonging to the shared network should
+to be returned. The ``subnets-include`` optional parameter
+specifies whether the subnets belonging to the shared network should
 also be returned.
 
 Response syntax:
@@ -3392,22 +3367,22 @@ Response syntax:
 
 If the subnets are returned with the shared network they are carried in
 the ``subnet4`` list within the shared network definition. The metadata
-is included in the returned shared network definition and it provides
-the database specific information associated with the returned object.
+is included in the returned shared network definition and provides
+the database-specific information associated with the returned object.
 
 .. _reference-remote-network4-list:
 
 remote-network4-list reference
 ==============================
 
-``remote-network4-list`` - This command is used to fetch a list of all
+``remote-network4-list`` - fetches a list of all
 IPv4 shared networks from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network4-list>`__
+Description and examples: see :ref:`command-remote-network4-list`
 
 Command syntax:
 
@@ -3451,10 +3426,10 @@ Response syntax:
    }
 
 The returned response contains the list of maps. Each map contains the
-shared network name and the metadata which provides database specific
+shared network name and the metadata, which provides database-specific
 information associated with the shared network. The returned list does
-not contain full definitions of the shared networks. Use
-``remote-network4-get`` to fetch the full information about the selected
+not contain full definitions of the shared networks; use
+``remote-network4-get`` to fetch the complete information about the selected
 shared networks.
 
 .. _reference-remote-network4-set:
@@ -3462,14 +3437,14 @@ shared networks.
 remote-network4-set reference
 =============================
 
-``remote-network4-set`` - This command is used to create or replace an
+``remote-network4-set`` - creates or replaces an
 IPv4 shared network in the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network4-set>`__
+Description and examples: see :ref:`command-remote-network4-set`
 
 Command syntax:
 
@@ -3490,8 +3465,8 @@ Command syntax:
    }
 
 The provided list must contain exactly one shared network specification.
-It must not contain subnets ("subnet4" parameter). The subnets are added
-to the shared network using ``remote-subnet4-set`` command.
+It must not contain subnets ("subnet4" parameter); the subnets are added
+to the shared network using the ``remote-subnet4-set`` command.
 
 Response syntax:
 
@@ -3502,7 +3477,7 @@ Response syntax:
        "text": "IPv4 shared network successfully set."
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3511,7 +3486,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-network6-del:
@@ -3519,14 +3494,14 @@ statuses are:
 remote-network6-del reference
 =============================
 
-``remote-network6-del`` - This command is used to delete an IPv6 shared
+``remote-network6-del`` - deletes an IPv6 shared
 network from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network6-del>`__
+Description and examples: see :ref:`command-remote-network4-del`
 
 Command syntax:
 
@@ -3548,7 +3523,7 @@ Command syntax:
    }
 
 This command includes a list with exactly one name of the shared network
-to be deleted. The ``subnets-action`` denotes whether the subnets in
+to be deleted. The ``subnets-action`` command denotes whether the subnets in
 this shared network should be deleted or not.
 
 Response syntax:
@@ -3563,7 +3538,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3572,7 +3547,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-network6-get:
@@ -3580,14 +3555,14 @@ statuses are:
 remote-network6-get reference
 =============================
 
-``remote-network6-get`` - This command is used to fetch selected IPv6
+``remote-network6-get`` - fetches the selected IPv6
 shared network for the server from the specified database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network6-get>`__
+Description and examples: see :ref:`command-remote-network4-get`
 
 Command syntax:
 
@@ -3609,8 +3584,8 @@ Command syntax:
    }
 
 This command includes a list with exactly one name of the shared network
-to be returned. The ``subnets-include`` optional parameter allows for
-specifying whether the subnets belonging to the shared network should
+to be returned. The ``subnets-include`` optional parameter
+specifies whether the subnets belonging to the shared network should
 also be returned.
 
 Response syntax:
@@ -3634,24 +3609,24 @@ Response syntax:
        }
    }
 
-If the subnets are returned with the shared network they are carried in
+If the subnets are returned with the shared network, they are carried in
 the ``subnet6`` list within the shared network definition. The metadata
-is included in the returned shared network definition and it provides
-the database specific information associated with the returned object.
+is included in the returned shared network definition and provides
+the database-specific information associated with the returned object.
 
 .. _reference-remote-network6-list:
 
 remote-network6-list reference
 ==============================
 
-``remote-network6-list`` - This command is used to fetch a list of all
+``remote-network6-list`` - fetches a list of all
 IPv6 shared networks from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network6-list>`__
+Description and examples: see :ref:`command-remote-network4-list`
 
 Command syntax:
 
@@ -3695,10 +3670,10 @@ Response syntax:
    }
 
 The returned response contains the list of maps. Each map contains the
-shared network name and the metadata which provides database specific
+shared network name and the metadata, which provides database-specific
 information associated with the shared network. The returned list does
-not contain full definitions of the shared networks. Use
-``remote-network6-get`` to fetch the full information about the selected
+not contain full definitions of the shared networks; use
+``remote-network6-get`` to fetch the complete information about the selected
 shared networks.
 
 .. _reference-remote-network6-set:
@@ -3706,14 +3681,14 @@ shared networks.
 remote-network6-set reference
 =============================
 
-``remote-network6-set`` - This command is used to create or replace an
+``remote-network6-set`` - creates or replaces an
 IPv6 shared network in the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-network6-set>`__
+Description and examples: see :ref:`command-remote-network4-set`
 
 Command syntax:
 
@@ -3734,8 +3709,8 @@ Command syntax:
    }
 
 The provided list must contain exactly one shared network specification.
-It must not contain subnets ("subnet6" parameter). The subnets are added
-to the shared network using ``remote-subnet6-set`` command.
+It must not contain subnets ("subnet6" parameter); the subnets are added
+to the shared network using the ``remote-subnet6-set`` command.
 
 Response syntax:
 
@@ -3746,7 +3721,7 @@ Response syntax:
        "text": "IPv6 shared network successfully set."
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3755,7 +3730,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option-def4-del:
@@ -3763,14 +3738,14 @@ statuses are:
 remote-option-def4-del reference
 ================================
 
-``remote-option-def4-del`` - This command is used to delete a DHCPv4
+``remote-option-def4-del`` - deletes a DHCPv4
 option definition from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-option-def4-del>`__
+Description and examples: see :ref:`command-remote-option-def4-del`
 
 Command syntax:
 
@@ -3804,7 +3779,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3813,7 +3788,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option-def4-get:
@@ -3821,14 +3796,14 @@ statuses are:
 remote-option-def4-get reference
 ================================
 
-``remote-option-def4-get`` - This command is used to fetch a DHCPv4
+``remote-option-def4-get`` - fetches a DHCPv4
 option definition from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-option-def4-get>`__
+Description and examples: see :ref:`command-remote-option-def4-get`
 
 Command syntax:
 
@@ -3849,7 +3824,7 @@ Command syntax:
        }
    }
 
-The desired option definition is identified by the pair of the option
+The desired option definition is identified by the pair of option
 code/space values.
 
 Response syntax:
@@ -3872,7 +3847,7 @@ Response syntax:
        }
    }
 
-The metadata is included and it provides database specific information
+The metadata is included and provides database-specific information
 associated with the returned object.
 
 .. _reference-remote-option-def4-get-all:
@@ -3880,15 +3855,14 @@ associated with the returned object.
 remote-option-def4-get-all reference
 ====================================
 
-``remote-option-def4-get-all`` - This command is used to fetch all
+``remote-option-def4-get-all`` - fetches all
 DHCPv4 option definitions from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option-def4-get-all>`__
+Description and examples: see :ref:`command-remote-option-def4-get-all`
 
 Command syntax:
 
@@ -3932,22 +3906,22 @@ Response syntax:
    }
 
 The returned response contains a list of maps. Each map contains an
-option definition specification and the metadata including database
-specific information associated with the returned objects.
+option definition specification and the metadata, including
+database-specific information associated with the returned objects.
 
 .. _reference-remote-option-def4-set:
 
 remote-option-def4-set reference
 ================================
 
-``remote-option-def4-set`` - This command is used to create or replace
+``remote-option-def4-set`` - creates or replaces a
 DHCPv4 option definition in the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-option-def4-set>`__
+Description and examples: see :ref:`command-remote-option-def4-set`
 
 Command syntax:
 
@@ -3979,7 +3953,7 @@ Response syntax:
        "text": "DHCPv4 option definition set."
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -3988,7 +3962,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option-def6-del:
@@ -3996,14 +3970,14 @@ statuses are:
 remote-option-def6-del reference
 ================================
 
-``remote-option-def6-del`` - This command is used to delete a DHCPv6
+``remote-option-def6-del`` - deletes a DHCPv6
 option definition from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-option-def6-del>`__
+Description and examples: see :ref:`command-remote-option-def4-del`
 
 Command syntax:
 
@@ -4015,7 +3989,7 @@ Command syntax:
            "option-defs": [
                {
                    "code": <option code>,
-                   "space": <option space
+                   "space": <option space>
                }
            ],
            "remote": {
@@ -4039,7 +4013,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4048,7 +4022,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option-def6-get:
@@ -4056,14 +4030,14 @@ statuses are:
 remote-option-def6-get reference
 ================================
 
-``remote-option-def6-get`` - This command is used to fetch a DHCPv6
+``remote-option-def6-get`` - fetches a DHCPv6
 option definition from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-option-def6-get>`__
+Description and examples: see :ref:`command-remote-option-def4-get`
 
 Command syntax:
 
@@ -4107,7 +4081,7 @@ Response syntax:
        }
    }
 
-The metadata is included and it provides database specific information
+The metadata is included and provides database-specific information
 associated with the returned object.
 
 .. _reference-remote-option-def6-get-all:
@@ -4115,15 +4089,14 @@ associated with the returned object.
 remote-option-def6-get-all reference
 ====================================
 
-``remote-option-def6-get-all`` - This command is used to fetch all
+``remote-option-def6-get-all`` - fetches all
 DHCPv6 option definitions from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option-def6-get-all>`__
+Description and examples: see :ref:`command-remote-option-def4-get-all`
 
 Command syntax:
 
@@ -4167,22 +4140,22 @@ Response syntax:
    }
 
 The returned response contains a list of maps. Each map contains an
-option definition specification and the metadata including database
-specific information associated with the returned objects.
+option definition specification and the metadata, including
+database-specific information associated with the returned objects.
 
 .. _reference-remote-option-def6-set:
 
 remote-option-def6-set reference
 ================================
 
-``remote-option-def6-set`` - This command is used to create or replace
+``remote-option-def6-set`` - creates or replaces a
 DHCPv6 option definition in the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-option-def6-set>`__
+Description and examples: see :ref:`command-remote-option-def4-set`
 
 Command syntax:
 
@@ -4214,7 +4187,7 @@ Response syntax:
        "text": "DHCPv6 option definition set."
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4223,7 +4196,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option4-global-del:
@@ -4231,15 +4204,14 @@ statuses are:
 remote-option4-global-del reference
 ===================================
 
-``remote-option4-global-del`` - This command is used to delete a DHCPv4
+``remote-option4-global-del`` - deletes a DHCPv4
 global option from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option4-global-del>`__
+Description and examples: see :ref:`command-remote-option4-global-del`
 
 Command syntax:
 
@@ -4275,7 +4247,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4284,7 +4256,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option4-global-get:
@@ -4292,15 +4264,14 @@ statuses are:
 remote-option4-global-get reference
 ===================================
 
-``remote-option4-global-get`` - This command is used to fetch a global
+``remote-option4-global-get`` - fetches a global
 DHCPv4 option for the server from the specified database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option4-global-get>`__
+Description and examples: see :ref:`command-remote-option4-global-get`
 
 Command syntax:
 
@@ -4341,7 +4312,7 @@ Response syntax:
        }
    }
 
-The metadata is included and it provides database specific information
+The metadata is included and provides database-specific information
 associated with the returned object.
 
 .. _reference-remote-option4-global-get-all:
@@ -4349,15 +4320,14 @@ associated with the returned object.
 remote-option4-global-get-all reference
 =======================================
 
-``remote-option4-global-get-all`` - This command is used to fetch all
+``remote-option4-global-get-all`` - fetches all
 DHCPv4 global options for the server from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option4-global-get-all>`__
+Description and examples: see :ref:`command-remote-option4-global-get-all`
 
 Command syntax:
 
@@ -4401,7 +4371,7 @@ Response syntax:
    }
 
 The returned response contains a list of maps. Each map contains a
-global option specification and the metadata including database specific
+global option specification and the metadata, including database-specific
 information associated with the returned object.
 
 .. _reference-remote-option4-global-set:
@@ -4409,15 +4379,14 @@ information associated with the returned object.
 remote-option4-global-set reference
 ===================================
 
-``remote-option4-global-set`` - This command is used to create or
-replace a DHCPv4 global option in the configuration database.
+``remote-option4-global-set`` - creates or
+replaces a DHCPv4 global option in the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option4-global-set>`__
+Description and examples: see :ref:`command-remote-option4-global-set`
 
 Command syntax:
 
@@ -4437,7 +4406,7 @@ Command syntax:
        }
    }
 
-The provided list must cotain exactly one option specification.
+The provided list must contain exactly one option specification.
 
 Response syntax:
 
@@ -4456,7 +4425,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4465,7 +4434,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option6-global-del:
@@ -4473,15 +4442,14 @@ statuses are:
 remote-option6-global-del reference
 ===================================
 
-``remote-option6-global-del`` - This command is used to delete a DHCPv6
+``remote-option6-global-del`` - deletes a DHCPv6
 global option from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option6-global-del>`__
+Description and examples: see :ref:`command-remote-option4-global-del`
 
 Command syntax:
 
@@ -4517,7 +4485,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4526,7 +4494,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-option6-global-get:
@@ -4534,15 +4502,14 @@ statuses are:
 remote-option6-global-get reference
 ===================================
 
-``remote-option6-global-get`` - This command is used to delete a DHCPv6
+``remote-option6-global-get`` - deletes a DHCPv6
 global option from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option6-global-get>`__
+Description and examples: see :ref:`command-remote-option4-global-get`
 
 Command syntax:
 
@@ -4583,7 +4550,7 @@ Response syntax:
        }
    }
 
-The metadata is included and it provides database specific information
+The metadata is included and provides database-specific information
 associated with the returned object.
 
 .. _reference-remote-option6-global-get-all:
@@ -4591,15 +4558,14 @@ associated with the returned object.
 remote-option6-global-get-all reference
 =======================================
 
-``remote-option6-global-get-all`` - This command is used to fetch all
+``remote-option6-global-get-all`` - fetches all
 DHCPv6 global options for the server from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option6-global-get-all>`__
+Description and examples: see :ref:`command-remote-option4-global-get-all`
 
 Command syntax:
 
@@ -4643,7 +4609,7 @@ Response syntax:
    }
 
 The returned response contains a list of maps. Each map contains a
-global option specification and the metadata including database specific
+global option specification and the metadata, including database-specific
 information associated with the returned object.
 
 .. _reference-remote-option6-global-set:
@@ -4651,15 +4617,14 @@ information associated with the returned object.
 remote-option6-global-set reference
 ===================================
 
-``remote-option6-global-set`` - This command is used to create or
-replace a DHCPv6 global option in the configuration database.
+``remote-option6-global-set`` - creates or
+replaces a DHCPv6 global option in the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-option6-global-set>`__
+Description and examples: see :ref:`command-remote-option4-global-set`
 
 Command syntax:
 
@@ -4679,7 +4644,7 @@ Command syntax:
        }
    }
 
-The provided list must cotain exactly one option specification.
+The provided list must contain exactly one option specification.
 
 Response syntax:
 
@@ -4698,7 +4663,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4707,7 +4672,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-subnet4-del-by-id:
@@ -4715,15 +4680,14 @@ statuses are:
 remote-subnet4-del-by-id reference
 ==================================
 
-``remote-subnet4-del-by-id`` - This command is used to delete an IPv4
+``remote-subnet4-del-by-id`` - deletes an IPv4
 subnet by ID from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet4-del-by-id>`__
+Description and examples: see :ref:`command-remote-subnet4-del-by-id`
 
 Command syntax:
 
@@ -4743,7 +4707,7 @@ Command syntax:
        }
    }
 
-This command includes a list with exactly one id of the subnet to be
+This command includes a list with exactly one ID of the subnet to be
 deleted.
 
 Response syntax:
@@ -4758,7 +4722,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4767,7 +4731,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-subnet4-del-by-prefix:
@@ -4775,15 +4739,14 @@ statuses are:
 remote-subnet4-del-by-prefix reference
 ======================================
 
-``remote-subnet4-del-by-prefix`` - This command is used to delete an
+``remote-subnet4-del-by-prefix`` - deletes an
 IPv4 subnet by prefix from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet4-del-by-prefix>`__
+Description and examples: see :ref:`command-remote-subnet4-del-by-prefix`
 
 Command syntax:
 
@@ -4818,7 +4781,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -4827,7 +4790,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-subnet4-get-by-id:
@@ -4835,15 +4798,14 @@ statuses are:
 remote-subnet4-get-by-id reference
 ==================================
 
-``remote-subnet4-get-by-id`` - This command is used to fetch selected
+``remote-subnet4-get-by-id`` - fetches a selected
 IPv4 subnet by ID for the server from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet4-get-by-id>`__
+Description and examples: see :ref:`command-remote-subnet4-get-by-id`
 
 Command syntax:
 
@@ -4861,7 +4823,7 @@ Command syntax:
        }
    }
 
-This command includes a list with exactly one id of the subnet to be
+This command includes a list with exactly one ID of the subnet to be
 returned.
 
 Response syntax:
@@ -4887,23 +4849,22 @@ Response syntax:
 
 If the shared network name is null, it means that the returned subnet
 does not belong to any shared network (global subnet). The metadata is
-included in the returned subnet definition and it provides database
-specific information associated with the returned object.
+included in the returned subnet definition and provides
+database-specific information associated with the returned object.
 
 .. _reference-remote-subnet4-get-by-prefix:
 
 remote-subnet4-get-by-prefix reference
 ======================================
 
-``remote-subnet4-get-by-prefix`` - This command is used to fetch
+``remote-subnet4-get-by-prefix`` - fetches a
 selected IPv4 subnet by prefix from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet4-get-by-prefix>`__
+Description and examples: see :ref:`command-remote-subnet4-get-by-prefix`
 
 Command syntax:
 
@@ -4949,22 +4910,22 @@ Response syntax:
 
 If the shared network name is null, it means that the returned subnet
 does not belong to any shared network (global subnet). The metadata is
-included in the returned subnet definition and it provides database
-specific information associated with the returned object.
+included in the returned subnet definition and provides
+database-specific information associated with the returned object.
 
 .. _reference-remote-subnet4-list:
 
 remote-subnet4-list reference
 =============================
 
-``remote-subnet4-list`` - This command is used to fetch a list of all
+``remote-subnet4-list`` - fetches a list of all
 IPv4 subnets from the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-subnet4-list>`__
+Description and examples: see :ref:`command-remote-subnet4-list`
 
 Command syntax:
 
@@ -5012,11 +4973,11 @@ Response syntax:
    }
 
 The returned response contains a list of maps. Each map contains a
-subnet identifier, prefix and shared network name to which the subnet
-belongs. If the subnet does not belong to a shared netork the name is
-null. The metadata includes database specific information associated
+subnet identifier, prefix, and shared network name to which the subnet
+belongs. If the subnet does not belong to a shared network, the name is
+null. The metadata includes database-specific information associated
 with the subnets. The returned list does not contain full subnet
-definitions. Use ``remote-subnet4-get`` to fetch the full information
+definitions; use ``remote-subnet4-get`` to fetch the complete information
 about the selected subnets.
 
 .. _reference-remote-subnet4-set:
@@ -5024,14 +4985,14 @@ about the selected subnets.
 remote-subnet4-set reference
 ============================
 
-``remote-subnet4-set`` - This command is used to create or replace an
-IPv4 subnet the configuration database.
+``remote-subnet4-set`` - creates or replaces an
+IPv4 subnet in the configuration database.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-subnet4-set>`__
+Description and examples: see :ref:`command-remote-subnet4-set`
 
 Command syntax:
 
@@ -5055,7 +5016,7 @@ Command syntax:
    }
 
 The provided list must contain exactly one subnet specification. The
-``shared-network-name`` parameter is required for these commands. It
+``shared-network-name`` parameter is required for these commands; it
 associates the subnet with the shared network by its name. If the subnet
 must not belong to any shared network (global subnet), the ``null``
 value must be specified for the shared network name.
@@ -5073,7 +5034,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5082,7 +5043,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-subnet6-del-by-id:
@@ -5090,15 +5051,14 @@ statuses are:
 remote-subnet6-del-by-id reference
 ==================================
 
-``remote-subnet6-del-by-id`` - This command is used to delete an IPv6
+``remote-subnet6-del-by-id`` - deletes an IPv6
 subnet by ID from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet6-del-by-id>`__
+Description and examples: see :ref:`command-remote-subnet4-del-by-id`
 
 Command syntax:
 
@@ -5118,7 +5078,7 @@ Command syntax:
        }
    }
 
-This command includes a list with exactly one id of the subnet to be
+This command includes a list with exactly one ID of the subnet to be
 deleted.
 
 Response syntax:
@@ -5133,7 +5093,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5142,7 +5102,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-subnet6-del-by-prefix:
@@ -5150,15 +5110,14 @@ statuses are:
 remote-subnet6-del-by-prefix reference
 ======================================
 
-``remote-subnet6-del-by-prefix`` - This command is used to delete an
+``remote-subnet6-del-by-prefix`` - deletes an
 IPv6 subnet by prefix from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet6-del-by-prefix>`__
+Description and examples: see :ref:`command-remote-subnet4-del-by-prefix`
 
 Command syntax:
 
@@ -5193,7 +5152,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5202,7 +5161,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-remote-subnet6-get-by-id:
@@ -5210,15 +5169,14 @@ statuses are:
 remote-subnet6-get-by-id reference
 ==================================
 
-``remote-subnet6-get-by-id`` - This command is used to fetch selected
+``remote-subnet6-get-by-id`` - fetches a selected
 IPv6 subnet by ID for the server from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet6-get-by-id>`__
+Description and examples: see :ref:`command-remote-subnet4-get-by-id`
 
 Command syntax:
 
@@ -5238,7 +5196,7 @@ Command syntax:
        }
    }
 
-This command includes a list with exactly one id of the subnet to be
+This command includes a list with exactly one ID of the subnet to be
 returned.
 
 Response syntax:
@@ -5266,23 +5224,22 @@ Response syntax:
 
 If the shared network name is null, it means that the returned subnet
 does not belong to any shared network (global subnet). The metadata is
-included in the returned subnet definition and it provides database
-specific information associated with the returned object.
+included in the returned subnet definition and provides
+database-specific information associated with the returned object.
 
 .. _reference-remote-subnet6-get-by-prefix:
 
 remote-subnet6-get-by-prefix reference
 ======================================
 
-``remote-subnet6-get-by-prefix`` - This command is used to fetch
+``remote-subnet6-get-by-prefix`` - fetches a
 selected IPv6 subnet by prefix from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See
-`??? <#command-remote-subnet6-get-by-prefix>`__
+Description and examples: see :ref:`command-remote-subnet4-get-by-prefix`
 
 Command syntax:
 
@@ -5328,22 +5285,22 @@ Response syntax:
 
 If the shared network name is null, it means that the returned subnet
 does not belong to any shared network (global subnet). The metadata is
-included in the returned subnet definition and it provides database
-specific information associated with the returned object.
+included in the returned subnet definition and provides
+database-specific information associated with the returned object.
 
 .. _reference-remote-subnet6-list:
 
 remote-subnet6-list reference
 =============================
 
-``remote-subnet6-list`` - This command is used to fetch a list of all
+``remote-subnet6-list`` - fetches a list of all
 IPv6 subnets from the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-subnet6-list>`__
+Description and examples: see :ref:`command-remote-subnet4-list`
 
 Command syntax:
 
@@ -5391,11 +5348,11 @@ Response syntax:
    }
 
 The returned response contains a list of maps. Each map contains a
-subnet identifier, prefix and shared network name to which the subnet
-belongs. If the subnet does not belong to a shared netork the name is
-null. The metadata includes database specific information associated
+subnet identifier, prefix, and shared network name to which the subnet
+belongs. If the subnet does not belong to a shared network, the name is
+null. The metadata includes database-specific information associated
 with the subnets. The returned list does not contain full subnet
-definitions. Use ``remote-subnet6-get`` to fetch the full information
+definitions; use ``remote-subnet6-get`` to fetch the complete information
 about the selected subnets.
 
 .. _reference-remote-subnet6-set:
@@ -5403,14 +5360,14 @@ about the selected subnets.
 remote-subnet6-set reference
 ============================
 
-``remote-subnet6-set`` - This command is used to create or replace an
-IPv4 subnet the configuration database.
+``remote-subnet6-set`` - creates or replaces an
+IPv4 subnet in the configuration database.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`cb_cmds <#commands-cb_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Configuration Backend Commands hooks library<commands-cb_cmds-lib>`)
 
-Description and examples: See `??? <#command-remote-subnet6-set>`__
+Description and examples: see :ref:`command-remote-subnet4-set`
 
 Command syntax:
 
@@ -5434,7 +5391,7 @@ Command syntax:
    }
 
 The provided list must contain exactly one subnet specification. The
-``shared-network-name`` parameter is required for these commands. It
+``shared-network-name`` parameter is required for these commands; it
 associates the subnet with the shared network by its name. If the subnet
 must not belong to any shared network (global subnet), the ``null``
 value must be specified for the shared network name.
@@ -5452,7 +5409,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5461,7 +5418,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-reservation-add:
@@ -5470,15 +5427,15 @@ reservation-add reference
 =========================
 
 ``reservation-add`` - adds a new host reservation. The reservation may
-include IPv4 address, IPv6 addresses, IPv6 prefixes, various
+include an IPv4 address, IPv6 addresses, IPv6 prefixes, various
 identifiers, a class the client will be assigned to, DHCPv4 and DHCPv6
-options and more.
+options, and more.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.2.0 (`host_cmds <#commands-host_cmds-lib>`__ hook)
+Availability: 1.2.0 (:ref:`The Host Commands hooks library<commands-host_cmds-lib>`)
 
-Description and examples: See `??? <#command-reservation-add>`__
+Description and examples: see :ref:`command-reservation-add`
 
 Command syntax:
 
@@ -5495,13 +5452,13 @@ Command syntax:
                "duid": <string>,
                "flex-id": <string>,
                "ip-address": <string (IPv4 address)>,
-               "ip-addresses": [ <comma separated strings> ],
+               "ip-addresses": [ <comma-separated strings> ],
                "hw-address": <string>,
                "hostname": <string>,
                "next-server": <string (IPv4 address)>,
-               "option-data-list": [ <comma separated structures defining options> ],
-               "prefixes": [ <comma separated IPv6 prefixes> ],
-               "reservation-client-classes": [ <comma separated strings> ],
+               "option-data-list": [ <comma-separated structures defining options> ],
+               "prefixes": [ <comma-separated IPv6 prefixes> ],
+               "reservation-client-classes": [ <comma-separated strings> ],
                "server-hostname": <string>,
                "subnet-id": <integer>,
                "user-context": <any valid JSON>,
@@ -5509,9 +5466,9 @@ Command syntax:
        }
    }
 
-Note the ip-address, client-id, next-server, server-hostname and
-boot-file-name are IPv4 specific. duid, ip-addresses and prefixes are
-IPv6 specific.
+Note that ip-address, client-id, next-server, server-hostname, and
+boot-file-name are IPv4-specific. duid, ip-addresses, and prefixes are
+IPv6-specific.
 
 Response syntax:
 
@@ -5522,7 +5479,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5531,7 +5488,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-reservation-del:
@@ -5539,13 +5496,13 @@ statuses are:
 reservation-del reference
 =========================
 
-``reservation-del`` - Deletes an existing host reservation.
+``reservation-del`` - deletes an existing host reservation.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.2.0 (`host_cmds <#commands-host_cmds-lib>`__ hook)
+Availability: 1.2.0 (:ref:`The Host Commands hooks library<commands-host_cmds-lib>`)
 
-Description and examples: See `??? <#command-reservation-del>`__
+Description and examples: see :ref:`command-reservation-del`
 
 Command syntax:
 
@@ -5561,7 +5518,7 @@ Command syntax:
        }
    }
 
-The host reservation can be identified by either (subnet-id, ip-address)
+The host reservation can be identified by either the (subnet-id, ip-address)
 pair or a triplet of (subnet-id, identifier-type, identifier).
 
 Response syntax:
@@ -5573,7 +5530,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5582,7 +5539,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-reservation-get:
@@ -5590,13 +5547,13 @@ statuses are:
 reservation-get reference
 =========================
 
-``reservation-get`` - Attempts to retrieve an existing host reservation
+``reservation-get`` - attempts to retrieve an existing host reservation.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.2.0 (`host_cmds <#commands-host_cmds-lib>`__ hook)
+Availability: 1.2.0 (:ref:`The Host Commands hooks library<commands-host_cmds-lib>`)
 
-Description and examples: See `??? <#command-reservation-get>`__
+Description and examples: see :ref:`command-reservation-get`
 
 Command syntax:
 
@@ -5611,7 +5568,7 @@ Command syntax:
        }
    }
 
-The host reservation can be identified by either (subnet-id, ip-address)
+The host reservation can be identified by either a (subnet-id, ip-address)
 pair or a triplet of (subnet-id, identifier-type, identifier).
 
 Response syntax:
@@ -5629,35 +5586,35 @@ Response syntax:
            "duid": <string>,
            "flex-id": <string>,
            "ip-address": <string (IPv4 address)>,
-           "ip-addresses": [ <comma separated strings> ],
+           "ip-addresses": [ <comma-separated strings> ],
            "hw-address": <string>,
            "hostname": <string>,
            "next-server": <string (IPv4 address)>,
-           "option-data-list": [ <comma separated structures defining options> ],
-           "prefixes": [ <comma separated IPv6 prefixes> ],
-           "reservation-client-classes": [ <comma separated strings> ],
+           "option-data-list": [ <comma-separated structures defining options> ],
+           "prefixes": [ <comma-separated IPv6 prefixes> ],
+           "reservation-client-classes": [ <comma-separated strings> ],
            "server-hostname": <string>,
            "subnet-id": <integer>,
            "user-context": <any valid JSON>,
        }
    }
 
-Arguments object appear only if a host is found. Many fields in the
-arguments object appear only if specific field is set.
+The arguments object appears only if a host is found. Many fields in the
+arguments object appear only if a specific field is set.
 
 .. _reference-reservation-get-all:
 
 reservation-get-all reference
 =============================
 
-``reservation-get-all`` - Retrieve all host reservations for a specified
+``reservation-get-all`` - retrieves all host reservations for a specified
 subnet.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.6.0 (`host_cmds <#commands-host_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Host Commands hooks library<commands-host_cmds-lib>`)
 
-Description and examples: See `??? <#command-reservation-get-all>`__
+Description and examples: see :ref:`command-reservation-get-all`
 
 Command syntax:
 
@@ -5678,21 +5635,21 @@ Response syntax:
        "text": <string>
    }
 
-reservation-get-all command may result in very large responses.
+The ``reservation-get-all`` command may result in very large responses.
 
 .. _reference-reservation-get-page:
 
 reservation-get-page reference
 ==============================
 
-``reservation-get-page`` - Retrieve host reservations for a specified
+``reservation-get-page`` - retrieves host reservations for a specified
 subnet by page.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
-Availability: 1.6.0 (`host_cmds <#commands-host_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Host Commands hooks library<commands-host_cmds-lib>`)
 
-Description and examples: See `??? <#command-reservation-get-page>`__
+Description and examples: see :ref:`command-reservation-get-page`
 
 Command syntax:
 
@@ -5708,9 +5665,12 @@ Command syntax:
        }
    }
 
-the subnet id and the page size limit are mandatory. The source index
-and from host id are optional and default to 0. Values to use to next
-the next page are returned in responses in a next map.
+The "subnet-id" and the "limit" arguments are mandatory. The "limit"
+specifies the maximum number of host reservations to be returned, and
+the "source-index" and "from" arguments should be set to 0 when retrieving
+the first page of host reservations (if they are not specified, they will
+default to 0). To fetch subsequent pages of host reservations, the returned
+values of "source-index" and "from" must be copied from the previous response.
 
 Response syntax:
 
@@ -5721,7 +5681,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5730,7 +5690,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-shutdown:
@@ -5738,7 +5698,7 @@ statuses are:
 shutdown reference
 ==================
 
-``shutdown`` - The shutdown command instructs the server to initiate its
+``shutdown`` - instructs the server to initiate its
 shutdown procedure.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
@@ -5746,7 +5706,7 @@ Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-shutdown>`__
+Description and examples: see :ref:`command-shutdown`
 
 Command syntax:
 
@@ -5768,7 +5728,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5777,7 +5737,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-stat-lease4-get:
@@ -5785,14 +5745,14 @@ statuses are:
 stat-lease4-get reference
 =========================
 
-``stat-lease4-get`` - The stat-lease4-get command fetches lease
+``stat-lease4-get`` - fetches lease
 statistics for a range of known IPv4 subnets.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.4.0 (`stat_cmds <#commands-stat_cmds-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Supplemental Statistics Commands hooks library<commands-stat_cmds-lib>`)
 
-Description and examples: See `??? <#command-stat-lease4-get>`__
+Description and examples: see :ref:`command-stat-lease4-get`
 
 Command syntax:
 
@@ -5824,7 +5784,7 @@ Response syntax:
        }
      }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5833,7 +5793,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-stat-lease6-get:
@@ -5841,14 +5801,14 @@ statuses are:
 stat-lease6-get reference
 =========================
 
-``stat-lease6-get`` - The stat-lease6-get command fetches lease
+``stat-lease6-get`` - fetches lease
 statistics for a range of known IPv6 subnets.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.4.0 (`stat_cmds <#commands-stat_cmds-lib>`__ hook)
+Availability: 1.4.0 (:ref:`The Supplemental Statistics Commands hooks library<commands-stat_cmds-lib>`)
 
-Description and examples: See `??? <#command-stat-lease6-get>`__
+Description and examples: see :ref:`command-stat-lease4-get`
 
 Command syntax:
 
@@ -5881,7 +5841,7 @@ Response syntax:
        }
      }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5890,7 +5850,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-statistic-get:
@@ -5898,15 +5858,15 @@ statuses are:
 statistic-get reference
 =======================
 
-``statistic-get`` - The statistic-get command retrieves a single
-statistic. It takes a single string parameter called name that specifies
+``statistic-get`` - retrieves a single
+statistic. It takes a single string parameter, called "name", that specifies
 the statistic name.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-statistic-get>`__
+Description and examples: see :ref:`command-statistic-get`
 
 Command syntax:
 
@@ -5932,7 +5892,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5941,7 +5901,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-statistic-get-all:
@@ -5949,14 +5909,13 @@ statuses are:
 statistic-get-all reference
 ===========================
 
-``statistic-get-all`` - The statistic-get-all command retrieves all
-statistics recorded.
+``statistic-get-all`` - retrieves all statistics recorded.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-statistic-get-all>`__
+Description and examples: see :ref:`command-statistic-get-all`
 
 Command syntax:
 
@@ -5967,8 +5926,8 @@ Command syntax:
        "arguments": { }
    }
 
-The server will respond with details of all recorded statistics, with
-result set to 0 indicating that it iterated over all statistics (even
+The server will respond with details of all recorded statistics, with a
+result of 0 indicating that it iterated over all statistics (even
 when the total number of statistics is zero).
 
 Response syntax:
@@ -5980,7 +5939,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -5989,7 +5948,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-statistic-remove:
@@ -5997,15 +5956,15 @@ statuses are:
 statistic-remove reference
 ==========================
 
-``statistic-remove`` - The statistic-remove command attempts to delete a
-single statistic. It takes a single string parameter called name that
+``statistic-remove`` - attempts to delete a
+single statistic. It takes a single string parameter, called "name", that
 specifies the statistic name.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-statistic-remove>`__
+Description and examples: see :ref:`command-statistic-remove`
 
 Command syntax:
 
@@ -6019,8 +5978,8 @@ Command syntax:
    }
 
 If the specific statistic is found and its removal was successful, the
-server will respond with a status of 0, indicating success and an empty
-parameters field. If an error is encountered (e.g. requested statistic
+server will respond with a status of 0, indicating success, and an empty
+parameters field. If an error is encountered (e.g. the requested statistic
 was not found), the server will return a status code of 1 (error) and
 the text field will contain the error description.
 
@@ -6033,7 +5992,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6042,7 +6001,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-statistic-remove-all:
@@ -6050,14 +6009,14 @@ statuses are:
 statistic-remove-all reference
 ==============================
 
-``statistic-remove-all`` - The statistic-remove-all command attempts to
+``statistic-remove-all`` - attempts to
 delete all statistics.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-statistic-remove-all>`__
+Description and examples: see :ref:`command-statistic-remove-all`
 
 Command syntax:
 
@@ -6069,7 +6028,7 @@ Command syntax:
    }
 
 If the removal of all statistics was successful, the server will respond
-with a status of 0, indicating success and an empty parameters field. If
+with a status of 0, indicating success, and an empty parameters field. If
 an error is encountered, the server will return a status code of 1
 (error) and the text field will contain the error description.
 
@@ -6082,7 +6041,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6091,7 +6050,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-statistic-reset:
@@ -6099,16 +6058,16 @@ statuses are:
 statistic-reset reference
 =========================
 
-``statistic-reset`` - The statistic-reset command sets the specified
+``statistic-reset`` - sets the specified
 statistic to its neutral value: 0 for integer, 0.0 for float, 0h0m0s0us
-for time duration and "" for string type. It takes a single string
-parameter called name that specifies the statistic name.
+for time duration, and "" for string type. It takes a single string
+parameter, called "name", that specifies the statistic name.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-statistic-reset>`__
+Description and examples: see :ref:`command-statistic-reset`
 
 Command syntax:
 
@@ -6121,9 +6080,9 @@ Command syntax:
        }
    }
 
-If the specific statistic is found and reset was successful, the server
-will respond with a status of 0, indicating success and an empty
-parameters field. If an error is encountered (e.g. requested statistic
+If the specific statistic is found and the reset was successful, the server
+will respond with a status of 0, indicating success, and an empty
+parameters field. If an error is encountered (e.g. the requested statistic
 was not found), the server will return a status code of 1 (error) and
 the text field will contain the error description.
 
@@ -6136,7 +6095,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6145,7 +6104,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-statistic-reset-all:
@@ -6153,15 +6112,15 @@ statuses are:
 statistic-reset-all reference
 =============================
 
-``statistic-reset-all`` - The statistic-reset command sets all
+``statistic-reset-all`` - sets all
 statistics to their neutral values: 0 for integer, 0.0 for float,
-0h0m0s0us for time duration and "" for string type.
+0h0m0s0us for time duration, and "" for string type.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``
 
 Availability: 1.0.0 (built-in)
 
-Description and examples: See `??? <#command-statistic-reset-all>`__
+Description and examples: see :ref:`command-statistic-reset-all`
 
 Command syntax:
 
@@ -6173,7 +6132,7 @@ Command syntax:
    }
 
 If the operation is successful, the server will respond with a status of
-0, indicating success and an empty parameters field. If an error is
+0, indicating success, and an empty parameters field. If an error is
 encountered, the server will return a status code of 1 (error) and the
 text field will contain the error description.
 
@@ -6186,7 +6145,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6195,7 +6154,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet4-add:
@@ -6203,14 +6162,14 @@ statuses are:
 subnet4-add reference
 =====================
 
-``subnet4-add`` - This command is used to create and add a new subnet to
+``subnet4-add`` - creates and adds a new subnet to
 the existing server configuration.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet4-add>`__
+Description and examples: see :ref:`command-subnet4-add`
 
 Command syntax:
 
@@ -6244,7 +6203,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6253,7 +6212,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet4-del:
@@ -6261,16 +6220,16 @@ statuses are:
 subnet4-del reference
 =====================
 
-``subnet4-del`` - This command is used to remove a subnet from the
+``subnet4-del`` - removes a subnet from the
 server's configuration. This command has no effect on other configured
-subnets but removing a subnet has certain implications which the
-server's administrator should be aware of.
+subnets, but administrators should exercise caution when
+using this command as removing a subnet may have unintended consequences.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet4-del>`__
+Description and examples: see :ref:`command-subnet4-del`
 
 Command syntax:
 
@@ -6300,7 +6259,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6309,7 +6268,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet4-get:
@@ -6317,16 +6276,16 @@ statuses are:
 subnet4-get reference
 =====================
 
-``subnet4-get`` - This command is used to retrieve detailed information
+``subnet4-get`` - retrieves detailed information
 about the specified subnet. This command usually follows the
-subnet4-list, which is used to discover available subnets with their
+``subnet4-list`` command, which is used to discover available subnets with their
 respective subnet identifiers and prefixes.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet4-get>`__
+Description and examples: see :ref:`command-subnet4-get`
 
 Command syntax:
 
@@ -6360,7 +6319,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6369,7 +6328,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet4-list:
@@ -6377,15 +6336,15 @@ statuses are:
 subnet4-list reference
 ======================
 
-``subnet4-list`` - This command is used to list all currently configured
+``subnet4-list`` - lists all currently configured
 subnets. The subnets are returned in a brief form, i.e. a subnet
-identifier and subnet prefix is included for each subnet.
+identifier and subnet prefix are included for each subnet.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet4-list>`__
+Description and examples: see :ref:`command-subnet4-list`
 
 Command syntax:
 
@@ -6423,14 +6382,14 @@ error description.
 subnet4-update reference
 ========================
 
-``subnet4-update`` - This command is used to update a subnet in the
+``subnet4-update`` - updates a subnet in the
 existing server configuration.
 
 Supported by: ``kea-dhcp4``
 
-Availability: 1.6.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet4-update>`__
+Description and examples: see :ref:`command-subnet4-update`
 
 Command syntax:
 
@@ -6464,7 +6423,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6473,7 +6432,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet6-add:
@@ -6481,15 +6440,15 @@ statuses are:
 subnet6-add reference
 =====================
 
-``subnet6-add`` - This command is used to create and add new subnet to
+``subnet6-add`` - creates and adds a new subnet to
 the existing server configuration. This operation has no impact on other
 subnets.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet6-add>`__
+Description and examples: see :ref:`command-subnet6-add`
 
 Command syntax:
 
@@ -6523,7 +6482,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6532,7 +6491,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet6-del:
@@ -6540,16 +6499,16 @@ statuses are:
 subnet6-del reference
 =====================
 
-``subnet6-del`` - This command is used to remove a subnet from the
+``subnet6-del`` - removes a subnet from the
 server's configuration. This command has no effect on other configured
-subnets but removing a subnet has certain implications which the
-server's administrator should be aware of.
+subnets, but administrators should exercise caution when
+using this command as removing a subnet may have unintended consequences.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet6-del>`__
+Description and examples: see :ref:`command-subnet6-del`
 
 Command syntax:
 
@@ -6577,7 +6536,7 @@ Response syntax:
        ]
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6586,7 +6545,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet6-get:
@@ -6594,16 +6553,16 @@ statuses are:
 subnet6-get reference
 =====================
 
-``subnet6-get`` - This command is used to retrieve detailed information
+``subnet6-get`` - retrieves detailed information
 about the specified subnet. This command usually follows the
-subnet6-list, which is used to discover available subnets with their
+``subnet6-list`` command, which is used to discover available subnets with their
 respective subnet identifiers and prefixes.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet6-get>`__
+Description and examples: see :ref:`command-subnet6-get`
 
 Command syntax:
 
@@ -6637,7 +6596,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6646,7 +6605,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-subnet6-list:
@@ -6654,15 +6613,15 @@ statuses are:
 subnet6-list reference
 ======================
 
-``subnet6-list`` - This command is used to list all currently configured
+``subnet6-list`` - lists all currently configured
 subnets. The subnets are returned in a brief form, i.e. a subnet
-identifier and subnet prefix is included for each subnet.
+identifier and subnet prefix are included for each subnet.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.3.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.3.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet6-list>`__
+Description and examples: see :ref:`command-subnet6-list`
 
 Command syntax:
 
@@ -6700,15 +6659,15 @@ error description.
 subnet6-update reference
 ========================
 
-``subnet6-update`` - This command is used to update a subnet in the
+``subnet6-update`` - updates a subnet in the
 existing server configuration. This operation has no impact on other
 subnets.
 
 Supported by: ``kea-dhcp6``
 
-Availability: 1.6.0 (`subnet_cmds <#commands-subnet_cmds-lib>`__ hook)
+Availability: 1.6.0 (:ref:`The Subnet Commands hooks library<commands-subnet_cmds-lib>`)
 
-Description and examples: See `??? <#command-subnet6-update>`__
+Description and examples: see :ref:`command-subnet6-update`
 
 Command syntax:
 
@@ -6742,7 +6701,7 @@ Response syntax:
        }
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6751,7 +6710,7 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)
 
 .. _reference-version-get:
@@ -6759,16 +6718,16 @@ statuses are:
 version-get reference
 =====================
 
-``version-get`` - The version-get command returns extended information
-about Kea version. The returned string is the same as if Kea would be
-run with -V command line option.
+``version-get`` - returns extended information
+about the Kea version in operation. The returned string is the same as if Kea were
+run with the -V command-line option.
 
 Supported by: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``,
 ``kea-ctrl-agent``
 
 Availability: 1.2.0 (built-in)
 
-Description and examples: See `??? <#command-version-get>`__
+Description and examples: see :ref:`command-version-get`
 
 Command syntax:
 
@@ -6787,7 +6746,7 @@ Response syntax:
        "text": <string>
    }
 
-Result is an integer representation of the status. Currently supported
+The result is an integer representation of the status. Currently supported
 statuses are:
 
 -  0 - success
@@ -6796,5 +6755,5 @@ statuses are:
 
 -  2 - unsupported
 
--  3 - empty (command was completed successfully, but no data was
+-  3 - empty (command was completed successfully, but no data were
    affected or returned)

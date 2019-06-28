@@ -129,20 +129,20 @@ value is obtained is unspecified.
 .. _classification-using-vendor:
 
 Built-in Client Classes
-======================
+=======================
 
 Some classes are built-in, so they do not need to be defined. The main
 example uses Vendor Class information: the server checks whether an
 incoming DHCPv4 packet includes the vendor class identifier option (60)
 or an incoming DHCPv6 packet includes the vendor class option (16). If
-it does, the content of that option is prepended with "VENDOR_CLASS_"
+it does, the content of that option is prepended with "VENDOR_CLASS\_"
 and the result is interpreted as a class. For example, modern cable
 modems send this option with value "docsis3.0", so the packet belongs to
 class "VENDOR_CLASS_docsis3.0".
 
-The "HA_" prefix is used by the High Availability hooks library to
+The "HA\_" prefix is used by the High Availability hooks library to
 designate certain servers to process DHCP packets as a result of load
-balancing. The class name is constructed by prepending the "HA_" prefix
+balancing. The class name is constructed by prepending the "HA\_" prefix
 to the name of the server which should process the DHCP packet. This
 server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
@@ -154,7 +154,7 @@ particular client. By convention, built-in classes' names begin with all
 capital letters.
 
 Currently recognized built-in class names are ALL, KNOWN and UNKNOWN, and the
-prefixes VENDOR_CLASS_, HA_, AFTER_, and EXTERNAL_. Although the AFTER\_
+prefixes VENDOR_CLASS\_, HA\_, AFTER\_, and EXTERNAL\_. Although the AFTER\_
 prefix is a provision for an as-yet-unwritten hook, the EXTERNAL\_
 prefix can be freely used; built-in classes are implicitly defined so
 they never raise warnings if they do not appear in the configuration.
@@ -339,8 +339,8 @@ Notes:
 -  "member('foobar')" checks whether the packet belongs to the client
    class "foobar". To avoid dependency loops, the configuration file
    parser verifies whether client classes were already defined or are
-   built-in, i.e., beginning by "VENDOR_CLASS_", "AFTER__" (for the
-   to-come "after" hook) and "EXTERNAL_" or equal to "ALL", "KNOWN",
+   built-in, i.e., beginning by "VENDOR_CLASS\_", "AFTER\_" (for the
+   to-come "after" hook) and "EXTERNAL\_" or equal to "ALL", "KNOWN",
    "UNKNOWN", etc.
 
    "known" and "unknown" are shorthand for "member('KNOWN')" and "not
@@ -523,7 +523,7 @@ digits separated by the separator, e.g ':', '-', '' (empty separator).
    the expressions are overly complex, the time taken to execute them
    may impact the performance of the server. Administrators who need complex or
    time-consuming expressions should consider writing a
-   `hook <#hooks-libraries>`__ to perform the necessary work.
+   :ref:`hook <hooks-libraries>` to perform the necessary work.
 
 .. _classification-configuring:
 
@@ -816,7 +816,7 @@ expression would be complex or time-consuming to write, and could be
 better or more easily written as code. Once the hook has added the proper class name
 to the packet, the rest of the classification system will work as expected
 in choosing a subnet and selecting options. For a description of hooks,
-see :ref:`hooks-libraries>`__; for information on configuring classes,
+see :ref:`hooks-libraries`; for information on configuring classes,
 see :ref:`classification-configuring` and :ref:`classification-subnets`.
 
 Debugging Expressions
@@ -833,7 +833,7 @@ The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
 To understand the logging statements, it is essential to understand a bit
 about how expressions are evaluated; for a more complete description,
 refer to the design document at
-https://gitlab.isc.org/isc-projects/kea/wikis/design%20documents. In
+https://gitlab.isc.org/isc-projects/kea/wikis/designs/Design-documents. In
 brief, there are two structures used during the evaluation of an
 expression: a list of tokens which represent the expressions, and a value
 stack which represents the values being manipulated.

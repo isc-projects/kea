@@ -61,7 +61,7 @@ refer to :ref:`installation` for a general overview of the installation process.
 
 ISC provides several additional premium hooks in the form of packages, which
 follow a similar installation procedure but with several additional steps.
-For your convenience, the premium hooks installation procedure is described in this section.
+For our users' convenience, the premium hooks installation procedure is described in this section.
 
 1. Download the package; detailed instructions are provided separately on how
 to get it. The package will be a file with a name similar to
@@ -80,7 +80,7 @@ Unpack this tarball:
    $ tar zxvf kea-KEAVERSION.tar.gz
 
 This will unpack the tarball into the kea-KEAVERSION subdirectory of
-your current working directory.
+the current working directory.
 
 3. Unpack the Kea premium tarball into the directory into which Kea was
 unpacked. Once Kea KEAVERSION has been unpacked into a kea-KEAVERSION
@@ -97,9 +97,9 @@ directory named "premium". Regardless of the name of the package, the
 directory will always be called "premium", although its contents will vary
 depending on the premium package.
 
-4. Run autoreconf tools. This step is necessary to update Kea's build
+4. Run ``autoreconf`` tools. This step is necessary to update Kea's build
 script to include the additional directory. If this tool is not already
-available on the system, install the automake and autoconf
+available on the system, install the ``automake`` and ``autoconf``
 tools. To generate the configure script, please use:
 
 ::
@@ -920,17 +920,15 @@ can be achieved by using the following configuration:
        ]
    }
 
-  **Note**
+Note that care should be taken when adjusting the expression. If the expression
+changes, then all the ``flex-id`` values may change, possibly rendering
+all reservations based on ``flex-id`` unusable until they are manually updated.
+It is strongly recommended that administrators start with the expression and a
+handful of reservations, and then adjust the expression as needed. Once
+the expression is confirmed to do what is desired of it, host reservations
+can be deployed on a broader scale.
 
-  Care should be taken when adjusting the expression. If the expression
-  changes, then all the ``flex-id`` values may change, possibly rendering
-  all reservations based on ``flex-id`` unusable until they are manually updated.
-  It is strongly recommended that administrators start with the expression and a
-  handful of reservations, and then adjust the expression as needed. Once
-  the expression is confirmed to do what is desired of it, host reservations
-  can be deployed on a broader scale.
-
-flex-id values in host reservations can be specified in two ways. First,
+``flex-id`` values in host reservations can be specified in two ways. First,
 they can be expressed as a hex string, e.g. bar string can be represented
 as 626174. Alternatively, it can be expressed as a quoted value (using
 double and single quotes), e.g. "'bar'". The former is more convenient
@@ -1235,8 +1233,8 @@ Example failure:
 As ``reservation-add`` is expected to store the host, the hosts-databases
 parameter must be specified in the configuration and databases must not
 run in read-only mode. In future versions of Kea, it will be possible to
-modify the reservations read from a configuration file. Please contact
-ISC if you are interested in this functionality.
+modify the reservations read from a configuration file. Interested parties are
+encouraged to contact ISC for more information on developing this functionality.
 
 .. _command-reservation-get:
 
@@ -1388,12 +1386,12 @@ may be disruptive. Use with caution. For larger deployments, please
 consider using ``reservation-get-page`` instead (see
 :ref:`command-reservation-get-page`).
 
-For a reference, see :ref:`ref-reservation-get-all`.
+For a reference, see :ref:`command-reservation-get-all`.
 
 .. _command-reservation-get-page:
 
-reservation-get-page command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The reservation-get-page command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``reservation-get-page`` can be used to query the host database and
 retrieve all reservations in a specified subnet by pages. This command
@@ -1516,8 +1514,6 @@ This command is more complex than ``reservation-get-all``, but lets
 users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
 ``reservation-get-all`` (see :ref:`command-reservation-get-all`.
-
-For a reference, see :ref:`ref-reservation-get-page`.
 
    **Note**
 
@@ -2519,35 +2515,35 @@ both the command and the response.
 
 .. _user-context:
 
-User contexts
+User Contexts
 =============
 
-Hook libraries can have their own configuration parameters. That is
+Hooks libraries can have their own configuration parameters, which is
 convenient if the parameter applies to the whole library. However,
-sometimes it is very useful if certain configuration entities are
-extended with additional configuration data. This is where the concept
-of user contexts comes in. A sysadmin can define an arbitrary set of
-data and attach it to Kea structures, as long as the data is specified
-as JSON map. In particular, it is possible to define fields that are
-integers, strings, boolean, lists and maps. It is possible to define
+sometimes it is very useful to extend certain configuration entities
+with additional configuration data. This is where the concept
+of user contexts comes in. A system administrator can define an arbitrary set of
+data and attach it to Kea structures, as long as the data are specified
+as a JSON map. In particular, it is possible to define fields that are
+integers, strings, boolean, lists, or maps. It is possible to define
 nested structures of arbitrary complexity. Kea does not use that data on
-its own, simply stores and makes it available for the hook libraries.
+its own; it simply stores it and makes it available for the hooks libraries.
 
 Another use case for user contexts may be storing comments and other
 information that will be retained by Kea. Regular comments are discarded
-when configuration is loaded, but user contexts are retained. This is
-useful if you want your comments to survive config-set, config-get
-operations for example.
+when the configuration is loaded, but user contexts are retained. This is
+useful if administrators want their comments to survive config-set or config-get
+operations, for example.
 
 If user context is supported in a given context, the parser translates
 "comment" entries into user context with a "comment" entry. The pretty
 print of a configuration does the opposite operation and puts "comment"
-entries at the beginning of maps as it seems to be the common usage.
+entries at the beginning of maps, as that seems to be the common usage.
 
 As of Kea 1.3, the structures that allow user contexts are pools of all
 types (addresses and prefixes) and subnets. Kea 1.4 extended user
 context support to the global scope, interfaces config, shared networks,
 subnets, client classes, option datas and definitions, host
 reservations, control socket, dhcp ddns, loggers and server id. These
-are supported in both DHCPv4 and DHCPv6 at the exception of server id
+are supported in both DHCPv4 and DHCPv6, with the exception of server id
 which is DHCPv6 only.

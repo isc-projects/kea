@@ -6,20 +6,20 @@ The Kea Shell
 
 .. _shell-overview:
 
-Overview
-========
+Overview of the Kea Shell
+=========================
 
 Kea 1.2.0 introduced the Control Agent (CA, see
-`??? <#kea-ctrl-agent>`__), which provides a RESTful control interface
+:ref:`kea-ctrl-agent`), which provides a RESTful control interface
 over HTTP. That API is typically expected to be used by various IPAMs
 and similar management systems. Nevertheless, there may be cases when an
-administrator wants to send a command to the CA directly. The Kea shell
+administrator wants to send a command to the CA directly, and the Kea shell
 provides a way to do this. It is a simple command-line,
 scripting-friendly, text client that is able to connect to the CA, send
 it commands with parameters, retrieve the responses, and display them.
 
 As the primary purpose of the Kea shell is as a tool in a scripting
-environment, it is not interactive. However, with simple tricks it can
+environment, it is not interactive. However, following simple guidelines it can
 be run manually.
 
 Shell Usage
@@ -55,9 +55,9 @@ where:
 
 Other switches are:
 
--  ``-h`` prints a help message.
+-  ``-h`` - prints a help message.
 
--  ``-v`` prints the software version.
+-  ``-v`` - prints the software version.
 
 Once started, the shell reads parameters for the command from standard
 input, which are expected to be in JSON format. When all have been read,
@@ -65,10 +65,9 @@ the shell establishes a connection with the CA using HTTP, sends the
 command, and awaits a response. Once that is received, it is displayed
 on standard output.
 
-For a list of available commands, see `??? <#ctrl-channel>`__;
-additional commands may be provided by hook libraries. If you are unsure
-which commands are supported, use the ``list-commands`` command. It will
-instruct the CA to return a list of all supported commands.
+For a list of available commands, see :ref:`ctrl-channel`;
+additional commands may be provided by hooks libraries. For a list of
+all supported commands from the CA, use the ``list-commands`` command.
 
 The following shows a simple example of usage:
 
@@ -86,7 +85,7 @@ returned for the service named ``dhcp4``.
 
 It is envisaged that the Kea shell will be most frequently used in
 scripts; the next example shows a simple scripted execution. It sends
-the command "config-write" to the CA (the ``--service`` parameter hasn't
+the command "config-write" to the CA (the ``--service`` parameter has not
 been used), along with the parameters specified in param.json. The
 result will be stored in result.json.
 
@@ -105,7 +104,7 @@ servers, the default empty path in the URL is not enough, so the
 
    $ kea-shell --host 192.0.2.1 --port 8001 --path kea ...
 
-Kea shell requires Python to to be installed on the system. It has been
+The Kea shell requires Python to to be installed on the system. It has been
 tested with Python 2.7 and various versions of Python 3, up to 3.5.
 Since not every Kea deployment uses this feature and there are
 deployments that do not have Python, the Kea shell is not enabled by
@@ -115,6 +114,6 @@ during the installation of Kea.
 The Kea shell is intended to serve more as a demonstration of the
 RESTful interface's capabilities (and, perhaps, an illustration for
 people interested in integrating their management environments with Kea)
-than as a serious management client. Do not expect it to be
-significantly expanded in the future. It is, and will remain, a simple
+than as a serious management client. It is not likely to be
+significantly expanded in the future; it is, and will remain, a simple
 tool.

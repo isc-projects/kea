@@ -4,8 +4,8 @@ host_cache: Caching Host Reservations
 =====================================
 
 Some database backends, such as RADIUS, are considered slow and may take
-a long time to respond. Since Kea in general is synchronous, the backend
-performance directly affects the DHCP performance. To minimize the
+a long time to respond. Since Kea in general is synchronous, backend
+performance directly affects DHCP performance. To minimize the
 impact and improve performance, the Host Cache library provides a way to
 cache information from the database locally. This includes negative
 caching, i.e. the ability to remember that there is no client
@@ -13,19 +13,19 @@ information in the database.
 
    **Note**
 
-   This library may only be loaded by the ``kea-dhcp4`` or the
+   This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
 
-In principle, this hook library can be used with any backend that may
-introduce performance degradation (MySQL, PostgreSQL, Cassandra,
+In principle, this hooks library can be used with any backend that may
+introduce performance degradation (MySQL, PostgreSQL, Cassandra, or
 RADIUS). Host Cache must be loaded for the RADIUS accounting mechanism
 to work.
 
-The Host Cache hook library is currently very simple. It takes only one
-optional parameter ("maximum") that defines the maximum number of hosts
+The Host Cache hooks library is currently very simple. It takes only one
+optional parameter ("maximum"), which defines the maximum number of hosts
 to be cached. If not specified, the default value of 0 is used, which
-means there is no limit. The hook library can be loaded the same way as
-any other hook library; for example, this configuration could be used:
+means there is no limit. This hooks library can be loaded the same way as
+any other hooks library; for example, this configuration could be used:
 
 ::
 
@@ -46,15 +46,15 @@ any other hook library; for example, this configuration could be used:
 
 Once loaded, the Host Cache hook library provides a number of new
 commands which can be used either over the control channel (see
-`??? <#ctrl-channel-client>`__) or the REST API (see
-`??? <#agent-overview>`__). An example REST API client is described in
-`??? <#shell-overview>`__. The following sections describe the commands
+:ref:`ctrl-channel-client`) or the RESTful API (see
+:ref:`agent-overview`). An example RESTful API client is described in
+:ref:`shell-overview`. The following sections describe the commands
 available.
 
 .. _command-cache-flush:
 
-cache-flush Command
--------------------
+The cache-flush Command
+-----------------------
 
 This command allows removal of a specified number of cached host
 entries. It takes one parameter, which defines the number of hosts to be
@@ -67,14 +67,14 @@ removed. An example usage looks as follows:
        "arguments": 1000
    }
 
-This command will remove 1000 hosts. If you want to delete all cached
+This command will remove 1000 hosts. To delete all cached
 hosts, please use cache-clear instead. The hosts are stored in FIFO
 order, so the oldest entries are always removed.
 
 .. _command-cache-clear:
 
-cache-clear Command
--------------------
+The cache-clear Command
+-----------------------
 
 This command allows removal of all cached host entries. An example usage
 looks as follows:
@@ -85,13 +85,13 @@ looks as follows:
        "command": "cache-clear"
    }
 
-This command will remove all hosts. If you want to delete only a certain
+This command will remove all hosts. To delete only a certain
 number of cached hosts, please use cache-flush instead.
 
 .. _command-cache-size:
 
-cache-size Command
-------------------
+The cache-size Command
+----------------------
 
 This command returns the number of host entries. An example usage looks
 as follows:
@@ -104,8 +104,8 @@ as follows:
 
 .. _command-cache-write:
 
-cache-write Command
--------------------
+The cache-write Command
+-----------------------
 
 In general, the cache content is considered a runtime state and the
 server can be shut down or restarted as usual; the cache will then be
@@ -114,8 +114,8 @@ useful to store the contents of the cache. One such case is RADIUS,
 where the cached hosts also retain additional cached RADIUS attributes;
 there is no easy way to obtain this information again, because renewing
 clients send their packet to the DHCP server directly. Another use case
-is when you want to restart the server and for performance reasons you
-want it to start with a hot (populated) cache.
+is when an administrator wants to restart the server and, for performance reasons,
+wants it to start with a hot (populated) cache.
 
 This command allows writing the contents of the in-memory cache to a
 file on disk. It takes one parameter, which defines the filename. An
@@ -134,8 +134,8 @@ processed by any other tool that is able to understand JSON format.
 
 .. _command-cache-load:
 
-cache-load Command
-------------------
+The cache-load Command
+----------------------
 
 See the previous section for a discussion of use cases where it may be
 useful to write and load contents of the host cache to disk.
@@ -157,8 +157,8 @@ processed by any other tool that is able to understand JSON format.
 
 .. _command-cache-get:
 
-cache-get Command
------------------
+The cache-get Command
+---------------------
 
 This command is similar to cache-write, but instead of writing the cache
 contents to disk, it returns the contents to whoever sent the command.
@@ -178,8 +178,8 @@ may be large.
 
 .. _command-cache-get-by-id:
 
-cache-get-by-id Command
------------------------
+The cache-get-by-id Command
+---------------------------
 
 This command is similar to cache-get, but instead of returning the whole
 content it returns only the entries matching the given identifier.
@@ -201,14 +201,14 @@ address.
 
 .. _command-cache-insert:
 
-cache-insert Command
---------------------
+The cache-insert Command
+------------------------
 
 This command may be used to manually insert a host into the cache; there
-are very few use cases when this command could be useful. This command
+are very few use cases when this command might be useful. This command
 expects its arguments to follow the usual syntax for specifying host
-reservations (see `??? <#host-reservation-v4>`__ or
-`??? <#host-reservation-v6>`__), with one difference: the subnet-id
+reservations (see :ref:`host-reservation-v4` or
+:ref:`host-reservation-v6`), with one difference: the subnet-id
 value must be specified explicitly.
 
 An example command that will insert an IPv4 host into the host cache
@@ -262,15 +262,15 @@ looks as follows:
 
 .. _command-cache-remove:
 
-cache-remove Command
---------------------
+The cache-remove Command
+------------------------
 
 Sometimes it is useful to remove a single entry from the host cache. A
 good use case is a situation where the device is up, Kea has already
 provided configuration, and the host entry is in cache. As a result of
-administrative action (e.g. customer hasn't paid their bills or has
+administrative action (e.g. the customer hasn't paid their bills or has
 perhaps been upgraded to better service), the information in the backend
-(e.g. MySQL or RADIUS) is being updated. However, since cache is in use,
+(e.g. MySQL or RADIUS) is being updated. However, since the cache is in use,
 Kea does not notice the change as the cached values are used. The
 cache-remove command can solve this problem by removing a cached entry
 after administrative changes.

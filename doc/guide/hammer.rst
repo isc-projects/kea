@@ -52,7 +52,7 @@ or in VirtualBox. To list of supported systems, use the
    freebsd:
      - 11.2: virtualbox
      - 12.0: virtualbox
-       
+
 
 It is also possible to run the build locally, in the current system (if the OS
 is supported).
@@ -108,7 +108,7 @@ using SSH, invoke:
    ./hammer.py ssh -p virtualbox -s freebsd -r 12.0
 
 It is possible to speed up subsequent Hammer builds. To achieve this
-Hammer employs :ref:`ccache <https://ccache.samba.org/>`. During
+Hammer employs `ccache <https://ccache.samba.org/>`__. During
 compilation, ccache stores objects in a shared folder. In subsequent runs,
 instead of doing an actual compilation, ccache returns the stored earlier
 objects. The cache with these objects for reuse needs to be stored outside of VM
@@ -119,7 +119,7 @@ operating system.
 ::
 
          ./hammer.py build -p lxc -s ubuntu -r 18.04 --ccache-dir ~/kea-ccache
-       
+
 
 ..
 

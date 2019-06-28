@@ -663,8 +663,8 @@ For additional Cassandra-specific parameters, see
 
 .. _read-only-database-configuration6:
 
-Using Read-Only Databases for Host Reservations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using Read-Only Databases for Host Reservations with DHCPv6
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some deployments the database user whose name is specified in the
 database backend configuration may not have write privileges to the
@@ -2378,7 +2378,7 @@ servers set to 2001:db8:0::1 and 2001:db8:2::1.
    }
 
 This example shows a configuration using an automatically generated
-"VENDOR_CLASS_" class. The administrator of the network has decided that
+"VENDOR_CLASS\_" class. The administrator of the network has decided that
 addresses in the range 2001:db8:1::1 to 2001:db8:1::ffff are to be
 managed by the DHCP6 server and that only clients belonging to the
 eRouter1.0 client class are allowed to use that pool.

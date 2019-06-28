@@ -6,8 +6,8 @@ The Kea Control Agent
 
 .. _agent-overview:
 
-Overview
-========
+Overview of the Kea Control Agent
+=================================
 
 The Kea Control Agent (CA) is a daemon which exposes a RESTful control
 interface for managing Kea servers. The daemon can receive control
@@ -132,7 +132,7 @@ configuration itself.
 
 Hooks libraries can be loaded by the Control Agent in the same way as
 they are loaded by the DHCPv4 and DHCPv6 servers. The CA currently
-supports one hook point - 'control_command_receive' - which makes it
+supports one hook point - "control_command_receive" - which makes it
 possible to delegate processing of some commands to the hooks library.
 The ``hooks-libraries`` list contains the list of hooks libraries that
 should be loaded by the CA, along with their configuration information
@@ -193,12 +193,12 @@ server enables authentication of the clients using certificates.
    #   openssl x509 -req -days 365 -in kea-client.csr -CA ca.crt \
    #           -CAkey ca.key -set_serial 01 -out kea-client.crt
    #
-   #   Note that the 'common name' value used when generating the client
+   #   Note that the "common name" value used when generating the client
    #   and the server certificates must differ from the value used
    #   for the CA certificate.
    #
    #   The client certificate must be deployed on the client system.
-   #   In order to test the proxy configuration with 'curl' run a
+   #   In order to test the proxy configuration with "curl", run a
    #   command similar to the following:
    #
    #   curl -k --key kea-client.key --cert kea-client.crt -X POST \

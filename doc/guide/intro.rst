@@ -74,7 +74,7 @@ software separately. (For the build requirements, also see :ref:`build-requireme
    kea-netconf agent. This Kea module is built optionally and requires
    Sysrepo software when used. Building Kea with NETCONF support
    requires many dependencies to be installed, which are described in
-   more detail in :ref: `netconf-install`.
+   more detail in :ref:`netconf-install`.
 
 .. _kea_software:
 
@@ -110,7 +110,7 @@ The following software is included with Kea:
 -  ``kea-ctrl-agent`` — Kea Control Agent (CA) is a daemon that exposes
    a RESTful control interface for managing Kea servers.
 
--  ``kea-netconf`` - Kea-netconf is an agent that provides a
+-  ``kea-netconf`` - kea-netconf is an agent that provides a
    YANG/NETCONF interface for the Kea environment.
 
 -  ``kea-shell`` — This simple text client uses the REST interface to

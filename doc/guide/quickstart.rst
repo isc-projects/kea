@@ -6,7 +6,7 @@ Quick Start
 
 This section describes the basic steps needed to get Kea up and running.
 For further details, full customizations, and troubleshooting, see the
-respective chapters in the Kea Administrator Reference Manual (ARM).
+respective chapters elsewhere in this Kea Administrator Reference Manual (ARM).
 
 .. _quick-start:
 
@@ -98,7 +98,7 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 
 For instructions specific to your system, please read the
 `system-specific notes <https://kb.isc.org/docs/installing-kea>`__,
-available in the `Kea section of ISC's
+available in the Kea section of `ISC's
 Knowledgebase <https://kb.isc.org/docs>`__.
 
 The details of ``keactrl`` script usage can be found in

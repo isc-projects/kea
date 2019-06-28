@@ -39,6 +39,8 @@ Although all configuration examples in this section are provided for the
 DHCPv4 server, the same parameters may be used for DHCPv6 server
 configuration.
 
+.. _lease-reclamation:
+
 Lease Reclamation
 =================
 
