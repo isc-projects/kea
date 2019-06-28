@@ -557,6 +557,7 @@ fi
 is_in_list "${command}" "db-init db-version db-upgrade lease-dump"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
+    usage
     exit 1
 fi
 shift
