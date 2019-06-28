@@ -1572,14 +1572,14 @@ GenericLeaseMgrTest::testLease6LargeIaidCheck() {
 
     DuidPtr duid(new DUID(vector<uint8_t>(8, 0x77)));
     IOAddress addr(std::string("2001:db8:1::111"));
-    SubnetID subnet_id = 8; // radom number
+    SubnetID subnet_id = 8; // random number
 
     // Use a value we know is larger than 32-bit signed max.
     uint32_t large_iaid = 0xFFFFFFFE;
 
     // We should be able to add with no problems.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, large_iaid,
-                               100, 200, 0, 0, subnet_id));
+                               100, 200, subnet_id));
     ASSERT_TRUE(lmptr_->addLease(lease));
 
     // Sanity check that we added it.
