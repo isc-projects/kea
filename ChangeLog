@@ -2,7 +2,7 @@
 	Corrected an error with retrieving DHCPv6 leases, whose IAID
 	values are larger than int32_t max, from Postgresql lease
 	databases.
-	(Gitlab #651,!384,	git TBD)
+	(Gitlab #651,!384,	git b58541c344708e56d93032c5f09a2b4a058970af)
 
 1605.	[func]		marcin
 	Extended mysql_cb hooks library to support new API calls for
