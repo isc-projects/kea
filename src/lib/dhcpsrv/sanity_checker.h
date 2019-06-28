@@ -28,8 +28,8 @@ class SanityChecker {
     /// correct subnet-id or discard the lease.
     ///
     /// @param lease Lease to be sanity-checked
-    /// @param current specify whether to use current (true) or staging(false)
-    ///                config
+    /// @param current specify whether to use current (true) or staging
+    ///        (false) config
     void checkLease(Lease4Ptr& lease, bool current = true);
 
     /// @brief Sanity checks and possibly corrects an IPv6 lease
@@ -40,8 +40,8 @@ class SanityChecker {
     /// type is TYPE_PD, it simply returns.
     ///
     /// @param lease Lease to be sanity-checked
-    /// @param current specify whether to use current (true) or staging(false)
-    ///                config
+    /// @param current specify whether to use current (true) or staging
+    ///        (false) config
     void checkLease(Lease6Ptr& lease, bool current = true);
 
     /// @brief Indicates the specified configuration enables lease sanity checking.

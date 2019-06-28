@@ -134,7 +134,7 @@ public:
                     .arg(lease->toText());
 
                 if (lease_checker)  {
-                    // If the lease is insane the checker will rese the lease pointer.
+                    // If the lease is insane the checker will reset the lease pointer.
                     // As lease file is loaded during the configuration, we have
                     // to use staging config, rather than current config for this
                     // (false = staging).
