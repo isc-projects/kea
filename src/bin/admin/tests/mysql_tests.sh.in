@@ -259,7 +259,7 @@ mysql_upgrade_test() {
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Ok, we have a 1.0 database. Let's upgrade it to 8.1
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     assert_eq 0 $ERRCODE "kea-admin db-upgrade mysql returned non-zero status code %d, expected %d"
@@ -710,7 +710,7 @@ EOF
     run_statement "dhcp6_subnet" "$qry"
 
     # Verify upgraded schema reports version 8.1
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "8.1" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
