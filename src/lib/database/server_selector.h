@@ -86,7 +86,7 @@ public:
 
     /// @brief Returns tags associated with the selector.
     ///
-    /// @return server tags for mutliple selections and for one server,
+    /// @return server tags for multiple selections and for one server,
     /// empty set for all servers and and unassigned.
     std::set<data::ServerTag> getTags() const {
         return (tags_);
@@ -108,7 +108,7 @@ public:
 
 private:
 
-    /// @brief Constructor used for "unassigned" and "all" slection types.
+    /// @brief Constructor used for "unassigned" and "all" selection types.
     ///
     /// @param type selector type.
     explicit ServerSelector(const Type& type);
