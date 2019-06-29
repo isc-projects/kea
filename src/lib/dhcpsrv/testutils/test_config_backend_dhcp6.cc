@@ -197,7 +197,8 @@ TestConfigBackendDHCPv6::getGlobalParameter6(const db::ServerSelector& server_se
             if ((*global_it)->hasServerTag(ServerTag(tag))) {
                 return (*global_it);
             }
-        } else if ((*global_it)->hasAllServerTag()) {
+        }
+        if ((*global_it)->hasAllServerTag()) {
             candidate = *global_it;
         }
     }

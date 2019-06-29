@@ -197,9 +197,10 @@ TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_se
         for (auto tag : tags) {
             if ((*global_it)->hasServerTag(ServerTag(tag))) {
                 return (*global_it);
-            } else if ((*global_it)->hasAllServerTag()) {
-                candidate = *global_it;
             }
+        }
+        if ((*global_it)->hasAllServerTag()) {
+            candidate = *global_it;
         }
     }
 
