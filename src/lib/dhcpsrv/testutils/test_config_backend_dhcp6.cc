@@ -187,6 +187,7 @@ TestConfigBackendDHCPv6::getModifiedOptions6(const db::ServerSelector& /* server
 StampedValuePtr
 TestConfigBackendDHCPv6::getGlobalParameter6(const db::ServerSelector& server_selector,
                                              const std::string& name) const {
+    auto candidate = StampedValuePtr();
     const auto& index = globals_.get<StampedValueNameIndexTag>();
     auto global_range = index.equal_range(name);
     for (auto global_it = global_range.first; global_it != global_range.second;
@@ -196,15 +197,12 @@ TestConfigBackendDHCPv6::getGlobalParameter6(const db::ServerSelector& server_se
             if ((*global_it)->hasServerTag(ServerTag(tag))) {
                 return (*global_it);
             }
+        } else if ((*global_it)->hasAllServerTag()) {
+            candidate = *global_it;
         }
     }
 
-    auto global_all_it = index.find(name);
-    if ((global_all_it != index.end()) && ((*global_all_it)->hasAllServerTag())) {
-        return (*global_all_it);
-    }
-
-    return (StampedValuePtr());
+    return (candidate);
 }
 
 
