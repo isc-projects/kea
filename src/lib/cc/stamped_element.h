@@ -47,6 +47,14 @@ public:
         server_tags_.push_back(ServerTag(server_tag));
     }
 
+    /// @brief Deletes server tag.
+    ///
+    /// Remove the first occurrence of the given server tag.
+    ///
+    /// @param server_tag server tag to delete.
+    /// @throw NotFound if the server tag cannot be found.
+    void delServerTag(const std::string& server_tag);
+
     /// @brief Returns server tags.
     ///
     /// @return Server tag as string.

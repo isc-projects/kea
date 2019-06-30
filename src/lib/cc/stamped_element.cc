@@ -23,6 +23,17 @@ StampedElement::hasServerTag(const ServerTag& server_tag) const {
     return (false);
 }
 
+void
+StampedElement::delServerTag(const std::string& server_tag) {
+    for (auto it = server_tags_.begin(); it < server_tags_.end(); ++it) {
+        if (it->get() == server_tag) {
+            server_tags_.erase(it);
+            return;
+        }
+    }
+    isc_throw(NotFound, "can't find server tag '" << server_tag << "' to delete");
+}
+
 bool
 StampedElement::hasAllServerTag() const {
     return (hasServerTag(ServerTag(ServerTag::ALL)));

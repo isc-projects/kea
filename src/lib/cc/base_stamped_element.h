@@ -67,7 +67,7 @@ protected:
     /// @brief Database identifier of the configuration element.
     ///
     /// The default value of 0 indicates that the identifier is
-    /// not set. 
+    /// not set.
     uint64_t id_;
 
     /// @brief Holds timestamp value.
