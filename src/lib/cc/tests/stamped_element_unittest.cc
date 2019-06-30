@@ -71,7 +71,7 @@ TEST(StampedElementTest, update) {
 }
 
 // Tests that one or more server tag can be specified.
-TEST(StampedElementTest, setServerTags) {
+TEST(StampedElementTest, setServerTag) {
     StampedElement element;
     element.setServerTag("foo");
     EXPECT_EQ(1, element.getServerTags().size());
@@ -90,6 +90,26 @@ TEST(StampedElementTest, setServerTags) {
     element.setServerTag(ServerTag::ALL);
     EXPECT_TRUE(element.hasAllServerTag());
 }
+
+// Tests that a server tag can be deleted.
+TEST(StampedElementTest, delServerTag) {
+    StampedElement element;
+    EXPECT_THROW(element.delServerTag("foo"), isc::NotFound);
+    element.setServerTag("foo");
+    element.setServerTag("foo");
+    ASSERT_EQ(2, element.getServerTags().size());
+    EXPECT_EQ("foo", element.getServerTags()[0].get());
+    EXPECT_EQ("foo", element.getServerTags()[1].get());
+
+    EXPECT_NO_THROW(element.delServerTag("foo"));
+    ASSERT_EQ(1, element.getServerTags().size());
+    EXPECT_EQ("foo", element.getServerTags()[0].get());
+
+    EXPECT_NO_THROW(element.delServerTag("foo"));
+    EXPECT_EQ(0, element.getServerTags().size());
+    EXPECT_THROW(element.delServerTag("foo"), isc::NotFound);
+}
+
 
 // Test that metadata can be created from the StampedElement.
 TEST(StampedElementTest, getMetadata) {
