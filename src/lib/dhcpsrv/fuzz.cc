@@ -35,58 +35,28 @@ using namespace std;
 // Constants defined in the Fuzz class definition.
 constexpr size_t        Fuzz::BUFFER_SIZE;
 constexpr size_t        Fuzz::MAX_SEND_SIZE;
-constexpr useconds_t    Fuzz::SLEEP_INTERVAL;
-constexpr long          Fuzz::LOOP_COUNT;
-
-// FuzzSync methods.  FuzSynch is the class that encapsulates the
-// synchronization process between the main and fuzzing threads.
+constexpr long          Fuzz::MAX_LOOP_COUNT;
 
 // Constructor
-FuzzSync::FuzzSync(const char* name) : ready_(false), name_(name) {
-}
-
-// Wait to be notified when the predicate is true
-void
-FuzzSync::wait(void) {
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_WAITING).arg(name_);
-    unique_lock<mutex>   lock(mutex_);
-    cond_.wait(lock, [=]() { return this->ready_; });
-    ready_ = false;
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_WAITED).arg(name_);
-}
-
-// Set predicate and notify the waiting thread to continue
-void
-FuzzSync::notify(void) {
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SETTING).arg(name_);
-    unique_lock<mutex>  lock(mutex_);
-    ready_ = true;
-    cond_.notify_all();
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SET).arg(name_);
-}
-
-// Fuzz methods.
-
-// Constructor
-Fuzz::Fuzz(int ipversion, volatile bool* shutdown) :
-    fuzz_sync_("fuzz_sync"), main_sync_("main_sync"), address_(nullptr),
-    interface_(nullptr), loop_max_(LOOP_COUNT), port_(0), running_(false),
-    sockaddr_ptr_(nullptr), sockaddr_len_(0), shutdown_ptr_(nullptr) {
+Fuzz::Fuzz(int ipversion) :
+    address_(nullptr), interface_(nullptr), loop_max_(MAX_LOOP_COUNT), port_(0),
+    sockaddr_len_(0), sockaddr_ptr_(nullptr), sockfd_(-1) {
 
     try {
         stringstream reason;    // Used to construct exception messages
 
-        // Store reference to shutdown flag.  When the fuzzing loop has read
-        // the set number of packets from AFL, it will set this flag to trigger
-        // a Kea shutdown.
-        if (shutdown) {
-            shutdown_ptr_ = shutdown;
-        } else {
-            isc_throw(FuzzInitFail, "must pass shutdown flag to kea_fuzz_init");
-        }
-
         // Set up address structures.
         setAddress(ipversion);
+
+        // Create the socket throw which packets read from stdin will be send
+        // to the port on which Kea is listening.  This is closed in the
+        // destructor.
+        sockfd_ = socket((ipversion == 4) ? AF_INET : AF_INET6, SOCK_DGRAM, 0);
+        if (sockfd_ < 0) {
+            LOG_FATAL(fuzz_logger, FUZZ_SOCKET_CREATE_FAIL)
+                      .arg(strerror(errno));
+            return;
+        }
 
         // Check if the hard-coded maximum loop count is being overridden
         const char *loop_max_ptr = getenv("FUZZ_AFL_LOOP_MAX");
@@ -106,14 +76,6 @@ Fuzz::Fuzz(int ipversion, volatile bool* shutdown) :
             }
         }
 
-        // Start the thread that reads the packets sent by AFL from stdin and
-        // passes them to the port on which Kea is listening.
-        fuzzing_thread_ = std::thread(&Fuzz::run, this);
-
-        // Wait for the fuzzing thread to read its first packet from AFL and
-        // send it to the port on which Kea is listening.
-        fuzz_sync_.wait();
-
     } catch (const FuzzInitFail& e) {
         // AFL tends to make it difficult to find out what exactly has failed:
         // make sure that the error is logged.
@@ -127,11 +89,7 @@ Fuzz::Fuzz(int ipversion, volatile bool* shutdown) :
 
 // Destructor
 Fuzz::~Fuzz() {
-    // The fuzzing thread should not be running when the fuzzing object
-    // goes out of scope.
-    if (running_) {
-        LOG_ERROR(fuzz_logger, FUZZ_THREAD_NOT_TERMINATED);
-    }
+    static_cast<void>(close(sockfd_));
 }
 
 // Parse IP address/port/interface and set up address structures.
@@ -164,25 +122,10 @@ Fuzz::setAddress(int ipversion) {
         isc_throw(FuzzInitFail, reason.str());
     }
 
-    // Decide if the address is an IPv4 or IPv6 address.
-    if ((strstr(address_, ".") != NULL) && (ipversion == 4)) {
-        // Assume an IPv4 address
-        memset(&servaddr4_, 0, sizeof(servaddr4_));
-
-        servaddr4_.sin_family = AF_INET;
-        if (inet_pton(AF_INET, address_, &servaddr4_.sin_addr) != 1) {
-            reason << "inet_pton() failed: can't convert "
-                   << address_ << " to an IPv6 address" << endl;
-            isc_throw(FuzzInitFail, reason.str());
-        }
-        servaddr4_.sin_port = htons(port_);
-
-        sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr4_);
-        sockaddr_len_ = sizeof(servaddr4_);
-
-    } else if ((strstr(address_, ":") != NULL) && (ipversion == 6)) {
-
-        // Set up the IPv6 address structure.
+    // Set up the appropriate data structure depending on the address given.
+    if ((strstr(address_, ":") != NULL) && (ipversion == 6)) {
+        // Expecting IPv6 and the address contains a colon, so assume it is an
+        // an IPv6 address.
         memset(&servaddr6_, 0, sizeof (servaddr6_));
 
         servaddr6_.sin6_family = AF_INET6;
@@ -203,6 +146,24 @@ Fuzz::setAddress(int ipversion) {
 
         sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr6_);
         sockaddr_len_ = sizeof(servaddr6_);
+
+    } else if ((strstr(address_, ".") != NULL) && (ipversion == 4)) {
+        // Expecting an IPv4 address and it contains a dot, so assume it is.
+        // This check is done after the IPv6 check, as it is possible for an
+        // IPv4 address to be emnbedded in an IPv6 one.
+        memset(&servaddr4_, 0, sizeof(servaddr4_));
+
+        servaddr4_.sin_family = AF_INET;
+        if (inet_pton(AF_INET, address_, &servaddr4_.sin_addr) != 1) {
+            reason << "inet_pton() failed: can't convert "
+                   << address_ << " to an IPv6 address" << endl;
+            isc_throw(FuzzInitFail, reason.str());
+        }
+        servaddr4_.sin_port = htons(port_);
+
+        sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr4_);
+        sockaddr_len_ = sizeof(servaddr4_);
+
     } else {
         reason << "Expected IP version (" << ipversion << ") is not "
                << "4 or 6, or the given address " << address_ << " does not "
@@ -213,127 +174,44 @@ Fuzz::setAddress(int ipversion) {
 }
 
 
-// This is the main fuzzing function. It receives data from fuzzing engine.
-// That data is received to stdin and then sent over the configured UDP socket.
-// It then waits for the main thread to process the packet, the completion of
-// that task being signalled by the main thread calling Fuzz::packetProcessed().
+// This is the main fuzzing function. It receives data from fuzzing engine over
+// stdin and then sends it to the configured UDP socket.
 void
-Fuzz::run(void) {
-    running_ = true;
+Fuzz::transfer(void) {
 
-    // Create the socket throw which packets read from stdin will be send
-    // to the port on which Kea is listening.
-    int sockfd = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-        LOG_FATAL(fuzz_logger, FUZZ_SOCKET_CREATE_FAIL).arg(strerror(errno));
-        return;
-    }
+    // Read from stdin.  Just return if nothing is read (or there is an error)
+    // and hope that this does not cause a hang.
+    char buf[BUFFER_SIZE];
+    ssize_t length = read(0, buf, sizeof(buf));
 
-    // Main loop.  This runs for a fixed number of iterations, after which
-    // Kea will be terminated and AFL will restart it.  The counting of loop
-    // iterations is done here with a separate variable (instead of inside
-    // inside the read loop in the server process using __AFL_LOOP) to ensure
-    // that thread running this function shuts down properly between each
-    // restart of Kea.
-    auto loop = loop_max_;
-    while (loop-- > 0) {
-        // Read from stdin and continue reading (albeit after a pause) even
-        // if there is an error.  Do the same if an EOF is received.
-        char buf[BUFFER_SIZE];
-        ssize_t length = read(0, buf, sizeof(buf));
-        if (length <= 0) {
-            // Don't log EOFs received - they may be generated by AFL
-            if (length != 0) {
-                LOG_ERROR(fuzz_logger, FUZZ_READ_FAIL).arg(strerror(errno));
-            }
-            usleep(SLEEP_INTERVAL);
-            continue;
-        }
-        LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_DATA_READ)
-                  .arg(length);
+    // Save the errno in case there was an error because if debugging is
+    // enabled, the following LOG_DEBUG call may destroy its value.
+    int errnum = errno;
+    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_DATA_READ)
+              .arg(length);
 
+    if (length > 0) {
         // Now send the data to the UDP port on which Kea is listening.
-        //
-        // The condition variables synchronize the operation: this thread
-        // will read from stdin and write to the socket.  It then blocks until
-        // the main thread has processed the packet, at which point it can read
-        // more data from stdin.
-        //
-        // Synchronization is required because although the read from stdin is
-        // blocking, there is no blocking on the sending of data to the port
-        // from which Kea is reading.  It is quite possible to lose packets,
-        // and AFL seems to get confused in this case.  At any rate, without
-        // some form of synchronization, this approach does not work.
-
         // Send the data to the main Kea thread.  Limit the size of the
         // packets that can be sent.
         size_t send_len = (length < MAX_SEND_SIZE) ? length : MAX_SEND_SIZE;
-        ssize_t sent = sendto(sockfd, buf, send_len, 0, sockaddr_ptr_,
+        ssize_t sent = sendto(sockfd_, buf, send_len, 0, sockaddr_ptr_,
                               sockaddr_len_);
-        if (sent < 0) {
-            // TODO:  If we get here, we may well hang: AFL has sent us a
-            // packet but by continuing, we are not letting Kea process it
-            // and trigger AFL to send another.  For the time being, we
-            // are restricting the size of packets Kea can send us.
-            LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
-            continue;
+        if (sent > 0) {
+            LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SEND).arg(sent);
         } else if (sent != length) {
             LOG_WARN(fuzz_logger, FUZZ_SHORT_SEND).arg(length).arg(sent);
         } else {
-            LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SEND).arg(sent);
+            LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
         }
-
-        if (loop <= 0) {
-            // If this is the last loop iteration, close everything down.
-            // This is done before giving permission for the main thread
-            // to run to avoid a race condition.
-            *shutdown_ptr_ = true;
-            close(sockfd);
-            LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_SHUTDOWN_INITIATED);
+    } else {
+        // Read did not get any bytes.  A zero-length read (EOF) may have been
+        // generated by AFL, so don't log that.  But otherwise log an error.
+        if (length != 0) {
+            LOG_ERROR(fuzz_logger, FUZZ_READ_FAIL).arg(strerror(errnum));
         }
-
-        // Tell the main thread to run.
-        fuzz_sync_.notify();
-
-        // We now need to synchronize with the main thread.  In particular,
-        // we suspend processing until we know that the processing of the
-        // packet by Kea has finished and that the completion function has
-        // raised a SIGSTOP.
-        main_sync_.wait();
     }
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_LOOP_EXIT);
 
-    // If the main thread is waiting, let it terminate as well.
-    fuzz_sync_.notify();
-
-    running_ = false;
-
-    return;
-}
-
-// Called by the main thread, this notifies AFL that processing for the
-// last packet has finished.
-void
-Fuzz::packetProcessed(void) {
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_PACKET_PROCESSED_CALLED);
-
-    // Tell AFL that the processing for this packet has finished.
-    raise(SIGSTOP);
-
-    // Tell the fuzzing loop that it can continue and wait until it tells
-    // us that the main thread can continue.
-    main_sync_.notify();
-    fuzz_sync_.wait();
-
-    // If the fuzzing thread is shutting down, wait for it to terminate.
-    if (*shutdown_ptr_) {
-        // We shouldn't need to notify it to continue (the previous call in
-        // this method should have done that), but it does no harm to be sure.
-        main_sync_.notify();
-        LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_THREAD_WAIT);
-        fuzzing_thread_.join();
-        LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE, FUZZ_THREAD_TERMINATED);
-    }
 }
 
 #endif  // ENABLE_AFL

@@ -10,10 +10,6 @@ $NAMESPACE isc::dhcp
 A debug message output to indicate how much data has been received from
 the fuzzer via stdin
 
-% FUZZ_INTERFACE fuzzing will use interface %1 (address %2, port %3)
-An informational message output during fuzzing initialization, this reports
-the details of the interface to be used for fuzzing.
-
 % FUZZ_INIT_COMPLETE fuzz initialization complete: interface %1, address %2, port %3, max loops %4
 An informational message output when the fuzzing initialization function has
 completed successfully. The parameters listed are those which must be/can be
@@ -22,23 +18,6 @@ set via environment variables.
 % FUZZ_INIT_FAIL fuzz initialization failure, reason: %1
 An error message reported if the fuzzing initialization failed.  The reason
 for the failure is given in the message.
-
-% FUZZ_LOOP_EXIT fuzzing loop has exited, shutting down Kea
-This debug message is output when Kea has processed the number of packets
-given by the hard-coded variable Fuzz::LOOP_COUNT.  Kea is shutting
-itself down and will be restarted by AFL.  This is recommended by the AFL
-documentation as a way of avoiding issues if Kea gets itself into a funny
-state after running for a long time.
-
-% FUZZ_LOOP_MAX fuzzing loop will run %1 time(s) before exiting
-A debug message noting how many loops (i.e. packets from the fuzzer) the code
-will process before Kea exits and the fuzzer restarts it.  The hard-coded
-value can be overridden by setting the environment variable FUZZ_AFL_LOOP_MAX.
-
-% FUZZ_PACKET_PROCESSED_CALLED packetProcessed has been called
-A debug message indicating that the processing of a packet by Kea has
-finished and that the Fuzz::packetProcessed() method has been called.  This
-raises a SIGSTOP informing AFL that Kea is ready to receive another packet.
 
 % FUZZ_READ_FAIL error reading input from fuzzer: %1
 This error is reported if the read of data from the fuzzer (which is
@@ -57,49 +36,14 @@ sends data received from AFL to the socket on which Kea is listening) fails.
 The reason for the failure is given in the message.  The fuzzing code will
 attempt to continue from this, but it may cause the fuzzing process to fail.
 
-% FUZZ_SET successfully set %1 condition variable
-A debug message stating the named condition variable has been be set.
-
-% FUZZ_SETTING setting %1 condition variable
-A debug message stating the named condition variable is to be set.
-
 % FUZZ_SHORT_SEND expected to send %d bytes to Kea input socket but only sent %2
 A warning message that is output if the sendto() call (used to send data
 from the fuzzing thread to the main Kea processing) did not send as much
 data as that read from AFL.  This may indicate a problem in the underlying
 communications between the fuzzing thread and the main Kea processing.
 
-% FUZZ_SHUTDOWN_INITIATED shutdown initated, shutdown flag is set
-A debug message output when the fuzzing thread has reached the maximum number
-of iterations.  At this point, the shutdown flag is set, Kea will exit and
-the fuzzer will restart it.  Periodic shutdowns of the program being fuzzed
-are recommended in the AFL documentation as a way of overcoming memory leaks
-of odd conditions that a program can get into after an extended period of
-running.
-
 % FUZZ_SOCKET_CREATE_FAIL failed to crease socket for use by fuzzing thread: %1
 An error message output when the fuzzing code has failed to create a socket
 through which is will copy data received on stdin from the AFL fuzzer to
 the port on which Kea is listening.  The program will most likely hang if
 this occurs.
-
-% FUZZ_THREAD_NOT_TERMINATED fuzzing thread has not terminated
-An error message output in the destructor of the fuzzing object should the
-object go out of scope with the fuzzing thread running.  This message is
-for diagnosing problems in the fuzzing code.
-
-% FUZZ_THREAD_TERMINATED fuzzing thread has terminated
-A debug message, output when the main thread has detected that the fuzzing
-thread has terminated.
-
-% FUZZ_THREAD_WAIT waiting for fuzzing thread to terminate
-A debug message, output when the main thread is waiting for the fuzzing thread
-to terminate.
-
-% FUZZ_WAITED successfully waited for for %1 condition variable to be set
-A debug message stating the the condition variable for which the originating
-thread was waiting has been set and that the wait has completed.
-
-% FUZZ_WAITING waiting for %1 condition variable to be set
-A debug message stating the condition variable for which the originating
-thread is waiting.

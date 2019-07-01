@@ -444,22 +444,18 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 
 bool Dhcpv6Srv::run() {
 #ifdef ENABLE_AFL
-    // AFL fuzzing setup initiated here. At this stage, Kea has loaded its
-    // config, opened sockets, established DB connections, etc. It is truly
-    // ready to process packets. Now it's time to initialize AFL. It will set
-    // up a separate thread that will receive data from fuzzing engine and will
-    // send it as packets to Kea. Kea is supposed to process them and hopefully
-    // not crash in the process. Once the packet processing is done, Kea should
-    // let the know that it's ready for the next packet. This is done further
-    // down in this loop by a call to the packetProcessed() method.
-    Fuzz fuzz_controller(6, &shutdown_);
+    // Set up structures needed for fuzzing.
+    Fuzz fuzzer(6);
     //
     // The next line is needed as a signature for AFL to recognise that we are
     // running persistent fuzzing.  This has to be in the main image file.
-    __AFL_LOOP(0);
-#endif // ENABLE_AFL
-
+    while (__AFL_LOOP(fuzzer.maxLoopCount())) {
+        // Read from stdin and put the data read into an address/port on which
+        // Kea is listening, read for Kea to read it via asynchronous I/O.
+        fuzzer.transfer();
+#else
     while (!shutdown_) {
+#endif // ENABLE_AFL
         try {
             run_one();
             getIOService()->poll();
@@ -474,12 +470,6 @@ bool Dhcpv6Srv::run() {
             // by more specific catches.
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
         }
-
-#ifdef ENABLE_AFL
-        // Ok, this particular packet processing is done.  If we are fuzzing,
-        // let AFL know about it.
-        fuzz_controller.packetProcessed();
-#endif // ENABLE_AFL
     }
 
     return (true);
