@@ -188,12 +188,12 @@ TestConfigBackendDHCPv4::getModifiedOptions4(const db::ServerSelector& /* server
 StampedValuePtr
 TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_selector,
                                              const std::string& name) const {
+    auto tags = server_selector.getTags();
     auto candidate = StampedValuePtr();
     const auto& index = globals_.get<StampedValueNameIndexTag>();
     auto global_range = index.equal_range(name);
     for (auto global_it = global_range.first; global_it != global_range.second;
          ++global_it) {
-        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if ((*global_it)->hasServerTag(ServerTag(tag))) {
                 return (*global_it);
@@ -209,18 +209,50 @@ TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_se
 
 
 StampedValueCollection
-TestConfigBackendDHCPv4::getAllGlobalParameters4(const db::ServerSelector& /* server_selector */) const {
-    return (globals_);
+TestConfigBackendDHCPv4::getAllGlobalParameters4(const db::ServerSelector& server_selector) const {
+    auto tags = server_selector.getTags();
+    StampedValueCollection globals;
+    for (auto global : globals_) {
+        bool got = false;
+        for (auto tag : tags) {
+            if (global->hasServerTag(ServerTag(tag))) {
+                globals.insert(global);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (global->hasAllServerTag()) {
+            globals.insert(global);
+        }
+    }
+    return (globals);
 }
 
 StampedValueCollection
-TestConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
                                                       const boost::posix_time::ptime& modification_time) const {
-    const auto& index = globals_.get<StampedValueModificationTimeIndexTag>();
+    auto tags = server_selector.getTags();
     StampedValueCollection globals;
+    const auto& index = globals_.get<StampedValueModificationTimeIndexTag>();
     auto lb = index.lower_bound(modification_time);
     for (auto global = lb; global != index.end(); ++global) {
-        globals.insert(*global);
+        bool got = false;
+        for (auto tag : tags) {
+            if ((*global)->hasServerTag(ServerTag(tag))) {
+                globals.insert(*global);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if ((*global)->hasAllServerTag()) {
+            globals.insert(*global);
+        }
     }
     return (globals);
 }
@@ -571,10 +603,18 @@ TestConfigBackendDHCPv4::deleteGlobalParameter4(const db::ServerSelector& server
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteAllGlobalParameters4(const db::ServerSelector& /* server_selector */) {
-    auto globals_size = globals_.size();
-    globals_.clear();
-    return (globals_size);
+TestConfigBackendDHCPv4::deleteAllGlobalParameters4(const db::ServerSelector& server_selector) {
+    uint64_t cnt = 0;
+    for (auto global_it = globals_.begin(); global_it != globals_.end(); ) {
+        auto value = *global_it;
+        if (value->hasServerTag(ServerTag(getServerTag(server_selector)))) {
+            global_it = globals_.erase(global_it);
+            cnt++;
+        } else {
+            ++global_it;
+        }
+    }
+    return (cnt);
 }
 
 uint64_t
