@@ -1,4 +1,4 @@
-.. note::.. _installation:
+.. _installation:
 
 ************
 Installation
