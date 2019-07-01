@@ -3,7 +3,7 @@
 	checking to be enabled inside the Lease File Cleanup (LFC)
 	process.  The LFC cannot meaningfully perform sanity checking
 	as it does not have access to the full server configuration.
-	(Gitlab #686,!403 git TBD)
+	(Gitlab #686,!403 git 68b2cb0385779ef0c520164e418dee124d7cb364)
 
 1606.	[bug]		tmark
 	Corrected an error with retrieving DHCPv6 leases, whose IAID
