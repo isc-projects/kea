@@ -94,9 +94,6 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
     }
 
     switch (checks->getLeaseSanityCheck()) {
-    case CfgConsistency::LEASE_CHECK_NONE:
-        // No checks whatsoever, just return the lease as-is.
-        break;
     case CfgConsistency::LEASE_CHECK_WARN:
         if (lease->subnet_id_ != id) {
             // Print a warning, but return the lease as is.
@@ -149,6 +146,7 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
 
         }
         break;
+
     case CfgConsistency::LEASE_CHECK_DEL:
         if (lease->subnet_id_ != id) {
             LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL_DISCARD)
@@ -158,6 +156,13 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
             lease.reset();
         }
         break;
+
+    default:
+        // Shouldn't get here but some compilers and analyzers
+        // complain.  We'll we treat it as NONE and return the 
+        // lease as-is.
+        break;
+
     }
 
     // Additional checks may be implemented in the future here.

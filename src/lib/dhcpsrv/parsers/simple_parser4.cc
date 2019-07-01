@@ -166,8 +166,8 @@ const SimpleDefaults SimpleParser4::IFACE4_DEFAULTS = {
 /// @brief This table defines default values for dhcp-queue-control in DHCPv4.
 const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
     { "enable-queue",   Element::boolean, "false"},
-    { "queue-type", Element::string,  "kea-ring4"},
-    { "capacity",  Element::integer, "500"}
+    { "queue-type",     Element::string,  "kea-ring4"},
+    { "capacity",       Element::integer, "500"}
 };
 
 /// @brief This defines default values for sanity checking for DHCPv4.

@@ -149,8 +149,8 @@ const SimpleDefaults SimpleParser6::IFACE6_DEFAULTS = {
 /// @brief This table defines default values for dhcp-queue-control in DHCPv4.
 const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
     { "enable-queue",   Element::boolean, "false"},
-    { "queue-type", Element::string,  "kea-ring6"},
-    { "capacity",  Element::integer, "500"}
+    { "queue-type",     Element::string,  "kea-ring6"},
+    { "capacity",       Element::integer, "500"}
 };
 
 /// @brief This defines default values for sanity checking for DHCPv6.
