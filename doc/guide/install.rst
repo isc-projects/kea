@@ -1,4 +1,4 @@
-.. _installation:
+.. note::.. _installation:
 
 ************
 Installation
@@ -49,7 +49,7 @@ In addition to the run-time requirements (listed in
 :ref:`required-software`), building Kea from source code requires
 various development include headers and program development tools.
 
-   **Note**
+.. note::
 
    Some operating systems have split their distribution packages into a
    run-time and a development package. You will need to install the
@@ -139,7 +139,7 @@ Downloading this "bleeding edge" code is recommended only for developers
 or advanced users. Using development code in a production environment is
 not recommended.
 
-   **Note**
+.. note::
 
    When building from source code retrieved via git, additional software
    will be required: automake (v1.11 or later), libtoolize, and autoconf
@@ -228,7 +228,7 @@ options. Some commonly used options are:
 
 ..
 
-   **Note**
+.. note::
 
    For instructions concerning the installation and configuration of
    database backends for Kea, see :ref:`dhcp-install-configure`.
@@ -334,7 +334,7 @@ Do not use any form of parallel or job server options (such as GNU
 make's ``-j`` option) when performing this step; doing so may cause
 errors.
 
-   **Note**
+.. note::
 
    The install step may require superuser privileges.
 
@@ -348,7 +348,7 @@ relevant linker cache configuration file for your OS):
 
 ..
 
-   **Note**
+.. note::
 
    If you do not run ``ldconfig`` where it is required, you may see
    errors like the following:
@@ -374,7 +374,7 @@ optional external database backend must be explicitly included when Kea
 is built. This section covers the building of Kea with one of the
 optional backends and the creation of the lease database.
 
-   **Note**
+.. note::
 
    When unit tests are built with Kea (i.e. the --with-gtest configuration
    option is specified), the databases must be manually pre-configured

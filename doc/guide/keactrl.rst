@@ -98,7 +98,7 @@ The contents of ``keactrl.conf`` are:
 
 ..
 
-   **Note**
+ .. note::
 
    In the example above, strings of the form @something@ are replaced by
    the appropriate values when Kea is installed.
@@ -126,7 +126,7 @@ effect as long as the ``kea_verbose`` is set to "yes." Setting it to
 Kea configuration file. If no logging configuration is specified, the
 default settings will be used.
 
-   **Note**
+ .. note::
 
    The verbosity for the server is set when it is started. Once started,
    the verbosity can be only changed by stopping the server and starting
@@ -243,7 +243,7 @@ take effect. This limitation will be removed in a future release.
 
 ..
 
-   **Note**
+ .. note::
 
    NETCONF is an optional feature that is disabled by default and can be
    enabled during compilation. If Kea was compiled without NETCONF
@@ -252,7 +252,7 @@ take effect. This limitation will be removed in a future release.
    the keactrl.conf file, but NETCONF status will not be shown and other
    commands will ignore it.
 
-   **Note**
+ .. note::
 
    Currently ``keactrl`` does not report configuration failures when the
    server is started or reconfigured. To check if the server's

@@ -144,7 +144,7 @@ curly bracket (or brace). Each configuration must contain an object
 specifying the configuration of the Kea module using it. In the example
 above this object is called ``Dhcp4``.
 
-   **Note**
+.. note::
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
@@ -183,7 +183,7 @@ quotes around them.) ``renew-timer`` and ``rebind-timer`` are values
 (also in seconds) that define T1 and T2 timers that govern when the
 client will begin the renewal and rebind procedures.
 
-   **Note**
+.. note::
 
    Both ``renew-timer`` and ``rebind-timer``
    are optional. The server will only send ``rebind-timer`` to the client,
@@ -376,7 +376,7 @@ in this Kea Administrator's Reference Manual: :ref:`kea-lfc`.
 Lease Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   **Note**
+.. note::
 
    Lease database access information must be configured for the DHCPv4
    server, even if it has already been configured for the DHCPv6 server.
@@ -468,7 +468,7 @@ The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
-   **Note**
+.. note::
 
    Automatic reconnection to database backends is configured
    individually per backend. This allows users to tailor the recovery
@@ -481,7 +481,7 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 ..
 
-   **Note**
+.. note::
 
    Note that the host parameter is used by the MySQL and PostgreSQL backends.
    Cassandra has a concept of contact points that can be used to
@@ -680,7 +680,7 @@ The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
-   **Note**
+.. note::
 
    Automatic reconnection to database backends is configured
    individually per backend. This allows users to tailor the recovery
@@ -747,7 +747,7 @@ Setting this parameter to ``false`` configures the database backend to
 operate in "read-write" mode, which is also the default configuration if
 the parameter is not specified.
 
-   **Note**
+.. note::
 
    The ``readonly`` parameter is currently only supported for MySQL and
    PostgreSQL databases.
@@ -890,7 +890,7 @@ should not be used when the directly connected clients are operating on
 that link. To use a single address on such interface, the
 "interface-name/address" notation should be used.
 
-   **Note**
+.. note::
 
    Specifying the value ``raw`` as the socket type doesn't guarantee
    that the raw sockets will be used! The use of raw sockets to handle
@@ -1026,7 +1026,7 @@ subnet 3 are now associated with subnet 4, something that may have
 unexpected consequences. The only remedy for this issue at present is to
 manually specify a unique identifier for each subnet.
 
-   **Note**
+.. note::
 
    Subnet IDs must be greater than zero and less than 4294967295.
 
@@ -1184,7 +1184,7 @@ Calculating the values is controlled by the following three parameters.
 
 ..
 
-   **Note**
+.. note::
 
    In the event that both explicit values are specified and
    calculate-tee-times is true, the server will use the explicit values.
@@ -1933,7 +1933,7 @@ last field is an array, i.e. it can contain more than one value, as in:
 The new option content is one IPv4 address followed by one or more 16-
 bit unsigned integers.
 
-   **Note**
+.. note::
 
    In general, boolean values are specified as ``true`` or ``false``,
    without quotes. Some specific boolean parameters may also accept
@@ -1941,7 +1941,7 @@ bit unsigned integers.
 
 ..
 
-   **Note**
+.. note::
 
    Numbers can be specified in decimal or hexadecimal format. The
    hexadecimal format can be either plain (e.g. abcd) or prefixed with
@@ -2067,7 +2067,7 @@ The definition used to decode a VSI option is:
 
 ..
 
-   **Note**
+.. note::
 
    This last-resort definition for the Vendor-Specific Information
    option (code 43) is not compatible with a raw binary value. When
@@ -2076,7 +2076,7 @@ The definition used to decode a VSI option is:
    matching these cases and an option definition for the VSI option with
    a binary type and no encapsulation.
 
-   **Note**
+.. note::
 
    Option definitions in client classes are allowed only for this
    limited option set (codes 43 and from 224 to 254), and only for
@@ -2537,7 +2537,7 @@ class list for the packet. The second specifies an expression that is
 evaluated for each packet. If the result is "true", the packet is a
 member of the class.
 
-   **Note**
+.. note::
 
    Care should be taken with client classification, as it is easy for
    clients that do not meet class criteria to be denied all service.
@@ -2581,7 +2581,7 @@ client documentation for specific values.
 If there are multiple classes defined and an incoming packet is matched
 to multiple classes, the class that is evaluated first is used.
 
-   **Note**
+.. note::
 
    The classes are ordered as specified in the configuration.
 
@@ -2595,7 +2595,7 @@ example, modern cable modems will send this option with value
 "docsis3.0" and as a result the packet will belong to class
 "VENDOR_CLASS_docsis3.0".
 
-   **Note**
+.. note::
 
    Certain special actions for clients in VENDOR_CLASS_docsis3.0 can be
    achieved by defining VENDOR_CLASS_docsis3.0 and setting its
@@ -3011,7 +3011,7 @@ parameter, which provides the following modes of behavior:
 
 ..
 
-   **Note**
+.. note::
 
    Note that in early versions of Kea, this parameter was a boolean and permitted only
    values of ``true`` and ``false``. Boolean values have been deprecated
@@ -3115,7 +3115,7 @@ Thus, a client-supplied value of "myhost-$[123.org" would become
 name supplied by the client, and it is performed before applying a
 qualifying suffix (if one is defined and needed).
 
-   **Note**
+.. note::
 
    The following are some considerations to keep in mind:
    Name sanitizing is meant to catch the more common cases of invalid
@@ -3399,7 +3399,7 @@ cooperating DHCPv4 and DHCPv6 servers. This section is about the
 configuration of the DHCPv4 side (the DHCPv6 side is described in
 :ref:`dhcp6-dhcp4o6-config`).
 
-   **Note**
+.. note::
 
    DHCPv4-over-DHCPv6 support is experimental and the details of the
    inter-process communication may change; both the DHCPv4 and DHCPv6
@@ -3651,7 +3651,7 @@ global reservations defined. Typically, such reservations would be used
 to reserve hostnames for clients which may move from one subnet to
 another.
 
-   **Note**
+.. note::
 
    Global reservations, while useful in certain circumstances, have aspects
    that must be given due consideration when using them, please see
@@ -3717,7 +3717,7 @@ conflict with existing leases. Another recommendation is to use
 out-of-pool reservations. If the reserved address does not belong to a
 pool, there is no way that other clients can get it.
 
-   **Note**
+.. note::
 
    The conflict-resolution mechanism does not work for global
    reservations. Although the global address reservations feature may be useful
@@ -3948,7 +3948,7 @@ with classification, using expressions. The "KNOWN" or "UNKNOWN" built-in
 class is added to the packet and any class depending on it (directly or
 indirectly) and not only-if-required is evaluated.
 
-   **Note**
+.. note::
 
    To force the evaluation of a class expression after the
    host reservation lookup, for instance because of a dependency on
@@ -3970,7 +3970,7 @@ The `Kea wiki
 provides some examples of how to conduct common host reservation
 operations.
 
-   **Note**
+.. note::
 
    In Kea, the maximum length of an option specified per-host is
    arbitrarily set to 4096 bytes.
@@ -4234,7 +4234,7 @@ exhausted; this sometimes occurs when the client provides a hint that belongs to
 subnet, or the client has reservations in a subnet other than the
 default.
 
-   **Note**
+.. note::
 
    Deployments should not assume that Kea waits until it has allocated
    all the addresses from the first subnet in a shared network before
@@ -4694,7 +4694,7 @@ It is also possible to specify a relay IPv4 address for a given subnet.
 It can be used to match incoming packets into a subnet in uncommon
 configurations, e.g. shared networks. See :ref:`dhcp4-relay-override` for details.
 
-   **Note**
+.. note::
 
    The subnet selection mechanism described in this section is based on
    the assumption that client classification is not used. The
@@ -4749,7 +4749,7 @@ selects that subnet for a relay with address 10.0.0.1.
 If "relay" is specified, the "ip-addresses" parameter within it is
 mandatory.
 
-   **Note**
+.. note::
 
    The current version of Kea uses the "ip-addresses" parameter, which
    supports specifying a list of addresses.
@@ -4872,7 +4872,7 @@ back to the available pool.
 Statistics in the DHCPv4 Server
 ===============================
 
-   **Note**
+.. note::
 
    This section describes DHCPv4-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.
@@ -5643,7 +5643,7 @@ during the startup or reconfiguration, and will fetch the configuration
 available for this server from the database. This configuration is
 merged into the configuration read from the configuration file.
 
-   **Note**
+.. note::
 
    Whenever there is a conflict between the parameters specified in the
    configuration file and the database, the parameters from the database

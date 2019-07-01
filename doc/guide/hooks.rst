@@ -49,7 +49,7 @@ be built.
 Installing Hook Packages
 ========================
 
-   **Note**
+.. note::
 
    For more details about installing the Kea Premium Hooks package, please read
    `this Knowledgebase article <https://kb.isc.org/docs/aa-01587>`__.
@@ -202,14 +202,14 @@ configuration would be:
 
 ..
 
-   **Note**
+.. note::
 
    This syntax is effective as of Kea 1.1.0, to facilitate the
    specification of library-specific parameters. Libraries should allow a
    parameter entry for comments, as is the case with many configuration
    scopes.
 
-   **Note**
+.. note:
 
    In all versions of Kea since 1.1.0, libraries
    are reloaded even if their lists have not changed,
@@ -238,7 +238,7 @@ Notes:
 -  An empty list has the same effect as omitting the ``hooks-libraries``
    configuration element altogether.
 
-      **Note**
+    .. note::
 
       There is one case where this is not true: if Kea is running with a
       configuration that contains a ``hooks-libraries`` item, and that
@@ -259,7 +259,7 @@ advantage of this feature to provide functions that may only be useful
 to a subset of Kea users. To this end, ISC has created some hooks
 libraries, discussed in the following sections.
 
-   **Note**
+.. note::
 
    Some of these libraries are available with the base code, while
    others will be shared with organizations supporting development of
@@ -277,7 +277,7 @@ loaded by the ``kea-dhcp4`` or ``kea-dhcp6`` processes. If a library
 from ISC does not work as expected, please make sure that it has been
 loaded by the correct process per the table below.
 
-   **Warning**
+.. warning::
 
    While the Kea Control Agent includes the "hooks" functionality, (i.e.
    hooks libraries can be loaded by this process), none of ISC's current
@@ -373,7 +373,7 @@ only access a registration portal. Once they fill in necessary data,
 their details are added to the known clients file and they get a proper
 address after their device is restarted.
 
-   **Note**
+.. note::
 
    This library was developed several years before the host reservation
    mechanism became available. Host reservation is much
@@ -429,7 +429,7 @@ renewals into a set of log files.
 Currently this library is only
 available to ISC customers with a paid support contract.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
@@ -462,7 +462,7 @@ described below; see :ref:`forensic-log-configuration`. The next part of the nam
 date the log file was started, with four digits for year, two digits for
 month, and two digits for day. The file is rotated on a daily basis.
 
-   **Note**
+.. note::
 
    When running Kea servers for both DHCPv4 and DHCPv6, the log names
    must be distinct. See the examples in :ref:`forensic-log-configuration`.
@@ -845,7 +845,7 @@ scenarios are addressed by the Flexible Identifiers hook application.
 Currently this library is only available to ISC customers with a paid support
 contract.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
@@ -920,13 +920,15 @@ can be achieved by using the following configuration:
        ]
    }
 
-Note that care should be taken when adjusting the expression. If the expression
-changes, then all the ``flex-id`` values may change, possibly rendering
-all reservations based on ``flex-id`` unusable until they are manually updated.
-It is strongly recommended that administrators start with the expression and a
-handful of reservations, and then adjust the expression as needed. Once
-the expression is confirmed to do what is desired of it, host reservations
-can be deployed on a broader scale.
+.. note::
+
+  Care should be taken when adjusting the expression. If the expression
+  changes, then all the ``flex-id`` values may change, possibly rendering
+  all reservations based on ``flex-id`` unusable until they are manually updated.
+  It is strongly recommended that administrators start with the expression and a
+  handful of reservations, and then adjust the expression as needed. Once
+  the expression is confirmed to do what is desired of it, host reservations
+  can be deployed on a broader scale.
 
 ``flex-id`` values in host reservations can be specified in two ways. First,
 they can be expressed as a hex string, e.g. bar string can be represented
@@ -1072,7 +1074,7 @@ reservations will be added in the future.
 Currently this library is only available to ISC customers with a paid support
 contract.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
@@ -1409,7 +1411,7 @@ reservations are returned. The end is reached once the returned list is
 empty, the count is 0, no next map is present, and result status 3 (empty) is
 returned.
 
-   **Note**
+.. note::
 
    The from and source-index parameters are reflecting the internal state of
    the search. There is no need to understand what they represent; it is
@@ -1478,7 +1480,7 @@ Some hosts are returned with information to get the next page:
        "text": "72 IPv4 host(s) found."
    }
 
-Note that the from and source-index fields were specified in the response in
+Note that the "from" and "source-index" fields were specified in the response in
 the next map. Those two must be copied to the next command, so Kea
 continues from the place where the last command finished. To get the
 next page the following command can be sent:
@@ -1515,7 +1517,7 @@ users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
 ``reservation-get-all`` (see :ref:`command-reservation-get-all`.
 
-   **Note**
+.. note::
 
    Currently ``reservation-get-page`` is not supported by the Cassandra
    host backend.
@@ -1618,7 +1620,7 @@ shared networks) is also provided.
 Currently this library is only available to ISC customers with a paid support
 contract.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
@@ -1957,7 +1959,7 @@ values, so the auto-generation is never used. The two
 approaches can be mixed only if the administrator understands how internal
 automatic subnet-id generation works in Kea.
 
-   **Note**
+.. note::
 
    Subnet IDs must be greater than zero and less than 4294967295.
 
@@ -2279,7 +2281,7 @@ only one subnet) is discouraged in production environments. For details
 regarding syntax, see :ref:`shared-network4` and
 :ref:`shared-network6`.
 
-   **Note**
+.. note::
 
    As opposed to parameter inheritance during the processing of a full new
    configuration, this command does not fully handle parameter inheritance.
@@ -2455,7 +2457,7 @@ return a response similar to the following:
 The ``network6-subnet-add`` command uses exactly the same syntax for
 both the command and the response.
 
-   **Note**
+.. note::
 
    As opposed to parameter inheritance during the processing of a full new
    configuration or when adding a new shared network with new subnets,

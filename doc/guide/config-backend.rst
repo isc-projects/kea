@@ -90,7 +90,7 @@ CB in the current Kea 1.6.0 release:
 
 ..
 
-   **Note**
+.. note::
 
    We strongly recommend against duplication of the configuration information
    in the file and the database. For example, when specifying subnets
@@ -102,7 +102,7 @@ CB in the current Kea 1.6.0 release:
    so it is possible that parts of the configuration specified in the
    file may be overridden if contradicted by information in the database.
 
-   **Note**
+.. note::
 
    It is recommended that the ``subnet_cmds`` hooks library not be used to
    manage the subnets when the configuration backend is used as a source
@@ -122,7 +122,7 @@ configuration switch is used during the Kea build. The MySQL C client
 libraries must be installed, as explained in
 :ref:`DHCP Database Installation and Configuration <dhcp-install-configure>`.
 
-   **Note**
+.. note::
 
    Any existing MySQL schema must be upgraded to the latest schema
    required by the particular Kea version using the ``kea-admin`` tool,

@@ -11,7 +11,7 @@ cache information from the database locally. This includes negative
 caching, i.e. the ability to remember that there is no client
 information in the database.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.

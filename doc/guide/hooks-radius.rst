@@ -15,7 +15,7 @@ attributes. As such, the alternative looks more appealing: to extend the
 DHCP server to talk to RADIUS directly. That is the goal this library
 intends to fulfill.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or the
    ``kea-dhcp6`` process.

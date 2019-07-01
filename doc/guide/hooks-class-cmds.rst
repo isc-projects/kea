@@ -9,7 +9,7 @@ Kea DHCP servers' configurations) without the need to restart those
 servers. Using these commands it is possible to add, update, delete, and
 list client classes configured for a given server.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.

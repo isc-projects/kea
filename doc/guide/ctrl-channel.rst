@@ -165,7 +165,7 @@ in general uses plain English to describe the outcome of the command.
 which are specific to the command issued. The map may be present, but
 that depends on the specific command.
 
-   **Note**
+.. note::
 
    When sending commands via the Control Agent, it is possible to specify
    multiple services at which the command is targeted. CA forwards this

@@ -98,7 +98,7 @@ The classification process is conducted in several steps:
 
 ..
 
-   **Note**
+ .. note::
 
    Client classes in Kea follow the order in which they are specified in
    the configuration (vs. alphabetical order). Required classes follow
@@ -120,7 +120,7 @@ the client requested. As the NTP server was defined twice, the server
 chooses only one of the values for the reply; the class from which the
 value is obtained is unspecified.
 
-   **Note**
+ .. note::
 
    Care should be taken with client classification, as it is easy for
    clients that do not meet any class criteria to be denied service
@@ -517,7 +517,7 @@ digits separated by the separator, e.g ':', '-', '' (empty separator).
 
 ..
 
-   **Note**
+ .. note::
 
    The expression for each class is executed on each packet received. If
    the expressions are overly complex, the time taken to execute them
@@ -899,7 +899,7 @@ The logging might then resemble this:
 
 ..
 
-   **Note**
+ .. note::
 
    The debug logging may be quite verbose if there are a number of
    expressions to evaluate; that is intended as an aid in helping

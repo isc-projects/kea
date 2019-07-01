@@ -145,7 +145,7 @@ curly bracket (or brace). Each configuration must contain an object
 specifying the configuration of the Kea module using it. In the example
 above this object is called ``Dhcp6``.
 
-   **Note**
+.. note::
 
    In the current Kea release it is possible to specify configurations
    of multiple modules within a single configuration file, but this is
@@ -362,7 +362,7 @@ in this Kea Administrator's Reference Manual: :ref:`kea-lfc`.
 Lease Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   **Note**
+.. note::
 
    Lease database access information must be configured for the DHCPv6
    server, even if it has already been configured for the DHCPv4 server.
@@ -464,7 +464,7 @@ The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
-   **Note**
+.. note::
 
    Automatic reconnection to database backends is configured
    individually per backend. This allows users to tailor the recovery
@@ -477,7 +477,7 @@ loss of connectivity. The default value for Cassandra is 2000 ms.
 
 ..
 
-   **Note**
+.. note::
 
    Note that the host parameter is used by the MySQL and PostgreSQL backends.
    Cassandra has a concept of contact points that can be used to
@@ -626,7 +626,7 @@ The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
 loss of connectivity. The default value for Cassandra is 2000 ms.
 
-   **Note**
+.. note::
 
    Automatic reconnection to database backends is configured
    individually per backend. This allows users to tailor the recovery
@@ -693,7 +693,7 @@ Setting this parameter to ``false`` configures the database backend to
 operate in "read-write" mode, which is also the default configuration if
 the parameter is not specified.
 
-   **Note**
+.. note::
 
    The ``readonly`` parameter is currently only supported for MySQL and
    PostgreSQL databases.
@@ -799,7 +799,7 @@ subnet 3 are now associated with subnet 4, something that may have
 unexpected consequences. The only remedy for this issue at present is to
 manually specify a unique identifier for each subnet.
 
-   **Note**
+.. note::
 
    Subnet IDs must be greater than zero and less than 4294967295.
 
@@ -1114,7 +1114,7 @@ with the following addresses: 2001:db8:1::cafe and 2001:db8:1::babe.
 
 ..
 
-   **Note**
+.. note::
 
    The value for the setting of the "data" element is split across two
    lines in this example for clarity; when entering the command, the
@@ -1785,7 +1785,7 @@ last field is an array, i.e. it can contain more than one value, as in:
 The new option content is one IPv6 address followed by one or more 16-
 bit unsigned integers.
 
-   **Note**
+ .. note::
 
    In general, boolean values are specified as ``true`` or ``false``,
    without quotes. Some specific boolean parameters may accept also
@@ -2082,7 +2082,7 @@ Calculation of the values is controlled by the following three parameters:
 
 ..
 
-   **Note**
+ .. note::
 
    In the event that both explicit values are specified and
    calculate-tee-times is true, the server will use the explicit values.
@@ -2332,7 +2332,7 @@ class list for the packet. The second specifies an expression that is
 evaluated for each packet. If the result is "true", the packet is a
 member of the class.
 
-   **Note**
+ .. note::
 
    Care should be taken with client classification, as it is easy for
    clients that do not meet class criteria to be denied all service.
@@ -2614,7 +2614,7 @@ will generate NCRs and the configuration parameters that can be used to
 influence this decision. It assumes that the ``enable-updates``
 parameter is true.
 
-   **Note**
+ .. note::
 
    Currently the interface between kea-dhcp6 and D2 only supports
    requests which update DNS entries for a single IP address. If a lease
@@ -2753,7 +2753,7 @@ parameter, which provides the following modes of behavior:
 
 ..
 
-   **Note**
+ .. note::
 
    Note that in early versions of Kea, this parameter was a boolean and
    permitted only values of ``true`` and ``false``.
@@ -2870,7 +2870,7 @@ Thus, a client-supplied value of "myhost-$[123.org" would become
 name supplied by the client, and it is performed before applying a
 qualifying suffix (if one is defined and needed).
 
-   **Note**
+ .. note::
 
    The following are some considerations to keep in mind:
    Name sanitizing is meant to catch the more common cases of invalid
@@ -2909,7 +2909,7 @@ cooperating DHCPv4 and DHCPv6 servers. This section is about the
 configuration of the DHCPv6 side (the DHCPv4 side is described in
 :ref:`dhcp4-dhcp4o6-config`).
 
-   **Note**
+ .. note::
 
    DHCPv4-over-DHCPv6 support is experimental and the details of the
    inter-process communication may change; both the DHCPv4 and DHCPv6
@@ -2980,7 +2980,7 @@ The following configuration was used during some tests:
 
 ..
 
-   **Note**
+ .. note::
 
    Relayed DHCPv4-QUERY DHCPv6 messages are not supported.
 
@@ -3195,7 +3195,7 @@ global reservations defined. Typically, such reservations would be used
 to reserve hostnames for clients which may move from one subnet to
 another.
 
-   **Note**
+ .. note::
 
    Global reservations, while useful in certain circumstances, have aspects
    that must be given due consideration when using them, please see
@@ -3250,7 +3250,7 @@ conflict with existing leases. Another recommendation is to use
 out-of-pool reservations. If the reserved address does not belong to a
 pool, there is no way that other clients can get it.
 
-   **Note**
+ .. note::
 
    The conflict-resolution mechanism does not work for global
    reservations. Although the global address reservations feature may be useful
@@ -3437,7 +3437,7 @@ with classification, using expressions. The "KNOWN" or "UNKNOWN" built-in
 class is added to the packet and any class depending on it (directly or
 indirectly) and not only-if-required is evaluated.
 
-   **Note**
+ .. note::
 
    To force the evaluation of a class expression after the
    host reservation lookup, for instance because of a dependency on
@@ -3459,7 +3459,7 @@ The `Kea wiki
 provides some examples of how to conduct common host reservations
 operations.
 
-   **Note**
+ .. note::
 
    In Kea, the maximum length of an option specified per-host is
    arbitrarily set to 4096 bytes.
@@ -3721,7 +3721,7 @@ before the pools in the first subnet get exhausted; this sometimes occurs
 when the client provides a hint that belongs to another subnet, or the client has
 reservations in a subnet other than the default.
 
-   **Note**
+ .. note::
 
    Deployments should not assume that Kea waits until it has allocated
    all the addresses from the first subnet in a shared network before
@@ -4174,7 +4174,7 @@ When a new DUID type is selected, the server generates its value and
 replaces any existing DUID in the file. The server then uses the new
 server identifier in all future interactions with the clients.
 
-   **Note**
+ .. note::
 
    If the new server identifier is created after some clients have
    obtained their leases, the clients using the old identifier are not
@@ -4518,7 +4518,7 @@ selects that subnet for a relay with address 3000::1.
 If "relay" is specified, the "ip-addresses" parameter within it is
 mandatory.
 
-   **Note**
+ .. note::
 
    The current version of Kea uses the "ip-addresses" parameter, which
    supports specifying a list of addresses.
@@ -4764,7 +4764,7 @@ back to the available pool.
 Statistics in the DHCPv6 Server
 ===============================
 
-   **Note**
+ .. note::
 
    This section describes DHCPv6-specific statistics. For a general
    overview and usage of statistics, see :ref:`stats`.

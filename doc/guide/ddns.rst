@@ -238,7 +238,7 @@ illustrates how to change D2's global parameters so it will listen at
 
 ..
 
-   **Warning**
+.. warning::
 
    It is possible for a malicious attacker to send bogus
    NameChangeRequests to the DHCP-DDNS server. Addresses other than the
@@ -246,7 +246,7 @@ illustrates how to change D2's global parameters so it will listen at
    used for testing purposes; note that local users may still
    communicate with the DHCP-DDNS server.
 
-   **Note**
+.. note::
 
    If the ip-address and port are changed, the corresponding values in
    the DHCP servers' "dhcp-ddns" configuration section must be changed.
@@ -516,7 +516,7 @@ running at "172.88.99.10", set the Forward DNS Server as follows:
 
 ..
 
-   **Note**
+.. note::
 
    Since "hostname" is not yet supported, the parameter "ip-address"
    must be set to the address of the DNS server.
@@ -653,7 +653,7 @@ service is running at "172.88.99.10", then set it as follows:
 
 ..
 
-   **Note**
+.. note::
 
    Since "hostname" is not yet supported, the parameter "ip-address"
    must be set to the address of the DNS server.
@@ -663,7 +663,7 @@ service is running at "172.88.99.10", then set it as follows:
 User Contexts in DDNS
 ---------------------
 
-   **Note**
+.. note::
 
    User contexts were designed for hook libraries, which are not yet
    supported for DHCP-DDNS server configuration.

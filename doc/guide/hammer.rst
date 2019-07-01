@@ -13,7 +13,7 @@ git repository. This tool was developed primarily for internal purposes
 and ISC cannot guarantee its proper operation. If you decide to use it,
 please do so with care.
 
-   **Note**
+ .. note::
 
    Use of this tool is completely optional. Everything it does can be
    done manually.
@@ -88,7 +88,7 @@ To exclude the installation and generation of docs, type:
 The basic scope can be extended by: mysql, pgsql, cql, native-pkg,
 radius, shell, and forge.
 
-   **Note**
+ .. note::
 
    To build Kea locally, Hammer dependencies like Vagrant are
    not needed.
@@ -123,7 +123,7 @@ operating system.
 
 ..
 
-   **Note**
+ .. note::
 
    ccache is currently only supported for LXC in Hammer; support
    for VirtualBox may be added later.

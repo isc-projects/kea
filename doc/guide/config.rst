@@ -85,7 +85,7 @@ A very simple configuration for DHCPv4 could look like this:
 More examples are available in the installed ``share/doc/kea/examples``
 directory.
 
-   **Note**
+ .. note::
 
    The "Logging" element is removed in Kea 1.6.0 and its contents (the
    "loggers" object) moved inside the configuration objects (maps) for the

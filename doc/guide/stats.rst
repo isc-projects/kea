@@ -93,7 +93,7 @@ returned. ``Remove`` removes a statistic completely, so the statistic
 will no longer be reported. Please note that the server code may add
 it back if there is a reason to record it.
 
-   **Note**
+.. note::
 
    The following sections describe commands that can be sent to the
    server; the examples are not fragments of a configuration file. For

@@ -17,7 +17,7 @@ retrieving lease statistics for all subnets, a single subnet, or a range
 of subnets. Finally, this library was constructed to provide commands
 for retrieving these statistics.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.

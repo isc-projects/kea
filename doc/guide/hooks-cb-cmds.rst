@@ -16,7 +16,7 @@ loaded by the server used for the configuration management.
 The ``cb_cmds`` library is only available to ISC customers with a paid
 support contract.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
@@ -66,7 +66,7 @@ be specified, the parameter should be omitted. In this case, the server
 will use the first backend listed in the ``config-control`` map within
 the configuration of the server receiving the command.
 
-   **Note**
+.. note::
 
    As of the Kea 1.6.0 release, it is possible to configure the Kea server
    to use only one configuration backend. Strictly speaking, it is
@@ -456,7 +456,7 @@ which are not specified with the command, will be marked as
 values for unspecified parameters or, if the global values are not
 specified, the default values will be used.
 
-   **Note**
+.. note::
 
    As with other "set" commands, this command replaces all the
    information about the given shared network in the database, if the
@@ -882,7 +882,7 @@ subnet having the same parameters, but it becomes global.
 The ``shared-network-name`` parameter is mandatory for the
 ``remote-subnet4-set`` command.
 
-   **Note**
+.. note::
 
    As with other "set" commands, this command replaces all the
    information about the particular subnet in the database, if the

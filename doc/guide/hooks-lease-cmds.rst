@@ -17,7 +17,7 @@ of the subnet to which it is supposed to belong. The library also
 provides a non-programmatic way to manage user contexts associated with
 leases.
 
-   **Note**
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or the
    ``kea-dhcp6`` process.
@@ -433,7 +433,7 @@ following format:
 
 ..
 
-   **Warning**
+.. warning::
 
    The ``lease4-get-all`` and ``lease6-get-all`` commands may result in
    very large responses. This may have a negative impact on the DHCP

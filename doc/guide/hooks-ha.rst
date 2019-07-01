@@ -9,7 +9,7 @@ of the DHCP service in the event of an outage of one of the servers.
 This library was previously only available to ISC's paid subscribers,
 but is now part of the open source Kea, available to all users.
 
-   **Note**
+ .. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
@@ -223,7 +223,7 @@ The following is the list of all possible server states:
 
 ..
 
-   **Note**
+ .. note::
 
    Currently, restarting the HA service from the ``terminated`` state
    requires restarting the DHCP server or reloading its configuration.
@@ -1111,7 +1111,7 @@ states; however, it is not practical for the ``backup`` and
 ``terminated`` states because the server never transitions out of these
 states anyway.
 
-   **Note**
+ .. note::
 
    In the ``syncing`` state the server is paused before it makes an
    attempt to synchronize the lease database with a partner. To pause
@@ -1120,7 +1120,7 @@ states anyway.
 
 ..
 
-   **Note**
+ .. note::
 
    The state of the HA state machine depends on the state of the
    cooperating server. Therefore, it must be taken into account that

@@ -111,7 +111,7 @@ for the DHCPv4 server and the CA (for this server) must match. Consult
 :ref:`d2-ctrl-channel` to learn how the socket configuration is
 specified for the DHCPv4, DHCPv6, and D2 services.
 
-   **Warning**
+ .. warning::
 
    "dhcp4-server", "dhcp6-server", and "d2-server" were renamed to
    "dhcp4", "dhcp6", and "d2" respectively in Kea 1.2. If you are
@@ -240,7 +240,7 @@ server enables authentication of the clients using certificates.
 
 ..
 
-   **Note**
+ .. note::
 
    Note that the configuration snippet provided above is for testing
    purposes only. It should be modified according to the security
