@@ -1,3 +1,7 @@
+1608.	[bug]		fdupont
+	Missing debug DHCP6_PACKET_SEND logging message was added.
+	(Gitlab #699,!401, git ac96edbe30be5c93f5e3d2512961f1bc99c3253a)
+
 1607.	[bug]		tmark
 	Corrected an initialization issue which caused lease sanity
 	checking to be enabled inside the Lease File Cleanup (LFC)
