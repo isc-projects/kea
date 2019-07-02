@@ -1,3 +1,9 @@
+1609.	[bug]		fdupont
+	Fixed the implementation of authentication keys in DHCPv6
+	host reservations. Please note this includes a PostgreSQL
+	schema update.
+	(Gitlab #550,!297, git f45511f0445cd4204671771175f7f0d34df54b0e(
+
 1608.	[bug]		fdupont
 	Missing debug DHCP6_PACKET_SEND logging message was added.
 	(Gitlab #699,!401, git ac96edbe30be5c93f5e3d2512961f1bc99c3253a)
