@@ -445,7 +445,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 bool Dhcpv6Srv::run() {
 #ifdef ENABLE_AFL
     // Set up structures needed for fuzzing.
-    Fuzz fuzzer(6);
+    Fuzz fuzzer(6, server_port_);
     //
     // The next line is needed as a signature for AFL to recognise that we are
     // running persistent fuzzing.  This has to be in the main image file.

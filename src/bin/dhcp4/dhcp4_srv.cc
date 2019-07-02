@@ -770,7 +770,7 @@ bool
 Dhcpv4Srv::run() {
 #ifdef ENABLE_AFL
     // Set up structures needed for fuzzing.
-    Fuzz fuzzer(4);
+    Fuzz fuzzer(4, server_port_);
     //
     // The next line is needed as a signature for AFL to recognise that we are
     // running persistent fuzzing.  This has to be in the main image file.

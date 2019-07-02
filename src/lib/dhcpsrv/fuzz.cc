@@ -38,9 +38,9 @@ constexpr size_t        Fuzz::MAX_SEND_SIZE;
 constexpr long          Fuzz::MAX_LOOP_COUNT;
 
 // Constructor
-Fuzz::Fuzz(int ipversion) :
-    address_(nullptr), interface_(nullptr), loop_max_(MAX_LOOP_COUNT), port_(0),
-    sockaddr_len_(0), sockaddr_ptr_(nullptr), sockfd_(-1) {
+Fuzz::Fuzz(int ipversion, uint16_t port) :
+    address_(nullptr), interface_(nullptr), loop_max_(MAX_LOOP_COUNT),
+    port_(port), sockaddr_len_(0), sockaddr_ptr_(nullptr), sockfd_(-1) {
 
     try {
         stringstream reason;    // Used to construct exception messages
@@ -103,23 +103,11 @@ Fuzz::setAddress(int ipversion) {
         isc_throw(FuzzInitFail, "no fuzzing interface has been set");
     }
 
-    // Now the address.
+    // Now the address. (The port is specified via the "-p" command-line
+    // switch and passed to this object through the constructor.)
     address_ = getenv("FUZZ_AFL_ADDRESS");
     if (address_ == 0) {
         isc_throw(FuzzInitFail, "no fuzzing address has been set");
-    }
-
-    // ... and the port.
-    const char *port_ptr = getenv("FUZZ_AFL_PORT");
-    if (port_ptr == 0) {
-        isc_throw(FuzzInitFail, "no fuzzing port has been set");
-    }
-    try {
-        port_ = boost::lexical_cast<uint16_t>(port_ptr);
-    } catch (const boost::bad_lexical_cast&) {
-        reason << "cannot convert port number specification "
-               << port_ptr << " to an integer";
-        isc_throw(FuzzInitFail, reason.str());
     }
 
     // Set up the appropriate data structure depending on the address given.

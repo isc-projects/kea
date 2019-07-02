@@ -73,7 +73,9 @@ public:
     ///
     /// @param ipversion Either 4 or 6 depending on what IP version the
     ///                  server responds to.
-    Fuzz(int ipversion);
+    /// @param port      Port on which the server is listening, and hence the
+    ///                  port to which the fuzzer will send input from AFL.
+    Fuzz(int ipversion, uint16_t port);
 
     /// @brief Destructor
     ///
