@@ -803,9 +803,3 @@ server_pid_file_test() {
     # All ok. Shut down the server and exit.
     test_finish 0
 }
-
-# Verify that prefix was set by the includer.
-if [ -z ${prefix+x} ]; then
-    printf "internal error: \${prefix} must be set\n"
-    clean_exit 1
-fi
