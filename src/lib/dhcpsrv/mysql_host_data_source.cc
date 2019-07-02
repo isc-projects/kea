@@ -39,43 +39,6 @@ using namespace std;
 
 namespace {
 
-/// @brief Maximum size of an IPv6 address represented as a text string.
-///
-/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
-/// colon separators.
-const size_t ADDRESS6_TEXT_MAX_LEN = 39;
-
-/// @brief Maximum length of classes stored in a dhcp4/6_client_classes
-/// columns.
-const size_t CLIENT_CLASSES_MAX_LEN = 255;
-
-/// @brief Maximum length of the hostname stored in DNS.
-///
-/// This length is restricted by the length of the domain-name carried
-/// in the Client FQDN %Option (see RFC4702 and RFC4704).
-const size_t HOSTNAME_MAX_LEN = 255;
-
-/// @brief Maximum length of option value.
-const size_t OPTION_VALUE_MAX_LEN = 4096;
-
-/// @brief Maximum length of option value specified in textual format.
-const size_t OPTION_FORMATTED_VALUE_MAX_LEN = 8192;
-
-/// @brief Maximum length of option space name.
-const size_t OPTION_SPACE_MAX_LEN = 128;
-
-/// @brief Maximum length of user context.
-const size_t USER_CONTEXT_MAX_LEN = 8192;
-
-/// @brief Maximum length of the server hostname.
-const size_t SERVER_HOSTNAME_MAX_LEN = 64;
-
-/// @brief Maximum length of the boot file name.
-const size_t BOOT_FILE_NAME_MAX_LEN = 128;
-
-/// @brief Maximum length of keys (coded in hexadecimal).
-const size_t KEY_LEN = 16 * 2;
-
 /// @brief Numeric value representing last supported identifier.
 ///
 /// This value is used to validate whether the identifier type stored in
@@ -407,7 +370,7 @@ public:
             // auth key
             bind_[13].buffer_type = MYSQL_TYPE_STRING;
             std::string auth_key = host->getKey().toText();
-            std::strncpy(auth_key_, auth_key.c_str(), KEY_LEN);
+            std::strncpy(auth_key_, auth_key.c_str(), TEXT_AUTH_KEY_LEN);
             auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;
             bind_[13].buffer_length = auth_key.length();
@@ -800,7 +763,7 @@ private:
     unsigned long dhcp4_boot_file_name_length_;
 
     /// Authentication keys
-    char  auth_key_[KEY_LEN];
+    char  auth_key_[TEXT_AUTH_KEY_LEN];
 
     /// The length of the string for holding keys
     unsigned long auth_key_length_;

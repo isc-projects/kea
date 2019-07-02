@@ -36,7 +36,7 @@ AuthKey::AuthKey() {
 
 std::vector<uint8_t>
 AuthKey::getRandomKeyString() {
-    return (isc::cryptolink::random(AuthKey::KEY_LEN));
+    return (isc::cryptolink::random(AUTH_KEY_LEN));
 }
 
 std::string
@@ -50,8 +50,8 @@ AuthKey::toText() const {
 void
 AuthKey::setAuthKey(const std::vector<uint8_t>& key) {
     authKey_ = key;
-    if (authKey_.size() > AuthKey::KEY_LEN) {
-        authKey_.resize(AuthKey::KEY_LEN);
+    if (authKey_.size() > AUTH_KEY_LEN) {
+        authKey_.resize(AUTH_KEY_LEN);
     }
 }
 
@@ -59,6 +59,7 @@ void
 AuthKey::setAuthKey(const std::string& key) {
     if (key.empty()) {
         authKey_.clear();
+        return;
     }
     try {
         std::vector<uint8_t> bin;

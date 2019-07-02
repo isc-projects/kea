@@ -85,24 +85,6 @@ struct OptionWrapper {
     std::string option_space_;
 };
 
-/// @brief Maximum length of classes stored in a host_ipv4/6_client_classes
-///     column.
-static constexpr size_t CLIENT_CLASSES_MAX_LENGTH = 255u;
-
-/// @brief Maximum length of the hostname stored in DNS. This length is
-///     restricted by the length of the domain-name carried in the Client FQDN
-///     Option (see RFC4702 and RFC4704).
-static constexpr size_t HOSTNAME_MAX_LENGTH = 255u;
-
-/// @brief Maximum length of option value
-static constexpr size_t OPTION_VALUE_MAX_LENGTH = 4096u;
-
-/// @brief Maximum length of option value specified in textual format
-static constexpr size_t OPTION_FORMATTED_VALUE_MAX_LENGTH = 8192u;
-
-/// @brief Maximum length of option space name
-static constexpr size_t OPTION_SPACE_MAX_LENGTH = 128u;
-
 /// @brief Numeric value representing the last supported identifier. This value
 ///     is used to validate whether the identifier type stored in a database is
 ///     within bounds of supported identifiers.
@@ -1377,10 +1359,10 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
 
         // hostname: text
         hostname_ = host->getHostname();
-        if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
+        if (hostname_.size() > HOSTNAME_MAX_LEN) {
             isc_throw(BadValue, "CqlHostExchange::prepareExchange(): hostname "
                       << hostname_ << " of length " << hostname_.size()
-                      << " is greater than allowed of " << HOSTNAME_MAX_LENGTH);
+                      << " is greater than allowed of " << HOSTNAME_MAX_LEN);
         }
 
         // user_context: text
@@ -1393,20 +1375,20 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
 
         // host_ipv4_client_classes: text
         host_ipv4_client_classes_ = host->getClientClasses4().toText(",");
-        if (host_ipv4_client_classes_.size() > CLIENT_CLASSES_MAX_LENGTH) {
+        if (host_ipv4_client_classes_.size() > CLIENT_CLASSES_MAX_LEN) {
             isc_throw(BadValue, "CqlHostExchange::prepareExchange(): "
                       "IPv4 client classes " << host_ipv4_client_classes_ << " of length "
                       << host_ipv4_client_classes_.size() << " is greater than allowed of "
-                      << CLIENT_CLASSES_MAX_LENGTH);
+                      << CLIENT_CLASSES_MAX_LEN);
         }
 
         // host_ipv6_client_classes: text
         host_ipv6_client_classes_ = host->getClientClasses6().toText(",");
-        if (host_ipv6_client_classes_.size() > CLIENT_CLASSES_MAX_LENGTH) {
+        if (host_ipv6_client_classes_.size() > CLIENT_CLASSES_MAX_LEN) {
             isc_throw(BadValue, "CqlHostExchange::prepareExchange(): "
                       "IPv6 client classes " << host_ipv6_client_classes_ << " of length "
                       << host_ipv6_client_classes_.size() << " is greater than allowed of "
-                      << CLIENT_CLASSES_MAX_LENGTH);
+                      << CLIENT_CLASSES_MAX_LEN);
         }
 
         if (reservation == NULL) {
@@ -1613,7 +1595,7 @@ CqlHostExchange::hashIntoId() const {
     key_stream << std::setw(4) << std::setfill('-')
                << reserved_ipv6_prefix_length_;
     key_stream << std::setw(4) << std::setfill('-') << option_code_;
-    key_stream << std::setw(OPTION_SPACE_MAX_LENGTH) << std::setfill('-')
+    key_stream << std::setw(OPTION_SPACE_MAX_LEN) << std::setfill('-')
                << option_space_;
     const std::string key = key_stream.str();
 

@@ -24,18 +24,55 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Maximum size of an IPv6 address represented as a text string.
+///
+/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
+/// colon separators.
+const size_t ADDRESS6_TEXT_MAX_LEN = 39;
+
+/// @brief Maximum length of classes stored in a dhcp4/6_client_classes
+/// columns.
+const size_t CLIENT_CLASSES_MAX_LEN = 255;
+
+/// @brief Maximum length of the hostname stored in DNS.
+///
+/// This length is restricted by the length of the domain-name carried
+/// in the Client FQDN %Option (see RFC4702 and RFC4704).
+const size_t HOSTNAME_MAX_LEN = 255;
+
+/// @brief Maximum length of option value.
+const size_t OPTION_VALUE_MAX_LEN = 4096;
+
+/// @brief Maximum length of option value specified in textual format.
+const size_t OPTION_FORMATTED_VALUE_MAX_LEN = 8192;
+
+/// @brief Maximum length of option space name.
+const size_t OPTION_SPACE_MAX_LEN = 128;
+
+/// @brief Maximum length of user context.
+const size_t USER_CONTEXT_MAX_LEN = 8192;
+
+/// @brief Maximum length of the server hostname.
+const size_t SERVER_HOSTNAME_MAX_LEN = 64;
+
+/// @brief Maximum length of the boot file name.
+const size_t BOOT_FILE_NAME_MAX_LEN = 128;
+
+/// @brief Maximum length of authentication keys - 128 bits.
+const uint8_t AUTH_KEY_LEN = 16;
+
+/// @brief Maximum length of authentication keys (coded in hexadecimal).
+const size_t TEXT_AUTH_KEY_LEN = AUTH_KEY_LEN * 2;
+
 /// @brief HostID (used only when storing in MySQL, PostgreSQL or Cassandra)
 typedef uint64_t HostID;
 
 /// @brief Authentication keys.
 ///
 /// This class represents authentication keys to be used for
-/// calculating HMAC in the authentication field of the recofigure message.
+/// calculating HMAC in the authentication field of the reconfigure message.
 class AuthKey {
 public:
-    /// @brief Length of the key - 128 bits.
-    const static uint8_t KEY_LEN = 16;
-
     /// @brief Constructor.
     ///
     /// Constructor for assigning auth keys in host reservation.
@@ -46,7 +83,10 @@ public:
     /// @brief Constructor.
     ///
     /// Constructor for assigning auth keys in host reservation.
-    /// Ensures the key length is not greater than 16 bytes.
+    /// Ensures the key length is not greater than AUTH_KEY_LEN (16) bytes
+    /// so TEXT_AUTH_KEY_LEN (32) hexadecimal digits.
+    /// See @c setKey for constraints on its input format.
+    ///
     /// @param key auth key in hexadecimal to be stored.
     AuthKey(const std::string& key);
 
@@ -76,7 +116,8 @@ public:
     /// Set the key value.
     /// If the size is greater than 16 bytes, we resize to 16 bytes.
     /// @param key auth key in hexadecimal to be stored.
-    /// @throw BadValue if the string is not a valid hexadecimal encoding.
+    /// @throw BadValue if the string is not a valid hexadecimal encoding,
+    /// for instance has a not hexadecimal or odd number of digits.
     void setAuthKey(const std::string& key);
 
     /// @brief Return auth key.
@@ -88,7 +129,7 @@ public:
 
     /// @brief Return text format for keys.
     ///
-    /// @return auth key in hexadecimal.
+    /// @return auth key as a string of hexadecimal digits.
     std::string toText() const;
 
     ///
