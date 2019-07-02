@@ -59,7 +59,7 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
         }
 
         // Check if the hard-coded maximum loop count is being overridden
-        const char *loop_max_ptr = getenv("FUZZ_AFL_LOOP_MAX");
+        const char *loop_max_ptr = getenv("KEA_AFL_LOOP_MAX");
         if (loop_max_ptr != 0) {
             try {
                 loop_max_ = boost::lexical_cast<long>(loop_max_ptr);
@@ -70,7 +70,7 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
             }
 
             if (loop_max_ <= 0) {
-                reason << "FUZZ_AFL_LOOP_MAX is " << loop_max_ << ". "
+                reason << "KEA_AFL_LOOP_MAX is " << loop_max_ << ". "
                        << "It must be an integer greater than zero.";
                 isc_throw(FuzzInitFail, reason.str());
             }
@@ -98,14 +98,14 @@ Fuzz::setAddress(int ipversion) {
     stringstream reason;    // Used in error messages
 
     // Get the environment for the fuzzing: interface, address and port.
-    interface_ = getenv("FUZZ_AFL_INTERFACE");
+    interface_ = getenv("KEA_AFL_INTERFACE");
     if (! interface_) {
         isc_throw(FuzzInitFail, "no fuzzing interface has been set");
     }
 
     // Now the address. (The port is specified via the "-p" command-line
     // switch and passed to this object through the constructor.)
-    address_ = getenv("FUZZ_AFL_ADDRESS");
+    address_ = getenv("KEA_AFL_ADDRESS");
     if (address_ == 0) {
         isc_throw(FuzzInitFail, "no fuzzing address has been set");
     }
