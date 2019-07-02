@@ -18,6 +18,9 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief Type of pointers to stamped elements.
+typedef boost::shared_ptr<data::StampedElement> StampedElementPtr;
+
 /// @brief Base class for implementing fake backends
 template<typename ConfigBackendType>
 class TestConfigBackend : public ConfigBackendType {
@@ -84,6 +87,40 @@ public:
             return (tags.begin()->get());
         }
         return ("");
+    }
+
+    /// @brief Copy server tags between two stamped elements.
+    ///
+    /// @param src Pointer to stamped element to copy tags from.
+    /// @param dst Pointer to stamped element to copy tags to.
+    void copyServerTags(const StampedElementPtr& src,
+                        const StampedElementPtr& dst) const {
+        auto tags = src->getServerTags();
+        for (auto tag : tags) {
+            // Until the stamped element tags are in a set (vs a vector)
+            // we have to avoid duplicates.
+            if (dst->hasServerTag(tag)) {
+                continue;
+            }
+            dst->setServerTag(tag.get());
+        }
+    }
+
+    /// @brief Merge server tags for a stamped element and a server selector.
+    ///
+    /// @param elem Stamped element to update.
+    /// @param server_selector Server selector.
+    void mergeServerTags(const StampedElementPtr& elem,
+                         const db::ServerSelector& server_selector) const {
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            // Until the stamped element tags are in a set (vs a vector)
+            // we have to avoid duplicates.
+            if (elem->hasServerTag(tag)) {
+                continue;
+            }
+            elem->setServerTag(tag.get());
+        }
     }
 
     /// @brief Fake database connection

@@ -51,8 +51,26 @@ TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& /* server_selector
 }
 
 Subnet4Collection
-TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& /* server_selector */) const {
-    return (subnets_);
+TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selector) const {
+    auto tags = server_selector.getTags();
+    Subnet4Collection subnets;
+    for (auto subnet : subnets_) {
+        bool got = false;
+        for (auto tag : tags) {
+            if (subnet->hasServerTag(ServerTag(tag))) {
+                subnets.push_back(subnet);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (subnet->hasAllServerTag()) {
+            subnets.push_back(subnet);
+        }
+    }
+    return (subnets);
 }
 
 Subnet4Collection
@@ -101,8 +119,26 @@ TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& /* server_s
 }
 
 SharedNetwork4Collection
-TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& /* server_selector */) const{
-    return (shared_networks_);
+TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_selector) const{
+    auto tags = server_selector.getTags();
+    SharedNetwork4Collection shared_networks;
+    for (auto shared_network : shared_networks_) {
+        bool got = false;
+        for (auto tag : tags) {
+            if (shared_network->hasServerTag(ServerTag(tag))) {
+                shared_networks.push_back(shared_network);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (shared_network->hasAllServerTag()) {
+            shared_networks.push_back(shared_network);
+        }
+    }
+    return (shared_networks);
 }
 
 SharedNetwork4Collection
@@ -118,9 +154,11 @@ TestConfigBackendDHCPv4::getModifiedSharedNetworks4(const db::ServerSelector& /*
 }
 
 OptionDefinitionPtr
-TestConfigBackendDHCPv4::getOptionDef4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getOptionDef4(const db::ServerSelector& server_selector,
                                        const uint16_t code,
                                        const std::string& space) const {
+    auto tags = server_selector.getTags();
+    auto candidate = OptionDefinitionPtr();
     const auto& index = option_defs_.get<1>();
     auto option_def_it_pair = index.equal_range(code);
 
@@ -128,59 +166,139 @@ TestConfigBackendDHCPv4::getOptionDef4(const db::ServerSelector& /* server_selec
          option_def_it != option_def_it_pair.second;
          ++option_def_it) {
         if ((*option_def_it)->getOptionSpaceName() == space) {
-            return (*option_def_it);
+            for (auto tag : tags) {
+                if ((*option_def_it)->hasServerTag(ServerTag(tag))) {
+                    return (*option_def_it);
+                }
+            }
+            if ((*option_def_it)->hasAllServerTag()) {
+                candidate = *option_def_it;
+            }
         }
     }
-    return (OptionDefinitionPtr());
+    return (candidate);
 }
 
 OptionDefContainer
-TestConfigBackendDHCPv4::getAllOptionDefs4(const db::ServerSelector& /* server_selector */) const {
-    return (option_defs_);
-}
-
-OptionDefContainer
-TestConfigBackendDHCPv4::getModifiedOptionDefs4(const db::ServerSelector& /* server_selector */,
-                                                const boost::posix_time::ptime& modification_time) const {
-    const auto& index = option_defs_.get<3>();
+TestConfigBackendDHCPv4::getAllOptionDefs4(const db::ServerSelector& server_selector) const {
+    auto tags = server_selector.getTags();
     OptionDefContainer option_defs;
+    for (auto option_def : option_defs_) {
+        bool got = false;
+        for (auto tag : tags) {
+            if (option_def->hasServerTag(ServerTag(tag))) {
+                option_defs.push_back(option_def);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (option_def->hasAllServerTag()) {
+            option_defs.push_back(option_def);
+        }
+    }
+    return (option_defs);
+}
+
+OptionDefContainer
+TestConfigBackendDHCPv4::getModifiedOptionDefs4(const db::ServerSelector& server_selector,
+                                                const boost::posix_time::ptime& modification_time) const {
+    auto tags = server_selector.getTags();
+    OptionDefContainer option_defs;
+    const auto& index = option_defs_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option_def = lb; option_def != index.end(); ++option_def) {
-        option_defs.push_back(*option_def);
+        bool got = false;
+        for (auto tag : tags) {
+            if ((*option_def)->hasServerTag(ServerTag(tag))) {
+                option_defs.push_back(*option_def);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if ((*option_def)->hasAllServerTag()) {
+            option_defs.push_back(*option_def);
+        }
     }
     return (option_defs);
 }
 
 OptionDescriptorPtr
-TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& server_selector,
                                     const uint16_t code,
                                     const std::string& space) const {
+    auto tags = server_selector.getTags();
+    auto candidate = OptionDescriptorPtr();
     const auto& index = options_.get<1>();
     auto option_it_pair = index.equal_range(code);
 
     for (auto option_it = option_it_pair.first; option_it != option_it_pair.second;
          ++option_it) {
         if (option_it->space_name_ == space) {
-            return (OptionDescriptorPtr(new OptionDescriptor(*option_it)));
+            for (auto tag : tags) {
+                if (option_it->hasServerTag(ServerTag(tag))) {
+                    return (OptionDescriptorPtr(new OptionDescriptor(*option_it)));
+                }
+            }
+            if (option_it->hasAllServerTag()) {
+                candidate = OptionDescriptorPtr(new OptionDescriptor(*option_it));
+            }
         }
     }
 
-    return (OptionDescriptorPtr());
+    return (candidate);
 }
 
 OptionContainer
-TestConfigBackendDHCPv4::getAllOptions4(const db::ServerSelector& /* server_selector */) const {
-    return (options_);
-}
-
-OptionContainer
-TestConfigBackendDHCPv4::getModifiedOptions4(const db::ServerSelector& /* server_selector */,
-                                             const boost::posix_time::ptime& modification_time) const {
-    const auto& index = options_.get<3>();
+TestConfigBackendDHCPv4::getAllOptions4(const db::ServerSelector& server_selector) const {
+    auto tags = server_selector.getTags();
     OptionContainer options;
+    for (auto option : options_) {
+        bool got = false;
+        for (auto tag : tags) {
+            if (option.hasServerTag(ServerTag(tag))) {
+                options.push_back(option);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (option.hasAllServerTag()) {
+            options.push_back(option);
+        }
+    }
+    return (options);
+}
+
+OptionContainer
+TestConfigBackendDHCPv4::getModifiedOptions4(const db::ServerSelector& server_selector,
+                                             const boost::posix_time::ptime& modification_time) const {
+    auto tags = server_selector.getTags();
+    OptionContainer options;
+    const auto& index = options_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option = lb; option != index.end(); ++option) {
-        options.push_back(*option);
+        bool got = false;
+        for (auto tag : tags) {
+            if (option->hasServerTag(ServerTag(tag))) {
+                options.push_back(*option);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (option->hasAllServerTag()) {
+            options.push_back(*option);
+        }
     }
     return (options);
 }
@@ -278,15 +396,16 @@ TestConfigBackendDHCPv4::getServer4(const ServerTag& server_tag) const {
 void
 TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& server_selector,
                                              const Subnet4Ptr& subnet) {
-    subnet->setServerTag(getServerTag(server_selector));
-
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet->getID());
 
     if (subnet_it != index.cend()) {
+        copyServerTags(*subnet_it, subnet);
+        mergeServerTags(subnet, server_selector);
         index.replace(subnet_it, subnet);
 
     } else {
+        mergeServerTags(subnet, server_selector);
         index.insert(subnet);
     }
 }
@@ -294,15 +413,16 @@ TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& server_se
 void
 TestConfigBackendDHCPv4::createUpdateSharedNetwork4(const db::ServerSelector& server_selector,
                                                     const SharedNetwork4Ptr& shared_network) {
-    shared_network->setServerTag(getServerTag(server_selector));
-
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network->getName());
 
     if (network_it != index.cend()) {
+        copyServerTags(*network_it, shared_network);
+        mergeServerTags(shared_network, server_selector);
         index.replace(network_it, shared_network);
 
     } else {
+        mergeServerTags(shared_network, server_selector);
         index.insert(shared_network);
     }
 }
@@ -310,94 +430,177 @@ TestConfigBackendDHCPv4::createUpdateSharedNetwork4(const db::ServerSelector& se
 void
 TestConfigBackendDHCPv4::createUpdateOptionDef4(const db::ServerSelector& server_selector,
                                                 const OptionDefinitionPtr& option_def) {
-    option_def->setServerTag(getServerTag(server_selector));
+    auto tag = getServerTag(server_selector);
+    option_def->setServerTag(tag);
 
-    auto& index = option_defs_.get<1>();
-    auto option_def_it = index.find(option_def->getCode());
+    // Index #1 is by option code.
+    auto& index1 = option_defs_.get<1>();
+    auto option_def_it_pair1 = index1.equal_range(option_def->getCode());
 
-    if (option_def_it != index.cend()) {
-        index.replace(option_def_it, option_def);
-
-    } else {
-        index.insert(option_def);
+    for (auto option_def_it = option_def_it_pair1.first;
+         option_def_it != option_def_it_pair1.second;
+         option_def_it++) {
+        auto existing_option_def = *option_def_it;
+        if ((existing_option_def->getOptionSpaceName() == option_def->getOptionSpaceName()) &&
+            (existing_option_def->hasServerTag(ServerTag(tag)))) {
+            index1.replace(option_def_it, option_def);
+            return;
+        }
     }
+
+    // Index #2 is by option name.
+    auto& index2 = option_defs_.get<2>();
+    auto option_def_it_pair2 = index2.equal_range(option_def->getName());
+
+    for (auto option_def_it = option_def_it_pair2.first;
+         option_def_it != option_def_it_pair2.second;
+         option_def_it++) {
+        auto existing_option_def = *option_def_it;
+        if ((existing_option_def->getOptionSpaceName() == option_def->getOptionSpaceName()) &&
+            (existing_option_def->hasServerTag(ServerTag(tag)))) {
+            index2.replace(option_def_it, option_def);
+            return;
+        }
+    }
+
+    option_defs_.push_back(option_def);
 }
 
 void
 TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                              const OptionDescriptorPtr& option) {
-    option->setServerTag(getServerTag(server_selector));
+    auto tag = getServerTag(server_selector);
+    option->setServerTag(tag);
 
     auto& index = options_.get<1>();
-    auto option_it = index.find(option->option_->getType());
+    auto option_it_pair = index.equal_range(option->option_->getType());
 
-    if (option_it != index.end()) {
-        index.replace(option_it, *option);
-
-    } else {
-        index.insert(*option);
+    for (auto option_it = option_it_pair.first;
+         option_it != option_it_pair.second;
+         ++option_it) {
+        if ((option_it->space_name_ == option->space_name_) &&
+            (option_it->hasServerTag(ServerTag(tag)))) {
+            index.replace(option_it, *option);
+            return;
+        }
     }
+
+    options_.push_back(*option);
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                              const std::string& shared_network_name,
                                              const OptionDescriptorPtr& option) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network_name);
 
-    if (network_it != index.end()) {
-        auto shared_network = *network_it;
-        shared_network->getCfgOption()->del(option->space_name_, option->option_->getType());
-        shared_network->getCfgOption()->add(*option, option->space_name_);
-
-    } else {
+    if (network_it == index.end()) {
         isc_throw(BadValue, "attempted to create or update option in a non existing "
                   "shared network " << shared_network_name);
     }
+
+    auto shared_network = *network_it;
+    if (!shared_network->hasAllServerTag()) {
+        bool found = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (shared_network->hasServerTag(ServerTag(tag))) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            isc_throw(BadValue, "attempted to create or update option in a "
+                      "shared network " << shared_network_name
+                      << " not present in a selected server");
+        }
+    }
+
+    shared_network->getCfgOption()->del(option->space_name_, option->option_->getType());
+    shared_network->getCfgOption()->add(*option, option->space_name_);
 }
 
 void
-TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                              const SubnetID& subnet_id,
                                              const OptionDescriptorPtr& option) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
 
-    if (subnet_it != index.cend()) {
-        auto subnet = *subnet_it;
-        subnet->getCfgOption()->del(option->space_name_, option->option_->getType());
-        subnet->getCfgOption()->add(*option, option->space_name_);
-
-    } else {
+    if (subnet_it == index.cend()) {
         isc_throw(BadValue, "attempted to create or update option in a non existing "
                   "subnet ID " << subnet_id);
     }
-}
 
-void
-TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& /* server_selector */,
-                                             const asiolink::IOAddress& pool_start_address,
-                                             const asiolink::IOAddress& pool_end_address,
-                                             const OptionDescriptorPtr& option) {
-    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
-        auto pool = (*subnet)->getPool(Lease::TYPE_V4, pool_start_address);
-        if (pool) {
-            pool->getCfgOption()->del(option->space_name_, option->option_->getType());
-            pool->getCfgOption()->add(*option, option->space_name_);
-
-            return;
+    auto subnet = *subnet_it;
+    if (!subnet->hasAllServerTag()) {
+        bool found = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (subnet->hasServerTag(ServerTag(tag))) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            isc_throw(BadValue, "attempted to create or update option in a "
+                      "subnet ID " << subnet_id
+                      << " not present in a selected server");
         }
     }
 
-    isc_throw(BadValue, "attempted to create or update option in a non existing "
-              "pool " << pool_start_address << " - " << pool_end_address);
+    subnet->getCfgOption()->del(option->space_name_, option->option_->getType());
+    subnet->getCfgOption()->add(*option, option->space_name_);
+}
+
+void
+TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
+                                             const asiolink::IOAddress& pool_start_address,
+                                             const asiolink::IOAddress& pool_end_address,
+                                             const OptionDescriptorPtr& option) {
+    auto tags = server_selector.getTags();
+    auto not_in_tags = false;
+    for (auto subnet : subnets_) {
+        auto pool = subnet->getPool(Lease::TYPE_V4, pool_start_address);
+        if (!pool) {
+            continue;
+        }
+        if (!subnet->hasAllServerTag()) {
+            for (auto tag : tags) {
+                if (subnet->hasServerTag(ServerTag(tag))) {
+                    not_in_tags = true;
+                    break;
+                }
+            }
+            if (not_in_tags) {
+                continue;
+            }
+        }
+
+        pool->getCfgOption()->del(option->space_name_, option->option_->getType());
+        pool->getCfgOption()->add(*option, option->space_name_);
+
+        return;
+    }
+
+    if (!not_in_tags) {
+        isc_throw(BadValue, "attempted to create or update option in "
+                  "a non existing pool " << pool_start_address
+                  << " - " << pool_end_address);
+    } else {
+        isc_throw(BadValue, "attempted to create or update option in "
+                  "a pool " << pool_start_address
+                  << " - " << pool_end_address
+                  << " not present in a selected server");
+    }
 }
 
 void
 TestConfigBackendDHCPv4::createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                                       const data::StampedValuePtr& value) {
-    value->setServerTag(getServerTag(server_selector));
+    auto tag = getServerTag(server_selector);
+    value->setServerTag(tag);
 
     auto& index = globals_.get<StampedValueNameIndexTag>();
     auto global_it_pair = index.equal_range(value->getName());
@@ -405,7 +608,7 @@ TestConfigBackendDHCPv4::createUpdateGlobalParameter4(const db::ServerSelector& 
     for (auto global_it = global_it_pair.first; global_it != global_it_pair.second;
          ++global_it) {
         auto existing_value = *global_it;
-        if (existing_value->hasServerTag(ServerTag(getServerTag(server_selector)))) {
+        if (existing_value->hasServerTag(ServerTag(tag))) {
             index.replace(global_it, value);
             return;
         }
@@ -453,7 +656,7 @@ TestConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& /
                                                      const std::string& shared_network_name) {
     uint64_t cnt = 0;
     auto& index = subnets_.get<SubnetRandomAccessIndexTag>();
-    for (auto subnet = index.begin(); subnet != index.end(); ++subnet) {
+    for (auto subnet = index.begin(); subnet != index.end(); ) {
         SharedNetwork4Ptr network;
         (*subnet)->getSharedNetwork(network);
         if (network && (network->getName() == shared_network_name)) {
@@ -464,6 +667,8 @@ TestConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& /
             ((*subnet)->getSharedNetworkName() == shared_network_name)) {
             subnet = index.erase(subnet);
             ++cnt;
+        } else {
+            ++subnet;
         }
     }
     return (cnt);
@@ -494,39 +699,53 @@ TestConfigBackendDHCPv4::deleteAllSharedNetworks4(const db::ServerSelector& /* s
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteOptionDef4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::deleteOptionDef4(const db::ServerSelector& server_selector,
                                           const uint16_t code,
                                           const std::string& space) {
+    auto tag = getServerTag(server_selector);
     uint64_t erased = 0;
-    for (auto option_def_it = option_defs_.begin(); option_def_it != option_defs_.end();
-         ++option_def_it) {
+    for (auto option_def_it = option_defs_.begin(); option_def_it != option_defs_.end(); ) {
         if (((*option_def_it)->getCode() == code) &&
-            ((*option_def_it)->getOptionSpaceName() == space)) {
+            ((*option_def_it)->getOptionSpaceName() == space) &&
+            ((*option_def_it)->hasServerTag(ServerTag(tag)))) {
             option_def_it = option_defs_.erase(option_def_it);
             ++erased;
+        } else {
+            ++option_def_it;
         }
     }
     return (erased);
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteAllOptionDefs4(const db::ServerSelector& /* server_selector */) {
-    auto option_defs_size = option_defs_.size();
-    option_defs_.clear();
-    return (option_defs_size);
+TestConfigBackendDHCPv4::deleteAllOptionDefs4(const db::ServerSelector& server_selector) {
+    auto tag = getServerTag(server_selector);
+    uint64_t erased = 0;
+    for (auto option_def_it = option_defs_.begin(); option_def_it != option_defs_.end(); ) {
+        if ((*option_def_it)->hasServerTag(ServerTag(tag))) {
+            option_def_it = option_defs_.erase(option_def_it);
+            ++erased;
+        } else {
+            ++option_def_it;
+        }
+    }
+    return (erased);
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector,
                                        const uint16_t code,
                                        const std::string& space) {
+    auto tag = getServerTag(server_selector);
     uint64_t erased = 0;
-    for (auto option_it = options_.begin(); option_it != options_.end();
-         ++option_it) {
+    for (auto option_it = options_.begin(); option_it != options_.end(); ) {
         if ((option_it->option_->getType() == code) &&
-            (option_it->space_name_ == space)) {
+            (option_it->space_name_ == space) &&
+            (option_it->hasServerTag(ServerTag(tag)))) {
             option_it = options_.erase(option_it);
             ++erased;
+        } else {
+            ++option_it;
         }
     }
     return (erased);
@@ -588,13 +807,14 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& /* server_selec
 uint64_t
 TestConfigBackendDHCPv4::deleteGlobalParameter4(const db::ServerSelector& server_selector,
                                                 const std::string& name) {
+    auto tag = getServerTag(server_selector);
     auto& index = globals_.get<StampedValueNameIndexTag>();
     auto global_it_pair = index.equal_range(name);
 
     for (auto global_it = global_it_pair.first; global_it != global_it_pair.second;
          ++global_it) {
         auto value = *global_it;
-        if (value->hasServerTag(ServerTag(getServerTag(server_selector)))) {
+        if (value->hasServerTag(ServerTag(tag))) {
             index.erase(global_it);
             return (1);
         }
@@ -604,10 +824,11 @@ TestConfigBackendDHCPv4::deleteGlobalParameter4(const db::ServerSelector& server
 
 uint64_t
 TestConfigBackendDHCPv4::deleteAllGlobalParameters4(const db::ServerSelector& server_selector) {
+    auto tag = getServerTag(server_selector);
     uint64_t cnt = 0;
     for (auto global_it = globals_.begin(); global_it != globals_.end(); ) {
         auto value = *global_it;
-        if (value->hasServerTag(ServerTag(getServerTag(server_selector)))) {
+        if (value->hasServerTag(ServerTag(tag))) {
             global_it = globals_.erase(global_it);
             cnt++;
         } else {
