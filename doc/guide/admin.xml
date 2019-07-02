@@ -107,6 +107,13 @@
         </listitem>
       </itemizedlist>
 
+      <note>In previous versions of Kea ending with 1.6.0
+      <command>db-init</command>, <command>db-version</command> and
+      <command>db-upgrade</command> commands were named
+      <command>lease-init</command>, <command>lease-version</command> and
+      <command>lease-upgrade</command>.
+      </note>
+
       <command>backend</command> specifies the type of backend database. The currently
       supported types are:
 
