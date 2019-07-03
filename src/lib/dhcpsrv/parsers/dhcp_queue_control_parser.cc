@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,10 +18,10 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-data::ElementPtr 
+data::ElementPtr
 DHCPQueueControlParser::parse(const isc::data::ConstElementPtr& control_elem) {
     // All we really do here is verify that it is a map that
-    // contains at least queue-type.  All other content depends 
+    // contains at least queue-type.  All other content depends
     // on the packet queue implementation of that type.
     if (control_elem->getType() != Element::map) {
         isc_throw(DhcpConfigError, "dhcp-queue-control must be a map");

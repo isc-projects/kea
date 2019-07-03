@@ -21,13 +21,6 @@ namespace dhcp {
 class SharedNetwork4Parser : public BaseNetworkParser {
 public:
 
-    /// @brief This table defines all shared network parameters for DHCPv4.
-    ///
-    /// Boolean, integer, real and string types are for scalar parameters,
-    /// list and map types for entries.
-    /// Order follows shared_network_param rule in bison grammar.
-    static const isc::data::SimpleKeywords SHARED_NETWORK4_PARAMETERS;
-
     /// @brief Parses shared configuration information for IPv4 shared network.
     ///
     /// @param shared_network_data Data element holding shared network
@@ -42,14 +35,6 @@ public:
 /// @brief Implements parser for IPv6 shared networks.
 class SharedNetwork6Parser : public BaseNetworkParser {
 public:
-
-    /// @brief This table defines all shared network parameters for DHCPv6.
-    ///
-    /// Boolean, integer, real and string types are for scalar parameters,
-    /// list and map types for entries.
-    /// Order follows shared_network_param rule in bison grammar.
-    static const isc::data::SimpleKeywords SHARED_NETWORK6_PARAMETERS;
-
     /// @brief Parses shared configuration information for IPv6 shared network.
     ///
     /// @param shared_network_data Data element holding shared network
