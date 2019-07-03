@@ -1322,9 +1322,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         "            \"reservation-mode\": \"all\", \n"
         "            \"4o6-interface\": \"\", \n"
         "            \"4o6-interface-id\": \"\", \n"
-        "            \"4o6-subnet\": \"\", \n"
-        "            \"dhcp4o6-port\": 0, \n"
-        "            \"decline-probation-period\": 86400 \n"
+        "            \"4o6-subnet\": \"\" \n"
         "        }";
 
 

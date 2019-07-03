@@ -165,6 +165,8 @@ const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
 /// Order follows subnet4_param rule in bison grammar.
 const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "valid-lifetime",         Element::integer },
+    { "min-valid-lifetime",     Element::integer },
+    { "max-valid-lifetime",     Element::integer },
     { "renew-timer",            Element::integer },
     { "rebind-timer",           Element::integer },
     { "option-data",            Element::list },
@@ -288,6 +290,8 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
     { "valid-lifetime",         Element::integer },
+    { "min-valid-lifetime",     Element::integer },
+    { "max-valid-lifetime",     Element::integer },
     { "user-context",           Element::map },
     { "comment",                Element::string },
     { "calculate-tee-times",    Element::boolean },
