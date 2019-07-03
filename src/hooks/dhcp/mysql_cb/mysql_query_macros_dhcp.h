@@ -353,7 +353,7 @@ namespace {
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON a.server_id = s.id " \
     "WHERE (s.tag = ? OR s.id = 1) " #__VA_ARGS__ \
-    " ORDER BY o.option_id"
+    " ORDER BY o.option_id, s.id"
 
 #define MYSQL_GET_OPTION4(...) \
     MYSQL_GET_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
@@ -665,6 +665,14 @@ namespace {
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON a.server_id = s.id " \
     "WHERE s.tag = ? " #__VA_ARGS__
+#endif
+
+#ifndef MYSQL_DELETE_OPTION_UNASSIGNED
+#define MYSQL_DELETE_OPTION_UNASSIGNED(table_prefix, ...) \
+    "DELETE o FROM " #table_prefix "_options AS o " \
+    "LEFT JOIN " #table_prefix "_options_server AS a " \
+    "  ON o.option_id = a.option_id " \
+    "WHERE a.option_id IS NULL " #__VA_ARGS__
 #endif
 
 #ifndef MYSQL_DELETE_OPTION_POOL_RANGE

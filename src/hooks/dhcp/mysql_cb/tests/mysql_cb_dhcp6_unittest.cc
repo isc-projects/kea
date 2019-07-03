@@ -343,6 +343,18 @@ public:
         desc.space_name_ = "isc";
         test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
+        desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
+                                          true, false, "my-timezone-2");
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        desc.setContext(user_context);
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        desc = createOption<OptionString>(Option::V6, D6O_NEW_POSIX_TIMEZONE,
+                                          true, false, "my-timezone-3");
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        desc.setContext(user_context);
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
         // Add definitions for DHCPv6 non-standard options in case we need to
         // compare subnets, networks and pools in JSON format. In that case,
         // the @c toElement functions require option definitions to generate the
@@ -1953,8 +1965,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteOption6) {
                                 opt_posix_timezone);
 
     // Retrieve the option again and make sure that updates were
-    // properly propagated to the database.
-    returned_opt_posix_timezone = cbptr_->getOption6(ServerSelector::ALL(),
+    // properly propagated to the database. Use explicit server selector
+    // which should also return this option.
+    returned_opt_posix_timezone = cbptr_->getOption6(ServerSelector::ONE("server1"),
                                                      opt_posix_timezone->option_->getType(),
                                                      opt_posix_timezone->space_name_);
     ASSERT_TRUE(returned_opt_posix_timezone);
@@ -1991,6 +2004,189 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteOption6) {
         testNewAuditEntry("dhcp6_options",
                           AuditEntry::ModificationType::DELETE,
                           "global option deleted");
+    }
+}
+
+// This test verifies that it is possible to differentiate between the
+// global options by server tag and that the option specified for the
+// particular server overrides the value specified for all servers.
+TEST_F(MySqlConfigBackendDHCPv6Test, globalOptions6WithServerTags) {
+    OptionDescriptorPtr opt_timezone1 = test_options_[0];
+    OptionDescriptorPtr opt_timezone2 = test_options_[6];
+    OptionDescriptorPtr opt_timezone3 = test_options_[7];
+
+    EXPECT_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server1"),
+                                             opt_timezone1),
+                 DbOperationError);
+
+    // Create two servers.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[1]));
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("server2 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server1"),
+                                                opt_timezone1));
+    {
+        SCOPED_TRACE("global option for server1 is set");
+        // The value of 3 means there should be 3 audit entries available for the
+        // server1, two that indicate creation of the servers and one that we
+        // validate, which sets the global option.
+        testNewAuditEntry("dhcp6_options",
+                          AuditEntry::ModificationType::CREATE,
+                          "global option set",
+                          ServerSelector::ONE("server1"),
+                          3, 1);
+
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server2"),
+                                                opt_timezone2));
+    {
+        SCOPED_TRACE("global option for server2 is set");
+        // Same as in case of the server1, there should be 3 audit entries and
+        // we validate one of them.
+        testNewAuditEntry("dhcp6_options",
+                          AuditEntry::ModificationType::CREATE,
+                          "global option set",
+                          ServerSelector::ONE("server2"),
+                          3, 1);
+
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateOption6(ServerSelector::ALL(),
+                                                opt_timezone3));
+    {
+        SCOPED_TRACE("global option for all servers is set");
+        // There should be one new audit entry for all servers. It logs
+        // the insertion of the global option.
+        testNewAuditEntry("dhcp6_options",
+                          AuditEntry::ModificationType::CREATE,
+                          "global option set",
+                          ServerSelector::ALL(),
+                          1, 1);
+
+    }
+
+    OptionDescriptorPtr returned_option;
+
+    // Try to fetch the option specified for all servers. It should return
+    // the third option.
+    EXPECT_NO_THROW(
+        returned_option = cbptr_->getOption6(ServerSelector::ALL(),
+                                             opt_timezone3->option_->getType(),
+                                             opt_timezone3->space_name_);
+    );
+    ASSERT_TRUE(returned_option);
+    testOptionsEquivalent(*opt_timezone3, *returned_option);
+
+    // Try to fetch the option specified for the server1. It should override the
+    // option specified for all servers.
+    EXPECT_NO_THROW(
+        returned_option = cbptr_->getOption6(ServerSelector::ONE("server1"),
+                                             opt_timezone1->option_->getType(),
+                                             opt_timezone1->space_name_);
+    );
+    ASSERT_TRUE(returned_option);
+    testOptionsEquivalent(*opt_timezone1, *returned_option);
+
+    // The same in case of the server2.
+    EXPECT_NO_THROW(
+        returned_option = cbptr_->getOption6(ServerSelector::ONE("server2"),
+                                             opt_timezone2->option_->getType(),
+                                             opt_timezone2->space_name_);
+    );
+    ASSERT_TRUE(returned_option);
+    testOptionsEquivalent(*opt_timezone2, *returned_option);
+
+    OptionContainer returned_options;
+
+    // Try to fetch the collection of global options for the server1, server2
+    // and server3. The server3 does not have an explicit value so for this server
+    // we should get the option associated with "all" servers.
+    EXPECT_NO_THROW(
+        returned_options = cbptr_->getAllOptions6(ServerSelector::
+                                                  MULTIPLE({ "server1", "server2",
+                                                             "server3" }));
+    );
+    ASSERT_EQ(3, returned_options.size());
+
+    // Check that expected options have been returned.
+    auto current_option = returned_options.begin();
+    testOptionsEquivalent(*opt_timezone1, *current_option);
+    testOptionsEquivalent(*opt_timezone2, *(++current_option));
+    testOptionsEquivalent(*opt_timezone3, *(++current_option));
+
+    // Try to fetch the collection of options specified for all servers.
+    // This excludes the options specific to server1 and server2. It returns
+    // only the common ones.
+    EXPECT_NO_THROW(
+        returned_options = cbptr_->getAllOptions6(ServerSelector::ALL());
+    );
+    ASSERT_EQ(1, returned_options.size());
+    testOptionsEquivalent(*opt_timezone3, *returned_options.begin());
+
+    // Delete the server1. It should remove associations of this server with the
+    // option and the option itself.
+    EXPECT_NO_THROW(cbptr_->deleteServer6(ServerTag("server1")));
+    EXPECT_NO_THROW(
+        returned_options = cbptr_->getAllOptions6(ServerSelector::ONE("server1"));
+    );
+    ASSERT_EQ(1, returned_options.size());
+    testOptionsEquivalent(*opt_timezone3, *returned_options.begin());
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the global option after server deletion");
+        testNewAuditEntry("dhcp6_options",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting a server", ServerSelector::ONE("server1"),
+                          2, 1);
+    }
+
+    // Attempt to delete global option for server1.
+    uint64_t deleted_num = 0;
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteOption6(ServerSelector::ONE("server1"),
+                                                        opt_timezone1->option_->getType(),
+                                                        opt_timezone1->space_name_));
+    EXPECT_EQ(0, deleted_num);
+
+    // Deleting the existing option for server2 should succeed.
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteOption6(ServerSelector::ONE("server2"),
+                                                        opt_timezone2->option_->getType(),
+                                                        opt_timezone2->space_name_));
+    EXPECT_EQ(1, deleted_num);
+
+    // Create this option again to test that deletion of all servers removes it too.
+    EXPECT_NO_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server2"),
+                                                opt_timezone2));
+
+    // Delete all servers, except 'all'.
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteAllServers6());
+    EXPECT_NO_THROW(
+        returned_options = cbptr_->getAllOptions6(ServerSelector::ALL());
+    );
+    EXPECT_EQ(1, deleted_num);
+    ASSERT_EQ(1, returned_options.size());
+    testOptionsEquivalent(*opt_timezone3, *returned_options.begin());
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the global option after deletion of"
+                     " all servers");
+        testNewAuditEntry("dhcp6_options",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting all servers", ServerSelector::ONE("server2"),
+                          4, 1);
     }
 }
 

@@ -762,8 +762,10 @@ MySqlConfigBackendImpl::getOptions(const int index,
 
     uint64_t last_option_id = 0;
 
+    OptionContainer local_options;
+
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [this, universe, &options, &last_option_id]
+                      [this, universe, &local_options, &last_option_id]
                       (MySqlBindingCollection& out_bindings) {
         // Parse option.
         if (!out_bindings[0]->amNull() &&
@@ -774,11 +776,46 @@ MySqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
             if (desc) {
                 // server_tag for the global option
-                desc->setServerTag(out_bindings[12]->getString());
-                static_cast<void>(options.push_back(*desc));
+                ServerTag last_option_server_tag(out_bindings[12]->getString());
+                desc->setServerTag(last_option_server_tag.get());
+
+                // If we're fetching options for a given server (explicit server
+                // tag is provided), it takes precedence over the same option
+                // specified for all servers. Therefore, we check if the given
+                // option already exists and belongs to 'all'.
+                auto& index = local_options.get<1>();
+                auto existing_it_pair = index.equal_range(desc->option_->getType());
+                auto existing_it = existing_it_pair.first;
+                bool found = false;
+                for ( ; existing_it != existing_it_pair.second; ++existing_it) {
+                    if (existing_it->space_name_ == desc->space_name_) {
+                        found = true;
+                        // This option was already fetched. Let's check if we should
+                        // replace it or not.
+                        if (!last_option_server_tag.amAll() && existing_it->hasAllServerTag()) {
+                            index.replace(existing_it, *desc);
+                            return;
+                        }
+                        break;
+                    }
+                }
+
+                // If there is no such global option yet or the existing option
+                // belongs to a different server and the inserted option is not
+                // for all servers.
+                if (!found ||
+                    (!existing_it->hasServerTag(last_option_server_tag) &&
+                     !last_option_server_tag.amAll())) {
+                    static_cast<void>(local_options.push_back(*desc));
+                }
             }
         }
     });
+
+    // Append the options fetched by this function into the container supplied
+    // by the caller. The container supplied by the caller may already hold
+    // some options fetched for other server tags.
+    options.insert(options.end(), local_options.begin(), local_options.end());
 }
 
 OptionDescriptorPtr

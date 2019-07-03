@@ -121,6 +121,7 @@ public:
         DELETE_OPTION_DEF6_CODE_NAME,
         DELETE_ALL_OPTION_DEFS6,
         DELETE_OPTION6,
+        DELETE_ALL_OPTIONS6_UNASSIGNED,
         DELETE_OPTION6_SUBNET_ID,
         DELETE_OPTION6_POOL_RANGE,
         DELETE_OPTION6_PD_POOL,
@@ -1653,7 +1654,10 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
-            MySqlBinding::createNull()
+            MySqlBinding::createNull(),
+            MySqlBinding::createString(tag),
+            MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
+            MySqlBinding::condCreateString(option->space_name_)
         };
 
         MySqlTransaction transaction(conn_);
@@ -1668,16 +1672,11 @@ public:
                            MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                            server_selector, "global option set", false);
 
-        if (existing_option) {
-            in_bindings.push_back(MySqlBinding::createString(tag));
-            in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
-            in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
-                                    in_bindings);
-
-        } else {
+        if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
+                                    in_bindings) == 0) {
+            // Remove the 3 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 3);
             insertOption6(server_selector, in_bindings);
-
         }
 
         transaction.commit();
@@ -2245,7 +2244,11 @@ public:
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
                                     DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
                                     MySqlBindingCollection());
-            /// @todo delete dangling options and option definitions.
+
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
+                                    DELETE_ALL_OPTIONS6_UNASSIGNED,
+                                    MySqlBindingCollection());
+            /// @todo delete dangling option definitions.
         }
 
         transaction.commit();
@@ -2281,7 +2284,11 @@ public:
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
                                     DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
                                     MySqlBindingCollection());
-            /// @todo delete dangling options and option definitions.
+
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
+                                    DELETE_ALL_OPTIONS6_UNASSIGNED,
+                                    MySqlBindingCollection());
+            /// @todo delete dangling option definitions.
         }
 
         transaction.commit();
@@ -2751,6 +2758,11 @@ TaggedStatementArray tagged_statements = { {
     // Delete single global option.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6,
       MYSQL_DELETE_OPTION(dhcp6, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
+    },
+
+    // Delete all options which are unassigned to any servers.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTIONS6_UNASSIGNED,
+      MYSQL_DELETE_OPTION_UNASSIGNED(dhcp6)
     },
 
     // Delete single option from a subnet.
