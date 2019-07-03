@@ -28,5 +28,15 @@ Server::create(const ServerTag& tag, const std::string& description) {
     return (boost::make_shared<Server>(tag, description));
 }
 
+ElementPtr
+Server::toElement() const {
+    ElementPtr result = Element::createMap();
+
+    result->set("server-tag", Element::create(getServerTagAsText()));
+    result->set("description", Element::create(getDescription()));
+
+    return (result);
+}
+
 } // end of namespace isc::db
 } // end of namespace isc
