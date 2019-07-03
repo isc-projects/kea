@@ -1715,7 +1715,11 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
-            MySqlBinding::createNull()
+            MySqlBinding::createNull(),
+            MySqlBinding::createString(tag),
+            MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
+            MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
+            MySqlBinding::condCreateString(option->space_name_)
         };
 
         boost::scoped_ptr<MySqlTransaction> transaction;
@@ -1740,15 +1744,10 @@ public:
                            server_selector, "subnet specific option set",
                            cascade_update);
 
-        if (existing_option) {
-            in_bindings.push_back(MySqlBinding::createString(tag));
-            in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)));
-            in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
-            in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
-                                    in_bindings);
-
-        } else {
+        if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
+                                    in_bindings) == 0) {
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -1877,11 +1876,18 @@ public:
             in_bindings.push_back(MySqlBinding::createNull());
         }
 
+        // Insert bindings used only during the update.
+        in_bindings.push_back(MySqlBinding::createString(tag));
+        in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
+        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
+        in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
+
+
         MySqlTransaction transaction(conn_);
 
-        const int index = (pool_type == Lease::TYPE_NA ?
-                           GET_OPTION6_POOL_ID_CODE_SPACE :
-                           GET_OPTION6_PD_POOL_ID_CODE_SPACE);
+        int index = (pool_type == Lease::TYPE_NA ?
+                     GET_OPTION6_POOL_ID_CODE_SPACE :
+                     GET_OPTION6_PD_POOL_ID_CODE_SPACE);
         OptionDescriptorPtr existing_option =
             getOption(index, server_selector, pool_type, pool_id,
                       option->option_->getType(), option->space_name_);
@@ -1899,17 +1905,12 @@ public:
                            MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                            server_selector, msg, cascade_update);
 
-        if (existing_option) {
-            in_bindings.push_back(MySqlBinding::createString(tag));
-            in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
-            in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
-            in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
-            const int index = (pool_type == Lease::TYPE_NA ?
+        index = (pool_type == Lease::TYPE_NA ?
                  MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID :
                  MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID);
-            conn_.updateDeleteQuery(index, in_bindings);
-
-        } else {
+        if (conn_.updateDeleteQuery(index, in_bindings) == 0) {
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -1950,7 +1951,11 @@ public:
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
-            MySqlBinding::createNull()
+            MySqlBinding::createNull(),
+            MySqlBinding::createString(tag),
+            MySqlBinding::createString(shared_network_name),
+            MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
+            MySqlBinding::condCreateString(option->space_name_)
         };
 
         boost::scoped_ptr<MySqlTransaction> transaction;
@@ -1974,15 +1979,11 @@ public:
                            server_selector, "shared network specific option set",
                            cascade_update);
 
-        if (existing_option) {
-            in_bindings.push_back(MySqlBinding::createString(tag));
-            in_bindings.push_back(MySqlBinding::createString(shared_network_name));
-            in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
-            in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
+        if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
                                     UPDATE_OPTION6_SHARED_NETWORK,
-                                    in_bindings);
-        } else {
+                                    in_bindings) == 0) {
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
