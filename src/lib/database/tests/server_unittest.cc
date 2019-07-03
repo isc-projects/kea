@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <database/server_collection.h>
+#include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 #include <string>
@@ -32,6 +33,23 @@ TEST(ServerTest, constructor) {
 TEST(ServerTest, tooLongDescription) {
     EXPECT_THROW(Server::create(ServerTag("xyz"), std::string(65537, 'c')),
                  BadValue);
+}
+
+// Tests that toElement method works well.
+TEST(ServerTest, toEDlement) {
+    ServerPtr server1 = Server::create(ServerTag("foo"), "a server");
+    std::string expected1 = "{"
+        "\"server-tag\": \"foo\","
+        "\"description\": \"a server\""
+        " }";
+    isc::test::runToElementTest<Server>(expected1, *server1);
+
+    ServerPtr server2 =Server::create(ServerTag("bar"));
+    std::string expected2= "{"
+        "\"server-tag\": \"bar\","
+        "\"description\": \"\""
+        " }";
+    isc::test::runToElementTest<Server>(expected2, *server2);
 }
 
 // Tests that it is possible to fetch server by tag fromn the collection.

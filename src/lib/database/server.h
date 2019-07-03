@@ -8,6 +8,7 @@
 #define DB_SERVER_H
 
 #include <cc/base_stamped_element.h>
+#include <cc/cfg_to_element.h>
 #include <cc/server_tag.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
@@ -28,7 +29,7 @@ typedef boost::shared_ptr<Server> ServerPtr;
 /// provided by the administrator and the metadata.
 ///
 /// This class extends the base class with the server description field.
-class Server : public data::BaseStampedElement {
+class Server : public data::BaseStampedElement,  public data::CfgToElement {
 public:
 
     /// @brief Constructor.
@@ -68,6 +69,11 @@ public:
     std::string getDescription() const {
         return (description_);
     }
+
+    /// @brief Unparses server object.
+    ///
+    /// @return A pointer to unparsed server configuration.
+    virtual data::ElementPtr toElement() const;
 
 private:
 
