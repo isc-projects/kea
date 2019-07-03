@@ -2402,7 +2402,7 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_OPTION(dhcp4, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
     },
 
-    // Delete all options which are unassigned to any servers.
+    // Delete all global options which are unassigned to any servers.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
       MYSQL_DELETE_OPTION_UNASSIGNED(dhcp4, AND o.scope_id = 0)
     },
