@@ -115,7 +115,7 @@ public:
         DELETE_OPTION_DEF4_CODE_NAME,
         DELETE_ALL_OPTION_DEFS4,
         DELETE_OPTION4,
-        DELETE_ALL_OPTIONS4_UNASSIGNED,
+        DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
         DELETE_OPTION4_SUBNET_ID,
         DELETE_OPTION4_POOL_RANGE,
         DELETE_OPTION4_SHARED_NETWORK,
@@ -1930,7 +1930,7 @@ public:
                                     MySqlBindingCollection());
 
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::
-                                    DELETE_ALL_OPTIONS4_UNASSIGNED,
+                                    DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
                                     MySqlBindingCollection());
             /// @todo delete option definitions.
         }
@@ -1970,7 +1970,7 @@ public:
                                     MySqlBindingCollection());
 
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::
-                                    DELETE_ALL_OPTIONS4_UNASSIGNED,
+                                    DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
                                     MySqlBindingCollection());
 
             /// @todo delete dangling option definitions.
@@ -2403,8 +2403,8 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete all options which are unassigned to any servers.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTIONS4_UNASSIGNED,
-      MYSQL_DELETE_OPTION_UNASSIGNED(dhcp4)
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_OPTIONS4_UNASSIGNED,
+      MYSQL_DELETE_OPTION_UNASSIGNED(dhcp4, AND o.scope_id = 0)
     },
 
     // Delete single option from a subnet.
