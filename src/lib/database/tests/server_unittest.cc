@@ -35,8 +35,8 @@ TEST(ServerTest, tooLongDescription) {
                  BadValue);
 }
 
-// Tests that toElement method works well.
-TEST(ServerTest, toEDlement) {
+// Tests that toElement method returns expected JSON map.
+TEST(ServerTest, toElement) {
     ServerPtr server1 = Server::create(ServerTag("foo"), "a server");
     std::string expected1 = "{"
         "\"server-tag\": \"foo\","
@@ -44,7 +44,7 @@ TEST(ServerTest, toEDlement) {
         " }";
     isc::test::runToElementTest<Server>(expected1, *server1);
 
-    ServerPtr server2 =Server::create(ServerTag("bar"));
+    ServerPtr server2 = Server::create(ServerTag("bar"));
     std::string expected2= "{"
         "\"server-tag\": \"bar\","
         "\"description\": \"\""
@@ -52,7 +52,7 @@ TEST(ServerTest, toEDlement) {
     isc::test::runToElementTest<Server>(expected2, *server2);
 }
 
-// Tests that it is possible to fetch server by tag fromn the collection.
+// Tests that it is possible to fetch server by tag from the collection.
 TEST(ServerFetcherTest, getByTag) {
     ServerCollection servers;
 
