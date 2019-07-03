@@ -22,7 +22,8 @@ namespace dhcp {
 
 DUID::DUID(const std::vector<uint8_t>& duid) {
     if (duid.size() > MAX_DUID_LEN) {
-        isc_throw(isc::BadValue, "DUID too large");
+        isc_throw(isc::BadValue, "DUID is " << duid.size() 
+                  << ", exceeds max of " << MAX_DUID_LEN);
     }
     if (duid.empty()) {
         isc_throw(isc::BadValue, "Empty DUIDs are not allowed");
@@ -32,7 +33,8 @@ DUID::DUID(const std::vector<uint8_t>& duid) {
 
 DUID::DUID(const uint8_t* data, size_t len) {
     if (len > MAX_DUID_LEN) {
-        isc_throw(isc::BadValue, "DUID too large");
+        isc_throw(isc::BadValue, "DUID is " << len 
+                  << ", exceeds max of " << MAX_DUID_LEN);
     }
     if (len == 0) {
         isc_throw(isc::BadValue, "Empty DUIDs/Client-ids not allowed");

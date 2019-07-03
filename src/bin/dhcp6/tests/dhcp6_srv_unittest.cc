@@ -1476,54 +1476,75 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
 }
 
-// This test verifies if the sanityCheck() really checks options content,
-// especially truncated client-id.
-TEST_F(Dhcpv6SrvTest, truncatedClientId) {
+// This test verifies that sanity checking against valid and invalid
+// client ids
+TEST_F(Dhcpv6SrvTest, sanityCheckClientId) {
     NakedDhcpv6Srv srv(0);
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
 
     // Case 1: completely empty (size 0)
-    pkt->addOption(generateClientId(0));
+    pkt->addOption(generateBinaryOption(D6O_CLIENTID, 0));
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN),
                  RFCViolation);
 
     // Case 2: too short (at the very least 3 bytes are needed)
     pkt->delOption(D6O_CLIENTID);
-    pkt->addOption(generateClientId(2));
+    pkt->addOption(generateBinaryOption(D6O_CLIENTID, 2));
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN),
                  RFCViolation);
 
     // Case 3: the shortest DUID possible (3 bytes) is ok:
     pkt->delOption(D6O_CLIENTID);
-    pkt->addOption(generateClientId(3));
+    pkt->addOption(generateBinaryOption(D6O_CLIENTID, 3));
     EXPECT_NO_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN));
+
+    // Case 4: longest possible is 128, should be ok
+    pkt->delOption(D6O_CLIENTID);
+    pkt->addOption(generateBinaryOption(D6O_CLIENTID, DUID::MAX_DUID_LEN));
+    EXPECT_NO_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN));
+
+    // Case 5: too long
+    pkt->delOption(D6O_CLIENTID);
+    pkt->addOption(generateBinaryOption(D6O_CLIENTID, DUID::MAX_DUID_LEN + 1));
+    EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN),
+                 RFCViolation);
 }
 
-// This test verifies if the sanityCheck() really checks options content,
-// especially truncated server-id.
-TEST_F(Dhcpv6SrvTest, truncatedServerId) {
+// This test verifies that sanity checking against valid and invalid
+// server ids
+TEST_F(Dhcpv6SrvTest, sanityCheckServerId) {
     NakedDhcpv6Srv srv(0);
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
 
     // Case 1: completely empty (size 0)
-    pkt->addOption(generateServerId(0));
+    pkt->addOption(generateBinaryOption(D6O_SERVERID, 0));
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
 
     // Case 2: too short (at the very least 3 bytes are needed)
     pkt->delOption(D6O_SERVERID);
-    pkt->addOption(generateServerId(2));
+    pkt->addOption(generateBinaryOption(D6O_SERVERID, 2));
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
 
     // Case 3: the shortest DUID possible (3 bytes) is ok:
     pkt->delOption(D6O_SERVERID);
-    pkt->addOption(generateServerId(3));
+    pkt->addOption(generateBinaryOption(D6O_SERVERID, 3));
     EXPECT_NO_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY));
-}
 
+    // Case 4: longest possible is 128, should be ok
+    pkt->delOption(D6O_SERVERID);
+    pkt->addOption(generateBinaryOption(D6O_SERVERID, DUID::MAX_DUID_LEN));
+    EXPECT_NO_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY));
+
+    // Case 5: too long
+    pkt->delOption(D6O_SERVERID);
+    pkt->addOption(generateBinaryOption(D6O_SERVERID, DUID::MAX_DUID_LEN + 1));
+    EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY),
+                 RFCViolation);
+}
 
 // Check that the server is testing if server identifier received in the
 // query, matches server identifier used by the server.
