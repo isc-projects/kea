@@ -1,0 +1,283 @@
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+@page fuzzer Fuzzing Kea
+
+@section fuzzIntro Introduction
+
+Fuzzing is a software-testing technique whereby a program is presented with a
+variety of generated data as input and is monitored for abnormal conditions
+such as crashes or hangs.
+
+Fuzz testing of Kea uses the AFL (American Fuzzy Lop) program.  In this, Kea is
+built using an AFL-supplied program that not only compiles the software but
+also instruments it.  When run, AFL generates test cases and monitors the
+execution of Kea as it processes them.  AFL will adjust the input based on
+these measurements, seeking to discover and test new execution paths.
+
+@section fuzzTypes Types of Kea Fuzzing
+
+@subsection fuzzTypeNetwork Fuzzing with Network Packets
+
+In this mode, AFL will start an instance of Kea and send it a packet of data.
+Kea reads this packet and processes it in the normal way.  AFL monitors code
+paths taken by Kea and, based on this, will vary the data sent in subsequent
+packets.
+
+@subsection fuzzTypeConfig Fuzzing with Configuration Files
+
+Kea has a configuration file check mode whereby it will read a configuration
+file, report whether the file is valid, then immediately exit.  Operation of
+the configuration parsing code can be tested with AFL by fuzzing the
+configuration file: AFL generates example configuration files based on a
+dictionary of valid keywords and runs Kea in configuration file check mode on
+them.  As with network packet fuzzing, the behaviour of Kea is monitored and
+the content of subsequent files adjusted accordingly.
+
+@section fuzzBuild Building Kea for Fuzzing
+
+Whatever tests are done, Kea needs to be built with fuzzing in mind.  The steps
+for this are:
+
+-# Install AFL on the system on which you plan to build Kea and do the fuzzing.
+   AFL may be downloaded from  http://lcamtuf.coredump.cx/afl.  At the time of
+   writing (August 2019), the latest version is 2.52b.  AFL should be built as
+   per the instructions in the README file in the distribution.  The LLVM-based
+   instrumentation programs should also be build, as per the instructions in
+   the file llvm_mode/README.llvm (also in the distribution).  Note that this
+   requires that LLVM be installed on the machine used for the fuzzing.
+
+-# Build Kea.  Kea should be compiled and built as usual, although the
+   following additional steps should be observed:
+   - Set the environment variable CXX to point to the afl-clang-fast++
+     compiler.
+   - Specify a value of "--prefix" on the command line to set the directory
+     into which Kea is installed.
+   - Add the "--enable-fuzz" switch to the "configure" command line.
+   .
+   For example:
+   @code
+   CXX=/opt/afl/afl-clang-fast++ ./configure --enable-fuzz --prefix=$HOME/installed
+   make
+   @endcode
+
+-# Install Kea to the directory specified by "--prefix":
+   @code
+   make install
+   @endcode
+   This step is not strictly necessary, but makes running AFL easier.
+   "libtool", used by the Kea build procedure to build executable images, puts
+   the executable in a hidden ".libs" subdirectory of the target directory and
+   creates a shell script in the target directory for running it.  The wrapper
+   script handles the fact that the Kea libraries on which the executable depends
+   are not installed by fixing up the LD_LIBRARY_PATH environment variable to
+   point to them.  It is possible to set the variable appropriately and use AFL
+   to run the image from the ".libs" directory; in practice, it is a lot
+   simpler to install the programs in the directories set by "--prefix" and run
+   them from there.
+
+@section fuzzRun Running the Fuzzer
+
+@subsection fuzzRunNetwork Fuzzing with Network Packets
+
+-# In this type of fuzzing, Kea is processing packets from the fuzzer over a
+   network interface.  This interface could be a physical interface or it could
+   be the loopback interface.  Either way, it needs to be configured with a
+   suitable IPv4 or IPv6 address depending on whether kea-dhcp4 or kea-dhcp6 is
+   being fuzzed.
+
+-# Once the interface has been decided, these need to be set in the
+   configuration file used for the test.  For example, if fuzzing Kea-dhcp4
+   using the loopback interface "lo" and IPv4 address 10.53.0.1, the
+   configuration file would contain the following snippet:
+   @code
+       "Dhcp4": {
+           :
+           "interfaces-config": {
+               "interfaces": ["lo/10.53.0.1"]
+           },
+           "subnet4": [
+               {
+                   :
+                   "interface": "lo",
+                   :
+               }
+           ],
+           :
+        }
+   @endcode
+
+-# The specification of the interface and address in the configuration file
+   is used by the main Kea code.  Owing to the way that the fuzzing interface
+   between Kea and AFL is implemented, the address and interface also need to
+   be specified by the environment variables KEA_AFL_INTERFACE and
+   KEA_AFL_ADDRESS.  With a configuration file containing statements listed
+   above, the relevant commands are:
+   @code
+   export KEA_AFL_INTERFACE="lo"
+   export KEA_AFL_ADDRESS="10.53.0.1"
+   @endcode
+   (If kea-dhcp6 is being fuzzed, then KEA_AFL_ADDRESS should specify an IPv6
+   address.)
+
+-# The fuzzer can now be run: a suitable command line is:
+   @code
+   afl-fuzz -m 4096 -i seeds -o fuzz-out -- ./kea-dhcp6 -c kea.conf -p 9001 -P 9002
+   @endcode
+   In the above:
+   - It is assumed that the directory holding the "afl-fuzz" program is in
+     the path, otherwise include the path name when invoking it.
+   - "-m 4096" allows Kea to take up to 4096 MB of memory.  (Use "ulimit" to
+     check and optionally modify the amount of virtual memory that can be used.)
+   - The "-i" switch specifies a directory (in this example, one named "seeds")
+     holding "seed" files.  These are binary files that AFL will use as its
+     source for generating new packets.  They can generated from a real packet
+     stream with wireshark: right click on a packet, then export as binary
+     data. Ensure that only the payload of the UDP packet is exported.
+   - The "-o" switch specifies a directory (in this example called "fuzz-out")
+     that AFL will use to hold packets it has generated and packets that it has
+     found causes crashes or hangs.
+   - "--" Separates the AFL command line from that of Kea.
+   - "./kea-dhcp6" is the program being fuzzed.  As mentioned above, this
+     should be an executable image, and it will be simpler to fuzz one
+     that has been installed.
+   - The "-c" switch sets the configuration file Kea should use while being
+     fuzzed.
+   - "-p 9001 -P 9002". The port on which Kea should listen and the port to
+     which it should send replies.  If omitted, Kea will try to use the default
+     DHCP ports, which are in the privileged range.  Unless run with "sudo",
+     Kea will fail to open the port and Kea will exit early on: no useful
+     information will be obtained from the fuzzer.
+
+-# Check that the fuzzer is working.  If run from a terminal (with a black
+   background - AFL is particular about this), AFL will bring up a curses-style
+   interface showing the progress of the fuzzing.  A good indication that
+   everything is working is to look at the "total paths" figure.  Initially,
+   this should increase reasonably rapidly.  If not, it is likely that Kea is
+   failing to start or initialize properly and the logging output (assuming
+   this has been configured) should be examined.  Some sample seed packets are
+   provided in the "src/bin/dhcp4/tests/fuzz-data" and
+   "src/bin/dhcp6/tests/fuzz-data" directories.
+
+@subsection fuzzRunConfig Fuzzing with Configuration Files
+
+AFL can be used to check the parsing of the configuration files.  In this type
+of fuzzing, AFL generates configuration files which is passes to Kea to check.
+Steps for this fuzzing are:
+
+-# Build Kea as described above.
+
+-# Create a dictionary of keywords.  Athough AFL will mutate the files by
+   byte swaps, bit flips and the like, better results are obtained if it can
+   create new files based on keywords that could appear in the file.  The
+   dictionary is described in the AFL documentation, but in brief, the file
+   contains successive lines of the form 'variable=keyword"', e.g.
+   @code
+   PD_POOLS="pd-pools"
+   PEERADDR="peeraddr"
+   PERSIST="persist"
+   PKT="pkt"
+   PKT4="pkt4"
+   @endcode
+   "variable" can be anything, as its name is ignored by AFL.  However, all the
+   variable names in the file must be different.  "keyword" is a valid keyword
+   that could appear in the configuration file.  The convention adopted in the
+   example above seems to work well - variables have the same name as keywords,
+   but are in uppercase and have hyphens replaced by underscores.
+
+-# Run Kea with a command line of the form:
+   @code
+   afl-fuzz -m 4096 -i seeds -o fuzz-out -x dict.dat -- ./kea-dhcp4 -t @@
+   @endcode
+   In the above command line:
+   - Everything up to and including the "--" is the AFL command.  The switches
+     are as described in the previous section apart from the "-x" switch: this
+     specifies the dictionary file ("dict.dat" in this example) described
+     above.
+   - The Kea command line uses the "-t" switch to specify the configuration
+     file to check.  This is specified by two consecutive "@" signs: AFL
+     will replace these with the name of a file it has created when starting
+     Kea.
+
+@section Fuzzing Internals
+
+@subsection fuzzInternalNetwork Fuzzing with Network Packets
+
+The AFL fuzzer delivers packets to Kea's stdin.  Although the part of Kea
+concerning the reception of packets could have been modified to accept input
+from stdin and have Kea pick them up in the normal way, a less-intrusive method
+was adopted.
+
+The packet loop in the main server code for kea-dhcp4 and kea-dhcp6 is
+essentially:
+@code{.unparsed}
+while (not shutting down) {
+    Read and process one packet
+}
+@endcode
+When --enable-fuzz is specified, this is conceptually modified to:
+@code{.unparsed}
+while (not shutting down) {
+    Read stdin and copy data to address/port on which Kea is listening
+    Read and process one packet
+}
+@endcode
+
+Implementation is via an object of class "Fuzz".  When created, it identifies
+an interface, adress and port on which Kea is listening and creates the
+appropriate address structures for these.  The port is passed as an argument to
+the constructor because at the point at which the object is constructed, that
+information is readily available.  The interface and address are picked up from
+the environment variables mentioned above.  Consideration was given to
+extracting the interface and address information from the configuration file,
+but it was decided not to do this:
+
+-# The configuration file can contain the definition of multiple interfaces;
+   if this is the case, the one being used for fuzzing is unclear.
+-# The code is much simpler if the data is extracted from environment
+   variables.
+
+Every time through the loop, the object reads the data from stdin and writes it
+to the identified address/port.  Control then returns to the main Kea code,
+which finds data available on the address/port on which it is listening and
+handles the data in the normal way.
+
+In practice, the "while" line is actually:
+@code{.unparsed}
+while (__AFL_LOOP(count)) {
+@endcode
+__AFL_LOOP is a token recognised and expanded by the AFL compiler (so no need
+to "#include" a file defining it) that implements the logic for the fuzzing.
+Each time through the loop (apart from the first), it raises a SIGSTOP signal
+telling AFL that the packet has been processed and instructing it to provide
+more data.  The "count" value is the number of times through the loop before
+the loop terminates and the process is allowed to exit normally.  When this
+happens, AFL will start the process anew.  The purpose of periodically shutting
+down the process is to avoid issues raised by the fuzzing being confused with
+any issues associated with the process running for a long time (e.g. memory
+leaks).
+
+@subsection fuzzInternalConfig Fuzzing with Configuration Files
+
+No changes were required to Kea source code to fuzz configuration files. In
+fact, other than compiling with afl-clang++ and installing the resultant
+executable, no other steps are required.  In particular, there is no need to
+use the "--enable-fuzz" switch in the configuration command line (although
+doing so will not cause any problems).
+
+@subsection fuzzThreads Changes Required for Multi-Threaded Kea
+
+The early versions of the fuzzing code used a separate thread to receive the
+packets from AFL and to write them to the socket on which Kea is listening.
+The lack of synchronization proved a problem, with Kea hanging in some
+instances.  Although some experiments with thread synchronization were
+successful, in the end the far simpler single-threaded implementation described
+above was adopted for the single-threaded Kea 1.6.  Should Kea be modified to
+become multi-threaded, the fuzzing code will need to be changed back to reading
+the AFL input in the background.
+
+*/
