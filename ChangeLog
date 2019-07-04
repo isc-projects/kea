@@ -1,3 +1,7 @@
+1610.	[build]		fdupont
+	Removed the obsolete compatcheck top directory.
+	(Gitlab #667,!391, git 8cb113a52f0cf56fbdb5cb0e87464135234c2ac1)
+
 1609.	[bug]		fdupont
 	Fixed the implementation of authentication keys in DHCPv6
 	host reservations. Please note this includes a PostgreSQL
