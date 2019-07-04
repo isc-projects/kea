@@ -1,3 +1,7 @@
+1611.	[doc]		fdupont
+	Clarified how Kea handles subnet prefixes in server configuration.
+	(Gitlab #419,!333, git f260b51148b4f7584165e13fcf2320fdd5992a74)
+
 1610.	[build]		fdupont
 	Removed the obsolete compatcheck top directory.
 	(Gitlab #667,!391, git 8cb113a52f0cf56fbdb5cb0e87464135234c2ac1)
