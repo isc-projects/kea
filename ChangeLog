@@ -1,3 +1,8 @@
+1612.	[bug]		razvan
+	Fixed crash caused by unloading premium libraries which use
+	custom host cache containers.
+	(Gitlab #639,!410, git d3f7e9d9a18d93fb014c8e637e15c6ae9ca9269e)
+
 1611.	[doc]		fdupont
 	Clarified how Kea handles subnet prefixes in server configuration.
 	(Gitlab #419,!333, git f260b51148b4f7584165e13fcf2320fdd5992a74)
@@ -10,7 +15,7 @@
 	Fixed the implementation of authentication keys in DHCPv6
 	host reservations. Please note this includes a PostgreSQL
 	schema update.
-	(Gitlab #550,!297, git f45511f0445cd4204671771175f7f0d34df54b0e(
+	(Gitlab #550,!297, git f45511f0445cd4204671771175f7f0d34df54b0e)
 
 1608.	[bug]		fdupont
 	Missing debug DHCP6_PACKET_SEND logging message was added.
@@ -27,7 +32,7 @@
 	Corrected an error with retrieving DHCPv6 leases, whose IAID
 	values are larger than int32_t max, from Postgresql lease
 	databases.
-	(Gitlab #651,!384,	git 67e047df61d56558d474514a21ed0db96152557a)
+	(Gitlab #651,!384, git 67e047df61d56558d474514a21ed0db96152557a)
 
 1605.	[func]		marcin
 	Extended mysql_cb hooks library to support new API calls for
@@ -87,7 +92,7 @@
 
 1595.	[func]		fdupont
 	Removed unused t1_ and t2_ members from internal lease class.
-	(Gitlab #567,!357, 6072db5f4ca6cfa9573152c255f97dd170acbd57)
+	(Gitlab #567,!357, git 6072db5f4ca6cfa9573152c255f97dd170acbd57)
 
 1594.	[bug]		fdupont
 	Kea no longer uses the .../var/kea directory, for instance pid
