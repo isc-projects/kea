@@ -1,3 +1,8 @@
+1613.	[func]		marcin
+	Add support for associating the global DHCP options with the
+	server tags in the mysql_cb hooks library.
+	(Gitlab #714,!409, git 711c1dca9de388b786942fe5bedb8b8cf63b85ba)
+
 1612.	[bug]		razvan
 	Fixed crash caused by unloading premium libraries which use
 	custom host cache containers.
