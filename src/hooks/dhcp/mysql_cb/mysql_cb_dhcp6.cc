@@ -1661,9 +1661,6 @@ public:
         };
 
         MySqlTransaction transaction(conn_);
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION6_CODE_SPACE, Option::V6, server_selector,
-                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1729,12 +1726,6 @@ public:
         if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
-
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION6_SUBNET_ID_CODE_SPACE, Option::V6,
-                      server_selector, subnet_id,
-                      option->option_->getType(),
-                      option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1885,13 +1876,6 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        int index = (pool_type == Lease::TYPE_NA ?
-                     GET_OPTION6_POOL_ID_CODE_SPACE :
-                     GET_OPTION6_PD_POOL_ID_CODE_SPACE);
-        OptionDescriptorPtr existing_option =
-            getOption(index, server_selector, pool_type, pool_id,
-                      option->option_->getType(), option->space_name_);
-
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         if (pool_type == Lease::TYPE_PD) {
@@ -1905,9 +1889,9 @@ public:
                            MySqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
                            server_selector, msg, cascade_update);
 
-        index = (pool_type == Lease::TYPE_NA ?
-                 MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID :
-                 MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID);
+        auto index = (pool_type == Lease::TYPE_NA ?
+                      MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID :
+                      MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID);
         if (conn_.updateDeleteQuery(index, in_bindings) == 0) {
             // Remove the 4 bindings used only in case of update.
             in_bindings.resize(in_bindings.size() - 4);
@@ -1965,11 +1949,6 @@ public:
         if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
-
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION6_SHARED_NETWORK_CODE_SPACE, Option::V6,
-                      server_selector, shared_network_name,
-                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.

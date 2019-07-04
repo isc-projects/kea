@@ -1449,9 +1449,6 @@ public:
         };
 
         MySqlTransaction transaction(conn_);
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION4_CODE_SPACE, Option::V4, server_selector,
-                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1516,12 +1513,6 @@ public:
         if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
-
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION4_SUBNET_ID_CODE_SPACE, Option::V4,
-                      server_selector, subnet_id,
-                      option->option_->getType(),
-                      option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1607,11 +1598,6 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION4_POOL_ID_CODE_SPACE,
-                      server_selector, Lease::TYPE_V4, pool_id,
-                      option->option_->getType(), option->space_name_);
-
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
@@ -1677,11 +1663,6 @@ public:
         if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
-
-        OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION4_SHARED_NETWORK_CODE_SPACE, Option::V4,
-                      server_selector, shared_network_name,
-                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
