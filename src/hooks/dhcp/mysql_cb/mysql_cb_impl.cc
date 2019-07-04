@@ -387,14 +387,16 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
 
     uint64_t last_def_id = 0;
 
+    OptionDefContainer local_option_defs;
+
     // Run select query.
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&option_defs, &last_def_id]
+                      [&local_option_defs, &last_def_id]
                       (MySqlBindingCollection& out_bindings) {
         // Get pointer to last fetched option definition.
         OptionDefinitionPtr last_def;
-        if (!option_defs.empty()) {
-            last_def = *option_defs.rbegin();
+        if (!local_option_defs.empty()) {
+            last_def = *local_option_defs.rbegin();
         }
 
         // See if the last fetched definition is the one for which we now got
@@ -453,14 +455,47 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             last_def->setModificationTime(out_bindings[5]->getTimestamp());
 
             // server_tag
-            last_def->setServerTag(out_bindings[10]->getString());
+            ServerTag last_def_server_tag(out_bindings[10]->getString());
+            last_def->setServerTag(last_def_server_tag.get());
 
-            // Store created option definition.
-            // (option_defs is a multi-index container with no unique
-            //  indexes so push_back can't fail).
-            static_cast<void>(option_defs.push_back(last_def));
+            // If we're fetching option definitions for a given server
+            // (explicit server tag is provided), it takes precedence over
+            // the same option definition specified for all servers.
+            // Therefore, we check if the given option already exists and
+            // belongs to 'all'.
+            auto& index = local_option_defs.get<1>();
+            auto existing_it_pair = index.equal_range(last_def->getCode());
+            auto existing_it = existing_it_pair.first;
+            bool found = false;
+            for ( ; existing_it != existing_it_pair.second; ++existing_it) {
+                if ((*existing_it)->getOptionSpaceName() == last_def->getOptionSpaceName()) {
+                    found = true;
+                    // This option definition was already fetched. Let's check
+                    // if we should replace it or not.
+                    if (!last_def_server_tag.amAll() && (*existing_it)->hasAllServerTag()) {
+                        index.replace(existing_it, last_def);
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            // If there is no such option definition yet or the existing option
+            // definition belongs to a different server and the inserted option
+            // definition is not for all servers.
+            if (!found ||
+                (!(*existing_it)->hasServerTag(last_def_server_tag) &&
+                 !last_def_server_tag.amAll())) {
+                static_cast<void>(local_option_defs.push_back(last_def));
+            }
         }
     });
+
+    // Append the option definition fetched by this function into the container
+    // supplied by the caller. The container supplied by the caller may already
+    // hold some option definitions fetched for other server tags.
+    option_defs.insert(option_defs.end(), local_option_defs.begin(),
+                       local_option_defs.end());
 }
 
 void
@@ -497,7 +532,10 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
         MySqlBinding::createBool(option_def->getArrayType()),
         MySqlBinding::createString(option_def->getEncapsulatedSpace()),
         record_types_binding,
-        createInputContextBinding(option_def)
+        createInputContextBinding(option_def),
+        MySqlBinding::createString(tag),
+        MySqlBinding::createInteger<uint16_t>(option_def->getCode()),
+        MySqlBinding::createString(option_def->getOptionSpaceName())
     };
 
     MySqlTransaction transaction(conn_);
@@ -525,15 +563,9 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
                                        "option definition set",
                                        true);
 
-    if (existing_definition) {
-        // Need to add three more bindings for WHERE clause.
-        in_bindings.push_back(MySqlBinding::createString(tag));
-        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(existing_definition->getCode()));
-        in_bindings.push_back(MySqlBinding::createString(existing_definition->getOptionSpaceName()));
-        conn_.updateDeleteQuery(update_option_def, in_bindings);
-
-    } else {
-        // If the option definition doesn't exist, let's insert it.
+    if (conn_.updateDeleteQuery(update_option_def, in_bindings) == 0) {
+        // Remove the bindings used only during the update.
+        in_bindings.resize(in_bindings.size() - 3);
         conn_.insertQuery(insert_option_def, in_bindings);
 
         // Fetch unique identifier of the inserted option definition and use it

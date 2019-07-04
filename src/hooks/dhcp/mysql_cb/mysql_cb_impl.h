@@ -25,6 +25,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -630,6 +631,28 @@ public:
                             const int& create_index,
                             const int& update_index,
                             const db::ServerPtr& server);
+
+    /// @brief Executes multiple update and/or delete queries with no input
+    /// bindings.
+    ///
+    /// This is a convenience function which takes multiple query indexes as
+    /// arguments and for each index executes an update or delete query.
+    /// One of the applications of this function is to remove dangling
+    /// configuration elements after the server associated with these elements
+    /// have been deleted.
+    ///
+    /// @tparam T type of the indexes, e.g. @c MySqlConfigBackendDHCPv4Impl::StatementIndex.
+    /// @tparam R parameter pack holding indexes of type @c T.
+    /// @param first_index first index.
+    /// @param other_indexes remaining indexes.
+    template<typename T, typename... R>
+    void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
+        std::vector<T> indexes({ first_index, other_indexes... });
+        db::MySqlBindingCollection empty_bindings;
+        for (auto index : indexes) {
+            conn_.updateDeleteQuery(index, empty_bindings);
+        }
+    }
 
     /// @brief Returns backend type in the textual format.
     ///

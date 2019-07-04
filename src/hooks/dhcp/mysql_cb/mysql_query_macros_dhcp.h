@@ -657,6 +657,14 @@ namespace {
     "WHERE s.tag = ? " #__VA_ARGS__
 #endif
 
+#ifndef MYSQL_DELETE_OPTION_DEF_UNASSIGNED
+#define MYSQL_DELETE_OPTION_DEF_UNASSIGNED(table_prefix, ...) \
+    "DELETE d FROM " #table_prefix "_option_def AS d " \
+    "LEFT JOIN " #table_prefix "_option_def_server AS a " \
+    "  ON d.id = a.option_def_id " \
+    "WHERE a.option_def_id IS NULL " #__VA_ARGS__
+#endif
+
 #ifndef MYSQL_DELETE_OPTION
 #define MYSQL_DELETE_OPTION(table_prefix, ...) \
     "DELETE o FROM " #table_prefix "_options AS o " \

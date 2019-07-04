@@ -302,6 +302,10 @@ public:
         option_def.reset(new OptionDefinition("whale", 20236, "string"));
         option_def->setOptionSpaceName("xyz");
         test_option_defs_.push_back(option_def);
+
+        option_def.reset(new OptionDefinition("bar", 1234, "uint64", true));
+        option_def->setOptionSpaceName("dhcp6");
+        test_option_defs_.push_back(option_def);
     }
 
     /// @brief Creates several DHCP options used in tests.
@@ -1800,11 +1804,202 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getOptionDef6) {
     }
 }
 
+// This test verifies that it is possible to differentiate between the
+// option definitions by server tag and that the option definition
+// specified for the particular server overrides the definition for
+// all servers.
+TEST_F(MySqlConfigBackendDHCPv6Test, optionDefs6WithServerTags) {
+    OptionDefinitionPtr option1 = test_option_defs_[0];
+    OptionDefinitionPtr option2 = test_option_defs_[1];
+    OptionDefinitionPtr option3 = test_option_defs_[4];
+
+    // An attempt to create option definition for non-existing server should
+    // fail.
+    EXPECT_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server1"),
+                                                option1),
+                 DbOperationError);
+
+    // Create two servers.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[1]));
+    {
+        SCOPED_TRACE("server1 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("server2 is created");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    // This time creation of the option definition for the server1 should pass.
+    EXPECT_NO_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server1"),
+                                                   option1));
+    {
+        SCOPED_TRACE("option definition for server1 is set");
+        // The value of 3 means there should be 3 audit entries available for the
+        // server1, two that indicate creation of the servers and one that we
+        // validate, which sets the option definition.
+        testNewAuditEntry("dhcp6_option_def",
+                          AuditEntry::ModificationType::CREATE,
+                          "option definition set",
+                          ServerSelector::ONE("server1"),
+                          3, 1);
+    }
+
+    // Creation of the option definition for the server2 should also pass.
+    EXPECT_NO_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server2"),
+                                                   option2));
+    {
+        SCOPED_TRACE("option definition for server2 is set");
+        // Same as in case of the server1, there should be 3 audit entries and
+        // we validate one of them.
+        testNewAuditEntry("dhcp6_option_def",
+                          AuditEntry::ModificationType::CREATE,
+                          "option definition set",
+                          ServerSelector::ONE("server2"),
+                          3, 1);
+    }
+
+    // Finally, creation of the option definition for all servers should
+    // also pass.
+    EXPECT_NO_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ALL(),
+                                                   option3));
+    {
+        SCOPED_TRACE("option definition for server2 is set");
+        // There should be one new audit entry for all servers. It logs
+        // the insertion of the option definition.
+        testNewAuditEntry("dhcp6_option_def",
+                          AuditEntry::ModificationType::CREATE,
+                          "option definition set",
+                          ServerSelector::ALL(),
+                          1, 1);
+    }
+
+    OptionDefinitionPtr returned_option_def;
+
+    // Try to fetch the option definition specified for all servers. It should
+    // return the third one.
+    EXPECT_NO_THROW(
+        returned_option_def = cbptr_->getOptionDef6(ServerSelector::ALL(),
+                                                    option3->getCode(),
+                                                    option3->getOptionSpaceName())
+    );
+    ASSERT_TRUE(returned_option_def);
+    EXPECT_TRUE(returned_option_def->equals(*option3));
+
+    // Try to fetch the option definition specified for server1. It should
+    // override the definition for all servers.
+    EXPECT_NO_THROW(
+        returned_option_def = cbptr_->getOptionDef6(ServerSelector::ONE("server1"),
+                                                    option1->getCode(),
+                                                    option1->getOptionSpaceName())
+    );
+    ASSERT_TRUE(returned_option_def);
+    EXPECT_TRUE(returned_option_def->equals(*option1));
+
+    // The same in case of the server2.
+    EXPECT_NO_THROW(
+        returned_option_def = cbptr_->getOptionDef6(ServerSelector::ONE("server2"),
+                                                    option2->getCode(),
+                                                    option2->getOptionSpaceName())
+    );
+    ASSERT_TRUE(returned_option_def);
+    EXPECT_TRUE(returned_option_def->equals(*option2));
+
+    OptionDefContainer returned_option_defs;
+
+    // Try to fetch the collection of the option definitions for server1, server2
+    // and server3. The server3 does not have an explicit option definition, so
+    // for this server we should get the definition associated with "all" servers.
+    EXPECT_NO_THROW(
+        returned_option_defs = cbptr_->getAllOptionDefs6(ServerSelector::
+                                                         MULTIPLE({ "server1", "server2",
+                                                                    "server3" }));
+    );
+    ASSERT_EQ(3, returned_option_defs.size());
+
+    // Check that expected option definitions have been returned.
+    auto current_option = returned_option_defs.begin();
+    EXPECT_TRUE((*current_option)->equals(*option1));
+    EXPECT_TRUE((*(++current_option))->equals(*option2));
+    EXPECT_TRUE((*(++current_option))->equals(*option3));
+
+    // Try to fetch the collection of options specified for all servers.
+    // This excludes the options specific to server1 and server2. It returns
+    // only the common ones.
+    EXPECT_NO_THROW(
+        returned_option_defs = cbptr_->getAllOptionDefs6(ServerSelector::ALL());
+
+    );
+    ASSERT_EQ(1, returned_option_defs.size());
+    EXPECT_TRUE((*returned_option_defs.begin())->equals(*option3));
+
+    // Delete the server1. It should remove associations of this server with the
+    // option definitions and the option definition itself.
+    EXPECT_NO_THROW(cbptr_->deleteServer6(ServerTag("server1")));
+    EXPECT_NO_THROW(
+        returned_option_defs = cbptr_->getAllOptionDefs6(ServerSelector::ONE("server1"));
+
+    );
+    ASSERT_EQ(1, returned_option_defs.size());
+    EXPECT_TRUE((*returned_option_defs.begin())->equals(*option3));
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the option definition after server deletion");
+        testNewAuditEntry("dhcp6_option_def",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting a server", ServerSelector::ONE("server1"),
+                          2, 1);
+    }
+
+    // Attempt to delete option definition for server1.
+    uint64_t deleted_num = 0;
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ONE("server1"),
+                                                           option1->getCode(),
+                                                           option1->getOptionSpaceName()));
+    EXPECT_EQ(0, deleted_num);
+
+    // Deleting the existing option definition for server2 should succeed.
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ONE("server2"),
+                                                           option2->getCode(),
+                                                           option2->getOptionSpaceName()));
+    EXPECT_EQ(1, deleted_num);
+
+    // Create this option definition again to test that deletion of all servers
+    // removes it too.
+    EXPECT_NO_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ONE("server2"),
+                                                   option2));
+
+    // Delete all servers, except 'all'.
+    EXPECT_NO_THROW(deleted_num = cbptr_->deleteAllServers6());
+    EXPECT_NO_THROW(
+        returned_option_defs = cbptr_->getAllOptionDefs6(ServerSelector::ALL());
+    );
+    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1, returned_option_defs.size());
+    EXPECT_TRUE((*returned_option_defs.begin())->equals(*option3));
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the option definition after deletion of"
+                     " all servers");
+        testNewAuditEntry("dhcp6_option_def",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleting all servers", ServerSelector::ONE("server2"),
+                          4, 1);
+    }
+}
+
 // Test that all option definitions can be fetched.
 TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
     // Insert test option definitions into the database. Note that the second
     // option definition will overwrite the first option definition as they use
     // the same code and space.
+    size_t updates_num = 0;
     for (auto option_def : test_option_defs_) {
         cbptr_->createUpdateOptionDef6(ServerSelector::ALL(), option_def);
 
@@ -1816,6 +2011,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
             testNewAuditEntry("dhcp6_option_def",
                               AuditEntry::ModificationType::UPDATE,
                               "option definition set");
+            ++updates_num;
 
         } else {
             SCOPED_TRACE("CREATE audit entry for the option definition " +
@@ -1828,12 +2024,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
 
     // Fetch all option_definitions.
     OptionDefContainer option_defs = cbptr_->getAllOptionDefs6(ServerSelector::ALL());
-    ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+    ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // All option definitions should also be returned for explicitly specified
     // server tag.
     option_defs = cbptr_->getAllOptionDefs6(ServerSelector::ONE("server1"));
-    ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+    ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // See if option definitions are returned ok.
     for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
@@ -1853,7 +2049,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6) {
     EXPECT_EQ(0, cbptr_->deleteOptionDef6(ServerSelector::ALL(),
                                           99, "non-exiting-space"));
     // All option definitions should be still there.
-    ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+    ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // Should not delete option definition for explicit server tag
     // because our option definition is for all servers.

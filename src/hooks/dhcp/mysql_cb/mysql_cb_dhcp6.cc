@@ -120,6 +120,7 @@ public:
         DELETE_ALL_SHARED_NETWORKS6,
         DELETE_OPTION_DEF6_CODE_NAME,
         DELETE_ALL_OPTION_DEFS6,
+        DELETE_ALL_OPTION_DEFS6_UNASSIGNED,
         DELETE_OPTION6,
         DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
         DELETE_OPTION6_SUBNET_ID,
@@ -2187,6 +2188,18 @@ public:
                                     in_bindings));
     }
 
+    /// @brief Removes unassigned global parameters, global options and
+    /// option definitions.
+    ///
+    /// This function is called when one or more servers are deleted and
+    /// it is likely that there are some orhpaned configuration elements
+    /// left in the database. This method removes those elements.
+    void purgeUnassignedConfig() {
+        multipleUpdateDeleteQueries(DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
+                                    DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
+                                    DELETE_ALL_OPTION_DEFS6_UNASSIGNED);
+    }
+
     /// @brief Attempts to delete a server having a given tag.
     ///
     /// @param server_tag Tag of the server to be deleted.
@@ -2219,16 +2232,9 @@ public:
                                              in_bindings);
 
         // If we have deleted any servers we have to remove any dangling global
-        // parameters.
+        // parameters, options and option definitions.
         if (count > 0) {
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
-                                    DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
-                                    MySqlBindingCollection());
-
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
-                                    DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
-                                    MySqlBindingCollection());
-            /// @todo delete dangling option definitions.
+            purgeUnassignedConfig();
         }
 
         transaction.commit();
@@ -2259,16 +2265,9 @@ public:
                                              in_bindings);
 
         // If we have deleted any servers we have to remove any dangling global
-        // parameters.
+        // parameters, options and option definitions.
         if (count > 0) {
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
-                                    DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
-                                    MySqlBindingCollection());
-
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
-                                    DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
-                                    MySqlBindingCollection());
-            /// @todo delete dangling option definitions.
+            purgeUnassignedConfig();
         }
 
         transaction.commit();
@@ -2733,6 +2732,11 @@ TaggedStatementArray tagged_statements = { {
     // Delete all option definitions.
     { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTION_DEFS6,
       MYSQL_DELETE_OPTION_DEF(dhcp6)
+    },
+
+    // Delete all option definitions which are assigned to no servers.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTION_DEFS6_UNASSIGNED,
+      MYSQL_DELETE_OPTION_DEF_UNASSIGNED(dhcp6)
     },
 
     // Delete single global option.
