@@ -173,17 +173,17 @@ TEST_F(StatsMgrTest, getGetAll) {
     StatsMgr::instance().setValue("delta", "Lorem");
 
     // The string's representation of firstly added statistics
-    std::string alpha_first = ", 1234, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+    std::string alpha_first = ", 1234, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
-    std::string beta_first = ", 12.34, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+    std::string beta_first = ", 12.34, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
-    std::string gamma_first = ", \"01:02:03.000004\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+    std::string gamma_first = ", \"01:02:03.000004\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
-    std::string delta_first = ", \"Lorem\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+    std::string delta_first = ", \"Lorem\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Now add some values to them
@@ -206,17 +206,17 @@ TEST_F(StatsMgrTest, getGetAll) {
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
 
-    std::string exp_str_alpha = "[ [ 6912, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+    std::string exp_str_alpha = "[ [ 6912, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\"" + alpha_first;
-    std::string exp_str_beta = "[ [ 69.12, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+    std::string exp_str_beta = "[ [ 69.12, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\"" + beta_first;
-    std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+    std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\"" + gamma_first;
-    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\"" + delta_first;
 
     // Check that individual stats are reported properly
