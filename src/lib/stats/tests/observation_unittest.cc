@@ -564,6 +564,11 @@ TEST_F(ObservationTest, names) {
     EXPECT_EQ("beta", b.getName());
     EXPECT_EQ("gamma", c.getName());
     EXPECT_EQ("delta", d.getName());
+
+    ASSERT_EQ(a.getSize(), 1);
+    ASSERT_EQ(b.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(d.getSize(), 1);
 }
 
 };
