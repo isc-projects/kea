@@ -188,7 +188,7 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
                 storage.front().second - storage.back().second;
             // removing samples until the range_of_storage
             // stops exceeding the duration limit
-            while (range_of_storage > max_sample_age.second) {
+            while (range_of_storage > max_sample_age_.second) {
                 storage.pop_back();
                 range_of_storage =
                     storage.front().second - storage.back().second;
