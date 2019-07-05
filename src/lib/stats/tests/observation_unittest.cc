@@ -510,8 +510,8 @@ TEST_F(ObservationTest, durationToJSON) {
         isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
 
     // String which contains first added sample
-    std::string first_sample = ", \"01:02:03.000004\", \""
-        + isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
+    std::string first_sample = ", \"01:02:03.000004\", \"" +
+        isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
 
     // 1 hour 2 minutes 3 seconds and 4 milliseconds
     c.setValue(time_duration(1, 2, 3, 4));
