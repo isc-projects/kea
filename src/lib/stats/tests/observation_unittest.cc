@@ -33,11 +33,11 @@ public:
 
     /// @brief Constructor
     /// Initializes four observations.
-    ObservationTest() :
-        a("alpha", static_cast<int64_t>(1234)), // integer
-        b("beta", 12.34), // float
-        c("gamma", millisec::time_duration(1, 2, 3, 4)), // duration
-        d("delta", "1234") { // string
+    ObservationTest()
+        :a("alpha", static_cast<int64_t>(1234)), // integer
+         b("beta", 12.34), // float
+         c("gamma", millisec::time_duration(1, 2, 3, 4)), // duration
+         d("delta", "1234") { // string
     }
 
     Observation a;
@@ -515,7 +515,6 @@ TEST_F(ObservationTest, stringToJSON) {
     // String which contains first added sample
     std::string first_sample = ", \"1234\", \"" +
         isc::util::ptimeToText(d.getString().second) + "\" ] ]";
-
     d.setValue("Lorem ipsum dolor sit amet");
 
     std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \"" +
