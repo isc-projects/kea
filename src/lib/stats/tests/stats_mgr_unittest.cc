@@ -151,7 +151,7 @@ TEST_F(StatsMgrTest, setLimits) {
         StatsMgr::instance().setValue("foo", static_cast<int64_t>(i));
     }
 
-    EXPECT_EQ(StatsMgr::instance().getSize("foo"), 5); // sth goes wrong
+    EXPECT_EQ(StatsMgr::instance().getSize("foo"), 5);
     EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleCount("foo", 100));
 
     for (int64_t i = 0; i < 200; ++i) {
