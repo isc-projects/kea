@@ -838,6 +838,12 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("statistic-remove",
         boost::bind(&StatsMgr::statisticRemoveHandler, _1, _2));
 
+    //CommandMgr::instance().registerCommand("statistic-setMaxSampleAge",
+    //    boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+
+    //CommandMgr::instance().registerCommand("statistic-setMaxSampleCount",
+    //    boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+
     CommandMgr::instance().registerCommand("statistic-get-all",
         boost::bind(&StatsMgr::statisticGetAllHandler, _1, _2));
 
@@ -885,6 +891,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        //CommandMgr::instance().deregisterCommand("statistic-setMaxSampleAge");
+        //CommandMgr::instance().deregisterCommand("statistic-setMaxSampleCount");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {
