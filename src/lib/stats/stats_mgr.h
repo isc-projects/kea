@@ -137,12 +137,11 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the observation
     /// @param duration determines maximum age of samples
-    /// @return true if successful, false if there's no such statistic
     /// Example: to set a statistic to keep observations for the last 5 minutes,
-    /// call setMaxSampleAge("incoming-packets", time_duration(0,5,0,0));
+    /// call setMaxSampleAge("incoming-packets", time_duration(0, 5, 0, 0));
     /// to revert statistic to a single value, call:
-    /// setMaxSampleAge("incoming-packets" time_duration(0,0,0,0))
-    bool setMaxSampleAge(const std::string& name, const StatsDuration& duration);
+    /// setMaxSampleAge("incoming-packets" time_duration(0, 0, 0, 0))
+    void setMaxSampleAge(const std::string& name, const StatsDuration& duration);
 
     /// @brief Determines how many samples of a given statistic should be kept.
     ///
@@ -153,7 +152,6 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// @param name name of the observation
     /// @param max_samples how many samples of a given statistic should be kept
-    /// @return true if successful, false if there's no such statistic
     /// Example:
     /// To set a statistic to keep the last 100 observations, call:
     /// setMaxSampleCount("incoming-packets", 100);
@@ -233,7 +231,7 @@ class StatsMgr : public boost::noncopyable {
     /// @return returns full statistic name in form context[index].stat_name
     template<typename Type>
     static std::string generateName(const std::string& context, Type index,
-                             const std::string& stat_name) {
+                                    const std::string& stat_name) {
         std::stringstream name;
         name << context << "[" << index << "]." << stat_name;
         return (name.str());

@@ -2712,6 +2712,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_UPDATE_SERVER(dhcp6)
     },
 
+    // Update existing server, e.g. server description.
+    { MySqlConfigBackendDHCPv6Impl::UPDATE_SERVER6,
+      MYSQL_UPDATE_SERVER(dhcp6)
+    },
+
     // Delete global parameter by name.
     { MySqlConfigBackendDHCPv6Impl::DELETE_GLOBAL_PARAMETER6,
       MYSQL_DELETE_GLOBAL_PARAMETER(dhcp6, AND g.name = ?)
@@ -2795,6 +2800,11 @@ TaggedStatementArray tagged_statements = { {
     // Delete single global option.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6,
       MYSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
+    },
+
+    // Delete all global options which are unassigned to any servers.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
+      MYSQL_DELETE_OPTION_UNASSIGNED(dhcp6, AND o.scope_id = 0)
     },
 
     // Delete all global options which are unassigned to any servers.

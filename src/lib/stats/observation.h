@@ -80,7 +80,7 @@ class Observation {
     /// int64_t and double. If convincing use cases appear to change them
     /// to something else, we may change the underlying type.
     enum Type {
-        STAT_INTEGER, ///< this statistic is unsinged 64-bit integer value
+        STAT_INTEGER, ///< this statistic is unsigned 64-bit integer value
         STAT_FLOAT,   ///< this statistic is a floating point value
         STAT_DURATION,///< this statistic represents time duration
         STAT_STRING   ///< this statistic represents a string
@@ -113,24 +113,26 @@ class Observation {
     /// @brief Determines maximum age of samples.
     ///
     /// Specifies that statistic name should be stored not as a single value,
-    /// but rather as a set of values. duration determines the timespan.
+    /// but rather as a set of values. The duration determines the timespan.
     /// Samples older than duration will be discarded. This is time-constrained
     /// approach. For sample count constrained approach, see @ref
     /// setMaxSampleCount() below.
     ///
     ///
     /// @param duration determines maximum age of samples
-    /// Example: to set a statistic to keep observations for the last 5 minutes,
-    /// call setMaxSampleAge(time_duration(0,5,0,0));
-    /// to revert statistic to a single value, call:
-    /// setMaxSampleAge(time_duration(0,0,0,0))
+    /// Example:
+    /// To set a statistic to keep observations for the last 5 minutes,
+    /// call: setMaxSampleAge(time_duration(0, 5, 0, 0));
+    /// To revert statistic to a single value, call:
+    /// setMaxSampleAge(time_duration(0, 0, 0, 0))
     void setMaxSampleAge(const StatsDuration& duration);
 
     /// @brief Determines how many samples of a given statistic should be kept.
     ///
-    /// Specifies that statistic name should be stored not as single value, but
-    /// rather as a set of values. In this form, at most max_samples will be kept.
-    /// When adding max_samples+1 sample, the oldest sample will be discarded.
+    /// Specifies that statistic name should be stored not as a single value,
+    /// but rather as a set of values. In this form, at most max_samples will
+    /// be kept. When adding max_samples + 1 sample, the oldest sample will be
+    /// discarded.
     ///
     ///
     /// @param max_samples how many samples of a given statistic should be kept
@@ -268,7 +270,7 @@ private:
     /// @param exp_type expected observation type (used for sanity checking)
     /// @return Size of storage
     template<typename StorageType>
-    size_t getSizeInternal( StorageType& storage, Type exp_type) const;
+    size_t getSizeInternal(StorageType& storage, Type exp_type) const;
 
     /// @brief Records absolute sample (internal version)
     ///
@@ -341,21 +343,22 @@ private:
     /// Only one kind of limit can be active
     /// The bool value informs which limit
     /// is available
-    /// True means active limit, false unactive
+    /// True means active limit, false means inactive limit
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
     std::pair<bool, uint32_t> max_sample_count = std::make_pair(true, 20);
 
-    /// @brief Maximum timespan od samples
+    /// @brief Maximum timespan of samples
     /// The limit is represent as a pair
     /// of bool value and StatsDuration(boost::posix_time::time_duration)
     /// Only one kind of limit can be active
     /// The bool value informs which limit
     /// is available
-    /// True means active limit, false unactive
+    /// True means active limit, false means inactive limit
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    std::pair<bool, StatsDuration> max_sample_age = std::make_pair(false, boost::posix_time::time_duration(0,0,0,0));
+    std::pair<bool, StatsDuration> max_sample_age = std::make_pair(false,
+            boost::posix_time::time_duration(0, 0, 0, 0));
 
     /// @defgroup samples_storage Storage for supported observations
     ///

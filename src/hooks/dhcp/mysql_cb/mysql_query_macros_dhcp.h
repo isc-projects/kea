@@ -567,6 +567,15 @@ namespace {
     ") VALUES (?, ?, ?)"
 #endif
 
+#ifndef MYSQL_INSERT_SERVER
+#define MYSQL_INSERT_SERVER(table_prefix) \
+    "INSERT INTO " #table_prefix "_server (" \
+    "  tag," \
+    "  description," \
+    "  modification_ts" \
+    ") VALUES (?, ?, ?)"
+#endif
+
 #ifndef MYSQL_UPDATE_GLOBAL_PARAMETER
 #define MYSQL_UPDATE_GLOBAL_PARAMETER(table_prefix) \
     "UPDATE " #table_prefix "_global_parameter AS g " \
@@ -751,6 +760,14 @@ namespace {
 
 #define MYSQL_DELETE_OPTION_NO_TAG(table_prefix, ...) \
     MYSQL_DELETE_OPTION_COMMON(table_prefix, __VA_ARGS__)
+#endif
+
+#ifndef MYSQL_DELETE_OPTION_UNASSIGNED
+#define MYSQL_DELETE_OPTION_UNASSIGNED(table_prefix, ...) \
+    "DELETE o FROM " #table_prefix "_options AS o " \
+    "LEFT JOIN " #table_prefix "_options_server AS a " \
+    "  ON o.option_id = a.option_id " \
+    "WHERE a.option_id IS NULL " #__VA_ARGS__
 #endif
 
 #ifndef MYSQL_DELETE_OPTION_UNASSIGNED

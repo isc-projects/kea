@@ -79,24 +79,18 @@ bool StatsMgr::deleteObservation(const std::string& name) {
     return (global_->del(name));
 }
 
-bool StatsMgr::setMaxSampleAge(const std::string& name,
+void StatsMgr::setMaxSampleAge(const std::string& name,
                                const StatsDuration& duration) {
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->setMaxSampleAge(duration);
-        return (true);
-    } else {
-        return (false);
     }
 }
 
-bool StatsMgr::setMaxSampleCount(const std::string& name, uint32_t max_samples){
+void StatsMgr::setMaxSampleCount(const std::string& name, uint32_t max_samples){
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->setMaxSampleCount(max_samples);
-        return (true);
-    } else {
-        return (false);
     }
 }
 
