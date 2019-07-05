@@ -83,11 +83,9 @@ void StatsMgr::setMaxSampleAge(const std::string& name,
     if (obs) {
         obs->setMaxSampleAge(duration);
     }
-    //isc_throw(NotImplemented, "setMaxSampleAge not implemented");
 }
 
 void StatsMgr::setMaxSampleCount(const std::string& name, uint32_t max_samples){
-    //isc_throw(NotImplemented, "setMaxSampleCount not implemented");
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->setMaxSampleCount(max_samples);
