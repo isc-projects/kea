@@ -410,18 +410,22 @@ Observation::getJSON() const {
 void Observation::reset() {
     switch(type_) {
     case STAT_INTEGER: {
+        integer_samples_.clear();
         setValue(static_cast<int64_t>(0));
         return;
     }
     case STAT_FLOAT: {
+        float_samples_.clear();
         setValue(0.0);
         return;
     }
     case STAT_DURATION: {
+        duration_samples_.clear();
         setValue(time_duration(0, 0, 0, 0));
         return;
     }
     case STAT_STRING: {
+        string_samples_.clear();
         setValue(string(""));
         return;
     }
