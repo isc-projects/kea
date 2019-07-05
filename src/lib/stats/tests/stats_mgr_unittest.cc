@@ -255,7 +255,8 @@ TEST_F(StatsMgrTest, reset) {
 
     // This should reset alpha to 0
     EXPECT_NO_THROW(StatsMgr::instance().reset("alpha"));
-    EXPECT_EQ(0, StatsMgr::instance().getObservation("alpha")->getInteger().first);
+    EXPECT_EQ(0,
+              StatsMgr::instance().getObservation("alpha")->getInteger().first);
 
     // The other stats should remain untouched
     EXPECT_EQ(12.34,
@@ -640,7 +641,8 @@ TEST_F(StatsMgrTest, commandResetAll) {
     ASSERT_TRUE(rep_all);
 
     // Check that they're indeed reset
-    EXPECT_EQ(0, StatsMgr::instance().getObservation("alpha")->getInteger().first);
+    EXPECT_EQ(0,
+              StatsMgr::instance().getObservation("alpha")->getInteger().first);
     EXPECT_EQ(0.0f,
               StatsMgr::instance().getObservation("beta")->getFloat().first);
     EXPECT_EQ(time_duration(0, 0, 0, 0),

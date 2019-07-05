@@ -308,7 +308,7 @@ private:
     /// @return List of observed samples
     template<typename SampleType, typename Storage>
     std::list<SampleType> getValuesInternal(Storage& storage,
-        Type exp_type) const;
+                                            Type exp_type) const;
 
     /// @brief Determines maximum age of samples.
     ///
@@ -318,7 +318,7 @@ private:
     /// @param exp_type expected observation type (used for sanity checking)
     template<typename StorageType>
     void setMaxSampleAgeInternal(StorageType& storage,
-        const StatsDuration& duration, Type exp_type);
+                                 const StatsDuration& duration, Type exp_type);
 
     /// @brief Determines how many samples of a given statistic should be kept.
     ///
@@ -328,7 +328,7 @@ private:
     /// @param exp_type expected observation type (used for sanity checking)
     template<typename StorageType>
     void setMaxSampleCountInternal(StorageType& storage,
-        uint32_t max_samples, Type exp_type);
+                                   uint32_t max_samples, Type exp_type);
 
     /// @brief Observation (statistic) name
     std::string name_;

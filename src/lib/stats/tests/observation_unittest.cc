@@ -49,7 +49,6 @@ public:
 // Basic tests for the Observation constructors. This test checks whether
 // parameters passed to the constructor initialize the object properly.
 TEST_F(ObservationTest, constructor) {
-
     EXPECT_EQ(Observation::STAT_INTEGER, a.getType());
     EXPECT_EQ(Observation::STAT_FLOAT, b.getType());
     EXPECT_EQ(Observation::STAT_DURATION, c.getType());
@@ -83,7 +82,6 @@ TEST_F(ObservationTest, constructor) {
 // This test checks whether it is possible to set to an absolute value for all
 // given types.
 TEST_F(ObservationTest, setValue) {
-
     EXPECT_NO_THROW(a.setValue(static_cast<int64_t>(5678)));
     EXPECT_NO_THROW(b.setValue(56e+78));
     EXPECT_NO_THROW(c.setValue(millisec::time_duration(5, 6, 7, 8)));
@@ -92,8 +90,7 @@ TEST_F(ObservationTest, setValue) {
 
     EXPECT_EQ(5678, a.getInteger().first);
     EXPECT_EQ(56e+78, b.getFloat().first);
-    EXPECT_EQ(millisec::time_duration(5, 6, 7, 8),
-              c.getDuration().first);
+    EXPECT_EQ(millisec::time_duration(5, 6, 7, 8), c.getDuration().first);
     EXPECT_EQ("fiveSixSevenEight", d.getString().first);
 
     // Now check whether setting value to a different type does
@@ -118,7 +115,6 @@ TEST_F(ObservationTest, setValue) {
 // This test checks whether it is possible to add value to existing
 // counter.
 TEST_F(ObservationTest, addValue) {
-
     // Note: all Observations were set to 1234, 12.34 or similar in
     // ObservationTest constructor.
 
@@ -363,8 +359,7 @@ TEST_F(ObservationTest, setCountLimit) {
     for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, 21);
-        }
-        else {
+        } else {
             EXPECT_EQ((*it).first, int_samples[i]);
         }
         --i;
@@ -373,8 +368,7 @@ TEST_F(ObservationTest, setCountLimit) {
     for (std::list<FloatSample>::iterator it = samples_float.begin(); it != samples_float.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, 21.0);
-        }
-        else {
+        } else {
             EXPECT_EQ((*it).first, float_samples[i]);
         }
         --i;
@@ -383,8 +377,7 @@ TEST_F(ObservationTest, setCountLimit) {
     for (std::list<DurationSample>::iterator it = samples_duration.begin(); it != samples_duration.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, 21));
-        }
-        else {
+        } else {
             EXPECT_EQ((*it).first, duration_samples[i]);
         }
         --i;
@@ -393,8 +386,7 @@ TEST_F(ObservationTest, setCountLimit) {
     for (std::list<StringSample>::iterator it = samples_string.begin(); it != samples_string.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, "v");
-        }
-        else {
+        } else {
             EXPECT_EQ((*it).first, string_samples[i]);
         }
         --i;
@@ -423,7 +415,7 @@ TEST_F(ObservationTest, setAgeLimit) {
     // Wait 1 second to ensure removing previously setted value
     sleep(1);
     // add 10 new values
-    for (uint32_t i = 0;i<10;++i) {
+    for (uint32_t i = 0; i < 10; ++i) {
         c.setValue(millisec::time_duration(0, 0, 0, i));
     }
     // change the max_sample_age to smaller
@@ -439,7 +431,6 @@ TEST_F(ObservationTest, setAgeLimit) {
         EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, i));
         --i;
     }
-
 }
 
 // Test checks whether timing is reported properly.
@@ -527,7 +518,7 @@ TEST_F(ObservationTest, stringToJSON) {
     // String which contains first added sample
     std::string first_sample = ", \"1234\", \"" +
         isc::util::ptimeToText(d.getString().second) + "\" ] ]";
-    //
+
     d.setValue("Lorem ipsum dolor sit amet");
 
     std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \"" +
