@@ -141,7 +141,7 @@ class StatsMgr : public boost::noncopyable {
     /// Example: to set a statistic to keep observations for the last 5 minutes,
     /// call setMaxSampleAge("incoming-packets", time_duration(0, 5, 0, 0));
     /// to revert statistic to a single value, call:
-    /// setMaxSampleAge("incoming-packets" time_duration(0,0,0,0))
+    /// setMaxSampleAge("incoming-packets" time_duration(0, 0, 0, 0))
     bool setMaxSampleAge(const std::string& name, const StatsDuration& duration);
 
     /// @brief Determines how many samples of a given statistic should be kept.
