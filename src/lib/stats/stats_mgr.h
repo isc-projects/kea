@@ -300,6 +300,52 @@ class StatsMgr : public boost::noncopyable {
     statisticRemoveHandler(const std::string& name,
                            const isc::data::ConstElementPtr& params);
 
+    /// @brief Handles statistic-setMaxSampleAge command
+    ///
+    /// This method handles statistic-setMaxSampleAge command, which set max_sample_age
+    /// limit of a given statistic and leaves max_sample_count disabled.
+    /// It expects five parameters stored in params map:
+    /// name: name-of-the-statistic
+    /// duration limit of gathering samples given in four parameters:
+    /// hours, minutes, seconds and milliseconds
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received",
+    ///     "hours": 0,
+    ///     "minutes": 5,
+    ///     "seconds": 0,
+    ///     "milliseconds": 0
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-setMaxSampleAge")
+    /// @param params structure containing a map that contains "name" and "duration"
+    /// @return answer containing information about current statistic's limits
+    static isc::data::ConstElementPtr
+    statisticSetMaxSampleAgeHandler(const std::string& name,
+                            const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-setMaxSampleAge command
+    ///
+    /// This method handles statistic-setMaxSampleAge command, which set max_sample_age
+    /// limit of a given statistic and leaves max_sample_age disabled.
+    /// It expects two parameters stored in params map:
+    /// name: name-of-the-statistic
+    /// duration: duration limit of gathering samples
+    ///
+    /// Example params structure:
+    /// {
+    ///     "name": "packets-received",
+    ///     "max_samples": 15
+    /// }
+    ///
+    /// @param name name of the command (ignored, should be "statistic-setMaxSampleCount")
+    /// @param params structure containing a map that contains "name" and "max_samples"
+    /// @return answer containing information about current statistic's limits
+    static isc::data::ConstElementPtr
+    statisticSetMaxSampleCountHandler(const std::string& name,
+                            const isc::data::ConstElementPtr& params);
+
     /// @brief Handles statistic-get-all command
     ///
     /// This method handles statistic-get-all command, which returns values
@@ -431,6 +477,45 @@ private:
     /// @return true (if everything is ok), false otherwise
     static bool getStatName(const isc::data::ConstElementPtr& params,
                             std::string& name,
+                            std::string& reason);
+
+    /// @brief Utility method that attempts to extract duration limit for
+    /// a given statistic
+    ///
+    /// This method attempts to extract duration limit for a given statistic
+    /// from the params structure.
+    /// It is expected to be a map that contains four 'duration' elements: 'hours',
+    /// 'minutes', 'seconds' and 'milliseconds'
+    /// all are of type int. If present as expected, statistic duration
+    /// limit is set and true is returned.
+    /// If any of these four parameters is missing or is of incorrect type,
+    /// the reason is specified in reason parameter and false is returned.
+    ///
+    /// @param params parameters structure received in command
+    /// @param duration [out] duration limit for the statistic (if no error detected)
+    /// @param reason [out] failure reason (if error is detected)
+    /// @return true (if everything is ok), false otherwise
+    static bool getStatDuration(const isc::data::ConstElementPtr& params,
+                            StatsDuration& duration,
+                            std::string& reason);
+
+    /// @brief Utility method that attempts to extract count limit for
+    /// a given statistic
+    ///
+    /// This method attempts to extract count limit for a given statistic
+    /// from the params structure.
+    /// It is expected to be a map that contains 'max_samples' element,
+    /// that is of type int. If present as expected, statistic count
+    /// limit (max_samples) is set and true is returned.
+    /// If missing or is of incorrect type, the reason is specified in reason
+    /// parameter and false is returned.
+    ///
+    /// @param params parameters structure received in command
+    /// @param max_samples [out] count limit for the statistic (if no error detected)
+    /// @param reason [out] failure reason (if error is detected)
+    /// @return true (if everything is ok), false otherwise
+    static bool getStatMaxSamples(const isc::data::ConstElementPtr& params,
+                            uint32_t& max_samples,
                             std::string& reason);
 
     // This is a global context. All statistics will initially be stored here.

@@ -870,6 +870,12 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-setMaxSampleAge",
+        boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-setMaxSampleCount",
+        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
 }
 
 void ControlledDhcpv6Srv::shutdown() {
