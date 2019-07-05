@@ -527,6 +527,11 @@ TEST_F(ObservationTest, stringToJSON) {
 
 // Checks whether reset() resets the statistics properly.
 TEST_F(ObservationTest, reset) {
+    EXPECT_NO_THROW(a.addValue(static_cast<int64_t>(5678)));
+    EXPECT_NO_THROW(b.addValue(56.78));
+    EXPECT_NO_THROW(c.addValue(millisec::time_duration(5, 6, 7, 8)));
+    EXPECT_NO_THROW(d.addValue("fiveSixSevenEight"));
+
     a.reset(); // integer
     b.reset(); // float
     c.reset(); // duration
@@ -536,6 +541,11 @@ TEST_F(ObservationTest, reset) {
     EXPECT_EQ(0.0, b.getFloat().first);
     EXPECT_EQ(time_duration(0, 0, 0, 0), c.getDuration().first);
     EXPECT_EQ("", d.getString().first);
+
+    ASSERT_EQ(a.getSize(), 1);
+    ASSERT_EQ(b.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(d.getSize(), 1);
 }
 
 // Checks whether an observation can keep its name.
@@ -544,11 +554,6 @@ TEST_F(ObservationTest, names) {
     EXPECT_EQ("beta", b.getName());
     EXPECT_EQ("gamma", c.getName());
     EXPECT_EQ("delta", d.getName());
-
-    ASSERT_EQ(a.getSize(), 1);
-    ASSERT_EQ(b.getSize(), 1);
-    ASSERT_EQ(c.getSize(), 1);
-    ASSERT_EQ(d.getSize(), 1);
 }
 
 };
