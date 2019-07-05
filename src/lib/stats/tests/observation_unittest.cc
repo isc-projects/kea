@@ -33,11 +33,11 @@ public:
 
     /// @brief Constructor
     /// Initializes four observations.
-    ObservationTest()
-        :a("alpha", static_cast<int64_t>(1234)), // integer
-         b("beta", 12.34), // float
-         c("gamma", millisec::time_duration(1, 2, 3, 4)), // duration
-         d("delta", "1234") { // string
+    ObservationTest() :
+        a("alpha", static_cast<int64_t>(1234)), // integer
+        b("beta", 12.34), // float
+        c("gamma", millisec::time_duration(1, 2, 3, 4)), // duration
+        d("delta", "1234") { // string
     }
 
     Observation a;
@@ -553,6 +553,11 @@ TEST_F(ObservationTest, names) {
     EXPECT_EQ("beta", b.getName());
     EXPECT_EQ("gamma", c.getName());
     EXPECT_EQ("delta", d.getName());
+
+    ASSERT_EQ(a.getSize(), 1);
+    ASSERT_EQ(b.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(d.getSize(), 1);
 }
 
 };

@@ -844,6 +844,8 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCountNegative) {
     rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-setMaxSampleCount", params);
     EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
               rsp->str());
+=======
+>>>>>>> changes addressing coding standards and added extra verification in unittests
 }
 
 // This test checks whether statistic-setMaxSampleAge command really set

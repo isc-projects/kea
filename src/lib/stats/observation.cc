@@ -20,23 +20,23 @@ using namespace boost::posix_time;
 namespace isc {
 namespace stats {
 
-Observation::Observation(const std::string& name, const int64_t value)
-    :name_(name), type_(STAT_INTEGER) {
+Observation::Observation(const std::string& name, const int64_t value) :
+    name_(name), type_(STAT_INTEGER) {
     setValue(value);
 }
 
-Observation::Observation(const std::string& name, const double value)
-    :name_(name), type_(STAT_FLOAT) {
+Observation::Observation(const std::string& name, const double value) :
+    name_(name), type_(STAT_FLOAT) {
     setValue(value);
 }
 
-Observation::Observation(const std::string& name, const StatsDuration& value)
-    :name_(name), type_(STAT_DURATION) {
+Observation::Observation(const std::string& name, const StatsDuration& value) :
+    name_(name), type_(STAT_DURATION) {
     setValue(value);
 }
 
-Observation::Observation(const std::string& name, const std::string& value)
-    :name_(name), type_(STAT_STRING) {
+Observation::Observation(const std::string& name, const std::string& value) :
+    name_(name), type_(STAT_STRING) {
     setValue(value);
 }
 
@@ -177,18 +177,18 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
         // Storing of more than one sample
         storage.push_front(make_pair(value, microsec_clock::local_time()));
 
-        if (max_sample_count.first) {
+        if (max_sample_count_.first) {
             // if max_sample_count is set to true
             // and size of storage is equal to max_sample_count
-            if (storage.size() > max_sample_count.second) {
-                storage.pop_back();    // removing the last element
+            if (storage.size() > max_sample_count_.second) {
+                storage.pop_back(); // removing the last element
             }
         } else {
             StatsDuration range_of_storage =
                 storage.front().second - storage.back().second;
             // removing samples until the range_of_storage
             // stops exceeding the duration limit
-            while (range_of_storage > max_sample_age.second) {
+            while (range_of_storage > max_sample_age_.second) {
                 storage.pop_back();
                 range_of_storage =
                     storage.front().second - storage.back().second;
@@ -271,11 +271,11 @@ void Observation::setMaxSampleAgeInternal(StorageType& storage,
                   << typeToText(exp_type) << ", but the actual type is "
                   << typeToText(type_));
     }
-    // setting new value of max_sample_count
-    max_sample_age.first = true;
-    max_sample_age.second = duration;
+    // setting new value of max_sample_age
+    max_sample_age_.first = true;
+    max_sample_age_.second = duration;
     // deactivating the max_sample_count limit
-    max_sample_count.first = false;
+    max_sample_count_.first = false;
 
     StatsDuration range_of_storage =
         storage.front().second - storage.back().second;
@@ -296,10 +296,10 @@ void Observation::setMaxSampleCountInternal(StorageType& storage,
                   << typeToText(type_));
     }
     // setting new value of max_sample_count
-    max_sample_count.first = true;
-    max_sample_count.second = max_samples;
-    // unactivating the max_sample_age limit
-    max_sample_age.first = false;
+    max_sample_count_.first = true;
+    max_sample_count_.second = max_samples;
+    // deactivating the max_sample_age limit
+    max_sample_age_.first = false;
 
     while (storage.size() > max_samples) {
         // deleting elements which are exceeding the max_samples limit
