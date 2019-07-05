@@ -666,6 +666,7 @@ TEST_F(StatsMgrTest, commandStatisticRemove) {
 
     // It should be gone.
     EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
+    EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
 // Test checks if statistic-remove is able to handle:
@@ -714,6 +715,7 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     EXPECT_FALSE(StatsMgr::instance().getObservation("beta"));
     EXPECT_FALSE(StatsMgr::instance().getObservation("gamma"));
     EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
+    EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
 // This test checks whether statistic-setMaxSampleAge command really set

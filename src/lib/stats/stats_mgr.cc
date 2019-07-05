@@ -25,8 +25,8 @@ StatsMgr& StatsMgr::instance() {
     return (stats_mgr);
 }
 
-StatsMgr::StatsMgr()
-    :global_(new StatContext()) {
+StatsMgr::StatsMgr() :
+    global_(new StatContext()) {
 
 }
 

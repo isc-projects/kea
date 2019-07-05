@@ -33,11 +33,11 @@ public:
 
     /// @brief Constructor
     /// Initializes four observations.
-    ObservationTest()
-        :a("alpha", static_cast<int64_t>(1234)), // integer
-         b("beta", 12.34), // float
-         c("gamma", millisec::time_duration(1, 2, 3, 4)), // duration
-         d("delta", "1234") { // string
+    ObservationTest() :
+        a("alpha", static_cast<int64_t>(1234)), // integer
+        b("beta", 12.34), // float
+        c("gamma", millisec::time_duration(1, 2, 3, 4)), // duration
+        d("delta", "1234") { // string
     }
 
     Observation a;
@@ -128,10 +128,10 @@ TEST_F(ObservationTest, addValue) {
     EXPECT_EQ(millisec::time_duration(6, 8, 10, 12), c.getDuration().first);
     EXPECT_EQ("1234fiveSixSevenEight", d.getString().first);
 
-    ASSERT_EQ(a.getSize(), 1);
-    ASSERT_EQ(b.getSize(), 1);
-    ASSERT_EQ(c.getSize(), 1);
-    ASSERT_EQ(d.getSize(), 1);
+    ASSERT_EQ(a.getSize(), 2);
+    ASSERT_EQ(b.getSize(), 2);
+    ASSERT_EQ(c.getSize(), 2);
+    ASSERT_EQ(d.getSize(), 2);
 }
 
 // This test checks if collecting more than one sample
@@ -153,6 +153,11 @@ TEST_F(ObservationTest, moreThanOne) {
     EXPECT_NO_THROW(b.setValue(56e+78));
     EXPECT_NO_THROW(c.setValue(millisec::time_duration(5, 6, 7, 8)));
     EXPECT_NO_THROW(d.setValue("fiveSixSevenEight"));
+
+    ASSERT_EQ(a.getSize(), 3);
+    ASSERT_EQ(b.getSize(), 3);
+    ASSERT_EQ(c.getSize(), 3);
+    ASSERT_EQ(d.getSize(), 3);
 
     ASSERT_NO_THROW(a.getIntegers());
     ASSERT_NO_THROW(b.getFloats());
@@ -190,6 +195,12 @@ TEST_F(ObservationTest, moreThanOne) {
 // This test checks whether the size of storage
 // is equal to the true value
 TEST_F(ObservationTest, getSize) {
+    // Check if size of storages is equal to 1
+    ASSERT_EQ(a.getSize(), 1);
+    ASSERT_EQ(b.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(d.getSize(), 1);
+
     a.addValue(static_cast<int64_t>(5678));
     b.addValue(56.78);
     c.addValue(millisec::time_duration(5, 6, 7, 8));
@@ -215,6 +226,7 @@ TEST_F(ObservationTest, getSize) {
     EXPECT_NO_THROW(b.getSize());
     EXPECT_NO_THROW(c.getSize());
     EXPECT_NO_THROW(d.getSize());
+
     // Check if size of storages is equal to 3
     ASSERT_EQ(a.getSize(), 3);
     ASSERT_EQ(b.getSize(), 3);
@@ -225,16 +237,17 @@ TEST_F(ObservationTest, getSize) {
 // Checks whether setting amount limits works properly
 TEST_F(ObservationTest, setCountLimit) {
     // Preparing of 21 test's samples for each type of storage
-    int64_t int_samples[21] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-	    14, 15, 16, 17, 18, 19, 20};
-    double float_samples[21] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
+    int64_t int_samples[22] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+	    14, 15, 16, 17, 18, 19, 20, 21};
+    double float_samples[22] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
 	    9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0,
-	    20.0};
-    std::string string_samples[21] = {"a", "b", "c", "d", "e", "f", "g", "h",
-	    "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"};
-    millisec::time_duration duration_samples[21];
+	    20.0, 21.0};
+    std::string string_samples[22] = {"a", "b", "c", "d", "e", "f", "g", "h",
+	    "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
+	    "v"};
+    millisec::time_duration duration_samples[22];
 
-    for (uint32_t i = 0; i < 21; ++i) {
+    for (uint32_t i = 0; i < 22; ++i) {
         duration_samples[i] = millisec::time_duration(0, 0, 0, i);
     }
 
@@ -357,38 +370,22 @@ TEST_F(ObservationTest, setCountLimit) {
 
     i = 21; // index of last element in array of test's samples
     for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
-        if (i == 21) {
-            EXPECT_EQ((*it).first, 21);
-        } else {
-            EXPECT_EQ((*it).first, int_samples[i]);
-        }
+        EXPECT_EQ((*it).first, int_samples[i]);
         --i;
     }
     i = 21; // index of last element in array of test's samples
     for (std::list<FloatSample>::iterator it = samples_float.begin(); it != samples_float.end(); ++it) {
-        if (i == 21) {
-            EXPECT_EQ((*it).first, 21.0);
-        } else {
-            EXPECT_EQ((*it).first, float_samples[i]);
-        }
+        EXPECT_EQ((*it).first, float_samples[i]);
         --i;
     }
     i = 21; // index of last element in array of test's samples
     for (std::list<DurationSample>::iterator it = samples_duration.begin(); it != samples_duration.end(); ++it) {
-        if (i == 21) {
-            EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, 21));
-        } else {
-            EXPECT_EQ((*it).first, duration_samples[i]);
-        }
+        EXPECT_EQ((*it).first, duration_samples[i]);
         --i;
     }
     i = 21; // index of last element in array of test's samples
     for (std::list<StringSample>::iterator it = samples_string.begin(); it != samples_string.end(); ++it) {
-        if (i == 21) {
-            EXPECT_EQ((*it).first, "v");
-        } else {
-            EXPECT_EQ((*it).first, string_samples[i]);
-        }
+        EXPECT_EQ((*it).first, string_samples[i]);
         --i;
     }
 
@@ -412,7 +409,7 @@ TEST_F(ObservationTest, setAgeLimit) {
     // and whether it contains an expected value
     EXPECT_EQ((*samples_duration.begin()).first, millisec::time_duration(0, 0, 0, 3));
 
-    // Wait 1 second to ensure removing previously setted value
+    // Wait 1 second to ensure removing previously set value
     sleep(1);
     // add 10 new values
     for (uint32_t i = 0; i < 10; ++i) {
@@ -547,6 +544,11 @@ TEST_F(ObservationTest, names) {
     EXPECT_EQ("beta", b.getName());
     EXPECT_EQ("gamma", c.getName());
     EXPECT_EQ("delta", d.getName());
+
+    ASSERT_EQ(a.getSize(), 1);
+    ASSERT_EQ(b.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(d.getSize(), 1);
 }
 
 };
