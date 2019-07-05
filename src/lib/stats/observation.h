@@ -344,7 +344,7 @@ private:
     /// True means active limit, false unactive
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    std::pair<bool, uint32_t> max_sample_count = std::make_pair(true,20);
+    std::pair<bool, uint32_t> max_sample_count = std::make_pair(true, 20);
 
     /// @brief Maximum timespan od samples
     /// The limit is represent as a pair
@@ -355,7 +355,7 @@ private:
     /// True means active limit, false unactive
     /// By default the MaxSampleCount is set to 20
     /// and MaxSampleAge is disabled
-    std::pair<bool, StatsDuration> max_sample_age = std::make_pair(false,boost::posix_time::time_duration(0,0,0,0));
+    std::pair<bool, StatsDuration> max_sample_age = std::make_pair(false, boost::posix_time::time_duration(0,0,0,0));
 
     /// @defgroup samples_storage Storage for supported observations
     ///
