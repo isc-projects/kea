@@ -561,29 +561,36 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
     auto tags = server_selector.getTags();
     auto not_in_tags = false;
     for (auto subnet : subnets_) {
+	// Get the pool: if it is not here we can directly go to the next subnet.
         auto pool = subnet->getPool(Lease::TYPE_NA, pool_start_address);
         if (!pool) {
             continue;
         }
+
+	// Verify the subnet is in all or one of the given servers.
         if (!subnet->hasAllServerTag()) {
+	    auto in_tags = false;
             for (auto tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
-                    not_in_tags = true;
+		    in_tags = true;
                     break;
                 }
             }
-            if (not_in_tags) {
+            if (!in_tags) {
+		// Records the fact a subnet was found but not in a server.
+		not_in_tags = true;
                 continue;
             }
         }
 
+	// Update the option.
         pool->getCfgOption()->del(option->space_name_, option->option_->getType());
         pool->getCfgOption()->add(*option, option->space_name_);
 
         return;
     }
 
-    if (!not_in_tags) {
+    if (not_in_tags) {
         isc_throw(BadValue, "attempted to create or update option in "
                   "a non existing pool " << pool_start_address
                   << " - " << pool_end_address);
@@ -603,29 +610,36 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
     auto tags = server_selector.getTags();
     auto not_in_tags = false;
     for (auto subnet : subnets_) {
+	// Get the pd pool: if it is not here we can directly go to the next subnet.
         auto pdpool = subnet->getPool(Lease::TYPE_PD, pd_pool_prefix);
         if (!pdpool) {
             continue;
         }
+
+	// Verify the subnet is in all or one of the given servers.
         if (!subnet->hasAllServerTag()) {
+	    auto in_tags = false;
             for (auto tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
-                    not_in_tags = true;
+                    in_tags = true;
                     break;
                 }
             }
-            if (not_in_tags) {
+            if (!in_tags) {
+		// Records the fact a subnet was found but not in a server.
+		not_in_tags = true;
                 continue;
             }
         }
 
+	// Update the option.
         pdpool->getCfgOption()->del(option->space_name_, option->option_->getType());
         pdpool->getCfgOption()->add(*option, option->space_name_);
 
         return;
     }
 
-    if (!not_in_tags) {
+    if (not_in_tags) {
         isc_throw(BadValue, "attempted to create or update option in "
                   "a non existing prefix pool " << pd_pool_prefix
                   << "/" << static_cast<unsigned>(pd_pool_prefix_length));

@@ -99,10 +99,9 @@ public:
         for (auto tag : tags) {
             // Until the stamped element tags are in a set (vs a vector)
             // we have to avoid duplicates.
-            if (dst->hasServerTag(tag)) {
-                continue;
+            if (!dst->hasServerTag(tag)) {
+                dst->setServerTag(tag.get());
             }
-            dst->setServerTag(tag.get());
         }
     }
 
@@ -116,10 +115,9 @@ public:
         for (auto tag : tags) {
             // Until the stamped element tags are in a set (vs a vector)
             // we have to avoid duplicates.
-            if (elem->hasServerTag(tag)) {
-                continue;
+            if (!elem->hasServerTag(tag)) {
+                elem->setServerTag(tag.get());
             }
-            elem->setServerTag(tag.get());
         }
     }
 
