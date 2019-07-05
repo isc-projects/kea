@@ -138,7 +138,6 @@ TEST_F(ObservationTest, addValue) {
 // This test checks if collecting more than one sample
 // works well.
 TEST_F(ObservationTest, moreThanOne) {
-
     // Arrays of 4 types of samples
     int64_t int_samples[3] = {1234, 6912, 5678};
     double float_samples[3] = {12.34, 69.12, 56e+78};
@@ -167,7 +166,6 @@ TEST_F(ObservationTest, moreThanOne) {
     std::list<StringSample> samples_str = d.getStrings(); // List of all string samples
 
     uint32_t i = 2; // Index pointed to the end of array of samples
-
 
     for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
         EXPECT_EQ(int_samples[i], static_cast<int64_t>((*it).first));
@@ -236,23 +234,24 @@ TEST_F(ObservationTest, setCountLimit) {
     std::string string_samples[21] = {"a", "b", "c", "d", "e", "f", "g", "h",
 	    "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"};
     millisec::time_duration duration_samples[21];
-    for (uint32_t i = 0;i<21;++i) {
+
+    for (uint32_t i = 0; i < 21; ++i) {
         duration_samples[i] = millisec::time_duration(0, 0, 0, i);
     }
 
     // By default the max_sample_count is set to 20 and max_sample_age
     // is deactivated
     // Adding 21 samples to each type of Observation
-    for (uint32_t i = 0;i<21;++i) {
+    for (uint32_t i = 0; i < 21; ++i) {
         a.setValue(int_samples[i]);
     }
-    for (uint32_t i = 0;i<21;++i) {
+    for (uint32_t i = 0; i < 21; ++i) {
         b.setValue(float_samples[i]);
     }
-    for (uint32_t i = 0;i<21;++i) {
+    for (uint32_t i = 0; i < 21; ++i) {
         c.setValue(duration_samples[i]);
     }
-    for (uint32_t i = 0;i<21;++i) {
+    for (uint32_t i = 0; i < 21; ++i) {
         d.setValue(string_samples[i]);
     }
 
