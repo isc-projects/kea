@@ -128,11 +128,14 @@ TEST_F(ObservationTest, addValue) {
     EXPECT_NO_THROW(d.addValue("fiveSixSevenEight"));
 
     EXPECT_EQ(6912, a.getInteger().first);
-    EXPECT_EQ(69.12, b.getFloat().first);    // Check if size of storages is equal to 1
-
+    EXPECT_EQ(69.12, b.getFloat().first);
     EXPECT_EQ(millisec::time_duration(6, 8, 10, 12), c.getDuration().first);
     EXPECT_EQ("1234fiveSixSevenEight", d.getString().first);
 
+    ASSERT_EQ(a.getSize(), 1);
+    ASSERT_EQ(b.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(d.getSize(), 1);
 }
 
 // This test checks if collecting more than one sample
@@ -167,22 +170,22 @@ TEST_F(ObservationTest, moreThanOne) {
 
     uint32_t i = 2; // Index pointed to the end of array of samples
 
-    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+    for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
         EXPECT_EQ(int_samples[i], static_cast<int64_t>((*it).first));
         --i;
     }
     i = 2;
-    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+    for (std::list<FloatSample>::iterator it = samples_float.begin(); it != samples_float.end(); ++it) {
         EXPECT_EQ(float_samples[i], (*it).first);
         --i;
     }
     i = 2;
-    for (std::list<DurationSample>::iterator it=samples_dur.begin(); it != samples_dur.end(); ++it) {
+    for (std::list<DurationSample>::iterator it = samples_dur.begin(); it != samples_dur.end(); ++it) {
         EXPECT_EQ(duration_samples[i], (*it).first);
         --i;
     }
     i = 2;
-    for (std::list<StringSample>::iterator it=samples_str.begin(); it != samples_str.end(); ++it) {
+    for (std::list<StringSample>::iterator it = samples_str.begin(); it != samples_str.end(); ++it) {
         EXPECT_EQ(string_samples[i], (*it).first);
         --i;
     }
@@ -269,22 +272,22 @@ TEST_F(ObservationTest, setCountLimit) {
 
     // And whether storaged values are correct
     uint32_t i = 20; // index of the last element in array of test's samples
-    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+    for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
         EXPECT_EQ((*it).first, int_samples[i]);
         --i;
     }
     i = 20; // index of last element in array of test's samples
-    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+    for (std::list<FloatSample>::iterator it = samples_float.begin(); it != samples_float.end(); ++it) {
         EXPECT_EQ((*it).first, float_samples[i]);
         --i;
     }
     i = 20; // index of last element in array of test's samples
-    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+    for (std::list<DurationSample>::iterator it = samples_duration.begin(); it != samples_duration.end(); ++it) {
         EXPECT_EQ((*it).first, duration_samples[i]);
         --i;
     }
     i = 20; // index of last element in array of test's samples
-    for (std::list<StringSample>::iterator it=samples_string.begin(); it != samples_string.end(); ++it) {
+    for (std::list<StringSample>::iterator it = samples_string.begin(); it != samples_string.end(); ++it) {
         EXPECT_EQ((*it).first, string_samples[i]);
         --i;
     }
@@ -308,22 +311,22 @@ TEST_F(ObservationTest, setCountLimit) {
 
     // And whether storages contain only the 10 newest values
     i = 20; // index of last element in array of test's samples
-    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+    for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
         EXPECT_EQ((*it).first, int_samples[i]);
         --i;
     }
     i = 20; // index of last element in array of test's samples
-    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+    for (std::list<FloatSample>::iterator it = samples_float.begin(); it != samples_float.end(); ++it) {
         EXPECT_EQ((*it).first, float_samples[i]);
         --i;
     }
     i = 20; // index of last element in array of test's samples
-    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+    for (std::list<DurationSample>::iterator it = samples_duration.begin(); it != samples_duration.end(); ++it) {
         EXPECT_EQ((*it).first, duration_samples[i]);
         --i;
     }
     i = 20; // index of last element in array of test's samples
-    for (std::list<StringSample>::iterator it=samples_string.begin(); it != samples_string.end(); ++it) {
+    for (std::list<StringSample>::iterator it = samples_string.begin(); it != samples_string.end(); ++it) {
         EXPECT_EQ((*it).first, string_samples[i]);
         --i;
     }
@@ -357,7 +360,7 @@ TEST_F(ObservationTest, setCountLimit) {
     ASSERT_EQ(d.getSize(), 11);
 
     i = 21; // index of last element in array of test's samples
-    for (std::list<IntegerSample>::iterator it=samples_int.begin(); it != samples_int.end(); ++it) {
+    for (std::list<IntegerSample>::iterator it = samples_int.begin(); it != samples_int.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, 21);
         }
@@ -367,7 +370,7 @@ TEST_F(ObservationTest, setCountLimit) {
         --i;
     }
     i = 21; // index of last element in array of test's samples
-    for (std::list<FloatSample>::iterator it=samples_float.begin(); it != samples_float.end(); ++it) {
+    for (std::list<FloatSample>::iterator it = samples_float.begin(); it != samples_float.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, 21.0);
         }
@@ -377,7 +380,7 @@ TEST_F(ObservationTest, setCountLimit) {
         --i;
     }
     i = 21; // index of last element in array of test's samples
-    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+    for (std::list<DurationSample>::iterator it = samples_duration.begin(); it != samples_duration.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, 21));
         }
@@ -387,7 +390,7 @@ TEST_F(ObservationTest, setCountLimit) {
         --i;
     }
     i = 21; // index of last element in array of test's samples
-    for (std::list<StringSample>::iterator it=samples_string.begin(); it != samples_string.end(); ++it) {
+    for (std::list<StringSample>::iterator it = samples_string.begin(); it != samples_string.end(); ++it) {
         if (i == 21) {
             EXPECT_EQ((*it).first, "v");
         }
@@ -432,7 +435,7 @@ TEST_F(ObservationTest, setAgeLimit) {
 
     // and whether it contains expected values
     uint32_t i = 9;
-    for (std::list<DurationSample>::iterator it=samples_duration.begin(); it != samples_duration.end(); ++it) {
+    for (std::list<DurationSample>::iterator it = samples_duration.begin(); it != samples_duration.end(); ++it) {
         EXPECT_EQ((*it).first, millisec::time_duration(0, 0, 0, i));
         --i;
     }

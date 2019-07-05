@@ -158,6 +158,7 @@ size_t StatsMgr::getSize(const std::string& name) const {
     }
     return (size);
 }
+
 size_t StatsMgr::count() const {
     return (global_->stats_.size());
 }

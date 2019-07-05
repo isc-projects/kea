@@ -48,7 +48,6 @@ public:
 
 // Basic test for statistics manager interface.
 TEST_F(StatsMgrTest, basic) {
-
     // Getting an instance
     EXPECT_NO_THROW(StatsMgr::instance());
 
@@ -121,7 +120,6 @@ TEST_F(StatsMgrTest, stringStat) {
 
 // Basic test of getSize function.
 TEST_F(StatsMgrTest, getSize) {
-
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
     StatsMgr::instance().setValue("gamma", microsec::time_duration(1, 2, 3, 4));
@@ -144,7 +142,7 @@ TEST_F(StatsMgrTest, setLimits) {
     StatsMgr::instance().setValue("foo", static_cast<int64_t>(1));
 
     EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleAge("foo",
-                                                time_duration(0, 0, 1, 0)));
+                                                         time_duration(0, 0, 1, 0)));
 
     for (uint32_t i = 0; i < 10; ++i) {
         if (i == 5) {
@@ -155,6 +153,7 @@ TEST_F(StatsMgrTest, setLimits) {
 
     EXPECT_EQ(StatsMgr::instance().getSize("foo"), 5);
     EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleCount("foo", 100));
+
     for (int64_t i = 0; i < 200; ++i) {
         StatsMgr::instance().setValue("foo", i);
     }
@@ -165,7 +164,6 @@ TEST_F(StatsMgrTest, setLimits) {
 // This test checks whether a single (get("foo")) and all (getAll())
 // statistics are reported properly.
 TEST_F(StatsMgrTest, getGetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
@@ -249,7 +247,6 @@ TEST_F(StatsMgrTest, getGetAll) {
 
 // This test checks whether existing statistics can be reset.
 TEST_F(StatsMgrTest, reset) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
@@ -285,7 +282,6 @@ TEST_F(StatsMgrTest, reset) {
 
 // This test checks whether existing statistics can be reset.
 TEST_F(StatsMgrTest, resetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
@@ -309,7 +305,6 @@ TEST_F(StatsMgrTest, resetAll) {
 
 // This test checks whether statistics can be removed.
 TEST_F(StatsMgrTest, removeAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
@@ -480,7 +475,6 @@ TEST_F(StatsMgrTest, commandStatisticGet) {
 // - a request with missing statistic name
 // - a request for non-existing statistic.
 TEST_F(StatsMgrTest, commandStatisticGetNegative) {
-
     // Case 1: a request without parameters
     ConstElementPtr rsp = StatsMgr::instance().statisticGetHandler("statistic-get",
                                                                    ElementPtr());
@@ -503,7 +497,6 @@ TEST_F(StatsMgrTest, commandStatisticGetNegative) {
 // This test checks whether statistic-get-all command returns all statistics
 // correctly.
 TEST_F(StatsMgrTest, commandGetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
@@ -584,7 +577,6 @@ TEST_F(StatsMgrTest, commandStatisticReset) {
 // - a request with missing statistic name
 // - a request for non-existing statistic.
 TEST_F(StatsMgrTest, commandStatisticResetNegative) {
-
     // Case 1: a request without parameters
     ConstElementPtr rsp =
         StatsMgr::instance().statisticResetHandler("statistic-reset", ElementPtr());
@@ -608,7 +600,6 @@ TEST_F(StatsMgrTest, commandStatisticResetNegative) {
 // This test checks whether statistic-reset-all command really resets all
 // statistics correctly.
 TEST_F(StatsMgrTest, commandResetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
@@ -680,7 +671,6 @@ TEST_F(StatsMgrTest, commandStatisticRemove) {
 // - a request with missing statistic name
 // - a request for non-existing statistic.
 TEST_F(StatsMgrTest, commandStatisticRemoveNegative) {
-
     // Case 1: a request without parameters
     ConstElementPtr rsp =
         StatsMgr::instance().statisticRemoveHandler("statistic-remove", ElementPtr());
@@ -704,7 +694,6 @@ TEST_F(StatsMgrTest, commandStatisticRemoveNegative) {
 // This test checks whether statistic-remove-all command really resets all
 // statistics correctly.
 TEST_F(StatsMgrTest, commandRemoveAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);

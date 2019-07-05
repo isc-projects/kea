@@ -352,7 +352,6 @@ Observation::getJSON() const {
             entry->add(value);
             entry->add(timestamp);
         }
-
         break;
     }
     case STAT_FLOAT: {
