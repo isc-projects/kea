@@ -332,7 +332,6 @@ private:
     void setMaxSampleCountInternal(StorageType& storage,
                                    uint32_t max_samples, Type exp_type);
 
-
     /// @brief Observation (statistic) name
     std::string name_;
 
