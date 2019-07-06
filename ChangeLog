@@ -1,6 +1,6 @@
 1614.	[func]		marcin
 	Add support for associating the DHCP option definitions with
-        the server tags in the mysql_cb hooks library.
+	the server tags in the mysql_cb hooks library.
 	(Gitlab #715,!411, git 5511725555138213de4f48dc1091d65b5db47034)
 
 1613.	[func]		marcin
