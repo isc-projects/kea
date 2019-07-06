@@ -1453,24 +1453,59 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
 // Test that shared network can be inserted, fetched, updated and then
 // fetched again.
 TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
-    // Insert new shared network.
-    SharedNetwork6Ptr shared_network = test_networks_[0];
-    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network);
+    // Insert the server2 into the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
 
-    // Fetch this shared network by name.
-    SharedNetwork6Ptr
-        returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(),
-                                                     test_networks_[0]->getName());
-    ASSERT_TRUE(returned_network);
+    auto shared_network = test_networks_[0];
+    auto shared_network2 = test_networks_[2];
 
-    EXPECT_GT(returned_network->getId(), 0);
-    ASSERT_EQ(1, returned_network->getServerTags().size());
-    EXPECT_EQ("all", returned_network->getServerTags()[0].get());
+    // Insert two shared networks, one for all servers, and one for server2.
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
+                                                       shared_network));
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server2"),
+                                                       shared_network2));
 
-    // The easiest way to verify whether the returned shared network matches the
-    // inserted shared network is to convert both to text.
-    EXPECT_EQ(shared_network->toElement()->str(),
-              returned_network->toElement()->str());
+    // We are not going to support selection of a single entry for multiple servers.
+    EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           test_networks_[0]->getName()),
+                 isc::InvalidOperation);
+    // We currently don't support fetching a shared network which is assigned
+    // to no servers.
+    EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::UNASSIGNED(),
+                                           test_networks_[0]->getName()),
+                 isc::NotImplemented);
+
+    // Test that this shared network will be fetched for various server selectors.
+    auto test_get_network = [this, &shared_network] (const std::string& test_case_name,
+                                                     const ServerSelector& server_selector,
+                                                     const std::string& expected_tag = ServerTag::ALL) {
+        SCOPED_TRACE(test_case_name);
+        SharedNetwork6Ptr network;
+        ASSERT_NO_THROW(network = cbptr_->getSharedNetwork6(server_selector,
+                                                            shared_network->getName()));
+        ASSERT_TRUE(network);
+
+        EXPECT_GT(network->getId(), 0);
+        ASSERT_EQ(1, network->getServerTags().size());
+        EXPECT_EQ(expected_tag, network->getServerTags()[0].get());
+
+        // The easiest way to verify whether the returned shared network matches the
+        // inserted shared network is to convert both to text.
+        EXPECT_EQ(shared_network->toElement()->str(), network->toElement()->str());
+    };
+
+    {
+        SCOPED_TRACE("testing various server selectors before update");
+        test_get_network("all servers", ServerSelector::ALL());
+        test_get_network("one server", ServerSelector::ONE("server1"));
+        test_get_network("any server", ServerSelector::ANY());
+    }
 
     {
         SCOPED_TRACE("CREATE audit entry for a shared network");
@@ -1480,14 +1515,16 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
     }
 
     // Update shared network in the database.
-    SharedNetwork6Ptr shared_network2 = test_networks_[1];
-    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), shared_network2);
+    shared_network = test_networks_[1];
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
+                                                       shared_network));
 
-    // Fetch updated shared network and see if it matches.
-    returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(),
-                                                 test_networks_[1]->getName());
-    EXPECT_EQ(shared_network2->toElement()->str(),
-              returned_network->toElement()->str());
+    {
+        SCOPED_TRACE("testing various server selectors after update");
+        test_get_network("all servers after update", ServerSelector::ALL());
+        test_get_network("one server after update", ServerSelector::ONE("server1"));
+        test_get_network("any server after update", ServerSelector::ANY());
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a shared network");
@@ -1496,12 +1533,69 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
                           "shared network set");
     }
 
-    // Fetching the shared network for an explicitly specified server tag should
-    // succeed too.
-    returned_network = cbptr_->getSharedNetwork6(ServerSelector::ONE("server1"),
-                                                 shared_network2->getName());
-    EXPECT_EQ(shared_network2->toElement()->str(),
-              returned_network->toElement()->str());
+    // The server2 specific shared network should not be returned if the
+    // server selector is not matching.
+    EXPECT_FALSE(cbptr_->getSharedNetwork6(ServerSelector::ALL(),
+                                           shared_network2->getName()));
+    EXPECT_FALSE(cbptr_->getSharedNetwork6(ServerSelector::ONE("server1"),
+                                           shared_network2->getName()));
+
+    {
+        SCOPED_TRACE("testing selectors for server2 specific shared network");
+        shared_network = shared_network2;
+        test_get_network("one server", ServerSelector::ONE("server2"), "server2");
+        test_get_network("any server", ServerSelector::ANY(), "server2");
+    }
+}
+
+// Test that shared network may be created and updated and the server tags
+// are properly assigned to it.
+TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6) {
+    // Insert the server1 into the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    // Insert the server2 into the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp6_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    auto shared_network = test_networks_[0];
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
+                                                       shared_network));
+    {
+        SCOPED_TRACE("CREATE audit entry for shared network and ALL servers");
+        testNewAuditEntry("dhcp6_shared_network",
+                          AuditEntry::ModificationType::CREATE,
+                          "shared network set");
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                       shared_network));
+    {
+        SCOPED_TRACE("UPDATE audit entry for shared network and MULTIPLE servers");
+        testNewAuditEntry("dhcp6_shared_network",
+                          AuditEntry::ModificationType::UPDATE,
+                          "shared network set");
+    }
+
+    SharedNetwork6Ptr network;
+    ASSERT_NO_THROW(network = cbptr_->getSharedNetwork6(ServerSelector::ANY(),
+                                                        shared_network->getName()));
+    ASSERT_TRUE(network);
+    EXPECT_TRUE(network->hasServerTag(ServerTag("server1")));
+    EXPECT_TRUE(network->hasServerTag(ServerTag("server2")));
+    EXPECT_FALSE(network->hasServerTag(ServerTag()));
 }
 
 // Test that the information about unspecified optional parameters gets
@@ -2552,14 +2646,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
                           "subnet specific option set");
     }
 
-    // Deleting an option with explicitly specified server tag should fail.
-    EXPECT_EQ(0, cbptr_->deleteOption6(ServerSelector::ONE("server1"),
-                                       subnet->getID(),
-                                       opt_posix_timezone->option_->getType(),
-                                       opt_posix_timezone->space_name_));
-
-    // It should succeed for all servers.
-    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ALL(), subnet->getID(),
+    // It should succeed for any server.
+    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(), subnet->getID(),
                                        opt_posix_timezone->option_->getType(),
                                        opt_posix_timezone->space_name_));
 
@@ -2664,15 +2752,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
                           "address pool specific option set");
     }
 
-    // Deleting an option with explicitly specified server tag should fail.
-    EXPECT_EQ(0, cbptr_->deleteOption6(ServerSelector::ONE("server1"),
-                                       pool->getFirstAddress(),
-                                       pool->getLastAddress(),
-                                       opt_posix_timezone->option_->getType(),
-                                       opt_posix_timezone->space_name_));
-
-    // Delete option for all servers should succeed.
-    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ALL(),
+    // Delete option for any server should succeed.
+    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
                                        pool->getFirstAddress(),
                                        pool->getLastAddress(),
                                        opt_posix_timezone->option_->getType(),
@@ -2791,15 +2872,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
                           "prefix delegation pool specific option set");
     }
 
-    // Deleting an option with explicitly specified server tag should fail.
-    EXPECT_EQ(0, cbptr_->deleteOption6(ServerSelector::ONE("server1"),
-                                       pd_pool->getFirstAddress(),
-                                       static_cast<uint8_t>(pd_pool_len),
-                                       opt_posix_timezone->option_->getType(),
-                                       opt_posix_timezone->space_name_));
-
-    // Delete option for all servers should succeed.
-    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ALL(),
+    // Delete option for any server should succeed.
+    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
                                        pd_pool->getFirstAddress(),
                                        static_cast<uint8_t>(pd_pool_len),
                                        opt_posix_timezone->option_->getType(),
@@ -2902,14 +2976,8 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
                           "shared network specific option set");
     }
 
-    // Deleting an option with explicitly specified server tag should fail.
-    EXPECT_EQ(0, cbptr_->deleteOption6(ServerSelector::ONE("server1"),
-                                       shared_network->getName(),
-                                       opt_posix_timezone->option_->getType(),
-                                       opt_posix_timezone->space_name_));
-
-    // Deleting an option for all servers should succeed.
-    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ALL(),
+    // Deleting an option for any server should succeed.
+    EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
                                        shared_network->getName(),
                                        opt_posix_timezone->option_->getType(),
                                        opt_posix_timezone->space_name_));

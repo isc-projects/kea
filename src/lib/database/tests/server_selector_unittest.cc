@@ -61,4 +61,14 @@ TEST(ServerSelectorTest, multiple) {
     EXPECT_TRUE(selector.hasMultipleTags());
 }
 
+// Check that server selector can be set to ALL.
+TEST(ServerSelectorTest, any) {
+    ServerSelector selector = ServerSelector::ANY();
+    EXPECT_EQ(ServerSelector::Type::ANY, selector.getType());
+    EXPECT_FALSE(selector.amUnassigned());
+
+    auto tags = selector.getTags();
+    EXPECT_EQ(0, tags.size());
+}
+
 }

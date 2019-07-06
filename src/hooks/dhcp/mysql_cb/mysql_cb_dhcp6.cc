@@ -68,7 +68,8 @@ public:
         GET_SHARED_NETWORK_SUBNETS6,
         GET_POOL6_RANGE,
         GET_PD_POOL,
-        GET_SHARED_NETWORK6_NAME,
+        GET_SHARED_NETWORK6_NAME_WITH_TAG,
+        GET_SHARED_NETWORK6_NAME_NO_TAG,
         GET_ALL_SHARED_NETWORKS6,
         GET_MODIFIED_SHARED_NETWORKS6,
         GET_OPTION_DEF6_CODE_SPACE,
@@ -118,6 +119,7 @@ public:
         DELETE_PD_POOLS_SUBNET_ID,
         DELETE_SHARED_NETWORK6_NAME,
         DELETE_ALL_SHARED_NETWORKS6,
+        DELETE_SHARED_NETWORK6_SERVER,
         DELETE_OPTION_DEF6_CODE_NAME,
         DELETE_ALL_OPTION_DEFS6,
         DELETE_ALL_OPTION_DEFS6_UNASSIGNED,
@@ -214,18 +216,12 @@ public:
             // Let's first get the primary key of the global parameter.
             uint64_t id = mysql_insert_id(conn_.mysql_);
 
-            // Create bindings for inserting the association into
-            // dhcp6_global_parameter_server table.
-            MySqlBindingCollection in_server_bindings = {
-                MySqlBinding::createInteger<uint64_t>(id), // parameter_id
-                MySqlBinding::createString(tag), // tag used to obtain server_id
-                MySqlBinding::createTimestamp(value->getModificationTime()), // modification_ts
-            };
-
-            // Insert association.
-            conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_GLOBAL_PARAMETER6_SERVER,
-                              in_server_bindings);
-
+            // Successfully inserted global parameter. Now, we have to associate it
+            // with the server tag.
+            attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_GLOBAL_PARAMETER6_SERVER,
+                                   server_selector,
+                                   MySqlBinding::createInteger<uint64_t>(id),
+                                   MySqlBinding::createTimestamp(value->getModificationTime()));
         }
 
         transaction.commit();
@@ -1003,22 +999,16 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6,
                               in_bindings);
 
-            // Create bindings for inserting the association into
-            // dhcp6_subnet_server table.
-            MySqlBindingCollection in_server_bindings = {
-                MySqlBinding::createInteger<uint32_t>(subnet->getID()), // subnet_id
-                MySqlBinding::createString(tag), // tag used to obtain server_id
-                MySqlBinding::createTimestamp(subnet->getModificationTime()), // modification_ts
-            };
-
-            // Insert association.
-            conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
-                              in_server_bindings);
+            // Insert associations with the servers.
+            attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
+                                   server_selector,
+                                   MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+                                   MySqlBinding::createTimestamp(subnet->getModificationTime()));
 
         } catch (const DuplicateEntry&) {
             deletePools6(subnet);
             deletePdPools6(subnet);
-            deleteOptions6(server_selector, subnet);
+            deleteOptions6(ServerSelector::ANY(), subnet);
 
             // Need to add two more bindings for WHERE clause.
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet->getID()));
@@ -1258,9 +1248,11 @@ public:
 
         uint64_t last_network_id = 0;
         uint64_t last_option_id = 0;
+        std::string last_tag;
 
         conn_.selectQuery(index, in_bindings, out_bindings,
-                          [this, &shared_networks, &last_network_id, &last_option_id]
+                          [this, &shared_networks, &last_network_id, &last_option_id,
+                           &last_tag]
                           (MySqlBindingCollection& out_bindings) {
             SharedNetwork6Ptr last_network;
             if (!shared_networks.empty()) {
@@ -1271,6 +1263,10 @@ public:
             // row points to the next shared network we use the data in the
             // row to create the new shared network instance.
             if (last_network_id != out_bindings[0]->getInteger<uint64_t>()) {
+
+                // Reset last server tag as we're now starting to process new
+                // shared network.
+                last_tag.clear();
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
                 last_network = SharedNetwork6::create(out_bindings[1]->getString());
@@ -1392,9 +1388,6 @@ public:
 
                 // {min,max)_valid_lifetime
 
-                // server_tag
-                last_network->setServerTag(out_bindings[35]->getString());
-
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
 
@@ -1416,6 +1409,15 @@ public:
                     last_network->getCfgOption()->add(*desc, desc->space_name_);
                 }
             }
+
+            // Check for new server tags.
+            if (!out_bindings[35]->amNull() &&
+                (last_tag != out_bindings[35]->getString())) {
+                last_tag = out_bindings[35]->getString();
+                if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
+                    last_network->setServerTag(last_tag);
+                }
+            }
         });
     }
 
@@ -1434,15 +1436,20 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        auto tag = getServerTag(server_selector, "fetching shared network");
+        MySqlBindingCollection in_bindings;
+        auto index = GET_SHARED_NETWORK6_NAME_NO_TAG;
 
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
-            MySqlBinding::createString(name)
-        };
+        if (!server_selector.amAny()) {
+            auto tag = getServerTag(server_selector, "fetching shared network");
+            in_bindings.push_back(MySqlBinding::createString(tag));
+
+            index = GET_SHARED_NETWORK6_NAME_WITH_TAG;
+        }
+
+        in_bindings.push_back(MySqlBinding::createString(name));
 
         SharedNetwork6Collection shared_networks;
-        getSharedNetworks6(GET_SHARED_NETWORK6_NAME, in_bindings, shared_networks);
+        getSharedNetworks6(index, in_bindings, shared_networks);
 
         return (shared_networks.empty() ? SharedNetwork6Ptr() : *shared_networks.begin());
     }
@@ -1498,8 +1505,6 @@ public:
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
         }
-
-        auto tag = getServerTag(server_selector, "creating or updating shared network");
 
         // Create binding for host reservation mode.
         MySqlBindingPtr hr_mode_binding;
@@ -1563,27 +1568,26 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6,
                               in_bindings);
 
-            // Create bindings for inserting association into dhcp6_shared_network_server
-            // table.
-            MySqlBindingCollection in_server_bindings = {
-                MySqlBinding::createString(shared_network->getName()), // shared network name
-                MySqlBinding::createString(tag), // server tag
-                MySqlBinding::createTimestamp(shared_network->getModificationTime()), // modification_ts
-            };
-
-            // Insert association.
-            conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
-                              in_server_bindings);
-
-
         } catch (const DuplicateEntry&) {
-            deleteOptions6(server_selector, shared_network);
+            deleteOptions6(ServerSelector::ANY(), shared_network);
 
             // Need to add one more binding for WHERE clause.
             in_bindings.push_back(MySqlBinding::createString(shared_network->getName()));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_SHARED_NETWORK6,
                                     in_bindings);
+
+            MySqlBindingCollection in_server_bindings = {
+                MySqlBinding::createString(shared_network->getName())
+            };
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_SERVER,
+                                    in_server_bindings);
+
         }
+
+        attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
+                               server_selector,
+                               MySqlBinding::createString(shared_network->getName()),
+                               MySqlBinding::createTimestamp(shared_network->getModificationTime()));
 
         // (Re)create options.
         auto option_spaces = shared_network->getCfgOption()->getOptionSpaceNames();
@@ -1613,19 +1617,11 @@ public:
         conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_OPTION6,
                           in_bindings);
 
-        // Fetch unique identifier of the inserted option.
-        uint64_t id = mysql_insert_id(conn_.mysql_);
-
-        // Create bindings needed to insert association of that option with
-        // a server into the dhcp6_options_server table.
-        MySqlBindingCollection in_server_bindings = {
-            MySqlBinding::createInteger<uint64_t>(id), // option_id
-            MySqlBinding::createString(server_selector.getTags().begin()->get()), // server_tag
-            in_bindings[11] // copy modification timestamp from option
-        };
-
-        conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_OPTION6_SERVER,
-                          in_server_bindings);
+        // Associate the option with the servers.
+        attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_OPTION6_SERVER,
+                               server_selector,
+                               MySqlBinding::createInteger<uint64_t>(mysql_insert_id(conn_.mysql_)),
+                               in_bindings[11]);
     }
 
     /// @brief Sends query to insert or update global DHCP option.
@@ -1920,9 +1916,6 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        auto tag = getServerTag(server_selector, "creating or updating shared"
-                                " network level option");
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -1937,7 +1930,6 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
             MySqlBinding::createNull(),
-            MySqlBinding::createString(tag),
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
             MySqlBinding::condCreateString(option->space_name_)
@@ -1962,8 +1954,8 @@ public:
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
                                     UPDATE_OPTION6_SHARED_NETWORK,
                                     in_bindings) == 0) {
-            // Remove the 4 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 4);
+            // Remove the 3 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 3);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -2390,18 +2382,23 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Select shared network by name.
-    { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK6_NAME,
-      MYSQL_GET_SHARED_NETWORK6(AND n.name = ?)
+    { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK6_NAME_WITH_TAG,
+      MYSQL_GET_SHARED_NETWORK6_WITH_TAG(AND n.name = ?)
+    },
+
+    // Select shared network by name without filtering by server tag.
+    { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK6_NAME_NO_TAG,
+      MYSQL_GET_SHARED_NETWORK6_NO_TAG(WHERE n.name = ?)
     },
 
     // Select all shared networks.
     { MySqlConfigBackendDHCPv6Impl::GET_ALL_SHARED_NETWORKS6,
-      MYSQL_GET_SHARED_NETWORK6()
+      MYSQL_GET_SHARED_NETWORK6_WITH_TAG()
     },
 
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SHARED_NETWORKS6,
-      MYSQL_GET_SHARED_NETWORK6(AND n.modification_ts > ?)
+      MYSQL_GET_SHARED_NETWORK6_WITH_TAG(AND n.modification_ts > ?)
     },
 
     // Retrieves option definition by code and space.
@@ -2646,27 +2643,27 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing global option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
-      MYSQL_UPDATE_OPTION6(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
     },
 
     // Update existing subnet level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
-      MYSQL_UPDATE_OPTION6(AND o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing pool level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID,
-      MYSQL_UPDATE_OPTION6(AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing pd pool level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID,
-      MYSQL_UPDATE_OPTION6(AND o.scope_id = 6 AND o.pd_pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 6 AND o.pd_pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SHARED_NETWORK,
-      MYSQL_UPDATE_OPTION6(AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing server, e.g. server description.
@@ -2724,6 +2721,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_SHARED_NETWORK(dhcp6)
     },
 
+    // Delete associations of a shared network with server.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_SERVER,
+      MYSQL_DELETE_SHARED_NETWORK_SERVER(dhcp6)
+    },
+
     // Delete option definition.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION_DEF6_CODE_NAME,
       MYSQL_DELETE_OPTION_DEF(dhcp6, AND code = ? AND space = ?)
@@ -2741,7 +2743,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete single global option.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6,
-      MYSQL_DELETE_OPTION(dhcp6, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
     },
 
     // Delete all global options which are unassigned to any servers.
@@ -2751,34 +2753,34 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete single option from a subnet.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SUBNET_ID,
-      MYSQL_DELETE_OPTION(dhcp6,
-                          AND o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_NO_TAG(dhcp6,
+                          WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Delete single option from a pool.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_POOL_RANGE,
-      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp6, AND o.scope_id = 5 AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp6, o.scope_id = 5 AND o.code = ? AND o.space = ?)
     },
 
     // Delete single option from a pd pool.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_PD_POOL,
-      MYSQL_DELETE_OPTION_PD_POOL(AND o.scope_id = 6 AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_PD_POOL(o.scope_id = 6 AND o.code = ? AND o.space = ?)
     },
 
     // Delete single option from a shared network.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SHARED_NETWORK,
-      MYSQL_DELETE_OPTION(dhcp6,
-                          AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_NO_TAG(dhcp6,
+                          WHERE o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
     // Delete options belonging to a subnet.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SUBNET_ID,
-      MYSQL_DELETE_OPTION(dhcp6, AND o.scope_id = 1 AND o.dhcp6_subnet_id = ?)
+      MYSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ?)
     },
 
     // Delete options belonging to a shared_network.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SHARED_NETWORK,
-      MYSQL_DELETE_OPTION(dhcp6, AND o.scope_id = 4 AND o.shared_network_name = ?)
+      MYSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 4 AND o.shared_network_name = ?)
     },
 
     // Delete a server by tag.
@@ -3234,9 +3236,12 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const std::string& shared_network_name,
                                         const uint16_t code,
                                         const std::string& space) {
+    /// @todo In the future we might use the server selector to make sure that the
+    /// option is only deleted if the pool belongs to a given server. For now, we
+    /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6)
         .arg(shared_network_name).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(server_selector, shared_network_name,
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), shared_network_name,
                                            code, space);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6_RESULT)
         .arg(result);
@@ -3244,27 +3249,33 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
+MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector */,
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
                                         const std::string& space) {
+    /// @todo In the future we might use the server selector to make sure that the
+    /// option is only deleted if the pool belongs to a given server. For now, we
+    /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6)
         .arg(subnet_id).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(server_selector, subnet_id, code, space);
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), subnet_id, code, space);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6_RESULT)
         .arg(result);
     return (result);
 }
 
 uint64_t
-MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
+MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector */,
                                         const asiolink::IOAddress& pool_start_address,
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
                                         const std::string& space) {
+    /// @todo In the future we might use the server selector to make sure that the
+    /// option is only deleted if the pool belongs to a given server. For now, we
+    /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6)
         .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(server_selector, pool_start_address, pool_end_address,
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pool_start_address, pool_end_address,
                                            code, space);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6_RESULT)
         .arg(result);
@@ -3272,14 +3283,14 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
+MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector */,
                                         const asiolink::IOAddress& pd_pool_prefix,
                                         const uint8_t pd_pool_prefix_length,
                                         const uint16_t code,
                                         const std::string& space) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6)
         .arg(pd_pool_prefix.toText()).arg(pd_pool_prefix_length).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(server_selector, pd_pool_prefix,
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pd_pool_prefix,
                                            pd_pool_prefix_length, code, space);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6_RESULT)
         .arg(result);

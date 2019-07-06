@@ -50,7 +50,8 @@ public:
     enum class Type {
         UNASSIGNED,
         ALL,
-        SUBSET
+        SUBSET,
+        ANY
     };
 
     /// @brief Factory returning "unassigned" server selector.
@@ -79,6 +80,12 @@ public:
     /// @throw InvalidOperation if no server tags provided.
     static ServerSelector MULTIPLE(const std::set<std::string>& server_tags);
 
+    /// @brief Factory returning "any server" selector.
+    static ServerSelector ANY() {
+        ServerSelector selector(Type::ANY);
+        return (selector);
+    }
+
     /// @brief Returns type of the selector.
     Type getType() const {
         return (type_);
@@ -97,6 +104,13 @@ public:
     /// @return true if the selector is "unassigned", false otherwise.
     bool amUnassigned() const {
         return (getType() == Type::UNASSIGNED);
+    }
+
+    /// @brief Convenience method checking if the server selector is "any".
+    ///
+    /// @return true if the selector is "any", false otherwise.
+    bool amAny() const {
+        return (getType() == Type::ANY);
     }
 
     /// @brief Convenience method checking if the server selector has multiple tags.

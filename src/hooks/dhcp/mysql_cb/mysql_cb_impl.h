@@ -266,9 +266,11 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        auto tag = getServerTag(server_selector, operation);
-
-        in_bindings.insert(in_bindings.begin(), db::MySqlBinding::createString(tag));
+        // For ANY server, we use queries that lack server tag.
+        if (!server_selector.amAny()) {
+            auto tag = getServerTag(server_selector, operation);
+            in_bindings.insert(in_bindings.begin(), db::MySqlBinding::createString(tag));
+        }
 
         return (conn_.updateDeleteQuery(index, in_bindings));
     }
@@ -547,6 +549,19 @@ public:
     OptionDescriptorPtr
     processOptionRow(const Option::Universe& universe,
                      db::MySqlBindingCollection::iterator first_binding);
+
+    /// @brief Associates a configuration element with multiple servers.
+    ///
+    /// @param index Query index.
+    /// @param server_selector Server selector, perhaps with multiple server tags.
+    /// @param first_binding First binding to be used in the query.
+    /// @param in_bindings Parameter pack holding bindings for the query. Note that
+    /// the server tag (or server id) must be the last binding in the prepared
+    /// statement. The caller must not include this binding in the parameter pack.
+    void attachElementToServers(const int index,
+                                const db::ServerSelector& server_selector,
+                                const db::MySqlBindingPtr& first_binding,
+                                const db::MySqlBindingPtr& in_bindings...);
 
     /// @brief Creates input binding for relay addresses.
     ///

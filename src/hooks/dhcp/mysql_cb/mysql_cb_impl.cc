@@ -160,8 +160,17 @@ MySqlConfigBackendImpl::createAuditRevision(const int index,
         return;
     }
 
-    auto tag = getServerTag(server_selector, "creating new configuration "
-                            "audit revision");
+    /// @todo The audit trail is not really well prepared to handle multiple server
+    /// tags or no server tags. Therefore, if the server selector appears to be
+    /// pointing to multiple servers, no servers or any server we simply associate the
+    /// audit revision with all servers. The only case when we create a dedicated
+    /// audit entry is when there is a single server tag, i.e. "all" or explicit
+    /// server name. In fact, these are the most common two cases.
+    std::string tag = ServerTag::ALL;
+    auto tags = server_selector.getTags();
+    if (tags.size() == 1) {
+        tag = tags.begin()->get();
+    }
 
     MySqlBindingCollection in_bindings = {
         MySqlBinding::createTimestamp(audit_ts),
@@ -557,14 +566,11 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
         // as input to the next query.
         uint64_t id = mysql_insert_id(conn_.mysql_);
 
-        MySqlBindingCollection in_server_bindings = {
-            MySqlBinding::createInteger<uint64_t>(id), // option_def_id
-            MySqlBinding::createString(tag), // tag used to obtain server_id
-            MySqlBinding::createTimestamp(option_def->getModificationTime()), // modification_ts
-        };
-
-        // Insert association.
-        conn_.insertQuery(insert_option_def_server, in_server_bindings);
+        // Insert associations of the option definition with servers.
+        attachElementToServers(insert_option_def_server,
+                               server_selector,
+                               MySqlBinding::createInteger<uint64_t>(id),
+                               MySqlBinding::createTimestamp(option_def->getModificationTime()));
     }
 
     transaction.commit();
@@ -883,6 +889,20 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     }
 
     return (desc);
+}
+
+void
+MySqlConfigBackendImpl::attachElementToServers(const int index,
+                                               const ServerSelector& server_selector,
+                                               const MySqlBindingPtr& first_binding,
+                                               const MySqlBindingPtr& in_bindings...) {
+    // Create the vector from the parameter pack.
+    MySqlBindingCollection in_server_bindings = { first_binding, in_bindings };
+    for (auto tag : server_selector.getTags()) {
+        in_server_bindings.push_back(MySqlBinding::createString(tag.get()));
+        conn_.insertQuery(index, in_server_bindings);
+        in_server_bindings.pop_back();
+    }
 }
 
 MySqlBindingPtr
