@@ -540,21 +540,6 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
 
     MySqlTransaction transaction(conn_);
 
-    // Need to check if this definition already exists. We can't follow
-    // the same pattern as for shared networks and subnets, to try to insert
-    // the definition first and fall back to update if the DuplicateEntry
-    // exception is thrown, because the option code/space is not unique
-    // within the dhcpX_option_def table. Inserting another option definition
-    // with existing option code/name would not violate the key and the
-    // option definition instance would be inserted successfully. Therefore,
-    // we first fetch the option definition for the given server, code and
-    // space name. If it exists, we simply update it.
-    OptionDefinitionPtr existing_definition =
-        getOptionDef(get_option_def_code_space,
-                     server_selector,
-                     option_def->getCode(),
-                     option_def->getOptionSpaceName());
-
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
     ScopedAuditRevision audit_revision(this,
