@@ -1801,6 +1801,96 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
     ASSERT_TRUE(networks.empty());
 }
 
+// Test that selected shared network can be deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteSharedNetwork4) {
+    // Create two servers in the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp4_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[2]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp4_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    auto shared_network1 = test_networks_[0];
+    auto shared_network2 = test_networks_[2];
+    auto shared_network3 = test_networks_[3];
+
+    // Insert two shared networks, one for all servers, and one for server2.
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network1)
+    );
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server2"), shared_network2)
+    );
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           shared_network3)
+    );
+
+    auto test_no_delete = [this] (const std::string& test_case_name,
+                                  const ServerSelector& server_selector,
+                                  const SharedNetwork4Ptr& shared_network) {
+        SCOPED_TRACE(test_case_name);
+        uint64_t deleted_count = 0;
+        EXPECT_NO_THROW(
+            deleted_count = cbptr_->deleteSharedNetwork4(server_selector,
+                                                         shared_network->getName())
+        );
+        EXPECT_EQ(0, deleted_count);
+    };
+
+    {
+        SCOPED_TRACE("Test valid but non matching server selectors");
+        test_no_delete("selector: one, actual: all", ServerSelector::ONE("server2"),
+                       shared_network1);
+        test_no_delete("selector: all, actual: one", ServerSelector::ALL(),
+                       shared_network2);
+        test_no_delete("selector: all, actual: multiple", ServerSelector::ALL(),
+                       shared_network3);
+    }
+
+    // We are not going to support deletion of a single entry for multiple servers.
+    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                              shared_network3->getName()),
+                 isc::InvalidOperation);
+
+    // We currently don't support deleting a shared network with specifying
+    // an unassigned server tag. Use ANY to delete any subnet instead.
+    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                              shared_network1->getName()),
+                 isc::NotImplemented);
+
+    // Test successful deletion of a shared network.
+    auto test_delete = [this] (const std::string& test_case_name,
+                               const ServerSelector& server_selector,
+                               const SharedNetwork4Ptr& shared_network) {
+        SCOPED_TRACE(test_case_name);
+        uint64_t deleted_count = 0;
+        EXPECT_NO_THROW(
+            deleted_count = cbptr_->deleteSharedNetwork4(server_selector,
+                                                         shared_network->getName())
+        );
+        EXPECT_EQ(1, deleted_count);
+
+        EXPECT_FALSE(cbptr_->getSharedNetwork4(server_selector,
+                                                  shared_network->getName()));
+    };
+
+    test_delete("all servers", ServerSelector::ALL(), shared_network1);
+    test_delete("any server", ServerSelector::ANY(), shared_network2);
+    test_delete("one server", ServerSelector::ONE("server1"), shared_network3);
+
+}
+
 // Test that lifetimes in shared networks are handled as expected.
 TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkLifetime) {
     // Insert new shared network with unspecified valid lifetime

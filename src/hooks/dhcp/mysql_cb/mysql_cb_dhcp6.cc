@@ -117,7 +117,8 @@ public:
         DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
         DELETE_POOLS6_SUBNET_ID,
         DELETE_PD_POOLS_SUBNET_ID,
-        DELETE_SHARED_NETWORK6_NAME,
+        DELETE_SHARED_NETWORK6_NAME_WITH_TAG,
+        DELETE_SHARED_NETWORK6_NAME_NO_TAG,
         DELETE_ALL_SHARED_NETWORKS6,
         DELETE_SHARED_NETWORK6_SERVER,
         DELETE_OPTION_DEF6_CODE_NAME,
@@ -2711,14 +2712,19 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_PD_POOLS()
     },
 
-    // Delete shared network by name.
-    { MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME,
-      MYSQL_DELETE_SHARED_NETWORK(dhcp6, AND n.name = ?)
+    // Delete shared network by name with specifying server tag.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_WITH_TAG,
+      MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp6, AND n.name = ?)
+    },
+
+    // Delete shared network by name without specifying server tag.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_NO_TAG,
+      MYSQL_DELETE_SHARED_NETWORK_NO_TAG(dhcp6, AND n.name = ?)
     },
 
     // Delete all shared networks.
     { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6,
-      MYSQL_DELETE_SHARED_NETWORK(dhcp6)
+      MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp6)
     },
 
     // Delete associations of a shared network with server.
@@ -3177,8 +3183,11 @@ MySqlConfigBackendDHCPv6::deleteSharedNetwork6(const ServerSelector& server_sele
                                                const std::string& name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK6)
         .arg(name);
-    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME,
-                                                 server_selector, "deleting a shared network",
+    int index = (server_selector.amAny() ?
+                 MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_NO_TAG :
+                 MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_WITH_TAG);
+    uint64_t result = impl_->deleteTransactional(index, server_selector,
+                                                 "deleting a shared network",
                                                  "shared network deleted", true, name);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK6_RESULT)
         .arg(result);

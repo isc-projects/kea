@@ -111,7 +111,8 @@ public:
         DELETE_ALL_SUBNETS4,
         DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
         DELETE_POOLS4_SUBNET_ID,
-        DELETE_SHARED_NETWORK4_NAME,
+        DELETE_SHARED_NETWORK4_NAME_WITH_TAG,
+        DELETE_SHARED_NETWORK4_NAME_NO_TAG,
         DELETE_ALL_SHARED_NETWORKS4,
         DELETE_SHARED_NETWORK4_SERVER,
         DELETE_OPTION_DEF4_CODE_NAME,
@@ -1391,7 +1392,6 @@ public:
         transaction.commit();
     }
 
-
     /// @brief Sends query to insert DHCP option.
     ///
     /// This method expects that the server selector contains exactly one
@@ -2351,14 +2351,19 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_POOLS(dhcp4)
     },
 
-    // Delete shared network by name.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-      MYSQL_DELETE_SHARED_NETWORK(dhcp4, AND n.name = ?)
+    // Delete shared network by name with specifying server tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_WITH_TAG,
+      MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp4, AND n.name = ?)
+    },
+
+    // Delete shared network by name without specifying server tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_NO_TAG,
+      MYSQL_DELETE_SHARED_NETWORK_NO_TAG(dhcp4, AND n.name = ?)
     },
 
     // Delete all shared networks.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
-      MYSQL_DELETE_SHARED_NETWORK(dhcp4)
+      MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp4)
     },
 
     // Delete associations of a shared network with server.
@@ -2806,8 +2811,11 @@ MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_sele
                                                const std::string& name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK4)
         .arg(name);
-    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-                                                 server_selector, "deleting a shared network",
+    int index = (server_selector.amAny() ?
+                 MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_NO_TAG :
+                 MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_WITH_TAG);
+    uint64_t result = impl_->deleteTransactional(index, server_selector,
+                                                 "deleting a shared network",
                                                  "shared network deleted", true, name);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT)
         .arg(result);

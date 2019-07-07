@@ -659,14 +659,22 @@ namespace {
     "WHERE subnet_id = ?"
 #endif
 
-#ifndef MYSQL_DELETE_SHARED_NETWORK
-#define MYSQL_DELETE_SHARED_NETWORK(table_prefix, ...) \
+#ifndef MYSQL_DELETE_SHARED_NETWORK_COMMON
+#define MYSQL_DELETE_SHARED_NETWORK_COMMON(table_prefix, ...) \
     "DELETE n FROM " #table_prefix "_shared_network AS n " \
     "INNER JOIN " #table_prefix "_shared_network_server AS a" \
     "  ON n.id = a.shared_network_id " \
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON a.server_id = s.id " \
-    "WHERE s.tag = ? " #__VA_ARGS__
+    #__VA_ARGS__
+
+#define MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(table_prefix, ...) \
+    MYSQL_DELETE_SHARED_NETWORK_COMMON(table_prefix, WHERE s.tag = ? __VA_ARGS__)
+
+#define MYSQL_DELETE_SHARED_NETWORK_NO_TAG(table_prefix, ...) \
+    MYSQL_DELETE_SHARED_NETWORK_COMMON(table_prefix, __VA_ARGS__)
+
+
 #endif
 
 #ifndef MYSQL_DELETE_SHARED_NETWORK_SERVER
