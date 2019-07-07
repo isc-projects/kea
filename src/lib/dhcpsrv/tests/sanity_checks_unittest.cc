@@ -12,6 +12,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/sanity_checker.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <util/range_utilities.h>
 #include <cc/data.h>
@@ -173,5 +174,205 @@ TEST_F(SanityChecksTest, leaseCheck) {
     parserCheck(cfg, bogus2, true, CfgConsistency::LEASE_CHECK_NONE);
     parserCheck(cfg, bogus3, true, CfgConsistency::LEASE_CHECK_NONE);
     parserCheck(cfg, bogus4, true, CfgConsistency::LEASE_CHECK_NONE);
+}
+
+// Verify whether sanity checker works as expected (valid v4).
+TEST_F(SanityChecksTest,  valid4) {
+    // Create network and lease.
+    CfgMgr::instance().setFamily(AF_INET);
+    Subnet4Ptr subnet = createSubnet4("192.168.1.0/24", 1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
+    IOAddress addr("192.168.1.1");
+    Lease4Ptr lease = newLease4(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here in the same subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (valid v6).
+TEST_F(SanityChecksTest,  valid6) {
+    // Create network and lease.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Subnet6Ptr subnet = createSubnet6("2001:db8:1::/64", 1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = newLease6(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here in the same subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (wrong subnet v4).
+TEST_F(SanityChecksTest,  wrongSubnet4) {
+    // Create networks and lease in the second and wrong subnet.
+    CfgMgr::instance().setFamily(AF_INET);
+    Subnet4Ptr subnet1 = createSubnet4("192.168.1.0/24", 1);
+    Subnet4Ptr subnet2 = createSubnet4("192.168.2.0/24", 2);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet2);
+    IOAddress addr("192.168.1.1");
+    Lease4Ptr lease = newLease4(addr, 2);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here but was moved to the first and right subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet1->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (wrong subnet v6).
+TEST_F(SanityChecksTest,  wrongSubnet6) {
+    // Create networks and lease in the second and wrong subnet.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Subnet6Ptr subnet1 = createSubnet6("2001:db8:1::/64", 1);
+    Subnet6Ptr subnet2 = createSubnet6("2001:db8:2::/64", 2);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet2);
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = newLease6(addr, 2);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here but was moved to the first and right subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet1->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (no subnet v4).
+TEST_F(SanityChecksTest,  noSubnet4) {
+    // Create network and lease in a wrong subnet.
+    CfgMgr::instance().setFamily(AF_INET);
+    Subnet4Ptr subnet = createSubnet4("192.168.2.0/24", 1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
+    IOAddress addr("192.168.1.1");
+    Lease4Ptr lease = newLease4(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease was removed because its subnet does not exist,
+    EXPECT_FALSE(lease);
+}
+
+// Verify whether sanity checker works as expected (no subnet v6).
+TEST_F(SanityChecksTest,  noSubnet6) {
+    // Create network and lease in a wrong subnet.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Subnet6Ptr subnet = createSubnet6("2001:db8:2::/64", 1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = newLease6(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease was removed because its subnet does not exist,
+    EXPECT_FALSE(lease);
+}
+
+// Verify whether sanity checker works as expected (guard v4).
+TEST_F(SanityChecksTest,  guard4) {
+    // Create networks and lease in the first and guarded subnet.
+    CfgMgr::instance().setFamily(AF_INET);
+    Subnet4Ptr subnet1 = createSubnet4("192.168.1.0/24", 1);
+    subnet1->allowClientClass("foo");
+    Subnet4Ptr subnet2 = createSubnet4("192.168.1.100/24", 2);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet2);
+    IOAddress addr("192.168.1.1");
+    Lease4Ptr lease = newLease4(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here and in the guarded subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet1->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (guard v6).
+TEST_F(SanityChecksTest,  guard6) {
+    // Create networks and lease in the first and guarded subnet.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Subnet6Ptr subnet1 = createSubnet6("2001:db8:1::/64", 1);
+    subnet1->allowClientClass("foo");
+    Subnet6Ptr subnet2 = createSubnet6("2001:db8:2::100/64", 2);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet1);
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet2);
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = newLease6(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here and in the guarded subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet1->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (guard only v4).
+TEST_F(SanityChecksTest,  guardOnly4) {
+    // Create guarded network and lease.
+    CfgMgr::instance().setFamily(AF_INET);
+    Subnet4Ptr subnet = createSubnet4("192.168.1.0/24", 1);
+    subnet->allowClientClass("foo");
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
+    IOAddress addr("192.168.1.1");
+    Lease4Ptr lease = newLease4(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here in the same subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getID(), lease->subnet_id_);
+}
+
+// Verify whether sanity checker works as expected (valid v6).
+TEST_F(SanityChecksTest,  guardOnly6) {
+    // Create guarded network and lease.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Subnet6Ptr subnet = createSubnet6("2001:db8:1::/64", 1);
+    subnet->allowClientClass("foo");
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+    IOAddress addr("2001:db8:1::1");
+    Lease6Ptr lease = newLease6(addr, 1);
+
+    // Check the lease.
+    setLeaseCheck(CfgConsistency::LEASE_CHECK_FIX_DEL);
+    SanityChecker checker;
+    checker.checkLease(lease);
+
+    // Verify the lease is still here in the same subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getID(), lease->subnet_id_);
 }
 
