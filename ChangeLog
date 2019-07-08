@@ -1,5 +1,4 @@
 1616.	[func]		fdupont
-	
 	Renamed kea-admin lease-init, lease-version and lease-upgrade
 	commands to db-init, db-version and db-upgrade. Only the lease-*
 	command is now lease-dump.
