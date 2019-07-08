@@ -1,3 +1,10 @@
+1616.	[func]		fdupont
+	
+	Renamed kea-admin lease-init, lease-version and lease-upgrade
+	commands to db-init, db-version and db-upgrade. Only the lease-*
+	command is now lease-dump.
+	(Gitlab #466,!393, git cbd2ed23f2ea0649ccf608fe818197d2923108f0)
+
 1615.	[func]		fdupont
 	Added check for keyword name and type in parsers of objects
 	managed by the config backend (options, option definitions,
