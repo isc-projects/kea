@@ -106,6 +106,13 @@ public:
         return (getType() == Type::UNASSIGNED);
     }
 
+    /// @brief Convenience method checking if the server selector is "all".
+    ///
+    /// @return true if the selector is "all", false otherwise.
+    bool amAll() const {
+        return (getType() == Type::ALL);
+    }
+
     /// @brief Convenience method checking if the server selector is "any".
     ///
     /// @return true if the selector is "any", false otherwise.

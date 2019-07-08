@@ -32,6 +32,7 @@ TEST(ServerSelectorTest, all) {
     auto tags = selector.getTags();
     EXPECT_EQ(1, tags.size());
     EXPECT_EQ(1, tags.count(ServerTag("all")));
+    EXPECT_TRUE(selector.amAll());
     EXPECT_FALSE(selector.hasMultipleTags());
 }
 

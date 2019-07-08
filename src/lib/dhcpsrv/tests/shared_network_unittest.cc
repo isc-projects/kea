@@ -1225,5 +1225,53 @@ TEST(SharedNetwork6Test, delAll) {
     ASSERT_EQ(0, network->getAllSubnets()->size());
 }
 
+// This test verifies that the IPv4 shared network can be fetched by name.
+TEST(SharedNetworkFetcherTest, getSharedNetwork4ByName) {
+    SharedNetwork4Collection collection;
+
+    // Shared network hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto network = SharedNetworkFetcher4::get(collection, "network1");
+    EXPECT_FALSE(network);
+
+    network.reset(new SharedNetwork4("network1"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network.reset(new SharedNetwork4("network2"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network = SharedNetworkFetcher4::get(collection, "network1");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network1", network->getName());
+
+    network = SharedNetworkFetcher4::get(collection, "network2");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network2", network->getName());
+}
+
+// This test verifies that the IPv6 shared network can be fetched by name.
+TEST(SharedNetworkFetcherTest, getSharedNetwork6ByName) {
+    SharedNetwork6Collection collection;
+
+    // Shared network hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto network = SharedNetworkFetcher6::get(collection, "network1");
+    EXPECT_FALSE(network);
+
+    network.reset(new SharedNetwork6("network1"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network.reset(new SharedNetwork6("network2"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network = SharedNetworkFetcher6::get(collection, "network1");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network1", network->getName());
+
+    network = SharedNetworkFetcher6::get(collection, "network2");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network2", network->getName());
+}
+
 
 } // end of anonymous namespace

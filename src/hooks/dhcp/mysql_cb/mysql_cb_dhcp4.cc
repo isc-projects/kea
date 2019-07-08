@@ -66,7 +66,6 @@ public:
         GET_MODIFIED_SUBNETS4,
         GET_SHARED_NETWORK_SUBNETS4,
         GET_POOL4_RANGE,
-        GET_SHARED_NETWORK4_NAME_WITH_TAG,
         GET_SHARED_NETWORK4_NAME_NO_TAG,
         GET_ALL_SHARED_NETWORKS4,
         GET_MODIFIED_SHARED_NETWORKS4,
@@ -995,6 +994,7 @@ public:
     /// Query should order shared networks by id.
     ///
     /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
     /// @param in_bindings Input bindings specifying selection criteria. The
     /// size of the bindings collection must match the number of placeholders
     /// in the prepared statement. The input bindings collection must be empty
@@ -1002,6 +1002,7 @@ public:
     /// @param [out] shared_networks Reference to the container where fetched
     /// shared networks will be inserted.
     void getSharedNetworks4(const StatementIndex& index,
+                            const ServerSelector& server_selector,
                             const MySqlBindingCollection& in_bindings,
                             SharedNetwork4Collection& shared_networks) {
         // Create output bindings. The order must match that in the prepared
@@ -1218,6 +1219,13 @@ public:
                 }
             }
         });
+
+        // Now that we're done fetching the whole network, we have to
+        // check if it has matching server tags and toss it if it
+        // doesn't. We skip matching the server tags if we're asking
+        // for ANY shared network.
+        auto& sn_index = shared_networks.get<SharedNetworkRandomAccessIndexTag>();
+        tossNonMatchingElements(server_selector, sn_index);
     }
 
     /// @brief Sends query to retrieve single shared network by name.
@@ -1233,22 +1241,19 @@ public:
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
+
+        } else if (server_selector.hasMultipleTags()) {
+            isc_throw(InvalidOperation, "expected one server tag to be specified"
+                      " while fetching a shared network. Got: "
+                      << getServerTagsAsText(server_selector));
         }
 
-        MySqlBindingCollection in_bindings;
+        MySqlBindingCollection in_bindings = { MySqlBinding::createString(name) };
         auto index = GET_SHARED_NETWORK4_NAME_NO_TAG;
 
-        if (!server_selector.amAny()) {
-            auto tag = getServerTag(server_selector, "fetching shared network");
-            in_bindings.push_back(MySqlBinding::createString(tag));
-
-            index = GET_SHARED_NETWORK4_NAME_WITH_TAG;
-        }
-
-        in_bindings.push_back(MySqlBinding::createString(name));
-
         SharedNetwork4Collection shared_networks;
-        getSharedNetworks4(index, in_bindings, shared_networks);
+        getSharedNetworks4(GET_SHARED_NETWORK4_NAME_NO_TAG, server_selector, in_bindings,
+                           shared_networks);
 
         return (shared_networks.empty() ? SharedNetwork4Ptr() : *shared_networks.begin());
     }
@@ -1260,15 +1265,9 @@ public:
     /// structure where shared networks should be inserted.
     void getAllSharedNetworks4(const ServerSelector& server_selector,
                                SharedNetwork4Collection& shared_networks) {
-        auto tags = server_selector.getTags();
-
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get())
-            };
-
-            getSharedNetworks4(GET_ALL_SHARED_NETWORKS4, in_bindings, shared_networks);
-        }
+        MySqlBindingCollection in_bindings;
+        getSharedNetworks4(GET_ALL_SHARED_NETWORKS4, server_selector, in_bindings,
+                           shared_networks);
     }
 
     /// @brief Sends query to retrieve modified shared networks.
@@ -1280,17 +1279,12 @@ public:
     void getModifiedSharedNetworks4(const ServerSelector& server_selector,
                                     const boost::posix_time::ptime& modification_ts,
                                     SharedNetwork4Collection& shared_networks) {
-        auto tags = server_selector.getTags();
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createTimestamp(modification_ts)
+        };
 
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createTimestamp(modification_ts)
-            };
-
-            getSharedNetworks4(GET_MODIFIED_SHARED_NETWORKS4, in_bindings,
-                               shared_networks);
-        }
+        getSharedNetworks4(GET_MODIFIED_SHARED_NETWORKS4, server_selector, in_bindings,
+                           shared_networks);
     }
 
     /// @brief Sends query to insert or update shared network.
@@ -2030,11 +2024,6 @@ TaggedStatementArray tagged_statements = { {
       "ORDER BY p.id, x.option_id"
     },
 
-    // Select shared network by name and filter by server tag.
-    { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_WITH_TAG,
-      MYSQL_GET_SHARED_NETWORK4_WITH_TAG(AND n.name = ?)
-    },
-
     // Select shared network by name without filtering by server tag.
     { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_NO_TAG,
       MYSQL_GET_SHARED_NETWORK4_NO_TAG(WHERE n.name = ?)
@@ -2042,12 +2031,12 @@ TaggedStatementArray tagged_statements = { {
 
     // Select all shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
-      MYSQL_GET_SHARED_NETWORK4_WITH_TAG()
+      MYSQL_GET_SHARED_NETWORK4_NO_TAG()
     },
 
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
-      MYSQL_GET_SHARED_NETWORK4_WITH_TAG(AND n.modification_ts > ?)
+      MYSQL_GET_SHARED_NETWORK4_NO_TAG(WHERE n.modification_ts > ?)
     },
 
     // Retrieves option definition by code and space.

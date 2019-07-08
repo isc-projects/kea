@@ -669,6 +669,71 @@ public:
         }
     }
 
+    /// @brief Removes configuration elements from the index which don't match
+    /// the specified server selector.
+    ///
+    /// This is a generic function which removes configuration elements which
+    /// don't match the specified selector. In order to fetch all server tags
+    /// for the returned configuration element, the query must not limit the
+    /// results to the given server tag. Instead, it must post process the
+    /// result to eliminate those configuration elements for which the desired
+    /// server tag wasn't found.
+    ///
+    /// If the server selector is set to ANY, this method is no-op.
+    ///
+    /// @tparam CollectionIndex Type of the collection to be processed.
+    /// @param server_selector Server selector.
+    /// @param index Reference to the index holding the returned configuration
+    /// elements to be processed.
+    template<typename CollectionIndex>
+    void tossNonMatchingElements(const db::ServerSelector& server_selector,
+                                 CollectionIndex& index) {
+        // Don't filter the matching server tags if the server selector is
+        // set to ANY.
+        if (server_selector.amAny()) {
+            return;
+        }
+
+        // Go over the collection of elements.
+        for (auto elem = index.begin(); elem != index.end(); ) {
+
+            // If we're asking for shared networks matching all servers,
+            // we have to make sure that the fetched element has "all"
+            // server tag.
+            if (server_selector.amAll()) {
+                if (!(*elem)->hasAllServerTag()) {
+                    // It doesn't so let's remove it.
+                    elem = index.erase(elem);
+                    continue;
+                }
+
+            } else {
+                // Server selector contains explicit server tags, so
+                // let's see if the returned elements includes any of
+                // them.
+                auto tags = server_selector.getTags();
+                bool tag_found = false;
+                for (auto tag : tags) {
+                    if ((*elem)->hasServerTag(tag) ||
+                        (*elem)->hasAllServerTag()) {
+                        tag_found = true;
+                        break;
+                    }
+                }
+                if (!tag_found) {
+                    // Tag not matching, so toss the element.
+                    elem = index.erase(elem);
+                    continue;
+                }
+            }
+
+            // Go to the next element if we didn't toss the current one.
+            // Otherwise, the erase() function should have already taken
+            // us to the next one.
+            ++elem;
+        }
+    }
+
     /// @brief Returns backend type in the textual format.
     ///
     /// @return "mysql".

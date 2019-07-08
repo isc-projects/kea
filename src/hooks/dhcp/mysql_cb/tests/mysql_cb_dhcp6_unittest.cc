@@ -1779,6 +1779,78 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
     EXPECT_TRUE(subnet->getSharedNetworkName().empty());
 }
 
+// Test that shared networks with different server associations are returned.
+TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6WithServerTags) {
+    auto shared_network1 = test_networks_[0];
+    auto shared_network2 = test_networks_[2];
+    auto shared_network3 = test_networks_[3];
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[2]));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
+                                                       shared_network1));
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
+                                                       shared_network2));
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                       shared_network3));
+
+    SharedNetwork6Collection networks;
+
+    // All three networks are associated with the server1.
+    EXPECT_NO_THROW(networks = cbptr_->getAllSharedNetworks6(ServerSelector::ONE("server1")));
+    EXPECT_EQ(3, networks.size());
+
+    // First network is associated with all servers.
+    auto returned_network = SharedNetworkFetcher6::get(networks, "level1");
+    ASSERT_TRUE(returned_network);
+    EXPECT_TRUE(returned_network->hasAllServerTag());
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server1")));
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server2")));
+
+    // Second network is only associated with the server1.
+    returned_network = SharedNetworkFetcher6::get(networks, "level2");
+    ASSERT_TRUE(returned_network);
+    EXPECT_FALSE(returned_network->hasAllServerTag());
+    EXPECT_TRUE(returned_network->hasServerTag(ServerTag("server1")));
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server2")));
+
+    // Third network is associated with both server1 and server2.
+    returned_network = SharedNetworkFetcher6::get(networks, "level3");
+    ASSERT_TRUE(returned_network);
+    EXPECT_FALSE(returned_network->hasAllServerTag());
+    EXPECT_TRUE(returned_network->hasServerTag(ServerTag("server1")));
+    EXPECT_TRUE(returned_network->hasServerTag(ServerTag("server2")));
+
+    // For server2 we should only get two shared networks, i.e. first and last.
+    EXPECT_NO_THROW(networks = cbptr_->getAllSharedNetworks6(ServerSelector::ONE("server2")));
+    EXPECT_EQ(2, networks.size());
+
+    // First shared network is associated with all servers.
+    returned_network = SharedNetworkFetcher6::get(networks, "level1");
+    ASSERT_TRUE(returned_network);
+    EXPECT_TRUE(returned_network->hasAllServerTag());
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server1")));
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server2")));
+
+    // Last shared network is associated with server1 and server2.
+    returned_network = SharedNetworkFetcher6::get(networks, "level3");
+    ASSERT_TRUE(returned_network);
+    EXPECT_FALSE(returned_network->hasAllServerTag());
+    EXPECT_TRUE(returned_network->hasServerTag(ServerTag("server1")));
+    EXPECT_TRUE(returned_network->hasServerTag(ServerTag("server2")));
+
+    // Only the first shared network is associated with all servers.
+    EXPECT_NO_THROW(networks = cbptr_->getAllSharedNetworks6(ServerSelector::ALL()));
+    EXPECT_EQ(1, networks.size());
+
+    returned_network = SharedNetworkFetcher6::get(networks, "level1");
+    ASSERT_TRUE(returned_network);
+    EXPECT_TRUE(returned_network->hasAllServerTag());
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server1")));
+    EXPECT_FALSE(returned_network->hasServerTag(ServerTag("server2")));
+}
+
 // Test that shared networks modified after given time can be fetched.
 TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedSharedNetworks6) {
     // Explicitly set timestamps of shared networks. First shared

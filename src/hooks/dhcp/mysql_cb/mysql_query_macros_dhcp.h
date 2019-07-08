@@ -257,9 +257,6 @@ namespace {
     #__VA_ARGS__ \
     " ORDER BY n.id, s.id, o.option_id"
 
-#define MYSQL_GET_SHARED_NETWORK4_WITH_TAG(...) \
-    MYSQL_GET_SHARED_NETWORK4_COMMON(WHERE (s.tag = ? OR s.id = 1) __VA_ARGS__)
-
 #define MYSQL_GET_SHARED_NETWORK4_NO_TAG(...) \
     MYSQL_GET_SHARED_NETWORK4_COMMON(__VA_ARGS__)
 
@@ -312,9 +309,6 @@ namespace {
     "LEFT JOIN dhcp6_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name " \
     #__VA_ARGS__ \
     " ORDER BY n.id, s.id, o.option_id"
-
-#define MYSQL_GET_SHARED_NETWORK6_WITH_TAG(...) \
-    MYSQL_GET_SHARED_NETWORK6_COMMON(WHERE (s.tag = ? OR s.id = 1) __VA_ARGS__)
 
 #define MYSQL_GET_SHARED_NETWORK6_NO_TAG(...) \
     MYSQL_GET_SHARED_NETWORK6_COMMON(__VA_ARGS__)

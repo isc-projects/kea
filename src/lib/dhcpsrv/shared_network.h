@@ -455,6 +455,41 @@ typedef boost::multi_index_container<
     >
 > SharedNetwork6Collection;
 
+/// @brief A class containing static convenience methods to fetch the shared
+/// networks from the containers.
+///
+/// @tparam ReturnPtrType Type of the returned object, i.e. @c SharedNetwork4Ptr
+/// or @c SharedNetwork6Ptr.
+/// @tparam CollectionType One of the @c SharedNetwork4Collection or
+/// @c SharedNetwork6Collection.
+template<typename ReturnPtrType, typename CollectionType>
+class SharedNetworkFetcher {
+public:
+
+    /// @brief Fetches shared network by name.
+    ///
+    /// @param collection Const reference to the collection from which the shared
+    /// network is to be fetched.
+    /// @param name Name of the shared network to be fetched.
+    /// @return Pointer to the fetched shared network or null if no such shared
+    /// network could be found.
+    static ReturnPtrType get(const CollectionType& collection, const std::string& name) {
+        auto& index = collection.template get<SharedNetworkNameIndexTag>();
+        auto sn = index.find(name);
+        if (sn != index.end()) {
+            return (*sn);
+        }
+        // No network found. Return null pointer.
+        return (ReturnPtrType());
+    }
+};
+
+/// @brief Type of the @c SharedNetworkFetcher used for IPv4.
+using SharedNetworkFetcher4 = SharedNetworkFetcher<SharedNetwork4Ptr, SharedNetwork4Collection>;
+
+/// @brief Type of the @c SharedNetworkFetcher used for IPv6.
+using SharedNetworkFetcher6 = SharedNetworkFetcher<SharedNetwork6Ptr, SharedNetwork6Collection>;
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
