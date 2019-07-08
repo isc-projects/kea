@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -368,14 +368,29 @@ TEST_F(CommunicationStateTest, clockSkew) {
 // This test verifies that the clock skew value is formatted correctly
 // for logging.
 TEST_F(CommunicationStateTest, logFormatClockSkew) {
-    // Partner time is ahead by 15s.
-    state_.clock_skew_ += boost::posix_time::time_duration(0, 0, 15);
-    EXPECT_EQ("15s ahead", state_.logFormatClockSkew());
+    // Make sure logFormatClockSkew() does not throw if called prior
+    // the first call to setPartnerTime().
+    std::string log;
+    ASSERT_NO_THROW(log = state_.logFormatClockSkew());
+    EXPECT_EQ(std::string("skew not initialized"), log);
 
-    // Partner time is behind by 1m23s.
-    state_.setPartnerTime(HttpDateTime().rfc1123Format());
-    state_.clock_skew_ -= boost::posix_time::time_duration(0, 1, 23);
-    EXPECT_EQ("83s behind", state_.logFormatClockSkew());
+    // Get current time.
+    boost::posix_time::ptime now = HttpDateTime().getPtime();
+
+    // Partner time is ahead by 15s.
+    boost::posix_time::time_duration offset(0,0,15,0);
+    state_.setPartnerTime(HttpDateTime(now + offset).rfc1123Format());
+    ASSERT_NO_THROW(log = state_.logFormatClockSkew());
+    // We don't check the exact string for obvious reasons.
+    EXPECT_TRUE(log.find("s ahead") != std::string::npos) <<
+                " log content wrong: " << log;
+
+    // Partner time is behind by 15s.
+    state_.setPartnerTime(HttpDateTime(now - offset).rfc1123Format());
+    ASSERT_NO_THROW(log = state_.logFormatClockSkew());
+    // We don't check the exact string for obvious reasons.
+    EXPECT_TRUE(log.find("s behind") != std::string::npos) <<
+                " log content wrong: " << log;
 }
 
 }

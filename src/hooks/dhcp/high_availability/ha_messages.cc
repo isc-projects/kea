@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Wed Jun 26 2019 15:13
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon Jul 08 2019 13:20
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -104,8 +104,8 @@ const char* values[] = {
     "HA_HEARTBEAT_COMMUNICATIONS_FAILED", "failed to send heartbeat to %1: %2",
     "HA_HEARTBEAT_FAILED", "heartbeat to %1 failed: %2",
     "HA_HEARTBEAT_HANDLER_FAILED", "heartbeat command failed: %1",
-    "HA_HIGH_CLOCK_SKEW", "partner's clock is %1, please synchronize clocks!",
-    "HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION", "partner's clock is %1, causing HA service to terminate",
+    "HA_HIGH_CLOCK_SKEW", "%1, please synchronize clocks!",
+    "HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION", "%1, causing HA service to terminate",
     "HA_INIT_OK", "loading High Availability hooks library successful",
     "HA_LEASES4_COMMITTED_FAILED", "leases4_committed callout failed: %1",
     "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE", "%1: leases4_committed callout was invoked without any leases",
@@ -137,7 +137,7 @@ const char* values[] = {
     "HA_SYNC_HANDLER_FAILED", "ha-sync command failed: %1",
     "HA_SYNC_START", "starting lease database synchronization with %1",
     "HA_SYNC_SUCCESSFUL", "lease database synchronization with %1 completed successfully in %2",
-    "HA_TERMINATED", "HA service terminated because of the unacceptable clock skew; fix the problem and restart!",
+    "HA_TERMINATED", "HA service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!",
     NULL
 };
 

@@ -1,3 +1,9 @@
+1627.	[func]		tmark
+	High Availaiblity logging now also emits server and partner system
+	times when reporting clock skew issues.  Prior to this it reported
+	only the skew between the two servers.
+	(Gitlab #174,!414, git TBD)
+
 1626.	[bug]		marcin
 	Automatically delete embedded options as a result of deleting
 	a subnet, pool or shared network from the MySQL Configuration
