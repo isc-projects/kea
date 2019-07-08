@@ -1,3 +1,9 @@
+1617.	[bug]		fdupont
+	During the application of the config backend the external config
+	is initialized to the default values so when a global parameter
+	is changed and deleted it gets back a sane value.
+	(Gitlab #630,!355, git 237afd3c512ed4d05ae76de76cce21dca643a889)
+
 1616.	[func]		fdupont
 	Renamed kea-admin lease-init, lease-version and lease-upgrade
 	commands to db-init, db-version and db-upgrade. Only the lease-*
