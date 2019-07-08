@@ -128,7 +128,6 @@ public:
         DELETE_OPTION4_SHARED_NETWORK,
         DELETE_OPTIONS4_SUBNET_ID,
         DELETE_OPTIONS4_SHARED_NETWORK,
-        DELETE_OPTION4_SERVER,
         DELETE_SERVER4,
         DELETE_ALL_SERVERS4,
         NUM_STATEMENTS
@@ -2439,11 +2438,6 @@ TaggedStatementArray tagged_statements = { {
     // Delete options belonging to a shared_network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTIONS4_SHARED_NETWORK,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp4, WHERE o.scope_id = 4 AND o.shared_network_name = ?)
-    },
-
-    // Delete associations of an option with the server.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SERVER,
-      MYSQL_DELETE_OPTION_SERVER(dhcp4)
     },
 
     // Delete a server by tag.
