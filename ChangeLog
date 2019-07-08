@@ -1,3 +1,9 @@
+1615.	[func]		fdupont
+	Added check for keyword name and type in parsers of objects
+	managed by the config backend (options, option definitions,
+	subnets and shared networks).
+	(Gitlab #575,!358, git c9d87afad8db924da0aadc1b8ab40638bd0a6738)
+
 1614.	[func]		marcin
 	Add support for associating the DHCP option definitions with
 	the server tags in the mysql_cb hooks library.
