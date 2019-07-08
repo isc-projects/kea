@@ -1684,4 +1684,56 @@ TEST(Subnet6Test, lastAllocated) {
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_V4, ia), BadValue);
 }
 
+// This test verifies that the IPv4 subnet can be fetched by id.
+TEST(SubnetFetcherTest, getSubnet4ById) {
+    Subnet4Collection collection;
+
+    // Shared network hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto subnet = SubnetFetcher4::get(collection, SubnetID(1024));
+    EXPECT_FALSE(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1024));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 2048));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet = SubnetFetcher4::get(collection, SubnetID(1024));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(1024, subnet->getID());
+    EXPECT_EQ("192.0.2.0/24", subnet->toText());
+
+    subnet = SubnetFetcher4::get(collection, SubnetID(2048));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(2048, subnet->getID());
+    EXPECT_EQ("192.0.3.0/24", subnet->toText());
+}
+
+// This test verifies that the IPv6 subnet can be fetched by id.
+TEST(SubnetFetcherTest, getSubnet6ById) {
+    Subnet6Collection collection;
+
+    // Shared network hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto subnet = SubnetFetcher6::get(collection, SubnetID(1026));
+    EXPECT_FALSE(subnet);
+
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4, 1024));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet.reset(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4, 2048));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet = SubnetFetcher6::get(collection, SubnetID(1024));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(1024, subnet->getID());
+    EXPECT_EQ("2001:db8:1::", subnet->toText());
+
+    subnet = SubnetFetcher6::get(collection, SubnetID(2048));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(2048, subnet->getID());
+    EXPECT_EQ("2001:db8:2::", subnet->toText());
+}
+
 };

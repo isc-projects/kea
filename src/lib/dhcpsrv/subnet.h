@@ -855,6 +855,42 @@ typedef boost::multi_index_container<
     >
 > Subnet6Collection;
 
+/// @brief A class containing static convenience methods to fetch the subnets
+/// from the containers.
+///
+/// @tparam ReturnPtrType Type of the returned object, i.e. @c Subnet4Ptr
+/// or @c Subnet6Ptr.
+/// @tparam CollectionType One of the @c Subnet4Collection or @c Subnet6Collection.
+template<typename ReturnPtrType, typename CollectionType>
+class SubnetFetcher {
+public:
+
+    /// @brief Fetches shared network by name.
+    ///
+    /// @param collection Const reference to the collection from which the shared
+    /// network is to be fetched.
+    /// @param name Name of the shared network to be fetched.
+    /// @return Pointer to the fetched shared network or null if no such shared
+    /// network could be found.
+    static ReturnPtrType get(const CollectionType& collection,
+                             const SubnetID& subnet_id) {
+        auto& index = collection.template get<SubnetSubnetIdIndexTag>();
+        auto s = index.find(subnet_id);
+        if (s != index.end()) {
+            return (*s);
+        }
+        // No subnet found. Return null pointer.
+        return (ReturnPtrType());
+    }
+};
+
+/// @brief Type of the @c SubnetFetcher used for IPv4.
+using SubnetFetcher4 = SubnetFetcher<Subnet4Ptr, Subnet4Collection>;
+
+/// @brief Type of the @c SubnetFetcher used for IPv6.
+using SubnetFetcher6 = SubnetFetcher<Subnet6Ptr, Subnet6Collection>;
+
+
 //@}
 
 } // end of isc::dhcp namespace
