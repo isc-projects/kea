@@ -326,7 +326,8 @@ SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
                 bool_value = false;
             } else {
                 isc_throw(BadValue,
-                          "Internal error. Boolean value specified as "
+                          "Internal error. Boolean value for "
+                          << def_value.name_ << " specified as "
                           << def_value.value_ << ", expected true or false");
             }
             x.reset(new BoolElement(bool_value, pos));
@@ -340,7 +341,8 @@ SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
         default:
             // No default values for null, list or map
             isc_throw(BadValue,
-                      "Internal error. Incorrect default value type.");
+                      "Internal error. Incorrect default value type for "
+                      << def_value.name_);
         }
         addConfiguredGlobal(def_value.name_, x);
     }
