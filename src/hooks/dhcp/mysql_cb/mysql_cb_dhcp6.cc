@@ -69,8 +69,12 @@ public:
         GET_POOL6_RANGE,
         GET_PD_POOL,
         GET_SHARED_NETWORK6_NAME_NO_TAG,
+        GET_SHARED_NETWORK6_NAME_ANY,
+        GET_SHARED_NETWORK6_NAME_UNASSIGNED,
         GET_ALL_SHARED_NETWORKS6,
+        GET_ALL_SHARED_NETWORKS6_UNASSIGNED,
         GET_MODIFIED_SHARED_NETWORKS6,
+        GET_MODIFIED_SHARED_NETWORKS6_UNASSIGNED,
         GET_OPTION_DEF6_CODE_SPACE,
         GET_ALL_OPTION_DEFS6,
         GET_MODIFIED_OPTION_DEFS6,
@@ -117,7 +121,7 @@ public:
         DELETE_POOLS6_SUBNET_ID,
         DELETE_PD_POOLS_SUBNET_ID,
         DELETE_SHARED_NETWORK6_NAME_WITH_TAG,
-        DELETE_SHARED_NETWORK6_NAME_NO_TAG,
+        DELETE_SHARED_NETWORK6_NAME_ANY,
         DELETE_ALL_SHARED_NETWORKS6,
         DELETE_SHARED_NETWORK6_SERVER,
         DELETE_OPTION_DEF6_CODE_NAME,
@@ -1440,18 +1444,22 @@ public:
     SharedNetwork6Ptr getSharedNetwork6(const ServerSelector& server_selector,
                                         const std::string& name) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-
-        } else if (server_selector.hasMultipleTags()) {
+        if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a shared network. Got: "
                       << getServerTagsAsText(server_selector));
         }
 
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(name) };
+
         auto index = GET_SHARED_NETWORK6_NAME_NO_TAG;
+
+        if (server_selector.amUnassigned()) {
+            index = GET_SHARED_NETWORK6_NAME_UNASSIGNED;
+
+        } else if (server_selector.amAny()) {
+            index = GET_SHARED_NETWORK6_NAME_ANY;
+        }
 
         SharedNetwork6Collection shared_networks;
         getSharedNetworks6(index, server_selector, in_bindings, shared_networks);
@@ -1466,9 +1474,10 @@ public:
     /// structure where shared networks should be inserted.
     void getAllSharedNetworks6(const ServerSelector& server_selector,
                                SharedNetwork6Collection& shared_networks) {
+        auto index = (server_selector.amUnassigned() ? GET_ALL_SHARED_NETWORKS6_UNASSIGNED :
+                      GET_ALL_SHARED_NETWORKS6);
         MySqlBindingCollection in_bindings;
-        getSharedNetworks6(GET_ALL_SHARED_NETWORKS6, server_selector, in_bindings,
-                           shared_networks);
+        getSharedNetworks6(index, server_selector, in_bindings, shared_networks);
     }
 
     /// @brief Sends query to retrieve modified shared networks.
@@ -1484,8 +1493,9 @@ public:
             MySqlBinding::createTimestamp(modification_ts)
         };
 
-        getSharedNetworks6(GET_MODIFIED_SHARED_NETWORKS6, server_selector, in_bindings,
-                           shared_networks);
+        auto index = (server_selector.amUnassigned() ? GET_MODIFIED_SHARED_NETWORKS6_UNASSIGNED :
+                      GET_MODIFIED_SHARED_NETWORKS6);
+        getSharedNetworks6(index, server_selector, in_bindings, shared_networks);
     }
 
     /// @brief Sends query to insert or update shared network.
@@ -2375,9 +2385,19 @@ TaggedStatementArray tagged_statements = { {
       "ORDER BY p.id, x.option_id"
     },
 
-    // Select shared network by name without filtering by server tag.
+    // Select shared network by name.
     { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK6_NAME_NO_TAG,
       MYSQL_GET_SHARED_NETWORK6_NO_TAG(WHERE n.name = ?)
+    },
+
+    // Select shared network by name without specifying server tags.
+    { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK6_NAME_ANY,
+      MYSQL_GET_SHARED_NETWORK6_ANY(WHERE n.name = ?)
+    },
+
+    // Select unassigned shared network by name.
+    { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK6_NAME_UNASSIGNED,
+      MYSQL_GET_SHARED_NETWORK6_UNASSIGNED(AND n.name = ?)
     },
 
     // Select all shared networks.
@@ -2385,9 +2405,19 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_SHARED_NETWORK6_NO_TAG()
     },
 
+    // Select all unassigned shared networks.
+    { MySqlConfigBackendDHCPv6Impl::GET_ALL_SHARED_NETWORKS6_UNASSIGNED,
+      MYSQL_GET_SHARED_NETWORK6_UNASSIGNED()
+    },
+
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SHARED_NETWORKS6,
       MYSQL_GET_SHARED_NETWORK6_NO_TAG(WHERE n.modification_ts > ?)
+    },
+
+    // Select modified and unassigned shared networks.
+    { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SHARED_NETWORKS6_UNASSIGNED,
+      MYSQL_GET_SHARED_NETWORK6_UNASSIGNED(AND n.modification_ts > ?)
     },
 
     // Retrieves option definition by code and space.
@@ -2706,8 +2736,8 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete shared network by name without specifying server tag.
-    { MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_NO_TAG,
-      MYSQL_DELETE_SHARED_NETWORK_NO_TAG(dhcp6, AND n.name = ?)
+    { MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_ANY,
+      MYSQL_DELETE_SHARED_NETWORK_ANY(dhcp6, WHERE n.name = ?)
     },
 
     // Delete all shared networks.
@@ -3172,7 +3202,7 @@ MySqlConfigBackendDHCPv6::deleteSharedNetwork6(const ServerSelector& server_sele
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK6)
         .arg(name);
     int index = (server_selector.amAny() ?
-                 MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_NO_TAG :
+                 MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_ANY :
                  MySqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_WITH_TAG);
     uint64_t result = impl_->deleteTransactional(index, server_selector,
                                                  "deleting a shared network",

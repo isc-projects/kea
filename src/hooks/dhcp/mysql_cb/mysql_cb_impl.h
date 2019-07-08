@@ -707,6 +707,14 @@ public:
                     continue;
                 }
 
+            } else if (server_selector.amUnassigned()) {
+                // Returned element has server tags but we expect that the
+                // elements are unassigned.
+                if (!(*elem)->getServerTags().empty()) {
+                    elem = index.erase(elem);
+                    continue;
+                }
+
             } else {
                 // Server selector contains explicit server tags, so
                 // let's see if the returned elements includes any of

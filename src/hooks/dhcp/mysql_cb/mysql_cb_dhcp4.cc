@@ -67,8 +67,12 @@ public:
         GET_SHARED_NETWORK_SUBNETS4,
         GET_POOL4_RANGE,
         GET_SHARED_NETWORK4_NAME_NO_TAG,
+        GET_SHARED_NETWORK4_NAME_ANY,
+        GET_SHARED_NETWORK4_NAME_UNASSIGNED,
         GET_ALL_SHARED_NETWORKS4,
+        GET_ALL_SHARED_NETWORKS4_UNASSIGNED,
         GET_MODIFIED_SHARED_NETWORKS4,
+        GET_MODIFIED_SHARED_NETWORKS4_UNASSIGNED,
         GET_OPTION_DEF4_CODE_SPACE,
         GET_ALL_OPTION_DEFS4,
         GET_MODIFIED_OPTION_DEFS4,
@@ -111,7 +115,7 @@ public:
         DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
         DELETE_POOLS4_SUBNET_ID,
         DELETE_SHARED_NETWORK4_NAME_WITH_TAG,
-        DELETE_SHARED_NETWORK4_NAME_NO_TAG,
+        DELETE_SHARED_NETWORK4_NAME_ANY,
         DELETE_ALL_SHARED_NETWORKS4,
         DELETE_SHARED_NETWORK4_SERVER,
         DELETE_OPTION_DEF4_CODE_NAME,
@@ -1238,22 +1242,25 @@ public:
     SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-
-        } else if (server_selector.hasMultipleTags()) {
+        if (server_selector.hasMultipleTags()) {
             isc_throw(InvalidOperation, "expected one server tag to be specified"
                       " while fetching a shared network. Got: "
                       << getServerTagsAsText(server_selector));
         }
 
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(name) };
+
         auto index = GET_SHARED_NETWORK4_NAME_NO_TAG;
 
+        if (server_selector.amUnassigned()) {
+            index = GET_SHARED_NETWORK4_NAME_UNASSIGNED;
+
+        } else if (server_selector.amAny()) {
+            index = GET_SHARED_NETWORK4_NAME_ANY;
+        }
+
         SharedNetwork4Collection shared_networks;
-        getSharedNetworks4(GET_SHARED_NETWORK4_NAME_NO_TAG, server_selector, in_bindings,
-                           shared_networks);
+        getSharedNetworks4(index, server_selector, in_bindings, shared_networks);
 
         return (shared_networks.empty() ? SharedNetwork4Ptr() : *shared_networks.begin());
     }
@@ -1265,9 +1272,10 @@ public:
     /// structure where shared networks should be inserted.
     void getAllSharedNetworks4(const ServerSelector& server_selector,
                                SharedNetwork4Collection& shared_networks) {
+        auto index = (server_selector.amUnassigned() ? GET_ALL_SHARED_NETWORKS4_UNASSIGNED :
+                      GET_ALL_SHARED_NETWORKS4);
         MySqlBindingCollection in_bindings;
-        getSharedNetworks4(GET_ALL_SHARED_NETWORKS4, server_selector, in_bindings,
-                           shared_networks);
+        getSharedNetworks4(index, server_selector, in_bindings, shared_networks);
     }
 
     /// @brief Sends query to retrieve modified shared networks.
@@ -1283,8 +1291,9 @@ public:
             MySqlBinding::createTimestamp(modification_ts)
         };
 
-        getSharedNetworks4(GET_MODIFIED_SHARED_NETWORKS4, server_selector, in_bindings,
-                           shared_networks);
+        auto index = (server_selector.amUnassigned() ? GET_MODIFIED_SHARED_NETWORKS4_UNASSIGNED :
+                      GET_MODIFIED_SHARED_NETWORKS4);
+        getSharedNetworks4(index, server_selector, in_bindings, shared_networks);
     }
 
     /// @brief Sends query to insert or update shared network.
@@ -2024,9 +2033,19 @@ TaggedStatementArray tagged_statements = { {
       "ORDER BY p.id, x.option_id"
     },
 
-    // Select shared network by name without filtering by server tag.
+    // Select shared network by name.
     { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_NO_TAG,
       MYSQL_GET_SHARED_NETWORK4_NO_TAG(WHERE n.name = ?)
+    },
+
+    // Select shared network by name without specifying server tags.
+    { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_ANY,
+      MYSQL_GET_SHARED_NETWORK4_ANY(WHERE n.name = ?)
+    },
+
+    // Select unassigned shared network by name.
+    { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME_UNASSIGNED,
+      MYSQL_GET_SHARED_NETWORK4_UNASSIGNED(AND n.name = ?)
     },
 
     // Select all shared networks.
@@ -2034,9 +2053,19 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_SHARED_NETWORK4_NO_TAG()
     },
 
+    // Select all unassigned shared networks.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4_UNASSIGNED,
+      MYSQL_GET_SHARED_NETWORK4_UNASSIGNED()
+    },
+
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
       MYSQL_GET_SHARED_NETWORK4_NO_TAG(WHERE n.modification_ts > ?)
+    },
+
+    // Select modified and unassigned shared networks.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4_UNASSIGNED,
+      MYSQL_GET_SHARED_NETWORK4_UNASSIGNED(AND n.modification_ts > ?)
     },
 
     // Retrieves option definition by code and space.
@@ -2346,8 +2375,8 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete shared network by name without specifying server tag.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_NO_TAG,
-      MYSQL_DELETE_SHARED_NETWORK_NO_TAG(dhcp4, AND n.name = ?)
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_ANY,
+      MYSQL_DELETE_SHARED_NETWORK_ANY(dhcp4, WHERE n.name = ?)
     },
 
     // Delete all shared networks.
@@ -2800,8 +2829,9 @@ MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_sele
                                                const std::string& name) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK4)
         .arg(name);
+
     int index = (server_selector.amAny() ?
-                 MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_NO_TAG :
+                 MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_ANY :
                  MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME_WITH_TAG);
     uint64_t result = impl_->deleteTransactional(index, server_selector,
                                                  "deleting a shared network",

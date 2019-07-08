@@ -211,7 +211,7 @@ namespace {
 #endif
 
 #ifndef MYSQL_GET_SHARED_NETWORK4
-#define MYSQL_GET_SHARED_NETWORK4_COMMON(...) \
+#define MYSQL_GET_SHARED_NETWORK4_COMMON(server_join, ...) \
     "SELECT" \
     "  n.id," \
     "  n.name," \
@@ -249,21 +249,39 @@ namespace {
     "  n.max_valid_lifetime," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
-    "INNER JOIN dhcp4_shared_network_server AS a " \
-    "  ON n.id = a.shared_network_id " \
-    "INNER JOIN dhcp4_server AS s " \
-    "  ON (a.server_id = s.id) " \
+    server_join \
     "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name " \
     #__VA_ARGS__ \
     " ORDER BY n.id, s.id, o.option_id"
 
 #define MYSQL_GET_SHARED_NETWORK4_NO_TAG(...) \
-    MYSQL_GET_SHARED_NETWORK4_COMMON(__VA_ARGS__)
+    MYSQL_GET_SHARED_NETWORK4_COMMON( \
+    "INNER JOIN dhcp4_shared_network_server AS a " \
+    "  ON n.id = a.shared_network_id " \
+    "INNER JOIN dhcp4_server AS s " \
+    "  ON (a.server_id = s.id) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SHARED_NETWORK4_ANY(...) \
+    MYSQL_GET_SHARED_NETWORK4_COMMON( \
+    "LEFT JOIN dhcp4_shared_network_server AS a " \
+    "  ON n.id = a.shared_network_id " \
+    "LEFT JOIN dhcp4_server AS s " \
+    "  ON a.server_id = s.id ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SHARED_NETWORK4_UNASSIGNED(...) \
+    MYSQL_GET_SHARED_NETWORK4_COMMON( \
+    "LEFT JOIN dhcp4_shared_network_server AS a " \
+    "  ON n.id = a.shared_network_id " \
+    "LEFT JOIN dhcp4_server AS s " \
+    "  ON a.server_id = s.id ", \
+    WHERE a.shared_network_id IS NULL __VA_ARGS__)
 
 #endif
 
 #ifndef MYSQL_GET_SHARED_NETWORK6
-#define MYSQL_GET_SHARED_NETWORK6_COMMON(...) \
+#define MYSQL_GET_SHARED_NETWORK6_COMMON(server_join, ...) \
     "SELECT" \
     "  n.id," \
     "  n.name," \
@@ -302,16 +320,34 @@ namespace {
     "  n.max_valid_lifetime," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
-    "INNER JOIN dhcp6_shared_network_server AS a " \
-    "  ON n.id = a.shared_network_id " \
-    "INNER JOIN dhcp6_server AS s " \
-    "  ON (a.server_id = s.id) " \
+    server_join \
     "LEFT JOIN dhcp6_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name " \
     #__VA_ARGS__ \
     " ORDER BY n.id, s.id, o.option_id"
 
 #define MYSQL_GET_SHARED_NETWORK6_NO_TAG(...) \
-    MYSQL_GET_SHARED_NETWORK6_COMMON(__VA_ARGS__)
+    MYSQL_GET_SHARED_NETWORK6_COMMON( \
+    "INNER JOIN dhcp6_shared_network_server AS a " \
+    "  ON n.id = a.shared_network_id " \
+    "INNER JOIN dhcp6_server AS s " \
+    "  ON (a.server_id = s.id) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SHARED_NETWORK6_ANY(...) \
+    MYSQL_GET_SHARED_NETWORK6_COMMON( \
+    "LEFT JOIN dhcp6_shared_network_server AS a " \
+    "  ON n.id = a.shared_network_id " \
+    "LEFT JOIN dhcp6_server AS s " \
+    "  ON a.server_id = s.id ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SHARED_NETWORK6_UNASSIGNED(...) \
+    MYSQL_GET_SHARED_NETWORK6_COMMON( \
+    "LEFT JOIN dhcp6_shared_network_server AS a " \
+    "  ON n.id = a.shared_network_id " \
+    "LEFT JOIN dhcp6_server AS s " \
+    "  ON a.server_id = s.id ", \
+    WHERE a.shared_network_id IS NULL __VA_ARGS__)
 
 #endif
 
@@ -665,9 +701,9 @@ namespace {
 #define MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(table_prefix, ...) \
     MYSQL_DELETE_SHARED_NETWORK_COMMON(table_prefix, WHERE s.tag = ? __VA_ARGS__)
 
-#define MYSQL_DELETE_SHARED_NETWORK_NO_TAG(table_prefix, ...) \
-    MYSQL_DELETE_SHARED_NETWORK_COMMON(table_prefix, __VA_ARGS__)
-
+#define MYSQL_DELETE_SHARED_NETWORK_ANY(table_prefix, ...) \
+    "DELETE n FROM " #table_prefix "_shared_network AS n " \
+    #__VA_ARGS__
 
 #endif
 

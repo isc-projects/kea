@@ -1475,11 +1475,6 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
     EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                            test_networks_[0]->getName()),
                  isc::InvalidOperation);
-    // We currently don't support fetching a shared network which is assigned
-    // to no servers.
-    EXPECT_THROW(cbptr_->getSharedNetwork6(ServerSelector::UNASSIGNED(),
-                                           test_networks_[0]->getName()),
-                 isc::NotImplemented);
 
     // Test that this shared network will be fetched for various server selectors.
     auto test_get_network = [this, &shared_network] (const std::string& test_case_name,
@@ -1975,6 +1970,84 @@ TEST_F(MySqlConfigBackendDHCPv6Test, deleteSharedNetwork6) {
     test_delete("all servers", ServerSelector::ALL(), shared_network1);
     test_delete("any server", ServerSelector::ANY(), shared_network2);
     test_delete("one server", ServerSelector::ONE("server1"), shared_network3);
+}
+
+// Test that it is possible to retrieve and delete orphaned shared network.
+TEST_F(MySqlConfigBackendDHCPv6Test, unassignedSharedNetwork) {
+    // Create the server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
+
+    // Create the shared network and associate it with the server1.
+    auto shared_network = test_networks_[0];
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"), shared_network)
+    );
+
+    // Delete the server. The shared network should be preserved but is
+    // considered orhpaned, i.e. does not belong to any server.
+    uint64_t deleted_count = 0;
+    EXPECT_NO_THROW(deleted_count = cbptr_->deleteServer6(ServerTag("server1")));
+    EXPECT_EQ(1, deleted_count);
+
+    // Trying to fetch this shared network by server tag should return no result.
+    SharedNetwork6Ptr returned_network;
+    EXPECT_NO_THROW(returned_network = cbptr_->getSharedNetwork6(ServerSelector::ONE("server1"),
+                                                                 "level1"));
+    EXPECT_FALSE(returned_network);
+
+    // The same if we use other calls.
+    SharedNetwork6Collection returned_networks;
+    EXPECT_NO_THROW(
+        returned_networks = cbptr_->getAllSharedNetworks6(ServerSelector::ONE("server1"))
+    );
+    EXPECT_TRUE(returned_networks.empty());
+
+    EXPECT_NO_THROW(
+        returned_networks = cbptr_->getModifiedSharedNetworks6(ServerSelector::ONE("server1"),
+                                                               timestamps_["two days ago"])
+    );
+    EXPECT_TRUE(returned_networks.empty());
+
+    // We should get the shared network if we ask for unassigned.
+    EXPECT_NO_THROW(returned_network = cbptr_->getSharedNetwork6(ServerSelector::UNASSIGNED(),
+                                                                 "level1"));
+    ASSERT_TRUE(returned_network);
+
+    // Also if we ask for all unassigned networks it should be returned.
+    EXPECT_NO_THROW(returned_networks = cbptr_->getAllSharedNetworks6(ServerSelector::UNASSIGNED()));
+    ASSERT_EQ(1, returned_networks.size());
+
+    // And all modified.
+    EXPECT_NO_THROW(
+        returned_networks = cbptr_->getModifiedSharedNetworks6(ServerSelector::UNASSIGNED(),
+                                                               timestamps_["two days ago"])
+    );
+    ASSERT_EQ(1, returned_networks.size());
+
+    // If we ask for any network with this name, it should be returned too.
+    EXPECT_NO_THROW(returned_network = cbptr_->getSharedNetwork6(ServerSelector::ANY(),
+                                                                 "level1"));
+    ASSERT_TRUE(returned_network);
+
+    // Deleting a shared network with the mismatched server tag should not affect
+    // our shared network.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteSharedNetwork6(ServerSelector::ONE("server1"),
+                                                     "level1")
+    );
+    EXPECT_EQ(0, deleted_count);
+
+    // Also, if we delete all shared networks for server1.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteAllSharedNetworks6(ServerSelector::ONE("server1"))
+    );
+    EXPECT_EQ(0, deleted_count);
+
+    // We can delete this shared network when we specify ANY and the matching name.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteSharedNetwork6(ServerSelector::ANY(), "level1")
+    );
+    EXPECT_EQ(1, deleted_count);
 }
 
 // Test that lifetimes in shared networks are handled as expected.
