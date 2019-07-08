@@ -61,10 +61,16 @@ public:
         GET_GLOBAL_PARAMETER6,
         GET_ALL_GLOBAL_PARAMETERS6,
         GET_MODIFIED_GLOBAL_PARAMETERS6,
-        GET_SUBNET6_ID,
-        GET_SUBNET6_PREFIX,
+        GET_SUBNET6_ID_NO_TAG,
+        GET_SUBNET6_ID_ANY,
+        GET_SUBNET6_ID_UNASSIGNED,
+        GET_SUBNET6_PREFIX_NO_TAG,
+        GET_SUBNET6_PREFIX_ANY,
+        GET_SUBNET6_PREFIX_UNASSIGNED,
         GET_ALL_SUBNETS6,
+        GET_ALL_SUBNETS6_UNASSIGNED,
         GET_MODIFIED_SUBNETS6,
+        GET_MODIFIED_SUBNETS6_UNASSIGNED,
         GET_SHARED_NETWORK_SUBNETS6,
         GET_POOL6_RANGE,
         GET_PD_POOL,
@@ -118,6 +124,7 @@ public:
         DELETE_SUBNET6_PREFIX,
         DELETE_ALL_SUBNETS6,
         DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
+        DELETE_SUBNET6_SERVER,
         DELETE_POOLS6_SUBNET_ID,
         DELETE_PD_POOLS_SUBNET_ID,
         DELETE_SHARED_NETWORK6_NAME_WITH_TAG,
@@ -237,6 +244,7 @@ public:
     /// Query should order subnets by subnet_id.
     ///
     /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
     /// @param in_bindings Input bindings specifying selection criteria. The
     /// size of the bindings collection must match the number of placeholders
     /// in the prepared statement. The input bindings collection must be empty
@@ -244,6 +252,7 @@ public:
     /// @param [out] subnets Reference to the container where fetched subnets
     /// will be inserted.
     void getSubnets6(const StatementIndex& index,
+                     const ServerSelector& server_selector,
                      const MySqlBindingCollection& in_bindings,
                      Subnet6Collection& subnets) {
         // Create output bindings. The order must match that in the prepared
@@ -330,16 +339,16 @@ public:
         uint64_t last_pool_option_id = 0;
         uint64_t last_pd_pool_option_id = 0;
         uint64_t last_option_id = 0;
-
         Pool6Ptr last_pool;
         Pool6Ptr last_pd_pool;
+        std::string last_tag;
 
         // Execute actual query.
         conn_.selectQuery(index, in_bindings, out_bindings,
                           [this, &subnets, &last_pool,  &last_pd_pool,
                            &last_pool_id, &last_pd_pool_id,
                            &last_pool_option_id, &last_pd_pool_option_id,
-                           &last_option_id]
+                           &last_option_id, &last_tag]
                           (MySqlBindingCollection& out_bindings) {
             // Get pointer to the last subnet in the collection.
             Subnet6Ptr last_subnet;
@@ -357,6 +366,9 @@ public:
                 // rows will contain pool information.
                 last_pool_id = 0;
                 last_pd_pool_id = 0;
+
+                // Reset last server tag as we're now starting to process new subnet.
+                last_tag.clear();
 
                 // subnet_id
                 SubnetID subnet_id(out_bindings[0]->getInteger<uint32_t>());
@@ -491,9 +503,6 @@ public:
 
                 // 71 and 72 are {min,max}_valid_lifetime
 
-                // server_tag
-                last_subnet->setServerTag(out_bindings[73]->getString());
-
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.push_back(last_subnet);
 
@@ -502,6 +511,15 @@ public:
                 // so this is for sanity only.
                 if (!ret.second) {
                     isc_throw(Unexpected, "add subnet failed");
+                }
+            }
+
+            // Check for new server tags.
+            if (!out_bindings[73]->amNull() &&
+                (last_tag != out_bindings[73]->getString())) {
+                last_tag = out_bindings[73]->getString();
+                if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
+                    last_subnet->setServerTag(last_tag);
                 }
             }
 
@@ -573,8 +591,14 @@ public:
                     last_subnet->getCfgOption()->add(*desc, desc->space_name_);
                 }
             }
-
         });
+
+        // Now that we're done fetching the whole subnet, we have to
+        // check if it has matching server tags and toss it if it
+        // doesn't. We skip matching the server tags if we're asking
+        // for ANY subnet.
+        auto& subnet_index = subnets.get<SubnetRandomAccessIndexTag>();
+        tossNonMatchingElements(server_selector, subnet_index);
     }
 
     /// @brief Sends query to retrieve single subnet by id.
@@ -586,17 +610,25 @@ public:
     /// doesn't exist.
     Subnet6Ptr getSubnet6(const ServerSelector& server_selector,
                           const SubnetID& subnet_id) {
-        Subnet6Collection subnets;
-
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createInteger<uint32_t>(subnet_id)
-            };
-
-            getSubnets6(GET_SUBNET6_ID, in_bindings, subnets);
+        if (server_selector.hasMultipleTags()) {
+            isc_throw(InvalidOperation, "expected one server tag to be specified"
+                      " while fetching a subnet. Got: "
+                      << getServerTagsAsText(server_selector));
         }
+
+        MySqlBindingCollection in_bindings = { MySqlBinding::createInteger<uint32_t>(subnet_id) };
+
+        auto index = GET_SUBNET6_ID_NO_TAG;
+
+        if (server_selector.amUnassigned()) {
+            index = GET_SUBNET6_ID_UNASSIGNED;
+
+        } else if (server_selector.amAny()) {
+            index = GET_SUBNET6_ID_ANY;
+        }
+
+        Subnet6Collection subnets;
+        getSubnets6(index, server_selector, in_bindings, subnets);
 
         return (subnets.empty() ? Subnet6Ptr() : *subnets.begin());
     }
@@ -612,17 +644,25 @@ public:
     /// doesn't exist.
     Subnet6Ptr getSubnet6(const ServerSelector& server_selector,
                           const std::string& subnet_prefix) {
-        Subnet6Collection subnets;
-
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createString(subnet_prefix)
-            };
-
-            getSubnets6(GET_SUBNET6_PREFIX, in_bindings, subnets);
+        if (server_selector.hasMultipleTags()) {
+            isc_throw(InvalidOperation, "expected one server tag to be specified"
+                      " while fetching a subnet. Got: "
+                      << getServerTagsAsText(server_selector));
         }
+
+        MySqlBindingCollection in_bindings = { MySqlBinding::createString(subnet_prefix) };
+
+        auto index = GET_SUBNET6_PREFIX_NO_TAG;
+
+        if (server_selector.amUnassigned()) {
+            index = GET_SUBNET6_PREFIX_UNASSIGNED;
+
+        } else if (server_selector.amAny()) {
+            index = GET_SUBNET6_PREFIX_ANY;
+        }
+
+        Subnet6Collection subnets;
+        getSubnets6(index, server_selector, in_bindings, subnets);
 
         return (subnets.empty() ? Subnet6Ptr() : *subnets.begin());
     }
@@ -634,15 +674,10 @@ public:
     /// subnets should be inserted.
     void getAllSubnets6(const ServerSelector& server_selector,
                         Subnet6Collection& subnets) {
-        auto tags = server_selector.getTags();
-
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get())
-            };
-
-            getSubnets6(GET_ALL_SUBNETS6, in_bindings, subnets);
-        }
+        auto index = (server_selector.amUnassigned() ? GET_ALL_SUBNETS6_UNASSIGNED :
+                      GET_ALL_SUBNETS6);
+        MySqlBindingCollection in_bindings;
+        getSubnets6(index, server_selector, in_bindings, subnets);
     }
 
     /// @brief Sends query to retrieve modified subnets.
@@ -654,16 +689,13 @@ public:
     void getModifiedSubnets6(const ServerSelector& server_selector,
                              const boost::posix_time::ptime& modification_ts,
                              Subnet6Collection& subnets) {
-        auto tags = server_selector.getTags();
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createTimestamp(modification_ts)
+        };
 
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createTimestamp(modification_ts)
-            };
-
-            getSubnets6(GET_MODIFIED_SUBNETS6, in_bindings, subnets);
-        }
+        auto index = (server_selector.amUnassigned() ? GET_MODIFIED_SUBNETS6_UNASSIGNED :
+                      GET_MODIFIED_SUBNETS6);
+        getSubnets6(index, server_selector, in_bindings, subnets);
     }
 
     /// @brief Sends query to retrieve all subnets belonging to a shared network.
@@ -676,16 +708,8 @@ public:
     void getSharedNetworkSubnets6(const ServerSelector& server_selector,
                                   const std::string& shared_network_name,
                                   Subnet6Collection& subnets) {
-        auto tags = server_selector.getTags();
-
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createString(shared_network_name)
-            };
-
-            getSubnets6(GET_SHARED_NETWORK_SUBNETS6, in_bindings, subnets);
-        }
+        MySqlBindingCollection in_bindings = { MySqlBinding::createString(shared_network_name) };
+        getSubnets6(GET_SHARED_NETWORK_SUBNETS6, server_selector, in_bindings, subnets);
     }
 
     /// @brief Sends query to retrieve multiple pools.
@@ -902,8 +926,6 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        auto tag = getServerTag(server_selector, "creating or updating subnet");
-
         // Create JSON list of required classes.
         ElementPtr required_classes_element = Element::createList();
         const auto& required_classes = subnet->getRequiredClasses();
@@ -1004,12 +1026,6 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6,
                               in_bindings);
 
-            // Insert associations with the servers.
-            attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
-                                   server_selector,
-                                   MySqlBinding::createInteger<uint32_t>(subnet->getID()),
-                                   MySqlBinding::createTimestamp(subnet->getModificationTime()));
-
         } catch (const DuplicateEntry&) {
             deletePools6(subnet);
             deletePdPools6(subnet);
@@ -1020,7 +1036,19 @@ public:
             in_bindings.push_back(MySqlBinding::createString(subnet->toText()));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_SUBNET6,
                                     in_bindings);
+
+            MySqlBindingCollection in_server_bindings = {
+                MySqlBinding::createInteger<uint32_t>(subnet->getID())
+            };
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_SERVER,
+                                    in_server_bindings);
         }
+
+        // Insert associations with the servers.
+        attachElementToServers(MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
+                               server_selector,
+                               MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+                               MySqlBinding::createTimestamp(subnet->getModificationTime()));
 
         // (Re)create pools.
         for (auto pool : subnet->getPools(Lease::TYPE_NA)) {
@@ -2328,28 +2356,58 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Select subnet by id.
-    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_ID,
-      MYSQL_GET_SUBNET6(AND s.subnet_id = ?)
+    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_ID_NO_TAG,
+      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.subnet_id = ?)
+    },
+
+    // Select subnet by id without specifying server tags.
+    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_ID_ANY,
+      MYSQL_GET_SUBNET6_ANY(WHERE s.subnet_id = ?)
+    },
+
+    // Select unassigned subnet by id.
+    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_ID_UNASSIGNED,
+      MYSQL_GET_SUBNET6_UNASSIGNED(AND s.subnet_id = ?)
     },
 
     // Select subnet by prefix.
-    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_PREFIX,
-      MYSQL_GET_SUBNET6(AND s.subnet_prefix = ?)
+    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_PREFIX_NO_TAG,
+      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.subnet_prefix = ?)
+    },
+
+    // Select subnet by prefix without specifying server tags.
+    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_PREFIX_ANY,
+      MYSQL_GET_SUBNET6_ANY(WHERE s.subnet_prefix = ?)
+    },
+
+    // Select unassigned subnet by prefix.
+    { MySqlConfigBackendDHCPv6Impl::GET_SUBNET6_PREFIX_UNASSIGNED,
+      MYSQL_GET_SUBNET6_UNASSIGNED(AND s.subnet_prefix = ?)
     },
 
     // Select all subnets.
     { MySqlConfigBackendDHCPv6Impl::GET_ALL_SUBNETS6,
-      MYSQL_GET_SUBNET6()
+      MYSQL_GET_SUBNET6_NO_TAG()
+    },
+
+    // Select all unassigned subnets.
+    { MySqlConfigBackendDHCPv6Impl::GET_ALL_SUBNETS6_UNASSIGNED,
+      MYSQL_GET_SUBNET6_UNASSIGNED()
     },
 
     // Select subnets having modification time later than X.
     { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SUBNETS6,
-      MYSQL_GET_SUBNET6(AND s.modification_ts > ?)
+      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.modification_ts > ?)
+    },
+
+    // Select modified and unassigned subnets.
+    { MySqlConfigBackendDHCPv6Impl::GET_MODIFIED_SUBNETS6_UNASSIGNED,
+      MYSQL_GET_SUBNET6_UNASSIGNED(AND s.modification_ts > ?)
     },
 
     // Select subnets belonging to a shared network.
     { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK_SUBNETS6,
-      MYSQL_GET_SUBNET6(AND s.shared_network_name = ?)
+      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.shared_network_name = ?)
     },
 
     // Select pool by address range.
@@ -2740,6 +2798,11 @@ TaggedStatementArray tagged_statements = { {
     // Delete all subnets for a shared network.
     { MySqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
       MYSQL_DELETE_SUBNET(dhcp6, AND s.shared_network_name = ?)
+    },
+
+    // Delete associations of a subnet with server.
+    { MySqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_SERVER,
+      MYSQL_DELETE_SUBNET_SERVER(dhcp6),
     },
 
     // Delete pools for a subnet.

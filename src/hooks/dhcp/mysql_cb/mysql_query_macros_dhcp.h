@@ -49,7 +49,7 @@ namespace {
 #endif
 
 #ifndef MYSQL_GET_SUBNET4
-#define MYSQL_GET_SUBNET4(...) \
+#define MYSQL_GET_SUBNET4_COMMON(server_join, ...) \
     "SELECT" \
     "  s.subnet_id," \
     "  s.subnet_prefix," \
@@ -108,19 +108,41 @@ namespace {
     "  s.max_valid_lifetime," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
-    "INNER JOIN dhcp4_subnet_server AS a " \
-    "  ON s.subnet_id = a.subnet_id " \
-    "INNER JOIN dhcp4_server AS srv " \
-    "  ON (a.server_id = srv.id) OR (a.server_id = 1) " \
+    server_join \
     "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id " \
     "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
     "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id " \
-    "WHERE (srv.tag = ? OR srv.id = 1) " #__VA_ARGS__ \
+    #__VA_ARGS__ \
     " ORDER BY s.subnet_id, p.id, x.option_id, o.option_id"
+
+#define MYSQL_GET_SUBNET4_NO_TAG(...) \
+    MYSQL_GET_SUBNET4_COMMON( \
+    "INNER JOIN dhcp4_subnet_server AS a " \
+    "  ON s.subnet_id = a.subnet_id " \
+    "INNER JOIN dhcp4_server AS srv " \
+    "  ON (a.server_id = srv.id) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SUBNET4_ANY(...) \
+    MYSQL_GET_SUBNET4_COMMON( \
+    "LEFT JOIN dhcp4_subnet_server AS a "\
+    "  ON s.subnet_id = a.subnet_id " \
+    "LEFT JOIN dhcp4_server AS srv " \
+    "  ON a.server_id = srv.id ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SUBNET4_UNASSIGNED(...) \
+    MYSQL_GET_SUBNET4_COMMON( \
+    "LEFT JOIN dhcp4_subnet_server AS a "\
+    "  ON s.subnet_id = a.subnet_id " \
+    "LEFT JOIN dhcp4_server AS srv " \
+    "  ON a.server_id = srv.id ", \
+    WHERE a.subnet_id IS NULL __VA_ARGS__)
+
 #endif
 
 #ifndef MYSQL_GET_SUBNET6
-#define MYSQL_GET_SUBNET6(...) \
+#define MYSQL_GET_SUBNET6_COMMON(server_join, ...) \
     "SELECT" \
     "  s.subnet_id," \
     "  s.subnet_prefix," \
@@ -197,17 +219,39 @@ namespace {
     "  s.max_valid_lifetime," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
-    "INNER JOIN dhcp6_subnet_server AS a " \
-    "  ON s.subnet_id = a.subnet_id " \
-    "INNER JOIN dhcp6_server AS srv " \
-    "  ON (a.server_id = srv.id) OR (a.server_id = 1) " \
+    server_join \
     "LEFT JOIN dhcp6_pool AS p ON s.subnet_id = p.subnet_id " \
     "LEFT JOIN dhcp6_pd_pool AS d ON s.subnet_id = d.subnet_id " \
     "LEFT JOIN dhcp6_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
     "LEFT JOIN dhcp6_options AS y ON y.scope_id = 6 AND d.id = y.pd_pool_id " \
     "LEFT JOIN dhcp6_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp6_subnet_id " \
-    "WHERE (srv.tag = ? OR srv.id = 1) " #__VA_ARGS__ \
+    #__VA_ARGS__                                                        \
     " ORDER BY s.subnet_id, p.id, d.id, x.option_id, o.option_id"
+
+#define MYSQL_GET_SUBNET6_NO_TAG(...) \
+    MYSQL_GET_SUBNET6_COMMON( \
+    "INNER JOIN dhcp6_subnet_server AS a " \
+    "  ON s.subnet_id = a.subnet_id " \
+    "INNER JOIN dhcp6_server AS srv " \
+    "  ON (a.server_id = srv.id) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SUBNET6_ANY(...) \
+    MYSQL_GET_SUBNET6_COMMON( \
+    "LEFT JOIN dhcp6_subnet_server AS a "\
+    "  ON s.subnet_id = a.subnet_id " \
+    "LEFT JOIN dhcp6_server AS srv " \
+    "  ON a.server_id = srv.id ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_SUBNET6_UNASSIGNED(...) \
+    MYSQL_GET_SUBNET6_COMMON( \
+    "LEFT JOIN dhcp6_subnet_server AS a "\
+    "  ON s.subnet_id = a.subnet_id " \
+    "LEFT JOIN dhcp6_server AS srv " \
+    "  ON a.server_id = srv.id ", \
+    WHERE a.subnet_id IS NULL __VA_ARGS__)
+
 #endif
 
 #ifndef MYSQL_GET_SHARED_NETWORK4
@@ -674,6 +718,12 @@ namespace {
     "INNER JOIN " #table_prefix "_server AS srv" \
     "  ON a.server_id = srv.id " \
     "WHERE srv.tag = ? " #__VA_ARGS__
+#endif
+
+#ifndef MYSQL_DELETE_SUBNET_SERVER
+#define MYSQL_DELETE_SUBNET_SERVER(table_prefix) \
+    "DELETE FROM " #table_prefix "_subnet_server " \
+    "WHERE subnet_id = ?"
 #endif
 
 #ifndef MYSQL_DELETE_POOLS

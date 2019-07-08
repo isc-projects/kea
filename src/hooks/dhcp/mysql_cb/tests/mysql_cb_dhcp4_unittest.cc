@@ -1005,21 +1005,20 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
 
 // Test that subnet can be inserted, fetched, updated and then fetched again.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
-    // Insert new subnet.
-    Subnet4Ptr subnet = test_subnets_[0];
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+    // Insert the server2 into the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[2]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp4_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
 
-    // Fetch this subnet by subnet identifier.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-                                                    test_subnets_[0]->getID());
-    ASSERT_TRUE(returned_subnet);
-    ASSERT_EQ(1, returned_subnet->getServerTags().size());
-    EXPECT_EQ("all", returned_subnet->getServerTags().begin()->get());
+    auto subnet = test_subnets_[0];
+    auto subnet2 = test_subnets_[2];
 
-    // The easiest way to verify whether the returned subnet matches the inserted
-    // subnet is to convert both to text.
-    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
-
+    // Insert two subnets, one for all servers and one for server2.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
     {
         SCOPED_TRACE("CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
@@ -1027,44 +1026,97 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
                           "subnet set");
     }
 
-    // Update the subnet in the database (both use the same ID).
-    Subnet4Ptr subnet2 = test_subnets_[1];
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet2);
 
-    // Fetch updated subnet and see if it matches.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-                                         SubnetID(1024));
-    EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2));
+    {
+        SCOPED_TRACE("CREATE audit entry for the subnet");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "subnet set", ServerSelector::ONE("subnet2"),
+                          2, 1);
+    }
 
-    // Fetching the subnet for an explicitly specified server tag should
-    // succeed too.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
-                                         SubnetID(1024));
-    EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+    // We are not going to support selection of a single entry for multiple servers.
+    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                    subnet->getID()),
+                 isc::InvalidOperation);
+
+    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                    subnet->toText()),
+                 isc::InvalidOperation);
+
+    // Test that this subnet will be fetched for various server selectors.
+    auto test_get_subnet = [this, &subnet] (const std::string& test_case_name,
+                                            const ServerSelector& server_selector,
+                                            const std::string& expected_tag = ServerTag::ALL) {
+        SCOPED_TRACE(test_case_name);
+
+        // Test fetching subnet by id.
+        Subnet4Ptr returned_subnet;
+        ASSERT_NO_THROW(returned_subnet = cbptr_->getSubnet4(server_selector, subnet->getID()));
+        ASSERT_TRUE(returned_subnet);
+
+        ASSERT_EQ(1, returned_subnet->getServerTags().size());
+        EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag(expected_tag)));
+
+        EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+
+        // Test fetching subnet by prefix.
+        ASSERT_NO_THROW(returned_subnet = cbptr_->getSubnet4(server_selector,
+                                                             subnet->toText()));
+        ASSERT_TRUE(returned_subnet);
+
+        ASSERT_EQ(1, returned_subnet->getServerTags().size());
+        EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag(expected_tag)));
+
+        EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+    };
 
     {
-        SCOPED_TRACE("UPDATE audit entry for the subnet");
+        SCOPED_TRACE("testing various server selectors before update");
+        test_get_subnet("all servers", ServerSelector::ALL());
+        test_get_subnet("one server", ServerSelector::ONE("server1"));
+        test_get_subnet("any server", ServerSelector::ANY());
+    }
+
+    subnet = subnet2;
+    {
+        SCOPED_TRACE("testing server selectors for another server");
+        test_get_subnet("one server", ServerSelector::ONE("server2"), "server2");
+        test_get_subnet("any server", ServerSelector::ANY(), "server2");
+    }
+
+    // Update the subnet in the database (both use the same ID).
+    subnet = test_subnets_[1];
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
+    {
+        SCOPED_TRACE("CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::UPDATE,
                           "subnet set");
     }
 
-    // Insert another subnet.
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]);
+    {
+        SCOPED_TRACE("testing various server selectors after update");
+        test_get_subnet("all servers", ServerSelector::ALL());
+        test_get_subnet("one server", ServerSelector::ONE("server1"));
+        test_get_subnet("any server", ServerSelector::ANY());
+    }
 
-    // Fetch this subnet by prefix and verify it matches.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-                                         test_subnets_[2]->toText());
-    ASSERT_TRUE(returned_subnet);
-    EXPECT_EQ(test_subnets_[2]->toElement()->str(), returned_subnet->toElement()->str());
+    // The server2 specific subnet should not be returned if the server selector
+    // is not matching.
+    EXPECT_FALSE(cbptr_->getSubnet4(ServerSelector::ALL(), subnet2->getID()));
+    EXPECT_FALSE(cbptr_->getSubnet4(ServerSelector::ALL(), subnet2->toText()));
+    EXPECT_FALSE(cbptr_->getSubnet4(ServerSelector::ONE("server1"), subnet2->getID()));
+    EXPECT_FALSE(cbptr_->getSubnet4(ServerSelector::ONE("server1"), subnet2->toText()));
 
     // Update the subnet in the database (both use the same prefix).
     subnet2.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 30, 40, 60, 8192));
-    cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2);
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"),  subnet2));
 
     // Fetch again and verify.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-                                         test_subnets_[2]->toText());
+    auto returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server2"),
+                                              subnet2->toText());
     ASSERT_TRUE(returned_subnet);
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 
@@ -1072,7 +1124,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // with different subnets. This should throw.
     // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
     subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2),
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"),  subnet2),
                  DuplicateEntry);
 }
 
