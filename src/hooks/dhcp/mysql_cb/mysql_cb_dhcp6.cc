@@ -3259,7 +3259,7 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
+MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector */,
                                         const std::string& shared_network_name,
                                         const uint16_t code,
                                         const std::string& space) {
