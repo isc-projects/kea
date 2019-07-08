@@ -19,6 +19,13 @@
     "cmd-comment": "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter6-get-all</command> may be useful to verify the contents of the database after the update.",
     "resp-syntax": "{
     \"result\": 0,
-    \"text\": \"DHCPv6 global parameter(s) successfully set.\"
+    \"text\": \"DHCPv6 global parameter(s) successfully set.\",
+    \"arguments\": {
+        \"parameters\": {
+            <first parameter name>: <first parameter value>,
+            <second parameter name>: <second parameter value>
+        },
+        \"count\": 2
+    }
 }"
 }
