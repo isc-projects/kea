@@ -87,6 +87,11 @@ TEST(ServerTagTest, malformed) {
         SCOPED_TRACE("too long tag, max is 256");
         EXPECT_THROW(ServerTag(std::string(257, 'c')), BadValue);
     }
+
+    {
+        SCOPED_TRACE("use reserved keyword any as a tag");
+        EXPECT_THROW(ServerTag("any"), BadValue);
+    }
 }
 
 }

@@ -18,8 +18,10 @@ namespace data {
 /// configuration is stored in the database. The label "all" is reserved
 /// and it means "all servers". A configuration object in the database
 /// associated with this server tag belongs to all servers. The server
-/// tag must not be empty and must not be longer than 256 characters
-/// (excluding leading and terminating whitespaces, which are trimmed).
+/// tag must not be empty, must not be longer than 256 characters
+/// (excluding leading and terminating whitespaces, which are trimmed)
+/// and must not be set to "any" which has a special meaning for the
+/// server selector.
 class ServerTag {
 public:
 

@@ -28,6 +28,12 @@ ServerTag::ServerTag(const std::string& tag)
     }
 
     boost::algorithm::to_lower(tag_);
+
+    // ANY has a defined meaning for server selector and must not be used as
+    // a server tag.
+    if (tag_ == "any") {
+        isc_throw(BadValue, "'any' is reserved and must not be used as a server-tag");
+    }
 }
 
 bool
