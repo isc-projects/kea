@@ -604,7 +604,7 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 }
 
 isc::data::ConstElementPtr
-ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
+ControlledDhcpv4Srv::processConfig(ConstElementPtr config) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
               .arg(config->str());

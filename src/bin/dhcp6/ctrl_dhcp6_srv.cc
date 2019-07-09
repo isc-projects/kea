@@ -541,7 +541,7 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
 }
 
 isc::data::ConstElementPtr
-ControlledDhcpv6Srv::processCommand(string& command,
+ControlledDhcpv6Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
 
