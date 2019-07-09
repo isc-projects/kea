@@ -610,7 +610,6 @@ namespace {
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON a.server_id = s.id " \
     "SET" \
-    "  o.option_id = LAST_INSERT_ID(o.option_id)," \
     "  o.code = ?," \
     "  o.value = ?," \
     "  o.formatted_value = ?," \
@@ -780,18 +779,6 @@ namespace {
     "  AND o.pd_pool_id = " \
     "  (SELECT id FROM dhcp6_pd_pool" \
     "   WHERE prefix = ? AND prefix_length = ?)"
-#endif
-
-#ifndef MYSQL_DELETE_OPTION_SERVER
-#define MYSQL_DELETE_OPTION_SERVER(table_prefix) \
-    "DELETE os FROM " #table_prefix "_options_server AS os " \
-    "WHERE os.option_id = " \
-    "  (SELECT o.option_id FROM " #table_prefix "_options AS o" \
-    "   INNER JOIN " #table_prefix "_options_server AS a" \
-    "      ON o.option_id = a.option_id " \
-    "   INNER JOIN " #table_prefix "_server AS s" \
-    "      ON a.server_id = s.id " \
-    "   WHERE s.tag = ? AND o.scope_id = ? AND o.code = ? AND o.space = ?)"
 #endif
 
 #ifndef MYSQL_DELETE_SERVER

@@ -1546,6 +1546,13 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6) {
 // Test that shared network may be created and updated and the server tags
 // are properly assigned to it.
 TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6) {
+    auto shared_network = test_networks_[0];
+
+    // An attempto insert the shared network for non-existing server should fail.
+    EXPECT_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ONE("server1"),
+                                                    shared_network),
+                 DbOperationError);
+
     // Insert the server1 into the database.
     EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
     {
@@ -1563,8 +1570,6 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSharedNetwork6) {
                           AuditEntry::ModificationType::CREATE,
                           "server set");
     }
-
-    auto shared_network = test_networks_[0];
 
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
                                                        shared_network));
