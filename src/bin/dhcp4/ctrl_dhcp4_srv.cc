@@ -11,8 +11,8 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4to6_ipc.h>
-#include <dhcp4/parser_context.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcp4/parser_context.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
