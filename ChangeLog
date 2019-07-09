@@ -1,3 +1,8 @@
+1618.	[func]		marcin
+	Add support for associating the shared networks with the server
+	tags in the mysql_cb hooks library.
+	(Gitlab #716,!412, git 326fdbeb51dc1f6eebbdbbdcce78cfac87a61bd9)
+
 1617.	[bug]		fdupont
 	During the application of the config backend the external config
 	is initialized to the default values so when a global parameter
