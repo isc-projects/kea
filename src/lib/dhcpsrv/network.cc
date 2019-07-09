@@ -117,6 +117,24 @@ Network::hrModeFromString(const std::string& hr_mode_name) {
     }
 }
 
+Optional<IOAddress>
+Network::getGlobalProperty(Optional<IOAddress> property,
+                           const std::string& global_name) const {
+    if (!global_name.empty() && fetch_globals_fn_) {
+        ConstElementPtr globals = fetch_globals_fn_();
+        if (globals && (globals->getType() == Element::map)) {
+            ConstElementPtr global_param = globals->get(global_name);
+            if (global_param) {
+                std::string global_str = global_param->stringValue();
+                if (!global_str.empty()) {
+                    return (IOAddress(global_str));
+                }
+            }
+        }
+    }
+    return (property);
+}
+
 ElementPtr
 Network::toElement() const {
     ElementPtr map = Element::createMap();

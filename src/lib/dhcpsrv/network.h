@@ -589,21 +589,7 @@ protected:
     /// of @c property.
     util::Optional<asiolink::IOAddress>
     getGlobalProperty(util::Optional<asiolink::IOAddress> property,
-                      const std::string& global_name) const {
-        if (!global_name.empty() && fetch_globals_fn_) {
-            data::ConstElementPtr globals = fetch_globals_fn_();
-            if (globals && (globals->getType() == data::Element::map)) {
-                data::ConstElementPtr global_param = globals->get(global_name);
-                if (global_param) {
-                    std::string global_str = global_param->stringValue();
-                    if (!global_str.empty()) {
-                        return (asiolink::IOAddress(global_str));
-                    }
-                }
-            }
-        }
-        return (property);
-    }
+                      const std::string& global_name) const;
 
     /// @brief Returns a value associated with a network using inheritance.
     ///
