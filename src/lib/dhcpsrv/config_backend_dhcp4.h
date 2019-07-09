@@ -185,7 +185,7 @@ public:
     /// @brief Retrieves single option definition by code and space.
     ///
     /// Allowed server selectors: ALL, ONE.
-    /// Not allowed server selector: ANY, UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param code Code of the option to be retrieved.
@@ -223,7 +223,7 @@ public:
     /// @brief Retrieves single option by code and space.
     ///
     /// Allowed server selectors: ALL, ONE.
-    /// Not allowed server selector: ANY, UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param code Option code.
@@ -261,7 +261,7 @@ public:
     /// @brief Retrieves global parameter value.
     ///
     /// Allowed server selectors: ALL, ONE.
-    /// Not allowed server selector: ANY, UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
@@ -503,7 +503,8 @@ public:
     /// @param space Option space of the option to be deleted.
     /// @return Number of deleted option definitions.
     virtual uint64_t
-    deleteOptionDef4(const db::ServerSelector& server_selector, const uint16_t code,
+    deleteOptionDef4(const db::ServerSelector& server_selector,
+                     const uint16_t code,
                      const std::string& space) = 0;
 
     /// @brief Deletes all option definitions.
@@ -526,7 +527,8 @@ public:
     /// @param space Option space of the option to be deleted.
     /// @return Number of deleted options.
     virtual uint64_t
-    deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
+    deleteOption4(const db::ServerSelector& server_selector,
+                  const uint16_t code,
                   const std::string& space) = 0;
 
     /// @brief Deletes shared network level option.
@@ -557,8 +559,10 @@ public:
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
     virtual uint64_t
-    deleteOption4(const db::ServerSelector& server_selector, const SubnetID& subnet_id,
-                  const uint16_t code, const std::string& space) = 0;
+    deleteOption4(const db::ServerSelector& server_selector,
+                  const SubnetID& subnet_id,
+                  const uint16_t code,
+                  const std::string& space) = 0;
 
     /// @brief Deletes pool level option.
     ///

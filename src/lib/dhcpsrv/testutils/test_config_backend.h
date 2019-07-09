@@ -89,22 +89,6 @@ public:
         return ("");
     }
 
-    /// @brief Copy server tags between two stamped elements.
-    ///
-    /// @param src Pointer to stamped element to copy tags from.
-    /// @param dst Pointer to stamped element to copy tags to.
-    void copyServerTags(const StampedElementPtr& src,
-                        const StampedElementPtr& dst) const {
-        auto tags = src->getServerTags();
-        for (auto tag : tags) {
-            // Until the stamped element tags are in a set (vs a vector)
-            // we have to avoid duplicates.
-            if (!dst->hasServerTag(tag)) {
-                dst->setServerTag(tag.get());
-            }
-        }
-    }
-
     /// @brief Merge server tags for a stamped element and a server selector.
     ///
     /// @param elem Stamped element to update.
@@ -113,11 +97,7 @@ public:
                          const db::ServerSelector& server_selector) const {
         auto tags = server_selector.getTags();
         for (auto tag : tags) {
-            // Until the stamped element tags are in a set (vs a vector)
-            // we have to avoid duplicates.
-            if (!elem->hasServerTag(tag)) {
-                elem->setServerTag(tag.get());
-            }
+            elem->setServerTag(tag.get());
         }
     }
 

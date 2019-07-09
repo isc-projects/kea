@@ -35,27 +35,69 @@ TestConfigBackendDHCPv4::unregisterBackendType(ConfigBackendDHCPv4Mgr& mgr,
 }
 
 Subnet4Ptr
-TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
                                     const std::string& subnet_prefix) const{
     const auto& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_prefix);
-    return ((subnet_it != index.cend()) ? (*subnet_it) : Subnet4Ptr());
+    if (subnet_it == index.cend()) {
+        return (Subnet4Ptr());
+    }
+    Subnet4Ptr subnet = *subnet_it;
+    if (server_selector.amAny()) {
+        return (subnet);
+    }
+    if (server_selector.amUnassigned()) {
+        return (subnet->getServerTags().empty() ? subnet : Subnet4Ptr());
+    }
+    auto tags = server_selector.getTags();
+    for (auto tag : tags) {
+        if (subnet->hasServerTag(ServerTag(tag))) {
+            return (subnet);
+        }
+    }
+    return (subnet->hasAllServerTag() ? subnet : Subnet4Ptr());
 }
 
 Subnet4Ptr
-TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
                                     const SubnetID& subnet_id) const {
     const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
-    return ((subnet_it != index.cend()) ? (*subnet_it) : Subnet4Ptr());
+    if (subnet_it == index.cend()) {
+        return (Subnet4Ptr());
+    }
+    Subnet4Ptr subnet = *subnet_it;
+    if (server_selector.amAny()) {
+        return (subnet);
+    }
+    if (server_selector.amUnassigned()) {
+        return (subnet->getServerTags().empty() ? subnet : Subnet4Ptr());
+    }
+    auto tags = server_selector.getTags();
+    for (auto tag : tags) {
+        if (subnet->hasServerTag(ServerTag(tag))) {
+            return (subnet);
+        }
+    }
+    return (subnet->hasAllServerTag() ? subnet : Subnet4Ptr());
 }
 
 Subnet4Collection
 TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selector) const {
-    auto tags = server_selector.getTags();
     Subnet4Collection subnets;
     for (auto subnet : subnets_) {
+        if (server_selector.amAny()) {
+            subnets.push_back(subnet);
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if (subnet->getServerTags().empty()) {
+                subnets.push_back(subnet);
+            }
+            continue;
+        }
         bool got = false;
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
                 subnets.push_back(subnet);
@@ -74,13 +116,37 @@ TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selecto
 }
 
 Subnet4Collection
-TestConfigBackendDHCPv4::getModifiedSubnets4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getModifiedSubnets4(const db::ServerSelector& server_selector,
                                              const boost::posix_time::ptime& modification_time) const {
     const auto& index = subnets_.get<SubnetModificationTimeIndexTag>();
     Subnet4Collection subnets;
     auto lb = index.lower_bound(modification_time);
     for (auto subnet = lb; subnet != index.end(); ++subnet) {
-        subnets.push_back(*subnet);
+        if (server_selector.amAny()) {
+            subnets.push_back(*subnet);
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if ((*subnet)->getServerTags().empty()) {
+                subnets.push_back(*subnet);
+            }
+            continue;
+        }
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if ((*subnet)->hasServerTag(ServerTag(tag))) {
+                subnets.push_back(*subnet);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if ((*subnet)->hasAllServerTag()) {
+            subnets.push_back(*subnet);
+        }
     }
     return (subnets);
 }
@@ -111,19 +177,45 @@ TestConfigBackendDHCPv4::getSharedNetworkSubnets4(const db::ServerSelector& /* s
 }
 
 SharedNetwork4Ptr
-TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& server_selector,
                                            const std::string& name) const {
     const auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(name);
-    return ((network_it != index.cend()) ? (*network_it) : SharedNetwork4Ptr());
+    if (network_it == index.cend()) {
+        return (SharedNetwork4Ptr());
+    }
+    SharedNetwork4Ptr network = *network_it;
+    if (server_selector.amAny()) {
+        return (network);
+    }
+    if (server_selector.amUnassigned()) {
+        return (network->getServerTags().empty() ? network : SharedNetwork4Ptr());
+    }
+    auto tags = server_selector.getTags();
+    for (auto tag : tags) {
+        if (network->hasServerTag(ServerTag(tag))) {
+            return (network);
+        }
+    }
+    return (network->hasAllServerTag() ? network : SharedNetwork4Ptr());
 }
 
 SharedNetwork4Collection
 TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_selector) const{
-    auto tags = server_selector.getTags();
     SharedNetwork4Collection shared_networks;
     for (auto shared_network : shared_networks_) {
+        if (server_selector.amAny()) {
+            shared_networks.push_back(shared_network);
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if (shared_network->getServerTags().empty()) {
+                shared_networks.push_back(shared_network);
+            }
+            continue;
+        }
         bool got = false;
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if (shared_network->hasServerTag(ServerTag(tag))) {
                 shared_networks.push_back(shared_network);
@@ -142,13 +234,37 @@ TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_
 }
 
 SharedNetwork4Collection
-TestConfigBackendDHCPv4::getModifiedSharedNetworks4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::getModifiedSharedNetworks4(const db::ServerSelector& server_selector,
                                                     const boost::posix_time::ptime& modification_time) const {
     const auto& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
     SharedNetwork4Collection shared_networks;
     auto lb = index.lower_bound(modification_time);
     for (auto shared_network = lb; shared_network != index.end(); ++shared_network) {
-        shared_networks.push_back(*shared_network);
+        if (server_selector.amAny()) {
+            shared_networks.push_back(*shared_network);
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if ((*shared_network)->getServerTags().empty()) {
+                shared_networks.push_back(*shared_network);
+            }
+            continue;
+        }
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if ((*shared_network)->hasServerTag(ServerTag(tag))) {
+                shared_networks.push_back(*shared_network);
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if ((*shared_network)->hasAllServerTag()) {
+            shared_networks.push_back(*shared_network);
+        }
     }
     return (shared_networks);
 }
@@ -399,13 +515,11 @@ TestConfigBackendDHCPv4::createUpdateSubnet4(const db::ServerSelector& server_se
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet->getID());
 
-    if (subnet_it != index.cend()) {
-        copyServerTags(*subnet_it, subnet);
-        mergeServerTags(subnet, server_selector);
-        index.replace(subnet_it, subnet);
+    mergeServerTags(subnet, server_selector);
 
+    if (subnet_it != index.cend()) {
+        index.replace(subnet_it, subnet);
     } else {
-        mergeServerTags(subnet, server_selector);
         index.insert(subnet);
     }
 }
@@ -416,13 +530,11 @@ TestConfigBackendDHCPv4::createUpdateSharedNetwork4(const db::ServerSelector& se
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network->getName());
 
-    if (network_it != index.cend()) {
-        copyServerTags(*network_it, shared_network);
-        mergeServerTags(shared_network, server_selector);
-        index.replace(network_it, shared_network);
+    mergeServerTags(shared_network, server_selector);
 
+    if (network_it != index.cend()) {
+        index.replace(network_it, shared_network);
     } else {
-        mergeServerTags(shared_network, server_selector);
         index.insert(shared_network);
     }
 }
@@ -638,24 +750,100 @@ TestConfigBackendDHCPv4::createUpdateServer4(const db::ServerPtr& server) {
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteSubnet4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::deleteSubnet4(const db::ServerSelector& server_selector,
                                        const std::string& subnet_prefix) {
     auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto subnet_it = index.find(subnet_prefix);
+    if (subnet_it == index.end()) {
+        return (0);
+    }
+    if ((server_selector.amUnassigned()) &&
+        !(*subnet_it)->getServerTags().empty()) {
+        return (0);
+    }
+    if (!server_selector.amAny()) {
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if ((*subnet_it)->hasServerTag(ServerTag(tag))) {
+                got = true;
+                break;
+            }
+        }
+        if (!got && !(*subnet_it)->hasAllServerTag()) {
+            return (0);
+        }
+    }
     return (index.erase(subnet_prefix));
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteSubnet4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::deleteSubnet4(const db::ServerSelector& server_selector,
                                        const SubnetID& subnet_id) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    if (subnet_it == index.end()) {
+        return (0);
+    }
+    if ((server_selector.amUnassigned()) &&
+        !(*subnet_it)->getServerTags().empty()) {
+        return (0);
+    }
+    if (!server_selector.amAny()) {
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if ((*subnet_it)->hasServerTag(ServerTag(tag))) {
+                got = true;
+                break;
+            }
+        }
+        if (!got && !(*subnet_it)->hasAllServerTag()) {
+            return (0);
+        }
+    }
     return (index.erase(subnet_id));
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteAllSubnets4(const db::ServerSelector& /* server_selector */) {
-    auto subnets_size = subnets_.size();
-    subnets_.clear();
-    return (subnets_size);
+TestConfigBackendDHCPv4::deleteAllSubnets4(const db::ServerSelector& server_selector) {
+    // Collect subnet to remove by ID.
+    std::list<SubnetID> ids;
+    for (auto subnet : subnets_) {
+        if (server_selector.amAny()) {
+            ids.push_back(subnet->getID());
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if (subnet->getServerTags().empty()) {
+                ids.push_back(subnet->getID());
+            }
+            continue;
+        }
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (subnet->hasServerTag(ServerTag(tag))) {
+                ids.push_back(subnet->getID());
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (subnet->hasAllServerTag()) {
+            ids.push_back(subnet->getID());
+        }
+    }
+
+    // Erase subnets.
+    uint64_t erased = 0;
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    for (auto subnet_id : ids) {
+        erased += index.erase(subnet_id);
+    }
+    return (erased);
 }
 
 uint64_t
@@ -682,27 +870,80 @@ TestConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& /
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& server_selector,
                                               const std::string& name) {
+    auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto network_it = index.find(name);
+    if (network_it == index.end()) {
+        return (0);
+    }
+    if ((server_selector.amUnassigned()) &&
+        !(*network_it)->getServerTags().empty()) {
+        return (0);
+    }
+    if (!server_selector.amAny()) {
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if ((*network_it)->hasServerTag(ServerTag(tag))) {
+                got = true;
+                break;
+            }
+        }
+        if (!got && !(*network_it)->hasAllServerTag()) {
+            return (0);
+        }
+    }
+
+    // Remove this shared network.
     for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
         if ((*subnet)->getSharedNetworkName() == name) {
             (*subnet)->setSharedNetworkName("");
         }
     }
-
-    auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
-    auto network_it = index.find(name);
-    if (network_it != index.end()) {
-        (*network_it)->delAll();
-    }
+    (*network_it)->delAll();
     return (index.erase(name));
 }
 
 uint64_t
-TestConfigBackendDHCPv4::deleteAllSharedNetworks4(const db::ServerSelector& /* server_selector */) {
-    auto shared_networks_size = shared_networks_.size();
-    shared_networks_.clear();
-    return (shared_networks_size);
+TestConfigBackendDHCPv4::deleteAllSharedNetworks4(const db::ServerSelector& server_selector) {
+    // Collect shared network to remove.
+    std::list<std::string> names;
+    for (auto shared_network : shared_networks_) {
+        if (server_selector.amAny()) {
+            names.push_back(shared_network->getName());
+            continue;
+        }
+        if (server_selector.amUnassigned()) {
+            if (shared_network->getServerTags().empty()) {
+                names.push_back(shared_network->getName());
+            }
+            continue;
+        }
+        bool got = false;
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (shared_network->hasServerTag(ServerTag(tag))) {
+                names.push_back(shared_network->getName());
+                got = true;
+                break;
+            }
+        }
+        if (got) {
+            continue;
+        }
+        if (shared_network->hasAllServerTag()) {
+            names.push_back(shared_network->getName());
+        }
+    }
+
+    // Erase shared networks.
+    uint64_t erased = 0;
+    auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    for (auto name : names) {
+        erased += index.erase(name);
+    }
+    return (erased);
 }
 
 uint64_t
