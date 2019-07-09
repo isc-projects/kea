@@ -7,7 +7,6 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <cc/element_value.h>
@@ -24,27 +23,6 @@
 #include <cstdint>
 #include <functional>
 #include <string>
-
-namespace isc {
-namespace data {
-
-/// @brief The @c ElementValue specialization for IOAddress.
-template<>
-class ElementValue<asiolink::IOAddress> {
-public:
-
-    /// @brief Function operator extracting an @c Element value as string.
-    ///
-    /// @note This does NOT support empty string value.
-    ///
-    /// @param el Element holding a value to be extracted.
-    asiolink::IOAddress operator()(ConstElementPtr el) const {
-        return (asiolink::IOAddress(el->stringValue()));
-    }
-};
-
-} // end of namespace isc::data
-} // end of namespace isc
 
 namespace isc {
 namespace dhcp {
@@ -546,6 +524,14 @@ public:
 
 protected:
 
+    /// @brief Gets the optional callback function used to fetch globally
+    /// configured parameters.
+    ///
+    /// @return Pointer to the function.
+    FetchNetworkGlobalsFn getFetchGlobalsFn() const {
+        return (fetch_globals_fn_);
+    }
+
     /// @brief Returns a value of global configuration parameter with
     /// a given name.
     ///
@@ -591,6 +577,9 @@ protected:
     ///  - uses the string value of the parameter
     ///  - falls back when the value is empty
     ///
+    /// @note: use overloading vs specialization because full specialization
+    /// is not allowed in this scope.
+    ///
     /// @param property Value to be returned when it is specified or when
     /// no global value is found.
     /// @param global_name Name of the global parameter which value should
@@ -598,7 +587,7 @@ protected:
     ///
     /// @return Optional value fetched from the global level or the value
     /// of @c property.
-    template<> util::Optional<asiolink::IOAddress>
+    util::Optional<asiolink::IOAddress>
     getGlobalProperty(util::Optional<asiolink::IOAddress> property,
                       const std::string& global_name) const {
         if (!global_name.empty() && fetch_globals_fn_) {
