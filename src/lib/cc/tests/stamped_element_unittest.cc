@@ -75,12 +75,10 @@ TEST(StampedElementTest, setServerTag) {
     StampedElement element;
     element.setServerTag("foo");
     EXPECT_EQ(1, element.getServerTags().size());
-    EXPECT_EQ("foo", element.getServerTags()[0].get());
+    EXPECT_EQ("foo", element.getServerTags().begin()->get());
 
     element.setServerTag("bar");
     EXPECT_EQ(2, element.getServerTags().size());
-    EXPECT_EQ("foo", element.getServerTags()[0].get());
-    EXPECT_EQ("bar", element.getServerTags()[1].get());
 
     EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
     EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
@@ -96,18 +94,19 @@ TEST(StampedElementTest, delServerTag) {
     StampedElement element;
     EXPECT_THROW(element.delServerTag("foo"), isc::NotFound);
     element.setServerTag("foo");
-    element.setServerTag("foo");
+    element.setServerTag("bar");
+
     ASSERT_EQ(2, element.getServerTags().size());
-    EXPECT_EQ("foo", element.getServerTags()[0].get());
-    EXPECT_EQ("foo", element.getServerTags()[1].get());
+    EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
+    EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
 
     EXPECT_NO_THROW(element.delServerTag("foo"));
     ASSERT_EQ(1, element.getServerTags().size());
-    EXPECT_EQ("foo", element.getServerTags()[0].get());
+    EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
 
-    EXPECT_NO_THROW(element.delServerTag("foo"));
+    EXPECT_NO_THROW(element.delServerTag("bar"));
     EXPECT_EQ(0, element.getServerTags().size());
-    EXPECT_THROW(element.delServerTag("foo"), isc::NotFound);
+    EXPECT_THROW(element.delServerTag("bar"), isc::NotFound);
 }
 
 

@@ -15,23 +15,14 @@ StampedElement::StampedElement()
 
 bool
 StampedElement::hasServerTag(const ServerTag& server_tag) const {
-    for (auto tag : server_tags_) {
-        if (tag.get() == server_tag.get()) {
-            return (true);
-        }
-    }
-    return (false);
+    return (server_tags_.count(server_tag) > 0);
 }
 
 void
 StampedElement::delServerTag(const std::string& server_tag) {
-    for (auto it = server_tags_.begin(); it < server_tags_.end(); ++it) {
-        if (it->get() == server_tag) {
-            server_tags_.erase(it);
-            return;
-        }
+    if (!server_tags_.erase(ServerTag(server_tag))) {
+        isc_throw(NotFound, "can't find server tag '" << server_tag << "' to delete");
     }
-    isc_throw(NotFound, "can't find server tag '" << server_tag << "' to delete");
 }
 
 bool

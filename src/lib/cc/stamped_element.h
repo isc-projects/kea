@@ -9,7 +9,7 @@
 
 #include <cc/base_stamped_element.h>
 #include <cc/server_tag.h>
-#include <vector>
+#include <set>
 
 namespace isc {
 namespace data {
@@ -44,7 +44,7 @@ public:
     /// @param server_tag new server tag.
     /// @throw BadValue if the server tag length exceeds 256 characters.
     void setServerTag(const std::string& server_tag) {
-        server_tags_.push_back(ServerTag(server_tag));
+        server_tags_.insert(ServerTag(server_tag));
     }
 
     /// @brief Deletes server tag.
@@ -57,8 +57,8 @@ public:
 
     /// @brief Returns server tags.
     ///
-    /// @return Server tag as string.
-    std::vector<ServerTag> getServerTags() const {
+    /// @return Server tags.
+    std::set<ServerTag> getServerTags() const {
         return (server_tags_);
     }
 
@@ -82,7 +82,7 @@ public:
 private:
 
     /// @brief Holds server tags.
-    std::vector<ServerTag> server_tags_;
+    std::set<ServerTag> server_tags_;
 };
 
 } // end of namespace isc::data
