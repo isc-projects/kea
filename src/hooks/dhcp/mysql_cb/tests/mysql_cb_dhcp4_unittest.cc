@@ -1528,6 +1528,21 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
     }
 }
 
+// Test that getSharedNetwork4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getSharedNetwork4(ServerSelector::ANY(), "level1"));
+    EXPECT_NO_THROW(cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(), "level1"));
+    EXPECT_NO_THROW(cbptr_->getSharedNetwork4(ServerSelector::ALL(), "level1"));
+    EXPECT_NO_THROW(cbptr_->getSharedNetwork4(ServerSelector::ONE("server1"), "level1"));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           "level1"),
+                 isc::InvalidOperation);
+}
+
 // Test that shared network may be created and updated and the server tags
 // are properly assigned to it.
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
@@ -1581,6 +1596,33 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
     EXPECT_TRUE(network->hasServerTag(ServerTag("server1")));
     EXPECT_TRUE(network->hasServerTag(ServerTag("server2")));
     EXPECT_FALSE(network->hasServerTag(ServerTag()));
+}
+
+// Test that craeteUpdateSharedNetwork4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4Selectors) {
+    ASSERT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
+    ASSERT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[2]));
+
+    // Supported selectors.
+    SharedNetwork4Ptr shared_network(new SharedNetwork4("all"));
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
+                                                       shared_network));
+    shared_network.reset(new SharedNetwork4("one"));
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
+                                                       shared_network));
+    shared_network.reset(new SharedNetwork4("multiple"));
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                       shared_network));
+
+    // Not supported server selectors.
+    EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ANY(), shared_network),
+                 isc::InvalidOperation);
+
+    // Not implemented server selectors.
+    EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                                    shared_network),
+                 isc::NotImplemented);
 }
 
 // Test that the information about unspecified optional parameters gets
@@ -1763,6 +1805,20 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     EXPECT_TRUE(subnet->getSharedNetworkName().empty());
 }
 
+// Test that getAllSharedNetworks4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED()));
+    EXPECT_NO_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::ALL()));
+    EXPECT_NO_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::ONE("server1")));
+    EXPECT_NO_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::MULTIPLE({ "server1", "server2" })));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getAllSharedNetworks4(ServerSelector::ANY()),
+                 isc::InvalidOperation);
+}
+
 // Test that shared networks with different server associations are returned.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4WithServerTags) {
     auto shared_network1 = test_networks_[0];
@@ -1872,6 +1928,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
     ASSERT_TRUE(networks.empty());
 }
 
+// Test that getModifiedSharedNetworks4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+                                                       timestamps_["yesterday"]));
+    EXPECT_NO_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
+                                                       timestamps_["yesterday"]));
+    EXPECT_NO_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::ONE("server1"),
+                                                       timestamps_["yesterday"]));
+    EXPECT_NO_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                       timestamps_["yesterday"]));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getModifiedSharedNetworks4(ServerSelector::ANY(),
+                                                    timestamps_["yesterday"]),
+                 isc::InvalidOperation);
+}
+
 // Test that selected shared network can be deleted.
 TEST_F(MySqlConfigBackendDHCPv4Test, deleteSharedNetwork4) {
     // Create two servers in the database.
@@ -1961,19 +2036,56 @@ TEST_F(MySqlConfigBackendDHCPv4Test, deleteSharedNetwork4) {
     test_delete("one server", ServerSelector::ONE("server1"), shared_network3);
 }
 
+// Test that deleteSharedNetwork4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteSharedNetwork4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::ANY(), "level1"));
+    EXPECT_NO_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(), "level1"));
+    EXPECT_NO_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"), "level1"));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           "level1"),
+                 isc::InvalidOperation);
+
+    // Not implemented selectors.
+    EXPECT_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(), "level1"),
+                 isc::NotImplemented);
+}
+
+// Test that deleteAllSharedNetworks4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteAllSharedNetworks4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED()));
+    EXPECT_NO_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::ALL()));
+    EXPECT_NO_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::ANY()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteAllSharedNetworks4(ServerSelector::MULTIPLE({ "server1", "server2" })),
+                 isc::InvalidOperation);
+}
+
 // Test that it is possible to retrieve and delete orphaned shared network.
 TEST_F(MySqlConfigBackendDHCPv4Test, unassignedSharedNetwork) {
     // Create the server.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
 
-    // Create the shared network and associate it with the server1.
+    // Create the shared networks and associate them with the server1.
     auto shared_network = test_networks_[0];
+    auto shared_network2 = test_networks_[2];
     EXPECT_NO_THROW(
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"), shared_network)
     );
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"), shared_network2)
+    );
 
-    // Delete the server. The shared network should be preserved but is
-    // considered orhpaned, i.e. does not belong to any server.
+    // Delete the server. The shared networks should be preserved but are
+    // considered orhpaned, i.e. do not belong to any server.
     uint64_t deleted_count = 0;
     EXPECT_NO_THROW(deleted_count = cbptr_->deleteServer4(ServerTag("server1")));
     EXPECT_EQ(1, deleted_count);
@@ -2004,16 +2116,16 @@ TEST_F(MySqlConfigBackendDHCPv4Test, unassignedSharedNetwork) {
 
     // Also if we ask for all unassigned networks it should be returned.
     EXPECT_NO_THROW(returned_networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED()));
-    ASSERT_EQ(1, returned_networks.size());
+    ASSERT_EQ(2, returned_networks.size());
 
     // And all modified.
     EXPECT_NO_THROW(
         returned_networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
                                                                timestamps_["two days ago"])
     );
-    ASSERT_EQ(1, returned_networks.size());
+    ASSERT_EQ(2, returned_networks.size());
 
-    // If we ask for any network with this name, it should be returned too.
+    // If we ask for any network by name, it should be returned too.
     EXPECT_NO_THROW(returned_network = cbptr_->getSharedNetwork4(ServerSelector::ANY(),
                                                                  "level1"));
     ASSERT_TRUE(returned_network);
@@ -2035,6 +2147,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, unassignedSharedNetwork) {
     // We can delete this shared network when we specify ANY and the matching name.
     EXPECT_NO_THROW(
         deleted_count = cbptr_->deleteSharedNetwork4(ServerSelector::ANY(), "level1")
+    );
+    EXPECT_EQ(1, deleted_count);
+
+    // We can delete all second networks using UNASSIGNED selector.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED());
     );
     EXPECT_EQ(1, deleted_count);
 }

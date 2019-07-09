@@ -236,6 +236,12 @@ uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index,
                                         const ServerSelector& server_selector,
                                         const std::string& operation) {
+    // When deleting multiple objects we must not use ANY server.
+    if (server_selector.amAny()) {
+        isc_throw(InvalidOperation, "deleting multiple objects for ANY server is not"
+                  " supported");
+    }
+
     MySqlBindingCollection in_bindings;
     return (deleteFromTable(index, server_selector, operation, in_bindings));
 }

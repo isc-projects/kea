@@ -704,6 +704,12 @@ namespace {
     "DELETE n FROM " #table_prefix "_shared_network AS n " \
     #__VA_ARGS__
 
+#define MYSQL_DELETE_SHARED_NETWORK_UNASSIGNED(table_prefix, ...) \
+    "DELETE n FROM " #table_prefix "_shared_network AS n " \
+    "LEFT JOIN " #table_prefix "_shared_network_server AS a" \
+    "  ON n.id = a.shared_network_id " \
+    "WHERE a.shared_network_id IS NULL " #__VA_ARGS__
+
 #endif
 
 #ifndef MYSQL_DELETE_SHARED_NETWORK_SERVER

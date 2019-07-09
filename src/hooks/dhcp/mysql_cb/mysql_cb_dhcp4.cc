@@ -117,6 +117,7 @@ public:
         DELETE_SHARED_NETWORK4_NAME_WITH_TAG,
         DELETE_SHARED_NETWORK4_NAME_ANY,
         DELETE_ALL_SHARED_NETWORKS4,
+        DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED,
         DELETE_SHARED_NETWORK4_SERVER,
         DELETE_OPTION_DEF4_CODE_NAME,
         DELETE_ALL_OPTION_DEFS4,
@@ -1271,6 +1272,11 @@ public:
     /// structure where shared networks should be inserted.
     void getAllSharedNetworks4(const ServerSelector& server_selector,
                                SharedNetwork4Collection& shared_networks) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "fetching all shared networks for ANY "
+                      "server is not supported");
+        }
+
         auto index = (server_selector.amUnassigned() ? GET_ALL_SHARED_NETWORKS4_UNASSIGNED :
                       GET_ALL_SHARED_NETWORKS4);
         MySqlBindingCollection in_bindings;
@@ -1286,6 +1292,11 @@ public:
     void getModifiedSharedNetworks4(const ServerSelector& server_selector,
                                     const boost::posix_time::ptime& modification_ts,
                                     SharedNetwork4Collection& shared_networks) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "fetching modified shared networks for ANY "
+                      "server is not supported");
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createTimestamp(modification_ts)
         };
@@ -1302,9 +1313,13 @@ public:
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "creating or updating a shared network for ANY"
+                      " server is not supported");
+
+        } else if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "creating or updating a shared network without"
+                      " assigning it to a server or all servers is not supported");
         }
 
         // Create binding for host reservation mode.
@@ -2390,6 +2405,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp4)
     },
 
+    // Delete all unassigned shared networks.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED,
+      MYSQL_DELETE_SHARED_NETWORK_UNASSIGNED(dhcp4)
+    },
+
     // Delete associations of a shared network with server.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_SERVER,
       MYSQL_DELETE_SHARED_NETWORK_SERVER(dhcp4)
@@ -2828,6 +2848,15 @@ MySqlConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_selector,
                                                const std::string& name) {
+    /// @todo Using UNASSIGNED selector is allowed by the CB API but we don't have
+    /// dedicated query for this at the moment. The user should use ANY to delete
+    /// the shared network by name.
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "deleting an unassigned shared network requires "
+                  "an explicit server tag or using ANY server. The UNASSIGNED server "
+                  "selector is currently not supported");
+    }
+
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK4)
         .arg(name);
 
@@ -2844,9 +2873,17 @@ MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_sele
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& server_selector) {
+    if (server_selector.amAny()) {
+        isc_throw(InvalidOperation, "deleting all shared networks for ANY server is not"
+                  " supported");
+    }
+
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4);
-    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
-                                                 server_selector, "deleting all shared networks",
+
+    int index = (server_selector.amUnassigned() ?
+                 MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4_UNASSIGNED :
+                 MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4);
+    uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all shared networks",
                                                  "deleted all shared networks", true);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT)
         .arg(result);

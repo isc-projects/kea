@@ -22,6 +22,11 @@ class MySqlConfigBackendDHCPv4Impl;
 ///
 /// All POSIX times specified in the methods belonging to this
 /// class must be local times.
+///
+/// The server selection mechanisms used by this backend generally adhere
+/// to the rules described for @c ConfigBackendDHCPv4, but support for
+/// some of the selectors is not implemented. Whenever this is the case,
+/// the methods throw @c isc::NotImplemented exception.
 class MySqlConfigBackendDHCPv4 : public ConfigBackendDHCPv4 {
 public:
 

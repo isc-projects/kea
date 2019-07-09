@@ -261,13 +261,8 @@ public:
                              const std::string& operation,
                              db::MySqlBindingCollection& in_bindings) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
         // For ANY server, we use queries that lack server tag.
-        if (!server_selector.amAny()) {
+        if (!server_selector.amAny() && !server_selector.amUnassigned()) {
             auto tag = getServerTag(server_selector, operation);
             in_bindings.insert(in_bindings.begin(), db::MySqlBinding::createString(tag));
         }
@@ -307,6 +302,13 @@ public:
                              const db::ServerSelector& server_selector,
                              const std::string& operation,
                              KeyType key) {
+        // When deleting by some key, we must use ANY.
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "deleting an unassigned object requires "
+                      "an explicit server tag or using ANY server. The UNASSIGNED "
+                      "server selector is currently not supported");
+        }
+
         db::MySqlBindingCollection in_bindings;
 
         if (db::MySqlBindingTraits<KeyType>::column_type == MYSQL_TYPE_STRING) {
