@@ -2085,7 +2085,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, unassignedSharedNetwork) {
     );
 
     // Delete the server. The shared networks should be preserved but are
-    // considered orhpaned, i.e. do not belong to any server.
+    // considered orphaned, i.e. do not belong to any server.
     uint64_t deleted_count = 0;
     EXPECT_NO_THROW(deleted_count = cbptr_->deleteServer4(ServerTag("server1")));
     EXPECT_EQ(1, deleted_count);

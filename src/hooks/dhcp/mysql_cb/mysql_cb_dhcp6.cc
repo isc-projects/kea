@@ -2210,7 +2210,7 @@ public:
     /// option definitions.
     ///
     /// This function is called when one or more servers are deleted and
-    /// it is likely that there are some orhpaned configuration elements
+    /// it is likely that there are some orphaned configuration elements
     /// left in the database. This method removes those elements.
     void purgeUnassignedConfig() {
         multipleUpdateDeleteQueries(DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
