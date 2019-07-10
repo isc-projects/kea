@@ -302,7 +302,7 @@ class StatsMgr : public boost::noncopyable {
 
     /// @brief Handles statistic-set-max-sample-age command
     ///
-    /// This method handles statistic-setMaxSampleAge command, which set max_sample_age
+    /// This method handles statistic-set-max-sample-age command, which set max_sample_age
     /// limit of a given statistic and leaves max_sample_count disabled.
     /// It expects five parameters stored in params map:
     /// name: name-of-the-statistic
@@ -318,7 +318,7 @@ class StatsMgr : public boost::noncopyable {
     ///     "milliseconds": 0
     /// }
     ///
-    /// @param name name of the command (ignored, should be "statistic-setMaxSampleAge")
+    /// @param name name of the command (ignored, should be "statistic-set-max-sample-age")
     /// @param params structure containing a map that contains "name" and "duration"
     /// @return answer containing information about current statistic's limits
     static isc::data::ConstElementPtr
@@ -327,7 +327,7 @@ class StatsMgr : public boost::noncopyable {
 
     /// @brief Handles statistic-set-max-sample-age command
     ///
-    /// This method handles statistic-setMaxSampleAge command, which set max_sample_age
+    /// This method handles statistic-set-max-sample-age command, which set max_sample_age
     /// limit of a given statistic and leaves max_sample_age disabled.
     /// It expects two parameters stored in params map:
     /// name: name-of-the-statistic
@@ -339,7 +339,7 @@ class StatsMgr : public boost::noncopyable {
     ///     "max-samples": 15
     /// }
     ///
-    /// @param name name of the command (ignored, should be "statistic-setMaxSampleCount")
+    /// @param name name of the command (ignored, should be "statistic-set-max-sample-count")
     /// @param params structure containing a map that contains "name" and "max-samples"
     /// @return answer containing information about current statistic's limits
     static isc::data::ConstElementPtr
