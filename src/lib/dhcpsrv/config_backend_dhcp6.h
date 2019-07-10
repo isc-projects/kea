@@ -359,7 +359,6 @@ public:
 
     /// @brief Creates or updates global option.
     ///
-
     /// Allowed server selectors: ALL, ONE.
     /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
