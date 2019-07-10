@@ -115,8 +115,10 @@ public:
         DELETE_GLOBAL_PARAMETER4,
         DELETE_ALL_GLOBAL_PARAMETERS4,
         DELETE_ALL_GLOBAL_PARAMETERS4_UNASSIGNED,
-        DELETE_SUBNET4_ID,
-        DELETE_SUBNET4_PREFIX,
+        DELETE_SUBNET4_ID_WITH_TAG,
+        DELETE_SUBNET4_ID_ANY,
+        DELETE_SUBNET4_PREFIX_WITH_TAG,
+        DELETE_SUBNET4_PREFIX_ANY,
         DELETE_ALL_SUBNETS4,
         DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
         DELETE_SUBNET4_SERVER,
@@ -1003,11 +1005,27 @@ public:
     /// @return Number of deleted subnets.
     uint64_t deleteSubnet4(const ServerSelector& server_selector,
                            const SubnetID& subnet_id) {
-        return (deleteTransactional(DELETE_SUBNET4_ID, server_selector,
-                                    "deleting a subnet",
-                                    "subnet deleted",
-                                    true,
-                                    static_cast<uint32_t>(subnet_id)));
+        int index = (server_selector.amAny() ?
+                     MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_ANY :
+                     MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_WITH_TAG);
+        return (deleteTransactional(index, server_selector,
+                                    "deleting a subnet", "subnet deleted",
+                                    true, static_cast<uint32_t>(subnet_id)));
+    }
+
+    /// @brief Sends query to delete subnet by id.
+    ///
+    /// @param server_selector Server selector.
+    /// @param subnet_prefix Prefix of the subnet to be deleted.
+    /// @return Number of deleted subnets.
+    uint64_t deleteSubnet4(const ServerSelector& server_selector,
+                           const std::string& subnet_prefix) {
+        int index = (server_selector.amAny() ?
+                     MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_ANY :
+                     MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_WITH_TAG);
+        return (deleteTransactional(index, server_selector,
+                                    "deleting a subnet", "subnet deleted",
+                                    true, subnet_prefix));
     }
 
     /// @brief Deletes pools belonging to a subnet from the database.
@@ -2422,24 +2440,34 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED(dhcp4)
     },
 
-    // Delete subnet by id.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID,
-      MYSQL_DELETE_SUBNET(dhcp4, AND s.subnet_id = ?)
+    // Delete subnet by id with specifying server tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_WITH_TAG,
+      MYSQL_DELETE_SUBNET_WITH_TAG(dhcp4, AND s.subnet_id = ?)
     },
 
-    // Delete subnet by prefix.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-      MYSQL_DELETE_SUBNET(dhcp4, AND s.subnet_prefix = ?)
+    // Delete subnet by id without specifying server tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID_ANY,
+      MYSQL_DELETE_SUBNET_ANY(dhcp4, WHERE s.subnet_id = ?)
+    },
+
+    // Delete subnet by prefix with specifying server tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_WITH_TAG,
+      MYSQL_DELETE_SUBNET_WITH_TAG(dhcp4, AND s.subnet_prefix = ?)
+    },
+
+    // Delete subnet by prefix without specifying server tag.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX_ANY,
+      MYSQL_DELETE_SUBNET_ANY(dhcp4, WHERE s.subnet_prefix = ?)
     },
 
     // Delete all subnets.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
-      MYSQL_DELETE_SUBNET(dhcp4)
+      MYSQL_DELETE_SUBNET_WITH_TAG(dhcp4)
     },
 
     // Delete all subnets for a shared network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
-      MYSQL_DELETE_SUBNET(dhcp4, AND s.shared_network_name = ?)
+      MYSQL_DELETE_SUBNET_WITH_TAG(dhcp4, AND s.shared_network_name = ?)
     },
 
     // Delete associations of a subnet with server.
@@ -2862,9 +2890,7 @@ MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const std::string& subnet_prefix) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_PREFIX_SUBNET4)
         .arg(subnet_prefix);
-    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-                                                 server_selector, "deleting a subnet by prefix",
-                                                 "subnet deleted", true, subnet_prefix);
+    uint64_t result = impl_->deleteSubnet4(server_selector, subnet_prefix);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_PREFIX_SUBNET4_RESULT)
         .arg(result);
     return (result);

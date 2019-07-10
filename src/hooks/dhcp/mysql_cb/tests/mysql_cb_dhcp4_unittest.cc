@@ -1428,6 +1428,114 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4WithServerTags) {
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server2")));
 }
 
+// Test that selected subnet can be deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteSubnet4) {
+    // Create two servers in the database.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp4_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[2]));
+    {
+        SCOPED_TRACE("CREATE audit entry for server");
+        testNewAuditEntry("dhcp4_server",
+                          AuditEntry::ModificationType::CREATE,
+                          "server set");
+    }
+
+    auto subnet1 = test_subnets_[0];
+    auto subnet2 = test_subnets_[2];
+    auto subnet3 = test_subnets_[3];
+
+    auto create_test_subnets = [&] () {
+        // Insert three subnets, one for all servers, one for server2 and one for two
+        // servers: server1 and server2.
+        EXPECT_NO_THROW(
+            cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet1)
+        );
+        EXPECT_NO_THROW(
+            cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"), subnet2)
+        );
+        EXPECT_NO_THROW(
+            cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                        subnet3)
+        );
+    };
+
+    create_test_subnets();
+
+    // Test that subnet is not deleted for a specified server selector.
+    auto test_no_delete = [this] (const std::string& test_case_name,
+                                  const ServerSelector& server_selector,
+                                  const Subnet4Ptr& subnet) {
+        SCOPED_TRACE(test_case_name);
+        uint64_t deleted_count = 0;
+        EXPECT_NO_THROW(
+            deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->getID())
+        );
+        EXPECT_EQ(0, deleted_count);
+
+        deleted_count = 0;
+        EXPECT_NO_THROW(
+            deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->toText())
+        );
+        EXPECT_EQ(0, deleted_count);
+    };
+
+    {
+        SCOPED_TRACE("Test valid but non matching server selectors");
+        test_no_delete("selector: one, actual: all", ServerSelector::ONE("server2"),
+                       subnet1);
+        test_no_delete("selector: all, actual: one", ServerSelector::ALL(),
+                       subnet2);
+        test_no_delete("selector: all, actual: multiple", ServerSelector::ALL(),
+                       subnet3);
+    }
+
+    // Test successful deletion of a subnet by ID.
+    auto test_delete_by_id = [this] (const std::string& test_case_name,
+                                     const ServerSelector& server_selector,
+                                     const Subnet4Ptr& subnet) {
+        SCOPED_TRACE(test_case_name);
+        uint64_t deleted_count = 0;
+        EXPECT_NO_THROW(
+            deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->getID())
+        );
+        EXPECT_EQ(1, deleted_count);
+
+        EXPECT_FALSE(cbptr_->getSubnet4(server_selector, subnet->getID()));
+    };
+
+    test_delete_by_id("all servers", ServerSelector::ALL(), subnet1);
+    test_delete_by_id("any server", ServerSelector::ANY(), subnet2);
+    test_delete_by_id("one server", ServerSelector::ONE("server1"), subnet3);
+
+    // Re-create deleted subnets.
+    create_test_subnets();
+
+    // Test successful deletion of a subnet by prefix.
+    auto test_delete_by_prefix = [this] (const std::string& test_case_name,
+                                         const ServerSelector& server_selector,
+                                         const Subnet4Ptr& subnet) {
+        SCOPED_TRACE(test_case_name);
+        uint64_t deleted_count = 0;
+        EXPECT_NO_THROW(
+            deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->toText())
+        );
+        EXPECT_EQ(1, deleted_count);
+
+        EXPECT_FALSE(cbptr_->getSubnet4(server_selector, subnet->toText()));
+    };
+
+    test_delete_by_prefix("all servers", ServerSelector::ALL(), subnet1);
+    test_delete_by_prefix("any server", ServerSelector::ANY(), subnet2);
+    test_delete_by_prefix("one server", ServerSelector::ONE("server1"), subnet3);
+}
+
 // Test that subnets modified after given time can be fetched.
 TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
     // Explicitly set timestamps of subnets. First subnet has a timestamp
@@ -2094,7 +2202,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, deleteSharedNetwork4) {
     auto shared_network2 = test_networks_[2];
     auto shared_network3 = test_networks_[3];
 
-    // Insert two shared networks, one for all servers, and one for server2.
+    // Insert three shared networks, one for all servers, one for server2 and
+    // one for two servers: server1 and server2.
     EXPECT_NO_THROW(
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network1)
     );

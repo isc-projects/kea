@@ -711,13 +711,21 @@ namespace {
 #endif
 
 #ifndef MYSQL_DELETE_SUBNET
-#define MYSQL_DELETE_SUBNET(table_prefix, ...) \
+#define MYSQL_DELETE_SUBNET_COMMON(table_prefix, ...) \
     "DELETE s FROM " #table_prefix "_subnet AS s " \
     "INNER JOIN " #table_prefix "_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \
     "INNER JOIN " #table_prefix "_server AS srv" \
     "  ON a.server_id = srv.id " \
-    "WHERE srv.tag = ? " #__VA_ARGS__
+    #__VA_ARGS__
+
+#define MYSQL_DELETE_SUBNET_WITH_TAG(table_prefix, ...) \
+    MYSQL_DELETE_SUBNET_COMMON(table_prefix, WHERE srv.tag = ? __VA_ARGS__)
+
+#define MYSQL_DELETE_SUBNET_ANY(table_prefix, ...) \
+    "DELETE s FROM " #table_prefix "_subnet AS s " \
+    #__VA_ARGS__
+
 #endif
 
 #ifndef MYSQL_DELETE_SUBNET_SERVER
