@@ -1536,6 +1536,104 @@ TEST_F(MySqlConfigBackendDHCPv4Test, deleteSubnet4) {
     test_delete_by_prefix("one server", ServerSelector::ONE("server1"), subnet3);
 }
 
+// Test that it is possible to retrieve and delete orphaned subnet.
+TEST_F(MySqlConfigBackendDHCPv4Test, unassignedSubnet4) {
+    // Create the server.
+    EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
+
+    // Create the shared networks and associate them with the server1.
+    auto subnet = test_subnets_[0];
+    auto subnet2 = test_subnets_[2];
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSubnet4(ServerSelector::ONE("server1"), subnet)
+    );
+    EXPECT_NO_THROW(
+        cbptr_->createUpdateSubnet4(ServerSelector::ONE("server1"), subnet2)
+    );
+
+    // Delete the server. The subnets should be preserved but are considered orphaned,
+    // i.e. do not belong to any server.
+    uint64_t deleted_count = 0;
+    EXPECT_NO_THROW(deleted_count = cbptr_->deleteServer4(ServerTag("server1")));
+    EXPECT_EQ(1, deleted_count);
+
+    // Trying to fetch the subnet by server tag should return no result.
+    Subnet4Ptr returned_subnet;
+    EXPECT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
+                                                         subnet->getID()));
+    EXPECT_FALSE(returned_subnet);
+
+    // The same if we use other calls.
+    EXPECT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
+                                                         subnet->toText()));
+    EXPECT_FALSE(returned_subnet);
+
+    Subnet4Collection returned_subnets;
+    EXPECT_NO_THROW(returned_subnets = cbptr_->getAllSubnets4(ServerSelector::ONE("server1")));
+    EXPECT_TRUE(returned_subnets.empty());
+
+    EXPECT_NO_THROW(
+        returned_subnets = cbptr_->getModifiedSubnets4(ServerSelector::ONE("server1"),
+                                                       timestamps_["two days ago"])
+    );
+    EXPECT_TRUE(returned_subnets.empty());
+
+    // We should get the subnet if we ask for unassigned.
+    EXPECT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                                         subnet->getID()));
+    ASSERT_TRUE(returned_subnet);
+
+    EXPECT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                                         subnet->toText()));
+    ASSERT_TRUE(returned_subnet);
+
+    // Also if we ask for all unassigned subnets it should be returned.
+    EXPECT_NO_THROW(returned_subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED()));
+    ASSERT_EQ(2, returned_subnets.size());
+
+    // Same for modified subnets.
+    EXPECT_NO_THROW(
+        returned_subnets = cbptr_->getModifiedSubnets4(ServerSelector::UNASSIGNED(),
+                                                       timestamps_["two days ago"])
+    );
+    ASSERT_EQ(2, returned_subnets.size());
+
+    // If we ask for any subnet by subnet id, it should be returned too.
+    EXPECT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::ANY(),
+                                                         subnet->getID()));
+    ASSERT_TRUE(returned_subnet);
+
+    EXPECT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::ANY(),
+                                                         subnet->toText()));
+    ASSERT_TRUE(returned_subnet);
+
+    // Deleting the subnet with the mismatched server tag should not affect our
+    // subnet.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
+                                              subnet->getID())
+    );
+    EXPECT_EQ(0, deleted_count);
+
+    // Also, if we delete all subnets for server1.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1"))
+    );
+    EXPECT_EQ(0, deleted_count);
+
+    // We can delete this subnet when we specify ANY and the matching id.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteSubnet4(ServerSelector::ANY(), subnet->getID())
+    );
+    EXPECT_EQ(1, deleted_count);
+
+    // We can delete all subnets using UNASSIGNED selector.
+    EXPECT_NO_THROW(
+        deleted_count = cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED());
+    );
+    EXPECT_EQ(1, deleted_count);
+}
+
 // Test that subnets modified after given time can be fetched.
 TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
     // Explicitly set timestamps of subnets. First subnet has a timestamp
@@ -2383,7 +2481,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, unassignedSharedNetwork) {
     );
     EXPECT_EQ(1, deleted_count);
 
-    // We can delete all second networks using UNASSIGNED selector.
+    // We can delete all networks using UNASSIGNED selector.
     EXPECT_NO_THROW(
         deleted_count = cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED());
     );

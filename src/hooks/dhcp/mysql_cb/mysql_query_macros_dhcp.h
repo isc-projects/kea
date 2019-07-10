@@ -726,6 +726,12 @@ namespace {
     "DELETE s FROM " #table_prefix "_subnet AS s " \
     #__VA_ARGS__
 
+#define MYSQL_DELETE_SUBNET_UNASSIGNED(table_prefix, ...) \
+    "DELETE s FROM " #table_prefix "_subnet AS s " \
+    "LEFT JOIN " #table_prefix "_subnet_server AS a" \
+    "  ON s.subnet_id = a.subnet_id " \
+    "WHERE a.subnet_id IS NULL " #__VA_ARGS__
+
 #endif
 
 #ifndef MYSQL_DELETE_SUBNET_SERVER

@@ -120,6 +120,7 @@ public:
         DELETE_SUBNET4_PREFIX_WITH_TAG,
         DELETE_SUBNET4_PREFIX_ANY,
         DELETE_ALL_SUBNETS4,
+        DELETE_ALL_SUBNETS4_UNASSIGNED,
         DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
         DELETE_SUBNET4_SERVER,
         DELETE_POOLS4_SUBNET_ID,
@@ -2465,6 +2466,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_SUBNET_WITH_TAG(dhcp4)
     },
 
+    // Delete all unassigned subnets.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_UNASSIGNED,
+      MYSQL_DELETE_SUBNET_UNASSIGNED(dhcp4)
+    },
+
     // Delete all subnets for a shared network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
       MYSQL_DELETE_SUBNET_WITH_TAG(dhcp4, AND s.shared_network_name = ?)
@@ -2910,8 +2916,11 @@ MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selector) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SUBNETS4);
-    uint64_t result = impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
-                                                 server_selector, "deleting all subnets",
+
+    int index = (server_selector.amUnassigned() ?
+                 MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_UNASSIGNED :
+                 MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4);
+    uint64_t result = impl_->deleteTransactional(index, server_selector, "deleting all subnets",
                                                  "deleted all subnets", true);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_ALL_SUBNETS4_RESULT)
         .arg(result);
