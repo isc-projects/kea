@@ -71,6 +71,10 @@ public:
 
     /// @brief Retrieves all subnets belonging to a specified shared network.
     ///
+    /// The server selector is currently ignored by this method. All subnets
+    /// for the given shared network are returned regardless of their
+    /// associations with the servers.
+    ///
     /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network for which the
     /// subnets should be retrieved.

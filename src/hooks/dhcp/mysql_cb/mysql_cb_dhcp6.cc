@@ -2439,7 +2439,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Select subnets belonging to a shared network.
     { MySqlConfigBackendDHCPv6Impl::GET_SHARED_NETWORK_SUBNETS6,
-      MYSQL_GET_SUBNET6_NO_TAG(WHERE s.shared_network_name = ?)
+      MYSQL_GET_SUBNET6_ANY(WHERE s.shared_network_name = ?)
     },
 
     // Select pool by address range.
@@ -3011,12 +3011,12 @@ MySqlConfigBackendDHCPv6::getModifiedSubnets6(const ServerSelector& server_selec
 }
 
 Subnet6Collection
-MySqlConfigBackendDHCPv6::getSharedNetworkSubnets6(const ServerSelector& server_selector,
+MySqlConfigBackendDHCPv6::getSharedNetworkSubnets6(const ServerSelector& /* server_selector */,
                                                    const std::string& shared_network_name) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SHARED_NETWORK_SUBNETS6)
         .arg(shared_network_name);
     Subnet6Collection subnets;
-    impl_->getSharedNetworkSubnets6(server_selector, shared_network_name, subnets);
+    impl_->getSharedNetworkSubnets6(ServerSelector::ANY(), shared_network_name, subnets);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_SHARED_NETWORK_SUBNETS6_RESULT)
         .arg(subnets.size());
     return (subnets);

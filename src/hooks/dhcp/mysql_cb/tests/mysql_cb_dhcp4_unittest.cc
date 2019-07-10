@@ -1868,8 +1868,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
     EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
                              subnets[0]->toElement()));
 
-    // All subnets should also be returned for explicitly specified server tag.
-    subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ONE("server1"), "level1");
+    // All subnets should also be returned for ANY server.
+    subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ANY(), "level1");
     ASSERT_EQ(1, subnets.size());
 
     // Returned subnet should match test subnet #1.
