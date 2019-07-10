@@ -91,6 +91,9 @@ public:
 
     /// @brief Retrieves a single subnet by subnet_prefix.
     ///
+    /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
+    /// Not allowed server selector: MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
@@ -100,6 +103,9 @@ public:
 
     /// @brief Retrieves a single subnet by subnet identifier.
     ///
+    /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
+    /// Not allowed server selector: MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of a subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
@@ -108,12 +114,18 @@ public:
 
     /// @brief Retrieves all subnets.
     ///
+    /// Allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    /// Not allowed server selector: ANY.
+    ///
     /// @param server_selector Server selector.
     /// @return Collection of subnets or empty collection if no subnet found.
     virtual Subnet6Collection
     getAllSubnets6(const db::ServerSelector& server_selector) const = 0;
 
     /// @brief Retrieves all subnets belonging to a specified shared network.
+    ///
+    /// Allowed server selectors:ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network for which the
@@ -311,6 +323,9 @@ public:
 
     /// @brief Creates or updates a subnet.
     ///
+    /// Allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    /// Not allowed server selector: ANY.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet Subnet to be added or updated.
     virtual void
@@ -409,6 +424,9 @@ public:
 
     /// @brief Deletes subnet by prefix.
     ///
+    /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
+    /// Not allowed server selectors: MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be deleted.
     /// @return Number of deleted subnets.
@@ -418,6 +436,9 @@ public:
 
     /// @brief Deletes subnet by identifier.
     ///
+    /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
+    /// Not allowed server selectors: MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
     /// @return Number of deleted subnets.
@@ -425,6 +446,9 @@ public:
     deleteSubnet6(const db::ServerSelector& server_selector, const SubnetID& subnet_id) = 0;
 
     /// @brief Deletes all subnets.
+    ///
+    /// Allowed server selectors: UNASSIGNED, ALL, ONE.
+    /// Not allowed server selectors: ANY, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @return Number of deleted subnets.

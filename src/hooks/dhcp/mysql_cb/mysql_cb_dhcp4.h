@@ -75,7 +75,7 @@ public:
     /// for the given shared network are returned regardless of their
     /// associations with the servers.
     ///
-    /// @param server_selector Server selector.
+    /// @param server_selector Server selector (currently ignored).
     /// @param shared_network_name Name of the shared network for which the
     /// subnets should be retrieved.
     /// @return Collection of subnets or empty collection if no subnet found.
