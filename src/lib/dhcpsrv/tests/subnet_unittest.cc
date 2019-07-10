@@ -1728,12 +1728,12 @@ TEST(SubnetFetcherTest, getSubnet6ById) {
     subnet = SubnetFetcher6::get(collection, SubnetID(1024));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1024, subnet->getID());
-    EXPECT_EQ("2001:db8:1::", subnet->toText());
+    EXPECT_EQ("2001:db8:1::/64", subnet->toText());
 
     subnet = SubnetFetcher6::get(collection, SubnetID(2048));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(2048, subnet->getID());
-    EXPECT_EQ("2001:db8:2::", subnet->toText());
+    EXPECT_EQ("2001:db8:2::/64", subnet->toText());
 }
 
 };
