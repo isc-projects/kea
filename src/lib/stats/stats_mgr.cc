@@ -166,7 +166,7 @@ size_t StatsMgr::count() const {
 
 isc::data::ConstElementPtr
 StatsMgr::statisticSetMaxSampleAgeHandler(const std::string& /*name*/,
-                              const isc::data::ConstElementPtr& params) {
+                                          const isc::data::ConstElementPtr& params) {
     std::string name, error;
     StatsDuration duration;
     if (!getStatName(params, name, error)) {
@@ -178,7 +178,6 @@ StatsMgr::statisticSetMaxSampleAgeHandler(const std::string& /*name*/,
     if (instance().setMaxSampleAge(name, duration)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                             "Statistic '" + name + "' duration limit is set."));
-                            //"Statistic '" + name + "' duration limit is set to " + std::to_string(duration) + "."));
     } else {
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "No '" + name + "' statistic found"));
@@ -187,7 +186,7 @@ StatsMgr::statisticSetMaxSampleAgeHandler(const std::string& /*name*/,
 
 isc::data::ConstElementPtr
 StatsMgr::statisticSetMaxSampleCountHandler(const std::string& /*name*/,
-                            const isc::data::ConstElementPtr& params) {
+                                            const isc::data::ConstElementPtr& params) {
     std::string name, error;
     uint32_t max_samples;
     if (!getStatName(params, name, error)) {
@@ -199,7 +198,6 @@ StatsMgr::statisticSetMaxSampleCountHandler(const std::string& /*name*/,
     if (instance().setMaxSampleCount(name, max_samples)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                             "Statistic '" + name + "' count limit is set."));
-                            //"Statistic '" + name + "' count limit is set to " + std::to_string(max_samples) + "."));
     } else {
         return (createAnswer(CONTROL_RESULT_ERROR,
                            "No '" + name + "' statistic found"));
@@ -298,8 +296,8 @@ StatsMgr::getStatName(const isc::data::ConstElementPtr& params,
 
 bool
 StatsMgr::getStatDuration(const isc::data::ConstElementPtr& params,
-                      StatsDuration& duration,
-                      std::string& reason) {
+                          StatsDuration& duration,
+                          std::string& reason) {
     if (!params) {
         reason = "Missing mandatory 'duration' parameters.";
         return (false);
@@ -344,25 +342,25 @@ StatsMgr::getStatDuration(const isc::data::ConstElementPtr& params,
     int64_t minutes = stat_minutes->intValue();
     int64_t seconds = stat_seconds->intValue();
     int64_t milliseconds = stat_milliseconds->intValue();
-    duration = boost::posix_time::time_duration(hours,minutes,seconds,milliseconds);
+    duration = boost::posix_time::time_duration(hours, minutes, seconds, milliseconds);
     return (true);
 }
 
 bool
 StatsMgr::getStatMaxSamples(const isc::data::ConstElementPtr& params,
-                      uint32_t& max_samples,
-                      std::string& reason) {
+                            uint32_t& max_samples,
+                            std::string& reason) {
     if (!params) {
-        reason = "Missing mandatory 'max_samples' parameter.";
+        reason = "Missing mandatory 'max-samples' parameter.";
         return (false);
     }
-    ConstElementPtr stat_max_samples = params->get("max_samples");
+    ConstElementPtr stat_max_samples = params->get("max-samples");
     if (!stat_max_samples) {
-        reason = "Missing mandatory 'max_samples' parameter.";
+        reason = "Missing mandatory 'max-samples' parameter.";
         return (false);
     }
     if (stat_max_samples->getType() != Element::integer) {
-        reason = "'max_samples' parameter expected to be an integer.";
+        reason = "'max-samples' parameter expected to be an integer.";
         return (false);
     }
 
