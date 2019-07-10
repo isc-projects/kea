@@ -677,6 +677,10 @@ public:
     /// subnets should be inserted.
     void getAllSubnets6(const ServerSelector& server_selector,
                         Subnet6Collection& subnets) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "fetching all subnets for ANY "
+                      "server is not supported");
+        }
         auto index = (server_selector.amUnassigned() ? GET_ALL_SUBNETS6_UNASSIGNED :
                       GET_ALL_SUBNETS6);
         MySqlBindingCollection in_bindings;
@@ -692,6 +696,11 @@ public:
     void getModifiedSubnets6(const ServerSelector& server_selector,
                              const boost::posix_time::ptime& modification_ts,
                              Subnet6Collection& subnets) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "fetching modified subnets for ANY "
+                      "server is not supported");
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createTimestamp(modification_ts)
         };
@@ -924,7 +933,11 @@ public:
     void createUpdateSubnet6(const ServerSelector& server_selector,
                              const Subnet6Ptr& subnet) {
 
-        if (server_selector.amUnassigned()) {
+        if (server_selector.amAny()) {
+            isc_throw(InvalidOperation, "creating or updating a subnet for ANY"
+                      " server is not supported");
+
+        } else if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
                       " (unassigned) is unsupported at the moment");
         }

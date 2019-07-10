@@ -1003,6 +1003,33 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
     EXPECT_EQ(1, parameters.size());
 }
 
+// Test that ceateUpdateSubnet4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSubnet4Selectors) {
+    ASSERT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
+    ASSERT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[2]));
+
+    // Supported selectors.
+    Subnet4Ptr subnet = test_subnets_[0];
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),
+                                                subnet));
+    subnet = test_subnets_[2];
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server1"),
+                                                subnet));
+    subnet = test_subnets_[3];
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                subnet));
+
+    // Not supported server selectors.
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ANY(), subnet),
+                 isc::InvalidOperation);
+
+    // Not implemented server selectors.
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(),
+                                             subnet),
+                 isc::NotImplemented);
+}
+
 // Test that subnet can be inserted, fetched, updated and then fetched again.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // Insert the server2 into the database.
@@ -1126,6 +1153,21 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
     EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"),  subnet2),
                  DuplicateEntry);
+}
+
+// Test that getSubnet4 by ID throws appropriate exceptions for various server
+// selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4byIdSelectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::ANY(), SubnetID(1)));
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::UNASSIGNED(), SubnetID(1)));
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::ALL(), SubnetID(1)));
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::ONE("server1"), SubnetID(1)));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                    SubnetID(1)),
+                 isc::InvalidOperation);
 }
 
 // Test that the information about unspecified optional parameters gets
@@ -1258,6 +1300,21 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4ByPrefix) {
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 }
 
+// Test that getSubnet4 by prefix throws appropriate exceptions for various server
+// selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4byPrefixSelectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::ANY(), "192.0.2.0/24"));
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::UNASSIGNED(), "192.0.2.0/24"));
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::ALL(), "192.0.2.0/24"));
+    EXPECT_NO_THROW(cbptr_->getSubnet4(ServerSelector::ONE("server1"), "192.0.2.0/24"));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                    "192.0.2.0/24"),
+                 isc::InvalidOperation);
+}
+
 // Test that all subnets can be fetched and then deleted.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     // Insert test subnets into the database. Note that the second subnet will
@@ -1356,6 +1413,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     }
 }
 
+// Test that getAllSubnets4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED()));
+    EXPECT_NO_THROW(cbptr_->getAllSubnets4(ServerSelector::ALL()));
+    EXPECT_NO_THROW(cbptr_->getAllSubnets4(ServerSelector::ONE("server1")));
+    EXPECT_NO_THROW(cbptr_->getAllSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" })));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getAllSubnets4(ServerSelector::ANY()), isc::InvalidOperation);
+}
+
 // Test that subnets with different server associations are returned.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4WithServerTags) {
     auto subnet1 = test_subnets_[0];
@@ -1426,6 +1496,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4WithServerTags) {
     EXPECT_TRUE(returned_subnet->hasAllServerTag());
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server2")));
+}
+
+// Test that getModifiedSubnets4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->getModifiedSubnets4(ServerSelector::UNASSIGNED(),
+                                                timestamps_["yesterday"]));
+    EXPECT_NO_THROW(cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
+                                                timestamps_["yesterday"]));
+    EXPECT_NO_THROW(cbptr_->getModifiedSubnets4(ServerSelector::ONE("server1"),
+                                                timestamps_["yesterday"]));
+    EXPECT_NO_THROW(cbptr_->getModifiedSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                timestamps_["yesterday"]));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->getModifiedSubnets4(ServerSelector::ANY(),
+                                             timestamps_["yesterday"]),
+                 isc::InvalidOperation);
 }
 
 // Test that selected subnet can be deleted.
@@ -1534,6 +1623,57 @@ TEST_F(MySqlConfigBackendDHCPv4Test, deleteSubnet4) {
     test_delete_by_prefix("all servers", ServerSelector::ALL(), subnet1);
     test_delete_by_prefix("any server", ServerSelector::ANY(), subnet2);
     test_delete_by_prefix("one server", ServerSelector::ONE("server1"), subnet3);
+}
+
+// Test that deleteSubnet4 by ID throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteSubnet4ByIdSelectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ANY(), SubnetID(1)));
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), SubnetID(1)));
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ONE("server1"), SubnetID(1)));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           SubnetID(1)),
+                 isc::InvalidOperation);
+
+    // Not implemented selectors.
+    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), SubnetID(1)),
+                 isc::NotImplemented);
+}
+
+// Test that deleteSubnet4 by prefix throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteSubnet4ByPrefixSelectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ANY(), "192.0.2.0/24"));
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), "192.0.2.0/24"));
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ONE("server1"), "192.0.2.0/24"));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                           "192.0.2.0/24"),
+                 isc::InvalidOperation);
+
+    // Not implemented selectors.
+    EXPECT_THROW(cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), "192.0.2.0/24"),
+                 isc::NotImplemented);
+}
+
+// Test that deleteAllSubnets4 throws appropriate exceptions for various
+// server selectors.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteAllSubnets4Selectors) {
+    // Supported selectors.
+    EXPECT_NO_THROW(cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED()));
+    EXPECT_NO_THROW(cbptr_->deleteAllSubnets4(ServerSelector::ALL()));
+    EXPECT_NO_THROW(cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1")));
+
+    // Not supported selectors.
+    EXPECT_THROW(cbptr_->deleteAllSubnets4(ServerSelector::ANY()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteAllSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" })),
+                 isc::InvalidOperation);
 }
 
 // Test that it is possible to retrieve and delete orphaned subnet.
@@ -1928,7 +2068,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
     EXPECT_FALSE(network->hasServerTag(ServerTag()));
 }
 
-// Test that craeteUpdateSharedNetwork4 throws appropriate exceptions for various
+// Test that ceateUpdateSharedNetwork4 throws appropriate exceptions for various
 // server selectors.
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4Selectors) {
     ASSERT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
