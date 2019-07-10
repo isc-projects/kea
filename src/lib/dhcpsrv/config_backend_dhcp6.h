@@ -124,12 +124,12 @@ public:
 
     /// @brief Retrieves all subnets belonging to a specified shared network.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network for which the
-    /// subnets should be retrieved.
+    /// retrieved subnets should belongs to.
     /// @return Collection of subnets or empty collection if no subnet found.
     virtual Subnet6Collection
     getSharedNetworkSubnets6(const db::ServerSelector& server_selector,
@@ -370,8 +370,8 @@ public:
 
     /// @brief Creates or updates shared network level option.
     ///
-    /// Allowed server selectors: ALL.
-    /// Not allowed server selectors: ANY, UNASSIGNED, ONE, MULTIPLE.
+    /// Allowed server selector: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param shared_network_name Name of a shared network to which option
@@ -384,7 +384,7 @@ public:
 
     /// @brief Creates or updates subnet level option.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
@@ -397,7 +397,7 @@ public:
 
     /// @brief Creates or updates pool level option.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
@@ -414,7 +414,7 @@ public:
 
     /// @brief Creates or updates prefix delegation pool level option.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
@@ -481,9 +481,12 @@ public:
 
     /// @brief Deletes all subnets belonging to a specified shared network.
     ///
+    /// Allowed server selectors: UNASSIGNED, ALL, ONE.
+    /// Not allowed server selectors: ANY, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network for which the
-    /// subnets should be deleted.
+    /// deleted subnets should belongs to.
     /// @return Number of deleted subnets.
     virtual uint64_t
     deleteSharedNetworkSubnets6(const db::ServerSelector& server_selector,
@@ -551,6 +554,9 @@ public:
 
     /// @brief Deletes shared network level option.
     ///
+    /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
+    /// Not allowed server selector: MULTIPLE.
+    ///
     /// @param selector Server selector.
     /// @param shared_network_name Name of the shared network which option
     /// belongs to.
@@ -564,7 +570,7 @@ public:
 
     /// @brief Deletes subnet level option.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
@@ -581,7 +587,7 @@ public:
 
     /// @brief Deletes pool level option.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
@@ -601,7 +607,7 @@ public:
 
     /// @brief Deletes prefix delegation pool level option.
     ///
-    /// Allowed server selectors: ANY.
+    /// Allowed server selector: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.

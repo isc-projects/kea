@@ -151,25 +151,43 @@ TestConfigBackendDHCPv6::getModifiedSubnets6(const db::ServerSelector& server_se
 }
 
 Subnet6Collection
-TestConfigBackendDHCPv6::getSharedNetworkSubnets6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::getSharedNetworkSubnets6(const db::ServerSelector& server_selector,
                                                   const std::string& shared_network_name) const {
     Subnet6Collection subnets;
 
     // Subnet collection does not include the index by shared network name.
     // We need to iterate over the subnets and pick those that are associated
     // with a shared network.
-    for (auto subnet = subnets_.begin(); subnet != subnets_.end();
-         ++subnet) {
+    for (auto subnet : subnets_) {
+        // Skip subnets which do not match the server selector.
+        if (server_selector.amUnassigned() &&
+            !subnet->getServerTags().empty()) {
+            continue;
+        }
+        if (!server_selector.amAny()) {
+            bool got = false;
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                if (subnet->hasServerTag(ServerTag(tag))) {
+                    got = true;
+                    break;
+                }
+            }
+            if (!got && !subnet->hasAllServerTag()) {
+                continue;
+            }
+        }
+
         // The subnet can be associated with a shared network instance or
         // it may just point to the shared network name. The former is
         // the case when the subnet belongs to the server configuration.
         // The latter is the case when the subnet is fetched from the
         // database.
         SharedNetwork6Ptr network;
-        (*subnet)->getSharedNetwork(network);
+        subnet->getSharedNetwork(network);
         if (((network && (network->getName() == shared_network_name)) ||
-             ((*subnet)->getSharedNetworkName() == shared_network_name))) {
-            subnets.push_back(*subnet);
+             (subnet->getSharedNetworkName() == shared_network_name))) {
+            subnets.push_back(subnet);
         }
     }
     return (subnets);
@@ -612,8 +630,16 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
     }
 
     auto shared_network = *network_it;
-    if (!shared_network->hasAllServerTag()) {
-        bool found = false;
+    bool found = false;
+    if (server_selector.amUnassigned()) {
+        if (shared_network->getServerTags().empty()) {
+            found = true;
+        }
+    } else if (server_selector.amAny()) {
+        found = true;
+    } else if (shared_network->hasAllServerTag()) {
+        found = true;
+    } else {
         auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if (shared_network->hasServerTag(ServerTag(tag))) {
@@ -621,11 +647,11 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
                 break;
             }
         }
-        if (!found) {
-            isc_throw(BadValue, "attempted to create or update option in a "
-                      "shared network " << shared_network_name
-                      << " not present in a selected server");
-        }
+    }
+    if (!found) {
+        isc_throw(BadValue, "attempted to create or update option in a "
+                  "shared network " << shared_network_name
+                  << " not present in a selected server");
     }
 
     shared_network->getCfgOption()->del(option->space_name_, option->option_->getType());
@@ -645,8 +671,16 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
     }
 
     auto subnet = *subnet_it;
-    if (!subnet->hasAllServerTag()) {
-        bool found = false;
+    bool found = false;
+    if (server_selector.amUnassigned()) {
+        if (subnet->getServerTags().empty()) {
+            found = true;
+        }
+    } else if (server_selector.amAny()) {
+        found = true;
+    } else if (subnet->hasAllServerTag()) {
+        found = true;
+    } else {
         auto tags = server_selector.getTags();
         for (auto tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
@@ -654,11 +688,11 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
                 break;
             }
         }
-        if (!found) {
-            isc_throw(BadValue, "attempted to create or update option in a "
-                      "subnet ID " << subnet_id
-                      << " not present in a selected server");
-        }
+    }
+    if (!found) {
+        isc_throw(BadValue, "attempted to create or update option in a "
+                  "subnet ID " << subnet_id
+                  << " not present in a selected server");
     }
 
     subnet->getCfgOption()->del(option->space_name_, option->option_->getType());
@@ -670,8 +704,7 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
                                              const asiolink::IOAddress& pool_start_address,
                                              const asiolink::IOAddress& pool_end_address,
                                              const OptionDescriptorPtr& option) {
-    auto tags = server_selector.getTags();
-    auto not_in_tags = false;
+    auto not_in_selected_servers = false;
     for (auto subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.
         auto pool = subnet->getPool(Lease::TYPE_NA, pool_start_address);
@@ -679,9 +712,15 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
             continue;
         }
 
-        // Verify the subnet is in all or one of the given servers.
-        if (!subnet->hasAllServerTag()) {
+        // Verify the subnet is in a selected server.
+        if (server_selector.amUnassigned()) {
+            if (!subnet->getServerTags().empty()) {
+                not_in_selected_servers = true;
+                continue;
+            }
+        } else if (!server_selector.amAny() && !subnet->hasAllServerTag()) {
             auto in_tags = false;
+            auto tags = server_selector.getTags();
             for (auto tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
                     in_tags = true;
@@ -690,7 +729,7 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
             }
             if (!in_tags) {
                 // Records the fact a subnet was found but not in a server.
-                not_in_tags = true;
+                not_in_selected_servers = true;
                 continue;
             }
         }
@@ -702,15 +741,15 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
         return;
     }
 
-    if (not_in_tags) {
-        isc_throw(BadValue, "attempted to create or update option in "
-                  "a non existing pool " << pool_start_address
-                  << " - " << pool_end_address);
-    } else {
+    if (not_in_selected_servers) {
         isc_throw(BadValue, "attempted to create or update option in "
                   "a pool " << pool_start_address
                   << " - " << pool_end_address
                   << " not present in a selected server");
+    } else {
+        isc_throw(BadValue, "attempted to create or update option in "
+                  "a non existing pool " << pool_start_address
+                  << " - " << pool_end_address);
     }
 }
 
@@ -719,8 +758,7 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
                                              const asiolink::IOAddress& pd_pool_prefix,
                                              const uint8_t pd_pool_prefix_length,
                                              const OptionDescriptorPtr& option) {
-    auto tags = server_selector.getTags();
-    auto not_in_tags = false;
+    auto not_in_selected_servers = false;
     for (auto subnet : subnets_) {
         // Get the pd pool: if it is not here we can directly go to the next subnet.
         auto pdpool = subnet->getPool(Lease::TYPE_PD, pd_pool_prefix);
@@ -728,9 +766,15 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
             continue;
         }
 
-        // Verify the subnet is in all or one of the given servers.
-        if (!subnet->hasAllServerTag()) {
+        // Verify the subnet is in a selected server.
+        if (server_selector.amUnassigned()) {
+            if (!subnet->getServerTags().empty()) {
+                not_in_selected_servers = true;
+                continue;
+            }
+        } else if (!server_selector.amAny() && !subnet->hasAllServerTag()) {
             auto in_tags = false;
+            auto tags = server_selector.getTags();
             for (auto tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
                     in_tags = true;
@@ -739,7 +783,7 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
             }
             if (!in_tags) {
                 // Records the fact a subnet was found but not in a server.
-                not_in_tags = true;
+                not_in_selected_servers = true;
                 continue;
             }
         }
@@ -751,15 +795,15 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
         return;
     }
 
-    if (not_in_tags) {
-        isc_throw(BadValue, "attempted to create or update option in "
-                  "a non existing prefix pool " << pd_pool_prefix
-                  << "/" << static_cast<unsigned>(pd_pool_prefix_length));
-    } else {
+    if (not_in_selected_servers) {
         isc_throw(BadValue, "attempted to create or update option in "
                   "a prefix pool " << pd_pool_prefix
                   << "/" << static_cast<unsigned>(pd_pool_prefix_length)
                   << " not present in a selected server");
+    } else {
+        isc_throw(BadValue, "attempted to create or update option in "
+                  "a non existing prefix pool " << pd_pool_prefix
+                  << "/" << static_cast<unsigned>(pd_pool_prefix_length));
     }
 }
 
@@ -895,11 +939,32 @@ TestConfigBackendDHCPv6::deleteAllSubnets6(const db::ServerSelector& server_sele
 }
 
 uint64_t
-TestConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::deleteSharedNetworkSubnets6(const db::ServerSelector& server_selector,
                                                      const std::string& shared_network_name) {
     uint64_t cnt = 0;
     auto& index = subnets_.get<SubnetRandomAccessIndexTag>();
     for (auto subnet = index.begin(); subnet != index.end(); ) {
+        // Skip subnets which do not match the server selector.
+        if (server_selector.amUnassigned() &&
+           !(*subnet)->getServerTags().empty()) {
+            ++subnet;
+            continue;
+        }
+        if (!server_selector.amAny()) {
+            bool got = false;
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                if ((*subnet)->hasServerTag(ServerTag(tag))) {
+                    got = true;
+                    break;
+                }
+            }
+            if (!got && !(*subnet)->hasAllServerTag()) {
+                ++subnet;
+                continue;
+            }
+        }
+
         SharedNetwork6Ptr network;
         (*subnet)->getSharedNetwork(network);
         if (network && (network->getName() == shared_network_name)) {
@@ -1048,74 +1113,186 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
 }
 
 uint64_t
-TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
                                        const std::string& space) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network_name);
 
-    if (network_it != index.end()) {
-        auto shared_network = *network_it;
-        return (shared_network->getCfgOption()->del(space, code));
-
-    } else {
+    if (network_it == index.end()) {
         isc_throw(BadValue, "attempted to delete an option in a non existing "
                   "shared network " << shared_network_name);
     }
+
+    auto shared_network = *network_it;
+    bool found = false;
+    if (server_selector.amUnassigned()) {
+        if (shared_network->getServerTags().empty()) {
+            found = true;
+        }
+    } else if (server_selector.amAny()) {
+        found = true;
+    } else if (shared_network->hasAllServerTag()) {
+        found = true;
+    } else {
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (shared_network->hasServerTag(ServerTag(tag))) {
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found) {
+        isc_throw(BadValue, "attempted to delete option in a "
+                  "shared network " << shared_network_name
+                  << " not present in a selected server");
+    }
+
+    return (shared_network->getCfgOption()->del(space, code));
 }
 
 uint64_t
-TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
                                        const std::string& space) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
 
-    if (subnet_it != index.cend()) {
-        auto subnet = *subnet_it;
-        return (subnet->getCfgOption()->del(space, code));
-
-    } else {
+    if (subnet_it == index.cend()) {
         isc_throw(BadValue, "attempted to delete an option in a non existing "
                   "subnet ID " << subnet_id);
     }
+
+    auto subnet = *subnet_it;
+    bool found = false;
+    if (server_selector.amUnassigned()) {
+        if (subnet->getServerTags().empty()) {
+            found = true;
+        }
+    } else if (server_selector.amAny()) {
+        found = true;
+    } else if (subnet->hasAllServerTag()) {
+        found = true;
+    } else {
+        auto tags = server_selector.getTags();
+        for (auto tag : tags) {
+            if (subnet->hasServerTag(ServerTag(tag))) {
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found) {
+        isc_throw(BadValue, "attempted to delete option in a "
+                  "subnet ID " << subnet_id
+                  << " not present in a selected server");
+    }
+
+    return (subnet->getCfgOption()->del(space, code));
 }
 
 uint64_t
-TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const asiolink::IOAddress& pool_start_address,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
                                        const std::string& space) {
-    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
-        auto pool = (*subnet)->getPool(Lease::TYPE_NA, pool_start_address);
-        if (pool) {
-            return (pool->getCfgOption()->del(space, code));
+    auto not_in_selected_servers = false;
+    for (auto subnet : subnets_) {
+        // Get the pool: if it is not here we can directly go to the next subnet.
+
+        auto pool = subnet->getPool(Lease::TYPE_NA, pool_start_address);
+        if (!pool) {
+            continue;
         }
+
+        // Verify the subnet is in a selected server.
+        if (server_selector.amUnassigned()) {
+            if (!subnet->getServerTags().empty()) {
+                not_in_selected_servers = true;
+                continue;
+            }
+        } else if (!server_selector.amAny() && !subnet->hasAllServerTag()) {
+            auto in_tags = false;
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                if (subnet->hasServerTag(ServerTag(tag))) {
+                    in_tags = true;
+                    break;
+                }
+            }
+            if (!in_tags) {
+                // Records the fact a subnet was found but not in a server.
+                not_in_selected_servers = true;
+                continue;
+            }
+        }
+
+        return (pool->getCfgOption()->del(space, code));
     }
 
-    isc_throw(BadValue, "attempted to delete an option in a non existing "
-              "pool " << pool_start_address << " - " << pool_end_address);
+    if (not_in_selected_servers) {
+        isc_throw(BadValue, "attempted to delete an option in a pool "
+                  << pool_start_address << " - " << pool_end_address
+                  << " not present in a selected server");
+    } else {
+        isc_throw(BadValue, "attempted to delete an option in a non existing "
+                  "pool " << pool_start_address << " - " << pool_end_address);
+    }
 }
 
 uint64_t
-TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& /* server_selector */,
+TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const asiolink::IOAddress& pd_pool_prefix,
                                        const uint8_t pd_pool_prefix_length,
                                        const uint16_t code,
                                        const std::string& space) {
-    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
-        auto pdpool = (*subnet)->getPool(Lease::TYPE_PD, pd_pool_prefix);
-        if (pdpool) {
-            return (pdpool->getCfgOption()->del(space, code));
+    auto not_in_selected_servers = false;
+    for (auto subnet : subnets_) {
+        // Get the pd pool: if it is not here we can directly go to the next subnet.
+        auto pdpool = subnet->getPool(Lease::TYPE_PD, pd_pool_prefix);
+        if (!pdpool) {
+            continue;
         }
+
+        // Verify the subnet is in a selected server.
+        if (server_selector.amUnassigned()) {
+            if (!subnet->getServerTags().empty()) {
+                not_in_selected_servers = true;
+                continue;
+            }
+        } else if (!server_selector.amAny() && !subnet->hasAllServerTag()) {
+            auto in_tags = false;
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                if (subnet->hasServerTag(ServerTag(tag))) {
+                    in_tags = true;
+                    break;
+                }
+            }
+            if (!in_tags) {
+                // Records the fact a subnet was found but not in a server.
+                not_in_selected_servers = true;
+                continue;
+            }
+        }
+
+        return (pdpool->getCfgOption()->del(space, code));
     }
 
-    isc_throw(BadValue, "attempted to delete an option in a non existing "
-              "pd pool " << pd_pool_prefix << "/"
-              << static_cast<unsigned>(pd_pool_prefix_length));
+    if (not_in_selected_servers) {
+        isc_throw(BadValue, "attempted to delete an option in "
+                  "a prefix pool " << pd_pool_prefix
+                  << "/" << static_cast<unsigned>(pd_pool_prefix_length)
+                  << " not present in a selected server");
+    } else {
+        isc_throw(BadValue, "attempted to delete an option in "
+                  "a non existing prefix pool " << pd_pool_prefix
+                  << "/" << static_cast<unsigned>(pd_pool_prefix_length));
+    }
 }
 
 uint64_t
