@@ -2068,7 +2068,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
     EXPECT_FALSE(network->hasServerTag(ServerTag()));
 }
 
-// Test that ceateUpdateSharedNetwork4 throws appropriate exceptions for various
+// Test that createUpdateSharedNetwork4 throws appropriate exceptions for various
 // server selectors.
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4Selectors) {
     ASSERT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
