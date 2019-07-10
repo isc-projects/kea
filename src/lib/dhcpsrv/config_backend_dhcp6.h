@@ -172,6 +172,9 @@ public:
 
     /// @brief Retrieves shared networks modified after specified time.
     ///
+    /// Allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    /// Not allowed server selector: ANY.
+    ///
     /// @param server_selector Server selector.
     /// @param modification_time Lower bound shared network modification time.
     /// @return Collection of shared network or empty collection if
@@ -181,6 +184,9 @@ public:
                                const boost::posix_time::ptime& modification_time) const = 0;
 
     /// @brief Retrieves single option definition by code and space.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selector: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param code Code of the option to be retrieved.
@@ -192,6 +198,9 @@ public:
 
     /// @brief Retrieves all option definitions.
     ///
+    /// Allowed server selectors: ALL, ONE, MULTIPLE.
+    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @return Collection of option definitions or empty collection if
     /// no option definition found.
@@ -199,6 +208,9 @@ public:
     getAllOptionDefs6(const db::ServerSelector& server_selector) const = 0;
 
     /// @brief Retrieves option definitions modified after specified time.
+    ///
+    /// Allowed server selectors: ALL, ONE, MULTIPLE.
+    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param modification_time Lower bound option definition modification
@@ -211,6 +223,9 @@ public:
 
     /// @brief Retrieves single option by code and space.
     ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selector: ANY, UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param space Option space.
@@ -222,6 +237,9 @@ public:
 
     /// @brief Retrieves all global options.
     ///
+    /// Allowed server selectors: ALL, ONE, MULTIPLE.
+    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @return Collection of global options or empty collection if no
     /// option found.
@@ -229,6 +247,9 @@ public:
     getAllOptions6(const db::ServerSelector& server_selector) const = 0;
 
     /// @brief Retrieves options modified after specified time.
+    ///
+    /// Allowed server selectors: ALL, ONE, MULTIPLE.
+    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param modification_time Lower bound option modification time.
@@ -240,9 +261,8 @@ public:
 
     /// @brief Retrieves global parameter value.
     ///
-    /// Typically, the server selector used for this query should be set to
-    /// ONE. It is possible to use the MULTIPLE server selector but in that
-    /// case only the first found parameter is returned.
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selector: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
@@ -254,31 +274,8 @@ public:
 
     /// @brief Retrieves all global parameters.
     ///
-    /// Using the server selector it is possible to fetch the parameters for
-    /// one or more servers. The following list describes what parameters are
-    /// returned depending on the server selector specified:
-    /// - ALL: only common parameters are returned which are associated with
-    ///   the logical server 'all'. No parameters associated with the explicit
-    ///   server tags are returned.
-    ///
-    /// - ONE: parameters used by the particular sever are returned. This includes
-    ///   parameters associated with the particular server (identified by tag)
-    ///   and parameters associated with the logical server 'all' when server
-    ///   specific parameters are not given. For example, if there is a
-    ///   renew-timer specified for 'server1' tag, different value of the
-    ///   renew-timer specified for 'all' servers and a rebind-timer specified
-    ///   for 'all' servers, the caller will receive renew-timer value associated
-    ///   with the server1 and the rebind-timer value associated with all servers,
-    ///   because there is no explicit rebind-timer specified for server1.
-    ///
-    /// - MULTIPLE: parameters used by multiple servers, but those associated
-    ///   with specific server tags take precedence over the values specified for
-    ///   'all' servers. This is similar to the case of ONE server described
-    ///   above. The effect of querying for parameters belonging to multiple
-    ///   servers is the same as issuing multiple queries with ONE server
-    ///   being selected multiple times.
-    ///
-    /// - UNASSIGNED: parameters not associated with any servers.
+    /// Allowed server selectors: ALL, ONE, MULTIPLE.
+    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @return Collection of global parameters.
@@ -286,6 +283,9 @@ public:
     getAllGlobalParameters6(const db::ServerSelector& selector) const = 0;
 
     /// @brief Retrieves global parameters modified after specified time.
+    ///
+    /// Allowed server selectors: ALL, ONE, MULTIPLE.
+    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param modification_time Modification time.
@@ -295,6 +295,9 @@ public:
                                  const boost::posix_time::ptime& modification_time) const = 0;
 
     /// @brief Retrieves the most recent audit entries.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param modification_time Timestamp being a lower limit for the returned
@@ -345,6 +348,9 @@ public:
 
     /// @brief Creates or updates an option definition.
     ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param option_def Option definition to be added or updated.
     virtual void
@@ -353,6 +359,10 @@ public:
 
     /// @brief Creates or updates global option.
     ///
+
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param option Option to be added or updated.
     virtual void
@@ -360,6 +370,9 @@ public:
                         const OptionDescriptorPtr& option) = 0;
 
     /// @brief Creates or updates shared network level option.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param shared_network_name Name of a shared network to which option
@@ -372,6 +385,9 @@ public:
 
     /// @brief Creates or updates subnet level option.
     ///
+    /// Allowed server selectors: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of a subnet to which option belongs.
     /// @param option Option to be added or updated.
@@ -381,6 +397,9 @@ public:
                         const OptionDescriptorPtr& option) = 0;
 
     /// @brief Creates or updates pool level option.
+    ///
+    /// Allowed server selectors: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound address of the pool to which
@@ -396,6 +415,9 @@ public:
 
     /// @brief Creates or updates prefix delegation pool level option.
     ///
+    /// Allowed server selectors: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param pd_pool_prefix Address part of the prefix of the prefix
     /// delegation pool to which the option belongs.
@@ -409,6 +431,9 @@ public:
                         const OptionDescriptorPtr& option) = 0;
 
     /// @brief Creates or updates global parameter.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param value Value of the global parameter.
@@ -489,6 +514,9 @@ public:
 
     /// @brief Deletes option definition.
     ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
@@ -499,12 +527,18 @@ public:
 
     /// @brief Deletes all option definitions.
     ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @return Number of deleted option definitions.
     virtual uint64_t
     deleteAllOptionDefs6(const db::ServerSelector& server_selector) = 0;
 
     /// @brief Deletes global option.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
@@ -529,6 +563,9 @@ public:
 
     /// @brief Deletes subnet level option.
     ///
+    /// Allowed server selectors: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to which deleted option
     /// belongs.
@@ -540,6 +577,9 @@ public:
                   const uint16_t code, const std::string& space) = 0;
 
     /// @brief Deletes pool level option.
+    ///
+    /// Allowed server selectors: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound address of the pool to which
@@ -558,6 +598,9 @@ public:
 
     /// @brief Deletes prefix delegation pool level option.
     ///
+    /// Allowed server selectors: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param pd_pool_prefix Address part of the prefix of the prefix
     /// delegation pool to which the deleted option belongs.
@@ -575,6 +618,9 @@ public:
 
     /// @brief Deletes global parameter.
     ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    ///
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be deleted.
     /// @return Number of deleted global parameters.
@@ -583,6 +629,9 @@ public:
                            const std::string& name) = 0;
 
     /// @brief Deletes all global parameters.
+    ///
+    /// Allowed server selectors: ALL, ONE.
+    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @return Number of deleted global parameters.
