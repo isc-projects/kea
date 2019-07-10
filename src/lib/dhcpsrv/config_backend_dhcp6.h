@@ -124,7 +124,7 @@ public:
 
     /// @brief Retrieves all subnets belonging to a specified shared network.
     ///
-    /// Allowed server selectors:ANY.
+    /// Allowed server selectors: ANY.
     /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
