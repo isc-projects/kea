@@ -48,7 +48,6 @@ public:
 
 // Basic test for statistics manager interface.
 TEST_F(StatsMgrTest, basic) {
-
     // Getting an instance
     EXPECT_NO_THROW(StatsMgr::instance());
 
@@ -66,8 +65,8 @@ TEST_F(StatsMgrTest, integerStat) {
     EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
     ASSERT_TRUE(alpha);
 
-    std::string exp = "{ \"alpha\": [ [ 1234, \""
-        + isc::util::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
+    std::string exp = "{ \"alpha\": [ [ 1234, \"" +
+        isc::util::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("alpha")->str());
 }
@@ -81,8 +80,8 @@ TEST_F(StatsMgrTest, floatStat) {
     EXPECT_NO_THROW(beta = StatsMgr::instance().getObservation("beta"));
     ASSERT_TRUE(beta);
 
-    std::string exp = "{ \"beta\": [ [ 12.34, \""
-        + isc::util::ptimeToText(beta->getFloat().second) + "\" ] ] }";
+    std::string exp = "{ \"beta\": [ [ 12.34, \"" +
+        isc::util::ptimeToText(beta->getFloat().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("beta")->str());
 }
@@ -91,14 +90,14 @@ TEST_F(StatsMgrTest, floatStat) {
 // a duration statistic.
 TEST_F(StatsMgrTest, durationStat) {
     EXPECT_NO_THROW(StatsMgr::instance().setValue("gamma",
-                                                  microsec::time_duration(1,2,3,4)));
+                                                  microsec::time_duration(1, 2, 3, 4)));
 
     ObservationPtr gamma;
     EXPECT_NO_THROW(gamma = StatsMgr::instance().getObservation("gamma"));
     ASSERT_TRUE(gamma);
 
-    std::string exp = "{ \"gamma\": [ [ \"01:02:03.000004\", \""
-        + isc::util::ptimeToText(gamma->getDuration().second) + "\" ] ] }";
+    std::string exp = "{ \"gamma\": [ [ \"01:02:03.000004\", \"" +
+        isc::util::ptimeToText(gamma->getDuration().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("gamma")->str());
 }
@@ -113,37 +112,82 @@ TEST_F(StatsMgrTest, stringStat) {
     EXPECT_NO_THROW(delta = StatsMgr::instance().getObservation("delta"));
     ASSERT_TRUE(delta);
 
-    std::string exp = "{ \"delta\": [ [ \"Lorem ipsum\", \""
-        + isc::util::ptimeToText(delta->getString().second) + "\" ] ] }";
+    std::string exp = "{ \"delta\": [ [ \"Lorem ipsum\", \"" +
+        isc::util::ptimeToText(delta->getString().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("delta")->str());
 }
 
-// Setting limits is currently not implemented, so those methods should
-// throw.
-TEST_F(StatsMgrTest, setLimits) {
-    EXPECT_THROW(StatsMgr::instance().setMaxSampleAge("foo",
-                                                      time_duration(1,0,0,0)),
-                 NotImplemented);
+// Basic test of getSize function.
+TEST_F(StatsMgrTest, getSize) {
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", microsec::time_duration(1, 2, 3, 4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
-    EXPECT_THROW(StatsMgr::instance().setMaxSampleCount("foo", 100),
-                 NotImplemented);
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("alpha"));
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("beta"));
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("gamma"));
+    EXPECT_NO_THROW(StatsMgr::instance().getSize("delta"));
+
+    EXPECT_EQ(StatsMgr::instance().getSize("alpha"), 1);
+    EXPECT_EQ(StatsMgr::instance().getSize("beta"), 1);
+    EXPECT_EQ(StatsMgr::instance().getSize("gamma"), 1);
+    EXPECT_EQ(StatsMgr::instance().getSize("delta"), 1);
+}
+
+// Test checks whether setting age limit and count limit works properly
+TEST_F(StatsMgrTest, setLimits) {
+    // Initializing of an integer type observation
+    StatsMgr::instance().setValue("foo", static_cast<int64_t>(1));
+
+    EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleAge("foo",
+                                                         time_duration(0, 0, 1, 0)));
+
+    for (uint32_t i = 0; i < 10; ++i) {
+        if (i == 5) {
+            sleep(1); // wait one second to force exceeding the time limit
+        }
+        StatsMgr::instance().setValue("foo", static_cast<int64_t>(i));
+    }
+
+    EXPECT_EQ(StatsMgr::instance().getSize("foo"), 5);
+    EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleCount("foo", 100));
+
+    for (int64_t i = 0; i < 200; ++i) {
+        StatsMgr::instance().setValue("foo", i);
+    }
+
+    EXPECT_EQ(StatsMgr::instance().getSize("foo"), 100);
 }
 
 // This test checks whether a single (get("foo")) and all (getAll())
 // statistics are reported properly.
 TEST_F(StatsMgrTest, getGetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem");
+
+    // The string's representation of firstly added statistics
+    std::string alpha_first = ", 1234, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+                                   ->getInteger().second) + "\" ] ]";
+    std::string beta_first = ", 12.34, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+                                   ->getFloat().second) + "\" ] ]";
+    std::string gamma_first = ", \"01:02:03.000004\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+                                   ->getDuration().second) + "\" ] ]";
+    std::string delta_first = ", \"Lorem\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+                                   ->getString().second) + "\" ] ]";
 
     // Now add some values to them
     StatsMgr::instance().addValue("alpha", static_cast<int64_t>(5678));
     StatsMgr::instance().addValue("beta", 56.78);
-    StatsMgr::instance().addValue("gamma", time_duration(5,6,7,8));
+    StatsMgr::instance().addValue("gamma", time_duration(5, 6, 7, 8));
     StatsMgr::instance().addValue("delta", " ipsum");
 
     // There should be 4 statistics reported
@@ -160,18 +204,18 @@ TEST_F(StatsMgrTest, getGetAll) {
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
 
-    std::string exp_str_alpha = "[ [ 6912, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
-                                   ->getInteger().second) + "\" ] ]";
-    std::string exp_str_beta = "[ [ 69.12, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
-                                   ->getFloat().second) + "\" ] ]";
-    std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
-                                   ->getDuration().second) + "\" ] ]";
-    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
-                                   ->getString().second) + "\" ] ]";
+    std::string exp_str_alpha = "[ [ 6912, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+                                   ->getInteger().second) + "\"" + alpha_first;
+    std::string exp_str_beta = "[ [ 69.12, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+                                   ->getFloat().second) + "\"" + beta_first;
+    std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+                                   ->getDuration().second) + "\"" + gamma_first;
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+                                   ->getString().second) + "\"" + delta_first;
 
     // Check that individual stats are reported properly
     EXPECT_EQ("{ \"alpha\": " + exp_str_alpha + " }", rep_alpha->str());
@@ -203,21 +247,21 @@ TEST_F(StatsMgrTest, getGetAll) {
 
 // This test checks whether existing statistics can be reset.
 TEST_F(StatsMgrTest, reset) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // This should reset alpha to 0
     EXPECT_NO_THROW(StatsMgr::instance().reset("alpha"));
-    EXPECT_EQ(0, StatsMgr::instance().getObservation("alpha")->getInteger().first);
+    EXPECT_EQ(0,
+              StatsMgr::instance().getObservation("alpha")->getInteger().first);
 
     // The other stats should remain untouched
     EXPECT_EQ(12.34,
               StatsMgr::instance().getObservation("beta")->getFloat().first);
-    EXPECT_EQ(time_duration(1,2,3,4),
+    EXPECT_EQ(time_duration(1, 2, 3, 4),
               StatsMgr::instance().getObservation("gamma")->getDuration().first);
     EXPECT_EQ("Lorem ipsum",
               StatsMgr::instance().getObservation("delta")->getString().first);
@@ -228,7 +272,7 @@ TEST_F(StatsMgrTest, reset) {
     EXPECT_NO_THROW(StatsMgr::instance().reset("delta"));
     EXPECT_EQ(0.0,
               StatsMgr::instance().getObservation("beta")->getFloat().first);
-    EXPECT_EQ(time_duration(0,0,0,0),
+    EXPECT_EQ(time_duration(0, 0, 0, 0),
               StatsMgr::instance().getObservation("gamma")->getDuration().first);
     EXPECT_EQ("",
               StatsMgr::instance().getObservation("delta")->getString().first);
@@ -239,19 +283,19 @@ TEST_F(StatsMgrTest, reset) {
 
 // This test checks whether existing statistics can be reset.
 TEST_F(StatsMgrTest, resetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // This should reset alpha to 0
     EXPECT_NO_THROW(StatsMgr::instance().resetAll());
-    EXPECT_EQ(0, StatsMgr::instance().getObservation("alpha")->getInteger().first);
+    EXPECT_EQ(0,
+              StatsMgr::instance().getObservation("alpha")->getInteger().first);
     EXPECT_EQ(0.0,
               StatsMgr::instance().getObservation("beta")->getFloat().first);
-    EXPECT_EQ(time_duration(0,0,0,0),
+    EXPECT_EQ(time_duration(0, 0, 0, 0),
               StatsMgr::instance().getObservation("gamma")->getDuration().first);
     EXPECT_EQ("",
               StatsMgr::instance().getObservation("delta")->getString().first);
@@ -262,11 +306,10 @@ TEST_F(StatsMgrTest, resetAll) {
 
 // This test checks whether statistics can be removed.
 TEST_F(StatsMgrTest, removeAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // This should reset alpha to 0
@@ -300,7 +343,7 @@ TEST_F(StatsMgrTest, DISABLED_performanceSingleAdd) {
 
     ptime before = microsec_clock::local_time();
     for (uint32_t i = 0; i < cycles; ++i) {
-        StatsMgr::instance().addValue("metric1", 0.1*i);
+        StatsMgr::instance().addValue("metric1", 0.1 * i);
     }
     ptime after = microsec_clock::local_time();
 
@@ -322,7 +365,7 @@ TEST_F(StatsMgrTest, DISABLED_performanceSingleSet) {
 
     ptime before = microsec_clock::local_time();
     for (uint32_t i = 0; i < cycles; ++i) {
-        StatsMgr::instance().setValue("metric1", 0.1*i);
+        StatsMgr::instance().setValue("metric1", 0.1 * i);
     }
     ptime after = microsec_clock::local_time();
 
@@ -422,8 +465,8 @@ TEST_F(StatsMgrTest, commandStatisticGet) {
     EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
     ASSERT_TRUE(alpha);
 
-    std::string exp = "{ \"alpha\": [ [ 1234, \""
-        + isc::util::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
+    std::string exp = "{ \"alpha\": [ [ 1234, \"" +
+        isc::util::ptimeToText(alpha->getInteger().second) + "\" ] ] }";
 
     EXPECT_EQ("{ \"arguments\": " + exp + ", \"result\": 0 }", rsp->str());
 }
@@ -433,7 +476,6 @@ TEST_F(StatsMgrTest, commandStatisticGet) {
 // - a request with missing statistic name
 // - a request for non-existing statistic.
 TEST_F(StatsMgrTest, commandStatisticGetNegative) {
-
     // Case 1: a request without parameters
     ConstElementPtr rsp = StatsMgr::instance().statisticGetHandler("statistic-get",
                                                                    ElementPtr());
@@ -456,11 +498,10 @@ TEST_F(StatsMgrTest, commandStatisticGetNegative) {
 // This test checks whether statistic-get-all command returns all statistics
 // correctly.
 TEST_F(StatsMgrTest, commandGetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // Now get them. They're used to generate expected output
@@ -474,17 +515,17 @@ TEST_F(StatsMgrTest, commandGetAll) {
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
 
-    std::string exp_str_alpha = "[ [ 1234, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+    std::string exp_str_alpha = "[ [ 1234, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
-    std::string exp_str_beta = "[ [ 12.34, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+    std::string exp_str_beta = "[ [ 12.34, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
-    std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+    std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
-    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Check that all of them can be reported at once
@@ -537,7 +578,6 @@ TEST_F(StatsMgrTest, commandStatisticReset) {
 // - a request with missing statistic name
 // - a request for non-existing statistic.
 TEST_F(StatsMgrTest, commandStatisticResetNegative) {
-
     // Case 1: a request without parameters
     ConstElementPtr rsp =
         StatsMgr::instance().statisticResetHandler("statistic-reset", ElementPtr());
@@ -561,11 +601,10 @@ TEST_F(StatsMgrTest, commandStatisticResetNegative) {
 // This test checks whether statistic-reset-all command really resets all
 // statistics correctly.
 TEST_F(StatsMgrTest, commandResetAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // Now get them. They're used to generate expected output
@@ -579,17 +618,17 @@ TEST_F(StatsMgrTest, commandResetAll) {
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
 
-    std::string exp_str_alpha = "[ [ 1234, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+    std::string exp_str_alpha = "[ [ 1234, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
-    std::string exp_str_beta = "[ [ 12.34, \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+    std::string exp_str_beta = "[ [ 12.34, \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
-    std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+    std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
-    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \""
-        + isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
+        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Check that all of them can be reset at once
@@ -602,10 +641,11 @@ TEST_F(StatsMgrTest, commandResetAll) {
     ASSERT_TRUE(rep_all);
 
     // Check that they're indeed reset
-    EXPECT_EQ(0, StatsMgr::instance().getObservation("alpha")->getInteger().first);
+    EXPECT_EQ(0,
+              StatsMgr::instance().getObservation("alpha")->getInteger().first);
     EXPECT_EQ(0.0f,
               StatsMgr::instance().getObservation("beta")->getFloat().first);
-    EXPECT_EQ(time_duration(0,0,0,0),
+    EXPECT_EQ(time_duration(0, 0, 0, 0),
               StatsMgr::instance().getObservation("gamma")->getDuration().first);
     EXPECT_EQ("",
               StatsMgr::instance().getObservation("delta")->getString().first);
@@ -626,6 +666,7 @@ TEST_F(StatsMgrTest, commandStatisticRemove) {
 
     // It should be gone.
     EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
+    EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
 // Test checks if statistic-remove is able to handle:
@@ -633,7 +674,6 @@ TEST_F(StatsMgrTest, commandStatisticRemove) {
 // - a request with missing statistic name
 // - a request for non-existing statistic.
 TEST_F(StatsMgrTest, commandStatisticRemoveNegative) {
-
     // Case 1: a request without parameters
     ConstElementPtr rsp =
         StatsMgr::instance().statisticRemoveHandler("statistic-remove", ElementPtr());
@@ -657,11 +697,10 @@ TEST_F(StatsMgrTest, commandStatisticRemoveNegative) {
 // This test checks whether statistic-remove-all command really resets all
 // statistics correctly.
 TEST_F(StatsMgrTest, commandRemoveAll) {
-
     // Set a couple of statistics
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
     StatsMgr::instance().setValue("beta", 12.34);
-    StatsMgr::instance().setValue("gamma", time_duration(1,2,3,4));
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
 
     // Check that all of them can be reset at once
@@ -676,6 +715,7 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     EXPECT_FALSE(StatsMgr::instance().getObservation("beta"));
     EXPECT_FALSE(StatsMgr::instance().getObservation("gamma"));
     EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
+    EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
 };

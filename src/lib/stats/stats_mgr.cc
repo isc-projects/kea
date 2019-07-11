@@ -10,6 +10,8 @@
 #include <stats/stats_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <util/boost_time_utils.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace isc::data;
@@ -23,8 +25,8 @@ StatsMgr& StatsMgr::instance() {
     return (stats_mgr);
 }
 
-StatsMgr::StatsMgr()
-    :global_(new StatContext()) {
+StatsMgr::StatsMgr() :
+    global_(new StatContext()) {
 
 }
 
@@ -77,13 +79,25 @@ bool StatsMgr::deleteObservation(const std::string& name) {
     return (global_->del(name));
 }
 
-void StatsMgr::setMaxSampleAge(const std::string& ,
-                               const StatsDuration&) {
-    isc_throw(NotImplemented, "setMaxSampleAge not implemented");
+bool StatsMgr::setMaxSampleAge(const std::string& name,
+                               const StatsDuration& duration) {
+    ObservationPtr obs = getObservation(name);
+    if (obs) {
+        obs->setMaxSampleAge(duration);
+        return (true);
+    } else {
+        return (false);
+    }
 }
 
-void StatsMgr::setMaxSampleCount(const std::string& , uint32_t){
-    isc_throw(NotImplemented, "setMaxSampleCount not implemented");
+bool StatsMgr::setMaxSampleCount(const std::string& name, uint32_t max_samples) {
+    ObservationPtr obs = getObservation(name);
+    if (obs) {
+        obs->setMaxSampleCount(max_samples);
+        return (true);
+    } else {
+        return (false);
+    }
 }
 
 bool StatsMgr::reset(const std::string& name) {
@@ -108,7 +122,7 @@ isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
     isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
     ObservationPtr obs = getObservation(name);
     if (obs) {
-        response->set(name, obs->getJSON()); // that contains the observation
+        response->set(name, obs->getJSON()); // that contains observations
     }
     return (response);
 }
@@ -134,6 +148,15 @@ void StatsMgr::resetAll() {
         // ... and reset each statistic.
         s->second->reset();
     }
+}
+
+size_t StatsMgr::getSize(const std::string& name) const {
+    ObservationPtr obs = getObservation(name);
+    size_t size = 0;
+    if (obs) {
+        size = obs->getSize();
+    }
+    return (size);
 }
 
 size_t StatsMgr::count() const {
