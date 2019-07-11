@@ -6785,7 +6785,7 @@ bind10-devel-20121115 released on November 15, 2012
 	to the BIND 10 guide.
 	(Trac #2305, git c4b0294b5bf4a9d32fb18ab62ca572f492788d72)
 
-506.	[security]		jinmei
+506.	[sec]		jinmei
 	Fixed a use-after-free case in handling DNAME record with the
 	in-memory data source.  This could lead to a crash of b10-auth
 	if it serves a zone containing a DNAME RR from the in-memory
@@ -10080,14 +10080,16 @@ revision numbers will be replaced with corresponding git revisions.
 Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND
-[bug] general bug fix.  This is generally a backward compatible change,
+[bug]   General bug fix.  This is generally a backward compatible change,
 	unless it's deemed to be impossible or very hard to keep
 	compatibility to fix the bug.
-[build] compilation and installation infrastructure change.
-[doc] update to documentation. This shouldn't change run time behavior.
-[func] new feature.  In some cases this may be a backward incompatible
+[build] Compilation and installation infrastructure change.
+[doc]   Update to documentation. This shouldn't change run time behavior.
+[func]  new feature.  In some cases this may be a backward incompatible
 	change, which would require a bump of major version.
-[security] security hole fix. This is no different than a general bug
+[sec]   Security hole fix. This is no different than a general bug
 	fix except that it will be handled as confidential and will cause
 	security patch releases.
+[perf]  Performance related change.
+
 *: Backward incompatible or operational change.
