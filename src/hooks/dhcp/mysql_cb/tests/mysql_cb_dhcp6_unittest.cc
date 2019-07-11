@@ -1476,46 +1476,46 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSubnets6WithServerTags) {
     EXPECT_NO_THROW(subnets = cbptr_->getAllSubnets6(ServerSelector::ONE("server1")));
     EXPECT_EQ(3, subnets.size());
 
-    // First network is associated with all servers.
+    // First subnet is associated with all servers.
     auto returned_subnet = SubnetFetcher6::get(subnets, SubnetID(1024));
     ASSERT_TRUE(returned_subnet);
     EXPECT_TRUE(returned_subnet->hasAllServerTag());
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server2")));
 
-    // Second network is only associated with the server1.
+    // Second subnet is only associated with the server1.
     returned_subnet = SubnetFetcher6::get(subnets, SubnetID(2048));
     ASSERT_TRUE(returned_subnet);
     EXPECT_FALSE(returned_subnet->hasAllServerTag());
     EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server2")));
 
-    // Third network is associated with both server1 and server2.
+    // Third subnet is associated with both server1 and server2.
     returned_subnet = SubnetFetcher6::get(subnets, SubnetID(4096));
     ASSERT_TRUE(returned_subnet);
     EXPECT_FALSE(returned_subnet->hasAllServerTag());
     EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag("server2")));
 
-    // For server2 we should only get two shared subnets, i.e. first and last.
+    // For server2 we should only get two subnets, i.e. first and last.
     EXPECT_NO_THROW(subnets = cbptr_->getAllSubnets6(ServerSelector::ONE("server2")));
     EXPECT_EQ(2, subnets.size());
 
-    // First shared network is associated with all servers.
+    // First subnet is associated with all servers.
     returned_subnet = SubnetFetcher6::get(subnets, SubnetID(1024));
     ASSERT_TRUE(returned_subnet);
     EXPECT_TRUE(returned_subnet->hasAllServerTag());
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_FALSE(returned_subnet->hasServerTag(ServerTag("server2")));
 
-    // Last shared network is associated with server1 and server2.
+    // Last subnet is associated with server1 and server2.
     returned_subnet = SubnetFetcher6::get(subnets, SubnetID(4096));
     ASSERT_TRUE(returned_subnet);
     EXPECT_FALSE(returned_subnet->hasAllServerTag());
     EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag("server1")));
     EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag("server2")));
 
-    // Only the first shared network is associated with all servers.
+    // Only the first subnet is associated with all servers.
     EXPECT_NO_THROW(subnets = cbptr_->getAllSubnets6(ServerSelector::ALL()));
     EXPECT_EQ(1, subnets.size());
 
@@ -1690,7 +1690,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, unassignedSubnet6) {
     // Create the server.
     EXPECT_NO_THROW(cbptr_->createUpdateServer6(test_servers_[0]));
 
-    // Create the shared networks and associate them with the server1.
+    // Create the subnets and associate them with the server1.
     auto subnet = test_subnets_[0];
     auto subnet2 = test_subnets_[2];
     EXPECT_NO_THROW(
