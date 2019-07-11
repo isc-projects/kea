@@ -30,6 +30,10 @@ namespace test {
 /// commands which manpiluate the configuration information stored in the
 /// database.
 ///
+/// Supported server selectors are usually a super set of the allowed
+/// selectors so no code change could be needed if we decide to extend
+/// the configuration backend.
+///
 /// This backend stores server configuration information in memory.
 class TestConfigBackendDHCPv6 : public TestConfigBackend<ConfigBackendDHCPv6> {
 public:
