@@ -199,7 +199,7 @@ public:
     /// @brief Retrieves all option definitions.
     ///
     /// Allowed server selectors: ALL, ONE, MULTIPLE.
-    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED.
     ///
     /// @param server_selector Server selector.
     /// @return Collection of option definitions or empty collection if
@@ -210,7 +210,7 @@ public:
     /// @brief Retrieves option definitions modified after specified time.
     ///
     /// Allowed server selectors: ALL, ONE, MULTIPLE.
-    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED.
     ///
     /// @param server_selector Server selector.
     /// @param modification_time Lower bound option definition modification
@@ -238,7 +238,7 @@ public:
     /// @brief Retrieves all global options.
     ///
     /// Allowed server selectors: ALL, ONE, MULTIPLE.
-    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED.
     ///
     /// @param server_selector Server selector.
     /// @return Collection of global options or empty collection if no
@@ -249,7 +249,7 @@ public:
     /// @brief Retrieves options modified after specified time.
     ///
     /// Allowed server selectors: ALL, ONE, MULTIPLE.
-    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED.
     ///
     /// @param selector Server selector.
     /// @param modification_time Lower bound option modification time.
@@ -275,7 +275,7 @@ public:
     /// @brief Retrieves all global parameters.
     ///
     /// Allowed server selectors: ALL, ONE, MULTIPLE.
-    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED.
     ///
     /// @param selector Server selector.
     /// @return Collection of global parameters.
@@ -285,7 +285,7 @@ public:
     /// @brief Retrieves global parameters modified after specified time.
     ///
     /// Allowed server selectors: ALL, ONE, MULTIPLE.
-    /// Not allowed server selectors: UNASSIGNED, MULTIPLE.
+    /// Not allowed server selectors: ANY, UNASSIGNED.
     ///
     /// @param selector Server selector.
     /// @param modification_time Modification time.
