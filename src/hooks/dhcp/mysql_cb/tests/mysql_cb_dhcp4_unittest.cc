@@ -1044,6 +1044,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     auto subnet = test_subnets_[0];
     auto subnet2 = test_subnets_[2];
 
+    // An attempt to add a subnet to a non-existing server (server1) should fail.
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                             subnet2),
+                 DbOperationError);
+
+    // The subnet shouldn't have been added, even though one of the servers exists.
+    Subnet4Ptr returned_subnet;
+    ASSERT_NO_THROW(returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server2"),
+                                                                             subnet2->getID()));
+    EXPECT_FALSE(returned_subnet);
+
     // Insert two subnets, one for all servers and one for server2.
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
     {
@@ -1142,8 +1153,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ONE("server2"),  subnet2));
 
     // Fetch again and verify.
-    auto returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server2"),
-                                              subnet2->toText());
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server2"), subnet2->toText());
     ASSERT_TRUE(returned_subnet);
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 
