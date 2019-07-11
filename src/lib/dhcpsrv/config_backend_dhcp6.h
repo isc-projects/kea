@@ -370,8 +370,8 @@ public:
 
     /// @brief Creates or updates shared network level option.
     ///
-    /// Allowed server selectors: ALL, ONE.
-    /// Not allowed server selectors: ANY, UNASSIGNED, MULTIPLE.
+    /// Allowed server selectors: ALL.
+    /// Not allowed server selectors: ANY, UNASSIGNED, ONE, MULTIPLE.
     ///
     /// @param selector Server selector.
     /// @param shared_network_name Name of a shared network to which option
