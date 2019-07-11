@@ -431,7 +431,7 @@ public:
     /// @brief Deletes subnet by prefix.
     ///
     /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
-    /// Not allowed server selectors: MULTIPLE.
+    /// Not allowed server selector: MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be deleted.
@@ -443,7 +443,7 @@ public:
     /// @brief Deletes subnet by identifier.
     ///
     /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
-    /// Not allowed server selectors: MULTIPLE.
+    /// Not allowed server selector: MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
@@ -463,8 +463,8 @@ public:
 
     /// @brief Deletes all subnets belonging to a specified shared network.
     ///
-    /// Allowed server selectors: UNASSIGNED, ALL, ONE.
-    /// Not allowed server selectors: ANY, MULTIPLE.
+    /// Allowed server selector: ANY.
+    /// Not allowed server selectors: UNASSIGNED, ALL, ONE, MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network for which the
@@ -477,7 +477,7 @@ public:
     /// @brief Deletes shared network by name.
     ///
     /// Allowed server selectors: ANY, UNASSIGNED, ALL, ONE.
-    /// Not allowed server selectors: MULTIPLE.
+    /// Not allowed server selector: MULTIPLE.
     ///
     /// @param server_selector Server selector.
     /// @param name Name of the shared network to be deleted.
