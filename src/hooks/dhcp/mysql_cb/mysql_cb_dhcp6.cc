@@ -1796,7 +1796,6 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
             MySqlBinding::createNull(),
-            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
             MySqlBinding::condCreateString(option->space_name_)
@@ -1820,8 +1819,8 @@ public:
 
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
                                     in_bindings) == 0) {
-            // Remove the 4 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 4);
+            // Remove the 3 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 3);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -1908,7 +1907,6 @@ public:
             msg += "address";
         }
         msg += " pool level option";
-        auto tag = getServerTag(server_selector, msg);
 
         MySqlBindingCollection in_bindings;
         // code
@@ -1951,7 +1949,6 @@ public:
         }
 
         // Insert bindings used only during the update.
-        in_bindings.push_back(MySqlBinding::createString(tag));
         in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
         in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
         in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
@@ -1976,8 +1973,8 @@ public:
                       MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID :
                       MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID);
         if (conn_.updateDeleteQuery(index, in_bindings) == 0) {
-            // Remove the 4 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 4);
+            // Remove the 3 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 3);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -2779,17 +2776,17 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing subnet level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
-      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing pool level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID,
-      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing pd pool level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID,
-      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 6 AND o.pd_pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing shared network level option.
