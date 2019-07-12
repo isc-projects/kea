@@ -1356,6 +1356,14 @@ void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_nam
         isc_throw(RFCViolation, "Received empty or truncated " << opt_name << " option: "
                   << len << " byte(s) only");
     }
+
+    // We need to make sure we can construct one, if not we're toast later on.
+    try {
+        DuidPtr tmp(new DUID(opt->getData()));
+    } catch (const std::exception& ex) {
+        isc_throw(RFCViolation, "Received invalid content for "
+                  << opt_name << ", " << ex.what());
+    }
 }
 
 Subnet6Ptr
