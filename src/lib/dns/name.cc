@@ -7,13 +7,13 @@
 #include <config.h>
 
 #include <cctype>
-#include <cassert>
 #include <iterator>
 #include <functional>
 #include <vector>
 #include <iostream>
 #include <algorithm>
 
+#include <exceptions/isc_assert.h>
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
@@ -189,7 +189,7 @@ stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
                 break;
             }
             state = ft_ordinary;
-            assert(ndata.size() < Name::MAX_WIRE);
+            isc_throw_assert(ndata.size() < Name::MAX_WIRE);
             // FALLTHROUGH
         case ft_ordinary:
             if (c == '.') {
@@ -261,7 +261,7 @@ stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
             break;
         default:
             // impossible case
-            assert(false);
+            isc_throw_assert(false);
         }
     }
 
@@ -271,14 +271,14 @@ stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
                       "name is too long for termination in " <<
                       string(orig_s, send));
         }
-        assert(s == send);
+        isc_throw_assert(s == send);
         if (state != ft_ordinary) {
             isc_throw(IncompleteName,
                       "incomplete textual name in " <<
                       (empty ? "<empty>" : string(orig_s, send)));
         }
         if (state == ft_ordinary) {
-            assert(count != 0);
+            isc_throw_assert(count != 0);
             ndata.at(offsets.back()) = count;
 
             offsets.push_back(ndata.size());
@@ -304,7 +304,7 @@ Name::Name(const std::string &namestring, bool downcase) {
 
     // And get the output
     labelcount_ = offsets.size();
-    assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
+    isc_throw_assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     ndata_.assign(ndata.data(), ndata.size());
     length_ = ndata_.size();
     offsets_.assign(offsets.begin(), offsets.end());
@@ -338,7 +338,7 @@ Name::Name(const char* namedata, size_t data_len, const Name* origin,
 
     // Get the output
     labelcount_ = offsets.size();
-    assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
+    isc_throw_assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     ndata_.assign(ndata.data(), ndata.size());
     length_ = ndata_.size();
     offsets_.assign(offsets.begin(), offsets.end());
@@ -479,7 +479,7 @@ Name::Name(InputBuffer& buffer, bool downcase) {
             state = fw_start;
             break;
         default:
-            assert(false);
+            isc_throw_assert(false);
         }
     }
 
@@ -576,8 +576,8 @@ Name::isWildcard() const {
 
 Name
 Name::concatenate(const Name& suffix) const {
-    assert(length_ > 0 && suffix.length_ > 0);
-    assert(labelcount_ > 0 && suffix.labelcount_ > 0);
+    isc_throw_assert(length_ > 0 && suffix.length_ > 0);
+    isc_throw_assert(labelcount_ > 0 && suffix.labelcount_ > 0);
 
     unsigned int length = length_ + suffix.length_ - 1;
     if (length > Name::MAX_WIRE) {
@@ -589,7 +589,7 @@ Name::concatenate(const Name& suffix) const {
     retname.ndata_.assign(ndata_, 0, length_ - 1);
     retname.ndata_.insert(retname.ndata_.end(),
                           suffix.ndata_.begin(), suffix.ndata_.end());
-    assert(retname.ndata_.size() == length);
+    isc_throw_assert(retname.ndata_.size() == length);
     retname.length_ = length;
 
     //
@@ -598,13 +598,13 @@ Name::concatenate(const Name& suffix) const {
     // suffix name with the additional offset of the length of the prefix.
     //
     unsigned int labels = labelcount_ + suffix.labelcount_ - 1;
-    assert(labels <= Name::MAX_LABELS);
+    isc_throw_assert(labels <= Name::MAX_LABELS);
     retname.offsets_.reserve(labels);
     retname.offsets_.assign(&offsets_[0], &offsets_[0] + labelcount_ - 1);
     transform(suffix.offsets_.begin(), suffix.offsets_.end(),
               back_inserter(retname.offsets_),
               bind2nd(plus<char>(), length_ - 1));
-    assert(retname.offsets_.size() == labels);
+    isc_throw_assert(retname.offsets_.size() == labels);
     retname.labelcount_ = labels;
 
     return (retname);
@@ -671,7 +671,7 @@ Name::split(const unsigned int first, const unsigned int n) const {
 
     retname.length_ = retname.ndata_.size();
     retname.labelcount_ = retname.offsets_.size();
-    assert(retname.labelcount_ == newlabels);
+    isc_throw_assert(retname.labelcount_ == newlabels);
 
     return (retname);
 }
@@ -699,8 +699,8 @@ Name::downcase() {
         // we assume a valid name, and do abort() if the assumption fails
         // rather than throwing an exception.
         unsigned int count = ndata_.at(pos++);
-        assert(count <= MAX_LABELLEN);
-        assert(nlen >= count);
+        isc_throw_assert(count <= MAX_LABELLEN);
+        isc_throw_assert(nlen >= count);
 
         while (count > 0) {
             ndata_.at(pos) =

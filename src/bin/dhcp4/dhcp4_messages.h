@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Tue Jul 16 2019 11:03
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Jul 10 2019 15:10
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -24,6 +24,7 @@ extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES;
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA;
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS;
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_DATA;
+extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_MALFORMED;
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS;
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL;
 extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED;

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dns/labelsequence.h>
 #include <dns/name_internal.h>
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 
 #include <boost/functional/hash.hpp>
 
@@ -116,7 +117,7 @@ LabelSequence::serialize(void* buf, size_t buf_len) const {
     }
 
     const size_t offsets_len = getLabelCount();
-    assert(offsets_len < 256);  // should be in the 8-bit range
+    isc_throw_assert(offsets_len < 256);  // should be in the 8-bit range
 
     // Overridden check.  Buffer shouldn't overwrap the offset of name data
     // regions.
@@ -134,7 +135,7 @@ LabelSequence::serialize(void* buf, size_t buf_len) const {
     std::memcpy(bp, &data_[offsets_[first_label_]], ndata_len);
     bp += ndata_len;
 
-    assert(bp - reinterpret_cast<const uint8_t*>(buf) == expected_size);
+    isc_throw_assert(bp - reinterpret_cast<const uint8_t*>(buf) == expected_size);
 }
 
 bool
@@ -189,7 +190,7 @@ LabelSequence::compare(const LabelSequence& other,
 
         // We don't support any extended label types including now-obsolete
         // bitstring labels.
-        assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
+        isc_throw_assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
 
         const int cdiff = static_cast<int>(count1) - static_cast<int>(count2);
         unsigned int count = (cdiff < 0) ? count1 : count2;
@@ -309,7 +310,7 @@ LabelSequence::toRawText(bool omit_final_dot) const {
         }
 
         if (count <= Name::MAX_LABELLEN) {
-            assert(np_end - np >= count);
+            isc_throw_assert(np_end - np >= count);
 
             if (!result.empty()) {
                 // just after a non-empty label.  add a separating dot.
@@ -326,8 +327,8 @@ LabelSequence::toRawText(bool omit_final_dot) const {
     }
 
     // We should be at the end of the data and have consumed all labels.
-    assert(np == np_end);
-    assert(labels == 0);
+    isc_throw_assert(np == np_end);
+    isc_throw_assert(labels == 0);
 
     return (result);
 }
@@ -363,7 +364,7 @@ LabelSequence::toText(bool omit_final_dot) const {
         }
 
         if (count <= Name::MAX_LABELLEN) {
-            assert(np_end - np >= count);
+            isc_throw_assert(np_end - np >= count);
 
             if (!result.empty()) {
                 // just after a non-empty label.  add a separating dot.
@@ -404,8 +405,8 @@ LabelSequence::toText(bool omit_final_dot) const {
     }
 
     // We should be at the end of the data and have consumed all labels.
-    assert(np == np_end);
-    assert(labels == 0);
+    isc_throw_assert(np == np_end);
+    isc_throw_assert(labels == 0);
 
     return (result);
 }

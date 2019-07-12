@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <sstream>
 
 #include <gtest/gtest.h>
@@ -92,6 +93,21 @@ TEST_F(ExceptionTest, message) {
         ADD_FAILURE() << "Expected " "raise_foobar()" \
             " throws an exception of type " "BadValue" \
             ".\n Actual: it throws a different type.";
+    }
+}
+
+// Sanity check that ISC_THROW_ASSERT macro operates correctly.
+TEST(IscThrowAssert, checkMessage) {
+    int m = 5;
+    int n = 7;
+
+    ASSERT_NO_THROW(isc_throw_assert(m == m));
+
+    try {
+        isc_throw_assert(m == n);
+    } catch (const std::exception& ex) {
+        std::string msg = ex.what();
+        EXPECT_EQ("exceptions_unittest.cc:107 (m == n) failed", msg);
     }
 }
 
