@@ -1,4 +1,4 @@
-722.	[bug]		tmark
+1507.	[bug]		tmark
 	Added logic to kea-dhcp6 to catch values for client or
 	server DUIDs that exceed 128 bytes to inbound packet
 	sanity checking.
