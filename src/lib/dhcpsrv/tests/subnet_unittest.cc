@@ -1042,16 +1042,16 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     // Pool3 requires a member of bar
     mypool = subnet->getPool(Lease::TYPE_NA, no_class,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_FALSE(mypool);
     mypool = subnet->getPool(Lease::TYPE_NA, foo_class,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_FALSE(mypool);
     mypool = subnet->getPool(Lease::TYPE_NA, bar_class,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_EQ(mypool, pool3);
     mypool = subnet->getPool(Lease::TYPE_NA, three_classes,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_EQ(mypool, pool3);
 }
 
@@ -1688,7 +1688,7 @@ TEST(Subnet6Test, lastAllocated) {
 TEST(SubnetFetcherTest, getSubnet4ById) {
     Subnet4Collection collection;
 
-    // Shared network hasn't been added to the collection. A null pointer should
+    // Subnet hasn't been added to the collection. A null pointer should
     // be returned.
     auto subnet = SubnetFetcher4::get(collection, SubnetID(1024));
     EXPECT_FALSE(subnet);
@@ -1714,7 +1714,7 @@ TEST(SubnetFetcherTest, getSubnet4ById) {
 TEST(SubnetFetcherTest, getSubnet6ById) {
     Subnet6Collection collection;
 
-    // Shared network hasn't been added to the collection. A null pointer should
+    // Subnet hasn't been added to the collection. A null pointer should
     // be returned.
     auto subnet = SubnetFetcher6::get(collection, SubnetID(1026));
     EXPECT_FALSE(subnet);

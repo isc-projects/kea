@@ -865,13 +865,13 @@ template<typename ReturnPtrType, typename CollectionType>
 class SubnetFetcher {
 public:
 
-    /// @brief Fetches shared network by name.
+    /// @brief Fetches subnets by id.
     ///
-    /// @param collection Const reference to the collection from which the shared
-    /// network is to be fetched.
-    /// @param name Name of the shared network to be fetched.
-    /// @return Pointer to the fetched shared network or null if no such shared
-    /// network could be found.
+    /// @param collection Const reference to the collection from which the
+    /// subnet is to be fetched.
+    /// @param subnet_id Id of the subnet to be fetched.
+    /// @return Pointer to the fetched subnet or null if no such subnet
+    /// could be found.
     static ReturnPtrType get(const CollectionType& collection,
                              const SubnetID& subnet_id) {
         auto& index = collection.template get<SubnetSubnetIdIndexTag>();
