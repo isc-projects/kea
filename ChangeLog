@@ -1,3 +1,10 @@
+1651.	[security]		tmark
+	Added logic to kea-dhcp6 to catch values for client or
+	server DUIDs that exceed 128 bytes to inbound packet
+	sanity checking.
+	CVE:2019-6472
+	(Gitlab #722,!1-p git TBD)
+
 1650.	[build]		marcin
 	Bumped up library version numbers for Kea 1.6.0 final release.
 	(Gitlab #841,!490, git 2e88e2554905dd66b9974c9fc513ee7e7b825a46)
