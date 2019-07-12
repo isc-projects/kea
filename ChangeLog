@@ -1,3 +1,9 @@
+722.	[bug]		tmark
+	Added logic to kea-dhcp6 to catch values for client or
+	server DUIDs that exceed 128 bytes to inbound packet
+	sanity checking.
+	(Gitlab #722,!3 git TBD)
+
 Kea 1.5.0 released on Dec 14, 2018
 
 1506.	[build]		marcin
