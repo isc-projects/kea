@@ -1,4 +1,8 @@
-Kea 1.4.0-P1 released on July 11, 2018
+722.    [bug]       tmark
+	Added logic to kea-dhcp6 to catch values for client or
+	server DUIDs that exceen 128 bytes to inbound packet
+	sanity checking.
+	(Gitlab #722,!4	git TBD)
 
 1429.	[bug]		marcin
 	Removed memory leak in the DHCPv4 and DHCPv6 servers which
