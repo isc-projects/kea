@@ -1,3 +1,8 @@
+1619.	[func]		marcin
+	Add support for associating subnets with the server tags in the
+	mysql_cb hooks library.
+	(Gitlab #717,!417, git e121ec4e0a04bc5bebdbfecf9cc1606b50e71263)
+
 1618.	[func]		marcin
 	Add support for associating the shared networks with the server
 	tags in the mysql_cb hooks library.
