@@ -447,6 +447,57 @@ public:
         }
     }
 
+    /// @brief Executes INSERT using server table prepared statement.
+    ///
+    /// The statement index must point to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// This method executes prepared statement using provided bindings to
+    /// insert data into the database.
+    ///
+    /// This method is a clone of @c insertQuery but a parameter is
+    /// extracted using a WHERE clause which returns NULL when not found.
+    /// The name cpmes from its use for inserting a new entry in N:N
+    /// *_server tables.
+    ///
+    /// @tparam StatementIndex Type of the statement index enum.
+    ///
+    /// @param index Index of the query to be executed.
+    /// @param in_bindings Input bindings holding values to substitue placeholders
+    /// in the query.
+    /// @param tag Server tag (or in general the name of the parameter to
+    /// look for using the WHERE clause).
+    template<typename StatementIndex>
+    void insertServerQuery(const StatementIndex& index,
+                           const MySqlBindingCollection& in_bindings,
+                           const std::string& tag) {
+        std::vector<MYSQL_BIND> in_bind_vec;
+        for (MySqlBindingPtr in_binding : in_bindings) {
+            in_bind_vec.push_back(in_binding->getMySqlBinding());
+        }
+
+        // Bind the parameters to the statement
+        int status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+        checkError(status, index, "unable to bind parameters");
+
+        // Execute the statement
+        status = mysql_stmt_execute(statements_[index]);
+
+        if (status != 0) {
+            // Failure: check for the special case of duplicate entry.
+            if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+                isc_throw(DuplicateEntry, "Database duplicate entry error");
+            }
+            // Failure: check for the special case of WHERE returning NULL.
+            if (mysql_errno(mysql_) == ER_BAD_NULL_ERROR) {
+                isc_throw(DbOperationError, "server '" << tag
+                          << "' does not exist");
+            }
+            checkError(status, index, "unable to execute");
+        }
+    }
+
     /// @brief Executes UPDATE or DELETE prepared statement and returns
     /// the number of affected rows.
     ///

@@ -906,7 +906,7 @@ MySqlConfigBackendImpl::attachElementToServers(const int index,
     MySqlBindingCollection in_server_bindings = { first_binding, in_bindings };
     for (auto tag : server_selector.getTags()) {
         in_server_bindings.push_back(MySqlBinding::createString(tag.get()));
-        conn_.insertQuery(index, in_server_bindings);
+        conn_.insertServerQuery(index, in_server_bindings, tag.get());
         in_server_bindings.pop_back();
     }
 }

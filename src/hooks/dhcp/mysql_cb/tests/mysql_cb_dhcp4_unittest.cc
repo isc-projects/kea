@@ -708,9 +708,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
 
     // Try to insert one of them and associate with non-existing server.
     // This should fail because the server must be inserted first.
-    EXPECT_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
-                                                      global_parameter1),
-                 DbOperationError);
+    try {
+        cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
+                                             global_parameter1);
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "do not throw";
+    } catch (const DbOperationError& ex) {
+        std::string msg = "server 'server1' does not exist";
+        EXPECT_EQ(msg, ex.what());
+    } catch (const std::exception&) {
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "throw something else";
+    }
 
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
@@ -1045,9 +1054,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     auto subnet2 = test_subnets_[2];
 
     // An attempt to add a subnet to a non-existing server (server1) should fail.
-    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                             subnet2),
-                 DbOperationError);
+    try {
+        cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                    subnet2);
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "do not throw";
+    } catch (const DbOperationError& ex) {
+        std::string msg = "server 'server1' does not exist";
+        EXPECT_EQ(msg, ex.what());
+    } catch (const std::exception&) {
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "throw something else";
+    }
 
     // The subnet shouldn't have been added, even though one of the servers exists.
     Subnet4Ptr returned_subnet;
@@ -2029,9 +2047,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
     auto shared_network = test_networks_[0];
 
     // An attempto insert the shared network for non-existing server should fail.
-    EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
-                                                    shared_network),
-                 DbOperationError);
+    try {
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
+                                           shared_network);
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "do not throw";
+    } catch (const DbOperationError& ex) {
+        std::string msg = "server 'server1' does not exist";
+        EXPECT_EQ(msg, ex.what());
+    } catch (const std::exception&) {
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "throw something else";
+    }
 
     // Insert the server1 into the database.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
@@ -2729,9 +2756,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, optionDefs4WithServerTags) {
 
     // An attempt to create option definition for non-existing server should
     // fail.
-    EXPECT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ONE("server1"),
-                                                option1),
-                 DbOperationError);
+    try {
+        cbptr_->createUpdateOptionDef4(ServerSelector::ONE("server1"),
+                                       option1);
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "do not throw";
+    } catch (const DbOperationError& ex) {
+        std::string msg = "server 'server1' does not exist";
+        EXPECT_EQ(msg, ex.what());
+    } catch (const std::exception&) {
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "throw something else";
+    }
 
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
@@ -3121,9 +3157,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalOptions4WithServerTags) {
     OptionDescriptorPtr opt_boot_file_name2 = test_options_[6];
     OptionDescriptorPtr opt_boot_file_name3 = test_options_[7];
 
-    EXPECT_THROW(cbptr_->createUpdateOption4(ServerSelector::ONE("server1"),
-                                             opt_boot_file_name1),
-                 DbOperationError);
+    try {
+        cbptr_->createUpdateOption4(ServerSelector::ONE("server1"),
+                                    opt_boot_file_name1);
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "do not throw";
+    } catch (const DbOperationError& ex) {
+        std::string msg = "server 'server1' does not exist";
+        EXPECT_EQ(msg, ex.what());
+    } catch (const std::exception&) {
+        ADD_FAILURE() << "Expect to throw  DbOperationError: "
+                      << "throw something else";
+    }
 
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
