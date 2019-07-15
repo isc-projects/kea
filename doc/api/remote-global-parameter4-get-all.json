@@ -13,7 +13,7 @@
         \"server-tags\": [ <single server tag as string> ]
     }
 }",
-    "cmd-comment": "The <command>server-tags</command> list is mandatory and it muct contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global parameters shared by all servers.",
+    "cmd-comment": "The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global parameters shared by all servers.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"DHCPv4 global parameters found.\",

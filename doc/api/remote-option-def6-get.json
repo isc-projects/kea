@@ -15,10 +15,11 @@
         ],
         \"remote\": {
             <specification of the database to connect to>
-        }
+        },
+        \"server-tags\": [ <single server tag as string> ]
     }
 }",
-    "cmd-comment": "The desired option definition is identified by the pair of the option code/space values.",
+    "cmd-comment": "The desired option definition is identified by the pair of the option code/space values. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed to fetch the option definition instance shared by all servers.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"DHCPv6 option definition found.\",
@@ -27,12 +28,12 @@
             {
                 <option definition>,
                 \"metadata\": {
-                    \"server-tag\": <server tag>
+                    \"server-tags\": [ <server tag> ]
                 }
             }
         ],
         \"count\": 1
     }
 }",
-    "resp-comment": "The metadata is included and it provides database specific information associated with the returned object."
+    "resp-comment": "The metadata is included and it provides database specific information associated with the returned object. If the \"all\" server tag was specified, the command attempts to fetch the option definition associated with all servers. If the explicit server tag is specified, the command will fetch the option definition associated with the given server. If the server specific option definition doesn't exist, it will try to fetch the option definition associated with all servers."
 }
