@@ -10,6 +10,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/option_int.h>
+#include <stats/stats_mgr.h>
 #include <algorithm>
 #include <vector>
 
@@ -1154,6 +1155,14 @@ TEST_F(ClassifyTest, dropClass) {
 
     // Option, dropped.
     EXPECT_FALSE(client2.getContext().response_);
+
+    // There should also be pkt4-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt4-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
 } // end of anonymous namespace

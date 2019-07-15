@@ -20,6 +20,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <asiolink/io_address.h>
+#include <stats/stats_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <string>
 
@@ -2107,6 +2108,14 @@ TEST_F(ClassifyTest, dropClass) {
 
     // Option, dropped.
     EXPECT_FALSE(client2.getContext().response_);
+
+    // There should also be pkt6-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
 } // end of anonymous namespace

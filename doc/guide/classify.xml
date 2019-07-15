@@ -90,7 +90,7 @@
       resort) definition.
       </para></listitem>
       <listitem><para>
-      When the incoming packet belongs the special DROP class it is
+      When the incoming packet belongs the special class, "DROP", it is
       dropped and an informational message is logged with the packet
       information.
       </para></listitem>
