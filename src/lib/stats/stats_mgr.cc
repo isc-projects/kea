@@ -90,7 +90,8 @@ bool StatsMgr::setMaxSampleAge(const std::string& name,
     }
 }
 
-bool StatsMgr::setMaxSampleCount(const std::string& name, uint32_t max_samples) {
+bool StatsMgr::setMaxSampleCount(const std::string& name,
+                                 uint32_t max_samples) {
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->setMaxSampleCount(max_samples);

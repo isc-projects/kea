@@ -1,3 +1,8 @@
+1620.	[func]		franek, razvan
+	Kea statistics improvements: Support for storing more than one
+	sample.
+	(Gitlab #696,!418, git c7b8c275758c96f56081e02da429f5dd9d653b87)
+
 1619.	[func]		marcin
 	Add support for associating subnets with the server tags in the
 	mysql_cb hooks library.

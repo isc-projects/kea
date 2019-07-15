@@ -493,7 +493,6 @@ TEST_F(ObservationTest, floatToJSON) {
 // See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design for
 // details.
 TEST_F(ObservationTest, durationToJSON) {
-
     // String which contains first added sample
     std::string first_sample = ", \"01:02:03.000004\", \"" +
         isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
@@ -515,6 +514,7 @@ TEST_F(ObservationTest, stringToJSON) {
     // String which contains first added sample
     std::string first_sample = ", \"1234\", \"" +
         isc::util::ptimeToText(d.getString().second) + "\" ] ]";
+
     d.setValue("Lorem ipsum dolor sit amet");
 
     std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \"" +

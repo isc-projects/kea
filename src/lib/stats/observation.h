@@ -121,10 +121,10 @@ class Observation {
     ///
     /// @param duration determines maximum age of samples
     /// Example:
-    /// To set a statistic to keep observations for the last 5 minutes,
-    /// call: setMaxSampleAge(time_duration(0, 5, 0, 0));
+    /// To set a statistic to keep observations for the last 5 minutes, call:
+    /// setMaxSampleAge(time_duration(0, 5, 0, 0));
     /// To revert statistic to a single value, call:
-    /// setMaxSampleAge(time_duration(0, 0, 0, 0))
+    /// setMaxSampleAge(time_duration(0, 0, 0, 0));
     void setMaxSampleAge(const StatsDuration& duration);
 
     /// @brief Determines how many samples of a given statistic should be kept.
@@ -133,6 +133,7 @@ class Observation {
     /// but rather as a set of values. In this form, at most max_samples will
     /// be kept. When adding max_samples + 1 sample, the oldest sample will be
     /// discarded.
+    ///
     ///
     /// @param max_samples how many samples of a given statistic should be kept
     /// Example:
@@ -268,7 +269,7 @@ private:
     /// @tparam Storage type of storage (e.g. list<IntegerSample>)
     /// @param storage storage which size will be returned
     /// @param exp_type expected observation type (used for sanity checking)
-    /// @return Size of storage
+    /// @return size of storage
     template<typename StorageType>
     size_t getSizeInternal(StorageType& storage, Type exp_type) const;
 
@@ -306,7 +307,7 @@ private:
     /// @param observation storage
     /// @param exp_type expected observation type (used for sanity checking)
     /// @throw InvalidStatType if observation type mismatches
-    /// @return List of observed samples
+    /// @return list of observed samples
     template<typename SampleType, typename Storage>
     std::list<SampleType> getValuesInternal(Storage& storage,
                                             Type exp_type) const;
@@ -338,7 +339,7 @@ private:
     Type type_;
 
     /// @brief Maximum number of samples
-    /// The limit is represent as a pair
+    /// The limit is represented as a pair
     /// of bool value and uint32_t
     /// Only one kind of limit can be active
     /// The bool value informs which limit
@@ -349,7 +350,7 @@ private:
     std::pair<bool, uint32_t> max_sample_count_ = std::make_pair(true, 20);
 
     /// @brief Maximum timespan of samples
-    /// The limit is represent as a pair
+    /// The limit is represented as a pair
     /// of bool value and StatsDuration(boost::posix_time::time_duration)
     /// Only one kind of limit can be active
     /// The bool value informs which limit

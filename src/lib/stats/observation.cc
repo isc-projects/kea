@@ -164,7 +164,7 @@ size_t Observation::getSizeInternal(StorageType& storage, Type exp_type) const {
 
 template<typename SampleType, typename StorageType>
 void Observation::setValueInternal(SampleType value, StorageType& storage,
-    Type exp_type) {
+                                   Type exp_type) {
     if (type_ != exp_type) {
         isc_throw(InvalidStatType, "Invalid statistic type requested: "
                   << typeToText(exp_type) << ", but the actual type is "
@@ -247,7 +247,8 @@ std::list<StringSample> Observation::getStrings() const {
 }
 
 template<typename SampleType, typename Storage>
-std::list<SampleType> Observation::getValuesInternal(Storage& storage, Type exp_type) const {
+std::list<SampleType> Observation::getValuesInternal(Storage& storage,
+                                                     Type exp_type) const {
     if (type_ != exp_type) {
         isc_throw(InvalidStatType, "Invalid statistic type requested: "
                   << typeToText(exp_type) << ", but the actual type is "
@@ -265,7 +266,8 @@ std::list<SampleType> Observation::getValuesInternal(Storage& storage, Type exp_
 
 template<typename StorageType>
 void Observation::setMaxSampleAgeInternal(StorageType& storage,
-    const StatsDuration& duration, Type exp_type) {
+                                          const StatsDuration& duration,
+                                          Type exp_type) {
     if (type_ != exp_type) {
         isc_throw(InvalidStatType, "Invalid statistic type requested: "
                   << typeToText(exp_type) << ", but the actual type is "
@@ -289,7 +291,8 @@ void Observation::setMaxSampleAgeInternal(StorageType& storage,
 
 template<typename StorageType>
 void Observation::setMaxSampleCountInternal(StorageType& storage,
-    uint32_t max_samples, Type exp_type) {
+                                            uint32_t max_samples,
+                                            Type exp_type) {
     if (type_ != exp_type) {
         isc_throw(InvalidStatType, "Invalid statistic type requested: "
                   << typeToText(exp_type) << ", but the actual type is "
