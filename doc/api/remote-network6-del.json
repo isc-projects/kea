@@ -18,7 +18,7 @@
         }
     }
 }",
-    "cmd-comment": "This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not.",
+    "cmd-comment": "This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not. The <command>server-tags</command> parameter must not be specified for this command.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"1 IPv6 shared network(s) deleted.\",

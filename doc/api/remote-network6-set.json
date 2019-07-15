@@ -14,10 +14,11 @@
         ],
         \"remote\": {
             <specification of the database to connect to>
-        }
+        },
+        \"server-tags\": [ <first server tag>, <second server tag>, ... ]
     }
 }",
-    "cmd-comment": "The provided list must contain exactly one shared network specification. It must not contain subnets (\"subnet6\" parameter). The subnets are added to the shared network using <command>remote-subnet6-set</command> command.",
+    "cmd-comment": "The provided list must contain exactly one shared network specification. It must not contain subnets (\"subnet6\" parameter). The subnets are added to the shared network using <command>remote-subnet6-set</command> command. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the shared network with one or more user defined servers. It may include the special server tag \"all\" to associate the network with all servers.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"IPv6 shared network successfully set.\"
