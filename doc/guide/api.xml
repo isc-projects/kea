@@ -2693,13 +2693,14 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "remote-global-parameter4-del",
     "arguments": {
-        "parameters": [ &lt;parameter name&gt; ],
+        "parameters": [ &lt;parameter name as string&gt; ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command carries the list including exactly one name of the parameter to be deleted.</para>
+This command carries the list including exactly one name of the parameter to be deleted. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2736,13 +2737,14 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "remote-global-parameter4-get",
     "arguments": {
-        "parameters": [ &lt;parameter name&gt; ],
+        "parameters": [ &lt;parameter name as string&gt; ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command carries a list including exactly one name of the parameter to be fetched.</para>
+This command carries a list including exactly one name of the parameter to be fetched. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed to fetch the global parameter value shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2752,13 +2754,13 @@ This command carries a list including exactly one name of the parameter to be fe
         "parameters": {
             &lt;parameter name&gt;: &lt;parameter value&gt;,
             "metadata": {
-                "server-tag": &lt;server tag&gt;
+                "server-tags": [ &lt;server tag&gt; ]
             }
         },
         "count": 1
     }
 }</screen>
-The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is included and it provides database specific information associated with the returned object.</para>
+The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is included and it provides database specific information associated with the returned object. If the "all" server tag was specified, the command attempts to fetch the global parameter value associated with all servers. If the explicit server tag is specified, the command will fetch the value associated with the given server. If the server specific value doesn't exist, it will try to fetch the value associated with all servers.</para>
 
 </section>
 <!-- end of remote-global-parameter4-get -->
@@ -2780,10 +2782,11 @@ The returned response contains a map with a global parameter name/value pair. Th
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command contains no arguments besides the optional <command>remote</command>.</para>
+The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag "all" is allowed to fetch the global parameters shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2794,20 +2797,20 @@ This command contains no arguments besides the optional <command>remote</command
             {
                 &lt;first parameter name&gt;: &lt;first parameter value&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             },
             {
                 &lt;second parameter name&gt;: &lt;second parameter value&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects.</para>
+The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects. If the server tag "all" is included in the command, the response contains the global parameters shared between all servers. It excludes server specific global parameters. If an explicit server tag is included in the command, the response contains all global parameters directly associated with the given server and the global parameters associated with all servers when server specific values are not present.</para>
 
 </section>
 <!-- end of remote-global-parameter4-get-all -->
@@ -2833,10 +2836,11 @@ The returned response contains a list of maps. Each map contains a global parame
         },
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter4-get-all</command> may be useful to verify the contents of the database after the update.</para>
+This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter4-get-all</command> may be useful to verify the contents of the database after the update. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed and it associates the specified parameters with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2877,13 +2881,14 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "remote-global-parameter6-del",
     "arguments": {
-        "parameters": [ &lt;parameter name&gt; ],
+        "parameters": [ &lt;parameter name as string&gt; ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command carries the list including exactly one name of the parameter to be deleted.</para>
+This command carries the list including exactly one name of the parameter to be deleted. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2891,7 +2896,8 @@ This command carries the list including exactly one name of the parameter to be 
     "text": "DHCPv6 global parameter(s) deleted.",
     "arguments": {
         "count": 1
-    }</screen>
+    }
+}</screen>
 Result is an integer representation of the status. Currently supported statuses are:
 <itemizedlist>
   <listitem><para>0 - success</para></listitem>
@@ -2917,15 +2923,16 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Command syntax:
   <screen>{
-    "command": "remote-global-parameter6-get"
+    "command": "remote-global-parameter6-get",
     "arguments": {
-        "parameters": [ &lt;parameter name&gt; ],
+        "parameters": [ &lt;parameter name as string&gt; ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command carries a list including exactly one name of the parameter to be fetched.</para>
+This command carries a list including exactly one name of the parameter to be fetched. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed to fetch the global parameter value shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2935,13 +2942,13 @@ This command carries a list including exactly one name of the parameter to be fe
         "parameters": {
             &lt;parameter name&gt;: &lt;parameter value&gt;,
             "metadata": {
-                "server-tag": &lt;server tag&gt;
+                "server-tags": [ &lt;server tag&gt; ]
             }
         },
         "count": 1
     }
 }</screen>
-The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is included and it provides database specific information associated with the returned object.</para>
+The returned response contains a map with a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is included and it provides database specific information associated with the returned object. If the "all" server tag was specified, the command attempts to fetch the global parameter value associated with all servers. If the explicit server tag is specified, the command will fetch the value associated with the given server. If the server specific value doesn't exist, it will try to fetch the value associated with all servers.</para>
 
 </section>
 <!-- end of remote-global-parameter6-get -->
@@ -2959,14 +2966,15 @@ The returned response contains a map with a global parameter name/value pair. Th
 
 <para>Command syntax:
   <screen>{
-    "command": "remote-global-parameter6-get-all"
+    "command": "remote-global-parameter6-get-all",
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command contains no arguments besides the optional <command>remote</command>.</para>
+The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag "all" is allowed to fetch the global parameters shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -2977,20 +2985,20 @@ This command contains no arguments besides the optional <command>remote</command
             {
                 &lt;first parameter name&gt;: &lt;first parameter value&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             },
             {
                 &lt;second parameter name&gt;: &lt;second parameter value&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects.</para>
+The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects. If the server tag "all" is included in the command, the response contains the global parameters shared between all servers. It excludes server specific global parameters. If an explicit server tag is included in the command, the response contains all global parameters directly associated with the given server and the global parameters associated with all servers when server specific values are not present.</para>
 
 </section>
 <!-- end of remote-global-parameter6-get-all -->
@@ -2998,7 +3006,7 @@ The returned response contains a list of maps. Each map contains a global parame
 <!-- start of remote-global-parameter6-set -->
 <section xml:id="reference-remote-global-parameter6-set">
 <title>remote-global-parameter6-set reference</title>
-<para xml:id="ref-remote-global-parameter6-set"><command>remote-global-parameter6-set</command> - This command is used to create or update one more global DHCP parameters in the configuration database.</para>
+<para xml:id="ref-remote-global-parameter6-set"><command>remote-global-parameter6-set</command> - This command is used to create or update one more global parameters in the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -3016,10 +3024,11 @@ The returned response contains a list of maps. Each map contains a global parame
         },
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter6-get-all</command> may be useful to verify the contents of the database after the update.</para>
+This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter6-get-all</command> may be useful to verify the contents of the database after the update. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed and it associates the specified parameters with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3071,7 +3080,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not.</para>
+This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3119,7 +3128,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned.</para>
+This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3160,10 +3169,11 @@ If the subnets are returned with the shared network they are carried in the <com
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-This command contains no arguments besides the optional <command>remote</command>.</para>
+The <command>server-tags</command> list is required for this command. This list must not be empty. It may either contain one or multiple server tags as strings or a single <command>null</command> value.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3174,20 +3184,20 @@ This command contains no arguments besides the optional <command>remote</command
             {
                 "name": &lt;first shared network name&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 }
             },
             {
                 "name": &lt;second shared network name&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, ... ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network4-get</command> to fetch the full information about the selected shared networks.</para>
+The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network4-get</command> to fetch the full information about the selected shared networks. If the command includes explicit server tags as strings (including the special server tag "all"), the list contains all shared networks which are associated with any of the specified tags. A network is returned even if it is associated with multiple servers and only one of the specified tags matches. If the command includes the <command>null</command> value in the <command>server-tags</command> list, the response contains all shared networks which are assigned to no servers (unassigned).</para>
 
 </section>
 <!-- end of remote-network4-list -->
@@ -3214,10 +3224,11 @@ The returned response contains the list of maps. Each map contains the shared ne
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-The provided list must contain exactly one shared network specification. It must not contain subnets ("subnet4" parameter). The subnets are added to the shared network using <command>remote-subnet4-set</command> command.</para>
+The provided list must contain exactly one shared network specification. It must not contain subnets ("subnet4" parameter). The subnets are added to the shared network using <command>remote-subnet4-set</command> command. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the shared network with one or more user defined servers. It may include the special server tag "all" to associate the network with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3262,7 +3273,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not.</para>
+This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3310,7 +3321,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned.</para>
+This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3351,10 +3362,11 @@ If the subnets are returned with the shared network they are carried in the <com
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-This command contains no arguments besides the optional <command>remote</command>.</para>
+The <command>server-tags</command> list is required for this command. This list must not be empty. It may either contain one or multiple server tags as strings or a single <command>null</command> value.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3365,20 +3377,20 @@ This command contains no arguments besides the optional <command>remote</command
             {
                 "name": &lt;first shared network name&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 }
             },
             {
                 "name": &lt;second shared network name&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, ... ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network6-get</command> to fetch the full information about the selected shared networks.</para>
+The returned response contains the list of maps. Each map contains the shared network name and the metadata which provides database specific information associated with the shared network. The returned list does not contain full definitions of the shared networks. Use <command>remote-network6-get</command> to fetch the full information about the selected shared networks. If the command includes explicit server tags as strings (including the special server tag "all"), the list contains all shared networks which are associated with any of the specified tags. A network is returned even if it is associated with multiple servers and only one of the specified tags matches. If the command includes the <command>null</command> value in the <command>server-tags</command> list, the response contains all shared networks which are assigned to no servers (unassigned).</para>
 
 </section>
 <!-- end of remote-network6-list -->
@@ -3405,10 +3417,11 @@ The returned response contains the list of maps. Each map contains the shared ne
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-The provided list must contain exactly one shared network specification. It must not contain subnets ("subnet6" parameter). The subnets are added to the shared network using <command>remote-subnet6-set</command> command.</para>
+The provided list must contain exactly one shared network specification. It must not contain subnets ("subnet6" parameter). The subnets are added to the shared network using <command>remote-subnet6-set</command> command. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the shared network with one or more user defined servers. It may include the special server tag "all" to associate the network with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3448,10 +3461,11 @@ Result is an integer representation of the status. Currently supported statuses 
         } ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command includes a list with exactly one option definition specification comprising an option name and code.</para>
+This command includes a list with exactly one option definition specification comprising an option name and code. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3496,10 +3510,11 @@ Result is an integer representation of the status. Currently supported statuses 
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-The desired option definition is identified by the pair of the option code/space values.</para>
+The desired option definition is identified by the pair of the option code/space values. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed to fetch the option definition instance shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3510,14 +3525,14 @@ The desired option definition is identified by the pair of the option code/space
             {
                 &lt;option definition&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 1
     }
 }</screen>
-The metadata is included and it provides database specific information associated with the returned object.</para>
+The metadata is included and it provides database specific information associated with the returned object. If the "all" server tag was specified, the command attempts to fetch the option definition associated with all servers. If the explicit server tag is specified, the command will fetch the option definition associated with the given server. If the server specific option definition doesn't exist, it will try to fetch the option definition associated with all servers.</para>
 
 </section>
 <!-- end of remote-option-def4-get -->
@@ -3539,10 +3554,11 @@ The metadata is included and it provides database specific information associate
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command contains no arguments besides the optional <command>remote</command>.</para>
+The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag "all" is allowed to fetch the option definitions shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3553,20 +3569,20 @@ This command contains no arguments besides the optional <command>remote</command
             {
                 &lt;first option definition&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             },
             {
                 &lt;second option definition&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects.</para>
+The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects. If the server tag "all" is included in the command, the response contains the option definitions shared between all servers. It excludes server specific option definitions. If an explicit server tag is included in the command, the response contains all option definitions directly associated with the given server and the option definitions associated with all servers when server specific option definitions are not present.</para>
 
 </section>
 <!-- end of remote-option-def4-get-all -->
@@ -3593,10 +3609,11 @@ The returned response contains a list of maps. Each map contains an option defin
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-The provided list must contain exactly one option definition specification.</para>
+The provided list must contain exactly one option definition specification. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed and it associates the specified option definition with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3630,18 +3647,17 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "remote-option-def6-del",
     "arguments": {
-        "option-defs": [
-            {
-                "code": &lt;option code&gt;,
-                "space": &lt;option space
-            }
-        ],
+        "option-defs": [ {
+            "code": &lt;option code&gt;,
+            "space": &lt;option space
+        } ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command includes a list with exactly one option definition specification comprising an option name and code.</para>
+This command includes a list with exactly one option definition specification comprising an option name and code. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3686,10 +3702,11 @@ Result is an integer representation of the status. Currently supported statuses 
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-The desired option definition is identified by the pair of the option code/space values.</para>
+The desired option definition is identified by the pair of the option code/space values. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed to fetch the option definition instance shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3700,14 +3717,14 @@ The desired option definition is identified by the pair of the option code/space
             {
                 &lt;option definition&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 1
     }
 }</screen>
-The metadata is included and it provides database specific information associated with the returned object.</para>
+The metadata is included and it provides database specific information associated with the returned object. If the "all" server tag was specified, the command attempts to fetch the option definition associated with all servers. If the explicit server tag is specified, the command will fetch the option definition associated with the given server. If the server specific option definition doesn't exist, it will try to fetch the option definition associated with all servers.</para>
 
 </section>
 <!-- end of remote-option-def6-get -->
@@ -3729,10 +3746,11 @@ The metadata is included and it provides database specific information associate
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command contains no arguments besides the optional <command>remote</command>.</para>
+The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag "all" is allowed to fetch the option definitions shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3743,20 +3761,20 @@ This command contains no arguments besides the optional <command>remote</command
             {
                 &lt;first option definition&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             },
             {
                 &lt;second option definition&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects.</para>
+The returned response contains a list of maps. Each map contains an option definition specification and the metadata including database specific information associated with the returned objects. If the server tag "all" is included in the command, the response contains the option definitions shared between all servers. It excludes server specific option definitions. If an explicit server tag is included in the command, the response contains all option definitions directly associated with the given server and the option definitions associated with all servers when server specific option definitions are not present.</para>
 
 </section>
 <!-- end of remote-option-def6-get-all -->
@@ -3783,10 +3801,11 @@ The returned response contains a list of maps. Each map contains an option defin
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-The provided list must contain exactly one option definition specification.</para>
+The provided list must contain exactly one option definition specification. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed and it associates the specified option definition with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3828,10 +3847,11 @@ Result is an integer representation of the status. Currently supported statuses 
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command includes a list with exactly one option specification comprising an option name and code.</para>
+This command includes a list with exactly one option specification comprising an option name and code. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3876,9 +3896,10 @@ Result is an integer representation of the status. Currently supported statuses 
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
 }</screen>
-The option is identified by the pair of option code/space values.</para>
+The option is identified by the pair of option code/space values. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed to fetch the global option instance shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3889,13 +3910,13 @@ The option is identified by the pair of option code/space values.</para>
             {
                 &lt;option information&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ]
     }
 }</screen>
-The metadata is included and it provides database specific information associated with the returned object.</para>
+The metadata is included and it provides database specific information associated with the returned object. If the "all" server tag was specified, the command attempts to fetch the global option associated with all servers. If the explicit server tag is specified, the command will fetch the global option associated with the given server. If the server specific option doesn't exist, it will try to fetch the option associated with all servers.</para>
 
 </section>
 <!-- end of remote-option4-global-get -->
@@ -3917,10 +3938,11 @@ The metadata is included and it provides database specific information associate
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command takes no arguments besides the optional <command>remote</command> map.</para>
+The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag "all" is allowed to fetch the global options shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -3931,20 +3953,20 @@ This command takes no arguments besides the optional <command>remote</command> m
             {
                 &lt;first option specification&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             },
             {
                 &lt;second option specification&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object.</para>
+The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object. If the server tag "all" is included in the command, the response contains the global options shared between all servers. It excludes server specific global options. If an explicit server tag is included in the command, the response contains all global options directly associated with the given server and the options associated with all servers when server specific options are not present.</para>
 
 </section>
 <!-- end of remote-option4-global-get-all -->
@@ -3971,10 +3993,11 @@ The returned response contains a list of maps. Each map contains a global option
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-The provided list must cotain exactly one option specification.</para>
+The provided list must cotain exactly one option specification. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed and it associates the specified option with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4024,10 +4047,11 @@ Result is an integer representation of the status. Currently supported statuses 
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command includes a list with exactly one option specification comprising an option name and code.</para>
+This command includes a list with exactly one option specification comprising an option name and code. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4052,7 +4076,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of remote-option6-global-get -->
 <section xml:id="reference-remote-option6-global-get">
 <title>remote-option6-global-get reference</title>
-<para xml:id="ref-remote-option6-global-get"><command>remote-option6-global-get</command> - This command is used to delete a DHCPv6 global option from the configuration database.</para>
+<para xml:id="ref-remote-option6-global-get"><command>remote-option6-global-get</command> - This command is used to fetch a global DHCPv6 option for the server from the specified database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -4072,26 +4096,27 @@ Result is an integer representation of the status. Currently supported statuses 
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
 }</screen>
-The option is identified by the pair of option code/space values.</para>
+The option is identified by the pair of option code/space values. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed to fetch the global option instance shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "DHCPv6 option found.",
+    "text": "DHCPv6 option in found.",
     "arguments": {
         "options": [
             {
                 &lt;option information&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ]
     }
 }</screen>
-The metadata is included and it provides database specific information associated with the returned object.</para>
+The metadata is included and it provides database specific information associated with the returned object. If the "all" server tag was specified, the command attempts to fetch the global option associated with all servers. If the explicit server tag is specified, the command will fetch the global option associated with the given server. If the server specific option doesn't exist, it will try to fetch the option associated with all servers.</para>
 
 </section>
 <!-- end of remote-option6-global-get -->
@@ -4113,10 +4138,11 @@ The metadata is included and it provides database specific information associate
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-This command takes no arguments besides the optional <command>remote</command> map.</para>
+The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag "all" is allowed to fetch the global options shared by all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4127,20 +4153,20 @@ This command takes no arguments besides the optional <command>remote</command> m
             {
                 &lt;first option specification&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             },
             {
                 &lt;second option specification&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;server tag&gt; ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object.</para>
+The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object. If the server tag "all" is included in the command, the response contains the global options shared between all servers. It excludes server specific global options. If an explicit server tag is included in the command, the response contains all global options directly associated with the given server and the options associated with all servers when server specific options are not present.</para>
 
 </section>
 <!-- end of remote-option6-global-get-all -->
@@ -4167,10 +4193,11 @@ The returned response contains a list of maps. Each map contains a global option
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;single server tag as string&gt; ]
     }
 }</screen>
-The provided list must cotain exactly one option specification.</para>
+The provided list must cotain exactly one option specification. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag "all" is allowed and it associates the specified option with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4604,7 +4631,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one id of the subnet to be deleted.</para>
+This command includes a list with exactly one id of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4651,7 +4678,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one prefix of the subnet to be deleted.</para>
+This command includes a list with exactly one prefix of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4696,7 +4723,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one id of the subnet to be returned.</para>
+This command includes a list with exactly one id of the subnet to be returned. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4708,7 +4735,7 @@ This command includes a list with exactly one id of the subnet to be returned.</
             "subnet": &lt;subnet prefix&gt;,
             "shared-network-name": &lt;shared network name&gt; | null,
             "metadata": {
-                "server-tag": &lt;server tag&gt;
+                "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
             },
             &lt;the rest of the subnet specification here&gt;
         } ],
@@ -4743,7 +4770,7 @@ If the shared network name is null, it means that the returned subnet does not b
         }
     }
 }</screen>
-This command includes a list with exactly one prefix of the subnet to be returned.</para>
+This command includes a list with exactly one prefix of the subnet to be returned. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4756,7 +4783,7 @@ This command includes a list with exactly one prefix of the subnet to be returne
                 "subnet": &lt;subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 },
                 &lt;the rest of the subnet specification here&gt;
             }
@@ -4786,10 +4813,11 @@ If the shared network name is null, it means that the returned subnet does not b
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-This command includes no arguments besides the optional <command>remote</command> map.</para>
+The <command>server-tags</command> list is required for this command. This list must not be empty. It may either contain one or multiple server tags as strings or a single <command>null</command> value.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4802,7 +4830,7 @@ This command includes no arguments besides the optional <command>remote</command
                 "subnet": &lt;first subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 }
             },
             {
@@ -4810,14 +4838,14 @@ This command includes no arguments besides the optional <command>remote</command
                 "subnet": &lt;second subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, ... ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a subnet identifier, prefix and shared network name to which the subnet belongs. If the subnet does not belong to a shared netork the name is null. The metadata includes database specific information associated with the subnets. The returned list does not contain full subnet definitions. Use <command>remote-subnet4-get</command> to fetch the full information about the selected subnets.</para>
+The returned response contains a list of maps. Each map contains a subnet identifier, prefix and shared network name to which the subnet belongs. If the subnet does not belong to a shared netork the name is null. The metadata includes database specific information associated with the subnets. The returned list does not contain full subnet definitions. Use <command>remote-subnet4-get</command> to fetch the full information about the selected subnets. If the command includes explicit server tags as strings (including the special server tag "all"), the list contains all subnets which are associated with any of the specified tags. A subnet is returned even if it is associated with multiple servers and only one of the specified tags matches. If the command includes the <command>null</command> value in the <command>server-tags</command> list, the response contains all subnets which are assigned to no servers (unassigned).</para>
 
 </section>
 <!-- end of remote-subnet4-list -->
@@ -4847,10 +4875,11 @@ The returned response contains a list of maps. Each map contains a subnet identi
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name.</para>
+The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the subnet with one or more user defined servers. It may include the special server tag "all" to associate the subnet with all servers.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4898,7 +4927,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one id of the subnet to be deleted.</para>
+This command includes a list with exactly one id of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4945,7 +4974,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one prefix of the subnet to be deleted.</para>
+This command includes a list with exactly one prefix of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -4992,7 +5021,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
     }
 }</screen>
-This command includes a list with exactly one id of the subnet to be returned.</para>
+This command includes a list with exactly one id of the subnet to be returned. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -5005,7 +5034,7 @@ This command includes a list with exactly one id of the subnet to be returned.</
                 "subnet": &lt;subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 },
                 &lt;the rest of the subnet specification here&gt;
             }
@@ -5043,7 +5072,7 @@ If the shared network name is null, it means that the returned subnet does not b
         }
     }
 }</screen>
-This command includes a list with exactly one prefix of the subnet to be returned.</para>
+This command includes a list with exactly one prefix of the subnet to be returned. The <command>server-tags</command> parameter must not be specified for this command.</para>
 
 <para>Response syntax:
   <screen>{
@@ -5055,7 +5084,7 @@ This command includes a list with exactly one prefix of the subnet to be returne
             "subnet": &lt;subnet prefix&gt;,
             "shared-network-name": &lt;shared network name&gt; | null,
             "metadata": {
-                "server-tag": &lt;server tag&gt;
+                "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
             },
             &lt;the rest of the subnet specification here&gt;
         } ],
@@ -5084,10 +5113,11 @@ If the shared network name is null, it means that the returned subnet does not b
     "arguments": {
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-This command includes no arguments besides the optional <command>remote</command> map.</para>
+The <command>server-tags</command> list is required for this command. This list must not be empty. It may either contain one or multiple server tags as strings or a single <command>null</command> value.</para>
 
 <para>Response syntax:
   <screen>{
@@ -5100,7 +5130,7 @@ This command includes no arguments besides the optional <command>remote</command
                 "subnet": &lt;first subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 }
             },
             {
@@ -5108,14 +5138,14 @@ This command includes no arguments besides the optional <command>remote</command
                 "subnet": &lt;second subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, ... ]
                 }
             }
         ],
         "count": 2
     }
 }</screen>
-The returned response contains a list of maps. Each map contains a subnet identifier, prefix and shared network name to which the subnet belongs. If the subnet does not belong to a shared netork the name is null. The metadata includes database specific information associated with the subnets. The returned list does not contain full subnet definitions. Use <command>remote-subnet6-get</command> to fetch the full information about the selected subnets.</para>
+The returned response contains a list of maps. Each map contains a subnet identifier, prefix and shared network name to which the subnet belongs. If the subnet does not belong to a shared netork the name is null. The metadata includes database specific information associated with the subnets. The returned list does not contain full subnet definitions. Use <command>remote-subnet6-get</command> to fetch the full information about the selected subnets. If the command includes explicit server tags as strings (including the special server tag "all"), the list contains all subnets which are associated with any of the specified tags. A subnet is returned even if it is associated with multiple servers and only one of the specified tags matches. If the command includes the <command>null</command> value in the <command>server-tags</command> list, the response contains all subnets which are assigned to no servers (unassigned).</para>
 
 </section>
 <!-- end of remote-subnet6-list -->
@@ -5123,7 +5153,7 @@ The returned response contains a list of maps. Each map contains a subnet identi
 <!-- start of remote-subnet6-set -->
 <section xml:id="reference-remote-subnet6-set">
 <title>remote-subnet6-set reference</title>
-<para xml:id="ref-remote-subnet6-set"><command>remote-subnet6-set</command> - This command is used to create or replace an IPv4 subnet the configuration database.</para>
+<para xml:id="ref-remote-subnet6-set"><command>remote-subnet6-set</command> - This command is used to create or replace an IPv6 subnet the configuration database.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -5145,10 +5175,11 @@ The returned response contains a list of maps. Each map contains a subnet identi
         ],
         "remote": {
             &lt;specification of the database to connect to&gt;
-        }
+        },
+        "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
     }
 }</screen>
-The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name.</para>
+The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the subnet with one or more user defined servers. It may include the special server tag "all" to associate the subnet with all servers.</para>
 
 <para>Response syntax:
   <screen>{
