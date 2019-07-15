@@ -22,9 +22,9 @@ Command Line Options
 
 ``keactrl`` is run as follows:
 
-::
+.. code-block:: console
 
-   keactrl <command> [-c keactrl-config-file] [-s server[,server,...]]
+   # keactrl <command> [-c keactrl-config-file] [-s server[,server,...]]
 
 ``<command>`` is one of the commands described in
 `Commands <#keactrl-commands>`__.
@@ -53,7 +53,7 @@ on a per-command basis using the ``-c`` switch.
 
 The contents of ``keactrl.conf`` are:
 
-::
+.. code-block:: bash
 
    # This is a configuration file for keactrl script which controls
    # the startup, shutdown, reconfiguration and gathering the status
@@ -155,7 +155,7 @@ The following commands are supported by ``keactrl``:
 Typical output from ``keactrl`` when starting the servers looks similar
 to the following:
 
-::
+.. code-block:: console
 
    $ keactrl start
    INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea-dhcp4.conf -d
@@ -169,7 +169,7 @@ keactrl to determine whether a given server is running. If one or more
 servers are running when the start command is issued, the output will
 look similar to the following:
 
-::
+.. code-block:: console
 
    $ keactrl start
    INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/local/var/kea/kea.kea-dhcp4.pid.
@@ -188,7 +188,7 @@ must be manually deleted.
 
 The following command stops all servers:
 
-::
+.. code-block:: console
 
    $ keactrl stop
    INFO/keactrl: Stopping kea-dhcp4...
@@ -202,7 +202,7 @@ regardless of whether they are "enabled" in ``keactrl.conf``. If any
 of the servers are not running, an informational message is displayed as
 in the ``stop`` command output below.
 
-::
+.. code-block:: console
 
    $ keactrl stop
    INFO/keactrl: kea-dhcp4 isn't running.
@@ -218,7 +218,7 @@ file and that are currently running. When a server receives the SIGHUP signal
 it re-reads its configuration file and, if the new configuration is
 valid, uses the new configuration. A reload is executed as follows:
 
-::
+.. code-block:: console
 
    $ keactrl reload
    INFO/keactrl: Reloading kea-dhcp4...
@@ -232,7 +232,7 @@ version 1.5.0, kea-netconf does not support the SIGHUP signal. If its
 configuration has changed, please stop and restart it for the change to
 take effect. This limitation will be removed in a future release.
 
-::
+.. code-block:: console
 
    $ keactrl stop
    INFO/keactrl: kea-dhcp4 isn't running.
@@ -262,7 +262,7 @@ take effect. This limitation will be removed in a future release.
 Sometimes it is useful to check which servers are running. The
 ``status`` command reports this, with typical output that looks like:
 
-::
+.. code-block:: console
 
    $ keactrl status
    DHCPv4 server: active
@@ -288,14 +288,14 @@ the ``keactrl`` command is issued. For example, the following instructs
 ``keactrl`` to stop the ``kea-dhcp4`` and ``kea-dhcp6`` servers and
 leave the ``kea-dhcp-ddns`` and ``kea-ctrl-agent`` running:
 
-::
+.. code-block:: console
 
    $ keactrl stop -s dhcp4,dhcp6
 
 Similarly, the following will start only the ``kea-dhcp4`` and
 ``kea-dhcp-ddns`` servers, but not ``kea-dhcp6`` or ``kea-ctrl-agent``.
 
-::
+.. code-block:: console
 
    $ keactrl start -s dhcp4,dhcp_ddns
 

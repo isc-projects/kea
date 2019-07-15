@@ -54,7 +54,7 @@ STEP 1: Install dependencies
 Several tools are needed to build the dependencies and Kea itself. The
 following commands should install them:
 
-::
+.. code-block:: console
 
    $ sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
    $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
@@ -74,7 +74,7 @@ until those are processed, it is strongly recommended to use the
 FreeRADIUS client with ISC's patches. To download and compile this
 version, please use the following steps:
 
-::
+.. code-block:: console
 
    $ git clone https://github.com/fxdupont/freeradius-client.git
    $ cd freeradius-client/
@@ -100,7 +100,7 @@ compiled using the g++ 4.8 version in CentOS.
 
 To download and compile Boost 1.65, please use the following commands:
 
-::
+.. code-block:: console
 
    $ wget -nd https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
    $ tar zxvf boost_1_65_1.tar.gz
@@ -116,30 +116,33 @@ compiled.
 STEP 4: Compile and install Kea
 
 Obtain the Kea sources either by downloading them from the git
-repository or extracting the tarball:
+repository or extracting the tarball. Use one of those commands
+to obtain the Kea sources.
 
-::
+Choice 1: get from github
 
-   # Use one of those commands to obtain the Kea sources:
+.. code-block:: console
 
-   # Choice 1: get from github
    $ git clone https://github.com/isc-projects/kea
 
-   # Get a tarball and extract it
-   $ tar zxvf kea-KEAVERSION.tar.gz
+Choice 2: get a tarball and extract it
+
+.. code-block:: console
+
+   $ tar zxvf kea-|release|.tar.gz
 
 The next step is to extract the premium Kea package that contains the
 RADIUS repository into the Kea sources. After the tarball is extracted,
 the Kea sources should have a premium/ subdirectory.
 
-::
+.. code-block:: console
 
      $ cd kea
-     $ tar zxvf ../kea-premium-radius-KEAVERSION.tar.gz
+     $ tar zxvf ../kea-premium-radius-|release|.tar.gz
 
 Once this is done, verify that the Kea sources look similar to this:
 
-::
+.. code-block:: console
 
    $ ls -l
    total 952
@@ -168,7 +171,7 @@ is necessary to tell Kea where the FreeRADIUS client sources can be
 found. Also, since the non-standard Boost is used, the path to it must
 be specified.
 
-::
+.. code-block:: console
 
    $ autoreconf -i
    $ ./configure --with-freeradius=/path/to/freeradius --with-boost-include=/path/to/boost --with-boost-lib-dir=/path/to/boost/state/lib
@@ -178,11 +181,11 @@ directory (/usr/local) and the Boost 1.65 sources were compiled in
 /home/thomson/devel/boost1_65_1, the configure path should look as
 follows:
 
-::
+.. code-block:: console
 
-   ./configure --with-freeradius=/usr/local \
-               --with-boost-include=/home/thomson/devel/boost_1_65_1 \
-               --with-boost-lib-dir=/home/thomson/devel/boost_1_65_1/stage/lib
+   $ ./configure --with-freeradius=/usr/local \
+         --with-boost-include=/home/thomson/devel/boost_1_65_1 \
+         --with-boost-lib-dir=/home/thomson/devel/boost_1_65_1/stage/lib
 
 After some checks, the configure script should print a report similar to
 the following:
@@ -195,8 +198,8 @@ the following:
 
    Package:
      Name:              kea
-     Version:           KEAVERSION
-     Extended version:  KEAVERSION (tarball)
+     Version:           |release|
+     Extended version:  |release| (tarball)
      OS Family:         Linux
 
      Hooks directory:   /usr/local/lib/kea/hooks
@@ -280,7 +283,7 @@ Once the configuration is complete, compile Kea using make. If the
 system has more than one core, using the "-j N"
 option is recommended to speed up the build.
 
-::
+.. code-block:: console
 
        $ make -j5
        $ sudo make install
@@ -298,25 +301,25 @@ takes many parameters. For example, this configuration could be used:
 
      "Dhcp4": {
 
-     // Your regular DHCPv4 configuration parameters here.
+     # Your regular DHCPv4 configuration parameters here.
 
      "hooks-libraries": [
      {
-         // Note that RADIUS requires host-cache for proper operation,
-         // so that library is loaded as well.
+         # Note that RADIUS requires host-cache for proper operation,
+         # so that library is loaded as well.
          "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
      },
      {
          "library": "/usr/local/lib/kea/hooks/libdhc_radius.so",
          "parameters": {
 
-             // Specify where FreeRADIUS dictionary could be located
+             # Specify where FreeRADIUS dictionary could be located
              "dictionary": "/usr/local/etc/freeradius/dictionary",
 
-             // Specify which address to use to communicate with RADIUS servers
+             # Specify which address to use to communicate with RADIUS servers
              "bindaddr": "*",
 
-             // more RADIUS parameters here
+             # more RADIUS parameters here
          }
      } ]
 
@@ -459,61 +462,61 @@ following snippet could be used:
 
    "parameters": {
 
-       // Other RADIUS parameters here
+       # Other RADIUS parameters here
 
        "access": {
 
-           // This starts the list of access servers
+           # This starts the list of access servers
            "servers": [
            {
-               // These are parameters for the first (and only) access server
+               # These are parameters for the first (and only) access server
                "name": "127.0.0.1",
                "port": 1812,
                "secret": "xyz123"
            }
-           // Additional access servers could be specified here
+           # Additional access servers could be specified here
            ],
 
-           // This defines a list of additional attributes Kea will send to each
-           // access server in Access-Request.
+           # This defines a list of additional attributes Kea will send to each
+           # access server in Access-Request.
            "attributes": [
            {
-               // This attribute is identified by name (must be present in the
-               // dictionary) and has static value (i.e. the same value will be
-               // sent to every server for every packet)
+               # This attribute is identified by name (must be present in the
+               # dictionary) and has static value (i.e. the same value will be
+               # sent to every server for every packet)
                "name": "Password",
                "data": "mysecretpassword"
            },
            {
-               // It is also possible to specify an attribute using its type,
-               // rather than a name. 77 is Connect-Info. The value is specified
-               // using hex. Again, this is a static value. It will be sent the
-               // same for every packet and to every server.
+               # It is also possible to specify an attribute using its type,
+               # rather than a name. 77 is Connect-Info. The value is specified
+               # using hex. Again, this is a static value. It will be sent the
+               # same for every packet and to every server.
                "type": 77,
                "raw": "65666a6a71"
            },
            {
-               // This example shows how an expression can be used to send dynamic
-               // value. The expression (see Section 13) may take any value from
-               // the incoming packet or even its metadata (e.g. the interface
-               // it was received over from)
+               # This example shows how an expression can be used to send dynamic
+               # value. The expression (see Section 13) may take any value from
+               # the incoming packet or even its metadata (e.g. the interface
+               # it was received over from)
                "name": "Configuration-Token",
                "expr": "hexstring(pkt4.mac,':')"
            }
-           ] // End of attributes
-       } // End of access
+           ] # End of attributes
+       } # End of access
 
-       // Accounting parameters.
+       # Accounting parameters.
        "accounting": {
-           // This starts the list of accounting servers
+           # This starts the list of accounting servers
            "servers": [
            {
-               // These are parameters for the first (and only) accounting server
+               # These are parameters for the first (and only) accounting server
                "name": "127.0.0.1",
                "port": 1813,
                "secret": "sekret"
            }
-           // Additional accounting servers could be specified here
+           # Additional accounting servers could be specified here
            ]
        }
 

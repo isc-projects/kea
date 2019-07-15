@@ -341,80 +341,57 @@ with the only difference that ``this-server-name`` should be set to
 
 ::
 
-   {
    "Dhcp4": {
-
-       ...
-
-       "hooks-libraries": [
-           {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
-               "parameters": { }
-           },
-           {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
-               "parameters": {
-                   "high-availability": [ {
-                       "this-server-name": "server1",
-                       "mode": "load-balancing",
-                       "heartbeat-delay": 10000,
-                       "max-response-delay": 10000,
-                       "max-ack-delay": 5000,
-                       "max-unacked-clients": 5,
-                       "peers": [
-                           {
-                               "name": "server1",
-                               "url": "http://192.168.56.33:8080/",
-                               "role": "primary",
-                               "auto-failover": true
-                           },
-                           {
-                               "name": "server2",
-                               "url": "http://192.168.56.66:8080/",
-                               "role": "secondary",
-                               "auto-failover": true
-                           },
-                           {
-                               "name": "server3",
-                               "url": "http://192.168.56.99:8080/",
-                               "role": "backup",
-                               "auto-failover": false
-                           }
-                       ]
-                   } ]
-               }
+       "hooks-libraries": [{
+           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "parameters": { }
+       }, {
+           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "parameters": {
+               "high-availability": [{
+                   "this-server-name": "server1",
+                   "mode": "load-balancing",
+                   "heartbeat-delay": 10000,
+                   "max-response-delay": 10000,
+                   "max-ack-delay": 5000,
+                   "max-unacked-clients": 5,
+                   "peers": [{
+                       "name": "server1",
+                       "url": "http://192.168.56.33:8080/",
+                       "role": "primary",
+                       "auto-failover": true
+                   }, {
+                       "name": "server2",
+                       "url": "http://192.168.56.66:8080/",
+                       "role": "secondary",
+                       "auto-failover": true
+                   }, {
+                       "name": "server3",
+                       "url": "http://192.168.56.99:8080/",
+                       "role": "backup",
+                       "auto-failover": false
+                   }]
+               }]
            }
-       ],
+       }],
 
-       "subnet4": [
-           {
-               "subnet": "192.0.3.0/24",
-               "pools": [
-                   {
-                       "pool": "192.0.3.100 - 192.0.3.150",
-                       "client-class": "HA_server1"
-                   },
-                   {
-                       "pool": "192.0.3.200 - 192.0.3.250",
-                       "client-class": "HA_server2"
-                   }
-               ],
+       "subnet4": [{
+           "subnet": "192.0.3.0/24",
+           "pools": [{
+               "pool": "192.0.3.100 - 192.0.3.150",
+               "client-class": "HA_server1"
+            }, {
+               "pool": "192.0.3.200 - 192.0.3.250",
+               "client-class": "HA_server2"
+            }],
 
-               "option-data": [
-                   {
-                       "name": "routers",
-                       "data": "192.0.3.1"
-                   }
-               ],
+            "option-data": [{
+               "name": "routers",
+               "data": "192.0.3.1"
+            }],
 
-               "relay": { "ip-address": "10.1.2.3" }
-           }
-       ],
-
-       ...
-
-   }
-
+            "relay": { "ip-address": "10.1.2.3" }
+       }]
    }
 
 Two hook libraries must be loaded to enable HA:
@@ -566,90 +543,62 @@ HA hook library configuration has been removed from this example.
 
 ::
 
-   {
    "Dhcp4": {
+       "client-classes": [{
+           "name": "phones",
+           "test": "substring(option[60].hex,0,6) == 'Aastra'",
+       }, {
+           "name": "laptops",
+           "test": "not member('phones')"
+       }, {
+           "name": "phones_server1",
+           "test": "member('phones') and member('HA_server1')"
+       }, {
+           "name": "phones_server2",
+           "test": "member('phones') and member('HA_server2')"
+       }, {
+           "name": "laptops_server1",
+           "test": "member('laptops') and member('HA_server1')"
+       }, {
+           "name": "laptops_server2",
+           "test": "member('laptops') and member('HA_server2')"
+       }],
 
-       "client-classes": [
-           {
-               "name": "phones",
-               "test": "substring(option[60].hex,0,6) == 'Aastra'",
-           },
-           {
-               "name": "laptops",
-               "test": "not member('phones')"
-           },
-           {
-               "name": "phones_server1",
-               "test": "member('phones') and member('HA_server1')"
-           },
-           {
-               "name": "phones_server2",
-               "test": "member('phones') and member('HA_server2')"
-           },
-           {
-               "name": "laptops_server1",
-               "test": "member('laptops') and member('HA_server1')"
-           },
-           {
-               "name": "laptops_server2",
-               "test": "member('laptops') and member('HA_server2')"
+       "hooks-libraries": [{
+           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "parameters": { }
+       }, {
+           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "parameters": {
+               "high-availability": [{
+                  ...
+               }]
            }
-       ],
+       }],
 
-       "hooks-libraries": [
-           {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
-               "parameters": { }
-           },
-           {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
-               "parameters": {
-                   "high-availability": [ {
+       "subnet4": [{
+           "subnet": "192.0.3.0/24",
+           "pools": [{
+               "pool": "192.0.3.100 - 192.0.3.125",
+               "client-class": "phones_server1"
+           }, {
+               "pool": "192.0.3.126 - 192.0.3.150",
+               "client-class": "laptops_server1"
+           }, {
+               "pool": "192.0.3.200 - 192.0.3.225",
+               "client-class": "phones_server2"
+           }, {
+               "pool": "192.0.3.226 - 192.0.3.250",
+               "client-class": "laptops_server2"
+           }],
 
-                       ...
+           "option-data": [{
+               "name": "routers",
+               "data": "192.0.3.1"
+           }],
 
-                   } ]
-               }
-           }
-       ],
-
-       "subnet4": [
-           {
-               "subnet": "192.0.3.0/24",
-               "pools": [
-                   {
-                       "pool": "192.0.3.100 - 192.0.3.125",
-                       "client-class": "phones_server1"
-                   },
-                   {
-                       "pool": "192.0.3.126 - 192.0.3.150",
-                       "client-class": "laptops_server1"
-                   },
-                   {
-                       "pool": "192.0.3.200 - 192.0.3.225",
-                       "client-class": "phones_server2"
-                   },
-                   {
-                       "pool": "192.0.3.226 - 192.0.3.250",
-                       "client-class": "laptops_server2"
-                   }
-               ],
-
-               "option-data": [
-                   {
-                       "name": "routers",
-                       "data": "192.0.3.1"
-                   }
-               ],
-
-               "relay": { "ip-address": "10.1.2.3" }
-           }
-       ],
-
-       ...
-
-   }
-
+           "relay": { "ip-address": "10.1.2.3" }
+       }],
    }
 
 The configuration provided above splits the address range into four
@@ -677,76 +626,54 @@ hot-standby configuration:
 
 ::
 
-   {
    "Dhcp4": {
-
-       ...
-
-       "hooks-libraries": [
-           {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
-               "parameters": { }
-           },
-           {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
-               "parameters": {
-                   "high-availability": [ {
-                       "this-server-name": "server1",
-                       "mode": "hot-standby",
-                       "heartbeat-delay": 10000,
-                       "max-response-delay": 10000,
-                       "max-ack-delay": 5000,
-                       "max-unacked-clients": 5,
-                       "peers": [
-                           {
-                               "name": "server1",
-                               "url": "http://192.168.56.33:8080/",
-                               "role": "primary",
-                               "auto-failover": true
-                           },
-                           {
-                               "name": "server2",
-                               "url": "http://192.168.56.66:8080/",
-                               "role": "standby",
-                               "auto-failover": true
-                           },
-                           {
-                               "name": "server3",
-                               "url": "http://192.168.56.99:8080/",
-                               "role": "backup",
-                               "auto-failover": false
-                           }
-                       ]
-                   } ]
-               }
+       "hooks-libraries": [{
+           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "parameters": { }
+       }, {
+           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "parameters": {
+               "high-availability": [{
+                   "this-server-name": "server1",
+                   "mode": "hot-standby",
+                   "heartbeat-delay": 10000,
+                   "max-response-delay": 10000,
+                   "max-ack-delay": 5000,
+                   "max-unacked-clients": 5,
+                   "peers": [{
+                       "name": "server1",
+                       "url": "http://192.168.56.33:8080/",
+                       "role": "primary",
+                       "auto-failover": true
+                   }, {
+                       "name": "server2",
+                       "url": "http://192.168.56.66:8080/",
+                       "role": "standby",
+                       "auto-failover": true
+                   }, {
+                       "name": "server3",
+                       "url": "http://192.168.56.99:8080/",
+                       "role": "backup",
+                       "auto-failover": false
+                   }]
+               }]
            }
-       ],
+       }],
 
-       "subnet4": [
-           {
-               "subnet": "192.0.3.0/24",
-               "pools": [
-                   {
-                       "pool": "192.0.3.100 - 192.0.3.250",
-                       "client-class": "HA_server1"
-                   }
-               ],
+       "subnet4": [{
+           "subnet": "192.0.3.0/24",
+           "pools": [{
+               "pool": "192.0.3.100 - 192.0.3.250",
+               "client-class": "HA_server1"
+           }],
 
-               "option-data": [
-                   {
-                       "name": "routers",
-                       "data": "192.0.3.1"
-                   }
-               ],
+           "option-data": [{
+               "name": "routers",
+               "data": "192.0.3.1"
+           }],
 
-               "relay": { "ip-address": "10.1.2.3" }
-           }
-       ],
-
-       ...
-
-   }
-
+           "relay": { "ip-address": "10.1.2.3" }
+       }]
    }
 
 This configuration is very similar to the load-balancing configuration

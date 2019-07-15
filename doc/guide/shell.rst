@@ -27,9 +27,9 @@ Shell Usage
 
 ``kea-shell`` is run as follows:
 
-::
+.. code-block:: console
 
-   kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [--service service-name] [command]
+   $ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [--service service-name] [command]
 
 where:
 
@@ -71,7 +71,7 @@ all supported commands from the CA, use the ``list-commands`` command.
 
 The following shows a simple example of usage:
 
-::
+.. code-block:: console
 
    $ kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-commands
    ^D
@@ -89,7 +89,7 @@ the command "config-write" to the CA (the ``--service`` parameter has not
 been used), along with the parameters specified in param.json. The
 result will be stored in result.json.
 
-::
+.. code-block:: console
 
    $ cat param.json
    "filename": "my-config-file.json"
@@ -100,7 +100,7 @@ servers, the default empty path in the URL is not enough, so the
 ``--path`` parameter should be used. For instance, if requests to the
 "/kea" path are forwarded to the CA this can be used:
 
-::
+.. code-block:: console
 
    $ kea-shell --host 192.0.2.1 --port 8001 --path kea ...
 

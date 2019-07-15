@@ -1707,91 +1707,90 @@ currently has no means to validate it.
 
 .. table:: List of Standard DHCP Option Types
 
-   +-----------------------------------+-------------------------------------------------------+
-   | Name                              | Meaning                                               |
-   +===================================+=======================================================+
-   | binary                            | An arbitrary string of bytes,                         |
-   |                                   | specified as a set of hexadecimal                     |
-   |                                   | digits.                                               |
-   +-----------------------------------+-------------------------------------------------------+
-   | boolean                           | A boolean value with allowed                          |
-   |                                   | values true or false.                                 |
-   +-----------------------------------+-------------------------------------------------------+
-   | empty                             | No value; data is carried in                          |
-   |                                   | sub-options.                                          |
-   +-----------------------------------+-------------------------------------------------------+
-   | fqdn                              | Fully qualified domain name (e.g.                     |
-   |                                   | www.example.com).                                     |
-   +-----------------------------------+-------------------------------------------------------+
-   | ipv4-address                      | IPv4 address in the usual                             |
-   |                                   | dotted-decimal notation (e.g.                         |
-   |                                   | 192.0.2.1).                                           |
-   +-----------------------------------+-------------------------------------------------------+
-   | ipv6-address                      | IPv6 address in the usual colon                       |
-   |                                   | notation (e.g. 2001:db8::1).                          |
-   +-----------------------------------+-------------------------------------------------------+
-   | ipv6-prefix                       | IPv6 prefix and prefix length                         |
-   |                                   | specified using CIDR notation,                        |
-   |                                   | e.g. 2001:db8:1::/64. This data                       |
-   |                                   | type is used to represent an                          |
-   |                                   | 8-bit field conveying a prefix                        |
-   |                                   | length and the variable length                        |
-   |                                   | prefix value.                                         |
-   +-----------------------------------+-------------------------------------------------------+
-   | psid                              | PSID and PSID length separated by                     |
-   |                                   | a slash, e.g. 3/4 specifies                           |
-   |                                   | PSID=3 and PSID length=4. In the                      |
-   |                                   | wire format it is represented by                      |
-   |                                   | an 8-bit field carrying PSID                          |
-   |                                   | length (in this case equal to 4)                      |
-   |                                   | and the 16-bits-long PSID value                       |
-   |                                   | field (in this case equal to                          |
-   |                                   | "0011000000000000b" using binary                      |
-   |                                   | notation). Allowed values for a                       |
-   |                                   | PSID length are 0 to 16. See `RFC                     |
-   |                                   | 7597 <https://tools.ietf.org/html/rfc7597>`__         |
-   |                                   | for details about the PSID wire                       |
-   |                                   | representation.                                       |
-   +-----------------------------------+-------------------------------------------------------+
-   | record                            | Structured data that may be                           |
-   |                                   | comprised of any types (except                        |
-   |                                   | "record" and "empty"). The array                      |
-   |                                   | flag applies to the last field                        |
-   |                                   | only.                                                 |
-   +-----------------------------------+-------------------------------------------------------+
-   | string                            | Any text. Please note that Kea                        |
-   |                                   | will silently discard any                             |
-   |                                   | terminating/trailing nulls from                       |
-   |                                   | the end of 'string' options when                      |
-   |                                   | unpacking received packets. This                      |
-   |                                   | is in keeping with `RFC 2132,                         |
-   |                                   | Section                                               |
-   |                                   | 2 <https://tools.ietf.org/html/rfc2132#section-2>`__. |
-   +-----------------------------------+-------------------------------------------------------+
-   | tuple                             | A length encoded as an 8- (16-                        |
-   |                                   | for DHCPv6) bit unsigned integer                      |
-   |                                   | followed by a string of this                          |
-   |                                   | length.                                               |
-   +-----------------------------------+-------------------------------------------------------+
-   | uint8                             | 8-bit unsigned integer with                           |
-   |                                   | allowed values 0 to 255.                              |
-   +-----------------------------------+-------------------------------------------------------+
-   | uint16                            | 16-bit unsigned integer with                          |
-   |                                   | allowed values 0 to 65535.                            |
-   +-----------------------------------+-------------------------------------------------------+
-   | uint32                            | 32-bit unsigned integer with                          |
-   |                                   | allowed values 0 to 4294967295.                       |
-   +-----------------------------------+-------------------------------------------------------+
-   | int8                              | 8-bit signed integer with allowed                     |
-   |                                   | values -128 to 127.                                   |
-   +-----------------------------------+-------------------------------------------------------+
-   | int16                             | 16-bit signed integer with                            |
-   |                                   | allowed values -32768 to 32767.                       |
-   +-----------------------------------+-------------------------------------------------------+
-   | int32                             | 32-bit signed integer with                            |
-   |                                   | allowed values -2147483648 to                         |
-   |                                   | 2147483647.                                           |
-   +-----------------------------------+-------------------------------------------------------+
+   +-----------------+-------------------------------------------------------+
+   | Name            | Meaning                                               |
+   +=================+=======================================================+
+   | binary          | An arbitrary string of bytes, specified as a set      |
+   |                 | of hexadecimal digits.                                |
+   +-----------------+-------------------------------------------------------+
+   | boolean         | A boolean value with allowed                          |
+   |                 | values true or false.                                 |
+   +-----------------+-------------------------------------------------------+
+   | empty           | No value; data is carried in                          |
+   |                 | sub-options.                                          |
+   +-----------------+-------------------------------------------------------+
+   | fqdn            | Fully qualified domain name (e.g.                     |
+   |                 | www.example.com).                                     |
+   +-----------------+-------------------------------------------------------+
+   | ipv4-address    | IPv4 address in the usual                             |
+   |                 | dotted-decimal notation (e.g.                         |
+   |                 | 192.0.2.1).                                           |
+   +-----------------+-------------------------------------------------------+
+   | ipv6-address    | IPv6 address in the usual colon                       |
+   |                 | notation (e.g. 2001:db8::1).                          |
+   +-----------------+-------------------------------------------------------+
+   | ipv6-prefix     | IPv6 prefix and prefix length                         |
+   |                 | specified using CIDR notation,                        |
+   |                 | e.g. 2001:db8:1::/64. This data                       |
+   |                 | type is used to represent an                          |
+   |                 | 8-bit field conveying a prefix                        |
+   |                 | length and the variable length                        |
+   |                 | prefix value.                                         |
+   +-----------------+-------------------------------------------------------+
+   | psid            | PSID and PSID length separated by                     |
+   |                 | a slash, e.g. 3/4 specifies                           |
+   |                 | PSID=3 and PSID length=4. In the                      |
+   |                 | wire format it is represented by                      |
+   |                 | an 8-bit field carrying PSID                          |
+   |                 | length (in this case equal to 4)                      |
+   |                 | and the 16-bits-long PSID value                       |
+   |                 | field (in this case equal to                          |
+   |                 | "0011000000000000b" using binary                      |
+   |                 | notation). Allowed values for a                       |
+   |                 | PSID length are 0 to 16. See `RFC                     |
+   |                 | 7597 <https://tools.ietf.org/html/rfc7597>`__         |
+   |                 | for details about the PSID wire                       |
+   |                 | representation.                                       |
+   +-----------------+-------------------------------------------------------+
+   | record          | Structured data that may be                           |
+   |                 | comprised of any types (except                        |
+   |                 | "record" and "empty"). The array                      |
+   |                 | flag applies to the last field                        |
+   |                 | only.                                                 |
+   +-----------------+-------------------------------------------------------+
+   | string          | Any text. Please note that Kea                        |
+   |                 | will silently discard any                             |
+   |                 | terminating/trailing nulls from                       |
+   |                 | the end of 'string' options when                      |
+   |                 | unpacking received packets. This                      |
+   |                 | is in keeping with `RFC 2132,                         |
+   |                 | Section                                               |
+   |                 | 2 <https://tools.ietf.org/html/rfc2132#section-2>`__. |
+   +-----------------+-------------------------------------------------------+
+   | tuple           | A length encoded as an 8- (16-                        |
+   |                 | for DHCPv6) bit unsigned integer                      |
+   |                 | followed by a string of this                          |
+   |                 | length.                                               |
+   +-----------------+-------------------------------------------------------+
+   | uint8           | 8-bit unsigned integer with                           |
+   |                 | allowed values 0 to 255.                              |
+   +-----------------+-------------------------------------------------------+
+   | uint16          | 16-bit unsigned integer with                          |
+   |                 | allowed values 0 to 65535.                            |
+   +-----------------+-------------------------------------------------------+
+   | uint32          | 32-bit unsigned integer with                          |
+   |                 | allowed values 0 to 4294967295.                       |
+   +-----------------+-------------------------------------------------------+
+   | int8            | 8-bit signed integer with allowed                     |
+   |                 | values -128 to 127.                                   |
+   +-----------------+-------------------------------------------------------+
+   | int16           | 16-bit signed integer with                            |
+   |                 | allowed values -32768 to 32767.                       |
+   +-----------------+-------------------------------------------------------+
+   | int32           | 32-bit signed integer with                            |
+   |                 | allowed values -2147483648 to                         |
+   |                 | 2147483647.                                           |
+   +-----------------+-------------------------------------------------------+
 
 .. _dhcp4-custom-options:
 
@@ -2893,26 +2892,26 @@ table:
 
 .. table:: Default FQDN Flag Behavior
 
-   +-----------------+-----------------+-----------------+-----------------+
-   | Client          | Client Intent   | Server Response | Server          |
-   | Flags:N-S       |                 |                 | Flags:N-S-O     |
-   +=================+=================+=================+=================+
-   | 0-0             | Client wants to | Server          | 1-0-0           |
-   |                 | do forward      | generates       |                 |
-   |                 | updates, server | reverse-only    |                 |
-   |                 | should do       | request         |                 |
-   |                 | reverse updates |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | 0-1             | Server should   | Server          | 0-1-0           |
-   |                 | do both forward | generates       |                 |
-   |                 | and reverse     | request to      |                 |
-   |                 | updates         | update both     |                 |
-   |                 |                 | directions      |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | 1-0             | Client wants no | Server does not | 1-0-0           |
-   |                 | updates done    | generate a      |                 |
-   |                 |                 | request         |                 |
-   +-----------------+-----------------+-----------------+-----------------+
+   +------------+---------------------+-----------------+-------------+
+   | Client     | Client Intent       | Server Response | Server      |
+   | Flags:N-S  |                     |                 | Flags:N-S-O |
+   +============+=====================+=================+=============+
+   | 0-0        | Client wants to     | Server          | 1-0-0       |
+   |            | do forward          | generates       |             |
+   |            | updates, server     | reverse-only    |             |
+   |            | should do           | request         |             |
+   |            | reverse updates     |                 |             |
+   +------------+---------------------+-----------------+-------------+
+   | 0-1        | Server should       | Server          | 0-1-0       |
+   |            | do both forward     | generates       |             |
+   |            | and reverse         | request to      |             |
+   |            | updates             | update both     |             |
+   |            |                     | directions      |             |
+   +------------+---------------------+-----------------+-------------+
+   | 1-0        | Client wants no     | Server does not | 1-0-0       |
+   |            | updates done        | generate a      |             |
+   |            |                     | request         |             |
+   +------------+---------------------+-----------------+-------------+
 
 The first row in the table above represents "client delegation." Here
 the DHCP client states that it intends to do the forward DNS updates and
@@ -4142,8 +4141,8 @@ following can be used:
 ::
 
    "Dhcp4:" {
-       // This specifies global reservations. They will apply to all subnets that
-       // have global reservations enabled.
+       # This specifies global reservations. They will apply to all subnets that
+       # have global reservations enabled.
 
        "reservations": [
        {
@@ -4154,9 +4153,9 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          // Use of IP address in global reservation is risky. If used outside of
-          // a matching subnet, such as 192.0.1.0/24, it will result in a broken
-          // configuration being handed to the client.
+          # Use of IP address in global reservation is risky. If used outside of
+          # a matching subnet, such as 192.0.1.0/24, it will result in a broken
+          # configuration being handed to the client.
           "ip-address": "192.0.1.77"
        },
        {
@@ -4249,17 +4248,17 @@ introduced:
    "Dhcp4": {
        "shared-networks": [
            {
-               // Name of the shared network. It may be an arbitrary string
-               // and it must be unique among all shared networks.
+               # Name of the shared network. It may be an arbitrary string
+               # and it must be unique among all shared networks.
                "name": "my-secret-lair-level-1",
 
-               // The subnet selector can be specified at the shared network level.
-               // Subnets from this shared network will be selected for directly
-               // connected clients sending requests to server's "eth0" interface.
+               # The subnet selector can be specified at the shared network level.
+               # Subnets from this shared network will be selected for directly
+               # connected clients sending requests to server's "eth0" interface.
                "interface": "eth0",
 
-               // This starts a list of subnets in this shared network.
-               // There are two subnets in this example.
+               # This starts a list of subnets in this shared network.
+               # There are two subnets in this example.
                "subnet4": [
                    {
                        "subnet": "10.0.0.0/8",
@@ -4270,13 +4269,13 @@ introduced:
                        "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
                    }
                ],
-           } ], // end of shared-networks
+           } ], # end of shared-networks
 
-       // It is likely that in the network there will be a mix of regular,
-       // "plain" subnets and shared networks. It is perfectly valid to mix
-       // them in the same configuration file.
-       //
-       // This is a regular subnet. It is not part of any shared network.
+       # It is likely that in the network there will be a mix of regular,
+       # "plain" subnets and shared networks. It is perfectly valid to mix
+       # them in the same configuration file.
+       #
+       # This is a regular subnet. It is not part of any shared network.
        "subnet4": [
            {
                "subnet": "192.0.3.0/24",
@@ -4285,7 +4284,7 @@ introduced:
            }
        ]
 
-   } // end of Dhcp4
+   } # end of Dhcp4
    }
 
 As demonstrated in the example, it is possible to mix shared and regular
@@ -4315,12 +4314,12 @@ then override its value in the subnet scope. For example:
 
            "interface": "eth0",
 
-           // This applies to all subnets in this shared network, unless
-           // values are overridden on subnet scope.
+           # This applies to all subnets in this shared network, unless
+           # values are overridden on subnet scope.
            "valid-lifetime": 600,
 
-           // This option is made available to all subnets in this shared
-           // network.
+           # This option is made available to all subnets in this shared
+           # network.
            "option-data": [ {
                "name": "log-servers",
                "data": "1.2.3.4"
@@ -4331,7 +4330,7 @@ then override its value in the subnet scope. For example:
                    "subnet": "10.0.0.0/8",
                    "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
 
-                   // This particular subnet uses different values.
+                   # This particular subnet uses different values.
                    "valid-lifetime": 1200,
                    "option-data": [
                    {
@@ -4347,8 +4346,8 @@ then override its value in the subnet scope. For example:
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ],
 
-                    // This subnet does not specify its own valid-lifetime value,
-                    // so it is inherited from shared network scope.
+                    # This subnet does not specify its own valid-lifetime value,
+                    # so it is inherited from shared network scope.
                     "option-data": [
                     {
                         "name": "routers",
@@ -4389,8 +4388,8 @@ convenient to specify it once at the shared network level.
        {
            "name": "office-floor-2",
 
-           // This tells Kea that the whole shared network is reachable over a
-           // local interface. This applies to all subnets in this network.
+           # This tells Kea that the whole shared network is reachable over a
+           # local interface. This applies to all subnets in this network.
            "interface": "eth0",
 
            "subnet4": [
@@ -4403,9 +4402,9 @@ convenient to specify it once at the shared network level.
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
 
-                    // Specifying a different interface name is a configuration
-                    // error:
-                    // "interface": "eth1"
+                    # Specifying a different interface name is a configuration
+                    # error:
+                    # "interface": "eth1"
                }
            ]
        } ]
@@ -5390,29 +5389,25 @@ of LED devices could be configured in the following way:
 ::
 
    "Dhcp4": {
-       "subnet4": [
-           {
-               "subnet": "192.0.2.0/24",
-               "pools": [ {
-                   "pool": "192.0.2.10 - 192.0.2.20",
-                   // This is pool specific user context
-                   "user-context": { "color": "red" }
-               } ],
+       "subnet4": [{
+           "subnet": "192.0.2.0/24",
+           "pools": [{
+               "pool": "192.0.2.10 - 192.0.2.20",
+               # This is pool specific user context
+               "user-context": { "color": "red" }
+           }],
 
-               // This is a subnet-specific user context. Any type
-               // of information can be entered here as long as it is valid JSON.
-               "user-context": {
-                   "comment": "network on the second floor",
-                   "last-modified": "2017-09-04 13:32",
-                   "description": "you can put anything you like here",
-                   "phones": [ "x1234", "x2345" ],
-                   "devices-registered": 42,
-                   "billing": false
-               }
-           },
-           ...
-       ],
-       ...
+           # This is a subnet-specific user context. Any type
+           # of information can be entered here as long as it is valid JSON.
+           "user-context": {
+               "comment": "network on the second floor",
+               "last-modified": "2017-09-04 13:32",
+               "description": "you can put anything you like here",
+               "phones": [ "x1234", "x2345" ],
+               "devices-registered": 42,
+               "billing": false
+           }
+       }],
    }
 
 Kea does not interpret or use the user context information; it simply stores it and makes it
@@ -5605,31 +5600,23 @@ Consider the following configuration snippet:
 
 ::
 
-   {
-       "Dhcp4": {
-           "config-control": {
-               "config-databases": [
-                   {
-                       "type": "mysql",
-                       "name": "kea",
-                       "user": "kea",
-                       "password": "kea",
-                       "host": "192.0.2.1",
-                       "port": 3302
-                   }
-               ],
-               "config-fetch-wait-time": 20
-           },
-           "hooks-libraries": [
-               {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
-               },
-               {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-               }
-           ],
-           ...
-       }
+   "Dhcp4": {
+       "config-control": {
+           "config-databases": [{
+               "type": "mysql",
+               "name": "kea",
+               "user": "kea",
+               "password": "kea",
+               "host": "192.0.2.1",
+               "port": 3302
+           }],
+           "config-fetch-wait-time": 20
+       },
+       "hooks-libraries": [{
+           "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
+       }, {
+           "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+       }],
    }
 
 The ``config-control`` command contains two parameters. ``config-databases``

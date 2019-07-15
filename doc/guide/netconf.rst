@@ -69,7 +69,7 @@ named in Kea models (a short version of schema models).
 
 To list the currently installed YANG modules:
 
-::
+.. code-block:: console
 
      $ sysrepoctl -l
 
@@ -105,12 +105,12 @@ after installation.
 
 To install modules from sources, do the following:
 
-::
+.. code-block:: console
 
-   cd src/share/yang/modules
-   sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server*.yang
-   sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp4-server*.yang
-   sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp6-server*.yang
+   $ cd src/share/yang/modules
+   $ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server*.yang
+   $ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp4-server*.yang
+   $ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp6-server*.yang
    ...
 
 Note that the first -s parameter specifies the location of the YANG
@@ -120,7 +120,7 @@ by the Kea configuration under the SYSREPO_REPO name.
 
 The installation should look similar to the following:
 
-::
+.. code-block:: console
 
    $ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server*.yang
    Installing a new module from file 'ietf-dhcpv6-server@2018-11-20.yang'...
@@ -148,7 +148,7 @@ The installation should look similar to the following:
 It is possible to confirm whether the models are imported correctly by using
 sysrepoctl -l:
 
-::
+.. code-block:: console
 
    $ sysrepoctl -l
    Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.6/build/repository/yang/
@@ -175,7 +175,7 @@ sysrepoctl -l:
 To install a new revision of a module it must first be uninstalled, e.g.
 by:
 
-::
+.. code-block:: console
 
    sudo sysrepoctl -u -m kea-dhcp4-server
 
@@ -384,31 +384,31 @@ Kea sources.
 
 ::
 
-   // This is a simple example of a configuration for the NETCONF agent.
-   // This server provides a YANG interface for all Kea servers and the agent.
+   # This is a simple example of a configuration for the NETCONF agent.
+   # This server provides a YANG interface for all Kea servers and the agent.
    {
        "Netconf":
        {
-           // Control flags can be defined in the global scope or
-           // in a managed server scope. Precedences are:
-           // - use the default value (true)
-           // - use the global value
-           // - use the local value.
-           // So this overwrites the default value:
+           # Control flags can be defined in the global scope or
+           # in a managed server scope. Precedences are:
+           # - use the default value (true)
+           # - use the global value
+           # - use the local value.
+           # So this overwrites the default value:
            "boot-update": false,
 
-           // This map specifies how each server is managed. For each server there
-           // is a name of the YANG model to be used and the control channel.
+           # This map specifies how each server is managed. For each server there
+           # is a name of the YANG model to be used and the control channel.
            //
-           // Currently three control channel types are supported:
-           // "stdout" which outputs the configuration on the standard output,
-           // "unix" which uses the local control channel supported by the
-           // "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
-           // and "http" which uses the Control Agent "ca" to manage itself or
-           // to forward commands to "dhcp4" or "dhcp6".
+           # Currently three control channel types are supported:
+           # "stdout" which outputs the configuration on the standard output,
+           # "unix" which uses the local control channel supported by the
+           # "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
+           # and "http" which uses the Control Agent "ca" to manage itself or
+           # to forward commands to "dhcp4" or "dhcp6".
            "managed-servers":
            {
-               // This is how kea-netconf can communicate with the DHCPv4 server.
+               # This is how kea-netconf can communicate with the DHCPv4 server.
                "dhcp4":
                {
                    "comment": "DHCP4 server",
@@ -420,7 +420,7 @@ Kea sources.
                    }
                },
 
-               // DHCPv6 parameters.
+               # DHCPv6 parameters.
                "dhcp6":
                {
                    "model": "kea-dhcp6-server",
@@ -431,8 +431,8 @@ Kea sources.
                    }
                },
 
-               // Currently the DHCP-DDNS (nicknamed D2) server does not support
-               // a command channel.
+               # Currently the DHCP-DDNS (nicknamed D2) server does not support
+               # a command channel.
                "d2":
                {
                    "model": "kea-dhcp-ddns",
@@ -443,7 +443,7 @@ Kea sources.
                    }
                },
 
-               // Of course the Control Agent (CA) supports HTTP.
+               # Of course the Control Agent (CA) supports HTTP.
                "ca":
                {
                    "model": "kea-ctrl-agent",
@@ -455,39 +455,39 @@ Kea sources.
                }
            },
 
-           // kea-netconf is able to load hooks libraries that augment its operation.
-           // Currently there are no hook points defined in kea-netconf
-           // processing.
+           # kea-netconf is able to load hooks libraries that augment its operation.
+           # Currently there are no hook points defined in kea-netconf
+           # processing.
            "hooks-libraries": [
-               // The hooks libraries list may contain more than one library.
+               # The hooks libraries list may contain more than one library.
                {
-                   // The only necessary parameter is the library filename.
+                   # The only necessary parameter is the library filename.
                    "library": "/opt/local/netconf-commands.so",
 
-                   // Some libraries may support parameters. Make sure you
-                   // type this section carefully, as kea-netconf does not
-                   // validate it (because the format is library-specific).
+                   # Some libraries may support parameters. Make sure you
+                   # type this section carefully, as kea-netconf does not
+                   # validate it (because the format is library-specific).
                    "parameters": {
                        "param1": "foo"
                    }
                }
            ],
 
-           // Similar to other Kea components, NETCONF also uses logging.
+           # Similar to other Kea components, NETCONF also uses logging.
            "loggers": [
                {
                    "name": "kea-netconf",
                    "output_options": [
                        {
                            "output": "/var/log/kea-netconf.log",
-                           // Several additional parameters are possible in
-                           // addition to the typical output.
-                           // Flush determines whether logger flushes output
-                           //  to a file.
-                           // Maxsize determines maximum filesize before
-                           // the file is being rotated.
-                           // Maxver specifies the maximum number of
-                           //  rotated files being kept.
+                           # Several additional parameters are possible in
+                           # addition to the typical output.
+                           # Flush determines whether logger flushes output
+                           #  to a file.
+                           # Maxsize determines maximum filesize before
+                           # the file is being rotated.
+                           # Maxver specifies the maximum number of
+                           #  rotated files being kept.
                            "flush": true,
                            "maxsize": 204800,
                            "maxver": 4
@@ -553,7 +553,7 @@ The test box has an Ethernet interface named eth1. On some systems it is
 possible to rename interfaces, for instance on a Linux with an ens38
 interface:
 
-::
+.. code-block:: console
 
     # ip link set down dev ens38
     # ip link set name eth1 dev ens38
@@ -561,7 +561,7 @@ interface:
 
 The interface must have an address in the test prefix:
 
-::
+.. code-block:: console
 
     # ip -6 addr add 2001:db8::1/64 dev eth1
 
@@ -586,14 +586,14 @@ DHCPv6 server:
 In order to launch the Kea DHCPv6 server using the configuration
 contained within the ``boot.json`` file, run:
 
-::
+.. code-block:: console
 
     # kea-dhcp6 -d -c boot.json
 
 The current configuration of the server can be fetched via control
 socket by running:
 
-::
+.. code-block:: console
 
     # echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea6-sock '-,ignoreeof'
 
@@ -638,7 +638,7 @@ Note that in production there should not be a need to log at the DEBUG level.
 
 The Kea NETCONF agent is launched by:
 
-::
+.. code-block:: console
 
     # kea-netconf -d -c netconf.json
 
@@ -646,7 +646,7 @@ Now that both ``kea-netconf`` and ``kea-dhcp6`` are running, it is
 possible to populate updates to the configuration to the DHCPv6 server.
 The following is the configuration extracted from ``startup.xml``:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <subnet6>
@@ -669,7 +669,7 @@ The following is the configuration extracted from ``startup.xml``:
 
 To populate this new configuration:
 
-::
+.. code-block:: console
 
     # sysrepocfg -d startup -f xml -i startup.xml kea-dhcp6-server
 
@@ -704,7 +704,7 @@ NETCONF:
 In the first case, consider the following ``BAD-schema.xml``
 configuration file:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <subnet4>
@@ -727,14 +727,14 @@ configuration file:
 
 It is directly rejected by ``sysrepocfg``:
 
-::
+.. code-block:: console
 
     # sysrepocfg -d running -f xml -i BAD-schema.xml kea-dhcp6-server
 
 In the second case, the configuration is rejected by ``kea-netconf``.
 For example, consider this ``BAD-translator.xml`` file:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <subnet6>
@@ -759,7 +759,7 @@ For example, consider this ``BAD-translator.xml`` file:
 In the third case, the configuration is presented to the Kea DHCPv6
 server and fails to validate as in this ``BAD-config.xml`` file:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <subnet6>
@@ -793,7 +793,7 @@ NETCONF Operation Example with Two Pools
 This example adds a second pool to the initial (i.e. startup)
 configuration in the ``twopools.xml`` file:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <subnet6>
@@ -821,7 +821,7 @@ configuration in the ``twopools.xml`` file:
 
 This configuration is installed by:
 
-::
+.. code-block:: console
 
     # sysrepocfg -d running -f xml -i twopools.xml kea-dhcp6-server
 
@@ -832,7 +832,7 @@ NETCONF Operation Example with Two Subnets
 
 This example specifies two subnets in the ``twosubnets.xml`` file:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <subnet6>
@@ -864,7 +864,7 @@ This example specifies two subnets in the ``twosubnets.xml`` file:
 
 This configuration is installed by:
 
-::
+.. code-block:: console
 
     # sysrepocfg -d running -f xml -i twosubnets.xml kea-dhcp6-server
 
@@ -876,7 +876,7 @@ NETCONF Operation Example with Logging
 This example adds a logger entry to the initial (i.e. startup)
 configuration in the ``logging.xml`` file:
 
-::
+.. code-block:: xml
 
    <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
      <interfaces-config>
@@ -947,7 +947,7 @@ The corresponding Kea configuration in JSON is:
 Finally, any of the previous examples can be replayed using
 ``sysrepocfg`` in edit mode as follows:
 
-::
+.. code-block:: console
 
     # sysrepocfg -d running -f xml -e vi kea-dhcp6-server
 

@@ -65,32 +65,32 @@ For our users' convenience, the premium hooks installation procedure is describe
 
 1. Download the package; detailed instructions are provided separately on how
 to get it. The package will be a file with a name similar to
-kea-premium-KEAVERSION.tar.gz. (The name may vary depending on the package
+kea-premium-|release|.tar.gz. (The name may vary depending on the package
 purchased.)
 
 2. Administrators who still have the sources for the corresponding version of the
 open-source Kea package still on their system from the initial Kea installation
 should skip this step. Otherwise, extract the Kea source from the original
-tarball that was downloaded. For example, with a download of Kea KEAVERSION.,
-there should be a tarball called kea-KEAVERSION.tar.gz on the system.
+tarball that was downloaded. For example, with a download of Kea |release|.,
+there should be a tarball called kea-|release|.tar.gz on the system.
 Unpack this tarball:
 
 ::
 
-   $ tar zxvf kea-KEAVERSION.tar.gz
+   $ tar zxvf kea-|release|.tar.gz
 
-This will unpack the tarball into the kea-KEAVERSION subdirectory of
+This will unpack the tarball into the kea-|release| subdirectory of
 the current working directory.
 
 3. Unpack the Kea premium tarball into the directory into which Kea was
-unpacked. Once Kea KEAVERSION has been unpacked into a kea-KEAVERSION
+unpacked. Once Kea |release| has been unpacked into a kea-|release|
 subdirectory and the Kea premium tarball is in the current directory, the following
 steps will unpack the premium tarball into the correct location:
 
 ::
 
-     $ cd kea-KEAVERSION
-     $ tar xvf ../kea-premium-KEAVERSION.tar.gz
+     $ cd kea-|release|
+     $ tar xvf ../kea-premium-|release|.tar.gz
 
 Note that unpacking the Kea premium package will put the files into a
 directory named "premium". Regardless of the name of the package, the
@@ -114,13 +114,13 @@ first section of the output should look something like this:
 ::
 
    Package:
-     Name:            kea
-     Version:         KEAVERSION
-     Extended version:KEAVERSION (tarball)
-     OS Family:       Linux
-     Using GNU sed:   yes
-     Premium package: yes
-     Included Hooks:  forensic_log flex_id host_cmds
+     Name:             kea
+     Version:          |release|
+     Extended version: |release| (tarball)
+     OS Family:        Linux
+     Using GNU sed:    yes
+     Premium package:  yes
+     Included Hooks:   forensic_log flex_id host_cmds
 
 The last line indicates which specific hooks were detected. Note that
 some hooks may require their own dedicated switches, e.g. the RADIUS hook
@@ -285,50 +285,63 @@ loaded by the correct process per the table below.
 
 .. table:: List of Available Hooks Libraries
 
-   +-----------------+-----------------+-----------------+-----------------+
-   | Name            | Availability    | Since           | Load by process |
-   +=================+=================+=================+=================+
-   | user_chk        | Kea sources     | Kea 0.8         | kea-dhcp4,      |
-   |                 |                 |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Forensic        | Support         | Kea 1.1.0       | kea-dhcp4,      |
-   | Logging         | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Flexible        | Support         | Kea 1.2.0       | kea-dhcp4,      |
-   | Identifier      | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Host Commands   | Support         | Kea 1.2.0       | kea-dhcp4,      |
-   |                 | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Subnet Commands | Support         | Kea 1.3.0       | kea-dhcp4,      |
-   |                 | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Lease Commands  | Kea sources     | Kea 1.3.0       | kea-dhcp4,      |
-   |                 |                 |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | High            | Kea sources     | Kea 1.4.0       | kea-dhcp4,      |
-   | Availability    |                 |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Statistics      | Kea sources     | Kea 1.4.0       | kea-dhcp4,      |
-   | Commands        |                 |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | RADIUS          | Support         | Kea 1.4.0       | kea-dhcp4,      |
-   |                 | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Host Cache      | Support         | Kea 1.4.0       | kea-dhcp4,      |
-   |                 | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Class Commands  | Support         | Kea 1.5.0       | kea-dhcp4,      |
-   |                 | customers       |                 | kea-dhcp6       |
-   +-----------------+-----------------+-----------------+-----------------+
-   | MySQL           | Kea sources     | Kea 1.6.0       | kea-dhcp4,      |
-   | Configuration   |                 |                 | kea-dhcp6       |
-   | Backend         |                 |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
-   | Configuration   | Support         | Kea 1.6.0       | kea-dhcp4,      |
-   | Backend         | customers       |                 | kea-dhcp6       |
-   | Commands        |                 |                 |                 |
-   +-----------------+-----------------+-----------------+-----------------+
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Name            | Availability    | Since           | Load by process | Description                                          |
+   +=================+=================+=================+=================+======================================================+
+   | user_chk        | Kea sources     | Kea 0.8         | kea-dhcp4,      | Reads known users list from a file. Unknown users    |
+   |                 |                 |                 | kea-dhcp6       | will be                                              |
+   |                 |                 |                 |                 | assigned a lease                                     |
+   |                 |                 |                 |                 | from the last subnet defined in the configuration    |
+   |                 |                 |                 |                 | file,                                                |
+   |                 |                 |                 |                 | e.g. to redirect                                     |
+   |                 |                 |                 |                 | them a captive portal. This demonstrates how an      |
+   |                 |                 |                 |                 | external                                             |
+   |                 |                 |                 |                 | source of                                            |
+   |                 |                 |                 |                 | information can be used to influence the Kea         |
+   |                 |                 |                 |                 | allocation                                           |
+   |                 |                 |                 |                 | engine. This hook                                    |
+   |                 |                 |                 |                 | is part of the Kea source code and is available in   |
+   |                 |                 |                 |                 | the                                                  |
+   |                 |                 |                 |                 | src/hooks/dhcp/user_chk directory.                   |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Forensic        | Support         | Kea 1.1.0       | kea-dhcp4,      |                                                      |
+   | Logging         | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Flexible        | Support         | Kea 1.2.0       | kea-dhcp4,      |                                                      |
+   | Identifier      | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Host Commands   | Support         | Kea 1.2.0       | kea-dhcp4,      |                                                      |
+   |                 | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Subnet Commands | Support         | Kea 1.3.0       | kea-dhcp4,      |                                                      |
+   |                 | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Lease Commands  | Kea sources     | Kea 1.3.0       | kea-dhcp4,      |                                                      |
+   |                 |                 |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | High            | Kea sources     | Kea 1.4.0       | kea-dhcp4,      |                                                      |
+   | Availability    |                 |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Statistics      | Kea sources     | Kea 1.4.0       | kea-dhcp4,      |                                                      |
+   | Commands        |                 |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | RADIUS          | Support         | Kea 1.4.0       | kea-dhcp4,      |                                                      |
+   |                 | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Host Cache      | Support         | Kea 1.4.0       | kea-dhcp4,      |                                                      |
+   |                 | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Class Commands  | Support         | Kea 1.5.0       | kea-dhcp4,      |                                                      |
+   |                 | customers       |                 | kea-dhcp6       |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | MySQL           | Kea sources     | Kea 1.6.0       | kea-dhcp4,      |                                                      |
+   | Configuration   |                 |                 | kea-dhcp6       |                                                      |
+   | Backend         |                 |                 |                 |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+   | Configuration   | Support         | Kea 1.6.0       | kea-dhcp4,      |                                                      |
+   | Backend         | customers       |                 | kea-dhcp6       |                                                      |
+   | Commands        |                 |                 |                 |                                                      |
+   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
 
 ISC hopes to see more hooks libraries become available as time
 progresses, developed both internally and externally. Since this list
@@ -902,13 +915,13 @@ can be achieved by using the following configuration:
 ::
 
    "Dhcp6": {
-       "subnet6": [{ ..., // subnet definition starts here
+       "subnet6": [{ ..., # subnet definition starts here
        "reservations": [
-           "flex-id": "'port1234'", // value of the first 8 bytes of the interface-id
+           "flex-id": "'port1234'", # value of the first 8 bytes of the interface-id
            "ip-addresses": [ "2001:db8::1" ]
        ],
-       }], // end of subnet definitions
-       "host-reservation-identifiers": ["duid", "flex-id"], // add "flex-id" to reservation identifiers
+       }], # end of subnet definitions
+       "host-reservation-identifiers": ["duid", "flex-id"], # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_flex_id.so",
@@ -941,13 +954,13 @@ for non-printable characters and do not require the use of the
 ::
 
    "Dhcp6": {
-       "subnet6": [{ ..., // subnet definition starts here
+       "subnet6": [{ ..., # subnet definition starts here
        "reservations": [
-           "flex-id": "01:02:03:04:05:06", // value of the first 8 bytes of the interface-id
+           "flex-id": "01:02:03:04:05:06", # value of the first 8 bytes of the interface-id
            "ip-addresses": [ "2001:db8::1" ]
        ],
-       }], // end of subnet definitions
-       "host-reservation-identifiers": ["duid", "flex-id"], // add "flex-id" to reservation identifiers
+       }], # end of subnet definitions
+       "host-reservation-identifiers": ["duid", "flex-id"], # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_flex_id.so",
@@ -2246,12 +2259,12 @@ An example response could look as follows:
                    {
                        "subnet": "192.0.2.0/24",
                        "id": 5,
-                       // many other subnet-specific details here
+                       # many other subnet-specific details here
                    },
                    {
                        "id": 6,
                        "subnet": "192.0.3.0/31",
-                       // many other subnet-specific details here
+                       # many other subnet-specific details here
                    }
                ],
                "valid-lifetime": 120

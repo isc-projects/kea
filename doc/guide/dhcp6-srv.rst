@@ -3635,8 +3635,9 @@ following can be used:
 ::
 
    "Dhcp6:" {
-       // This specifies global reservations. They will apply to all subnets that
-       // have global reservations enabled.
+       # This specifies global reservations.
+       # They will apply to all subnets that
+       # have global reservations enabled.
 
        "reservations": [
        {
@@ -3647,9 +3648,10 @@ following can be used:
           "hw-address": "01:02:03:04:05:06",
           "hostname": "hw-host-fixed",
 
-          // Use of IP address in global reservation is risky. If used outside of
-          // matching subnet, such as 3001::/64, it will result in a broken
-          // configuration being handed to the client.
+          # Use of IP address in global reservation is risky.
+          # If used outside of matching subnet, such as 3001::/64,
+          # it will result in a broken configuration being handed
+          # to the client.
           "ip-address": "2001:db8:ff::77"
        },
        {
@@ -3732,52 +3734,44 @@ introduced:
 
 ::
 
-   {
    "Dhcp6": {
-       "shared-networks": [
-           {
-               // Name of the shared network. It may be an arbitrary string
-               // and it must be unique among all shared networks.
-               "name": "ipv6-lab-1",
+       "shared-networks": [{
+           # Name of the shared network. It may be an arbitrary string
+           # and it must be unique among all shared networks.
+           "name": "ipv6-lab-1",
 
-               // The subnet selector can be specified on the shared network level.
-               // Subnets from this shared network will be selected for clients
-               // communicating via relay agent having the specified IP address.
-               "relay": {
-                   "ip-addresses": [ "2001:db8:2:34::1" ]
-               },
+           # The subnet selector can be specified on the shared network
+           # level. Subnets from this shared network will be selected
+           # for clients communicating via relay agent having
+           # the specified IP address.
+           "relay": {
+               "ip-addresses": [ "2001:db8:2:34::1" ]
+           },
 
-               // This starts a list of subnets in this shared network.
-               // There are two subnets in this example.
-               "subnet6": [
-                   {
-                       "subnet": "2001:db8::/48",
-                       "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
-                   },
-                   {
-                       "subnet": "3ffe:ffe::/64",
-                       "pools": [ { "pool":  "3ffe:ffe::/64" } ]
-                   }
-               ]
-           } ], // end of shared-networks
+           # This starts a list of subnets in this shared network.
+           # There are two subnets in this example.
+           "subnet6": [{
+               "subnet": "2001:db8::/48",
+               "pools": [{ "pool":  "2001:db8::1 - 2001:db8::ffff" }]
+           }, {
+               "subnet": "3ffe:ffe::/64",
+               "pools": [{ "pool":  "3ffe:ffe::/64" }]
+           }]
+       }], # end of shared-networks
 
-       // It is likely that in the network there will be a mix of regular,
-       // "plain" subnets and shared networks. It is perfectly valid to mix
-       // them in the same configuration file.
-       //
-       // This is a regular subnet. It is not part of any shared-network.
-       "subnet6": [
-           {
-               "subnet": "2001:db9::/48",
-               "pools": [ { "pool":  "2001:db9::/64" } ],
-               "relay": {
-                   "ip-addresses": [ "2001:db8:1:2::1" ]
-               }
+       # It is likely that in the network there will be a mix of regular,
+       # "plain" subnets and shared networks. It is perfectly valid
+       # to mix them in the same configuration file.
+       #
+       # This is a regular subnet. It is not part of any shared-network.
+       "subnet6": [{
+           "subnet": "2001:db9::/48",
+           "pools": [{ "pool":  "2001:db9::/64" }],
+           "relay": {
+               "ip-addresses": [ "2001:db8:1:2::1" ]
            }
-       ]
-
-   } // end of Dhcp6
-   }
+       }]
+   } # end of Dhcp6
 
 As demonstrated in the example, it is possible to mix shared and regular
 ("plain") subnets. Each shared network must have a unique name. This is
@@ -3807,12 +3801,12 @@ then override its value in the subnet scope. For example:
                 "ip-addresses": [ "2001:db8:2:34::1" ]
            },
 
-           // This applies to all subnets in this shared network, unless
-           // values are overridden on subnet scope.
+           # This applies to all subnets in this shared network, unless
+           # values are overridden on subnet scope.
            "valid-lifetime": 600,
 
-           // This option is made available to all subnets in this shared
-           // network.
+           # This option is made available to all subnets in this shared
+           # network.
            "option-data": [ {
                "name": "dns-servers",
                "data": "2001:db8::8888"
@@ -3823,7 +3817,7 @@ then override its value in the subnet scope. For example:
                    "subnet": "2001:db8:1::/48",
                    "pools": [ { "pool":  "2001:db8:1::1 - 2001:db8:1::ffff" } ],
 
-                   // This particular subnet uses different values.
+                   # This particular subnet uses different values.
                    "valid-lifetime": 1200,
                    "option-data": [
                    {
@@ -3839,8 +3833,8 @@ then override its value in the subnet scope. For example:
                     "subnet": "2001:db8:2::/48",
                     "pools": [ { "pool":  "2001:db8:2::1 - 2001:db8:2::ffff" } ],
 
-                    // This subnet does not specify its own valid-lifetime value,
-                    // so it is inherited from shared network scope.
+                    # This subnet does not specify its own valid-lifetime value,
+                    # so it is inherited from shared network scope.
                     "option-data": [
                     {
                         "name": "dns-servers",
@@ -3888,8 +3882,8 @@ convenient to specify it once at the shared network level.
        {
            "name": "office-floor-2",
 
-           // This tells Kea that the whole shared network is reachable over a
-           // local interface. This applies to all subnets in this network.
+           # This tells Kea that the whole shared network is reachable over a
+           # local interface. This applies to all subnets in this network.
            "interface": "eth0",
 
            "subnet6": [
@@ -3902,9 +3896,9 @@ convenient to specify it once at the shared network level.
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
 
-                    // Specifying a different interface name is a configuration
-                    // error:
-                    // "interface": "eth1"
+                    # Specifying a different interface name is a configuration
+                    # error:
+                    # "interface": "eth1"
                }
            ],
        } ]
@@ -5410,7 +5404,7 @@ option is actually needed. An example configuration looks as follows:
                "prefix-len": 56,
                "delegated-len": 64,
 
-               // This is a pool specific context.
+               # This is a pool specific context.
                "user-context": {
                    "threshold-percent": 85,
                    "v4-network": "192.168.0.0/16",
@@ -5423,8 +5417,8 @@ option is actually needed. An example configuration looks as follows:
            } ],
            "subnet": "2001:db8::/32",
 
-           // This is a subnet-specific context. Any type of
-           // information can be entered here as long as it is valid JSON.
+           # This is a subnet-specific context. Any type of
+           # information can be entered here as long as it is valid JSON.
            "user-context": {
                "comment": "Those v4-v6 migration technologies are tricky.",
                "experimental": true,

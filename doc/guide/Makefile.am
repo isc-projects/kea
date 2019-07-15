@@ -33,18 +33,32 @@ rst_sources+=stats.rst
 
 
 sphinxbuild = sphinx-build
-sphinxopts = -E
 
-kea-guide.pdf: $(rst_sources)
-	@$(sphinxbuild) -b latex $(srcdir) $(builddir)/_build $(sphinxopts)
+sphinxopts=
+sphinxopts+=-v
+sphinxopts+=-E
+sphinxopts+=-a
+sphinxopts+=-c "${abs_srcdir}"
+sphinxopts+=-D release="@PACKAGE_VERSION@"
+sphinxopts+=-D version="@PACKAGE_VERSION@"
 
-kea-guide.html: $(rst_sources)
-	@$(sphinxbuild) -b singlehtml $(srcdir) $(builddir)/_build $(sphinxopts)
+sphinxbuilddir=$(builddir)/_build
 
-pages: $(rst_sources)
-	@$(sphinxbuild) -b html $(srcdir) $(builddir)/_build2 $(sphinxopts)
+all: pdf html singlehtml
+
+pdf: $(rst_sources)
+	$(sphinxbuild) -M latexpdf $(srcdir) $(sphinxbuilddir) $(sphinxopts)
+
+html singlehtml: $(rst_sources)
+	$(sphinxbuild) -M $@ $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
 
 EXTRA_DIST = $(rst_sources)
 
 # TODO: here should be added some stuff for DIST, etc to be consumed by automake/autoconf
+
+clean::
+	-rm -rf $(sphinxbuilddir)
+
+
+.PHONY: all pdf html singlehtml

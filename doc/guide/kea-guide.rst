@@ -6,7 +6,7 @@ Kea is an open source implementation of the Dynamic Host Configuration
 Protocol (DHCP) servers, developed and maintained by Internet Systems
 Consortium (ISC).
 
-This is the reference guide for Kea version &keaversion;.
+This is the reference guide for Kea version |release|.
 Links to the most up-to-date version of this document (in PDF, HTML,
 and plain text formats), along with other documents for
 Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administrator-reference-manual>`_.
@@ -47,11 +47,11 @@ Kea is an open source project designed, developed, and maintained by
 Internet Systems Consortium, Inc, a 501(c)3 non-profit organization. ISC
 is primarily funded by revenues from support subscriptions for our open
 source, and we encourage all professional users to consider this option.
-To learn more, see ​\ https://www.isc.org/support/.
+To learn more, see \ https://www.isc.org/support/.
 
 If you would like to contribute to ISC to assist us in continuing to
 make quality open source software, please visit our donations page at
-​\ https://www.isc.org/donate/.
+\ https://www.isc.org/donate/.
 
 We thank all the organizations and individuals who have helped to make
 Kea possible. `Comcast <https://www.comcast.com/>`__ and the Comcast

@@ -259,7 +259,7 @@ Starting the Control Agent
 The CA is started by running its binary and specifying the configuration
 file it should use. For example:
 
-::
+.. code-block:: console
 
    $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 

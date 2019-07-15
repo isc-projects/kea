@@ -179,7 +179,7 @@ To create the database:
 
 1. Log into MySQL as "root":
 
-   ::
+   .. code-block:: console
 
       $ mysql -u root -p
       Enter password:
@@ -187,16 +187,16 @@ To create the database:
 
 2. Create the MySQL database:
 
-   ::
+   .. code-block:: mysql
 
-      mysql> CREATE DATABASE database-name;
+      mysql> CREATE DATABASE database_name;
 
-   (database-name is the name chosen for the database.)
+   (database_name is the name chosen for the database.)
 
 3. Create the user under which Kea will access the database (and give it
    a password), then grant it access to the database tables:
 
-   ::
+   .. code-block:: mysql
 
       mysql> CREATE USER 'user-name'@'localhost' IDENTIFIED BY 'password';
       mysql> GRANT ALL ON database-name.* TO 'user-name'@'localhost';
@@ -209,7 +209,7 @@ To create the database:
    (Alternatively, the tables can be created by exiting MySQL and using the
    ``kea-admin`` tool, as explained below.) To do this:
 
-   ::
+   .. code-block:: mysql
 
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_create.mysql
@@ -218,7 +218,7 @@ To create the database:
 
 5. Exit MySQL:
 
-   ::
+   .. code-block:: mysql
 
       mysql> quit
       Bye
@@ -227,7 +227,7 @@ To create the database:
 If the tables were not created in Step 4, run the ``kea-admin`` tool
 to create them now:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-init mysql -u database-user -p database-password -n database-name
 
@@ -248,7 +248,7 @@ existing database will need to be upgraded. This can be done using the
 
 To check the current version of the database, use the following command:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-version mysql -u database-user -p database-password -n database-name
 
@@ -262,7 +262,7 @@ upgrade process does not discard any data, but depending on the nature
 of the changes, it may be impossible to subsequently downgrade to an
 earlier version. To perform an upgrade, issue the following command:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-upgrade mysql -u database-user -p database-password -n database-name
 
@@ -285,7 +285,7 @@ which the servers will access it. A number of steps are required:
 
 1. Log into PostgreSQL as "root":
 
-   ::
+   .. code-block:: console
 
       $ sudo -u postgres psql postgres
       Enter password:
@@ -293,7 +293,7 @@ which the servers will access it. A number of steps are required:
 
 2. Create the database:
 
-   ::
+   .. code-block:: psql
 
       postgres=# CREATE DATABASE database-name;
       CREATE DATABASE
@@ -304,7 +304,7 @@ which the servers will access it. A number of steps are required:
 3. Create the user under which Kea will access the database (and give it
    a password), then grant it access to the database:
 
-   ::
+   .. code-block:: psql
 
       postgres=# CREATE USER user-name WITH PASSWORD 'password';
       CREATE ROLE
@@ -314,7 +314,7 @@ which the servers will access it. A number of steps are required:
 
 4. Exit PostgreSQL:
 
-   ::
+   .. code-block:: psql
 
       postgres=# \q
       Bye
@@ -328,7 +328,7 @@ which the servers will access it. A number of steps are required:
    completes, Kea will return to the shell prompt. The
    output should be similar to the following:
 
-   ::
+   .. code-block:: console
 
       $ psql -d database-name -U user-name -f path-to-kea/share/kea/scripts/pgsql/dhcpdb_create.pgsql
       Password for user user-name:
@@ -388,7 +388,7 @@ Initialize the PostgreSQL Database Using kea-admin
 If the tables were not created manually, do so now by
 running the ``kea-admin`` tool:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-init pgsql -u database-user -p database-password -n database-name
 
@@ -409,13 +409,13 @@ database backend type must be used in the commands.
 
 Use the following command to check the current schema version:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-version pgsql -u database-user -p database-password -n database-name
 
 Use the following command to perform an upgrade:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-upgrade pgsql -u database-user -p database-password -n database-name
 
@@ -447,13 +447,13 @@ To create the database:
 
 1. Export CQLSH_HOST environment variable:
 
-   ::
+   .. code-block:: console
 
       $ export CQLSH_HOST=localhost
 
 2. Log into CQL:
 
-   ::
+   .. code-block:: console
 
       $ cqlsh
       cql>
@@ -479,7 +479,7 @@ To create the database:
 If the tables were not created in Step 4, do so now by
 running the ``kea-admin`` tool:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-init cql -n database-name
 
@@ -500,7 +500,7 @@ existing database will need to be upgraded. This can be done using the
 
 To check the current version of the database, use the following command:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-version cql -n database-name
 
@@ -514,7 +514,7 @@ upgrade process does not discard any data, but depending on the nature
 of the changes, it may be impossible to subsequently downgrade to an
 earlier version. To perform an upgrade, issue the following command:
 
-::
+.. code-block:: console
 
    $ kea-admin lease-upgrade cql -n database-name
 

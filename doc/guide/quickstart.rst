@@ -22,27 +22,27 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 
 3.  Extract the tarball. For example:
 
-    ::
+    .. code-block:: console
 
-       $ tar xvzf kea-KEAVERSION.tar.gz
+       $ tar xvzf kea-|release|.tar.gz
 
 4.  Go into the source directory and run the configure script:
 
-    ::
+    .. code-block:: console
 
-       $ cd kea-KEAVERSION
+       $ cd kea-|release|
        $ ./configure [your extra parameters]
 
 5.  Build it:
 
-    ::
+    .. code-block:: console
 
        $ make
 
 6.  Install it (by default it will be placed in ``/usr/local/``, so it
     is likely that you will need root privileges for this step):
 
-    ::
+    .. code-block:: console
 
        # make install
 
@@ -55,25 +55,25 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 8.  In order to start the DHCPv4 server in the background, run the
     following command (as root):
 
-    ::
+    .. code-block:: console
 
        # keactrl start -s dhcp4
 
     Or run the following command to start the DHCPv6 server instead:
 
-    ::
+    .. code-block:: console
 
        # keactrl start -s dhcp6
 
     Note that it is also possible to start all servers simultaneously:
 
-    ::
+    .. code-block:: console
 
-       $ keactrl start
+       # keactrl start
 
 9.  Verify that the Kea server(s) is/are running:
 
-    ::
+    .. code-block:: console
 
        # keactrl status
 
@@ -92,7 +92,7 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 
 11. Stop running the server(s):
 
-    ::
+    .. code-block:: console
 
        # keactrl stop
 
@@ -112,12 +112,12 @@ Running the Kea Servers Directly
 The Kea servers can be started directly, without the need to use
 ``keactrl``. To start the DHCPv4 server run the following command:
 
-::
+.. code-block:: console
 
    # kea-dhcp4 -c /path/to/your/kea4/config/file.json
 
 Similarly, to start the DHCPv6 server run the following command:
 
-::
+.. code-block:: console
 
    # kea-dhcp6 -c /path/to/your/kea6/config/file.json

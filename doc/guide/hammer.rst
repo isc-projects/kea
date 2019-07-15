@@ -21,9 +21,9 @@ please do so with care.
 The first-time user is strongly encouraged to look at Hammer's built-in
 help:
 
-::
+.. code-block:: console
 
-   ./hammer.py --help
+   $ ./hammer.py --help
 
 It will list available parameters.
 
@@ -31,9 +31,9 @@ Hammer is able to set up various operating systems running either in LXC
 or in VirtualBox. To list of supported systems, use the
 ``supported-systems`` command:
 
-::
+.. code-block:: console
 
-   $./hammer.py supported-systems
+   $ ./hammer.py supported-systems
    fedora:
      - 27: lxc, virtualbox
      - 28: lxc, virtualbox
@@ -61,9 +61,9 @@ First, you must install the Hammer dependencies: Vagrant
 and either VirtualBox or LXC. To make life easier, Hammer can install
 Vagrant and the required Vagrant plugins using the command:
 
-::
+.. code-block:: console
 
-   ./hammer.py ensure-hammer-deps
+   $ ./hammer.py ensure-hammer-deps
 
 VirtualBox and LXC need to be installed manually.
 
@@ -71,9 +71,9 @@ The basic functions provided by Hammer are to prepare the build environment
 and perform the actual build, and to run the unit tests locally in the current
 system. This can be achieved by running the command:
 
-::
+.. code-block:: console
 
-   ./hammer.py build -p local
+   $ ./hammer.py build -p local
 
 The scope of the process can be defined using --with (-w) and --without
 (-x) options. By default the build command will build Kea with
@@ -81,9 +81,9 @@ documentation, install it locally, and run unit tests.
 
 To exclude the installation and generation of docs, type:
 
-::
+.. code-block:: console
 
-   ./hammer.py build -p local -x install docs
+   $ ./hammer.py build -p local -x install docs
 
 The basic scope can be extended by: mysql, pgsql, cql, native-pkg,
 radius, shell, and forge.
@@ -96,16 +96,16 @@ radius, shell, and forge.
 Hammer can be told to set up a new virtual machine with a specified
 operating system, without the build:
 
-::
+.. code-block:: console
 
-   ./hammer.py prepare-system -p virtualbox -s freebsd -r 12.0
+   $ ./hammer.py prepare-system -p virtualbox -s freebsd -r 12.0
 
 This way we can prepare a system for our own use. To get to such a system
 using SSH, invoke:
 
-::
+.. code-block:: console
 
-   ./hammer.py ssh -p virtualbox -s freebsd -r 12.0
+   $ ./hammer.py ssh -p virtualbox -s freebsd -r 12.0
 
 It is possible to speed up subsequent Hammer builds. To achieve this
 Hammer employs `ccache <https://ccache.samba.org/>`__. During
@@ -116,9 +116,9 @@ or LXC. To indicate the folder, you must indicate the --ccache-dir
 parameter for Hammer. In the indicated folder, there are separate stored objects for each target
 operating system.
 
-::
+.. code-block:: console
 
-         ./hammer.py build -p lxc -s ubuntu -r 18.04 --ccache-dir ~/kea-ccache
+   $ ./hammer.py build -p lxc -s ubuntu -r 18.04 --ccache-dir ~/kea-ccache
 
 
 ..
@@ -130,6 +130,6 @@ operating system.
 
 For more information check:
 
-::
+.. code-block:: console
 
-   ./hammer.py --help
+   $ ./hammer.py --help

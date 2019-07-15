@@ -31,14 +31,14 @@ any other hooks library; for example, this configuration could be used:
 
      "Dhcp4": {
 
-     // Your regular DHCPv4 configuration parameters here.
+     # Your regular DHCPv4 configuration parameters here.
 
      "hooks-libraries": [
      {
          "library": "/usr/local/lib/kea/hooks/libdhc_host_cache.so",
          "parameters": {
 
-             // Tells Kea to never cache more than 1000 hosts.
+             # Tells Kea to never cache more than 1000 hosts.
              "maximum": 1000
 
          }

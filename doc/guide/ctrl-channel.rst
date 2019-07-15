@@ -183,14 +183,14 @@ common UNIX/Linux tools such as ``socat`` and ``curl``.
 In order to control the given Kea service via a UNIX domain socket, use
 ``socat`` in interactive mode as follows:
 
-::
+.. code-block:: console
 
    $ socat UNIX:/path/to/the/kea/socket -
 
 or in batch mode, include the "ignoreeof" option as shown below to
 ensure ``socat`` waits long enough for the server to respond:
 
-::
+.. code-block:: console
 
    $ echo "{ some command...}" | socat UNIX:/path/to/the/kea/socket -,ignoreeof
 
@@ -208,7 +208,7 @@ section.
 
 To use Kea's RESTful API with ``curl``, use the following:
 
-::
+.. code-block:: console
 
    $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }' http://ca.example.org:8000/
 

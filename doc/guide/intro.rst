@@ -8,14 +8,14 @@ Kea is the next generation of DHCP software developed by ISC. It
 supports both DHCPv4 and DHCPv6 protocols along with their extensions,
 e.g. prefix delegation and dynamic updates to DNS.
 
-This guide covers Kea version KEAVERSION.
+This guide covers Kea version |release|.
 
 Supported Platforms
 ===================
 
 Kea is officially supported on CentOS, Fedora, Ubuntu, Debian, and
 FreeBSD systems. It is also likely to work on many other platforms.
-Kea-KEAVERSION builds have been tested on:
+Kea-|release| builds have been tested on:
 
 -  CentOS Linux — 7.1804 (aka 7.5)
 -  Fedora — 28, 29

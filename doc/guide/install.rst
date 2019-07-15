@@ -152,7 +152,7 @@ development is done in the “master” branch.
 The code can be checked out from
 ``https://gitlab.isc.org/isc-projects/kea.git``:
 
-::
+.. code-block:: console
 
    $ git clone https://gitlab.isc.org/isc-projects/kea.git
 
@@ -179,7 +179,7 @@ Configure Before the Build
 Kea uses the GNU Build System to discover build environment details. To
 generate the makefiles using the defaults, simply run:
 
-::
+.. code-block:: console
 
    $ ./configure
 
@@ -254,7 +254,7 @@ developers, or people who want to extend Kea code or send patches:
    Internet anyway, please set the XSLTPROC_NET environment variable in
    configure to any non-empty value, e.g.
 
-   ::
+   .. code-block:: console
 
       $ ./configure XSLTPROC_NET=yes --enable-generate-docs
 
@@ -287,7 +287,7 @@ For example, the following command configures Kea to find the Boost
 headers in /usr/pkg/include, specifies that PostgreSQL support should be
 enabled, and sets the installation location to /opt/kea:
 
-::
+.. code-block:: console
 
    $ ./configure \
          --with-boost-include=/usr/pkg/include \
@@ -298,7 +298,7 @@ If you have any problems with building Kea using the header-only Boost
 code, or you'd like to use the Boost system library (assumed for the
 sake of this example to be located in /usr/pkg/lib):
 
-::
+.. code-block:: console
 
    $ ./configure \
          --with-boost-libs=-lboost_system \
@@ -316,7 +316,7 @@ Build
 After the configure step is complete, build the executables from the C++
 code and prepare the Python scripts by running the command:
 
-::
+.. code-block:: console
 
    $ make
 
@@ -326,7 +326,7 @@ Install
 To install the Kea executables, support files, and documentation, issue
 the command:
 
-::
+.. code-block:: console
 
    $ make install
 
@@ -342,7 +342,7 @@ If required, run ``ldconfig`` as root with ``/usr/local/lib`` (or with
 prefix/lib if configured with --prefix) in ``/etc/ld.so.conf`` (or the
 relevant linker cache configuration file for your OS):
 
-::
+.. code-block:: console
 
    $ ldconfig
 
@@ -355,8 +355,8 @@ relevant linker cache configuration file for your OS):
 
    ::
 
-                    program: error while loading shared libraries: libkea-something.so.1:
-                    cannot open shared object file: No such file or directory
+       program: error while loading shared libraries: libkea-something.so.1:
+       cannot open shared object file: No such file or directory
 
 
 .. _dhcp-install-configure:
@@ -393,17 +393,17 @@ with the following modification. To enable the MySQL database code, at
 the "configure" step (see :ref:`configure`),
 the --with-mysql switch should be specified:
 
-::
+.. code-block:: console
 
-   ./configure [other-options] --with-mysql
+   $ ./configure [other-options] --with-mysql
 
 If MySQL was not installed in the default location, the location of the
 MySQL configuration program "mysql_config" should be included with the
 switch, i.e.
 
-::
+.. code-block:: console
 
-   ./configure [other-options] --with-mysql=path-to-mysql_config
+   $ ./configure [other-options] --with-mysql=path-to-mysql_config
 
 See :ref:`mysql-database-create` for details regarding MySQL
 database configuration.
@@ -419,17 +419,17 @@ Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the PostgreSQL database code,
 at the "configure" step (see :ref:`configure`), the --with-pgsql switch should be specified:
 
-::
+.. code-block:: console
 
-   ./configure [other-options] --with-pgsql
+   $ ./configure [other-options] --with-pgsql
 
 If PostgreSQL was not installed in the default location, the location of
 the PostgreSQL configuration program "pg_config" should be included with
 the switch, i.e.
 
-::
+.. code-block:: console
 
-   ./configure [other-options] --with-pgsql=path-to-pg_config
+   $ ./configure [other-options] --with-pgsql=path-to-pg_config
 
 See :ref:`pgsql-database-create` for details regarding PostgreSQL
 database configuration.
@@ -446,9 +446,9 @@ simply install or build and install the package. Then build and install
 Kea as described in :ref:`installation`. To enable the
 Cassandra (CQL) database code, at the "configure" step (see :ref:`configure`), enter:
 
-::
+.. code-block:: console
 
-   ./configure [other-options] --with-cql=path-to-pkg-config
+   $ ./configure [other-options] --with-cql=path-to-pkg-config
 
 Note if ``pkg-config`` is at its standard location (and thus in the
 shell path) you do not need to supply its path. If it does not work
@@ -461,7 +461,7 @@ dependencies for building cpp-driver, see the project homepage
 https://github.com/datastax/cpp-driver. In June 2016, the following
 commands were used:
 
-::
+.. code-block:: console
 
    $ git clone https://github.com/datastax/cpp-driver
    $ cd cpp-driver
@@ -486,9 +486,9 @@ Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the Cassandra (CQL) database
 code, at the "configure" step (see :ref:`configure`), enter:
 
-::
+.. code-block:: console
 
-   ./configure [other-options] --with-cql=path-to-cql_config
+   $ ./configure [other-options] --with-cql=path-to-cql_config
 
 
 
