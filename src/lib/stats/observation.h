@@ -194,6 +194,16 @@ class Observation {
     /// @return size of storage
     size_t getSize() const;
 
+    /// @brief Returns both value of max_sample_age_ of statistic.
+    ///
+    /// @return max_sample_age_.
+    std::pair<bool, StatsDuration> getMaxSampleAge() const;
+
+    /// @brief Returns both value of max_sample_count_ of statistic.
+    ///
+    /// @return max_sample_count_.
+    std::pair<bool, uint32_t> getMaxSampleCount() const;
+
     /// @brief Resets statistic.
     ///
     /// Sets statistic to a neutral (0, 0.0 or "") value and

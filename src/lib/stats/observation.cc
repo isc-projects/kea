@@ -150,6 +150,14 @@ size_t Observation::getSize() const {
     return (size);
 }
 
+std::pair<bool, StatsDuration> Observation::getMaxSampleAge() const {
+    return (max_sample_age_);
+}
+
+std::pair<bool, uint32_t> Observation::getMaxSampleCount() const {
+    return (max_sample_count_);
+}
+
 template<typename StorageType>
 size_t Observation::getSizeInternal(StorageType& storage, Type exp_type) const {
     if (type_ != exp_type) {
@@ -178,8 +186,8 @@ void Observation::setValueInternal(SampleType value, StorageType& storage,
         storage.push_front(make_pair(value, microsec_clock::local_time()));
 
         if (max_sample_count_.first) {
-            // if max_sample_count is set to true
-            // and size of storage is equal to max_sample_count
+            // if max_sample_count_ is set to true
+            // and size of storage is equal to max_sample_count_
             if (storage.size() > max_sample_count_.second) {
                 storage.pop_back(); // removing the last element
             }
@@ -273,10 +281,10 @@ void Observation::setMaxSampleAgeInternal(StorageType& storage,
                   << typeToText(exp_type) << ", but the actual type is "
                   << typeToText(type_));
     }
-    // setting new value of max_sample_age
+    // setting new value of max_sample_age_
     max_sample_age_.first = true;
     max_sample_age_.second = duration;
-    // deactivating the max_sample_count limit
+    // deactivating the max_sample_count_ limit
     max_sample_count_.first = false;
 
     StatsDuration range_of_storage =
@@ -298,10 +306,10 @@ void Observation::setMaxSampleCountInternal(StorageType& storage,
                   << typeToText(exp_type) << ", but the actual type is "
                   << typeToText(type_));
     }
-    // setting new value of max_sample_count
+    // setting new value of max_sample_count_
     max_sample_count_.first = true;
     max_sample_count_.second = max_samples;
-    // deactivating the max_sample_age limit
+    // deactivating the max_sample_age_ limit
     max_sample_age_.first = false;
 
     while (storage.size() > max_samples) {

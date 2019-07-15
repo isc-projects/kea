@@ -430,6 +430,35 @@ TEST_F(ObservationTest, setAgeLimit) {
     }
 }
 
+// Test checks whether we can get max_sample_age_ and max_sample_count_
+// properly.
+TEST_F(ObservationTest, getLimits) {
+    // First checks whether getting default values works properly
+    EXPECT_EQ(a.getMaxSampleAge().first, false);
+    EXPECT_EQ(b.getMaxSampleAge().first, false);
+    EXPECT_EQ(c.getMaxSampleAge().first, false);
+    EXPECT_EQ(d.getMaxSampleAge().first, false);
+
+    EXPECT_EQ(a.getMaxSampleCount().first, true);
+    EXPECT_EQ(b.getMaxSampleCount().first, true);
+    EXPECT_EQ(c.getMaxSampleCount().first, true);
+    EXPECT_EQ(d.getMaxSampleCount().first, true);
+
+    EXPECT_EQ(a.getMaxSampleCount().second, 20);
+    EXPECT_EQ(b.getMaxSampleCount().second, 20);
+    EXPECT_EQ(c.getMaxSampleCount().second, 20);
+    EXPECT_EQ(d.getMaxSampleCount().second, 20);
+
+    // Change limit to max_sample_age_
+    a.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3));
+    EXPECT_EQ(a.getMaxSampleAge().first, true);
+    EXPECT_EQ(a.getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+
+    EXPECT_EQ(a.getMaxSampleCount().first, false);
+    EXPECT_EQ(a.getMaxSampleCount().second, 20);
+
+}
+
 // Test checks whether timing is reported properly.
 TEST_F(ObservationTest, timers) {
     ptime before = microsec_clock::local_time();

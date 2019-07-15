@@ -136,7 +136,7 @@ TEST_F(StatsMgrTest, getSize) {
     EXPECT_EQ(StatsMgr::instance().getSize("delta"), 1);
 }
 
-// Test checks whether setting age limit and count limit works properly
+// Test checks whether setting age limit and count limit works properly.
 TEST_F(StatsMgrTest, setLimits) {
     // Initializing of an integer type observation
     StatsMgr::instance().setValue("foo", static_cast<int64_t>(1));
@@ -159,6 +159,66 @@ TEST_F(StatsMgrTest, setLimits) {
     }
 
     EXPECT_EQ(StatsMgr::instance().getSize("foo"), 100);
+}
+
+// Test checks whether setting age limit and count limit to existing
+// statistics works properly.
+TEST_F(StatsMgrTest, setLimitsAll) {
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    //First, check the setting of time limit to existing statistics
+    EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleAgeAll(time_duration(0, 0, 1, 0)));
+    // Now check if time limit was set properly
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().second,
+                                                            time_duration(0, 0, 1, 0));
+    // and whether count limit is disabled
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().second,
+                                                            time_duration(0, 0, 1, 0));
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().second,
+                                                            time_duration(0, 0, 1, 0));
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().second,
+                                                            time_duration(0, 0, 1, 0));
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, false);
+
+    //then, check the setting of count limit to existing statistics
+    EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleCountAll(1200));
+    // Now check if count limit was set properly
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().second, 1200);
+    // and whether count limit is disabled
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().second, 1200);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().second, 1200);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().second, 1200);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, false);
 }
 
 // This test checks whether a single (get("foo")) and all (getAll())
@@ -716,6 +776,201 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     EXPECT_FALSE(StatsMgr::instance().getObservation("gamma"));
     EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
     EXPECT_EQ(0, StatsMgr::instance().count());
+}
+
+// This test checks whether statistic-set-max-sample-age command really set
+// max_sample_age_ limit correctly.
+TEST_F(StatsMgrTest, commandSetMaxSampleAge) {
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+    params->set("duration", Element::create(1245)); // time_duration(0, 20, 45, 0)
+
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+
+    // Now check if time limit was set properly
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().second,
+                                                            time_duration(0, 20, 45, 0));
+    // and whether count limit is disabled
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
+}
+
+// Test checks if statistic-set-max-sample-age is able to handle:
+// - a request without parameters
+// - a request without duration parameter
+// - a request with missing statistic name
+// - a request for non-existing statistic.
+TEST_F(StatsMgrTest, commandSetMaxSampleAgeNegative) {
+
+    // Case 1: a request without parameters
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", ElementPtr());
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 2: a request without duration parameter
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 3: a request with missing statistic name
+    params = Element::createMap();
+    params->set("duration", Element::create(100));
+    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 4: a request for non-existing statistic
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
+              rsp->str());
+}
+
+TEST_F(StatsMgrTest, commandSetMaxSampleAgeAll) {
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    ElementPtr params = Element::createMap();
+    params->set("duration", Element::create(3765)); // time_duration(1, 2, 45, 0)
+
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticSetMaxSampleAgeAllHandler("statistic-set-max-sample-age-all", params);
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+
+    // Now check if time limit was set properly
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().second,
+                                                            time_duration(1, 2, 45, 0));
+    // and whether count limit is disabled
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().second,
+                                                            time_duration(1, 2, 45, 0));
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().second,
+                                                            time_duration(1, 2, 45, 0));
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().second,
+                                                            time_duration(1, 2, 45, 0));
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, false);
+}
+
+// This test checks whether statistic-set-max-sample-count command really set
+// max_sample_count_ limit correctly.
+TEST_F(StatsMgrTest, commandSetMaxSampleCount) {
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+    params->set("max-samples", Element::create(15));
+
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+
+    // Now check if time limit was set properly
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().second, 15);
+
+    // and whether duration limit is disabled
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
+}
+
+// Test checks if statistic-set-max-sample-age is able to handle:
+// - a request without parameters
+// - a request without max-samples parameter
+// - a request with missing statistic name
+// - a request for non-existing statistic.
+TEST_F(StatsMgrTest, commandSetMaxSampleCountNegative) {
+
+    // Case 1: a request without parameters
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", ElementPtr());
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 2: a request without max-samples parameter
+    ElementPtr params = Element::createMap();
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 3: a request with missing statistic name
+    params = Element::createMap();
+    params->set("max-samples", Element::create(10));
+    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
+
+    // Case 4: a request for non-existing statistic
+    params->set("name", Element::create("alpha"));
+    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
+              rsp->str());
+}
+
+TEST_F(StatsMgrTest, commandSetMaxSampleCountAll) {
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", time_duration(1, 2, 3, 4));
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+
+    ElementPtr params = Element::createMap();
+    params->set("max-samples", Element::create(200));
+
+    ConstElementPtr rsp =
+        StatsMgr::instance().statisticSetMaxSampleCountAllHandler("statistic-set-max-sample-count-all", params);
+    int status_code;
+    ASSERT_NO_THROW(parseAnswer(status_code, rsp));
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
+    // Now check if count limit was set properly
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().second, 200);
+    // and whether count limit is disabled
+    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().second, 200);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().second, 200);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, false);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().second, 200);
+
+    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, false);
 }
 
 };
