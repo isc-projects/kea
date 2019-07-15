@@ -17,7 +17,7 @@
         }
     }
 }",
-    "cmd-comment": "This command includes a list with exactly one id of the subnet to be deleted.",
+    "cmd-comment": "This command includes a list with exactly one id of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"1 IPv4 subnet(s) deleted.\",

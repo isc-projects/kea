@@ -15,7 +15,7 @@
         }
     }
 }",
-    "cmd-comment": "This command includes a list with exactly one id of the subnet to be returned.",
+    "cmd-comment": "This command includes a list with exactly one id of the subnet to be returned. The <command>server-tags</command> parameter must not be specified for this command.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"IPv4 subnet found.\",
@@ -25,7 +25,7 @@
             \"subnet\": <subnet prefix>,
             \"shared-network-name\": <shared network name> | null,
             \"metadata\": {
-                \"server-tag\": <server tag>
+                \"server-tags\": [ <first server tag>, <second server tag>, ... ]
             },
             <the rest of the subnet specification here>
         } ],
