@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include <boost/circular_buffer.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/time_duration.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -68,6 +69,87 @@ typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
 ///
 /// @todo: Eventually it will be possible to retain multiple samples for the same
 /// observation, but that is outside of scope for 0.9.2.
+
+template<typename SampleType>
+class DataContainerBase {
+public:
+    DataContainerBase() {}
+    virtual ~DataContainerBase() {}
+    virtual void push_front(SampleType&) = 0;
+    virtual SampleType pop_back() = 0;
+    virtual std::vector<SampleType> getValues() = 0;
+    virtual SampleType& front() = 0;
+    virtual SampleType& back() = 0;
+    virtual size_t size() = 0;
+    virtual void clear() = 0;
+};
+
+template<typename SampleType, typename StorageType>
+class DataContainer : public DataContainerBase<SampleType> {
+public:
+    void push_front(SampleType& value) {
+        storage_.push_front(value);
+    }
+    SampleType pop_back() {
+        return storage_.pop_back();
+    }
+    std::vector<SampleType> getValues() {
+        std::vector<SampleType> result(storage_.size());
+        std::copy(storage_.begin(), storage_.end(), result.begin());
+        return (result);
+    }
+    SampleType& front() {
+        return storage_.front();
+    }
+    SampleType& back() {
+        return storage_.back();
+    }
+    size_t size() {
+        return storage_.size();
+    }
+    void clear() {
+        storage_.clear();
+    }
+private:
+    StorageType storage_;
+};
+
+typedef DataContainerBase<IntegerSample> IntegerDataContainerBase;
+typedef std::shared_ptr<IntegerDataContainerBase> IntegerDataContainerBasePtr;
+
+typedef DataContainer<IntegerSample, std::list<IntegerSample>> IntegerListDataContainer;
+typedef std::shared_ptr<IntegerListDataContainer> IntegerListDataContainerPtr;
+
+typedef DataContainer<IntegerSample, boost::circular_buffer<IntegerSample>> IntegerRingDataContainer;
+typedef std::shared_ptr<IntegerRingDataContainer> IntegerRingDataContainerPtr;
+
+typedef DataContainerBase<FloatSample> FloatDataContainerBase;
+typedef std::shared_ptr<FloatDataContainerBase> FloatDataContainerBasePtr;
+
+typedef DataContainer<FloatSample, std::list<FloatSample>> FloatListDataContainer;
+typedef std::shared_ptr<FloatListDataContainer> FloatListDataContainerPtr;
+
+typedef DataContainer<FloatSample, boost::circular_buffer<FloatSample>> FloatRingDataContainer;
+typedef std::shared_ptr<FloatRingDataContainer> FloatRingDataContainerPtr;
+
+typedef DataContainerBase<DurationSample> DurationDataContainerBase;
+typedef std::shared_ptr<DurationDataContainerBase> DurationDataContainerBasePtr;
+
+typedef DataContainer<DurationSample, std::list<DurationSample>> DurationListDataContainer;
+typedef std::shared_ptr<DurationListDataContainer> DurationListDataContainerPtr;
+
+typedef DataContainer<DurationSample, boost::circular_buffer<DurationSample>> DurationRingDataContainer;
+typedef std::shared_ptr<DurationRingDataContainer> DurationRingDataContainerPtr;
+
+typedef DataContainerBase<StringSample> StringDataContainerBase;
+typedef std::shared_ptr<StringDataContainerBase> StringDataContainerBasePtr;
+
+typedef DataContainer<StringSample, std::list<StringSample>> StringListDataContainer;
+typedef std::shared_ptr<StringListDataContainer> StringListDataContainerPtr;
+
+typedef DataContainer<StringSample, boost::circular_buffer<StringSample>> StringRingDataContainer;
+typedef std::shared_ptr<StringRingDataContainer> StringRingDataContainerPtr;
+
 class Observation {
  public:
 
@@ -229,22 +311,22 @@ class Observation {
     /// @brief Returns observed integer samples
     /// @return list of observed samples (value + timestamp)
     /// @throw InvalidStatType if statistic is not integer
-    std::list<IntegerSample> getIntegers() const;
+    std::vector<IntegerSample> getIntegers() const;
 
     /// @brief Returns observed float samples
     /// @return list of observed samples (value + timestamp)
     /// @throw InvalidStatType if statistic is not fp
-    std::list<FloatSample> getFloats() const;
+    std::vector<FloatSample> getFloats() const;
 
     /// @brief Returns observed duration samples
     /// @return list of observed samples (value + timestamp)
     /// @throw InvalidStatType if statistic is not time duration
-    std::list<DurationSample> getDurations() const;
+    std::vector<DurationSample> getDurations() const;
 
     /// @brief Returns observed string samples
     /// @return list of observed samples (value + timestamp)
     /// @throw InvalidStatType if statistic is not a string
-    std::list<StringSample> getStrings() const;
+    std::vector<StringSample> getStrings() const;
 
     /// @brief Returns as a JSON structure
     /// @return JSON structures representing all observations
@@ -309,7 +391,7 @@ private:
     /// @throw InvalidStatType if observation type mismatches
     /// @return list of observed samples
     template<typename SampleType, typename Storage>
-    std::list<SampleType> getValuesInternal(Storage& storage,
+    std::vector<SampleType> getValuesInternal(Storage& storage,
                                             Type exp_type) const;
 
     /// @brief Determines maximum age of samples.
@@ -331,6 +413,9 @@ private:
     template<typename StorageType>
     void setMaxSampleCountInternal(StorageType& storage,
                                    uint32_t max_samples, Type exp_type);
+
+    template<typename StorageType>
+    void swapStorage();
 
     /// @brief Observation (statistic) name
     std::string name_;
@@ -369,16 +454,40 @@ private:
     /// @{
 
     /// @brief Storage for integer samples
-    std::list<IntegerSample> integer_samples_;
+    IntegerDataContainerBasePtr integer_samples_;
 
     /// @brief Storage for floating point samples
-    std::list<FloatSample> float_samples_;
+    FloatDataContainerBasePtr float_samples_;
 
     /// @brief Storage for time duration samples
-    std::list<DurationSample> duration_samples_;
+    DurationDataContainerBasePtr duration_samples_;
 
     /// @brief Storage for string samples
-    std::list<StringSample> string_samples_;
+    StringDataContainerBasePtr string_samples_;
+
+    /// @brief Ring Storage for integer samples
+    IntegerRingDataContainerPtr integer_ring_samples_;
+
+    /// @brief Ring Storage for floating point samples
+    FloatRingDataContainerPtr float_ring_samples_;
+
+    /// @brief Ring Storage for time duration samples
+    DurationRingDataContainerPtr duration_ring_samples_;
+
+    /// @brief Ring Storage for string samples
+    StringRingDataContainerPtr string_ring_samples_;
+
+    /// @brief List Storage for integer samples
+    IntegerListDataContainerPtr integer_list_samples_;
+
+    /// @brief List Storage for floating point samples
+    FloatListDataContainerPtr float_list_samples_;
+
+    /// @brief List Storage for time duration samples
+    DurationListDataContainerPtr duration_list_samples_;
+
+    /// @brief List Storage for string samples
+    StringListDataContainerPtr string_list_samples_;
     /// @}
 };
 

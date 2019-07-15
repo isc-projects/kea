@@ -230,38 +230,40 @@ SampleType Observation::getValueInternal(Storage& storage, Type exp_type) const 
     return (*storage.begin());
 }
 
-std::list<IntegerSample> Observation::getIntegers() const {
+std::vector<IntegerSample> Observation::getIntegers() const {
     return (getValuesInternal<IntegerSample>(integer_samples_, STAT_INTEGER));
 }
 
-std::list<FloatSample> Observation::getFloats() const {
+std::vector<FloatSample> Observation::getFloats() const {
     return (getValuesInternal<FloatSample>(float_samples_, STAT_FLOAT));
 }
 
-std::list<DurationSample> Observation::getDurations() const {
+std::vector<DurationSample> Observation::getDurations() const {
     return (getValuesInternal<DurationSample>(duration_samples_, STAT_DURATION));
 }
 
-std::list<StringSample> Observation::getStrings() const {
+std::vector<StringSample> Observation::getStrings() const {
     return (getValuesInternal<StringSample>(string_samples_, STAT_STRING));
 }
 
 template<typename SampleType, typename Storage>
-std::list<SampleType> Observation::getValuesInternal(Storage& storage,
-                                                     Type exp_type) const {
+std::vector<SampleType> Observation::getValuesInternal(Storage& storage,
+                                                       Type exp_type) const {
     if (type_ != exp_type) {
         isc_throw(InvalidStatType, "Invalid statistic type requested: "
                   << typeToText(exp_type) << ", but the actual type is "
                   << typeToText(type_));
     }
 
-    if (storage.empty()) {
+    if (storage->empty()) {
         // That should never happen. The first element is always initialized in
         // the constructor. reset() sets its value to zero, but the element should
         // still be there.
         isc_throw(Unexpected, "Observation storage container empty");
     }
-    return (storage);
+    std::vector<SampleType> result(storage->size());
+    std::copy(result.begin(), storage->begin(), storage->end());
+    return (result);
 }
 
 template<typename StorageType>
@@ -280,12 +282,12 @@ void Observation::setMaxSampleAgeInternal(StorageType& storage,
     max_sample_count_.first = false;
 
     StatsDuration range_of_storage =
-        storage.front().second - storage.back().second;
+        storage->front().second - storage->back().second;
 
     while (range_of_storage > duration) {
         // deleting elements which are exceeding the duration limit
-        storage.pop_back();
-        range_of_storage = storage.front().second - storage.back().second;
+        storage->pop_back();
+        range_of_storage = storage->front().second - storage->back().second;
     }
 }
 
@@ -343,11 +345,11 @@ Observation::getJSON() const {
     // retrieving all samples of indicated observation
     switch (type_) {
     case STAT_INTEGER: {
-        std::list<IntegerSample> s = getIntegers(); // List of all integer samples
+        std::vector<IntegerSample> s = getIntegers(); // List of all integer samples
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<IntegerSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (std::vector<IntegerSample>::iterator it = s.begin(); it != s.end(); ++it) {
             value = isc::data::Element::create(static_cast<int64_t>((*it).first));
             timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
 
@@ -357,11 +359,11 @@ Observation::getJSON() const {
         break;
     }
     case STAT_FLOAT: {
-        std::list<FloatSample> s = getFloats();
+        std::vector<FloatSample> s = getFloats();
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<FloatSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (std::vector<FloatSample>::iterator it = s.begin(); it != s.end(); ++it) {
             value = isc::data::Element::create((*it).first);
             timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
 
@@ -371,11 +373,11 @@ Observation::getJSON() const {
         break;
     }
     case STAT_DURATION: {
-        std::list<DurationSample> s = getDurations();
+        std::vector<DurationSample> s = getDurations();
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<DurationSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (std::vector<DurationSample>::iterator it = s.begin(); it != s.end(); ++it) {
             value = isc::data::Element::create(isc::util::durationToText((*it).first));
             timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
 
@@ -385,11 +387,11 @@ Observation::getJSON() const {
         break;
     }
     case STAT_STRING: {
-        std::list<StringSample> s = getStrings();
+        std::vector<StringSample> s = getStrings();
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<StringSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (std::vector<StringSample>::iterator it = s.begin(); it != s.end(); ++it) {
             value = isc::data::Element::create((*it).first);
             timestamp = isc::data::Element::create(isc::util::ptimeToText((*it).second));
 
@@ -412,22 +414,22 @@ Observation::getJSON() const {
 void Observation::reset() {
     switch(type_) {
     case STAT_INTEGER: {
-        integer_samples_.clear();
+        integer_samples_->clear();
         setValue(static_cast<int64_t>(0));
         return;
     }
     case STAT_FLOAT: {
-        float_samples_.clear();
+        float_samples_->clear();
         setValue(0.0);
         return;
     }
     case STAT_DURATION: {
-        duration_samples_.clear();
+        duration_samples_->clear();
         setValue(time_duration(0, 0, 0, 0));
         return;
     }
     case STAT_STRING: {
-        string_samples_.clear();
+        string_samples_->clear();
         setValue(string(""));
         return;
     }
