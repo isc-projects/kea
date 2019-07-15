@@ -7,17 +7,19 @@
     "cmd-syntax": "{
     \"command\": \"remote-global-parameter6-del\",
     \"arguments\": {
-        \"parameters\": [ <parameter name> ],
+        \"parameters\": [ <parameter name as string> ],
         \"remote\": {
             <specification of the database to connect to>
-        }
+        },
+        \"server-tags\": [ <single server tag as string> ]
     }
 }",
-    "cmd-comment": "This command carries the list including exactly one name of the parameter to be deleted.",
+    "cmd-comment": "This command carries the list including exactly one name of the parameter to be deleted. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error."
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"DHCPv6 global parameter(s) deleted.\",
     \"arguments\": {
         \"count\": 1
-    }"
+    }
+}"
 }
