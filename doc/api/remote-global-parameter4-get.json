@@ -5,7 +5,7 @@
     "avail": "1.6.0",
     "hook": "cb_cmds",
     "cmd-syntax": "{
-    \"command\": \"remote-global-parameter4-get\"
+    \"command\": \"remote-global-parameter4-get\",
     \"arguments\": {
         \"parameters\": [ <parameter name> ],
         \"remote\": {

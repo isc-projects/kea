@@ -83,6 +83,14 @@ remote-option6-global-del
 remote-option6-global-get
 remote-option6-global-get-all
 remote-option6-global-set
+remote-server4-del
+remote-server4-get
+remote-server4-get-all
+remote-server4-set
+remote-server6-del
+remote-server6-get
+remote-server6-get-all
+remote-server6-set
 remote-subnet4-del-by-id
 remote-subnet4-del-by-prefix
 remote-subnet4-get-by-id

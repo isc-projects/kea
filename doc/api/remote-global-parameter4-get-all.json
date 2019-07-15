@@ -5,7 +5,7 @@
     "avail": "1.6.0",
     "hook": "cb_cmds",
     "cmd-syntax": "{
-    \"command\": \"remote-global-parameter4-get-all\"
+    \"command\": \"remote-global-parameter4-get-all\",
     \"arguments\": {
         \"remote\": {
             <specification of the database to connect to>

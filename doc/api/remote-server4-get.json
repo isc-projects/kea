@@ -1,0 +1,35 @@
+{
+    "name": "remote-server4-get",
+    "brief": "This command is used to fetch the information about the DHCPv4 server, such as server tag and description.",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-server4-get\",
+    \"arguments\": {
+        \"servers\": [
+            {
+                \"server-tag\": <server tag>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command carries the list including exactly one map with the tag of the server to be fetched.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCP server <server tag> found.\",
+    \"arguments\": {
+        \"servers\": [
+            {
+                \"server-tag\": <server tag>,
+                \"description\": <server description>
+            }
+        ],
+        \"count\": 1
+    }
+}",
+    "resp-comment": "The server tag is the unique identifier of the server, used to associate the configuration elements in the database with the particular server instance. The returned server description is specified by the user when setting the server information."
+}

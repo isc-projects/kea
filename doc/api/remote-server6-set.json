@@ -1,0 +1,34 @@
+{
+    "name": "remote-server6-set",
+    "brief": "This command is used to create or replace information about the DHCPv6 server in the database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-server6-set\",
+    \"arguments\": {
+        \"servers\": [
+            {
+                \"server-tag\": <server tag>,
+                \"description\": <server description>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "The provided list must contain exactly one server specification. The <command>server-tag</command> must be unique accross all servers within the configuration database. The <command>description</command> is the arbitrary text describing the server, its location within the network etc.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv6 server successfully set.\",
+    \"arguments\": {
+        \"servers\": [
+            {
+                \"server-tag\": <server tag>,
+                \"description\": <server description>
+            }
+        ]
+    }
+}"
+}

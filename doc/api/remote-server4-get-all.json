@@ -1,0 +1,34 @@
+{
+    "name": "remote-server4-get-all",
+    "brief": "This command is used to fetch information about all DHCPv4 servers specified by the user.",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-server4-get-all\",
+    \"arguments\": {
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command contains no arguments besides the optional <command>remote</command>.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv4 servers found.\",
+    \"arguments\": {
+        \"servers\": [
+            {
+                \"server-tag\": <first server tag>
+                \"description\": <first server description>
+            },
+            {
+                \"server-tag\": <second server tag>
+                \"description\": <second server description>
+            }
+        ],
+        \"count\": 2
+    }
+}",
+    "resp-comment": "The returned response contain a list of maps. Each map contains a server tag uniquely identifying a server and the user defined description of the server. The Kea Configuration Backend uses the keyword <command>all</command> to associate parts of the configuration with all servers. Internally, it creates the logical server <command>all</command> for this purpose. However, this logical server is not returned as a result of the <command>remote-server4-get-all</command>. Only the user defined servers are returned."
+}
