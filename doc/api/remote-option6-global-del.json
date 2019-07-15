@@ -15,10 +15,11 @@
         ],
         \"remote\": {
             <specification of the database to connect to>
-        }
+        },
+        \"server-tags\": [ <single server tag as string> ]
     }
 }",
-    "cmd-comment": "This command includes a list with exactly one option specification comprising an option name and code.",
+    "cmd-comment": "This command includes a list with exactly one option specification comprising an option name and code. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.",
     "resp-syntax": "{
     \"result\": 0,
     \"text\": \"1 DHCPv6 option(s) deleted.\",
