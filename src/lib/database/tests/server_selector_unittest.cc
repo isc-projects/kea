@@ -19,7 +19,7 @@ TEST(ServerSelectorTest, unassigned) {
     ServerSelector selector = ServerSelector::UNASSIGNED();
     EXPECT_EQ(ServerSelector::Type::UNASSIGNED, selector.getType());
     EXPECT_TRUE(selector.amUnassigned());
-    EXPECT_TRUE(selector.getTags().empty());
+    EXPECT_TRUE(selector.hasNoTags());
     EXPECT_FALSE(selector.hasMultipleTags());
 }
 
@@ -29,6 +29,7 @@ TEST(ServerSelectorTest, all) {
     EXPECT_EQ(ServerSelector::Type::ALL, selector.getType());
     EXPECT_FALSE(selector.amUnassigned());
 
+    EXPECT_FALSE(selector.hasNoTags());
     auto tags = selector.getTags();
     EXPECT_EQ(1, tags.size());
     EXPECT_EQ(1, tags.count(ServerTag("all")));
@@ -42,6 +43,7 @@ TEST(ServerSelectorTest, one) {
     EXPECT_EQ(ServerSelector::Type::SUBSET, selector.getType());
     EXPECT_FALSE(selector.amUnassigned());
 
+    EXPECT_FALSE(selector.hasNoTags());
     auto tags = selector.getTags();
     ASSERT_EQ(1, tags.size());
     EXPECT_EQ(1, tags.count(ServerTag("some-tag")));
@@ -54,6 +56,7 @@ TEST(ServerSelectorTest, multiple) {
     EXPECT_EQ(ServerSelector::Type::SUBSET, selector.getType());
     EXPECT_FALSE(selector.amUnassigned());
 
+    EXPECT_FALSE(selector.hasNoTags());
     auto tags = selector.getTags();
     ASSERT_EQ(3, tags.size());
     EXPECT_EQ(1, tags.count(ServerTag("tag1")));
@@ -62,14 +65,13 @@ TEST(ServerSelectorTest, multiple) {
     EXPECT_TRUE(selector.hasMultipleTags());
 }
 
-// Check that server selector can be set to ALL.
+// Check that server selector can be set to ANY.
 TEST(ServerSelectorTest, any) {
     ServerSelector selector = ServerSelector::ANY();
     EXPECT_EQ(ServerSelector::Type::ANY, selector.getType());
     EXPECT_FALSE(selector.amUnassigned());
 
-    auto tags = selector.getTags();
-    EXPECT_EQ(0, tags.size());
+    EXPECT_TRUE(selector.hasNoTags());
 }
 
 }

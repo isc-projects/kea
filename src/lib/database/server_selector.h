@@ -99,6 +99,13 @@ public:
         return (tags_);
     }
 
+    /// @brief Convenience method checking if the server selector has no tags.
+    ///
+    /// @return true when the server selector has no tags, false otherwise.
+    bool hasNoTags() const {
+        return (tags_.empty());
+    }
+
     /// @brief Convenience method checking if the server selector is "unassigned".
     ///
     /// @return true if the selector is "unassigned", false otherwise.
