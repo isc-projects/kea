@@ -126,9 +126,8 @@
           information about the fetched object which may be useful for the administrator,
           but is not the part of the object specification from the DHCP server standpoint.
           In the Kea 1.6.0 release, the metadata is limited to the
-          <command>server-tag</command>, which describescthe association of the object
-          with the particular server or all servers. The server tag is always set to
-          <command>all</command> in the Kea 1.6.0 beta release.
+          <command>server-tags</command>, which describes the associations of the object
+          with the selected servers or all servers.
           </para>
 
           <para>The following is the example response to the <command>remote-network4-list</command>
@@ -142,7 +141,7 @@
             {
                 "name": "level3",
                 "metadata": {
-                    "server-tag": "all"
+                    "server-tags": [ "all" ]
                 }
             }
         ],
@@ -153,7 +152,7 @@
          </para>
 
           <para>Client implementations must not assume that the metadata contains
-          only the <command>server-tag</command> parameter. In the future releases
+          only the <command>server-tags</command> parameter. In the future releases
           this map will be extended with additional information, e.g. object
           modification time, log message created during the last modification etc.
           </para>
