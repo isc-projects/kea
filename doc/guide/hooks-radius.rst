@@ -3,7 +3,7 @@
 radius: RADIUS Server Support
 =============================
 
-The RADIUS hook library allows Kea to interact with two types of RADIUS
+The RADIUS hooks library allows Kea to interact with two types of RADIUS
 servers: access and accounting. Although the most common DHCP and RADIUS
 integration is done on the DHCP relay-agent level (DHCP clients send
 DHCP packets to DHCP relays; those relays contact the RADIUS server and
@@ -538,8 +538,8 @@ received during the initial Discover/Offer exchanges and use it again
 later when sending accounting messages.
 
 This mechanism is implemented based on user context in host
-reservations. (See :ref:`user-context` for details about user
-context). The host cache mechanism allows the information retrieved by
+reservations. (See :ref:`user-context` for details.)
+The host cache mechanism allows the information retrieved by
 RADIUS to be stored and later used for sending accounting and access
 queries to the RADIUS server. In other words, the host-cache mechanism
 is mandatory, unless administrators do not want RADIUS communication for messages

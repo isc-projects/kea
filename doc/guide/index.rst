@@ -75,7 +75,7 @@ project: `Afilias <https://www.afilias.info/>`__,
 `Google <https://www.google.com/>`__, `RIPE
 NCC <https://www.ripe.net/>`__, `Registro.br <https://registro.br/>`__,
 `.nz Registry Services <https://nzrs.net.nz/>`__, and `Technical Center
-of Internet <https://www.tcinet.ru/>`__ .
+of Internet <https://www.tcinet.ru/>`__.
 
 .. |image0| image:: kea-logo-100x70.png
 

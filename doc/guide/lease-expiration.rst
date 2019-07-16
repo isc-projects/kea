@@ -155,8 +155,8 @@ by the following diagram:
 
 
    |  c1  |            | c2 |            |c3|            | c4 |
-   |<---->|<---------->|<-->|<---------->|<>|<---------->|<-->|
-   ---------------------------------------------------------------->
+   |<---->|<---------->|<-->|<---------->|<>|<---------->|<-->|<--
+   ------------------------------------------------------------------>
    |      |     5s     |    |     5s     |  |     5s     |    | time
 
 This diagram shows four lease-reclamation cycles (c1 through c4) of
@@ -322,9 +322,9 @@ should consider using host reservations or leases with very long lifetimes.
 
 .. _leases-reclamation-using-command:
 
-Reclaiming Expired Leases with Command
-======================================
+Reclaiming Expired Leases via Command
+=====================================
 
-The *leases-reclaim* command can be used to trigger lease reclamation at
+The ``leases-reclaim`` command can be used to trigger lease reclamation at
 any time. Please consult the :ref:`command-leases-reclaim` section
 for details about using this command.

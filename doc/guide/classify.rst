@@ -98,7 +98,7 @@ The classification process is conducted in several steps:
 
 ..
 
- .. note::
+.. note::
 
    Client classes in Kea follow the order in which they are specified in
    the configuration (vs. alphabetical order). Required classes follow
@@ -120,7 +120,7 @@ the client requested. As the NTP server was defined twice, the server
 chooses only one of the values for the reply; the class from which the
 value is obtained is unspecified.
 
- .. note::
+.. note::
 
    Care should be taken with client classification, as it is easy for
    clients that do not meet any class criteria to be denied service
@@ -413,7 +413,7 @@ Notes:
    than one appear. For the vendor.enterprise and vendor-class.enterprise
    expressions, the value from the first instance is returned. Please
    submit a feature request on the
-   `Kea GitLab site <https://gitlab.isc.org/isc-projects/kea>`__ if you need
+   `Kea GitLab site <https://gitlab.isc.org/isc-projects/kea>`__ to request
    support for multiple instances.
 
 .. table:: List of Classification Expressions
@@ -517,7 +517,7 @@ digits separated by the separator, e.g ':', '-', '' (empty separator).
 
 ..
 
- .. note::
+.. note::
 
    The expression for each class is executed on each packet received. If
    the expressions are overly complex, the time taken to execute them
@@ -543,7 +543,7 @@ The option data is a list which defines any options that should be
 assigned to members of this class.
 
 The option definition is for DHCPv4 option 43
-(:ref:`dhcp4-vendor-opts` and DHCPv4 private options
+(:ref:`dhcp4-vendor-opts`) and DHCPv4 private options
 (:ref:`dhcp4-private-opts`).
 
 Usually the test expression is evaluated before subnet selection, but in
@@ -889,17 +889,17 @@ The logging might then resemble this:
 
 ::
 
-          2016-05-19 13:35:04.163 DEBUG [kea.eval/44478] EVAL_DEBUG_OPTION Pushing option 61 with value 0x666F6F626172
-          2016-05-19 13:35:04.164 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '0'
-          2016-05-19 13:35:04.165 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '3'
-          2016-05-19 13:35:04.166 DEBUG [kea.eval/44478] EVAL_DEBUG_SUBSTRING Popping length 3, start 0, string 0x666F6F626172 pushing result 0x666F6F
-          2016-05-19 13:35:04.167 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string 'foo'
-          2016-05-19 13:35:04.168 DEBUG [kea.eval/44478] EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F pushing result 'true'
+      2016-05-19 13:35:04.163 DEBUG [kea.eval/44478] EVAL_DEBUG_OPTION Pushing option 61 with value 0x666F6F626172
+      2016-05-19 13:35:04.164 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '0'
+      2016-05-19 13:35:04.165 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string '3'
+      2016-05-19 13:35:04.166 DEBUG [kea.eval/44478] EVAL_DEBUG_SUBSTRING Popping length 3, start 0, string 0x666F6F626172 pushing result 0x666F6F
+      2016-05-19 13:35:04.167 DEBUG [kea.eval/44478] EVAL_DEBUG_STRING Pushing text string 'foo'
+      2016-05-19 13:35:04.168 DEBUG [kea.eval/44478] EVAL_DEBUG_EQUAL Popping 0x666F6F and 0x666F6F pushing result 'true'
 
 
 ..
 
- .. note::
+.. note::
 
    The debug logging may be quite verbose if there are a number of
    expressions to evaluate; that is intended as an aid in helping

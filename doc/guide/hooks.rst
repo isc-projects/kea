@@ -127,7 +127,7 @@ some hooks may require their own dedicated switches, e.g. the RADIUS hook
 requires extra switches for FreeRADIUS. Please consult later sections of
 this chapter for details.
 
-6. Rebuild Kea
+6. Rebuild Kea.
 
 ::
 
@@ -209,7 +209,9 @@ configuration would be:
    parameter entry for comments, as is the case with many configuration
    scopes.
 
-.. note:
+..
+
+.. note::
 
    In all versions of Kea since 1.1.0, libraries
    are reloaded even if their lists have not changed,
@@ -238,7 +240,7 @@ Notes:
 -  An empty list has the same effect as omitting the ``hooks-libraries``
    configuration element altogether.
 
-    .. note::
+   .. note::
 
       There is one case where this is not true: if Kea is running with a
       configuration that contains a ``hooks-libraries`` item, and that
@@ -1033,7 +1035,7 @@ client-id option) is ignored.
 
 The :ref:`lease-cmds` section describes commands used to retrieve,
 update, and delete leases using various identifiers, such as "hw-address" and
-"client-id". The lease_cmds library doesn't natively support querying
+"client-id". The lease_cmds library does not natively support querying
 for leases by flexible identifier. However, when ``replace-client-id`` is
 set to "true", it makes it possible to query for leases using a value
 derived from the flexible identifier. In the DHCPv4 case, the query will
@@ -1528,7 +1530,7 @@ page is received. Its response will look like this:
 This command is more complex than ``reservation-get-all``, but lets
 users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
-``reservation-get-all`` (see :ref:`command-reservation-get-all`.
+``reservation-get-all`` (see :ref:`command-reservation-get-all`).
 
 .. note::
 
@@ -2085,7 +2087,7 @@ belonging to the subnet. The server may also be configured with static
 host reservations which are associated with this subnet. The current
 implementation of the ``subnet4-del`` command removes neither the leases nor
 the host reservations associated with a subnet. This is the safest approach
-because the server doesn't lose track of leases assigned to the clients
+because the server does not lose track of leases assigned to the clients
 from this subnet. However, removal of the subnet may still cause
 configuration errors and conflicts. For example: after removal of the
 subnet, the server administrator may update a new subnet with the ID
@@ -2141,7 +2143,7 @@ belonging to the subnet. The server may also be configured with static
 host reservations which are associated with this subnet. The current
 implementation of the ``subnet6-del`` command removes neither the leases nor
 the host reservations associated with a subnet. This is the safest approach
-because the server doesn't lose track of leases assigned to the clients
+because the server does not lose track of leases assigned to the clients
 from this subnet. However, removal of the subnet may still cause
 configuration errors and conflicts. For example: after removal of the
 subnet, the server administrator may add a new subnet with the ID used

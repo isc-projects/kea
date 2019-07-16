@@ -141,7 +141,7 @@ Upon startup, the module will load its configuration and begin listening
 for NCRs based on that configuration.
 
 During startup, the server will attempt to create a PID file of the form:
-[localstatedir]/[conf name].kea-dhcp-ddns.pid where:
+[**localstatedir**]/[**conf name**].kea-dhcp-ddns.pid where:
 
 -  ``localstatedir`` - is the value as passed into the build configure
    script; it defaults to "/usr/local/var". Note that this value may be
@@ -560,7 +560,7 @@ This section describes how to add Reverse DDNS Domains; repeat these
 steps for each Reverse DDNS Domain desired. Each Reverse DDNS Domain has
 the following parameters:
 
--  ``name`` - the fully qualified reverse zone that this DDNS Domain can
+-  ``name`` - the fully qualified reverse zone that this DDNS domain can
    update. This is the value used during reverse matching, which will
    compare it with a reversed version of the request's lease address.
    The zone name should follow the appropriate standards; for example,

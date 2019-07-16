@@ -9,7 +9,7 @@ of the DHCP service in the event of an outage of one of the servers.
 This library was previously only available to ISC's paid subscribers,
 but is now part of the open source Kea, available to all users.
 
- .. note::
+.. note::
 
    This library may only be loaded by the ``kea-dhcp4`` or
    ``kea-dhcp6`` process.
@@ -223,7 +223,7 @@ The following is the list of all possible server states:
 
 ..
 
- .. note::
+.. note::
 
    Currently, restarting the HA service from the ``terminated`` state
    requires restarting the DHCP server or reloading its configuration.
@@ -295,7 +295,8 @@ in normal operation serves no scopes.
 The scope names can be used to associate pools, subnets, and networks
 with certain servers, so only these servers can allocate addresses or
 prefixes from those pools, subnets, or networks. This is done via the
-client classification mechanism (see below).
+client classification mechanism (see :ref:`ha-load-balancing-advanced-config`
+for more details).
 
 .. _ha-scope-transition:
 
@@ -394,13 +395,13 @@ with the only difference that ``this-server-name`` should be set to
        }]
    }
 
-Two hook libraries must be loaded to enable HA:
+Two hooks libraries must be loaded to enable HA:
 ``libdhcp_lease_cmds.so`` and ``libdhcp_ha.so``. The latter implements
 the HA feature, while the former enables control commands required by HA
 to fetch and manipulate leases on the remote servers. In the example
 provided above, it is assumed that Kea libraries are installed in the
 ``/usr/lib`` directory. If Kea is not installed in the /usr directory,
-the hook libraries locations must be updated accordingly.
+the hooks libraries locations must be updated accordingly.
 
 The HA configuration is specified within the scope of ``libdhcp_ha.so``.
 Note that the top-level parameter ``high-availability`` is a list, even
@@ -803,8 +804,8 @@ less than 10000 lines.
 
 .. _ha-syncing-timeouts:
 
-Discussion About Timeouts
--------------------------
+Timeouts
+--------
 
 In deployments with a large number of clients connected to the network,
 lease-database synchronization after a server failure may be a
@@ -881,10 +882,10 @@ the Kea source at: ``src/lib/config/timeouts.h``.
 
 .. _ha-pause-state-machine:
 
-Pausing HA State Machine
-------------------------
+Pausing the HA State Machine
+----------------------------
 
-The high availability state machine includes many different states
+The high-availability state machine includes many different states
 described in detail in :ref:`ha-server-states`. The server
 enters each state when certain conditions are met, most often taking
 into account the partner server's state. In some states the server
@@ -1038,7 +1039,7 @@ states; however, it is not practical for the ``backup`` and
 ``terminated`` states because the server never transitions out of these
 states anyway.
 
- .. note::
+.. note::
 
    In the ``syncing`` state the server is paused before it makes an
    attempt to synchronize the lease database with a partner. To pause
@@ -1047,7 +1048,7 @@ states anyway.
 
 ..
 
- .. note::
+.. note::
 
    The state of the HA state machine depends on the state of the
    cooperating server. Therefore, it must be taken into account that

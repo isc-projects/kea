@@ -44,7 +44,7 @@ any other hooks library; for example, this configuration could be used:
          }
      } ]
 
-Once loaded, the Host Cache hook library provides a number of new
+Once loaded, the Host Cache hooks library provides a number of new
 commands which can be used either over the control channel (see
 :ref:`ctrl-channel-client`) or the RESTful API (see
 :ref:`agent-overview`). An example RESTful API client is described in
@@ -69,7 +69,7 @@ removed. An example usage looks as follows:
 
 This command will remove 1000 hosts. To delete all cached
 hosts, please use cache-clear instead. The hosts are stored in FIFO
-order, so the oldest entries are always removed.
+(first-in, first-out) order, so the oldest entries are always removed.
 
 .. _command-cache-clear:
 

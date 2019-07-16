@@ -141,7 +141,7 @@ the specified client class has been found:
        "text": "Class 'ipxe_efi_x64' deleted."
    }
 
-If the class doesn't exist, the result of 3 is returned.
+If the class does not exist, the result of 3 is returned.
 
 .. _command-class-list:
 

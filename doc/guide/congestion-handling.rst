@@ -4,7 +4,7 @@
 Congestion Handling in DHCPv4 and DHCPv6
 ****************************************
 
-.. _congeston-handling-background:
+.. _congestion-handling-background:
 
 What is Congestion?
 ===================
@@ -39,7 +39,7 @@ that were no longer relevant, or worse, were redundant. In other words,
 the packets waiting in the FIFO socket buffers became increasingly
 stale.
 
-.. _congeston-handling-solution:
+.. _congestion-handling-solution:
 
 Configuring Congestion Handling
 ===============================
@@ -70,7 +70,8 @@ queue is implemented as a plug-in, which can replaced by a custom queue
 implementation via a hook library. This should make it straightforward
 for interested parties to experiment with their own solutions.
 (Developers can refer to isc::dhcp::PacketQueue and
-isc::dhcp::PacketQueueMgr, described in the Kea Developer's Guide).
+isc::dhcp::PacketQueueMgr, described in the
+`Kea Developer's Guide <https://jenkins.isc.org/job/Kea_doc/doxygen/index.html>`__.)
 
 Packet queue behavior is configured in both kea-dhcp4 and kea-dhcp6
 servers through an optional, top-level, configuration element,
