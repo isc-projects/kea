@@ -26,8 +26,7 @@ Command Line Options
 
    # keactrl <command> [-c keactrl-config-file] [-s server[,server,...]]
 
-``<command>`` is one of the commands described in
-`Commands <#keactrl-commands>`__.
+``<command>`` is one of the commands described in :ref:`keactrl-commands`.
 
 The optional ``-c keactrl-config-file`` switch allows specification of
 an alternate ``keactrl`` configuration file. (``--ctrl-config`` is a
@@ -68,7 +67,6 @@ The contents of ``keactrl.conf`` are:
    kea_dhcp_ddns_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf
    kea_ctrl_agent_config_file=@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf
    kea_netconf_config_file=@sysconfdir@/@PACKAGE@/kea-netconf.conf
-
 
    # Location of Kea binaries.
    exec_prefix=@exec_prefix@
@@ -243,7 +241,7 @@ take effect. This limitation will be removed in a future release.
 
 ..
 
- .. note::
+.. note::
 
    NETCONF is an optional feature that is disabled by default and can be
    enabled during compilation. If Kea was compiled without NETCONF
@@ -252,7 +250,7 @@ take effect. This limitation will be removed in a future release.
    the keactrl.conf file, but NETCONF status will not be shown and other
    commands will ignore it.
 
- .. note::
+.. note::
 
    Currently ``keactrl`` does not report configuration failures when the
    server is started or reconfigured. To check if the server's

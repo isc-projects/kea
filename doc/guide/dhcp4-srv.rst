@@ -3063,14 +3063,14 @@ are enabled. To set its value simply set it to the desired string:
 
 When generating a name, kea-dhcp4 will construct the name in the format:
 
-[generated-prefix]-[address-text].[qualifying-suffix].
+[**generated-prefix**]-[**address-text**].[**qualifying-suffix**].
 
-where address-text is simply the lease IP address converted to a
+where **address-text** is simply the lease IP address converted to a
 hyphenated string. For example, if the lease address is 172.16.1.10, the
 qualifying suffix "example.com", and the default value is used for
 ``generated-prefix``, the generated FQDN is:
 
-myhost-172-16-1-10.example.com.
+**myhost-172-16-1-10.example.com.**
 
 .. _host-name-sanitization:
 

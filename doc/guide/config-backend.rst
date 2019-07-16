@@ -28,7 +28,7 @@ network grows, the usefulness of the CB becomes obvious.
 
 A good example of a use case for the CB is a pair of Kea DHCP servers which can be configured
 to support High Availability as described in
-:ref:`ha: High Availability <high-availability-library>`. The configurations of both servers
+:ref:`high-availability-library`. The configurations of both servers
 are almost exactly the same. They may differ by the server identifier
 and designation of the server as a primary or standby (or secondary).
 They may also differ by the interfaces configuration. Typically, the
@@ -70,7 +70,7 @@ comes with a number of limitations as a result of the overall
 complexity of this feature and the development time constraints. This
 feature will evolve over time and the new capabilities will be added in
 subsequent releases. In this section we present the capabilities and limitations of the
-CB in the current Kea 1.6.0 release:
+CB in the Kea 1.6.0 release:
 
 -  Kea CB is supported for the MySQL database only.
 
@@ -120,13 +120,13 @@ Configuration Backend for MySQL must be compiled and loaded by the DHCP
 servers. This hooks library is compiled when the ``--with-mysql``
 configuration switch is used during the Kea build. The MySQL C client
 libraries must be installed, as explained in
-:ref:`DHCP Database Installation and Configuration <dhcp-install-configure>`.
+:ref:`dhcp-install-configure`.
 
 .. note::
 
    Any existing MySQL schema must be upgraded to the latest schema
    required by the particular Kea version using the ``kea-admin`` tool,
-   as described in `The kea-admin Tool <kea-admin>`.
+   as described in :ref:`kea-admin`.
 
 The ``cb_cmds`` premium hooks library, which is available to ISC's paid support
 customers, provides a complete set of commands to manage the
@@ -136,9 +136,9 @@ possible to manage the configuration information without the ``cb_cmds``
 hooks library with commonly available tools, such as MySQL Workbench or
 the command-line MySQL client, by directly working with the database.
 
-Refer to :ref:`cb_cmds: Configuration Backend Commands <cb-cmds-library>` for the details regarding the
+Refer to :ref:`cb-cmds-library` for the details regarding the
 ``cb_cmds`` hooks library.
 
 The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
 the list of supported configuration parameters, can be found in
-:ref:`Configuration Backend in DHCPv4 <dhcp4-cb>` and :ref:`Configuration Backend in DHCPv6 <dhcp6-cb>` respectively.
+:ref:`dhcp4-cb` and :ref:`dhcp6-cb` respectively.
