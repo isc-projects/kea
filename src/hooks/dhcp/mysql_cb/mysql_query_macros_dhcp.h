@@ -413,7 +413,7 @@ namespace {
     "INNER JOIN " #table_prefix "_option_def_server AS a" \
     "  ON d.id = a.option_def_id " \
     "INNER JOIN " #table_prefix "_server AS s " \
-    "  ON (a.server_id = s.id) OR (a.server_id = 1) " \
+    "  ON a.server_id = s.id " \
     "WHERE (s.tag = ? OR s.id = 1) " #__VA_ARGS__ \
     " ORDER BY d.id"
 #endif
