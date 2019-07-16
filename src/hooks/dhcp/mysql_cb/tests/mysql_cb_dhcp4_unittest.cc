@@ -2233,7 +2233,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     // Delete first shared network with it subnets and verify it is gone.
 
     // Begin by its subnet.
-    EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
+    EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ANY(),
                                                      test_networks_[1]->getName()));
 
     {
