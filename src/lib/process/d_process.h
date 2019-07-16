@@ -49,9 +49,6 @@ static const std::string CONFIG_SET_COMMAND("config-set");
 /// @brief String value for the server-tag-get command.
 static const std::string SERVER_TAG_GET_COMMAND("server-tag-get");
 
-/// @brief String value for the server-tag-set command.
-static const std::string SERVER_TAG_SET_COMMAND("server-tag-set");
-
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 

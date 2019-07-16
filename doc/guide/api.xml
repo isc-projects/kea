@@ -120,6 +120,7 @@
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 , <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
+, <command><link linkend="ref-server-tag-get">server-tag-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
@@ -148,8 +149,8 @@
 , <command><link linkend="ref-config-test">config-test</link></command>
 , <command><link linkend="ref-config-write">config-write</link></command>
 , <command><link linkend="ref-list-commands">list-commands</link></command>
+, <command><link linkend="ref-server-tag-get">server-tag-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
-, <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-kea-dhcp-ddns">Commands supported by kea-dhcp-ddns daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-config-get">config-get</link></command>
@@ -158,8 +159,8 @@
 , <command><link linkend="ref-config-test">config-test</link></command>
 , <command><link linkend="ref-config-write">config-write</link></command>
 , <command><link linkend="ref-list-commands">list-commands</link></command>
+, <command><link linkend="ref-server-tag-get">server-tag-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
-, <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-kea-dhcp4">Commands supported by kea-dhcp4 daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-cache-clear">cache-clear</link></command>
@@ -232,6 +233,7 @@
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 , <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
+, <command><link linkend="ref-server-tag-get">server-tag-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
@@ -319,6 +321,7 @@
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 , <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
+, <command><link linkend="ref-server-tag-get">server-tag-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
@@ -5427,6 +5430,41 @@ Result is an integer representation of the status. Currently supported statuses 
 </section>
 <!-- end of reservation-get-page -->
 
+<!-- start of server-tag-get -->
+<section xml:id="reference-server-tag-get">
+<title>server-tag-get reference</title>
+<para xml:id="ref-server-tag-get"><command>server-tag-get</command> - The server-tag-get command returns the server tag.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+
+<para>Availability: 1.6.0 (built-in)</para>
+
+<para>Description and examples: See <xref linkend="command-server-tag-get"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "server-tag-get"
+}</screen>
+</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": &lt;integer&gt;,
+    "text": &lt;string&gt;
+}
+</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
+</itemizedlist>
+</para>
+
+</section>
+<!-- end of server-tag-get -->
+
 <!-- start of shutdown -->
 <section xml:id="reference-shutdown">
 <title>shutdown reference</title>
@@ -6247,7 +6285,7 @@ Result is an integer representation of the status. Currently supported statuses 
               Kea version. The returned string is the same as if Kea would
               be run with -V command line option.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 

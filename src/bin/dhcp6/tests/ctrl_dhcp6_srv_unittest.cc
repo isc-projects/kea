@@ -791,7 +791,6 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
-    EXPECT_FALSE(command_list.find("\"server-tag-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -873,19 +872,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
     // Retry...
     sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
     expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
-}
-
-// This test verifies that the DHCP server does not handles server-tag-set command
-TEST_F(CtrlChannelDhcpv6SrvTest, serverTagSet) {
-    createUnixChannelServer();
-
-    std::string response;
-
-    // Send the server-tag-set command
-    sendUnixCommand("{ \"command\": \"server-tag-set\" }", response);
-    std::string expected = "{ \"result\": 2, "
-        "\"text\": \"'server-tag-set' command not supported.\" }";
-    EXPECT_EQ(expected, response);
 }
 
 // This test verifies that the DHCP server immediately reclaims expired

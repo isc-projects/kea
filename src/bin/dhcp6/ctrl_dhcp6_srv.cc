@@ -550,33 +550,6 @@ ControlledDhcpv6Srv::commandServerTagGetHandler(const std::string&,
     return (createAnswer(CONTROL_RESULT_SUCCESS, response));
 }
 
-ConstElementPtr
-ControlledDhcpv6Srv::commandServerTagSetHandler(const std::string&,
-                                                ConstElementPtr args) {
-    std::string message;
-    ConstElementPtr tag;
-    if (!args) {
-        message = "Missing mandatory 'arguments' parameter.";
-    } else {
-        tag = args->get("server-tag");
-        if (!tag) {
-            message = "Missing mandatory 'server-tag' parameter.";
-        } else if (tag->getType() != Element::string) {
-            message = "'server-tag' parameter expected to be a string.";
-        }
-    }
-
-    if (!message.empty()) {
-        // Something is amiss with arguments, return a failure response.
-        return (createAnswer(CONTROL_RESULT_ERROR, message));
-    }
-
-    CfgMgr::instance().getCurrentCfg()->setServerTag(tag->stringValue());
-    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("server-tag", tag);
-    message = "'server-tag' successfully updated.";
-    return (createAnswer(CONTROL_RESULT_SUCCESS, message));
-}
-
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -635,7 +608,6 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
             return (srv->commandServerTagGetHandler(command, args));
 
         }
-        // not yet server-tag-set
 
         return (isc::config::createAnswer(1, "Unrecognized command:"
                                           + command));
@@ -885,8 +857,6 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
 
-    // not yet server-tag-set
-
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
@@ -949,7 +919,6 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("server-tag-get");
-        // not yet server-tag-set
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

@@ -340,18 +340,6 @@ public:
     serverTagGetHandler(const std::string& command,
                         isc::data::ConstElementPtr args);
 
-    /// @brief handler for server-tag-set command
-    ///
-    /// This method handles the server-tag-set command, which sets
-    /// the server tag specified in args parameter.
-    ///
-    /// @param command (ignored)
-    /// @param args (ignored)
-    /// @return current configuration wrapped in a response
-    isc::data::ConstElementPtr
-    serverTagSetHandler(const std::string& command,
-                        isc::data::ConstElementPtr args);
-
 protected:
     /// @brief Virtual method that provides derivations the opportunity to
     /// support additional command line options.  It is invoked during command

@@ -550,33 +550,6 @@ ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandServerTagSetHandler(const std::string&,
-                                                ConstElementPtr args) {
-    std::string message;
-    ConstElementPtr tag;
-    if (!args) {
-        message = "Missing mandatory 'arguments' parameter.";
-    } else {
-        tag = args->get("server-tag");
-        if (!tag) {
-            message = "Missing mandatory 'server-tag' parameter.";
-        } else if (tag->getType() != Element::string) {
-            message = "'server-tag' parameter expected to be a string.";
-        }
-    }
-
-    if (!message.empty()) {
-        // Something is amiss with arguments, return a failure response.
-        return (createAnswer(CONTROL_RESULT_ERROR, message));
-    }
-
-    CfgMgr::instance().getCurrentCfg()->setServerTag(tag->stringValue());
-    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("server-tag", tag);
-    message = "'server-tag' successfully updated.";
-    return (createAnswer(CONTROL_RESULT_SUCCESS, message));
-}
-
-ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -634,7 +607,6 @@ ControlledDhcpv4Srv::processCommand(const string& command,
             return (srv->commandServerTagGetHandler(command, args));
 
         }
-        // not yet server-tag-set
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  "Unrecognized command:" + command);
         return (answer);
@@ -867,8 +839,6 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
 
-    // not yet server-tag-set
-
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
@@ -926,7 +896,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("server-tag-get");
-        // not yet server-tag-set
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

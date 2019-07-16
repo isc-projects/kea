@@ -588,7 +588,20 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     "command": "version-get"
 }
 </screen>
-      </section> <!-- end of command-version-get -->
+      </section> <!-- end of command-server-tag-get -->
+
+      <section xml:id="command-server-tag-get">
+        <title>server-tag-get</title>
+        <para>
+          The <emphasis>server-tag-get</emphasis> command returns
+          the server tag. This command does not take any parameters.
+        </para>
+<screen>
+{
+    "command": "server-tag-get"
+}
+</screen>
+      </section> <!-- end of command-server-tag-get -->
 
     </section> <!-- end of commands supported by both servers -->
 
