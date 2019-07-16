@@ -176,7 +176,151 @@
       <xref linkend="dhcp4-cb"/> and <xref linkend="dhcp6-cb"/>
       respectively.
     </para>
+  </section>
 
+  <section xml:id="cb-sharing">
+    <title>Configuration Sharing and Server Tags</title>
+    <para>
+      The configuration database is designed to store the configuration information
+      for multiple Kea servers. Depending on the use case, the entire configuration
+      may be shared by all servers, parts of the configuration may be shared by
+      multiple servers and the rest of the configuration may be different for these
+      servers or, finally, each server may have its own non-shared configuration.
+    </para>
+
+    <para>
+      The configuration elements in the database are associated with the servers
+      by "server tags". The server tag is an arbitrary string holding the name
+      of the Kea server instance. The names of the DHCPv4 and DHCPv6 servers are
+      independent. If there are both types of servers running on the same machine,
+      the instances of these servers may have different names or the same name
+      depending on the administrator's choice. The uniqueness of the server tag
+      is only checked for the particular server type, i.e. server tags for the
+      DHCPv4 servers are unique but there may be an instance of the DHCPv4 server
+      carrying the same name as the instance of the DHCPv6 server. There is no
+      requirement that these DHCP instances are running on the same system.
+      It is even possible to have multiple DHCP servers using the same tag
+      when connecting to the configuration database. From the database perspective
+      they are treated as a single DHCP server instance. Using such configuration
+      is useful when one group of servers should get the same configuration and
+      some other group of servers should get a different configuration.
+    </para>
+
+    <para>
+      The server definition, which consists of the server tag and the server
+      description, must be stored in the configuration database prior to creating
+      the dedicated configuration for that server. In cases when all servers use
+      the same configuration, e.g. a pair of servers running as the High Availability
+      peers, there is no need to configure the server tags for these
+      servers in the database. The database by default includes the logical
+      server <command>all</command>, which is used as a keyword to indicate that
+      the particular piece of configuration must be shared between all servers
+      connecting to the database. The <command>all</command> server can't be
+      deleted or modified. It is not even returned among other servers
+      as a result of the <command>remote-server[46]-get-all</command>
+      commands. Also, slightly different rules may apply to "all" keyword
+      than to any user defined server when running the commands provided by
+      the <command>cb_cmds</command> hooks library
+      (see <xref linkend="cb-cmds-library"/> for details).
+    </para>
+
+    <note>
+      <simpara>
+        In the simplest case there are no server tags defined in the configuration
+        database and all connecting servers will get the same configuration
+        regardless of the server tag they are using. The server tag that the
+        particular Kea instance presents to the database to fetch its configuration
+        is specified in the Kea configuration file, using the
+        <command>config-control</command> map (please refer to the
+        <xref linkend="dhcp4-cb-json"/> and <xref linkend="dhcp6-cb-json"/>
+        for details).
+      </simpara>
+    </note>
+
+    <para>
+      In order to differentiate the configurations between the Kea servers, a
+      collection of the server tags used by the servers must be stored in the
+      database. For the DHCPv4 and DHCPv6 servers, it can be done using the
+      commands described in <xref linkend="command-remote-server4-set"/> and
+      <xref linkend="command-remote-server6-set"/>. Next, the
+      server tags can be used to associate the configuration information with
+      the servers. However, it is important to note that some DHCP
+      configuration elements may be associated with multiple server tags and
+      other configuration elements may be associated with exactly one
+      server tag. The former configuration elements are referred to as
+      shareable configuration elements and the latter are referred to as
+      non-shareable configuration elements. The <xref linkend="dhcp4-cb"/>
+      and <xref linkend="dhcp6-cb"/> list the DHCP specific shareable and
+      non-shareable configuration elements. However, in this section we
+      want to briefly explain the difference between them.
+    </para>
+
+    <para>
+      The shareable configuration element is the one having some unique
+      property identifying it and which instance may appear only once in
+      the database. An example of the shareable DHCP element is a subnet
+      instance. The subnet is a part of the network topology and we assume
+      that the particular subnet may have only one definition within this
+      network. The subnet has two unique identifiers: subnet id and the
+      subnet prefix. The subnet identifier is used in Kea to uniquely
+      identify the subnet in many areas, e.g. in host reservations. The
+      subnet identifier uniquely identifies the subnet within the network.
+      Some commands provided by the <command>cb_cmds</command> hooks library
+      allow for accessing the subnet information by subnet identifier
+      (or prefix) and explicitly prohibit using the server tag to identify
+      the subnet. This is because, in a general case, the subnet definition
+      is not associated with a single server. In fact, it may even be associated
+      with no servers (unassigned) but still has an identifier and prefix
+      which uniquely identify the subnet.
+    </para>
+
+    <para>
+      A shareable configuration element may be associated with multiple
+      servers, one server or no servers. Deletion of the server which is
+      associated with the shareable element does not cause the deletion of
+      the shareable element. It merely deletes the association of the
+      deleted server with the element.
+    </para>
+
+    <para>
+      Unlike the shareable element, the non-shareable element must not be
+      explicitly associated with more than one server and must not exist
+      after the server is deleted (must not remain unassigned). The
+      non-shareable element only exists within the context of the server.
+      An example of the non-shareable element in DHCP is a global
+      parameter, e.g. <command>renew-timer</command>. The renew timer
+      is the value to be used by the particular server and only this
+      server. Other servers may have their respective renew timers
+      set to the same or different value. The renew timer is the
+      parameter which has no unique identifier by which it could be
+      accessed, modified or otherwise used. The global parameters like
+      the renew timer can be accessed by their name and the server for
+      which they are configured. For example: the commands described in
+      <xref linkend="command-remote-global-parameter4-get"/> allow for
+      fetching the value of the global parameter by parameter name and
+      the server name. Getting the global parameter only by its name is not
+      possible because there may be many global parameters with the given
+      name within the database.
+    </para>
+
+    <para>
+      When the server associated with a non-shareable configuration element
+      is deleted, the configuration element is automatically deleted from
+      the database along with the server because the non-shareable element
+      must be always assigned to some server (or the logical server "all").
+    </para>
+
+    <para>
+      The terms "shareable" and "non-shareable" only apply to the associations
+      with user defined servers. All configuration elements associated with
+      the logical server "all" are by definition shareable. For example: a
+      <command>renew-timer</command> associated with "all" servers is used
+      by all servers connecting to the database which don't have their specific
+      renew timers defined. In the special case when none of the configuration
+      elements are associated with user defined servers, the entire
+      configuration in the database is shareable because all its pieces
+      belong to "all" servers.
+    </para>
   </section>
 
 </section>
