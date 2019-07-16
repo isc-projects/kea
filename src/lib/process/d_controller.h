@@ -601,6 +601,15 @@ protected:
     /// @return a string containing additional version info
     virtual std::string getVersionAddendum() { return (""); }
 
+    /// @brief Deals with other (i.e. not application name) global objects.
+    ///
+    /// Code shared between config-test and config-set command handlers:
+    ///  - check obsolete or unknown (aka unsupported) objects.
+    ///  - relocate Logging.
+    ///
+    /// @param args Command arguments.
+    void handleOtherObjects(isc::data::ConstElementPtr args);
+
 private:
     /// @brief Name of the service under control.
     /// This name is used as the configuration module name and appears in log

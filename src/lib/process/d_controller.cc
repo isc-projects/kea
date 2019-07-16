@@ -528,6 +528,38 @@ DControllerBase::configWriteHandler(const std::string&,
                          + filename + " successful", params));
 }
 
+void
+DControllerBase::handleOtherObjects(ConstElementPtr args) {
+    // Check obsolete or unknown (aka unsupported) objects.
+    const std::string& app_name = getAppName();
+    for (auto obj : args->mapValue()) {
+        const std::string& obj_name = obj.first;
+        if (obj_name == app_name) {
+            continue;
+        }
+        if (obj_name == "Logging") {
+            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+                .arg("'Logging' defined in top level. This is deprecated."
+                     " Please define it in the '" + app_name + "' scope.");
+            continue;
+        }
+        LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+            .arg("'" + obj_name + "', defining anything in global level besides '"
+                 + app_name + "' is no longer supported.");
+    }
+
+    // Relocate Logging: if there is a global Logging object takes its
+    // loggers entry, move the entry to AppName object and remove
+    // now empty Logging.
+    Daemon::relocateLogging(args, app_name);
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    // We're not using cfgmgr to store logging information anymore.
+    // isc::dhcp::CfgMgr::instance().rollback();
+}
+
 ConstElementPtr
 DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     const int status_code = COMMAND_ERROR; // 1 indicates an error
@@ -555,33 +587,8 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
         return (result);
     }
 
-    // Check obsolete or unknown (aka unsupported) objects.
-    for (auto obj : args->mapValue()) {
-        const std::string& obj_name = obj.first;
-        if (obj_name == app_name) {
-            continue;
-        }
-        if (obj_name == "Logging") {
-            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("'Logging' defined in top level. This is deprecated."
-                     " Please define it in the '" + app_name + "' scope.");
-            continue;
-        }
-        LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-            .arg("'" + obj_name + "', defining anything in global level besides '"
-                 + app_name + "' is no longer supported.");
-    }
-
-    // Relocate Logging: if there is a global Logging object takes its
-    // loggers entry, move the entry to AppName object and remove
-    // now empty Logging.
-    Daemon::relocateLogging(args, getAppName());
-
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    // We're not using cfgmgr to store logging information anymore.
-    // isc::dhcp::CfgMgr::instance().rollback();
+    // Handle other (i.e. not application name) objects (e.g. Logging).
+    handleOtherObjects(args);
 
     // Now we check the server proper.
     return (checkConfig(module_config));
@@ -622,33 +629,8 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
 
     try {
 
-        // Check obsolete or unknown (aka unsupported) objects.
-        for (auto obj : args->mapValue()) {
-            const std::string& obj_name = obj.first;
-            if (obj_name == app_name) {
-                continue;
-            }
-            if (obj_name == "Logging") {
-                LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                    .arg("'Logging' defined in top level. This is deprecated."
-                         " Please define it in the '" + app_name + "' scope.");
-                continue;
-            }
-            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("'" + obj_name + "', defining anything in global level besides '"
-                     + app_name + "' is no longer supported.");
-        }
-
-        // Relocate Logging: if there is a global Logging object takes its
-        // loggers entry, move the entry to AppName object and remove
-        // now empty Logging.
-        Daemon::relocateLogging(args, getAppName());
-
-        // We are starting the configuration process so we should remove any
-        // staging configuration that has been created during previous
-        // configuration attempts.
-        // We're not using cfgmgr to store logging information anymore.
-        // isc::dhcp::CfgMgr::instance().rollback();
+        // Handle other (i.e. not application name) objects (e.g. Logging).
+        handleOtherObjects(args);
 
         // Temporary storage for logging configuration
         ConfigPtr storage(new ConfigBase());
