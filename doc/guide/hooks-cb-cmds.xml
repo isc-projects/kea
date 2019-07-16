@@ -161,9 +161,9 @@
 
         <section id="command-remote-server4-del">
           <title>remote-server4-del, remote-server6-del commands</title>
-          <para id="command-remote-server6-del">This command is used to delete
+          <para id="command-remote-server6-del">This command is used to delete the
           information about a selected DHCP server from the configuration database.
-          The server is identified by the unique case insensitive server tag.
+          The server is identified by a unique case insensitive server tag.
           For example:
 <screen>
 {
@@ -189,18 +189,18 @@
           associated with the server are removed from the database. The shareable
           configuration information, i.e. the configuration elements which may be
           associated with more than one server, is preserved. In particular,
-          subnets and shared networks associated with the deleted servers are
-          preserved. If any of the shareable configuration elements is associated
-          only with the deleted server, those objects become unassigned (orphaned).
-          For example: if the subnet has been created and associated with the
+          the subnets and shared networks associated with the deleted servers are
+          preserved. If any of the shareable configuration elements was associated
+          only with the deleted server, this object becomes unassigned (orphaned).
+          For example: if a subnet has been created and associated with the
           <command>server1</command> using the <command>remote-subnet4-set</command>
-          and the server1 is subsequently deleted, the subnet remains in the
+          command and the server1 is subsequently deleted, the subnet remains in the
           database but none of the servers can use this subnet. The subnet can
           be updated using the <command>remote-subnet4-set</command> and
           associated with some other server or with all servers using the special
           server tag "all". Such subnet can be also deleted from the database
           using the <command>remote-subnet4-del-by-id</command> or
-          <command>remote-subnet4-del-by-prefix</command> if it is no longer
+          <command>remote-subnet4-del-by-prefix</command>, if it is no longer
           needed.
           </para>
 
@@ -219,7 +219,7 @@
           <note>
             <simpara>The <command>remote-server4-del</command> and
             <command>remote-server6-del</command> commands must be used with care,
-            because an accidental deletion of the server causes parts of the existing
+            because an accidental deletion of the server causes some parts of the existing
             configurations to be lost permanently from the database. This operation
             is not reversible. Re-creation of the accidentally deleted server does not
             revert the lost configuration for that server and such configuration
@@ -236,7 +236,6 @@
 <screen>
 {
     "command": "remote-server6-get"
-    "service": [ "dhcp6" ],
     "arguments": {
         "servers": [
             {
@@ -253,7 +252,7 @@
 
           <para>This command fetches the information about the DHCPv6 server identified
           by the server tag <command>server1</command>. The server tag is case insensitive.
-          The successful response returns basic information about the server such as
+          A successful response returns  basic information about the server, such as
           server tag and the user's description of the server:
 <screen>
 {
@@ -263,7 +262,7 @@
         "servers": [
             {
                 "server-tag": "server1",
-                "description": "A DHCPv6 server located on the first floor"
+                "description": "A DHCPv6 server located on the first floor."
             }
         ],
         "count": 1
@@ -290,7 +289,7 @@
 </screen>
           </para>
           <para>The response includes basic information about each server, such as
-          a server tag and description:
+          its server tag and description:
 <screen>
 {
     "result": 0,
@@ -299,11 +298,11 @@
         "servers": [
             {
                 "server-tag": "server1",
-                "description": "A DHCP server located on the first floor"
+                "description": "A DHCP server located on the first floor."
             },
             {
                 "server-tag": "server2",
-                "description": "An old DHCP server to be soon replaced"
+                "description": "An old DHCP server to be soon replaced."
             }
         ],
         "count": 2
@@ -316,16 +315,17 @@
         <section id="command-remote-server4-set">
           <title>remote-server4-set, remote-server6-set commands</title>
           <para id="command-remote-server6-set">This command is used to create or replace
-          information about a DHCP server in the database. It is required when there is
-          a need to differentiate the configurations for various Kea instances connecting
-          to the same database. Various configuration elements, e.g. global parameters,
-          subnets may be associated with the selected servers (using server tags as
-          identifiers) allowing only those servers to use these configuration elements.
+          an information about a DHCP server in the database. The information about the
+          server must be created when there is a need to differentiate the configurations
+          used by various Kea instances connecting to the same database. Various
+          configuration elements, e.g. global parameters, subnets etc. may be explicitly
+          associated with the selected servers (using server tags as identifiers),
+          allowing only these servers to use the respective configuration elements.
           Using the particular server tag to make such associations is only possible when
-          the server has been created in the database using the
-          <command>remote-server4-set</command> or <command>remote-server6-set</command>
-          commands for the DHCPv4 and DHCPv6 cases respectively. The following command
-          creates the new (or updates existing) DHCPv6 server in the database:
+          the server information has been stored in the database via the
+          <command>remote-server4-set</command> or
+          <command>remote-server6-set</command> commands. The following command creates
+          a new (or updates an existing) DHCPv6 server in the database:
 <screen>
 {
     "command": "remote-server6-set"
