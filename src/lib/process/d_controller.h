@@ -603,7 +603,7 @@ protected:
 
     /// @brief Deals with other (i.e. not application name) global objects.
     ///
-    /// Code shared between config-test and config-set command handlers:
+    /// Code shared between configuration handlers:
     ///  - check obsolete or unknown (aka unsupported) objects.
     ///  - relocate Logging.
     ///
