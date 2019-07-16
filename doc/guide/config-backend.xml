@@ -107,12 +107,6 @@
         configuration parameters are not stored in the database at the moment.
         They have to be configured via the JSON configuration file.
       </simpara></listitem>
-      <listitem><simpara>
-        It is not supported to differentiate configurations of multiple
-        DHCP servers within the same database. All servers conected to the
-        particular database instance share the configuration stored in this
-        database. This limitation will be removed in Kea 1.6.0 final release.
-      </simpara></listitem>
     </itemizedlist>
 
     <note>
@@ -164,7 +158,7 @@
       The <command>cb_cmds</command> premium hooks library is available to
       ISC paid supported customers, which provides a complete set of commands
       to manage the servers' configuration information within the database.
-      This library can be attached to both DHCPv4 and DHCPv6 server instance.
+      This library can be attached to both DHCPv4 and DHCPv6 server instances.
       It is still possible to manage the configuration information without the
       <command>cb_cmds</command> hooks library with commonly available tools
       such as MySQL Workbench or command line MySQL client, by directly working
