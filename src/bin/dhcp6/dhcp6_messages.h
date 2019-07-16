@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 27 2019 20:26
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Jul 16 2019 11:03
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H

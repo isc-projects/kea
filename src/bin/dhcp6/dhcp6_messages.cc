@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Thu Jun 27 2019 20:26
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Jul 16 2019 11:03
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -231,7 +231,7 @@ const char* values[] = {
     "DHCP6_OPEN_SOCKET", "opening service sockets on port %1",
     "DHCP6_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCP6_PACKET_DROP_DHCP_DISABLED", "%1: DHCP service is globally disabled",
-    "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special DROP class: %1",
+    "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special class 'DROP': %1",
     "DHCP6_PACKET_DROP_PARSE_FAIL", "failed to parse packet from %1 to %2, received over interface %3, reason: %4",
     "DHCP6_PACKET_DROP_SERVERID_MISMATCH", "%1: dropping packet with server identifier: %2, server is using: %3",
     "DHCP6_PACKET_DROP_UNICAST", "%1: dropping unicast %2 packet as this packet should be sent to multicast",

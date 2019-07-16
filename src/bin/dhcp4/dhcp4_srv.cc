@@ -1008,7 +1008,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
 
     // Check the DROP special class.
     if (query->inClass("DROP")) {
-        LOG_INFO(packet4_logger, DHCP4_PACKET_DROP_DROP_CLASS)
+        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_PACKET_DROP_0010)
             .arg(query->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));

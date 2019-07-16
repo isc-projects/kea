@@ -685,7 +685,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
     // Check the DROP special class.
     if (query->inClass("DROP")) {
-        LOG_INFO(packet6_logger, DHCP6_PACKET_DROP_DROP_CLASS)
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_DROP_DROP_CLASS)
             .arg(query->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));

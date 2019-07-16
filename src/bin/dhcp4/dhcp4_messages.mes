@@ -509,9 +509,9 @@ This debug message is issued when a packet is dropped because it did contain
 option 53 and thus has no DHCP message type. The most likely explanation is
 that it was BOOTP packet.
 
-% DHCP4_PACKET_DROP_DROP_CLASS dropped as member of the special DROP class: %1
-This informational message is emitted when an incoming packet was classified
-into the special DROP class and dropped. The packet details are displayed.
+% DHCP4_PACKET_DROP_0010 dropped as member of the special class 'DROP': %1
+This debug message is emitted when an incoming packet was classified
+into the special class 'DROP' and dropped. The packet details are displayed.
 
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
