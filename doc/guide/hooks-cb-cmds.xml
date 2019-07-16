@@ -159,6 +159,214 @@
           </para>
         </section>
 
+        <section id="command-remote-server4-del">
+          <title>remote-server4-del, remote-server6-del commands</title>
+          <para id="command-remote-server6-del">This command is used to delete
+          information about a selected DHCP server from the configuration database.
+          The server is identified by the unique case insensitive server tag.
+          For example:
+<screen>
+{
+    "command": "remote-server4-del",
+    "arguments": {
+        "servers": [
+            {
+                "server-tag": "server1"
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+</screen>
+          </para>
+          <para>As a result of this command, the user defined server called
+          <command>server1</command> is removed from the database. All associations
+          of the configuration information with this server are automatically
+          removed from the database. The non-shareable configuration information,
+          such as: global parameters, option definitions and global options
+          associated with the server are removed from the database. The shareable
+          configuration information, i.e. the configuration elements which may be
+          associated with more than one server, is preserved. In particular,
+          subnets and shared networks associated with the deleted servers are
+          preserved. If any of the shareable configuration elements is associated
+          only with the deleted server, those objects become unassigned (orphaned).
+          For example: if the subnet has been created and associated with the
+          <command>server1</command> using the <command>remote-subnet4-set</command>
+          and the server1 is subsequently deleted, the subnet remains in the
+          database but none of the servers can use this subnet. The subnet can
+          be updated using the <command>remote-subnet4-set</command> and
+          associated with some other server or with all servers using the special
+          server tag "all". Such subnet can be also deleted from the database
+          using the <command>remote-subnet4-del-by-id</command> or
+          <command>remote-subnet4-del-by-prefix</command> if it is no longer
+          needed.
+          </para>
+
+          <para>The following is the successful response to the
+          <command>remote-server4-del</command> command:
+<screen>
+{
+    "result": 0,
+    "text": "1 DHCPv4 server(s) deleted."
+    "arguments": {
+        "count": 1
+    }
+}
+</screen>
+          </para>
+          <note>
+            <simpara>The <command>remote-server4-del</command> and
+            <command>remote-server6-del</command> commands must be used with care,
+            because an accidental deletion of the server causes parts of the existing
+            configurations to be lost permanently from the database. This operation
+            is not reversible. Re-creation of the accidentally deleted server does not
+            revert the lost configuration for that server and such configuration
+            must be re-created manually by the user.
+            </simpara>
+          </note>
+        </section>
+
+        <section id="command-remote-server4-get">
+          <title>remote-server4-get, remote-server6-get commands</title>
+          <para id="command-remote-server6-get">This command is used to fetch the
+          information about the selected DHCP server from the configuration database.
+          For example:
+<screen>
+{
+    "command": "remote-server6-get"
+    "service": [ "dhcp6" ],
+    "arguments": {
+        "servers": [
+            {
+                "server-tag": "server1"
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+</screen>
+          </para>
+
+          <para>This command fetches the information about the DHCPv6 server identified
+          by the server tag <command>server1</command>. The server tag is case insensitive.
+          The successful response returns basic information about the server such as
+          server tag and the user's description of the server:
+<screen>
+{
+    "result": 0,
+    "text": "DHCP server server1 found.",
+    "arguments": {
+        "servers": [
+            {
+                "server-tag": "server1",
+                "description": "A DHCPv6 server located on the first floor"
+            }
+        ],
+        "count": 1
+    }
+}
+</screen>
+          </para>
+        </section>
+
+        <section id="command-remote-server4-get-all">
+          <title>remote-server4-get-all, remote-server6-get-all commands</title>
+          <para id="command-remote-server6-get-all">This command is used to fetch all user
+          defined DHCPv4 or DHCPv6 servers from the database. The command structure
+          is very simple:
+<screen>
+{
+    "command": "remote-server4-get-all"
+    "arguments": {
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+</screen>
+          </para>
+          <para>The response includes basic information about each server, such as
+          a server tag and description:
+<screen>
+{
+    "result": 0,
+    "text": "DHCPv4 servers found.",
+    "arguments": {
+        "servers": [
+            {
+                "server-tag": "server1",
+                "description": "A DHCP server located on the first floor"
+            },
+            {
+                "server-tag": "server2",
+                "description": "An old DHCP server to be soon replaced"
+            }
+        ],
+        "count": 2
+    }
+}
+</screen>
+          </para>
+        </section>
+
+        <section id="command-remote-server4-set">
+          <title>remote-server4-set, remote-server6-set commands</title>
+          <para id="command-remote-server6-set">This command is used to create or replace
+          information about a DHCP server in the database. It is required when there is
+          a need to differentiate the configurations for various Kea instances connecting
+          to the same database. Various configuration elements, e.g. global parameters,
+          subnets may be associated with the selected servers (using server tags as
+          identifiers) allowing only those servers to use these configuration elements.
+          Using the particular server tag to make such associations is only possible when
+          the server has been created in the database using the
+          <command>remote-server4-set</command> or <command>remote-server6-set</command>
+          commands for the DHCPv4 and DHCPv6 cases respectively. The following command
+          creates the new (or updates existing) DHCPv6 server in the database:
+<screen>
+{
+    "command": "remote-server6-set"
+    "arguments": {
+        "servers": [
+            {
+                "server-tag": "server1",
+                "description": "A DHCP server on the ground floor."
+            }
+        ],
+        "remote": {
+            "type": "mysql"
+        }
+    }
+}
+</screen>
+          </para>
+          <para>The server tag must be unique accross all servers in the database. When
+          the server information under the given server tag already exists, it is replaced
+          with the new information. The specified server tag is case insensitive. The
+          maximum length of the server tag is 256 characters. The following keywords are
+          reserved and must not be used as server tags: "all" and "any".</para>
+
+          <para>The following is the example response to the above command:
+<screen>
+{
+    "result": 0,
+    "text": "DHCPv6 server successfully set.",
+    "arguments": {
+        "servers": [
+            {
+                "server-tag": "server1",
+                "description": "A DHCP server on the ground floor."
+            }
+        ]
+    }
+}
+</screen>
+          </para>
+        </section>
+
         <section id="command-remote-global-parameter4-del">
           <title>remote-global-parameter4-del, remote-global-parameter6-del commands</title>
           <para id="command-remote-global-parameter6-del">This command is used to

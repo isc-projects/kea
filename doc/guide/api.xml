@@ -4346,11 +4346,11 @@ This command contains no arguments besides the optional <command>remote</command
     "arguments": {
         "servers": [
             {
-                "server-tag": &lt;first server tag&gt;
+                "server-tag": &lt;first server tag&gt;,
                 "description": &lt;first server description&gt;
             },
             {
-                "server-tag": &lt;second server tag&gt;
+                "server-tag": &lt;second server tag&gt;,
                 "description": &lt;second server description&gt;
             }
         ],
@@ -4537,11 +4537,11 @@ This command contains no arguments besides the optional <command>remote</command
     "arguments": {
         "servers": [
             {
-                "server-tag": &lt;first server tag&gt;
+                "server-tag": &lt;first server tag&gt;,
                 "description": &lt;first server description&gt;
             },
             {
-                "server-tag": &lt;second server tag&gt;
+                "server-tag": &lt;second server tag&gt;,
                 "description": &lt;second server description&gt;
             }
         ],

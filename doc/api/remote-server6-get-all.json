@@ -19,11 +19,11 @@
     \"arguments\": {
         \"servers\": [
             {
-                \"server-tag\": <first server tag>
+                \"server-tag\": <first server tag>,
                 \"description\": <first server description>
             },
             {
-                \"server-tag\": <second server tag>
+                \"server-tag\": <second server tag>,
                 \"description\": <second server description>
             }
         ],
