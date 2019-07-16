@@ -1,3 +1,11 @@
+1621.	[func]		fdupont
+	Both kea-dhcp4 and kea-dhcp6 now support a special class, 'DROP'.
+	When the class is defined, inbound client packets that match the
+	class's match expression will be dropped without further processing.
+	Each such drop is logged at DEBUG level and accounted for in
+	drop statistics.
+	(Gitlab #606,!375, git bfa5b2c50324e9d2339daa8309774f49a5e7bf3c)
+
 1620.	[func]		franek, razvan
 	Kea statistics improvements: Support for storing more than one
 	sample.
