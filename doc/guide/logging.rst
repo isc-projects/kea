@@ -124,337 +124,337 @@ libraries), or hooks libraries (open source or premium).
 
 .. table:: List of Loggers Supported by Kea Servers and Hooks Libraries Shipped With Kea and Premium Packages
 
-   +----------------------------------+------------------------+-----------------------+
-   | Logger Name                      | Software Package       | Description           |
-   +==================================+========================+=======================+
-   | ``kea-ctrl-agent``               | core                   | The root logger for   |
-   |                                  |                        | the Control Agent     |
-   |                                  |                        | exposing the RESTful  |
-   |                                  |                        | control API. All      |
-   |                                  |                        | components used by    |
-   |                                  |                        | the Control Agent     |
-   |                                  |                        | inherit the settings  |
-   |                                  |                        | from this logger.     |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-ctrl-agent.http``          | core                   | A logger which        |
-   |                                  |                        | outputs log messages  |
-   |                                  |                        | related to receiving, |
-   |                                  |                        | parsing, and sending  |
-   |                                  |                        | HTTP messages.        |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4``                    | core                   | The root logger for   |
-   |                                  |                        | the DHCPv4 server.    |
-   |                                  |                        | All components used   |
-   |                                  |                        | by the DHCPv4 server  |
-   |                                  |                        | inherit the settings  |
-   |                                  |                        | from this logger.     |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp6``                    | core                   | The root logger for   |
-   |                                  |                        | the DHCPv6 server.    |
-   |                                  |                        | All components used   |
-   |                                  |                        | by the DHCPv6 server  |
-   |                                  |                        | inherit the settings  |
-   |                                  |                        | from this logger.     |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.alloc-engine``,      | core                   | Used by the lease     |
-   | ``kea-dhcp6.alloc-engine``       |                        | allocation engine,    |
-   |                                  |                        | which is responsible  |
-   |                                  |                        | for managing leases   |
-   |                                  |                        | in the lease          |
-   |                                  |                        | database, i.e.        |
-   |                                  |                        | creating, modifying,  |
-   |                                  |                        | and removing DHCP     |
-   |                                  |                        | leases as a result of |
-   |                                  |                        | processing messages   |
-   |                                  |                        | from clients.         |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.bad-packets``,       | core                   | Used by the DHCP      |
-   | ``kea-dhcp6.bad-packets``        |                        | servers for logging   |
-   |                                  |                        | inbound client        |
-   |                                  |                        | packets that were     |
-   |                                  |                        | dropped or to which   |
-   |                                  |                        | the server responded  |
-   |                                  |                        | with a DHCPNAK. It    |
-   |                                  |                        | allows administrators |
-   |                                  |                        | to configure a        |
-   |                                  |                        | separate log output   |
-   |                                  |                        | that contains only    |
-   |                                  |                        | packet drop and       |
-   |                                  |                        | reject entries.       |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.callouts``,          | core                   | Used to log messages  |
-   | ``kea-dhcp6.callouts``           |                        | pertaining to the     |
-   |                                  |                        | callouts registration |
-   |                                  |                        | and execution for the |
-   |                                  |                        | particular hook       |
-   |                                  |                        | point.                |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.commands``,          | core                   | Used to log messages  |
-   | ``kea-dhcp6.commands``           |                        | relating to the       |
-   |                                  |                        | handling of commands  |
-   |                                  |                        | received by the DHCP  |
-   |                                  |                        | server over the       |
-   |                                  |                        | command channel.      |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.database``,          | core                   | Used to log messages  |
-   | ``kea-dhcp6.database``           |                        | relating to general   |
-   |                                  |                        | operations on the     |
-   |                                  |                        | relational databases  |
-   |                                  |                        | and Cassandra.        |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.ddns``,              | core                   | Used by the DHCP      |
-   | ``kea-dhcp6.ddns``               |                        | server to log         |
-   |                                  |                        | messages related to   |
-   |                                  |                        | Client FQDN and       |
-   |                                  |                        | Hostname option       |
-   |                                  |                        | processing. It also   |
-   |                                  |                        | includes log messages |
-   |                                  |                        | related to the        |
-   |                                  |                        | relevant DNS updates. |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.dhcp4``              | core                   | Used by the DHCPv4    |
-   |                                  |                        | server daemon to log  |
-   |                                  |                        | basic operations.     |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.dhcpsrv``,           | core                   | The base loggers for  |
-   | ``kea-dhcp6.dhcpsrv``            |                        | the libkea-dhcpsrv    |
-   |                                  |                        | library.              |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.eval``,              | core                   | Used to log messages  |
-   | ``kea-dhcp6.eval``               |                        | relating to the       |
-   |                                  |                        | client classification |
-   |                                  |                        | expression evaluation |
-   |                                  |                        | code.                 |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.host-cache-hooks``,  | libdhcp_host_cache     | This logger is used   |
-   | ``kea-dhcp6.host-cache-hooks``   | premium hook library   | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the Host |
-   |                                  |                        | Cache hooks library.  |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.flex-id-hooks``,     | libdhcp_flex_id        | This logger is used   |
-   | ``kea-dhcp6.flex-id-hooks``      | premium hook library   | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | Flexible Identifiers  |
-   |                                  |                        | hooks library.        |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.ha-hooks``,          | libdhcp_ha hook        | This logger is used   |
-   | ``kea-dhcp6.ha-hooks``           | library                | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the High |
-   |                                  |                        | Availability hooks    |
-   |                                  |                        | library.              |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.hooks``,             | core                   | Used to log messages  |
-   | ``kea-dhcp6.hooks``              |                        | related to the        |
-   |                                  |                        | management of hooks   |
-   |                                  |                        | libraries, e.g.       |
-   |                                  |                        | registration and      |
-   |                                  |                        | deregistration of the |
-   |                                  |                        | libraries, and to the |
-   |                                  |                        | initialization of the |
-   |                                  |                        | callouts execution    |
-   |                                  |                        | for various hook      |
-   |                                  |                        | points within the     |
-   |                                  |                        | DHCP server.          |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.host-cmds-hooks``,   | libdhcp_host_cmds      | This logger is used   |
-   | ``kea-dhcp6.host-cmds-hooks``    | premium hook library   | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the Host |
-   |                                  |                        | Commands hooks        |
-   |                                  |                        | library. In general,  |
-   |                                  |                        | these will pertain to |
-   |                                  |                        | the loading and       |
-   |                                  |                        | unloading of the      |
-   |                                  |                        | library and the       |
-   |                                  |                        | execution of commands |
-   |                                  |                        | by the library.       |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.hosts``,             | core                   | Used within the       |
-   | ``kea-dhcp6.hosts``              |                        | libdhcpsrv, it logs   |
-   |                                  |                        | messages related to   |
-   |                                  |                        | the management of     |
-   |                                  |                        | DHCP host             |
-   |                                  |                        | reservations, i.e.    |
-   |                                  |                        | retrieving            |
-   |                                  |                        | reservations and      |
-   |                                  |                        | adding new            |
-   |                                  |                        | reservations.         |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.lease-cmds-hooks``,  | libdhcp_lease_cmds     | This logger is used   |
-   | ``kea-dhcp6.lease-cmds-hooks``   | hook library           | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | Lease Commands hooks  |
-   |                                  |                        | library. In general,  |
-   |                                  |                        | these will pertain to |
-   |                                  |                        | the loading and       |
-   |                                  |                        | unloading of the      |
-   |                                  |                        | library and the       |
-   |                                  |                        | execution of commands |
-   |                                  |                        | by the library.       |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.leases``,            | core                   | Used by the DHCP      |
-   | ``kea-dhcp6.leases``             |                        | server to log         |
-   |                                  |                        | messages related to   |
-   |                                  |                        | lease allocation. The |
-   |                                  |                        | messages include      |
-   |                                  |                        | detailed information  |
-   |                                  |                        | about the allocated   |
-   |                                  |                        | or offered leases,    |
-   |                                  |                        | errors during the     |
-   |                                  |                        | lease allocation,     |
-   |                                  |                        | etc.                  |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.legal-log-hooks``,   | libdhcp_legal_log      | This logger is used   |
-   | ``kea-dhcp6.legal-log-hooks``    | premium hook library   | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | Forensic Logging      |
-   |                                  |                        | hooks library.        |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.options``,           | core                   | Used by the DHCP      |
-   | ``kea-dhcp4.options``            |                        | server to log         |
-   |                                  |                        | messages related to   |
-   |                                  |                        | the processing of     |
-   |                                  |                        | options in the DHCP   |
-   |                                  |                        | messages, i.e.        |
-   |                                  |                        | parsing options,      |
-   |                                  |                        | encoding options into |
-   |                                  |                        | on-wire format, and   |
-   |                                  |                        | packet classification |
-   |                                  |                        | using options         |
-   |                                  |                        | contained in the      |
-   |                                  |                        | received packets.     |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.packets``,           | core                   | This logger is mostly |
-   | ``kea-dhcp6.packets``            |                        | used to log messages  |
-   |                                  |                        | related to            |
-   |                                  |                        | transmission of the   |
-   |                                  |                        | DHCP packets, i.e.    |
-   |                                  |                        | packet reception and  |
-   |                                  |                        | the sending of a      |
-   |                                  |                        | response. Such        |
-   |                                  |                        | messages include      |
-   |                                  |                        | information about the |
-   |                                  |                        | source and            |
-   |                                  |                        | destination IP        |
-   |                                  |                        | addresses and         |
-   |                                  |                        | interfaces used to    |
-   |                                  |                        | transmit packets. The |
-   |                                  |                        | logger is also used   |
-   |                                  |                        | to log messages       |
-   |                                  |                        | related to subnet     |
-   |                                  |                        | selection, as this    |
-   |                                  |                        | selection is usually  |
-   |                                  |                        | based on the IP       |
-   |                                  |                        | addresses, relay      |
-   |                                  |                        | addresses, and/or     |
-   |                                  |                        | interface names,      |
-   |                                  |                        | which can be          |
-   |                                  |                        | retrieved from the    |
-   |                                  |                        | received packet even  |
-   |                                  |                        | before the DHCP       |
-   |                                  |                        | message carried in    |
-   |                                  |                        | the packet is parsed. |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.radius-hooks``,      | libdhcp_radius         | This logger is used   |
-   | ``kea-dhcp6.radius-hooks``       | premium hook library   | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | RADIUS hooks library. |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.stat-cmds-hooks``,   | libdhcp_stat_cmds      | This logger is used   |
-   | ``kea-dhcp6.stat-cmds-hooks``    | hook library           | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | Statistics Commands   |
-   |                                  |                        | hooks library. In     |
-   |                                  |                        | general, these will   |
-   |                                  |                        | pertain to loading    |
-   |                                  |                        | and unloading the     |
-   |                                  |                        | library and the       |
-   |                                  |                        | execution of commands |
-   |                                  |                        | by the library.       |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.subnet-cmds-hooks``, | libdhcp_subnet_cmds    | This logger is used   |
-   | ``kea-dhcp6.subnet-cmds-hooks``  | hook library           | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | Subnet Commands hooks |
-   |                                  |                        | library. In general,  |
-   |                                  |                        | these will pertain to |
-   |                                  |                        | loading and unloading |
-   |                                  |                        | the library and the   |
-   |                                  |                        | execution of commands |
-   |                                  |                        | by the library.       |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp4.mysql-cb-hooks``,    | libdhcp_mysql_cb_hooks | This logger is used   |
-   | ``kea-dhcp6.mysql-cb-hooks``     | hook library           | to log messages       |
-   |                                  |                        | related to the        |
-   |                                  |                        | operation of the      |
-   |                                  |                        | MySQL Configuration   |
-   |                                  |                        | Backend hooks         |
-   |                                  |                        | library.              |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp-ddns``                | core                   | The root logger for   |
-   |                                  |                        | the kea-dhcp-ddns     |
-   |                                  |                        | daemon. All           |
-   |                                  |                        | components used by    |
-   |                                  |                        | this daemon inherit   |
-   |                                  |                        | the settings from     |
-   |                                  |                        | this logger unless    |
-   |                                  |                        | there are             |
-   |                                  |                        | configurations for    |
-   |                                  |                        | more specialized      |
-   |                                  |                        | loggers.              |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp-ddns.dctl``           | core                   | The logger used by    |
-   |                                  |                        | the kea-dhcp-ddns     |
-   |                                  |                        | daemon for logging    |
-   |                                  |                        | basic information     |
-   |                                  |                        | about the process,    |
-   |                                  |                        | received signals, and |
-   |                                  |                        | triggered             |
-   |                                  |                        | reconfigurations.     |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp-ddns.dhcpddns``       | core                   | The logger used by    |
-   |                                  |                        | the kea-dhcp-ddns     |
-   |                                  |                        | daemon for logging    |
-   |                                  |                        | events related to     |
-   |                                  |                        | DDNS operations.      |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp-ddns.dhcp-to-d2``     | core                   | Used by the           |
-   |                                  |                        | kea-dhcp-ddns daemon  |
-   |                                  |                        | for logging           |
-   |                                  |                        | information about     |
-   |                                  |                        | events dealing with   |
-   |                                  |                        | receiving messages    |
-   |                                  |                        | from the DHCP servers |
-   |                                  |                        | and adding them to    |
-   |                                  |                        | the queue for         |
-   |                                  |                        | processing.           |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-dhcp-ddns.d2-to-dns``      | core                   | Used by the           |
-   |                                  |                        | kea-dhcp-ddns daemon  |
-   |                                  |                        | for logging           |
-   |                                  |                        | information about     |
-   |                                  |                        | events dealing with   |
-   |                                  |                        | sending and receiving |
-   |                                  |                        | messages to and from  |
-   |                                  |                        | the DNS servers.      |
-   +----------------------------------+------------------------+-----------------------+
-   | ``kea-netconf``                  | core                   | The root logger for   |
-   |                                  |                        | the NETCONF agent.    |
-   |                                  |                        | All components used   |
-   |                                  |                        | by NETCONF inherit    |
-   |                                  |                        | the settings from     |
-   |                                  |                        | this logger if there  |
-   |                                  |                        | is no specialized     |
-   |                                  |                        | logger provided.      |
-   +----------------------------------+------------------------+-----------------------+
+   +----------------------------------+------------------------+--------------------------------+
+   | Logger Name                      | Software Package       | Description                    |
+   +==================================+========================+================================+
+   | ``kea-ctrl-agent``               | core                   | The root logger for            |
+   |                                  |                        | the Control Agent              |
+   |                                  |                        | exposing the RESTful           |
+   |                                  |                        | control API. All               |
+   |                                  |                        | components used by             |
+   |                                  |                        | the Control Agent              |
+   |                                  |                        | inherit the settings           |
+   |                                  |                        | from this logger.              |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-ctrl-agent.http``          | core                   | A logger which                 |
+   |                                  |                        | outputs log messages           |
+   |                                  |                        | related to receiving,          |
+   |                                  |                        | parsing, and sending           |
+   |                                  |                        | HTTP messages.                 |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4``                    | core                   | The root logger for            |
+   |                                  |                        | the DHCPv4 server.             |
+   |                                  |                        | All components used            |
+   |                                  |                        | by the DHCPv4 server           |
+   |                                  |                        | inherit the settings           |
+   |                                  |                        | from this logger.              |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp6``                    | core                   | The root logger for            |
+   |                                  |                        | the DHCPv6 server.             |
+   |                                  |                        | All components used            |
+   |                                  |                        | by the DHCPv6 server           |
+   |                                  |                        | inherit the settings           |
+   |                                  |                        | from this logger.              |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.alloc-engine``,      | core                   | Used by the lease              |
+   | ``kea-dhcp6.alloc-engine``       |                        | allocation engine,             |
+   |                                  |                        | which is responsible           |
+   |                                  |                        | for managing leases            |
+   |                                  |                        | in the lease                   |
+   |                                  |                        | database, i.e.                 |
+   |                                  |                        | creating, modifying,           |
+   |                                  |                        | and removing DHCP              |
+   |                                  |                        | leases as a result of          |
+   |                                  |                        | processing messages            |
+   |                                  |                        | from clients.                  |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.bad-packets``,       | core                   | Used by the DHCP               |
+   | ``kea-dhcp6.bad-packets``        |                        | servers for logging            |
+   |                                  |                        | inbound client                 |
+   |                                  |                        | packets that were              |
+   |                                  |                        | dropped or to which            |
+   |                                  |                        | the server responded           |
+   |                                  |                        | with a DHCPNAK. It             |
+   |                                  |                        | allows administrators          |
+   |                                  |                        | to configure a                 |
+   |                                  |                        | separate log output            |
+   |                                  |                        | that contains only             |
+   |                                  |                        | packet drop and                |
+   |                                  |                        | reject entries.                |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.callouts``,          | core                   | Used to log messages           |
+   | ``kea-dhcp6.callouts``           |                        | pertaining to the              |
+   |                                  |                        | callouts registration          |
+   |                                  |                        | and execution for the          |
+   |                                  |                        | particular hook                |
+   |                                  |                        | point.                         |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.commands``,          | core                   | Used to log messages           |
+   | ``kea-dhcp6.commands``           |                        | relating to the                |
+   |                                  |                        | handling of commands           |
+   |                                  |                        | received by the DHCP           |
+   |                                  |                        | server over the                |
+   |                                  |                        | command channel.               |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.database``,          | core                   | Used to log messages           |
+   | ``kea-dhcp6.database``           |                        | relating to general            |
+   |                                  |                        | operations on the              |
+   |                                  |                        | relational databases           |
+   |                                  |                        | and Cassandra.                 |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.ddns``,              | core                   | Used by the DHCP               |
+   | ``kea-dhcp6.ddns``               |                        | server to log                  |
+   |                                  |                        | messages related to            |
+   |                                  |                        | Client FQDN and                |
+   |                                  |                        | Hostname option                |
+   |                                  |                        | processing. It also            |
+   |                                  |                        | includes log messages          |
+   |                                  |                        | related to the                 |
+   |                                  |                        | relevant DNS updates.          |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.dhcp4``              | core                   | Used by the DHCPv4             |
+   |                                  |                        | server daemon to log           |
+   |                                  |                        | basic operations.              |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.dhcpsrv``,           | core                   | The base loggers for           |
+   | ``kea-dhcp6.dhcpsrv``            |                        | the libkea-dhcpsrv             |
+   |                                  |                        | library.                       |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.eval``,              | core                   | Used to log messages           |
+   | ``kea-dhcp6.eval``               |                        | relating to the                |
+   |                                  |                        | client classification          |
+   |                                  |                        | expression evaluation          |
+   |                                  |                        | code.                          |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.host-cache-hooks``,  | libdhcp_host_cache     | This logger is used            |
+   | ``kea-dhcp6.host-cache-hooks``   | premium hook library   | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the Host          |
+   |                                  |                        | Cache hooks library.           |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.flex-id-hooks``,     | libdhcp_flex_id        | This logger is used            |
+   | ``kea-dhcp6.flex-id-hooks``      | premium hook library   | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | Flexible Identifiers           |
+   |                                  |                        | hooks library.                 |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.ha-hooks``,          | libdhcp_ha hook        | This logger is used            |
+   | ``kea-dhcp6.ha-hooks``           | library                | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the High          |
+   |                                  |                        | Availability hooks             |
+   |                                  |                        | library.                       |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.hooks``,             | core                   | Used to log messages           |
+   | ``kea-dhcp6.hooks``              |                        | related to the                 |
+   |                                  |                        | management of hooks            |
+   |                                  |                        | libraries, e.g.                |
+   |                                  |                        | registration and               |
+   |                                  |                        | deregistration of the          |
+   |                                  |                        | libraries, and to the          |
+   |                                  |                        | initialization of the          |
+   |                                  |                        | callouts execution             |
+   |                                  |                        | for various hook               |
+   |                                  |                        | points within the              |
+   |                                  |                        | DHCP server.                   |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.host-cmds-hooks``,   | libdhcp_host_cmds      | This logger is used            |
+   | ``kea-dhcp6.host-cmds-hooks``    | premium hook library   | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the Host          |
+   |                                  |                        | Commands hooks                 |
+   |                                  |                        | library. In general,           |
+   |                                  |                        | these will pertain to          |
+   |                                  |                        | the loading and                |
+   |                                  |                        | unloading of the               |
+   |                                  |                        | library and the                |
+   |                                  |                        | execution of commands          |
+   |                                  |                        | by the library.                |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.hosts``,             | core                   | Used within the                |
+   | ``kea-dhcp6.hosts``              |                        | libdhcpsrv, it logs            |
+   |                                  |                        | messages related to            |
+   |                                  |                        | the management of              |
+   |                                  |                        | DHCP host                      |
+   |                                  |                        | reservations, i.e.             |
+   |                                  |                        | retrieving                     |
+   |                                  |                        | reservations and               |
+   |                                  |                        | adding new                     |
+   |                                  |                        | reservations.                  |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.lease-cmds-hooks``,  | libdhcp_lease_cmds     | This logger is used            |
+   | ``kea-dhcp6.lease-cmds-hooks``   | hook library           | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | Lease Commands hooks           |
+   |                                  |                        | library. In general,           |
+   |                                  |                        | these will pertain to          |
+   |                                  |                        | the loading and                |
+   |                                  |                        | unloading of the               |
+   |                                  |                        | library and the                |
+   |                                  |                        | execution of commands          |
+   |                                  |                        | by the library.                |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.leases``,            | core                   | Used by the DHCP               |
+   | ``kea-dhcp6.leases``             |                        | server to log                  |
+   |                                  |                        | messages related to            |
+   |                                  |                        | lease allocation. The          |
+   |                                  |                        | messages include               |
+   |                                  |                        | detailed information           |
+   |                                  |                        | about the allocated            |
+   |                                  |                        | or offered leases,             |
+   |                                  |                        | errors during the              |
+   |                                  |                        | lease allocation,              |
+   |                                  |                        | etc.                           |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.legal-log-hooks``,   | libdhcp_legal_log      | This logger is used            |
+   | ``kea-dhcp6.legal-log-hooks``    | premium hook library   | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | Forensic Logging               |
+   |                                  |                        | hooks library.                 |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.options``,           | core                   | Used by the DHCP               |
+   | ``kea-dhcp4.options``            |                        | server to log                  |
+   |                                  |                        | messages related to            |
+   |                                  |                        | the processing of              |
+   |                                  |                        | options in the DHCP            |
+   |                                  |                        | messages, i.e.                 |
+   |                                  |                        | parsing options,               |
+   |                                  |                        | encoding options into          |
+   |                                  |                        | on-wire format, and            |
+   |                                  |                        | packet classification          |
+   |                                  |                        | using options                  |
+   |                                  |                        | contained in the               |
+   |                                  |                        | received packets.              |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.packets``,           | core                   | This logger is mostly          |
+   | ``kea-dhcp6.packets``            |                        | used to log messages           |
+   |                                  |                        | related to                     |
+   |                                  |                        | transmission of the            |
+   |                                  |                        | DHCP packets, i.e.             |
+   |                                  |                        | packet reception and           |
+   |                                  |                        | the sending of a               |
+   |                                  |                        | response. Such                 |
+   |                                  |                        | messages include               |
+   |                                  |                        | information about the          |
+   |                                  |                        | source and                     |
+   |                                  |                        | destination IP                 |
+   |                                  |                        | addresses and                  |
+   |                                  |                        | interfaces used to             |
+   |                                  |                        | transmit packets. The          |
+   |                                  |                        | logger is also used            |
+   |                                  |                        | to log messages                |
+   |                                  |                        | related to subnet              |
+   |                                  |                        | selection, as this             |
+   |                                  |                        | selection is usually           |
+   |                                  |                        | based on the IP                |
+   |                                  |                        | addresses, relay               |
+   |                                  |                        | addresses, and/or              |
+   |                                  |                        | interface names,               |
+   |                                  |                        | which can be                   |
+   |                                  |                        | retrieved from the             |
+   |                                  |                        | received packet even           |
+   |                                  |                        | before the DHCP                |
+   |                                  |                        | message carried in             |
+   |                                  |                        | the packet is parsed.          |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.radius-hooks``,      | libdhcp_radius         | This logger is used            |
+   | ``kea-dhcp6.radius-hooks``       | premium hook library   | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | RADIUS hooks library.          |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.stat-cmds-hooks``,   | libdhcp_stat_cmds      | This logger is used            |
+   | ``kea-dhcp6.stat-cmds-hooks``    | hook library           | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | Statistics Commands            |
+   |                                  |                        | hooks library. In              |
+   |                                  |                        | general, these will            |
+   |                                  |                        | pertain to loading             |
+   |                                  |                        | and unloading the              |
+   |                                  |                        | library and the                |
+   |                                  |                        | execution of commands          |
+   |                                  |                        | by the library.                |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.subnet-cmds-hooks``, | libdhcp_subnet_cmds    | This logger is used            |
+   | ``kea-dhcp6.subnet-cmds-hooks``  | hook library           | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | Subnet Commands hooks          |
+   |                                  |                        | library. In general,           |
+   |                                  |                        | these will pertain to          |
+   |                                  |                        | loading and unloading          |
+   |                                  |                        | the library and the            |
+   |                                  |                        | execution of commands          |
+   |                                  |                        | by the library.                |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.mysql-cb-hooks``,    | libdhcp_mysql_cb_hooks | This logger is used            |
+   | ``kea-dhcp6.mysql-cb-hooks``     | hook library           | to log messages                |
+   |                                  |                        | related to the                 |
+   |                                  |                        | operation of the               |
+   |                                  |                        | MySQL Configuration            |
+   |                                  |                        | Backend hooks                  |
+   |                                  |                        | library.                       |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp-ddns``                | core                   | The root logger for            |
+   |                                  |                        | the kea-dhcp-ddns              |
+   |                                  |                        | daemon. All                    |
+   |                                  |                        | components used by             |
+   |                                  |                        | this daemon inherit            |
+   |                                  |                        | the settings from              |
+   |                                  |                        | this logger unless             |
+   |                                  |                        | there are                      |
+   |                                  |                        | configurations for             |
+   |                                  |                        | more specialized               |
+   |                                  |                        | loggers.                       |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp-ddns.dctl``           | core                   | The logger used by             |
+   |                                  |                        | the kea-dhcp-ddns              |
+   |                                  |                        | daemon for logging             |
+   |                                  |                        | basic information              |
+   |                                  |                        | about the process,             |
+   |                                  |                        | received signals, and          |
+   |                                  |                        | triggered                      |
+   |                                  |                        | reconfigurations.              |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp-ddns.dhcpddns``       | core                   | The logger used by             |
+   |                                  |                        | the kea-dhcp-ddns              |
+   |                                  |                        | daemon for logging             |
+   |                                  |                        | events related to              |
+   |                                  |                        | DDNS operations.               |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp-ddns.dhcp-to-d2``     | core                   | Used by the                    |
+   |                                  |                        | kea-dhcp-ddns daemon           |
+   |                                  |                        | for logging                    |
+   |                                  |                        | information about              |
+   |                                  |                        | events dealing with            |
+   |                                  |                        | receiving messages             |
+   |                                  |                        | from the DHCP servers          |
+   |                                  |                        | and adding them to             |
+   |                                  |                        | the queue for                  |
+   |                                  |                        | processing.                    |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp-ddns.d2-to-dns``      | core                   | Used by the                    |
+   |                                  |                        | kea-dhcp-ddns daemon           |
+   |                                  |                        | for logging                    |
+   |                                  |                        | information about              |
+   |                                  |                        | events dealing with            |
+   |                                  |                        | sending and receiving          |
+   |                                  |                        | messages to and from           |
+   |                                  |                        | the DNS servers.               |
+   +----------------------------------+------------------------+--------------------------------+
+   | ``kea-netconf``                  | core                   | The root logger for            |
+   |                                  |                        | the NETCONF agent.             |
+   |                                  |                        | All components used            |
+   |                                  |                        | by NETCONF inherit             |
+   |                                  |                        | the settings from              |
+   |                                  |                        | this logger if there           |
+   |                                  |                        | is no specialized              |
+   |                                  |                        | logger provided.               |
+   +----------------------------------+------------------------+--------------------------------+
 
 Note that user-defined hook libraries should not use any of the loggers
 mentioned above, but should instead define new loggers with names that

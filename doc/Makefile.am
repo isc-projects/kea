@@ -182,15 +182,6 @@ devel:
 	(cat Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > html/doxygen.log 2> html/doxygen-error.log
 	echo `grep -i ": warning:" html/doxygen-error.log | wc -l` warnings/errors detected.
 
-guide:
-	$(MAKE) -C guide kea-guide.html
-
-pdf:
-	$(MAKE) -C guide kea-guide.pdf
-
-pages:
-	$(MAKE) -C guide pages
-
 clean:
 	rm -rf html
 

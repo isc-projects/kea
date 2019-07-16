@@ -1,3 +1,6 @@
+.. figure:: _static/kea-logo-200.png
+   :align: right
+
 ##################################
 Kea Administrator Reference Manual
 ##################################
