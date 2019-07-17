@@ -800,8 +800,8 @@ Response syntax:
        }
    }
 
-The returned list of classes merely contains their names. In order to
-retrieve full information about one of these classes use
+The returned list of classes merely contains their names. To
+retrieve full information about one of these classes, use
 :ref:`command-class-get`. The returned result is 3 (empty) if no
 classes are found. If the command is processed successfully and the list
 of client classes is not empty, the result of 0 is returned. If there is

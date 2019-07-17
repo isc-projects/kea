@@ -500,7 +500,7 @@ severity to INFO will log INFO, WARN, ERROR, and FATAL messages). The
 severity may also be set to NONE, in which case all messages from that
 logger are inhibited.
 
- .. note::
+.. note::
 
    The ``keactrl`` tool, described in :ref:`keactrl`, can be configured
    to start the servers in verbose mode. If this is the case, the
@@ -555,7 +555,7 @@ The default value is 10240000 (10MB). The smallest value that can be
 specified without disabling rotation is 204800. Any value less than
 this, including 0, disables rotation.
 
- .. note::
+.. note::
 
    Due to a limitation of the underlying logging library (log4cplus),
    rolling over the log files (from ".1" to ".2", etc) may show odd
