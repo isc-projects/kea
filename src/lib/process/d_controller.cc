@@ -499,8 +499,9 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
         }
         if (obj_name == "Logging") {
             LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("'Logging' defined in top level. This is deprecated."
-                     " Please define it in the '" + app_name + "' scope.");
+                .arg("The top level element, 'Logging', has been deprecated."
+                     "  Loggers should be defined with the 'loggers[]'"
+                     " element within the '" +  app_name + "' scope.");
             continue;
         }
         LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
