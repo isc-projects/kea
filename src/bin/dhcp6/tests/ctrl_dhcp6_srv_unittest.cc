@@ -798,6 +798,10 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-age\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-age-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-count\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-count-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -1023,6 +1027,34 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
                     "  \"arguments\": {}}", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
               response);
+
+    // Check statistic-set-max-sample-age
+    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-age\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-set-max-sample-age-all
+    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-age-all\", "
+                    "  \"arguments\": {"
+                    "  \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
+              response);
+
+    // Check statistic-set-max-sample-count
+    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-count\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-set-max-sample-count-all
+    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-count-all\", "
+                    "  \"arguments\": {"
+                    "  \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
+              response);
 }
 
 // Tests that the server properly responds to shtudown command sent
@@ -1054,6 +1086,10 @@ TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");
     checkListCommands(rsp, "statistic-reset-all");
+    checkListCommands(rsp, "statistic-set-max-sample-age");
+    checkListCommands(rsp, "statistic-set-max-sample-age-all");
+    checkListCommands(rsp, "statistic-set-max-sample-count");
+    checkListCommands(rsp, "statistic-set-max-sample-count-all");    
 }
 
 // Tests if the server returns its configuration using config-get.
