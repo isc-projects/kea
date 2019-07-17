@@ -22,25 +22,9 @@ endif
 
 CLEANFILES  = *.gcno *.gcda
 
-man_MANS = kea-dhcp4.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp4.xml
-EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
+EXTRA_DIST = dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp4_parser.yy
 
-if GENERATE_DOCS
-kea-dhcp4.8: kea-dhcp4.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/kea-dhcp4.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
 
 # convenience archive
 

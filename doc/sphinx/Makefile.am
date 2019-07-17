@@ -117,7 +117,7 @@ mes_files+=$(top_srcdir)/src/bin/netconf/netconf_messages.mes
 all: pdf html mans
 
 kea-messages.rst: $(mes_files) system_messages.py
-	./system_messages.py -o $@ $(mes_files)
+	$(srcdir)/system_messages.py -o $@ $(mes_files)
 
 
 pdf: $(main_sources)
@@ -142,9 +142,9 @@ install-data-local:
 uninstall-local:
 	rm -rf $(DESTDIR)$(docdir)
 
-clean::
-	-rm -rf $(sphinxbuilddir)
-
+clean-local:
+	rm -rf $(sphinxbuilddir)
+	rm -f kea-messages.rst
 
 .PHONY: all pdf html mans
 

@@ -13,8 +13,8 @@ all: devel
 
 devel:
 	mkdir -p $(builddir)/html
-	(cat Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > $(builddir)/html/doxygen.log 2> $(builddir)/html/doxygen-error.log
+	(cat $(srcdir)/Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > $(builddir)/html/doxygen.log 2> $(builddir)/html/doxygen-error.log
 	echo `grep -i ": warning:" $(builddir)/html/doxygen-error.log | wc -l` warnings/errors detected.
 
-clean:
+clean-local:
 	rm -rf html

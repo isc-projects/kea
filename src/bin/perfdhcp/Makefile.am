@@ -56,19 +56,3 @@ perfdhcp_LDADD += $(PTHREAD_LDFLAGS)
 # ... and the documentation
 EXTRA_DIST = perfdhcp_internals.dox
 
-man_MANS = perfdhcp.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST += $(man_MANS) perfdhcp.xml
-
-if GENERATE_DOCS
-
-perfdhcp.8: perfdhcp.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/perfdhcp.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
