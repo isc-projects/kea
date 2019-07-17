@@ -1566,9 +1566,8 @@ fi
 
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
-                 doc/guide/Makefile
-                 doc/version.ent
-                 doc/docgen/Makefile
+                 doc/sphinx/Makefile
+                 doc/devel/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
                  ext/coroutine/Makefile
