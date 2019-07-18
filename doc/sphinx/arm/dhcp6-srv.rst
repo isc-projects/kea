@@ -2898,6 +2898,14 @@ qualifying suffix (if one is defined and needed).
    yield an empty domain label within a name, if that label consists
    only of invalid characters.
 
+.. note::
+
+   Since the 1.6.0 Kea release it is possible to specify hostname-char-set
+   and/or hostname-char-replacement at the global scope. This allows
+   to sanitize host names without requiring a dhcp-ddns entry. When
+   a hostname-char parameter is defined at the global scope and
+   in a dhcp-ddns entry the second (local) value is used.
+
 .. _dhcp6-dhcp4o6-config:
 
 DHCPv4-over-DHCPv6: DHCPv6 Side
