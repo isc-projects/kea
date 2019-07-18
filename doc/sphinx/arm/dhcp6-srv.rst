@@ -2851,7 +2851,7 @@ qualifying suffix "example.com", and the default value is used for
 
 **myhost-3001-1--70E.example.com.**
 
-.. _host-name-sanitization:
+.. _dhcp6-host-name-sanitization:
 
 Sanitizing Client FQDN Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

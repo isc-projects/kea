@@ -3083,7 +3083,7 @@ qualifying suffix "example.com", and the default value is used for
 
 **myhost-172-16-1-10.example.com.**
 
-.. _host-name-sanitization:
+.. _dhcp4-host-name-sanitization:
 
 Sanitizing Client Host Name and FQDN Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

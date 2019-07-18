@@ -222,7 +222,6 @@ To create the database:
 
       mysql> quit
       Bye
-      $
 
 If the tables were not created in Step 4, run the ``kea-admin`` tool
 to create them now:
