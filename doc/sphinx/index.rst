@@ -1,4 +1,4 @@
-.. figure:: ../static/kea-logo-200.png
+.. figure:: static/kea-logo-200.png
    :align: right
 
 ##################################
