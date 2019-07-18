@@ -721,7 +721,7 @@ done with the following Kea4 configuration:
            {
                "library": "/usr/local/lib/libdhcp_legal_log.so",
                "parameters": {
-                   "path": "/var/kea/var",
+                   "path": "/var/lib/kea/log",
                    "base-name": "kea-forensic4"
                }
            },
@@ -738,7 +738,7 @@ To configure it for kea-dhcp6, the commands are:
            {
                "library": "/usr/local/lib/libdhcp_legal_log.so",
                "parameters": {
-                   "path": "/var/kea/var",
+                   "path": "/var/lib/kea/log",
                    "base-name": "kea-forensic6"
                }
            },

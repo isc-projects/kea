@@ -58,7 +58,7 @@ configuration file. Since the DHCPv4 server opens privileged ports, it
 requires root access. This daemon must be run as root.
 
 During startup, the server will attempt to create a PID file of the
-form: [runstatedir]/[conf name].kea-dhcp4.pid where:
+form: [runstatedir]/kea/[conf name].kea-dhcp4.pid where:
 
 -  ``runstatedir``: The value as passed into the build configure
    script; it defaults to "/usr/local/var/run". Note that this value may be
@@ -113,7 +113,7 @@ be created. The basic configuration is as follows:
        "lease-database": {
            "type": "memfile",
            "persist": true,
-           "name": "/var/kea/dhcp4.leases"
+           "name": "/var/lib/kea/dhcp4.leases"
        },
 
    # Finally, we list the subnets from which we will be leasing addresses.
@@ -300,7 +300,7 @@ can be used to configure the memfile backend.
 
 -  ``name``: specifies an absolute location of the lease file in which
    new leases and lease updates will be recorded. The default value for
-   this parameter is ``"[kea-install-dir]/var/kea/kea-leases4.csv"``.
+   this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases4.csv"``.
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
    server will perform a lease file cleanup (LFC). This removes

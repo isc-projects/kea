@@ -38,7 +38,12 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``share/man/`` — manual pages (online documentation).
 
--  ``var/kea/`` — server identification, lease databases, and log files.
+-  ``var/lib/kea/`` — server identification, and lease databases
+   files.
+
+-  ``var/log/`` - log files.
+
+-  ``var/run/kea`` - pid and logger lock files.
 
 .. _build-requirements:
 
@@ -225,6 +230,22 @@ options. Some commonly used options are:
 --enable-perfdhcp
    Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
    is to not build it.
+
+.. note::
+
+   The ``--runstatedir`` in the installation directories is particular.
+   There are three cases:
+
+   - You use autoconf 2.70 or greater which supports this, but this autoconf
+     version has not been released yet.
+
+   - You use autoconf 2.69 patched to add support of this. In this case and the
+     previous simply use when needed the``--runstatedir`` configure parameter.
+
+   - There is no support (the configure parameter is not recognized and configure
+     directly raises an error). For autoconf 2.69 the ``runstatedir`` environment
+     variable is supported so simply remove the ``--`` before ``runstatedir``
+     in the configure script call, e.g.: ``./configure runstatedir=/opt/run ...``
 
 ..
 

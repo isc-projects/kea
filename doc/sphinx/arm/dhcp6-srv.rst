@@ -58,7 +58,7 @@ configuration file. Since the DHCPv6 server opens privileged ports, it
 requires root access. This daemon must be run as root.
 
 During startup, the server will attempt to create a PID file of the
-form: [**runstatedir**]/[**conf name**].kea-dhcp6.pid where:
+form: [**runstatedir**]/kea/[**conf name**].kea-dhcp6.pid where:
 
 -  ``runstatedir``: The value as passed into the build configure
    script; it defaults to "/usr/local/var/run". Note that this value may be
@@ -114,7 +114,7 @@ be created. The basic configuration is as follows:
        "lease-database": {
            "type": "memfile",
            "persist": true,
-           "name": "/var/kea/dhcp6.leases"
+           "name": "/var/lib/kea/dhcp6.leases"
        },
 
    # Finally, we list the subnets from which we will be leasing addresses.
@@ -286,7 +286,7 @@ can be used to configure the memfile backend.
 
 -  ``name``: specifies an absolute location of the lease file in which
    new leases and lease updates will be recorded. The default value for
-   this parameter is ``"[kea-install-dir]/var/kea/kea-leases6.csv"``.
+   this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases6.csv"``.
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
    server will perform a lease file cleanup (LFC). This removes
@@ -4320,7 +4320,7 @@ which will result in the following server identifier:
    |type |htype|   identifier    |
 
 The server stores the generated server identifier in the following
-location: [kea-install-dir]/var/kea/kea-dhcp6-serverid.
+location: [kea-install-dir]/var/lib/kea/kea-dhcp6-serverid.
 
 In some uncommon deployments where no stable storage is available, the
 server should be configured not to try to store the server identifier.
@@ -4355,7 +4355,7 @@ DHCPv6 data directory
 
 The Kea DHCPv6 server puts the server identifier file and the default
 memory lease file into its data directory. By default this directory is
-``prefix/var/kea`` but this location can be changed using the
+``prefix/var/lib/kea`` but this location can be changed using the
 ``data-directory`` global parameter as in:
 
 ::

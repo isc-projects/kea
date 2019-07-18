@@ -79,10 +79,10 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 
     A server status of "inactive" may indicate a configuration error.
     Please check the log file (by default named
-    ``[kea-install-dir]/var/kea/kea-dhcp4.log``,
-    ``[kea-install-dir]/var/kea/kea-dhcp6.log``,
-    ``[kea-install-dir]/var/kea/kea-ddns.log`` or
-    ``[kea-install-dir]/var/kea/kea-ctrl-agent.log``) for the details of
+    ``[kea-install-dir]/var/log/kea-dhcp4.log``,
+    ``[kea-install-dir]/var/log/kea-dhcp6.log``,
+    ``[kea-install-dir]/var/log/kea-ddns.log`` or
+    ``[kea-install-dir]/var/log/kea-ctrl-agent.log``) for the details of
     the error.
 
 10. If the server has been started successfully, test that it is
