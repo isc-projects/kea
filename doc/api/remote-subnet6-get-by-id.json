@@ -24,7 +24,7 @@
     \"arguments\": {
         \"subnets\": [
             {
-                \"id\": <subnet identifier>
+                \"id\": <subnet identifier>,
                 \"subnet\": <subnet prefix>,
                 \"shared-network-name\": <shared network name> | null,
                 \"metadata\": {
