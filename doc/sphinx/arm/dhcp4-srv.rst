@@ -58,10 +58,10 @@ configuration file. Since the DHCPv4 server opens privileged ports, it
 requires root access. This daemon must be run as root.
 
 During startup, the server will attempt to create a PID file of the
-form: [localstatedir]/[conf name].kea-dhcp4.pid where:
+form: [runstatedir]/[conf name].kea-dhcp4.pid where:
 
--  ``localstatedir``: The value as passed into the build configure
-   script; it defaults to "/usr/local/var". Note that this value may be
+-  ``runstatedir``: The value as passed into the build configure
+   script; it defaults to "/usr/local/var/run". Note that this value may be
    overridden at runtime by setting the environment variable
    KEA_PIDFILE_DIR, although this is intended primarily for testing
    purposes.

@@ -141,10 +141,10 @@ Upon startup, the module will load its configuration and begin listening
 for NCRs based on that configuration.
 
 During startup, the server will attempt to create a PID file of the form:
-[**localstatedir**]/[**conf name**].kea-dhcp-ddns.pid where:
+[**runstatedir**]/[**conf name**].kea-dhcp-ddns.pid where:
 
--  ``localstatedir`` - is the value as passed into the build configure
-   script; it defaults to "/usr/local/var". Note that this value may be
+-  ``runstatedir`` - is the value as passed into the build configure
+   script; it defaults to "/usr/local/var/run". Note that this value may be
    overridden at runtime by setting the environment variable
    KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
 
