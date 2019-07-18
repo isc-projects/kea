@@ -4796,7 +4796,12 @@ Statistics in the DHCPv6 Server
 
 The DHCPv6 server supports the following statistics:
 
+.. tabularcolumns:: |p{0.2\linewidth}|p{0.1\linewidth}|p{0.7\linewidth}|
+
 .. table:: DHCPv6 Statistics
+   :class: longtable
+   :widths: 20 10 70
+
 
    +-----------------------------------------+-----------------------+------------------------+
    | Statistic                               | Data Type             | Description            |

@@ -285,65 +285,155 @@ loaded by the correct process per the table below.
    hooks libraries can be loaded by this process), none of ISC's current
    hooks libraries should be loaded by the Control Agent.
 
-.. table:: List of Available Hooks Libraries
+.. tabularcolumns:: |p{0.1\linewidth}|p{0.1\linewidth}|p{0.8\linewidth}|
 
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Name            | Availability    | Since           | Load by process | Description                                          |
-   +=================+=================+=================+=================+======================================================+
-   | user_chk        | Kea sources     | Kea 0.8         | kea-dhcp4,      | Reads known users list from a file. Unknown users    |
-   |                 |                 |                 | kea-dhcp6       | will be                                              |
-   |                 |                 |                 |                 | assigned a lease                                     |
-   |                 |                 |                 |                 | from the last subnet defined in the configuration    |
-   |                 |                 |                 |                 | file,                                                |
-   |                 |                 |                 |                 | e.g. to redirect                                     |
-   |                 |                 |                 |                 | them a captive portal. This demonstrates how an      |
-   |                 |                 |                 |                 | external                                             |
-   |                 |                 |                 |                 | source of                                            |
-   |                 |                 |                 |                 | information can be used to influence the Kea         |
-   |                 |                 |                 |                 | allocation                                           |
-   |                 |                 |                 |                 | engine. This hook                                    |
-   |                 |                 |                 |                 | is part of the Kea source code and is available in   |
-   |                 |                 |                 |                 | the                                                  |
-   |                 |                 |                 |                 | src/hooks/dhcp/user_chk directory.                   |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Forensic        | Support         | Kea 1.1.0       | kea-dhcp4,      |                                                      |
-   | Logging         | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Flexible        | Support         | Kea 1.2.0       | kea-dhcp4,      |                                                      |
-   | Identifier      | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Host Commands   | Support         | Kea 1.2.0       | kea-dhcp4,      |                                                      |
-   |                 | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Subnet Commands | Support         | Kea 1.3.0       | kea-dhcp4,      |                                                      |
-   |                 | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Lease Commands  | Kea sources     | Kea 1.3.0       | kea-dhcp4,      |                                                      |
-   |                 |                 |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | High            | Kea sources     | Kea 1.4.0       | kea-dhcp4,      |                                                      |
-   | Availability    |                 |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Statistics      | Kea sources     | Kea 1.4.0       | kea-dhcp4,      |                                                      |
-   | Commands        |                 |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | RADIUS          | Support         | Kea 1.4.0       | kea-dhcp4,      |                                                      |
-   |                 | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Host Cache      | Support         | Kea 1.4.0       | kea-dhcp4,      |                                                      |
-   |                 | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Class Commands  | Support         | Kea 1.5.0       | kea-dhcp4,      |                                                      |
-   |                 | customers       |                 | kea-dhcp6       |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | MySQL           | Kea sources     | Kea 1.6.0       | kea-dhcp4,      |                                                      |
-   | Configuration   |                 |                 | kea-dhcp6       |                                                      |
-   | Backend         |                 |                 |                 |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
-   | Configuration   | Support         | Kea 1.6.0       | kea-dhcp4,      |                                                      |
-   | Backend         | customers       |                 | kea-dhcp6       |                                                      |
-   | Commands        |                 |                 |                 |                                                      |
-   +-----------------+-----------------+-----------------+-----------------+------------------------------------------------------+
+.. table:: List of Available Hooks Libraries
+   :class: longtable
+   :widths: 10 10 80
+
+   +-----------------+---------------+------------------------------------------------------------+
+   | Name            | Availability  | Description                                                |
+   +=================+===============+============================================================+
+   | user_chk        | Kea sources   |Reads known users list from a file. Unknown users will be   |
+   |                 | (since 0.8)   |assigned a lease from the last subnet defined in the        |
+   |                 |               |configuration file, e.g. to redirect them a captive         |
+   |                 |               |portal. This demonstrates how an external source of         |
+   |                 |               |information can be used to influence the Kea allocation     |
+   |                 |               |engine. This hook is part of the Kea source code and is     |
+   |                 |               |available in the src/hooks/dhcp/user_chk directory.         |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Forensic        | Support       |This library provides hooks that record a detailed log of   |
+   | Logging         | customers     |lease assignments and renewals into a set of log files. In  |
+   |                 | (since 1.1)   |many legal jurisdictions companies, especially ISPs, must   |
+   |                 |               |record information about the addresses they have leased to  |
+   |                 |               |DHCP clients. This library is designed to help with that    |
+   |                 |               |requirement. If the information that it records is          |
+   |                 |               |sufficient it may be used directly. If your jurisdiction    |
+   |                 |               |requires that you save a different set of information, you  |
+   |                 |               |may use it as a template or example and create your own     |
+   |                 |               |custom logging hooks.                                       |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Flexible        | Support       |Kea software provides a way to handle host reservations that|
+   | Identifier      | customers     |include addresses, prefixes, options, client classes and    |
+   |                 | (since 1.2)   |other features. The reservation can be based on hardware    |
+   |                 |               |address, DUID, circuit-id or client-id in DHCPv4 and using  |
+   |                 |               |hardware address or DUID in DHCPv6. However, there are      |
+   |                 |               |sometimes scenarios where the reservation is more complex,  |
+   |                 |               |e.g. uses other options that mentioned above, uses part of  |
+   |                 |               |specific options or perhaps even a combination of several   |
+   |                 |               |options and fields to uniquely identify a client. Those     |
+   |                 |               |scenarios are addressed by the Flexible Identifiers hook    |
+   |                 |               |application. It allows defining an expression, similar to   |
+   |                 |               |the one used in client classification,                      |
+   |                 |               |e.g. substring(relay6[0].option[37],0,6). Each incoming     |
+   |                 |               |packet is evaluated against that expression and its value is|
+   |                 |               |then searched in the reservations database.                 |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Host Commands   | Support       |Kea provides a way to store host reservations in a          |
+   |                 | customers     |database. In many larger deployments it is useful to be able|
+   |                 | (since 1.2)   |to manage that information while the server is running. This|
+   |                 |               |library provides management commands for adding, querying   |
+   |                 |               |and deleting host reservations in a safe way without        |
+   |                 |               |restarting the server.  In particular, it validates the     |
+   |                 |               |parameters, so an attempt to insert incorrect data, e.g. add|
+   |                 |               |a host with conflicting identifier in the same subnet will  |
+   |                 |               |be rejected. Those commands are exposed via command channel |
+   |                 |               |(JSON over unix sockets) and Control Agent (JSON over       |
+   |                 |               |RESTful interface). Additional commands and capabilities    |
+   |                 |               |related to host reservations will be added in the future.   |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Subnet Commands | Support       |In deployments in which subnet configuration needs to be    |
+   |                 | customers     |frequently updated, it is a hard requirement that such      |
+   |                 | (since 1.3)   |updates be performed without the need for a full DHCP server|
+   |                 |               |reconfiguration or restart. This hooks library allows for   |
+   |                 |               |incremental changes to the subnet configuration such as:    |
+   |                 |               |adding a subnet, removing a subnet. It also allows for      |
+   |                 |               |listing all available subnets and fetching detailed         |
+   |                 |               |information about a selected subnet. The commands exposed by|
+   |                 |               |this library do not affect other subnets or configuration   |
+   |                 |               |parameters currently used by the server.                    |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Lease Commands  | Kea sources   |The lease commands hook library offers a number of new      |
+   |                 | (since 1.3)   |commands used to manage leases. Kea provides a way to store |
+   |                 |               |lease information in various backends: memfile, MySQL,      |
+   |                 |               |PostgreSQL and Cassandra. This library provides a unified   |
+   |                 |               |interface that can manipulate leases in an unified, safe    |
+   |                 |               |way. In particular, it allows: manipulate leases in memfile |
+   |                 |               |while Kea is running, sanity check changes, check lease     |
+   |                 |               |existence and remove all leases belonging to specific       |
+   |                 |               |subnet. It can also catch more obscure errors, like adding a|
+   |                 |               |lease with subnet-id that does not exist in the             |
+   |                 |               |configuration or configuring a lease to use an address that |
+   |                 |               |is outside of the subnet to which it is supposed to belong. |
+   |                 |               |It provides a way to manage user contexts associated with   |
+   |                 |               |leases.                                                     |
+   +-----------------+---------------+------------------------------------------------------------+
+   | High            | Kea sources   |Minimizing a risk of DHCP service unavailability is achieved|
+   | Availability    | (since 1.4)   |by setting up a pair of the DHCP servers in a network.  Two |
+   |                 |               |modes of operation are supported. The first one is called   |
+   |                 |               |load balancing and is sometimes referred to as              |
+   |                 |               |active-active. Each server can handle selected group of     |
+   |                 |               |clients in this network or all clients, if it detects that  |
+   |                 |               |its partner has became unavailable.  It is also possible to |
+   |                 |               |designate one server to serve all DHCP clients, and leave   |
+   |                 |               |another server as "standby". This mode is called hot standby|
+   |                 |               |and is sometimes referenced to as active-passive. This      |
+   |                 |               |server will activate its DHCP function when it detects that |
+   |                 |               |its partner is not available.  Such cooperation between the |
+   |                 |               |DHCP servers requires that these servers constantly         |
+   |                 |               |communicate with each other to send updates about allocated |
+   |                 |               |leases and to periodically test whether their partners are  |
+   |                 |               |still operational. The hook library also provides an ability|
+   |                 |               |to send lease updates to external backup server, making it  |
+   |                 |               |much easier to have a replacement that is almost up to      |
+   |                 |               |date. The "libdhcp_ha" library provides such functionality  |
+   |                 |               |for Kea DHCP servers.                                       |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Statistics      | Kea sources   |The Statistics Commands library provides additional         |
+   | Commands        | (since 1.4)   |commmands for retrieving accurate DHCP lease statistics for |
+   |                 |               |Kea DHCP servers that share the same lease database. This   |
+   |                 |               |setup is common in deployments where DHCP service redundancy|
+   |                 |               |is required and a shared lease database is used to avoid    |
+   |                 |               |lease data replication between the DHCP servers. A feature  |
+   |                 |               |was introduced in Kea 1.4.0 that allows tracking lease      |
+   |                 |               |allocations within the lease database, thus making the      |
+   |                 |               |statistics accessible to all connected DHCP servers. The    |
+   |                 |               |Statistics Commands hooks library utilizes this feature and |
+   |                 |               |returns lease statistics for all subnets respectively.      |
+   +-----------------+---------------+------------------------------------------------------------+
+   | RADIUS          | Support       |The RADIUS Hook library allows Kea to interact with the     |
+   |                 | customers     |RADIUS servers using access and accounting mechanisms. The  |
+   |                 | (since 1.4)   |access mechanism may be used for access control, assigning  |
+   |                 |               |specific IPv4 or IPv6 addresses reserved by RADIUS,         |
+   |                 |               |dynamically assigning addresses from designated pools chosen|
+   |                 |               |by RADIUS or rejecting the client's messages altogether. The|
+   |                 |               |accounting mechanism allows RADIUS server to keep track of  |
+   |                 |               |device activity over time.                                  |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Host Cache      | Support       |Some of the database backends, such as RADIUS, are          |
+   |                 | customers     |considered slow and may take a long time to respond. Since  |
+   |                 | (since 1.4)   |Kea in general is synchronous, the backend performance      |
+   |                 |               |directly affects the DHCP performance. To minimize the      |
+   |                 |               |impact and improve performance, the Host Cache library      |
+   |                 |               |provides a way to cache responses from other hosts. This    |
+   |                 |               |includes negative caching, i.e. the ability to remember that|
+   |                 |               |there is no client information in the database.             |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Class Commands  | Support       |This Class Cmds hooks library allows for adding, updating   |
+   |                 | customers     |deleting and fetching configured DHCP client classes without|
+   |                 | (since 1.5)   |the need to restart the DHCP server.                        |
+   +-----------------+---------------+------------------------------------------------------------+
+   | MySQL           | Kea sources   |The MySQL CB hooks library is an implementation of the Kea  |
+   | Configuration   | (since 1.6)   |Configuration Backend for MySQL. It uses MySQL database as a|
+   | Backend         |               |repository for the Kea configuration information. The Kea   |
+   |                 |               |servers use this library to fetch their configurations.     |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Configuration   | Support       |The Configuration Backend Commands (CB Commands) hooks      |
+   | Backend         | customers     |library implements a collection of commands to manage the   |
+   | Commands        | (since 1.6)   |configuration information of the Kea servers in the         |
+   |                 |               |database. This library may only be used in conjuction with  |
+   |                 |               |one of the supported configuration backend implementations. |
+   +-----------------+---------------+------------------------------------------------------------+
 
 ISC hopes to see more hooks libraries become available as time
 progresses, developed both internally and externally. Since this list
