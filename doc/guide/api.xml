@@ -4731,7 +4731,7 @@ This command includes a list with exactly one id of the subnet to be returned. T
     "text": "IPv4 subnet found.",
     "arguments": {
         "subnets": [ {
-            "id": &lt;subnet identifier&gt;
+            "id": &lt;subnet identifier&gt;,
             "subnet": &lt;subnet prefix&gt;,
             "shared-network-name": &lt;shared network name&gt; | null,
             "metadata": {
@@ -4779,7 +4779,7 @@ This command includes a list with exactly one prefix of the subnet to be returne
     "arguments": {
         "subnets": [
             {
-                "id": &lt;subnet identifier&gt;
+                "id": &lt;subnet identifier&gt;,
                 "subnet": &lt;subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
@@ -5030,7 +5030,7 @@ This command includes a list with exactly one id of the subnet to be returned. T
     "arguments": {
         "subnets": [
             {
-                "id": &lt;subnet identifier&gt;
+                "id": &lt;subnet identifier&gt;,
                 "subnet": &lt;subnet prefix&gt;,
                 "shared-network-name": &lt;shared network name&gt; | null,
                 "metadata": {
@@ -5080,7 +5080,7 @@ This command includes a list with exactly one prefix of the subnet to be returne
     "text": "IPv6 subnet found.",
     "arguments": {
         "subnets": [ {
-            "id": &lt;subnet identifier&gt;
+            "id": &lt;subnet identifier&gt;,
             "subnet": &lt;subnet prefix&gt;,
             "shared-network-name": &lt;shared network name&gt; | null,
             "metadata": {
