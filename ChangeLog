@@ -1,3 +1,8 @@
+1622.	[bug]		fdupont
+	Corrected server tags returned with the metadata when fetching
+	option definitions from the MySQL configuration backend
+	(Gitlab #737,!424, git 1cc95ae2a66102427e583b4924383fd414e24f0f)
+
 1621.	[func]		fdupont
 	Both kea-dhcp4 and kea-dhcp6 now support a special class, 'DROP'.
 	When the class is defined, inbound client packets that match the
