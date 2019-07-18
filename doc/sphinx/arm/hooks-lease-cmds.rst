@@ -36,6 +36,9 @@ This library provides the following commands:
 
 -  ``lease6-add`` - adds a new IPv6 lease.
 
+-  ``lease6-bulk-apply`` - creates, updates and/or deletes multiple
+   IPv6 leases in a single transaction.
+
 -  ``lease4-get`` - checks whether an IPv4 lease with the specified
    parameters exists and returns it if it does.
 
@@ -241,6 +244,112 @@ Example failure:
 ::
 
    { "result": 1, "text": "missing parameter 'ip-address' (<string>:3:19)" }
+
+
+.. _command-lease6-bulk-apply:
+
+The lease6-bulk-apply Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``lease6-bulk-apply`` was implemented to address
+the performance penalty in the High Availability when a single DHCPv6
+transaction resulted in multiple lease updates sent to the partner if
+multiple address and/or prefix leases were allocated. Consider the case
+when a DHCPv6 client requests the assignment of two IPv6 addresses and two IPv6
+prefixes. That may result in allocation of 4 leases. In addition, the
+DHCPv6 may assign different address than requested by the client during
+the renew or rebind and delete the leases previously used by this client.
+The are 6 of lease changes sent between the HA partners is in this case.
+Sending these updates in individual commands, e.g. ``lease6-update``
+is highly inefficient and produces unnecessary delays in communication
+between the HA partners and in sending the response to the DHCPv6 client.
+
+The ``lease6-bulk-apply`` command deals with this
+problem by aggregating all lease changes in a single command. Both
+deleted leases and new/updated leases are conveyed in a single command.
+The receiving server iterates over the deleted leases and deletes them
+from its lease database. Next, it iterates over the new/updated leases
+and adds them to the database or updates them if they already exist.
+
+Even though the High Avialability is the major application for
+this command, it can be freely used in all cases when it is desired to
+send multiple lease changes in a single command.
+
+In the following example, we ask to delete two leases and to add
+or update two other leases in the database:
+
+
+::
+
+    {
+      "command": "lease6-bulk-apply",
+      "arguments": {
+          "deleted-leases": [
+              {
+                  "subnet-id": 66,
+                  "ip-address": "2001:db8:abcd::",
+                  "type": "IA_PD",
+                  ...
+              },
+              {
+                  "subnet-id": 66,
+                  "ip-address": "2001:db8:abcd::234",
+                  "type": "IA_NA",
+                  ...
+              }
+          ],
+          "leases": [
+              {
+                  "subnet-id": 66,
+                  "ip-address": "2001:db8:cafe::",
+                  "type": "IA_PD",
+                   ...
+              },
+              {
+                  "subnet-id": 66,
+                  "ip-address": "2001:db8:abcd::333",
+                  "type": "IA_NA",
+                  ...
+              }
+          ]
+       }
+   }
+
+If any of the leases is malformed, no leases changes are applied
+to the lease database. If the leases are well formed but there is a
+failure to apply any of the lease changes to the database, the command
+will continue to be processed for other leases. All the leases for which
+the command was unable to apply the changes in the database will be
+listed in the response. For example:
+
+::
+
+    {
+        "result": 0,
+        "text": "Bulk apply of 2 IPv6 leases completed".
+        "arguments": {
+            "failed-deleted-leases": [
+                {
+                    "subnet-id": 66,
+                    "ip-address": "2001:db8:abcd::",
+                    "type": "IA_PD"
+                }
+            ],
+            "failed-leases": [
+                {
+                    "subnet-id": 66,
+                    "ip-address": "2001:db8:cafe::",
+                    "type": "IA_PD",
+                    ...
+                }
+            ]
+        }
+    }
+
+The response above indicates that the hooks library was unable to
+delete the lease for prefix "2001:db8:abcd::" and add or update the lease
+for prefix "2001:db8:cafe::". However, there are two other lease changes
+which have been applied as indicated by the text message.
 
 .. _command-lease4-get:
 
