@@ -130,6 +130,8 @@ clocks and restart the servers.
 Server States
 -------------
 
+.. _command-ha-heartbeat:
+
 A DHCP server operating within an HA setup runs a state machine, and the
 state of the server can be retrieved by its peers using the
 ``ha-heartbeat`` command sent over the RESTful API. If the partner

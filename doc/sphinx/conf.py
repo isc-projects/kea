@@ -43,7 +43,7 @@ extensions = [
 source_suffix = '.rst'
 
 # The master toctree document.
-master_doc = 'arm/index'
+master_doc = 'index'
 
 # Additional docs
 messages_doc = 'kea-messages'

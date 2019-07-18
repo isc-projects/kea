@@ -3,14 +3,8 @@
     "brief": "Returns a list of compilation options that this particular binary was built with",
     "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.2.0",
-
-    "cmd-syntax": "{
-    \"command\": \"build-report\"
-}",
-
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": <string with build details>
-}",
-    "resp-comment": ""
+    "resp-syntax": {
+        "result": 0,
+        "text": "<string with build details>"
+    }
 }

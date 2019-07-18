@@ -5,26 +5,25 @@
     "support": [ "kea-dhcp6" ],
     "avail": "1.6.0",
     "hook": "subnet_cmds",
-    "cmd-syntax": "{
-    \"command\": \"subnet6-update\",
-    \"arguments\": {
-        \"subnet6\": [ {
-            \"id\": 234,
-            \"subnet\": \"2001:db8:1::/64\",
-            ...
-        } ]
+    "cmd-syntax": {
+        "command": "subnet6-update",
+        "arguments": {
+            "subnet6": [ {
+                "id": 234,
+                "subnet": "2001:db8:1::/64"
+            } ]
+        }
+    },
+    "resp-syntax": {
+        "result": 0,
+        "text": "IPv6 subnet updated",
+        "arguments": {
+            "subnet6": [
+                {
+                    "id": 234,
+                    "subnet": "2001:db8:1::/64"
+                }
+            ]
+        }
     }
-}",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"IPv6 subnet updated\",
-    \"arguments\": {
-        \"subnet6\": [
-            {
-                \"id\": 234,
-                \"subnet\": \"2001:db8:1::/64\"
-            }
-        ]
-    }
-}"
 }

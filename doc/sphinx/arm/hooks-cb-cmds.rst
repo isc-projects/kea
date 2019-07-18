@@ -147,6 +147,8 @@ message created during the last modification, etc.
 
 .. _command-remote-global-parameter4-del:
 
+.. _command-remote-global-parameter6-del:
+
 The remote-global-parameter4-del, remote-global-parameter6-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -173,6 +175,8 @@ parameter from the database:
 
 
 .. _command-remote-global-parameter4-get:
+
+.. _command-remote-global-parameter6-get:
 
 The remote-global-parameter4-get, remote-global-parameter6-get Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -278,6 +282,8 @@ Finally, the boolean value:
 
 .. _command-remote-global-parameter4-get-all:
 
+.. _command-remote-global-parameter6-get-all:
+
 The remote-global-parameter4-get-all, remote-global-parameter6-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -286,8 +292,10 @@ database. They include no arguments besides the optional ``remote`` map.
 
 .. _command-remote-global-parameter4-set:
 
-The remote-global-parameter4-set Command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _command-remote-global-parameter6-set:
+
+The remote-global-parameter4-set, remote-global-parameter6-set Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create scalar global DHCP parameters in the
 database. If any of the parameters already exists, its value is replaced
@@ -323,6 +331,8 @@ which of the parameters have been stored/updated successfully and which
 have failed.
 
 .. _command-remote-network4-del:
+
+.. _command-remote-network6-del:
 
 The remote-network4-del, remote-network6-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -361,6 +371,8 @@ global. This behavior corresponds to the behavior of the
 
 .. _command-remote-network4-get:
 
+.. _command-remote-network6-get:
+
 The remote-network4-get, remote-network6-get Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -394,6 +406,8 @@ with the full information about the subnets belonging to it:
 
 .. _command-remote-network4-list:
 
+.. _command-remote-network6-list:
+
 The remote-network4-list, remote-network6-list Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -407,6 +421,8 @@ The ``remote-network[46]-list`` takes no argument except the optional
 ``remote`` map.
 
 .. _command-remote-network4-set:
+
+.. _command-remote-network6-set:
 
 The remote-network4-set, remote-network6-set Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -468,6 +484,8 @@ specified, the default values will be used.
 
 .. _command-remote-option-def4-del:
 
+.. _command-remote-option-def6-del:
+
 The remote-option-def4-del, remote-option-def6-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -498,6 +516,8 @@ to the option space "isc". The default option spaces are "dhcp4" and
 "dhcp6" for the DHCPv4 and DHCPv6 top-level options, respectively.
 
 .. _command-remote-option-def4-get:
+
+.. _command-remote-option-def6-get:
 
 The remote-option-def4-get, remote-option-def6-get Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -530,6 +550,8 @@ code of 1 and belonging to option space "isc":
 
 .. _command-remote-option-def4-get-all:
 
+.. _command-remote-option-def6-get-all:
+
 The remote-option-def4-get-all, remote-option-def6-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -537,6 +559,8 @@ These commands are used to fetch all DHCP option definitions from the
 database. They take no arguments except the optional ``remote`` map.
 
 .. _command-remote-option-def4-set:
+
+.. _command-remote-option-def6-set:
 
 The remote-option-def4-set, remote-option-def6-set Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -573,6 +597,8 @@ top-level "dhcp4" option space:
 
 .. _command-remote-option4-global-del:
 
+.. _command-remote-option6-global-del:
+
 The remote-option4-global-del, remote-option6-global-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -602,6 +628,8 @@ The "dhcp4" is the top-level option space where the standard DHCPv4
 options belong.
 
 .. _command-remote-option4-global-get:
+
+.. _command-remote-option6-global-get:
 
 The remote-option4-global-get, remote-option6-global-get Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -633,6 +661,8 @@ The following command retrieves the IPv6 "DNS Servers" (code 23) option:
 
 .. _command-remote-option4-global-get-all:
 
+.. _command-remote-option6-global-get-all:
+
 The remote-option4-global-get-all, remote-option6-global-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -641,6 +671,8 @@ configuration database. They take no arguments except the optional
 ``remote`` map.
 
 .. _command-remote-option4-global-set:
+
+.. _command-remote-option6-global-set:
 
 The remote-option4-global-set, remote-option6-global-set Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -691,6 +723,8 @@ instead of the name. For example:
 
 .. _command-remote-subnet4-del-by-id:
 
+.. _command-remote-subnet6-del-by-id:
+
 The remote-subnet4-del-by-id, remote-subnet6-del-by-id Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -716,6 +750,8 @@ example, to delete the IPv4 subnet with an ID of 5:
 
 
 .. _command-remote-subnet4-del-by-prefix:
+
+.. _command-remote-subnet6-del-by-prefix:
 
 The remote-subnet4-del-by-prefix, remote-subnet6-del-by-prefix Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -743,6 +779,8 @@ subnet. For example:
 
 .. _command-remote-subnet4-get-by-id:
 
+.. _command-remote-subnet6-get-by-id:
+
 The remote-subnet4-get-by-id, remote-subnet6-get-by-id Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -768,6 +806,8 @@ For example:
 
 
 .. _command-remote-subnet4-get-by-prefix:
+
+.. _command-remote-subnet6-get-by-prefix:
 
 The remote-subnet4-get-by-prefix, remote-subnet6-get-by-prefix Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -795,6 +835,8 @@ subnet. For example:
 
 .. _command-remote-subnet4-list:
 
+.. _command-remote-subnet6-list:
+
 The remote-subnet4-list, remote-subnet6-list Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -806,6 +848,8 @@ information about the selected subnet, use the
 ``remote-subnet[46]-get-by-id`` or ``remote-subnet[46]-get-by-prefix`` command.
 
 .. _command-remote-subnet4-set:
+
+.. _command-remote-subnet6-set:
 
 The remote-subnet4-set, remote-subnet6-set Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

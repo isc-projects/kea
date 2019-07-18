@@ -5,9 +5,9 @@
     "avail": "1.4.0",
     "hook": "host_cache",
 
-    "resp-syntax": "{
-    \"result\": 0
-    \"text\": \"123 entries returned.\"
-    \"arguments\": <list of host reservations>
-}"
+    "resp-syntax": {
+        "result": 0,
+        "text": "123 entries returned.",
+        "arguments": "<list of host reservations>"
+    }
 }

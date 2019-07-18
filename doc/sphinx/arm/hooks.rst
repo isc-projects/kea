@@ -2184,6 +2184,8 @@ The example successful response may look like this:
 
 .. _command-network4-list:
 
+.. _command-network6-list:
+
 The network4-list, network6-list Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2219,6 +2221,8 @@ An example response for ``network4-list`` looks as follows:
 the response.
 
 .. _command-network4-get:
+
+.. _command-network6-get:
 
 The network4-get, network6-get Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2281,6 +2285,8 @@ used in ``config-get``, just limited to returning the shared network's
 information.
 
 .. _command-network4-add:
+
+.. _command-network6-add:
 
 The network4-add, network6-add Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2361,6 +2367,8 @@ applies to subnets within the network.
 
 .. _command-network4-del:
 
+.. _command-network6-del:
+
 The network4-del, network6-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -2420,6 +2428,8 @@ Alternatively, to completely remove the subnets, it is possible to use the
 ``subnet4-del`` or ``subnet6-del`` commands.
 
 .. _command-network4-subnet-add:
+
+.. _command-network6-subnet-add:
 
 The network4-subnet-add, network6-subnet-add Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2481,6 +2491,8 @@ both the command and the response.
    than inherited from the global scope or from the shared network.
 
 .. _command-network4-subnet-del:
+
+.. _command-network6-subnet-del:
 
 The network4-subnet-del, network6-subnet-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

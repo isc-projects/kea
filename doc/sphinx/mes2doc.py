@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert set of *.mes files to .rst documentation format')
     parser.add_argument('-o', '--output', help='Output file name (default to stdout).')
-    parser.add_argument('files', help='Input .mes files.', nargs='+') #, required=True)
+    parser.add_argument('files', help='Input .mes files.', nargs='+')
 
     args = parser.parse_args()
     return args
@@ -69,8 +69,6 @@ def read_input_files(files):
 
 def generate_rst(messages):
     rst = '''
-:orphan:
-
 ###################
 Kea Messages Manual
 ###################

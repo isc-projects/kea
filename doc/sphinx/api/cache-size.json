@@ -5,9 +5,9 @@
     "avail": "1.6.0",
     "hook": "host_cache",
 
-    "resp-syntax": "{
-    \"result\": 0
-    \"text\": \"123 entries.\"
-    \"arguments\": { \"size\": 123 }
-}"
+    "resp-syntax": {
+        "result": 0,
+        "text": "123 entries.",
+        "arguments": { "size": 123 }
+    }
 }

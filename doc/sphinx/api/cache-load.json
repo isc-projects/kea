@@ -5,8 +5,8 @@
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
     "hook": "host_cache",
-    "cmd-syntax": "{
-    \"command\": \"cache-load\",
-    \"arguments\": \"/tmp/kea-host-cache.json\"
-}"
+    "cmd-syntax": {
+        "command": "cache-load",
+        "arguments": "/tmp/kea-host-cache.json"
+    }
 }

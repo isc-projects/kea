@@ -97,6 +97,8 @@ servers.
 
 .. _command-lease4-add:
 
+.. _command-lease6-add:
+
 The lease4-add, lease6-add Commands
 -----------------------------------
 
@@ -359,6 +361,8 @@ such lease doesn't exist (empty result).
 
 .. _command-lease4-get:
 
+.. _command-lease6-get:
+
 The lease4-get, lease6-get Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -473,6 +477,8 @@ An example result returned when the host was found:
    }
 
 .. _command-lease4-get-all:
+
+.. _command-lease6-get-all:
 
 The lease4-get-all, lease6-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -682,6 +688,8 @@ leases were found.
 
 .. _command-lease4-del:
 
+.. _command-lease6-del:
+
 The lease4-del, lease6-del Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -728,6 +736,8 @@ or 3 (empty). The empty result means that a query has been completed
 properly, but the object (a lease in this case) has not been found.
 
 .. _command-lease4-update:
+
+.. _command-lease6-update:
 
 The lease4-update, lease6-update Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -783,6 +793,8 @@ An example of a command to update an IPv6 lease is:
    }
 
 .. _command-lease4-wipe:
+
+.. _command-lease6-wipe:
 
 The lease4-wipe, lease6-wipe Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

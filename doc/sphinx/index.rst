@@ -19,26 +19,26 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    :numbered:
    :maxdepth: 5
 
-   intro
-   quickstart
-   install
-   admin
-   config
-   keactrl
-   agent
-   dhcp4-srv
-   dhcp6-srv
-   lease-expiration
-   congestion-handling
-   ddns
-   lfc
-   classify
-   hooks
-   stats
-   ctrl-channel
-   logging
-   shell
-   netconf
+   arm/intro
+   arm/quickstart
+   arm/install
+   arm/admin
+   arm/config
+   arm/keactrl
+   arm/agent
+   arm/dhcp4-srv
+   arm/dhcp6-srv
+   arm/lease-expiration
+   arm/congestion-handling
+   arm/ddns
+   arm/lfc
+   arm/classify
+   arm/hooks
+   arm/stats
+   arm/ctrl-channel
+   arm/logging
+   arm/shell
+   arm/netconf
 
 .. toctree::
    :caption: Appendices
@@ -46,8 +46,9 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    :maxdepth: 1
 
    api
-   acknowledgments
-   manpages
+   arm/manpages
+   kea-messages
+   arm/acknowledgments
 
 
 

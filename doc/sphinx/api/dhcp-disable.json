@@ -4,10 +4,10 @@
     "description": "See <xref linkend=\"command-dhcp-disable\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
-    "cmd-syntax": "{
-    \"command\": \"dhcp-disable\",
-    \"arguments\": {
-        \"max-period\": 20
+    "cmd-syntax": {
+        "command": "dhcp-disable",
+        "arguments": {
+            "max-period": 20
+        }
     }
-}"
 }

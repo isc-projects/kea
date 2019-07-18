@@ -5,19 +5,18 @@
     "support": [ "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "subnet_cmds",
-    "cmd-syntax": "{
-    \"command\": \"network4-del\",
-    \"arguments\": {
-        \"name\": \"floor13\"
+    "cmd-syntax": {
+        "command": "network4-del",
+        "arguments": {
+            "name": "floor13"
+        }
+    },
+    "cmd-comment": "The network6-del command uses exactly the same syntax for both the command and the response.",
+    "resp-syntax": {
+        "command": "network4-del",
+        "arguments": {
+            "name": "floor13",
+            "subnets-action": "delete"
+        }
     }
-}",
-    "cmd-comment": "The network6-del command uses exactly the same syntax for
-                    both the command and the response.",
-    "resp-syntax": "{
-    \"command\": \"network4-del\",
-    \"arguments\": {
-        \"name\": \"floor13\",
-        \"subnets-action\": \"delete\"
-    }
-}"
 }

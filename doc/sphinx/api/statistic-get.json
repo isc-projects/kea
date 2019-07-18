@@ -4,11 +4,11 @@
     "description": "See <xref linkend=\"command-statistic-get\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.0.0",
-    "cmd-syntax": "{
-    \"command\": \"statistic-get\",
-    \"arguments\": {
-        \"name\": \"pkt4-received\"
-    }
-}",
-    "cmd-comment": "The server will respond with details of the requested statistic, with a result set to 0 indicating success and the specified statistic as the value of the \"arguments\" parameter."
+    "cmd-syntax": {
+        "command": "statistic-get",
+        "arguments": {
+            "name": "pkt4-received"
+        }
+    },
+    "cmd-comment": "The server will respond with details of the requested statistic, with a result set to 0 indicating success and the specified statistic as the value of the 'arguments' parameter."
 }

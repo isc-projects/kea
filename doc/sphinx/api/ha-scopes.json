@@ -5,11 +5,12 @@
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
     "hook": "high_availability",
-    "cmd-syntax": "{
-    \"command\": \"ha-scopes\",
-    \"service\": [ <service, typically \"dhcp4\" or \"dhcp6\"> ],
-    \"arguments\": {
-        \"scopes\": [ \"HA_server1\", \"HA_server2\" ]
-    }",
+    "cmd-syntax": {
+        "command": "ha-scopes",
+        "service": [ "<service, typically 'dhcp4' or 'dhcp6'>" ],
+        "arguments": {
+            "scopes": [ "HA_server1", "HA_server2" ]
+        }
+    },
     "cmd-comment": "In the example given, the arguments configure the server to handle traffic from both HA_server1 and HA_server2 scopes."
 }

@@ -5,9 +5,9 @@
     "avail": "1.4.0",
     "hook": "host_cache",
 
-    "cmd-syntax": "{
-    \"command\": \"cache-write\",
-    \"arguments\": \"/path/to/the/file.json\"
-}",
+    "cmd-syntax": {
+        "command": "cache-write",
+        "arguments": "/path/to/the/file.json"
+    },
     "cmd-comment": "The command takes one mandatory argument that specifies a filename path of a file to be written."
 }

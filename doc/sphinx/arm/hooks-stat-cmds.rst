@@ -59,6 +59,8 @@ configuration, Kea will not retrieve statistics for it.
 
 .. _command-stat-lease4-get:
 
+.. _command-stat-lease6-get:
+
 The stat-lease4-get, stat-lease6-get Commands
 ---------------------------------------------
 
