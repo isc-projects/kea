@@ -21,7 +21,7 @@ Synopsis
 :program:`kea-dhcp-ddns` [**-v**] [**-V**] [**-W**] [**-d**] [**-c** config-file] [**-t** config-file]
 
 Description
-===========
+~~~~~~~~~~~
 
 The ``kea-dhcp-ddns`` service process requests an update of DNS mapping
 based on DHCP lease change events. It runs as a separate process that
