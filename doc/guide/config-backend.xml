@@ -191,19 +191,9 @@
     <para>
       The configuration elements in the database are associated with the servers
       by "server tags". The server tag is an arbitrary string holding the name
-      of the Kea server instance. The names of the DHCPv4 and DHCPv6 servers are
-      independent. If there are both types of servers running on the same machine,
-      the instances of these servers may have different names or the same name
-      depending on the administrator's choice. The uniqueness of the server tag
-      is only checked for the particular server type, i.e. server tags for the
-      DHCPv4 servers are unique but there may be an instance of the DHCPv4 server
-      carrying the same name as the instance of the DHCPv6 server. There is no
-      requirement that these DHCP instances are running on the same system.
-      It is even possible to have multiple DHCP servers using the same tag
-      when connecting to the configuration database. From the database perspective
-      they are treated as a single DHCP server instance. Using such configuration
-      is useful when one group of servers should get the same configuration and
-      some other group of servers should get a different configuration.
+      of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
+      independent in the database, i.e. the same server tag can be created for
+      the DHCPv4 and the DHCPv6 server respectively.
     </para>
 
     <para>
@@ -238,6 +228,17 @@
     </note>
 
     <para>
+      All Kea instances presenting the same server tag to the configuration database
+      are given the same configuration. It is the administrator's choice whether
+      multiple Kea instances use the same server tag or each Kea instance is using
+      a different sever tag. Also, there is no requirement that the instances
+      running on the same physical or virtual machine use the same server tag. It is
+      even possible to configure the Kea server without assigning it a server tag.
+      In such case the server will be given the configuration specified for "all"
+      servers.
+    </para>
+
+    <para>
       In order to differentiate the configurations between the Kea servers, a
       collection of the server tags used by the servers must be stored in the
       database. For the DHCPv4 and DHCPv6 servers, it can be done using the
@@ -263,15 +264,16 @@
       that the particular subnet may have only one definition within this
       network. The subnet has two unique identifiers: subnet id and the
       subnet prefix. The subnet identifier is used in Kea to uniquely
-      identify the subnet in many areas, e.g. in host reservations. The
-      subnet identifier uniquely identifies the subnet within the network.
-      Some commands provided by the <command>cb_cmds</command> hooks library
-      allow for accessing the subnet information by subnet identifier
-      (or prefix) and explicitly prohibit using the server tag to identify
-      the subnet. This is because, in a general case, the subnet definition
-      is not associated with a single server. In fact, it may even be associated
-      with no servers (unassigned) but still has an identifier and prefix
-      which uniquely identify the subnet.
+      identify the subnet and to connect it with other configuration elements,
+      e.g. in host reservations. The subnet identifier uniquely identifies
+      the subnet within the network. Some commands provided by the
+      <command>cb_cmds</command> hooks library allow for accessing the subnet
+      information by subnet identifier (or prefix) and explicitly prohibit
+      using the server tag to access the subnet. This is because, in a
+      general case, the subnet definition is associated with multiple servers
+      rather than single server. In fact, it may even be associated
+      with no servers (unassigned). Still, the unassigned subnet has an
+      identifier and prefix which can be used to access the subnet.
     </para>
 
     <para>
@@ -294,13 +296,14 @@
       set to the same or different value. The renew timer is the
       parameter which has no unique identifier by which it could be
       accessed, modified or otherwise used. The global parameters like
-      the renew timer can be accessed by their name and the server for
-      which they are configured. For example: the commands described in
+      the renew timer can be accessed by the parameter name and the
+      tag of the server for which they are configured. For example:
+      the commands described in
       <xref linkend="command-remote-global-parameter4-get"/> allow for
-      fetching the value of the global parameter by parameter name and
-      the server name. Getting the global parameter only by its name is not
-      possible because there may be many global parameters with the given
-      name within the database.
+      fetching the value of the global parameter by the parameter name and
+      the server name. Getting the global parameter only by its name (without
+      specifying the server tag) is not possible because there may be many
+      global parameters with the given name in the database.
     </para>
 
     <para>
@@ -313,10 +316,10 @@
     <para>
       The terms "shareable" and "non-shareable" only apply to the associations
       with user defined servers. All configuration elements associated with
-      the logical server "all" are by definition shareable. For example: a
+      the logical server "all" are by definition shareable. For example: the
       <command>renew-timer</command> associated with "all" servers is used
       by all servers connecting to the database which don't have their specific
-      renew timers defined. In the special case when none of the configuration
+      renew timers defined. In the special case, when none of the configuration
       elements are associated with user defined servers, the entire
       configuration in the database is shareable because all its pieces
       belong to "all" servers.
