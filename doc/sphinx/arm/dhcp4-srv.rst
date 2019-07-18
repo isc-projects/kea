@@ -185,12 +185,12 @@ client will begin the renewal and rebind procedures.
 
 .. note::
 
-   From Kea 1.6.0 the lease valid lifetime is extended from a
+   Beginning with Kea 1.6.0 the lease valid lifetime is extended from a
    single value to a triplet with minimum, default and maximum values using
    ``min-valid-lifetime``, ``valid-lifetime`` and
    ``max-valid-lifetime``. When the client does not specify
    a lifetime the default value is used, when it specifies using a DHCP option
-   code 51 this value is used if it is not lesser than the  minimum (in this case
+   code 51 this value is used if it is not less than the  minimum (in this case
    the minimum is returned) or greater than the maximum (in this case the
    maximum is used).
 
