@@ -2037,6 +2037,29 @@ lease time, respectively. Kea can be configured to send values that are
 specified explicitly or that are calculated as percentages of the
 preferred lease time. The server's behavior is governed by a combination
 of configuration parameters, two of which have already been mentioned.
+
+From Kea 1.6.0 lease preferred and valid lifetime are extended from
+single values to triplets with minimum, default and maximum values using:
+
+
+- ``min-preferred-lifetime`` - specifies the minimal preferred lifetime (optional).
+
+- ``preferred-lifetime`` - specifies the default preferred lifetime.
+
+- ``max-preferred-lifetime`` - specifies the maximal preferred lifetime (optional).
+
+- ``min-valid-lifetime`` - specifies the minimal valid lifetime (optional).
+
+- ``valid-lifetime`` - specifies the default valid lifetime.
+
+- ``max-valid-lifetime`` - specifies the maximal valid lifetime (optional).
+
+When the client does not specify lifetimes the default is used. When
+it specifies a lifetime using IAADDR or IAPREFIX sub option with not
+zero values these values are used when they are between configured
+minimal (lower values are round up) and maximal (larger values are
+round down) bounds.
+
 To send specific, fixed values use the following two parameters:
 
 -  ``renew-timer`` - specifies the value of T1 in seconds.
