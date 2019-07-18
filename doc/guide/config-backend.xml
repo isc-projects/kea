@@ -324,6 +324,22 @@
       configuration in the database is shareable because all its pieces
       belong to "all" servers.
     </para>
+
+    <note>
+      <simpara>
+        Be very careful when associating the configuration elements with
+        different server tags. The configuration backend doesn't protect you
+        against some possible misconfigurations that may arise from the
+        wrong server tags' assignments. For example: if you assign a shared
+        network to one server and the subnets belonging to this shared network
+        to another server, the servers will fail upon trying to fetch and
+        use this configuration. The server fetching the subnets will be
+        aware that the subnets are associated with the shared network but
+        the shared network will not be found by this server as it doesn't
+        belong to it. In such case, both the shared network and the subnets
+        should be assigned to the same set of servers.
+      </simpara>
+    </note>
   </section>
 
 </section>
