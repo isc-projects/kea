@@ -108,7 +108,7 @@ mes_files+=$(top_srcdir)/src/bin/netconf/netconf_messages.mes
 endif
 
 
-all: pdf html mans
+all: html mans pdf
 
 kea-messages.rst: $(mes_files) system_messages.py
 	$(srcdir)/system_messages.py -o $@ $(mes_files)

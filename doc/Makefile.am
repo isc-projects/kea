@@ -1,6 +1,6 @@
-SUBDIRS = devel sphinx
+SUBDIRS = sphinx devel
 
-EXTRA_DIST += images/kea-logo-100x70.png
+EXTRA_DIST = images/kea-logo-100x70.png
 
 nobase_dist_doc_DATA  = examples/agent/comments.json
 nobase_dist_doc_DATA += examples/agent/simple.json
