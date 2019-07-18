@@ -1025,7 +1025,7 @@ it is intended to be used on a link through which the delegating router
 exchanges DHCPv6 messages with the requesting router. The configuration
 example below demonstrates how to specify an excluded prefix within a
 prefix pool definition. The excluded prefix
-"2001:db8:1:babe:cafe:80::/72" will be sent to a requesting router which
+"2001:db8:1:8000:cafe:80::/72" will be sent to a requesting router which
 includes the Prefix Exclude option in the Option Request option (ORO),
 and which is delegated a prefix from this pool.
 
@@ -1040,7 +1040,7 @@ and which is delegated a prefix from this pool.
                        "prefix": "2001:db8:1:8000::",
                        "prefix-len": 48,
                        "delegated-len": 64,
-                       "excluded-prefix": "2001:db8:1:babe:cafe:80::",
+                       "excluded-prefix": "2001:db8:1:8000:cafe:80::",
                        "excluded-prefix-len": 72
                    }
                ]
@@ -2354,7 +2354,7 @@ servers set to 2001:db8:0::1 and 2001:db8:2::1.
        "client-classes": [
            {
                "name": "Client_enterprise",
-               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
                "option-data": [
                    {
                        "name": "dns-servers",

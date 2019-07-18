@@ -603,7 +603,7 @@ hex string (which would indicate a DUID based on an enterprise id of
        "client-classes": [
            {
                "name": "Client_enterprise",
-               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
                "option-data": [
                    {
                        "name": "dns-servers",
@@ -684,7 +684,7 @@ configuration will restrict use of the addresses 2001:db8:1::1 to
        "client-classes": [
            {
                "name": "Client_enterprise",
-               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
                "option-data": [
                    {
                        "name": "dns-servers",
@@ -767,7 +767,7 @@ configuration will restrict use of the addresses 2001:db8:1::1 to
        "client-classes": [
            {
                "name": "Client_enterprise_",
-               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
                "option-data": [
                    {
                        "name": "dns-servers",
