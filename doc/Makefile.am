@@ -1,5 +1,7 @@
 SUBDIRS = devel sphinx
 
+EXTRA_DIST += images/kea-logo-100x70.png
+
 nobase_dist_doc_DATA  = examples/agent/comments.json
 nobase_dist_doc_DATA += examples/agent/simple.json
 nobase_dist_doc_DATA += examples/ddns/comments.json

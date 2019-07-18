@@ -53,7 +53,7 @@ rst_arm_sources+=arm/quickstart.rst
 rst_arm_sources+=arm/shell.rst
 rst_arm_sources+=arm/stats.rst
 
-main_sources=$(rst_arm_sources) kea-messages.rst conf.py $(static_sources)
+main_sources=$(rst_arm_sources) conf.py $(static_sources)
 
 # mans
 rst_man_sources=
@@ -114,10 +114,10 @@ kea-messages.rst: $(mes_files) system_messages.py
 	$(srcdir)/system_messages.py -o $@ $(mes_files)
 
 
-pdf: $(main_sources)
+pdf: $(main_sources) kea-messages.rst
 	$(SPHINXBUILD) -M latexpdf $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
-html: $(main_sources)
+html: $(main_sources) kea-messages.rst
 	$(SPHINXBUILD) -M html $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
 $(man8s): mans
