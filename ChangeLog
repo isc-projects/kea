@@ -1,3 +1,8 @@
+1623.	[bug]		fdupont
+	Eliminated the issue whereby the DHCP server could terminate as a
+	result of the remote-network4-del and remote-network6-del commands.
+	(Gitlab #738,!425, git b34151b647aae8690fe0996090e13403a8e3ad55)
+
 1622.	[bug]		fdupont
 	Corrected server tags returned with the metadata when fetching
 	option definitions from the MySQL configuration backend
