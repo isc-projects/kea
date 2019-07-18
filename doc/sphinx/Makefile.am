@@ -14,16 +14,6 @@ sphinxopts+=-D release="@PACKAGE_VERSION@"
 sphinxopts+=-D version="@PACKAGE_VERSION@"
 
 
-# TODO
-#HTMLDOCS = kea-guide.html kea-messages.html
-#DOCS = kea-guide.txt
-
-#dist_doc_DATA = $(DOCS)
-#dist_html_DATA = $(HTMLDOCS) kea-guide.css kea-logo-100x70.png
-#dist_html_DATA = $(HTMLDOCS) _static/kea-logo-100x70.png
-
-#doc_DATA = _build/singlehtml/kea-guide.html _build/singlehtml/_static/kea-logo-100x70.png
-
 static_sources=
 static_sources+=static/kea-imageonly-100bw.png
 static_sources+=static/kea-logo-200.png
@@ -65,7 +55,7 @@ rst_arm_sources+=arm/stats.rst
 
 main_sources=$(rst_arm_sources) kea-messages.rst conf.py $(static_sources)
 
-# mans  # TODO perfdhcp and netconf should be conditional
+# mans
 rst_man_sources=
 rst_man_sources+=man/kea-admin.8.rst
 rst_man_sources+=man/kea-ctrl-agent.8.rst
@@ -73,19 +63,21 @@ rst_man_sources+=man/kea-dhcp4.8.rst
 rst_man_sources+=man/kea-dhcp6.8.rst
 rst_man_sources+=man/kea-dhcp-ddns.8.rst
 rst_man_sources+=man/kea-lfc.8.rst
+if HAVE_SYSREPO
 rst_man_sources+=man/kea-netconf.8.rst
+endif
 rst_man_sources+=man/kea-shell.8.rst
 rst_man_sources+=man/keactrl.8.rst
+if PERFDHCP
 rst_man_sources+=man/perfdhcp.8.rst
+endif
 man_sources=$(rst_man_sources) conf.py
 man8s=$(foreach rst,$(rst_man_sources), $(sphinxbuilddir)/$(basename $(rst)))
 
 EXTRA_DIST += $(main_sources) $(man_sources) system_messages.py
 
-#DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
-#CLEANFILES = kea-guide.pdf kea-messages.pdf
-
+# list of messages files that are used to generate kea-messages.pdf
 mes_files=
 mes_files+=$(top_srcdir)/src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes
 mes_files+=$(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
@@ -111,7 +103,9 @@ mes_files+=$(top_srcdir)/src/bin/agent/ca_messages.mes
 mes_files+=$(top_srcdir)/src/bin/d2/d2_messages.mes
 mes_files+=$(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
 mes_files+=$(top_srcdir)/src/bin/lfc/lfc_messages.mes
+if HAVE_SYSREPO
 mes_files+=$(top_srcdir)/src/bin/netconf/netconf_messages.mes
+endif
 
 
 all: pdf html mans
