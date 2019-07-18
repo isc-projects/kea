@@ -283,7 +283,7 @@ Options
       When finished, prints templates.
 
 DHCPv4-Only Options
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 The following options only apply for DHCPv4 (i.e. when ``-4`` is given).
 
@@ -291,7 +291,7 @@ The following options only apply for DHCPv4 (i.e. when ``-4`` is given).
    Forces broadcast handling.
 
 DHCPv6-Only Options
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
 
@@ -313,7 +313,7 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    traffic passing through a single relay agent.
 
 Template-Related Options
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following options may only be used in conjunction with ``-T`` and
 control how ``perfdhcp`` modifies the template. The options may be
@@ -345,7 +345,7 @@ the corresponding template file (see "Templates" above).
    option (``-T``) is also given.
 
 Options Controlling a Test
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``-D max-drop``
    Aborts the test immediately if **max-drop** requests have been dropped.
@@ -371,7 +371,7 @@ Options Controlling a Test
    Sets the delay (in seconds) between two successive reports.
 
 Arguments
----------
+~~~~~~~~~
 
 server
    Indicates the server to test, specified as an IP address. In the DHCPv6 case, the
