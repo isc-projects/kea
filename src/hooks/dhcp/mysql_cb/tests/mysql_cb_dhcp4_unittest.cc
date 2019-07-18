@@ -2152,6 +2152,22 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithOptionalUnspecified) {
     EXPECT_FALSE(returned_network->getAuthoritative().get());
 }
 
+// Test that deleteSharedNetworkSubnets4 with not ANY selector throw.
+TEST_F(MySqlConfigBackendDHCPv4Test, deleteSharedNetworkSubnets4) {
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::UNASSIGNED(),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ONE("server1"),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+}
+
 // Test that all shared networks can be fetched.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     // Insert test shared networks into the database. Note that the second shared
@@ -2231,20 +2247,6 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
 
     // Delete first shared network with it subnets and verify it is gone.
-    // It requires ANY so verifies that all other choices throw.
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::UNASSIGNED(),
-                                                     test_networks_[1]->getName()),
-                 isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
-                                                     test_networks_[1]->getName()),
-                 isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ONE("server1"),
-                                                     test_networks_[1]->getName()),
-                 isc::InvalidOperation);
-    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets4(ServerSelector::MULTIPLE({ "server1", "server2" }),
-                                                     test_networks_[1]->getName()),
-                 isc::InvalidOperation);
-
     // Begin by its subnet.
     EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ANY(),
                                                      test_networks_[1]->getName()));
