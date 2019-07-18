@@ -18,7 +18,7 @@ kea-shell - Text client for Control Agent process
 Synopsis
 ~~~~~~~~
 
-:program:`kea-shell [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--timeout**] [**--service**] [**command**]
+:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--timeout**] [**--service**] [**command**]
 
 Description
 ~~~~~~~~~~~
