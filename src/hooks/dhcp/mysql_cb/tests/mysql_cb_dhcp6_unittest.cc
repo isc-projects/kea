@@ -2246,6 +2246,19 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getAllSharedNetworks6) {
     EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks6(ServerSelector::ONE("server1")));
 
     // Delete first shared network with it subnets and verify it is gone.
+    // It requires ANY so verifies that all other choices throw.
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::UNASSIGNED(),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ALL(),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ONE("server1"),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
+    EXPECT_THROW(cbptr_->deleteSharedNetworkSubnets6(ServerSelector::MULTIPLE({ "server1", "server2" }),
+                                                     test_networks_[1]->getName()),
+                 isc::InvalidOperation);
 
     // Begin by its subnet.
     EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets6(ServerSelector::ANY(),

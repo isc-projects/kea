@@ -2941,7 +2941,7 @@ MySqlConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& 
                                                       const std::string& shared_network_name) {
     if (!server_selector.amAny()) {
         isc_throw(InvalidOperation, "deleting all subnets from a shared "
-                  "network is defined only using ANY server");
+                  "network requires using ANY server selector");
     }
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4)
         .arg(shared_network_name);
