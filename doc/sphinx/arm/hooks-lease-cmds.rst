@@ -286,13 +286,11 @@ or update two other leases in the database:
       "arguments": {
           "deleted-leases": [
               {
-                  "subnet-id": 66,
                   "ip-address": "2001:db8:abcd::",
                   "type": "IA_PD",
                   ...
               },
               {
-                  "subnet-id": 66,
                   "ip-address": "2001:db8:abcd::234",
                   "type": "IA_NA",
                   ...
@@ -330,17 +328,18 @@ listed in the response. For example:
         "arguments": {
             "failed-deleted-leases": [
                 {
-                    "subnet-id": 66,
                     "ip-address": "2001:db8:abcd::",
-                    "type": "IA_PD"
+                    "type": "IA_PD",
+                    "result": 3,
+                    "error-message": "no lease found"
                 }
             ],
             "failed-leases": [
                 {
-                    "subnet-id": 66,
                     "ip-address": "2001:db8:cafe::",
                     "type": "IA_PD",
-                    ...
+                    "result": 1,
+                    "error-message": "unable to communicate with the lease database"
                 }
             ]
         }
@@ -349,7 +348,14 @@ listed in the response. For example:
 The response above indicates that the hooks library was unable to
 delete the lease for prefix "2001:db8:abcd::" and add or update the lease
 for prefix "2001:db8:cafe::". However, there are two other lease changes
-which have been applied as indicated by the text message.
+which have been applied as indicated by the text message. The
+``result`` is the status constant that indicates the type
+of the error experienced for the particular lease. The meaning of the
+returned codes are the same as the results returned for the commands.
+In particular, the result of 1 indicates an error while processing the
+lease, e.g. a communication error with the database. The result of 3
+indicates that an attempt to delete the lease was unsuccessful because
+such lease doesn't exist (empty result).
 
 .. _command-lease4-get:
 
