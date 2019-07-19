@@ -5593,6 +5593,17 @@ table. The non-scalar global parameters have dedicated commands; for example,
 the global DHCPv4 options (``option-data``) are modified using
 ``remote-option4-global-set``.
 
+The :ref:`cb-sharing` explains the concept of shareable
+and non-shareable configuration elements and the limitations for
+sharing them between multiple servers. In the DHCP configuration (both DHCPv4
+and DHCPv6) the shareable configuration elements are: subnets and shared
+networks. Thus, they can be explicitly associated with multiple server tags.
+The global parameters, option definitions and global options are non-shareable
+and they can be associated with only one server tag. This rule does not apply
+to the configuration elements associated with "all" servers. Any configuration
+element associated with "all" servers (using "all" keyword as a server tag) is
+used by all servers connecting to the configuration database.
+
 .. table:: List of DHCPv4 Parameters Supported by the Configuration Backend
 
    +--------------------------+----------------------------+-------------+-------------+-------------+

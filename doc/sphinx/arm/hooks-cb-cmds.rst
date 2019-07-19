@@ -115,8 +115,7 @@ fetched object which may be useful for the administrator, but which is not
 part of the object specification from the DHCP server standpoint. In the
 Kea 1.6.0 release, the metadata is limited to the ``server-tag``, which
 describes the association of the object with a particular server or
-all servers. The server tag is always set to ``all`` in the Kea 1.6.0
-beta release.
+all servers.
 
 The following is the example response to the ``remote-network4-list``
 command, which includes the metadata:
@@ -131,7 +130,7 @@ command, which includes the metadata:
                {
                    "name": "level3",
                    "metadata": {
-                       "server-tag": "all"
+                       "server-tags": [ "all" ]
                    }
                }
            ],
@@ -141,9 +140,224 @@ command, which includes the metadata:
 
 
 Client implementations must not assume that the metadata contains only
-the ``server-tag`` parameter. In future releases, this map will be
+the ``server-tags`` parameter. In future releases, this map will be
 extended with additional information, e.g. object modification time, log
 message created during the last modification, etc.
+
+.. _command-remote-server4-del:
+.. _command-remote-server6-del:
+
+remote-server4-del, remote-server6-del commands
+-----------------------------------------------
+
+This command is used to delete the information about a selected DHCP server from
+the configuration database. The server is identified by a unique case
+insensitive server tag.  For example:
+
+::
+
+    {
+        "command": "remote-server4-del",
+        "arguments": {
+            "servers": [
+                {
+                    "server-tag": "server1"
+                }
+            ],
+            "remote": {
+                "type": "mysql"
+            }
+        }
+    }
+
+As a result of this command, the user defined server called `server1` is removed
+from the database. All associations of the configuration information with this
+server are automatically removed from the database. The non-shareable
+configuration information, such as: global parameters, option definitions and
+global options associated with the server are removed from the database. The
+shareable configuration information, i.e. the configuration elements which may
+be associated with more than one server, is preserved. In particular, the
+subnets and shared networks associated with the deleted servers are
+preserved. If any of the shareable configuration elements was associated only
+with the deleted server, this object becomes unassigned (orphaned).  For
+example: if a subnet has been created and associated with the `server1` using
+the `remote-subnet4-set` command and the server1 is subsequently deleted, the
+subnet remains in the database but none of the servers can use this subnet. The
+subnet can be updated using the `remote-subnet4-set` and associated with some
+other server or with all servers using the special server tag "all". Such subnet
+can be also deleted from the database using the `remote-subnet4-del-by-id` or
+`remote-subnet4-del-by-prefix`, if it is no longer needed.
+
+The following is the successful response to the `remote-server4-del` command:
+
+::
+
+    {
+        "result": 0,
+        "text": "1 DHCPv4 server(s) deleted."
+        "arguments": {
+            "count": 1
+        }
+    }
+
+
+.. note::
+
+   The `remote-server4-del` and `remote-server6-del` commands must be used with
+   care, because an accidental deletion of the server causes some parts of the
+   existing configurations to be lost permanently from the database. This
+   operation is not reversible. Re-creation of the accidentally deleted server
+   does not revert the lost configuration for that server and such configuration
+   must be re-created manually by the user.
+
+.. _command-remote-server4-get:
+.. _command-remote-server6-get:
+
+remote-server4-get, remote-server6-get commands
+-----------------------------------------------
+
+This command is used to fetch the information about the selected DHCP server
+from the configuration database.  For example:
+
+::
+
+    {
+        "command": "remote-server6-get"
+        "arguments": {
+            "servers": [
+                {
+                    "server-tag": "server1"
+                }
+            ],
+            "remote": {
+                "type": "mysql"
+            }
+        }
+    }
+
+
+This command fetches the information about the DHCPv6 server identified by the
+server tag `server1`. The server tag is case insensitive.  A successful response
+returns basic information about the server, such as server tag and the user's
+description of the server:
+
+::
+
+    {
+        "result": 0,
+        "text": "DHCP server server1 found.",
+        "arguments": {
+            "servers": [
+                {
+                    "server-tag": "server1",
+                    "description": "A DHCPv6 server located on the first floor."
+                }
+            ],
+            "count": 1
+        }
+    }
+
+.. _command-remote-server4-get-all:
+.. _command-remote-server6-get-all:
+
+remote-server4-get-all, remote-server6-get-all commands
+-------------------------------------------------------
+
+This command is used to fetch all user defined DHCPv4 or DHCPv6 servers from the
+database. The command structure is very simple:
+
+::
+
+    {
+        "command": "remote-server4-get-all"
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            }
+        }
+    }
+
+The response includes basic information about each server, such as its server
+tag and description:
+
+::
+
+    {
+        "result": 0,
+        "text": "DHCPv4 servers found.",
+        "arguments": {
+            "servers": [
+                {
+                    "server-tag": "server1",
+                    "description": "A DHCP server located on the first floor."
+                },
+                {
+                    "server-tag": "server2",
+                    "description": "An old DHCP server to be soon replaced."
+                }
+            ],
+           "count": 2
+        }
+    }
+
+.. _command-remote-server4-set:
+.. _command-remote-server6-set:
+
+remote-server4-set, remote-server6-set commands
+-----------------------------------------------
+
+This command is used to create or replace an information about a DHCP server in
+the database. The information about the server must be created when there is a
+need to differentiate the configurations used by various Kea instances
+connecting to the same database. Various configuration elements, e.g. global
+parameters, subnets etc. may be explicitly associated with the selected servers
+(using server tags as identifiers), allowing only these servers to use the
+respective configuration elements. Using the particular server tag to make such
+associations is only possible when the server information has been stored in the
+database via the `remote-server4-set` or `remote-server6-set` commands. The
+following command creates a new (or updates an existing) DHCPv6 server in the
+database:
+
+::
+
+    {
+        "command": "remote-server6-set"
+        "arguments": {
+            "servers": [
+                {
+                    "server-tag": "server1",
+                    "description": "A DHCP server on the ground floor."
+                }
+            ],
+            "remote": {
+                "type": "mysql"
+            }
+        }
+    }
+
+The server tag must be unique accross all servers in the database. When the
+server information under the given server tag already exists, it is replaced
+with the new information. The specified server tag is case insensitive. The
+maximum length of the server tag is 256 characters. The following keywords are
+reserved and must not be used as server tags: "all" and "any".
+
+The following is the example response to the above command:
+
+::
+
+    {
+        "result": 0,
+        "text": "DHCPv6 server successfully set.",
+        "arguments": {
+            "servers": [
+                {
+                    "server-tag": "server1",
+                    "description": "A DHCP server on the ground floor."
+                }
+            ]
+        }
+    }
+
 
 .. _command-remote-global-parameter4-del:
 
@@ -159,7 +373,7 @@ this parameter, or a default value if the parameter is not specified in
 the configuration file.
 
 The following command attempts to delete the DHCPv4 ``renew-timer``
-parameter from the database:
+parameter common for all servers from the database:
 
 ::
 
@@ -169,9 +383,14 @@ parameter from the database:
            "parameters": [ "renew-timer" ],
            "remote": {
                "type": "mysql"
-            }
+            },
+           "server-tags": [ "all" ]
        }
    }
+
+If the server specific parameter is to be deleted, the
+`server-tags` list must contain the tag of the appropriate
+server. There must be exactly one server tag specified in this list.
 
 
 .. _command-remote-global-parameter4-get:
@@ -185,7 +404,7 @@ These commands are used to fetch a scalar global DHCP parameter from the
 configuration database.
 
 The following command attempts to fetch the ``boot-file-name``
-parameter:
+parameter for the "server1":
 
 ::
 
@@ -195,7 +414,8 @@ parameter:
            "parameters": [ "boot-file-name" ],
             "remote": {
                 "type": "mysql"
-            }
+            },
+            "server-tags": [ "server1" ]
        }
    }
 
@@ -215,13 +435,19 @@ In the case of the example above, the string value is returned, e.g.:
            "parameters": {
                "boot-file-name": "/dev/null",
                "metadata": {
-                   "server-tag": "all"
+                   "server-tags": [ "all" ]
                }
            },
            "count": 1
        }
    }
 
+
+Note that the response above indicates that the returned parameter is associated
+with "all" servers rather than "server1" used in the command. This indicates
+that there is no server1 specific value in the database. Therefore, the value
+shared by all servers is returned. If there was the server1 specific value
+in the database this value would be returned instead.
 
 The example response for the integer value is:
 
@@ -234,7 +460,7 @@ The example response for the integer value is:
            "parameters": {
                "renew-timer": 2000,
                "metadata": {
-                   "server-tag": "all"
+                   "server-tags": [ "server1" ]
                }
            },
            "count": 1
@@ -253,7 +479,7 @@ The real value:
            "parameters": {
                "t1-percent": 0.85,
                "metadata": {
-                   "server-tag": "all"
+                   "server-tags": [ "all" ]
                }
            },
            "count": 1
@@ -272,7 +498,7 @@ Finally, the boolean value:
            "parameters": {
                "match-client-id": true,
                "metadata": {
-                   "server-tag": "all"
+                   "server-tags": [ "server2" ]
                }
            },
            "count": 1
@@ -287,8 +513,64 @@ Finally, the boolean value:
 The remote-global-parameter4-get-all, remote-global-parameter6-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to fetch all global DHCP parameters from the
-database. They include no arguments besides the optional ``remote`` map.
+These commands are used to fetch all global DHCP parameters from the database
+for the specified server. The following example demonstrates how to fetch all
+global parameters to be used by the server "server1":
+
+::
+
+    {
+        "command": "remote-global-parameter4-get-all",
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "server1" ]
+        }
+    }
+
+The example response may look as follows:
+
+::
+
+    {
+        "result": 0,
+        "text": "DHCPv4 global parameters found.",
+        "arguments": {
+            "parameters": [
+                {
+                    "boot-file-name": "/dev/null",
+                    "metadata": {
+                        "server-tags": [ "server1" ]
+                    }
+                },
+                {
+                    "match-client-id": true,
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                }
+            ],
+            "count": 2
+        }
+    }
+
+
+The example response contains two parameters, one string parameter and one
+boolean parameter. The metadata returned for each parameter indicates
+if this parameter is specific to the "server1" or all servers. Since the
+`match-client-id` value is associated with "all" servers
+it indicates that there is no server1 specific setting for this parameter.
+Each parameter always has exactly one server tag associated with it, because
+the global parameters are non-shareable configuration elements.
+
+.. note::
+
+   If the server tag is set to "all" in the command, the response will
+   contain only the global parameters associated with the logical server
+   "all". When the server tag points to the specific server (as in the
+   example above), the returned list combines parameters associated with
+   this server and all servers, but the former take precedence.
 
 .. _command-remote-global-parameter4-set:
 
@@ -301,7 +583,7 @@ This command is used to create scalar global DHCP parameters in the
 database. If any of the parameters already exists, its value is replaced
 as a result of this command. It is possible to set multiple parameters
 within a single command, each having one of the four types: string,
-integer, real, and boolean. For example:
+integer, real, or boolean. For example:
 
 ::
 
@@ -316,19 +598,23 @@ integer, real, and boolean. For example:
            },
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "server1" ]
        }
    }
 
 
-An error is returned if any of the parameters is not supported by the
-DHCP server or its type does not match. Care should be taken when
-multiple parameters are specified in a single command, because it is
-possible that only some of the parameters are stored successfully and
-some fail. If an error occurs when processing this command, it is
-recommended to use ``remote-global-parameter[46]-get-all`` to check
-which of the parameters have been stored/updated successfully and which
-have failed.
+An error is returned if any of the parameters is not supported by the DHCP
+server or its type does not match. Care should be taken when multiple parameters
+are specified in a single command, because it is possible that only some of the
+parameters are stored successfully and some fail. If an error occurs when
+processing this command, it is recommended to use
+``remote-global-parameter[46]-get-all`` to check which of the parameters have
+been stored/updated successfully and which have failed.
+
+The `server-tags` list is mandatory and it must contain a single server tag or
+the keyword "all". In the example above, all specified parameters are associated
+with the "server1" server.
 
 .. _command-remote-network4-del:
 
@@ -369,6 +655,8 @@ they are disassociated from the deleted shared network and become
 global. This behavior corresponds to the behavior of the
 ``network[46]-del`` commands with respect to the ``subnets-action`` parameter.
 
+Note that the `server-tags` parameter must not be used for this command.
+
 .. _command-remote-network4-get:
 
 .. _command-remote-network6-get:
@@ -403,6 +691,7 @@ with the full information about the subnets belonging to it:
        }
    }
 
+Note that the `server-tags` parameter must not be used for this command.
 
 .. _command-remote-network4-list:
 
@@ -411,14 +700,109 @@ with the full information about the subnets belonging to it:
 The remote-network4-list, remote-network6-list Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to list all IPv4 or IPv6 shared networks in the
-particular database. The returned information about each shared network
-merely contains the shared network name and the metadata. To
-fetch detailed information about the selected shared network, use
-the ``remote-network[46]-get`` command.
+These commands are used to list all IPv4 or IPv6 shared networks for a server.
 
-The ``remote-network[46]-list`` takes no argument except the optional
-``remote`` map.
+The following command retrieves all shared networks to be used by the
+"server1" and "server2":
+
+::
+
+    {
+        "command": "remote-network4-list"
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "server1", "server2" ]
+        }
+    }
+
+The `server-tags` parameter is mandatory and it contains one or more server
+tags. It may contain the keyword "all" to fetch the shared networks associated
+with all servers. When the `server-tags` list contains the
+`null` value the returned response contains a list of unassigned shared
+networks, i.e. the networks which are associated with no servers. For example:
+
+::
+
+    {
+        "command": "remote-network4-list"
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ null ]
+        }
+    }
+
+The example response to this command when non-null server tags are specified
+looks similar to this:
+
+::
+
+    {
+        "result": 0,
+        "text": "3 IPv4 shared network(s) found.",
+        "arguments": {
+            "shared-networks": [
+                {
+                    "name": "ground floor",
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                },
+                {
+                    "name": "floor2",
+                    "metadata": {
+                        "server-tags": [ "server1" ]
+                    }
+                },
+                {
+                    "name": "floor3",
+                    "metadata": {
+                        "server-tags": [ "server2" ]
+                    }
+                }
+            ],
+            "count": 3
+        }
+    }
+
+The returned information about each shared network merely contains the shared
+network name and the metadata. In order to fetch the detailed information about
+the selected shared network, use the `remote-network[46]-get` command.
+
+The example response above contains three shared networks. One of the
+shared networks is associated will all servers, so it is included in
+the list of shared networks to be used by the "server1" and "server2".
+The remaining two shared networks are returned because one of them
+is associated with the "server1" and another one is associated with
+the "server2".
+
+
+When listing unassigned shared networks, the response will look similar
+to this:
+
+::
+
+    {
+        "result": 0,
+        "text": "1 IPv4 shared network(s) found.",
+        "arguments": {
+            "shared-networks": [
+                {
+                    "name": "fancy",
+                    "metadata": {
+                        "server-tags": [ null ]
+                    }
+                }
+            ],
+            "count": 1
+        }
+    }
+
+The `null` value in the metadata indicates that the
+returned shared network is unassigned.
 
 .. _command-remote-network4-set:
 
@@ -460,7 +844,8 @@ database:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "all" ]
        }
    }
 
@@ -471,6 +856,11 @@ which are not specified with the command, will be marked as
 "unspecified" in the database. The DHCP server will use the global
 values for unspecified parameters or, if the global values are not
 specified, the default values will be used.
+
+The `server-tags` list is mandatory for this command and it must include one or
+more server tags. As a result the shared network is associated with all listed
+servers. The shared network may be associated with all servers connecting to the
+database when the keyword "all" is included.
 
 .. note::
 
@@ -506,14 +896,19 @@ option space. For example:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "server1" ]
        }
    }
 
 
-deletes the definition of the option having the code of 1 and belonging
-to the option space "isc". The default option spaces are "dhcp4" and
-"dhcp6" for the DHCPv4 and DHCPv6 top-level options, respectively.
+deletes the definition of the option associated with the "server1", having the
+code of 1 and belonging to the option space "isc". The default option spaces are
+"dhcp4" and "dhcp6" for the DHCPv4 and DHCPv6 top level options respectively. If
+there is no such option explicitly associated with the server1, no option is
+deleted. In order to delete an option belonging to "all" servers, the keyword
+"all" must be used as server tag. The `server-tags` list must contain exactly
+one tag. It must not include the `null` value.
 
 .. _command-remote-option-def4-get:
 
@@ -527,8 +922,8 @@ the database. The option definition is identified by the option code and
 option space. The default option spaces are "dhcp4" and "dhcp6" for the
 DHCPv4 and DHCPv6 top-level options, respectively.
 
-The following command retrieves a DHCPv4 option definition having the
-code of 1 and belonging to option space "isc":
+The following command retrieves a DHCPv4 option definition associated with all
+servers, having the code of 1 and belonging to the option space "isc":
 
 ::
 
@@ -543,10 +938,13 @@ code of 1 and belonging to option space "isc":
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "all" ]
        }
    }
 
+The `server-tags` list must include exactly one server tag or the keyword
+"all". It must not contain the `null` value.
 
 .. _command-remote-option-def4-get-all:
 
@@ -555,8 +953,55 @@ code of 1 and belonging to option space "isc":
 The remote-option-def4-get-all, remote-option-def6-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to fetch all DHCP option definitions from the
-database. They take no arguments except the optional ``remote`` map.
+These commands are used to fetch all DHCP option definitions from the database
+for the particular server or all servers. For example:
+
+::
+
+    {
+        "command": "remote-option-def6-get-all"
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "all" ]
+        }
+    }
+
+
+This command attempts to fetch all DHCPv6 option definitions associated
+with "all" servers. The `server-tags` list is mandatory for
+this command and it must include exactly one server tag or the keyword "all".
+It must not include the `null` value.</para>
+
+The following is the example response to this command:
+
+::
+
+    {
+        "result": 0,
+        "text": "1 DHCPv6 option definition(s) found.",
+        "arguments": {
+            "option-defs": [
+                {
+                    "name": "bar",
+                    "code": 1012,
+                    "space": "dhcp6",
+                    "type": "record",
+                    "array": true,
+                    "record-types": "ipv6-address, uint16",
+                    "encapsulate": "",
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                }
+            ],
+            "count": 1
+        }
+    }
+
+The response contains an option definition associated with all servers as
+indicated by the metadata.
 
 .. _command-remote-option-def4-set:
 
@@ -570,7 +1015,7 @@ existing option definition in the database. The structure of the option
 definition information is the same as in the Kea configuration file (see
 :ref:`dhcp4-custom-options` and :ref:`dhcp6-custom-options`).
 The following command creates the DHCPv4 option definition in the
-top-level "dhcp4" option space:
+top-level "dhcp4" option space and associates it with the "server1":
 
 ::
 
@@ -590,10 +1035,14 @@ top-level "dhcp4" option space:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "server1" ]
        }
    }
 
+The `server-tags` list must include exactly one
+server tag or the keyword "all". It must not contain the
+`null` value.</para>
 
 .. _command-remote-option4-global-del:
 
@@ -619,13 +1068,18 @@ For example:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "server1" ]
        }
    }
 
-
-The "dhcp4" is the top-level option space where the standard DHCPv4
-options belong.
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The `server-tags` is mandatory and it must include a
+single option tag or the keyword "all". If the explicit server tag is specified
+then this command attempts to delete a global option associated with this
+server. If there is no such option associated with the given server, no option
+is deleted. In order to delete the option associated with all servers, the
+keyword "all" must be specified.
 
 .. _command-remote-option4-global-get:
 
@@ -639,7 +1093,8 @@ The option is identified by the code and option space. The top-level
 option spaces where DHCP standard options belong are called "dhcp4" and
 "dhcp6" for the DHCPv4 and DHCPv6 servers, respectively.
 
-The following command retrieves the IPv6 "DNS Servers" (code 23) option:
+The following command retrieves the IPv6 "DNS Servers" (code 23) option
+associated with all servers:
 
 ::
 
@@ -654,10 +1109,14 @@ The following command retrieves the IPv6 "DNS Servers" (code 23) option:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "all" ]
        }
    }
 
+The `server-tags` is mandatory and it must include exactly one
+server tag or the keyword "all". It must not contain the `null`
+value.
 
 .. _command-remote-option4-global-get-all:
 
@@ -666,9 +1125,49 @@ The following command retrieves the IPv6 "DNS Servers" (code 23) option:
 The remote-option4-global-get-all, remote-option6-global-get-all Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to fetch all global DHCP options from the
-configuration database. They take no arguments except the optional
-``remote`` map.
+These commands are used to fetch all global DHCP options from the configuration
+database for the particular server or for all servers. The following command
+fetches all global DHCPv4 options for the "server1":
+
+::
+
+    {
+        "command": "remote-option6-global-get-all",
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "server1" ]
+        }
+    }
+
+The `server-tags` list is mandatory for this command and
+it must contain exactly one server tag or a keyword "all". It must not contain
+the `null` value. The following is the example response to this
+command with a single option being associated with the "server1" returned:
+
+::
+
+    {
+        "result": 0,
+        "text": "DHCPv4 options found.",
+        "arguments": {
+            "options": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": false,
+                    "data": "192.0.2.3",
+                    "metadata": {
+                        "server-tags": [ "server1" ]
+                    }
+                }
+            ],
+            "count": 1
+        }
+    }
+
 
 .. _command-remote-option4-global-set:
 
@@ -695,10 +1194,15 @@ and :ref:`dhcp4-std-options`). For example:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "server1" ]
        }
    }
 
+The `server-tags` list is mandatory for this command
+and it must include exactly one server tag or the keyword "all". It must
+not include the `null` value. The command above associates
+the option with the "server1" server.
 
 Note that specifying an option name instead of the option code only
 works reliably for the standard DHCP options. When specifying a value
@@ -716,7 +1220,8 @@ instead of the name. For example:
                    "space": "isc",
                    "data": "2001:db8:1::1"
                }
-           ]
+           ],
+           "server-tags": [ "server1" ]
        }
    }
 
@@ -748,6 +1253,7 @@ example, to delete the IPv4 subnet with an ID of 5:
        }
    }
 
+The `server-tags` parameter must not be used with this command.
 
 .. _command-remote-subnet4-del-by-prefix:
 
@@ -776,6 +1282,7 @@ subnet. For example:
        }
    }
 
+The `server-tags` parameter must not be used with this command.
 
 .. _command-remote-subnet4-get-by-id:
 
@@ -804,6 +1311,7 @@ For example:
        }
    }
 
+The `server-tags` parameter must not be used with this command.
 
 .. _command-remote-subnet4-get-by-prefix:
 
@@ -832,6 +1340,7 @@ subnet. For example:
        }
    }
 
+The `server-tags` parameter must not be used with this command.
 
 .. _command-remote-subnet4-list:
 
@@ -840,12 +1349,107 @@ subnet. For example:
 The remote-subnet4-list, remote-subnet6-list Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These commands are used to list all IPv4 or IPv6 subnets from the
-database. They take no parameters except the optional ``remote`` map. The
-returned information about each subnet is limited to subnet identifier,
-prefix, and associated shared network name. To retrieve full
-information about the selected subnet, use the
-``remote-subnet[46]-get-by-id`` or ``remote-subnet[46]-get-by-prefix`` command.
+These commands are used to list all IPv4 or IPv6 subnets from the database for
+selected servers or all servers. The following command retrieves all servers to
+be used by the "server1" and "server2":
+
+::
+
+    {
+        "command": "remote-subnet4-list"
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ "server1", "server2" ]
+        }
+    }
+
+The `server-tags` parameter is mandatory and it contains one or
+more server tags. It may contain the keyword "all" to fetchg the subnets
+associated with all servers. When the `server-tags` list
+contains the `null` value the returned response contains a list
+of unassigned subnets, i.e. the subnets which are associated with no servers.
+For example:
+
+::
+
+    {
+        "command": "remote-subnet4-list"
+        "arguments": {
+            "remote": {
+                "type": "mysql"
+            },
+            "server-tags": [ null ]
+        }
+    }
+
+The example response to this command when non-null server tags are specified
+looks similar to this:
+
+::
+
+    {
+        "result": 0,
+        "text": "2 IPv4 subnet(s) found.",
+        "arguments": {
+            "subnets": [
+                {
+                    "id": 1,
+                    "subnet": "192.0.2.0/24",
+                    "shared-network-name": null,
+                    "metadata": {
+                        "server-tags": [ "server1", "server2" ]
+                    }
+                },
+                {
+                    "id": 2,
+                    "subnet": "192.0.3.0/24",
+                    "shared-network-name": null,
+                    "metadata": {
+                        "server-tags": [ "all" ]
+                    }
+                }
+            ],
+            "count": 2
+        }
+    }
+
+The returned information about each subnet is limited to subnet identifier,
+prefix and associated shared network name. In order to retrieve full
+information about the selected subnet use the
+`remote-subnet[46]-get-by-id` or
+`remote-subnet[46]-get-by-prefix`.
+
+The example response above contains two subnets. One of the subnets is
+associated with both servers: "server1" and "server2". The second subnet is
+associated with all servers, thus it is also present in the configuration for
+the "server1" and "server2".
+
+When listing unassigned subnets, the response will look similar to this:
+
+::
+
+    {
+        "result": 0,
+        "text": "1 IPv4 subnet(s) found.",
+        "arguments": {
+            "subnets": [
+                {
+                    "id": 3,
+                    "subnet": "192.0.4.0/24",
+                    "shared-network-name": null,
+                    "metadata": {
+                        "server-tags": [ null ]
+                    }
+                }
+            ],
+            "count": 1
+        }
+    }
+
+The `null` value in the metadata indicates that the
+returned subnet is unassigned.
 
 .. _command-remote-subnet4-set:
 
@@ -886,7 +1490,8 @@ Consider the following example:
            ],
            "remote": {
                "type": "mysql"
-           }
+           },
+           "server-tags": [ "all" ]
        }
    }
 
@@ -915,7 +1520,8 @@ network - the ``shared-network-name`` must be explicitly set to
                        "data": "192.0.2.1"
                    } ]
               }
-           ]
+           ],
+           "server-tags": [ "all" ]
        }
    }
 
@@ -924,7 +1530,10 @@ The subnet created in the previous example is replaced with the new
 subnet having the same parameters, but it becomes global.
 
 The ``shared-network-name`` parameter is mandatory for the
-``remote-subnet4-set`` command.
+``remote-subnet4-set`` command. The `server-tags` list is mandatory and it must
+include one or more server tags. As a result, the subnet is associated with all
+of the listed servers. It may also be associated with "all" servers connecting
+to the database when the keyword "all" is used as the server tag.</para>
 
 .. note::
 
