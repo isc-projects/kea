@@ -40,7 +40,7 @@ libkea_http_la_SOURCES += url.cc url.h
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_http_la_LDFLAGS += -no-undefined -version-info 6:0:1
+libkea_http_la_LDFLAGS += -no-undefined -version-info 6:0:0
 
 libkea_http_la_LIBADD  =
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
