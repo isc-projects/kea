@@ -1,3 +1,8 @@
+1624.	[doc]		marcin
+	Documented a usage of the server tags with the Kea Configuration
+	Backend in the Kea ARM.
+	(Gitlab #643,!421, git 4c60b02e619bce2c434bbf9ee0e775d8776b2d74)
+
 1623.	[bug]		fdupont
 	Eliminated the issue whereby the DHCP server could terminate as a
 	result of the remote-network4-del and remote-network6-del commands.
