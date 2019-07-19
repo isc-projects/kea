@@ -833,22 +833,22 @@ this configuration is accepted:
 
 ::
 
-"Dhcp6": {
-   "subnet6": [
-       {
-            "subnet": "2001:db8:1::1/64",
-            ...
-        }
-    ]
-}
+   "Dhcp6": {
+      "subnet6": [
+          {
+               "subnet": "2001:db8:1::1/64",
+               ...
+          }
+       ]
+   }
 
 Even there is another subnet with the "2001:db8:1::/64" prefix:
 only the textual form of subnets are compared to avoid duplicates.
 
 .. note::
 
-Abuse of this feature can lead to incorrect subnet selection
-(see :ref:`dhcp6-config-subnets`).
+   Abuse of this feature can lead to incorrect subnet selection
+   (see :ref:`dhcp6-config-subnets`).
 
 .. _dhcp6-unicast:
 

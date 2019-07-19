@@ -1071,14 +1071,14 @@ this configuration is accepted:
 
 ::
 
-"Dhcp4": {
-   "subnet4": [
-       {
-          "subnet": "192.0.2.1/24",
-           ...
-       }
-   ]
-}
+   "Dhcp4": {
+       "subnet4": [
+           {
+              "subnet": "192.0.2.1/24",
+               ...
+           }
+       ]
+   }
 
 Even there is another subnet with the "192.0.2.0/24" prefix: only the
 textual form of subnets are compared to avoid duplicates.
