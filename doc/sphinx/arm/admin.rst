@@ -50,16 +50,16 @@ upgrade, and dump lease data to a text file.
 ``backend``. Additional, non-mandatory options may be specified. The
 currently supported commands are:
 
--  ``lease-init`` — Initializes a new database schema. This is useful
+-  ``db-init`` — Initializes a new database schema. This is useful
    during a new Kea installation. The database is initialized to the
    latest version supported by the version of the software being
    installed.
 
--  ``lease-version`` — Reports the database backend version number. This
+-  ``db-version`` — Reports the database backend version number. This
    is not necessarily equal to the Kea version number as each backend
    has its own versioning scheme.
 
--  ``lease-upgrade`` — Conducts a database schema upgrade. This is
+-  ``db-upgrade`` — Conducts a database schema upgrade. This is
    useful when upgrading Kea.
 
 -  ``lease-dump`` — Dumps the contents of the lease database (for MySQL,
@@ -228,7 +228,7 @@ to create them now:
 
 .. code-block:: console
 
-   $ kea-admin lease-init mysql -u database-user -p database-password -n database-name
+   $ kea-admin db-init mysql -u database-user -p database-password -n database-name
 
 Do not do this if the tables were created in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
@@ -243,13 +243,13 @@ Upgrading a MySQL Database from an Earlier Version of Kea
 
 Sometimes a new Kea version may use a newer database schema, so the
 existing database will need to be upgraded. This can be done using the
-``kea-admin lease-upgrade`` command.
+``kea-admin db-upgrade`` command.
 
 To check the current version of the database, use the following command:
 
 .. code-block:: console
 
-   $ kea-admin lease-version mysql -u database-user -p database-password -n database-name
+   $ kea-admin db-version mysql -u database-user -p database-password -n database-name
 
 (See :ref:`kea-database-version`
 for a discussion about versioning.) If the version does not match the
@@ -263,7 +263,7 @@ earlier version. To perform an upgrade, issue the following command:
 
 .. code-block:: console
 
-   $ kea-admin lease-upgrade mysql -u database-user -p database-password -n database-name
+   $ kea-admin db-upgrade mysql -u database-user -p database-password -n database-name
 
 .. _pgsql-database:
 
@@ -279,7 +279,7 @@ other database backends will be used.
 First-Time Creation of the PostgreSQL Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The first task is to create both the lease database and the user under
+The first task is to create both the database and the user under
 which the servers will access it. A number of steps are required:
 
 1. Log into PostgreSQL as "root":
@@ -389,7 +389,7 @@ running the ``kea-admin`` tool:
 
 .. code-block:: console
 
-   $ kea-admin lease-init pgsql -u database-user -p database-password -n database-name
+   $ kea-admin db-init pgsql -u database-user -p database-password -n database-name
 
 Do not do this if the tables were already created manually. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
@@ -410,13 +410,13 @@ Use the following command to check the current schema version:
 
 .. code-block:: console
 
-   $ kea-admin lease-version pgsql -u database-user -p database-password -n database-name
+   $ kea-admin db-version pgsql -u database-user -p database-password -n database-name
 
 Use the following command to perform an upgrade:
 
 .. code-block:: console
 
-   $ kea-admin lease-upgrade pgsql -u database-user -p database-password -n database-name
+   $ kea-admin db-upgrade pgsql -u database-user -p database-password -n database-name
 
 .. _cql-database:
 
@@ -480,7 +480,7 @@ running the ``kea-admin`` tool:
 
 .. code-block:: console
 
-   $ kea-admin lease-init cql -n database-name
+   $ kea-admin db-init cql -n database-name
 
 Do not do this if the tables were created in Step 4. ``kea-admin``
 implements rudimentary checks; it will refuse to initialize a database
@@ -495,13 +495,13 @@ Upgrading a Cassandra Database from an Earlier Version of Kea
 
 Sometimes a new Kea version may use a newer database schema, so the
 existing database will need to be upgraded. This can be done using the
-``kea-admin lease-upgrade`` command.
+``kea-admin db-upgrade`` command.
 
 To check the current version of the database, use the following command:
 
 .. code-block:: console
 
-   $ kea-admin lease-version cql -n database-name
+   $ kea-admin db-version cql -n database-name
 
 (See :ref:`kea-database-version`
 for a discussion about versioning.) If the version does not match the
@@ -515,7 +515,7 @@ earlier version. To perform an upgrade, issue the following command:
 
 .. code-block:: console
 
-   $ kea-admin lease-upgrade cql -n database-name
+   $ kea-admin db-upgrade cql -n database-name
 
 Using Read-Only Databases with Host Reservations
 ------------------------------------------------
