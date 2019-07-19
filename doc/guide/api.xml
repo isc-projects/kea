@@ -3139,7 +3139,7 @@ This command includes a list with exactly one name of the shared network to be r
             {
                 "name": &lt;shared network name&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 },
                 &lt;the rest of the shared network information, potentially including subnets&gt;
             }
@@ -3332,7 +3332,7 @@ This command includes a list with exactly one name of the shared network to be r
             {
                 "name": &lt;shared network name&gt;,
                 "metadata": {
-                    "server-tag": &lt;server tag&gt;
+                    "server-tags": [ &lt;first server tag&gt;, &lt;second server tag&gt;, ... ]
                 },
                 &lt;the rest of the shared network information, potentially including subnets&gt;
             }

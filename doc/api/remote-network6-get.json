@@ -27,7 +27,7 @@
             {
                 \"name\": <shared network name>,
                 \"metadata\": {
-                    \"server-tag\": <server tag>
+                    \"server-tags\": [ <first server tag>, <second server tag>, ... ]
                 },
                 <the rest of the shared network information, potentially including subnets>
             }

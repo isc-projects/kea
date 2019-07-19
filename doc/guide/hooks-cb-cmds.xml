@@ -513,12 +513,12 @@
           used by the server "server1":
 <screen>
 {
-    \"command\": \"remote-global-parameter4-get-all\",
-    \"arguments\": {
-        \"remote\": {
+    "command": "remote-global-parameter4-get-all",
+    "arguments": {
+        "remote": {
             "type": "mysql"
         },
-        \"server-tags\": [ "server1" ]
+        "server-tags": [ "server1" ]
     }
 }
 </screen>
@@ -795,7 +795,7 @@
                 }
             }
         ],
-        "count": 3
+        "count": 1
     }
 }
             </screen>
@@ -973,10 +973,10 @@
           <para>The following is the example response to this command:
           <screen>
 {
-    \"result\": 0,
-    \"text\": \"1 DHCPv6 option definition(s) found.\",
-    \"arguments\": {
-        \"option-defs\": [
+    "result": 0,
+    "text": "1 DHCPv6 option definition(s) found.",
+    "arguments": {
+        "option-defs": [
             {
                 "name": "bar",
                 "code": 1012,
@@ -990,7 +990,7 @@
                 }
             }
         ],
-        \"count\": 1
+        "count": 1
     }
 }
           </screen>
@@ -1117,12 +1117,12 @@
           the "server1":
           <screen>
 {
-    \"command\": \"remote-option6-global-get-all\",
-    \"arguments\": {
-        \"remote\": {
+    "command": "remote-option6-global-get-all",
+    "arguments": {
+        "remote": {
             "type": "mysql"
         },
-        \"server-tags\": [ "server1" ]
+        "server-tags": [ "server1" ]
     }
 }
           </screen>
@@ -1317,12 +1317,12 @@
           "server1" and "server2":
           <screen>
 {
-    \"command\": \"remote-subnet4-list\"
-    \"arguments\": {
-        \"remote\": {
+    "command": "remote-subnet4-list"
+    "arguments": {
+        "remote": {
             "type": "mysql"
         },
-        \"server-tags\": [ "server1", "server2" ]
+        "server-tags": [ "server1", "server2" ]
     }
 }
           </screen>
@@ -1335,12 +1335,12 @@
           For example:
           <screen>
 {
-    \"command\": \"remote-subnet4-list\"
-    \"arguments\": {
-        \"remote\": {
+    "command": "remote-subnet4-list"
+    "arguments": {
+        "remote": {
             "type": "mysql"
         },
-        \"server-tags\": [ null ]
+        "server-tags": [ null ]
     }
 }
           </screen>
