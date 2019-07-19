@@ -68,6 +68,12 @@ currently supported commands are:
    meant to be used as a diagnostic tool, so it provides a portable,
    human-readable form of the lease data.
 
+.. note::
+
+  In previous versions of Kea earlier than 1.6.0 `db-init`, `db-version` and
+  `db-upgrade` commands were named `lease-init`, `lease-version` and
+  `lease-upgrade`.
+
 ``backend`` specifies the type of backend database. The currently
 supported types are:
 
