@@ -32,9 +32,6 @@ with open(config_ac_path) as f:
             parts = line.split(',')
             release = parts[1]
 version = release
-print("=" * 30)
-print(release)
-print("=" * 30)
 
 # -- General configuration ---------------------------------------------------
 
@@ -71,7 +68,18 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build', 'Thumbs.db', '.DS_Store',
+    # included files need to be excluded to avoid duplicate labels
+    'arm/hooks-class-cmds.rst',
+    'arm/hooks-cb-cmds.rst',
+    'arm/hooks-ha.rst',
+    'arm/hooks-host-cache.rst',
+    'arm/hooks-lease-cmds.rst',
+    'arm/hooks-radius.rst',
+    'arm/hooks-stat-cmds.rst',
+    'arm/hammer.rst',
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
