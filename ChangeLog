@@ -1,6 +1,6 @@
 1625.	[build]		tmark, marcin
 	Bumped up libraries version numbers for Kea 1.6.0 beta2 release.
-	(Gitlab #740,!427, git TBD)
+	(Gitlab #740,!427, git 359fe51531e802f052bd4172d4e295378155dbd5)
 
 1624.	[doc]		marcin
 	Documented a usage of the server tags with the Kea Configuration
