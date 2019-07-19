@@ -139,6 +139,7 @@ api_files+=api/lease4-get.json
 api_files+=api/lease4-update.json
 api_files+=api/lease4-wipe.json
 api_files+=api/lease6-add.json
+api_files+=api/lease6-bulk-apply.json
 api_files+=api/lease6-del.json
 api_files+=api/lease6-get-all.json
 api_files+=api/lease6-get.json
