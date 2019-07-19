@@ -59,7 +59,11 @@ The classification process is conducted in several steps:
     following its client class or global (or, for option 43, last
     resort) definition.
 
-5.  A subnet is chosen, possibly based on the class information when
+5.  When the incoming packet belongs the special DROP class it is
+    dropped and an informational message is logged with the packet
+    information.
+
+6.  A subnet is chosen, possibly based on the class information when
     some subnets are reserved. More precisely: when choosing a subnet,
     the server iterates over all of the subnets that are feasible given
     the information found in the packet (client address, relay address,
@@ -67,13 +71,13 @@ The classification process is conducted in several steps:
     class associated with it, or has a class which matches one of the
     packet's classes.
 
-6.  The server looks for host reservations. If an identifier from the
+7.  The server looks for host reservations. If an identifier from the
     incoming packet matches a host reservation in the subnet or shared
     network, the packet is associated with the KNOWN class and all
     classes of the host reservation. If a reservation is not found, the
     packet is assigned to the UNKNOWN class.
 
-7.  Classes with matching expressions - directly, or indirectly using the
+8.  Classes with matching expressions - directly, or indirectly using the
     KNOWN/UNKNOWN built-in classes and not marked for later evaluation ("on
     request") - are processed in the order they are defined
     in the configuration; the boolean expression is evaluated and, if it
@@ -81,17 +85,17 @@ The classification process is conducted in several steps:
     class. After a subnet is selected, the server determines whether
     there is a reservation for a given client. Therefore, it is not
     possible to use KNOWN/UNKNOWN classes to select a shared network or
-    a subnet.
+    a subnet, nor to make DROP class dependent of KNOWN/UNKNOWN classes.
 
-8.  If needed, addresses and prefixes from pools are assigned, possibly
+9.  If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
     class members.
 
-9.  Classes marked as "required" are evaluated in the order in which
+10. Classes marked as "required" are evaluated in the order in which
     they are listed: first the shared network, then the subnet, and
     finally the pools that assigned resources belong to.
 
-10. Options are assigned, again possibly based on the class information
+11. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
     For DHCPv4 private and code 43 options, this includes class local
     option definitions.

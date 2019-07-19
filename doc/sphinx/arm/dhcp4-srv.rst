@@ -2564,7 +2564,9 @@ shared network or a subnet.
 The process of classification is conducted in five steps. The first step
 is to assess an incoming packet and assign it to zero or more classes.
 The second step is to choose a subnet, possibly based on the class
-information. The next step is to evaluate class expressions depending on
+information. When the incoming packet is in the "DROP"
+special class it is dropped and an information message logged.
+The next step is to evaluate class expressions depending on
 the built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
 using them for pool selection and assigning classes from host
 reservations. The list of required classes is then built and each class
