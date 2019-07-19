@@ -110,7 +110,7 @@ public:
     explicit MySqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
-    ~MySqlConfigBackendImpl();
+    virtual ~MySqlConfigBackendImpl();
 
     /// @brief Creates MySQL binding from a @c Triplet.
     ///

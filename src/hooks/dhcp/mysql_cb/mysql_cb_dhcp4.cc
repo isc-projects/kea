@@ -2597,7 +2597,8 @@ MySqlConfigBackendDHCPv4Impl::MySqlConfigBackendDHCPv4Impl(const DatabaseConnect
 }
 
 MySqlConfigBackendDHCPv4::MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
-    : impl_(new MySqlConfigBackendDHCPv4Impl(parameters)) {
+    : base_impl_(new MySqlConfigBackendDHCPv4Impl(parameters)), impl_() {
+    impl_ = boost::dynamic_pointer_cast<MySqlConfigBackendDHCPv4Impl>(base_impl_);
 }
 
 Subnet4Ptr
