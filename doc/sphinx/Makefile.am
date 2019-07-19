@@ -10,8 +10,6 @@ sphinxopts+=-E
 sphinxopts+=-a
 sphinxopts+=-j auto
 sphinxopts+=-c "${abs_srcdir}"
-sphinxopts+=-D release="@PACKAGE_VERSION@"
-sphinxopts+=-D version="@PACKAGE_VERSION@"
 
 
 static_sources=

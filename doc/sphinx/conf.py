@@ -23,6 +23,19 @@ project = 'Kea'
 copyright = '2019, Internet Systems Consortium'
 author = 'Internet Systems Consortium'
 
+# get current kea version
+config_ac_path = '../../configure.ac'
+release = 'UNRELEASED'
+with open(config_ac_path) as f:
+    for line in f.readlines():
+        if line.startswith('AC_INIT(kea'):
+            parts = line.split(',')
+            release = parts[1]
+version = release
+print("=" * 30)
+print(release)
+print("=" * 30)
+
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
