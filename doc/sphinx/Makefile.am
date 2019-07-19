@@ -9,7 +9,7 @@ sphinxopts+=-v
 sphinxopts+=-E
 sphinxopts+=-a
 sphinxopts+=-W
-sphinxopts+=-j auto
+sphinxopts+=-j 2
 sphinxopts+=-c "${abs_srcdir}"
 
 

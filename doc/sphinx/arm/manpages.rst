@@ -12,15 +12,3 @@
 
 Manual Pages
 ============
-
-.. include:: ../man/kea-shell.8.rst
-.. include:: ../man/kea-admin.8.rst
-.. include:: ../man/keactrl.8.rst
-.. include:: ../man/kea-ctrl-agent.8.rst
-.. include:: ../man/kea-dhcp4.8.rst
-.. include:: ../man/kea-dhcp6.8.rst
-.. include:: ../man/kea-dhcp-ddns.8.rst
-.. include:: ../man/kea-lfc.8.rst
-.. include:: ../man/kea-netconf.8.rst
-.. include:: ../man/kea-shell.8.rst
-.. include:: ../man/perfdhcp.8.rst

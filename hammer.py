@@ -1143,7 +1143,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['dblatex', 'xsltproc', 'elinks', 'docbook-xsl'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'latexmk'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
