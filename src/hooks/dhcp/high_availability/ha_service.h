@@ -734,7 +734,7 @@ protected:
     ///
     /// @param ec Error status of the ASIO connect
     /// @param tcp_native_fd socket descriptor to register
-    /// @param returns true. Registeration cannot fail, and if ec indicates a real
+    /// @return always true. Registeration cannot fail, and if ec indicates a real
     /// error we want Connection logic to process it.
     bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
 

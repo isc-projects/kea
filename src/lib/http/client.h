@@ -173,6 +173,8 @@ public:
     /// @param request_timeout Timeout for the transaction in milliseconds.
     /// @param connect_callback Optional callback invoked when the client
     /// connects to the server.
+    /// @param close_callback Optional callback invoked when the client
+    /// closes the connection to the server.
     ///
     /// @throw HttpClientError If invalid arguments were provided.
     void asyncSendRequest(const Url& url,
