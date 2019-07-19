@@ -22,13 +22,13 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 
 3.  Extract the tarball. For example:
 
-    .. code-block:: console
+    .. parsed-literal::
 
        $ tar xvzf kea-|release|.tar.gz
 
 4.  Go into the source directory and run the configure script:
 
-    .. code-block:: console
+    .. parsed-literal::
 
        $ cd kea-|release|
        $ ./configure [your extra parameters]

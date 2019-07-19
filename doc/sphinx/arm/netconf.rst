@@ -81,17 +81,18 @@ After installation the result should be similar to this:
    Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.6/build/repository/data/
    (Do not alter contents of these directories manually)
 
-   Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules   | Enabled Features
-   ---------------------------------------------------------------------------------------------------------------------------
-   ietf-netconf-notifications | 2012-02-06 | Installed   | root:root           | 666         |              |
-   ietf-netconf               | 2011-06-01 | Imported    |                     |             |              |
-   ietf-netconf-acm           | 2012-02-22 | Imported    |                     |             |              |
-   nc-notifications           | 2008-07-14 | Installed   | root:root           | 666         |              |
-   notifications              | 2008-07-14 | Installed   | root:root           | 666         |              |
-   turing-machine             | 2013-12-27 | Installed   | root:root           | 666         |              |
-   iana-if-type               | 2014-05-08 | Installed   |                     |             |              |
-   ietf-interfaces            | 2014-05-08 | Installed   | root:root           | 666         |              |
-   ietf-ip                    | 2014-06-16 | Installed   |                     |             |              |
+   Module Name      | Revision   | Conformance | Data Owner | Permissions
+   ----------------------------------------------------------------------
+   ietf-netconf-    | 2012-02-06 | Installed   | root:root  | 666
+     -notifications |            |             |            |
+   ietf-netconf     | 2011-06-01 | Imported    |            |
+   ietf-netconf-acm | 2012-02-22 | Imported    |            |
+   nc-notifications | 2008-07-14 | Installed   | root:root  | 666
+   notifications    | 2008-07-14 | Installed   | root:root  | 666
+   turing-machine   | 2013-12-27 | Installed   | root:root  | 666
+   iana-if-type     | 2014-05-08 | Installed   |            |
+   ietf-interfaces  | 2014-05-08 | Installed   | root:root  | 666
+   ietf-ip          | 2014-06-16 | Installed   |            |
 
 There are two major modules that Kea is able to support:
 kea-dhcp4-server and kea-dhcp6-server. Note that while there is an
@@ -155,22 +156,22 @@ sysrepoctl -l:
    Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.6/build/repository/data/
    (Do not alter contents of these directories manually)
 
-   Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules   | Enabled Features
-   ---------------------------------------------------------------------------------------------------------------------------
-   ietf-netconf-notifications | 2012-02-06 | Installed   | root:root           | 666         |              |
-   ietf-netconf               | 2011-06-01 | Imported    |                     |             |              |
-   ietf-netconf-acm           | 2012-02-22 | Imported    |                     |             |              |
-   nc-notifications           | 2008-07-14 | Installed   | root:root           | 666         |              |
-   notifications              | 2008-07-14 | Installed   | root:root           | 666         |              |
-   turing-machine             | 2013-12-27 | Installed   | root:root           | 666         |              |
-   iana-if-type               | 2014-05-08 | Installed   |                     |             |              |
-   ietf-interfaces            | 2014-05-08 | Installed   | root:root           | 666         |              |
-   ietf-ip                    | 2014-06-16 | Installed   |                     |             |              |
-   kea-dhcp4-server           | 2018-11-20 | Installed   | root:root           | 666         |              |
-   kea-dhcp6-server           | 2018-11-20 | Installed   | root:root           | 666         |              |
-   ietf-dhcpv6-server         | 2018-09-04 | Installed   | root:root           | 666         |              |
-   ietf-dhcpv6-options        | 2018-09-04 | Imported    |                     |             |              |
-   ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |             |              |
+   Module Name                | Revision   | Conformance | Data Owner          | Permissions
+   -----------------------------------------------------------------------------------------
+   ietf-netconf-notifications | 2012-02-06 | Installed   | root:root           | 666
+   ietf-netconf               | 2011-06-01 | Imported    |                     |
+   ietf-netconf-acm           | 2012-02-22 | Imported    |                     |
+   nc-notifications           | 2008-07-14 | Installed   | root:root           | 666
+   notifications              | 2008-07-14 | Installed   | root:root           | 666
+   turing-machine             | 2013-12-27 | Installed   | root:root           | 666
+   iana-if-type               | 2014-05-08 | Installed   |                     |
+   ietf-interfaces            | 2014-05-08 | Installed   | root:root           | 666
+   ietf-ip                    | 2014-06-16 | Installed   |                     |
+   kea-dhcp4-server           | 2018-11-20 | Installed   | root:root           | 666
+   kea-dhcp6-server           | 2018-11-20 | Installed   | root:root           | 666
+   ietf-dhcpv6-server         | 2018-09-04 | Installed   | root:root           | 666
+   ietf-dhcpv6-options        | 2018-09-04 | Imported    |                     |
+   ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |
 
 To install a new revision of a module it must first be uninstalled, e.g.
 by:

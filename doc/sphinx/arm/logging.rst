@@ -122,7 +122,11 @@ Currently defined loggers are defined in the following table. The
 loggers belong to the core Kea code (open source Kea binaries and
 libraries), or hooks libraries (open source or premium).
 
+.. tabularcolumns:: |p{0.2\linewidth}|p{0.2\linewidth}|p{0.6\linewidth}|
+
 .. table:: List of Loggers Supported by Kea Servers and Hooks Libraries Shipped With Kea and Premium Packages
+   :class: longtable
+   :widths: 20 20 60
 
    +----------------------------------+------------------------+--------------------------------+
    | Logger Name                      | Software Package       | Description                    |

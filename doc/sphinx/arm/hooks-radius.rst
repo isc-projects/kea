@@ -127,7 +127,7 @@ Choice 1: get from github
 
 Choice 2: get a tarball and extract it
 
-.. code-block:: console
+.. parsed-literal::
 
    $ tar zxvf kea-|release|.tar.gz
 
@@ -135,7 +135,7 @@ The next step is to extract the premium Kea package that contains the
 RADIUS repository into the Kea sources. After the tarball is extracted,
 the Kea sources should have a premium/ subdirectory.
 
-.. code-block:: console
+.. parsed-literal::
 
      $ cd kea
      $ tar zxvf ../kea-premium-radius-|release|.tar.gz
@@ -189,8 +189,7 @@ follows:
 After some checks, the configure script should print a report similar to
 the following:
 
-::
-
+.. parsed-literal::
 
           Kea source configure results:
        -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

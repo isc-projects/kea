@@ -75,7 +75,7 @@ tarball that was downloaded. For example, with a download of Kea |release|.,
 there should be a tarball called kea-|release|.tar.gz on the system.
 Unpack this tarball:
 
-::
+.. parsed-literal::
 
    $ tar zxvf kea-|release|.tar.gz
 
@@ -87,7 +87,7 @@ unpacked. Once Kea |release| has been unpacked into a kea-|release|
 subdirectory and the Kea premium tarball is in the current directory, the following
 steps will unpack the premium tarball into the correct location:
 
-::
+.. parsed-literal::
 
      $ cd kea-|release|
      $ tar xvf ../kea-premium-|release|.tar.gz
@@ -111,7 +111,7 @@ originally building Kea. It is possible to verify that configure has detected th
 premium package by inspecting the summary printed when it exits. The
 first section of the output should look something like this:
 
-::
+.. parsed-literal::
 
    Package:
      Name:             kea
