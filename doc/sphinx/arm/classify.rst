@@ -59,7 +59,7 @@ The classification process is conducted in several steps:
     following its client class or global (or, for option 43, last
     resort) definition.
 
-5.  When the incoming packet belongs the special DROP class it is
+5.  When the incoming packet belongs the special class, `DROP`, it is
     dropped and an informational message is logged with the packet
     information.
 
