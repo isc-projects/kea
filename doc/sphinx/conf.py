@@ -73,6 +73,7 @@ exclude_patterns = [
     # included files need to be excluded to avoid duplicate labels
     'arm/hooks-class-cmds.rst',
     'arm/hooks-cb-cmds.rst',
+    'arm/config-backend.rst',
     'arm/hooks-ha.rst',
     'arm/hooks-host-cache.rst',
     'arm/hooks-lease-cmds.rst',

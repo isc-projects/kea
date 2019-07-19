@@ -1,0 +1,17 @@
+There are several steps needed to document new API command:
+
+1. edit cmds-list and add the new command
+2. (optional) run: ./generate-templates cmds-list
+   This will go through the list of commands listed in cmds-list
+   and will check if there are corresponding JSON files in api/name.json
+   If the file is missing, a new JSON will be created using template.
+   If you dislike this generator, you can always use _template.json
+   and copy it over under the name of a new command.
+3. Edit api/command-name.json. If the command is provided by the daemon
+   out of its own (and not via hook), simply delete the hook entry.
+   If you don't want to provide command syntax (cmd-syntax key),
+   any comments about the syntax (cmd-comment key) or response syntax
+   (resp-syntax) or any comment about response (resp-comment), simply
+   remove those unused keys. The generator will attempt to generate
+   boilerplates for it.
+4. Rebuild User's Guide as usual, run in doc/sphinx folder: make

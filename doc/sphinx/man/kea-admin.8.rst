@@ -8,9 +8,6 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
-.. highlight: console
-
-.. kea-admin:
 
 kea-admin - Shell script for managing Kea databases
 ---------------------------------------------------

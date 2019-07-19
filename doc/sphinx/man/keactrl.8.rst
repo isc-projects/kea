@@ -8,9 +8,6 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
-.. highlight: console
-
-.. _keactrl:
 
 keactrl - Shell script for managing Kea
 ---------------------------------------
