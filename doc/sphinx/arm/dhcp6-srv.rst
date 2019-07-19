@@ -822,6 +822,34 @@ This identifier will not change for this subnet unless the "id"
 parameter is removed or set to 0. The value of 0 forces auto-generation
 of the subnet identifier.
 
+.. _ipv6-subnet-prefix:
+
+IPv6 Subnet Prefix
+------------------
+
+The subnet prefix is the second way to identify a subnet. It does not
+need to have the address part to match the prefix length, for instance
+this configuration is accepted:
+
+::
+
+"Dhcp6": {
+   "subnet6": [
+       {
+            "subnet": "2001:db8:1::1/64",
+            ...
+        }
+    ]
+}
+
+Even there is another subnet with the "2001:db8:1::/64" prefix:
+only the textual form of subnets are compared to avoid duplicates.
+
+.. note::
+
+Abuse of this feature can lead to incorrect subnet selection
+(see :ref:`dhcp6-config-subnets`).
+
 .. _dhcp6-unicast:
 
 Unicast Traffic Support

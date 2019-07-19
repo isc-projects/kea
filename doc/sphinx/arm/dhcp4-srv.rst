@@ -1060,6 +1060,34 @@ This identifier will not change for this subnet unless the "id"
 parameter is removed or set to 0. The value of 0 forces auto-generation
 of the subnet identifier.
 
+.. _ipv4-subnet-prefix:
+
+IPv4 Subnet Prefix
+------------------
+
+The subnet prefix is the second way to identify a subnet. It does not
+need to have the address part to match the prefix length, for instance
+this configuration is accepted:
+
+::
+
+"Dhcp4": {
+   "subnet4": [
+       {
+          "subnet": "192.0.2.1/24",
+           ...
+       }
+   ]
+}
+
+Even there is another subnet with the "192.0.2.0/24" prefix: only the
+textual form of subnets are compared to avoid duplicates.
+
+.. note::
+
+    Abuse of this feature can lead to incorrect subnet selection
+    (see :ref:`dhcp4-subnet-selection`).
+
 .. _dhcp4-address-config:
 
 Configuration of IPv4 Address Pools
