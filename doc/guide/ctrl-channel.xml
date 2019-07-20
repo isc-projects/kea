@@ -588,7 +588,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     "command": "version-get"
 }
 </screen>
-      </section> <!-- end of command-server-tag-get -->
+      </section> <!-- end of command-version-get -->
 
       <section xml:id="command-server-tag-get">
         <title>server-tag-get</title>
