@@ -906,7 +906,14 @@ MySqlConfigBackendImpl::attachElementToServers(const int index,
     MySqlBindingCollection in_server_bindings = { first_binding, in_bindings };
     for (auto tag : server_selector.getTags()) {
         in_server_bindings.push_back(MySqlBinding::createString(tag.get()));
-        conn_.insertQuery(index, in_server_bindings);
+        // Handles the case where the server does not exists.
+        try {
+            conn_.insertQuery(index, in_server_bindings);
+        } catch (const NullKeyError&) {
+            // The message should give the tag value.
+            isc_throw(NullKeyError,
+                      "server '" << tag.get() << "' does not exist");
+        }
         in_server_bindings.pop_back();
     }
 }

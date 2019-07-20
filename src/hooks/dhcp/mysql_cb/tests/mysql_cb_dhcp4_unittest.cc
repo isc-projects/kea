@@ -765,7 +765,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalParameters4WithServerTags) {
     // This should fail because the server must be inserted first.
     EXPECT_THROW(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server1"),
                                                       global_parameter1),
-                 DbOperationError);
+                 NullKeyError);
 
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
@@ -1102,7 +1102,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // An attempt to add a subnet to a non-existing server (server1) should fail.
     EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::MULTIPLE({ "server1", "server2" }),
                                              subnet2),
-                 DbOperationError);
+                 NullKeyError);
 
     // The subnet shouldn't have been added, even though one of the servers exists.
     Subnet4Ptr returned_subnet;
@@ -2128,7 +2128,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateSharedNetwork4) {
     // An attempto insert the shared network for non-existing server should fail.
     EXPECT_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ONE("server1"),
                                                     shared_network),
-                 DbOperationError);
+                 NullKeyError);
 
     // Insert the server1 into the database.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[0]));
@@ -2880,7 +2880,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, optionDefs4WithServerTags) {
     // fail.
     EXPECT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ONE("server1"),
                                                 option1),
-                 DbOperationError);
+                 NullKeyError);
 
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
@@ -3272,7 +3272,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, globalOptions4WithServerTags) {
 
     EXPECT_THROW(cbptr_->createUpdateOption4(ServerSelector::ONE("server1"),
                                              opt_boot_file_name1),
-                 DbOperationError);
+                 NullKeyError);
 
     // Create two servers.
     EXPECT_NO_THROW(cbptr_->createUpdateServer4(test_servers_[1]));
