@@ -967,7 +967,15 @@ if test "$SYSREPO_CONFIG" != "" ; then
         [AC_LANG_PROGRAM(
             [#include <sysrepo-cpp/Session.hpp>],
             [sysrepo::Connection("conn-name");])],
-        [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+        [AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <sysrepo-cpp/Session.hpp>],
+                [auto is_empty = [[]](sysrepo::S_Val v){
+                    return (v->empty()); };
+                ])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library, new])
+             AC_DEFINE([HAVE_POST_0_7_7_SYSREPO], [1], [Using sysrepo > 0.7.7])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library, yes])])],
         [AC_LINK_IFELSE(
             [AC_LANG_PROGRAM(
                 [#include <sysrepo-cpp/Session.h>],
