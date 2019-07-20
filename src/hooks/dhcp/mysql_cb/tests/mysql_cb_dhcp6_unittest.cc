@@ -1093,6 +1093,25 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedGlobalParameters6) {
     EXPECT_EQ(1, parameters.size());
 }
 
+// Test that the NullKeyError message is correctly updated.
+TEST_F(MySqlConfigBackendDHCPv6Test, nullKeyError) {
+    // Create a global parameter (it should work with any object type).
+    StampedValuePtr global_parameter = StampedValue::create("global", "value");
+
+    // Try to insert it and associate with non-existing server.
+    std::string msg;
+    try {
+        cbptr_->createUpdateGlobalParameter6(ServerSelector::ONE("server1"),
+                                             global_parameter);
+        msg = "got no exception";
+    } catch (const NullKeyError& ex) {
+        msg = ex.what();
+    } catch (const std::exception&) {
+        msg = "got another exception";
+    }
+    EXPECT_EQ("server 'server1' does not exist", msg);
+}
+
 // Test that ceateUpdateSubnet6 throws appropriate exceptions for various
 // server selectors.
 TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateSubnet6Selectors) {
