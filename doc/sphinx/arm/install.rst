@@ -112,9 +112,9 @@ the system:
 -  googletest (version 1.8 or later) is required when using the --with-gtest
    configuration option to build the unit tests.
 
--  The documentation generation tools elinks, docbook-xsl, libxslt, and
-   Doxygen, if using the --enable-generate-docs configuration option to
-   create the documentation.
+-  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
+   texlive with its extensions and Doxygen, if using the --enable-generate-docs
+   configuration option to create the documentation.
 
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.

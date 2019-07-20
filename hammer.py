@@ -1021,7 +1021,9 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
+            packages.extend(['python3-sphinx', 'texlive', 'texlive-fncychap', 'texlive-tabulary',
+                             'texlive-framed', 'texlive-wrapfig', 'texlive-upquote',
+                             'texlive-capt-of', 'texlive-needspace', 'latexmk'])
 
         if 'mysql' in features:
             execute('sudo dnf remove -y community-mysql-devel || true')
@@ -1187,7 +1189,9 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['dblatex', 'xsltproc', 'elinks', 'docbook-xsl'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'latexmk'])
+            if revision == '9':
+                packages.append('texlive-generic-extra')
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1223,7 +1227,7 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
 
         if 'docs' in features:
-            packages.extend(['libxslt', 'elinks', 'docbook-xsl'])
+            packages.extend(['py36-sphinx', 'py36-sphinx_rtd_theme'])
 
         if 'unittest' in features:
             _install_gtest_sources()

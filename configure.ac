@@ -1438,9 +1438,19 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Sphinx [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
+AC_ARG_WITH([sphinx],
+  AC_HELP_STRING([--with-sphinx=PATH], [path to sphinx-build tool]),
+  [sphinx_path="$withval"])
+
 if test "x$enable_generate_docs" != xno ; then
+
 # Check for sphinx-build
-  AC_PATH_PROG([SPHINXBUILD], [sphinx-build])
+  if test -z "$sphinx_path"; then
+     AC_PATH_PROGS([SPHINXBUILD], [sphinx-build sphinx-build-3])
+  else
+     SPHINXBUILD="$sphinx_path"
+  fi
+  echo $SPHINXBUILD
   if test -z "$SPHINXBUILD"; then
     AC_MSG_ERROR([sphinx-build not found; it is required for --enable-generate-docs, please see http://www.sphinx-doc.org/en/master/usage/installation.html for details])
   else
