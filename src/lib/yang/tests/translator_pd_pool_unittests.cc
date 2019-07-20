@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,11 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
     EXPECT_NO_THROW(sess_->set_item(prefix.c_str(), s_prefix));
     const string& length = xpath + "/prefix-length";
     uint8_t len = 56;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_length(new Val(len));
+#else
     S_Val s_length(new Val(len, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(length.c_str(), s_length));
 
     // Get the pool.
@@ -128,7 +132,11 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_delegated(new Val(dl));
+#else
     S_Val s_delegated(new Val(dl, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
 
     // Get the pool.
@@ -332,7 +340,11 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_delegated(new Val(dl));
+#else
     S_Val s_delegated(new Val(dl, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
 
     // Create the second pd-pool 2001:db8:0:2000::/56
@@ -341,7 +353,11 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     spool2 << xpath + "/pd-pool[prefix='" << prefix2 << "']";
     const string& x_delegated2 = spool2.str() + "/delegated-len";
     uint8_t dl2 = 60;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_delegated2(new Val(dl2));
+#else
     S_Val s_delegated2(new Val(dl2, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(x_delegated2.c_str(), s_delegated2));
 
 

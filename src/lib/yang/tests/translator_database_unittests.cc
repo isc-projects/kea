@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,7 +62,11 @@ TEST_F(TranslatorDatabaseTest, get) {
     S_Val s_type(new Val("memfile"));
     EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
     uint32_t li = 3600;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_interval(new Val(li));
+#else
     S_Val s_interval(new Val(li, SR_UINT32_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(xinterval.c_str(), s_interval));
 
     // Get empty.
@@ -120,7 +124,11 @@ TEST_F(TranslatorDatabaseTest, setEmpty) {
     S_Val s_type(new Val("memfile"));
     EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
     uint32_t li = 3600;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_interval(new Val(li));
+#else
     S_Val s_interval(new Val(li, SR_UINT32_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(xinterval.c_str(), s_interval));
 
     // Reset to empty.
@@ -181,7 +189,11 @@ TEST_F(TranslatorDatabasesTest, get) {
     S_Val s_host(new Val("localhost"));
     EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
     uint16_t mport = 3306;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_port(new Val(mport));
+#else
     S_Val s_port(new Val(mport, SR_UINT16_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
 
     // Get empty.
@@ -277,7 +289,11 @@ TEST_F(TranslatorDatabasesTest, setEmpty) {
     S_Val s_host(new Val("localhost"));
     EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
     uint16_t mport = 3306;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_port(new Val(mport));
+#else
     S_Val s_port(new Val(mport, SR_UINT16_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
 
     // Reset to empty.
@@ -311,7 +327,11 @@ TEST_F(TranslatorDatabasesTest, setEmpties) {
     S_Val s_host(new Val("localhost"));
     EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
     uint16_t mport = 3306;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_port(new Val(mport));
+#else
     S_Val s_port(new Val(mport, SR_UINT16_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
 
     // Reset to empty.

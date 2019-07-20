@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,11 @@ TEST_F(TranslatorLoggersTest, get) {
     S_Val s_severity(new Val("WARN", SR_ENUM_T));
     EXPECT_NO_THROW(sess_->set_item(xseverity.c_str(), s_severity));
     uint32_t max_ver = 10;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    S_Val s_maxver(new Val(max_ver));
+#else
     S_Val s_maxver(new Val(max_ver, SR_UINT32_T));
+#endif
     EXPECT_NO_THROW(sess_->set_item(xmaxver.c_str(), s_maxver));
 
     // Get empty.

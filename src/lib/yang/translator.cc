@@ -186,7 +186,11 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
+#ifdef HAVE_POST_0_7_7_SYSREPO
+        s_val.reset(new Val(static_cast<uint8_t>(elem->intValue())));
+#else
         s_val.reset(new Val(static_cast<uint8_t>(elem->intValue()), type));
+#endif
         break;
 
     case SR_UINT16_T:
@@ -195,7 +199,11 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
+#ifdef HAVE_POST_0_7_7_SYSREPO
+        s_val.reset(new Val(static_cast<uint16_t>(elem->intValue())));
+#else
         s_val.reset(new Val(static_cast<uint16_t>(elem->intValue()), type));
+#endif
         break;
 
     case SR_UINT32_T:
@@ -204,7 +212,11 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
+#ifdef HAVE_POST_0_7_7_SYSREPO
+        s_val.reset(new Val(static_cast<uint32_t>(elem->intValue())));
+#else
         s_val.reset(new Val(static_cast<uint32_t>(elem->intValue()), type));
+#endif
         break;
 
     case SR_INT8_T:
@@ -213,7 +225,11 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
+#ifdef HAVE_POST_0_7_7_SYSREPO
+        s_val.reset(new Val(static_cast<int8_t>(elem->intValue())));
+#else
         s_val.reset(new Val(static_cast<int8_t>(elem->intValue()), type));
+#endif
         break;
 
     case SR_INT16_T:
@@ -222,7 +238,11 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
+#ifdef HAVE_POST_0_7_7_SYSREPO
+        s_val.reset(new Val(static_cast<int16_t>(elem->intValue())));
+#else
         s_val.reset(new Val(static_cast<int16_t>(elem->intValue()), type));
+#endif
         break;
 
     case SR_INT32_T:
@@ -231,7 +251,11 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
                       "value for an integer called with not an integer: "
                       << elem->str());
         }
+#ifdef HAVE_POST_0_7_7_SYSREPO
+        s_val.reset(new Val(static_cast<int32_t>(elem->intValue())));
+#else
         s_val.reset(new Val(static_cast<int32_t>(elem->intValue()), type));
+#endif
         break;
 
     case SR_BINARY_T:
