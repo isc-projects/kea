@@ -291,15 +291,14 @@ private:
     commandLeasesReclaimHandler(const std::string& command,
                                 isc::data::ConstElementPtr args);
 
-    /// @brief Handler for processing 'server-tag-get' command
+    /// @brief handler for server-tag-get command
     ///
-    /// This handler processes server-tag-get command, which retrieves
+    /// This method handles the server-tag-get command, which retrieves
     /// the current server tag and returns it in response.
     ///
-    /// @param command (parameter ignored)
-    /// @param args { "server-tag": "<new-value>" } argument map.
-    ///
-    /// @return status of the command
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
     isc::data::ConstElementPtr
     commandServerTagGetHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
