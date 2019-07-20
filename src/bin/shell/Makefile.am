@@ -6,9 +6,6 @@ sbin_SCRIPTS = kea-shell
 
 CLEANFILES = *.pyc
 
-man_MANS = kea-shell.8
-DISTCLEANFILES = $(sbin_SCRIPTS) $(man_MANS)
-
 CLEANDIRS = __pycache__
 
 clean-local:
