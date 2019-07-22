@@ -9,7 +9,7 @@
 # Get BNF grammars from bison files
 
 # Check if there is one argument only
-if [ $# -ne 1]; then
+if [ $# -ne 1 ]; then
     echo "extract_bnf.sh <bison-file-base-name>"
     exit 1
 fi
@@ -35,6 +35,8 @@ fi
 #  - remove line numbers
 #  - remove intermediate productions
 #  - remove intermediate non-terminals
+#  - replace standard tokens
+#  - replace : by BNF ::=
 #  - squeeze multiple blank lines
 
 cat $output |\
@@ -42,4 +44,14 @@ cat $output |\
 @AWK@ '// { gsub("^ +[0-9]+ ", ""); print }' |\
 @AWK@ '/^\$@[0-9]+:/ { next }; // { print }' |\
 @AWK@ '// { gsub(" \\$@[0-9]+ ", " ") ; print }' |\
+@AWK@ '// { gsub("\"constant string\"", "STRING"); print }' |\
+@AWK@ '// { gsub("\"integer\"", "INTEGER"); print }' |\
+@AWK@ '// { gsub("\"floating point\"", "FLOAT"); print }' |\
+@AWK@ '// { gsub("\"boolean\"", "BOOLEAN"); print }' |\
+@AWK@ '// { gsub("\"constant hexstring\"", "HEXSTRING"); print }' |\
+@AWK@ '// { gsub("\"option name\"", "OPTION_NAME"); print }' |\
+@AWK@ '// { gsub("\"ip address\"", "IP_ADDRESS"); print }' |\
+@AWK@ '// { gsub("\"end of file\"", "EOF"); print }' |\
+@AWK@ '// { gsub("%empty", ""); print }' |\
+@AWK@ '// { gsub(": ", " ::= "); print }' |\
 cat -s
