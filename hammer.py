@@ -907,6 +907,15 @@ def _configure_pgsql(system, features):
     log.info('postgresql just configured')
 
 
+def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep_time_after_attempt=None,
+                capture=False):
+    cmd = 'sudo apt update'
+    if system == 'debian' and int(revision) >= 10:
+        cmd += ' --allow-releaseinfo-change'
+    return execute(cmd, env=env, check_times=check_times, attempts=attempts,
+                   sleep_time_after_attempt=sleep_time_after_attempt, capture=capture)
+
+
 def _install_cassandra_deb(system, revision, env, check_times):
     """Install Cassandra and cpp-driver using DEB package."""
     if not os.path.exists('/usr/sbin/cassandra'):
@@ -915,7 +924,7 @@ def _install_cassandra_deb(system, revision, env, check_times):
         execute(cmd, env=env, check_times=check_times)
         execute('wget -qO- https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -',
                 env=env, check_times=check_times)
-        execute('sudo apt update', env=env, check_times=check_times)
+        _apt_update(system, revision, env=env, check_times=check_times)
         install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
@@ -1122,7 +1131,7 @@ def prepare_system_local(features, check_times):
 
     # prepare ubuntu
     elif system == 'ubuntu':
-        execute('sudo apt update', env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+        _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
                     'libboost-system-dev']
@@ -1165,7 +1174,7 @@ def prepare_system_local(features, check_times):
 
     # prepare debian
     elif system == 'debian':
-        execute('sudo apt update', env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+        _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
                     'liblog4cplus-dev', 'libboost-system-dev']
@@ -1512,7 +1521,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
                 env=env, check_times=check_times)
         # try apt update for up to 10 times if there is an error
         for _ in range(10):
-            _, out = execute('sudo apt update', capture=True)
+            _, out = _apt_update(system, revision, capture=True)
             if 'Bad header data' not in out:
                 break
             time.sleep(4)
