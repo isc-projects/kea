@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 
   <info>
     <productname>ISC Kea</productname>
-    <date>May 29, 2019</date>
-    <edition>1.6.0-beta</edition>
+    <date>July 24, 2019</date>
+    <edition>1.6.0-beta2</edition>
     <author>
       <contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin

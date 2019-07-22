@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 
 $NAMESPACE isc::ha
 
@@ -262,16 +262,16 @@ This warning message indicates that there was a problem in communication with a
 HA peer while processing a DHCP client query and sending lease update. The
 client's DHCP message will be dropped.
 
-% HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER %1: failed to delete the lease having type %2 for address %3, reason: %4
-This informational message is issued when one of the leases failed to delete
-on the HA peer while processing lease updates sent from this server. Typically,
-the lease fails to delete when it doesn't exist in the peer's database.
-
 % HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER %1: failed to create or update the lease having type %2 for address %3, reason: %4
 This informational message is issued when one of the leases failed to be
 created or updated on the HA peer whilw processing the lease updates sent
 from this server. This may indicate an issue with communication between
 the peer and its lease database.
+
+% HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER %1: failed to delete the lease having type %2 for address %3, reason: %4
+This informational message is issued when one of the leases failed to delete
+on the HA peer while processing lease updates sent from this server. Typically,
+the lease fails to delete when it doesn't exist in the peer's database.
 
 % HA_LEASE_UPDATE_FAILED %1: lease update to %2 failed: %3
 This warning message indicates that a peer returned an error status code
