@@ -18,17 +18,19 @@ fi
 
 mysql "$@" <<EOF
 
-# Do not perform cascade deletion of the data in the dhcp4_pool because
-# the cascade deletion does not execute triggers associated with the table.
-# Instead we are going to use triggers on the dhcp4_subnet table.
-ALTER TABLE dhcp4_pool
-    DROP FOREIGN KEY fk_dhcp4_pool_subnet_id;
+# Drop existing trigger on the dhcp4_shared_network table.
+DROP TRIGGER dhcp4_shared_network_ADEL;
 
-ALTER TABLE dhcp4_pool
-    ADD CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
-    REFERENCES dhcp4_subnet (subnet_id)
-    ON DELETE NO ACTION ON UPDATE CASCADE;
-
+# Create new trigger which will delete options associated with the shared
+# network.
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_BDEL BEFORE DELETE ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, "delete");
+        DELETE FROM dhcp4_options WHERE shared_network_name = OLD.name;
+    END $$
+DELIMITER ;
 
 # Drop existing trigger on the dhcp4_subnet table.
 DROP TRIGGER dhcp4_subnet_ADEL;
@@ -45,6 +47,75 @@ CREATE TRIGGER dhcp4_subnet_BDEL BEFORE DELETE ON dhcp4_subnet
     END $$
 DELIMITER ;
 
+# Do not perform cascade deletion of the data in the dhcp4_pool because
+# the cascade deletion does not execute triggers associated with the table.
+# Instead we are going to use triggers on the dhcp4_subnet table.
+ALTER TABLE dhcp4_pool
+    DROP FOREIGN KEY fk_dhcp4_pool_subnet_id;
+
+ALTER TABLE dhcp4_pool
+    ADD CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp4_subnet (subnet_id)
+    ON DELETE NO ACTION ON UPDATE CASCADE;
+
+# Drop existing trigger on the dhcp6_shared_network table.
+DROP TRIGGER dhcp6_shared_network_ADEL;
+
+# Create new trigger which will delete options associated with the shared
+# network.
+DELIMITER $$
+CREATE TRIGGER dhcp6_shared_network_BDEL BEFORE DELETE ON dhcp6_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_shared_network', OLD.id, "delete");
+        DELETE FROM dhcp6_options WHERE shared_network_name = OLD.name;
+    END $$
+DELIMITER ;
+
+# Drop existing trigger on the dhcp6_subnet table.
+DROP TRIGGER dhcp6_subnet_ADEL;
+
+# Create new trigger which will delete pools associated with the subnet and
+# the options associated with the subnet.
+DELIMITER $$
+CREATE TRIGGER dhcp6_subnet_BDEL BEFORE DELETE ON dhcp6_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_subnet', OLD.subnet_id, "delete");
+        DELETE FROM dhcp6_pool WHERE subnet_id = OLD.subnet_id;
+        DELETE FROM dhcp6_pd_pool WHERE subnet_id = OLD.subnet_id;
+        DELETE FROM dhcp6_options WHERE dhcp6_subnet_id = OLD.subnet_id;
+    END $$
+DELIMITER ;
+
+# Do not perform cascade deletion of the data in the dhcp6_pool and dhcp6_pd_pool
+# because the cascaded deletion does not execute triggers associated with the table.
+# Instead we are going to use triggers on the dhcp6_subnet table.
+ALTER TABLE dhcp6_pool
+    DROP FOREIGN KEY fk_dhcp6_pool_subnet_id;
+
+ALTER TABLE dhcp6_pd_pool
+    DROP FOREIGN KEY fk_dhcp6_pd_pool_subnet_id;
+
+ALTER TABLE dhcp6_pool
+    ADD CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE NO ACTION ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_pd_pool
+    ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE NO ACTION ON UPDATE CASCADE;
+
+# Create trigger which removes pool specific options upon removal of
+# the pool.
+DELIMITER $$
+CREATE TRIGGER dhcp6_pd_pool_BDEL BEFORE DELETE ON dhcp6_pd_pool FOR EACH ROW
+BEGIN
+DELETE FROM dhcp6_options WHERE scope_id = 6 AND pd_pool_id = OLD.id;
+END
+$$
+DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
