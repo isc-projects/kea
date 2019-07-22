@@ -1736,6 +1736,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/yang/Makefile
                  src/share/yang/modules/Makefile
                  tools/Makefile
+                 tools/extract_bnf.sh
                  tools/path_replacer.sh
 ])
 
