@@ -2772,6 +2772,29 @@ TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkLifetime) {
               returned_network->toElement()->str());
 }
 
+// Test that deleting a shared network triggers deletion of the options
+// associated with the shared network.
+TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkOptions) {
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[0]));
+    EXPECT_EQ(3, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[1]));
+    EXPECT_EQ(0, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
+                                                 test_networks_[1]->getName()));
+    EXPECT_EQ(0, countRows("dhcp6_shared_network"));
+    EXPECT_EQ(0, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[0]));
+    EXPECT_EQ(3, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
+                                                 test_networks_[0]->getName()));
+    EXPECT_EQ(0, countRows("dhcp6_shared_network"));
+    EXPECT_EQ(0, countRows("dhcp6_options"));
+}
+
 // Test that option definition can be inserted, fetched, updated and then
 // fetched again.
 TEST_F(MySqlConfigBackendDHCPv6Test, getOptionDef6) {
