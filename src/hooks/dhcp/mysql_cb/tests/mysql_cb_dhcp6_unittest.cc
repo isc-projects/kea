@@ -17,10 +17,11 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/testutils/generic_backend_unittest.h>
+#include <dhcpsrv/testutils/mysql_generic_backend_unittest.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <mysql.h>
 #include <map>
 #include <sstream>
 
@@ -33,6 +34,24 @@ using namespace isc::dhcp::test;
 
 namespace {
 
+/// @brief Test implementation of the MySQL configuration backend.
+///
+/// It exposes protected members of the @c MySqlConfigBackendDHCPv6.
+class TestMySqlConfigBackendDHCPv6 : public MySqlConfigBackendDHCPv6 {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    /// concerned with the database.
+    explicit TestMySqlConfigBackendDHCPv6(const DatabaseConnection::ParameterMap& parameters)
+        : MySqlConfigBackendDHCPv6(parameters) {
+    }
+
+    using MySqlConfigBackendDHCPv6::base_impl_;
+
+};
+
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv6.
 ///
 /// @todo The tests we're providing here only test cases when the
@@ -43,7 +62,7 @@ namespace {
 /// server tags. We will have to expand existing tests when
 /// the API is extended allowing for inserting servers to the
 /// database.
-class MySqlConfigBackendDHCPv6Test : public GenericBackendTest {
+class MySqlConfigBackendDHCPv6Test : public MySqlGenericBackendTest {
 public:
 
     /// @brief Constructor.
@@ -58,7 +77,7 @@ public:
             // Create MySQL connection and use it to start the backend.
             DatabaseConnection::ParameterMap params =
                 DatabaseConnection::parse(validMySQLConnectionString());
-            cbptr_.reset(new MySqlConfigBackendDHCPv6(params));
+            cbptr_.reset(new TestMySqlConfigBackendDHCPv6(params));
 
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
@@ -83,6 +102,30 @@ public:
         cbptr_.reset();
         // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
+    }
+
+    /// @brief Counts rows in a selected table in MySQL database.
+    ///
+    /// This method can be used to verify that some configuration elements were
+    /// deleted from a selected table as a result of cascade delete or a trigger.
+    /// For example, deleting a subnet should trigger deletion of its address
+    /// pools and options. By counting the rows on each table we can determine
+    /// whether the deletion took place on all tables for which it was expected.
+    ///
+    /// @param table Table name.
+    /// @return Number of rows in the specified table.
+    size_t countRows(const std::string& table) const {
+        auto p = boost::dynamic_pointer_cast<TestMySqlConfigBackendDHCPv6>(cbptr_);
+        if (!p) {
+            ADD_FAILURE() << "cbptr_ does not cast to TestMySqlConfigBackendDHCPv6";
+            return (0);
+        }
+
+        // Reuse the existing connection of the backend.
+        auto impl = boost::dynamic_pointer_cast<MySqlConfigBackendImpl>(p->base_impl_);
+        auto& conn = impl->conn_;
+
+        return (MySqlGenericBackendTest::countRows(conn, table));
     }
 
     /// @brief Creates several servers used in tests.
@@ -1928,6 +1971,36 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
     returned_list->add(subnets[1]->toElement());
 
     EXPECT_TRUE(isEquivalent(returned_list, test_list));
+}
+
+// Test that deleting a subnet triggers deletion of the options associated
+// with the subnet and pools.
+TEST_F(MySqlConfigBackendDHCPv6Test, subnetOptions) {
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[0]));
+    EXPECT_EQ(2, countRows("dhcp6_pool"));
+    EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
+    EXPECT_EQ(3, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[1]));
+    EXPECT_EQ(2, countRows("dhcp6_pool"));
+    EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
+    EXPECT_EQ(4, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->deleteSubnet6(ServerSelector::ALL(), test_subnets_[1]->getID()));
+    EXPECT_EQ(0, countRows("dhcp6_subnet"));
+    EXPECT_EQ(0, countRows("dhcp6_pool"));
+    EXPECT_EQ(0, countRows("dhcp6_pd_pool"));
+    EXPECT_EQ(0, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[0]));
+    EXPECT_EQ(2, countRows("dhcp6_pool"));
+    EXPECT_EQ(3, countRows("dhcp6_options"));
+
+    EXPECT_NO_THROW(cbptr_->deleteSubnet6(ServerSelector::ALL(), test_subnets_[0]->getID()));
+    EXPECT_EQ(0, countRows("dhcp6_subnet"));
+    EXPECT_EQ(0, countRows("dhcp6_pool"));
+    EXPECT_EQ(0, countRows("dhcp6_pd_pool"));
+    EXPECT_EQ(0, countRows("dhcp6_options"));
 }
 
 // Test that shared network can be inserted, fetched, updated and then

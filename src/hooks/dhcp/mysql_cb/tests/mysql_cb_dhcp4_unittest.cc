@@ -18,11 +18,11 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/testutils/generic_backend_unittest.h>
+#include <dhcpsrv/testutils/mysql_generic_backend_unittest.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <boost/shared_ptr.hpp>
-#include <mysql.h>
 #include <gtest/gtest.h>
+#include <mysql.h>
 #include <map>
 #include <sstream>
 
@@ -63,7 +63,7 @@ public:
 /// server tags. We will have to expand existing tests when
 /// the API is extended allowing for inserting servers to the
 /// database.
-class MySqlConfigBackendDHCPv4Test : public GenericBackendTest {
+class MySqlConfigBackendDHCPv4Test : public MySqlGenericBackendTest {
 public:
 
     /// @brief Constructor.
@@ -126,20 +126,7 @@ public:
         auto impl = boost::dynamic_pointer_cast<MySqlConfigBackendImpl>(p->base_impl_);
         auto& conn = impl->conn_;
 
-        // Execute a simple select query on all rows.
-        std::string query = "SELECT * FROM " + table;
-        auto status = mysql_query(conn.mysql_, query.c_str());
-        if (status != 0) {
-            ADD_FAILURE() << "Query failed: " << mysql_error(conn.mysql_);
-            return (0);
-        }
-
-        // Get the number of rows returned and free the result.
-        MYSQL_RES * res = mysql_store_result(conn.mysql_);
-        unsigned numrows = static_cast<unsigned>(mysql_num_rows(res));
-        mysql_free_result(res);
-
-        return (numrows);
+        return (MySqlGenericBackendTest::countRows(conn, table));
     }
 
     /// @brief Creates several servers used in tests.
@@ -1974,11 +1961,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
     EXPECT_TRUE(isEquivalent(returned_list, test_list));
 }
 
+// Test that deleting a subnet triggers deletion of the options associated
+// with the subnet and pools.
 TEST_F(MySqlConfigBackendDHCPv4Test, subnetOptions) {
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
     EXPECT_EQ(3, countRows("dhcp4_options"));
 
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[1]));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
     EXPECT_EQ(2, countRows("dhcp4_options"));
 
     EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[1]->getID()));
@@ -1988,6 +1979,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, subnetOptions) {
 
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
     EXPECT_EQ(3, countRows("dhcp4_options"));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
 
     EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[0]->getID()));
     EXPECT_EQ(0, countRows("dhcp4_subnet"));

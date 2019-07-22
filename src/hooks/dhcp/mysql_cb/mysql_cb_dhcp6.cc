@@ -2966,7 +2966,8 @@ MySqlConfigBackendDHCPv6Impl::MySqlConfigBackendDHCPv6Impl(const DatabaseConnect
 }
 
 MySqlConfigBackendDHCPv6::MySqlConfigBackendDHCPv6(const DatabaseConnection::ParameterMap& parameters)
-    : impl_(new MySqlConfigBackendDHCPv6Impl(parameters)) {
+    : base_impl_(new MySqlConfigBackendDHCPv6Impl(parameters)), impl_() {
+    impl_ = boost::dynamic_pointer_cast<MySqlConfigBackendDHCPv6Impl>(base_impl_);
 }
 
 Subnet6Ptr

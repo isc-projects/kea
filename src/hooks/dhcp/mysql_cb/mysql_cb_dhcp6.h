@@ -7,6 +7,7 @@
 #ifndef MYSQL_CONFIG_BACKEND_DHCP6_H
 #define MYSQL_CONFIG_BACKEND_DHCP6_H
 
+#include <mysql_cb_impl.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/config_backend_dhcp6.h>
 #include <mysql_cb_log.h>
@@ -571,7 +572,11 @@ public:
     /// This should be called by the hook lib unload() function.
     static void unregisterBackendType();
 
-private:
+protected:
+
+    /// @brief Pointer to the base implementation of the backend shared by
+    /// DHCPv4 and DHCPv6 servers.
+    boost::shared_ptr<MySqlConfigBackendImpl> base_impl_;
 
     /// @brief Pointer to the implementation of the @c MySqlConfigBackendDHCPv6
     /// class.
