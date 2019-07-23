@@ -48,6 +48,7 @@ cat $output |\
 @AWK@ '// { gsub("\"integer\"", "INTEGER"); print }' |\
 @AWK@ '// { gsub("\"floating point\"", "FLOAT"); print }' |\
 @AWK@ '// { gsub("\"boolean\"", "BOOLEAN"); print }' |\
+@AWK@ '// { gsub("\"null\"", "NULL"); print }' |\
 @AWK@ '// { gsub("\"constant hexstring\"", "HEXSTRING"); print }' |\
 @AWK@ '// { gsub("\"option name\"", "OPTION_NAME"); print }' |\
 @AWK@ '// { gsub("\"ip address\"", "IP_ADDRESS"); print }' |\
