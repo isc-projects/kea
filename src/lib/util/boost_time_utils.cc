@@ -11,25 +11,38 @@
 #include <iomanip>
 
 std::string
-isc::util::ptimeToText(boost::posix_time::ptime t) {
+isc::util::ptimeToText(boost::posix_time::ptime t, size_t fsecs_precision) {
     boost::gregorian::date d = t.date();
     std::stringstream s;
     s << d.year()
       << "-" << std::setw(2) << std::setfill('0') << d.month().as_number()
       << "-" << std::setw(2) << std::setfill('0') << d.day()
-      << " " << durationToText(t.time_of_day());
+      << " " << durationToText(t.time_of_day(), fsecs_precision);
     return (s.str());
 }
 
 std::string
-isc::util::durationToText(boost::posix_time::time_duration dur) {
+isc::util::durationToText(boost::posix_time::time_duration dur, size_t fsecs_precision) {
     std::stringstream s;
     s << std::setw(2) << std::setfill('0') << dur.hours()
       << ":" << std::setw(2) << std::setfill('0') << dur.minutes()
-      << ":" << std::setw(2) << std::setfill('0') << dur.seconds()
-      << "." << std::setw(boost::posix_time::time_duration::num_fractional_digits())
-      << std::setfill('0')
-      << dur.fractional_seconds();
+      << ":" << std::setw(2) << std::setfill('0') << dur.seconds();
+
+    if (fsecs_precision) {
+        size_t fsecs = dur.fractional_seconds();
+        size_t width = DEFAULT_FRAC_SECS;
+        if (fsecs_precision < width) {
+            for (size_t diff = width - fsecs_precision; diff; --diff) {
+                fsecs /= 10;
+            }
+
+            width = fsecs_precision;
+        } 
+
+      s << "." << std::setw(width) 
+        << std::setfill('0')
+        << fsecs;
+    }
 
     return (s.str());
 }

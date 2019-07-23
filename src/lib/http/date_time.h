@@ -43,7 +43,8 @@ public:
 
     /// @brief Default constructor.
     ///
-    /// Sets current universal time as time value.
+    /// Sets current universal time as time value. 
+    /// Time resolution is to seconds (i.e no fractional seconds). 
     HttpDateTime();
 
     /// @brief Construct from @c boost::posix_time::ptime object.

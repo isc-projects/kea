@@ -26,6 +26,9 @@ using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::http;
+using namespace boost::posix_time;
+using namespace boost::gregorian;
+
 
 namespace {
 
@@ -378,19 +381,33 @@ TEST_F(CommunicationStateTest, logFormatClockSkew) {
     boost::posix_time::ptime now = HttpDateTime().getPtime();
 
     // Partner time is ahead by 15s.
-    boost::posix_time::time_duration offset(0,0,15,0);
+    boost::posix_time::time_duration offset(0,0,15);
     state_.setPartnerTime(HttpDateTime(now + offset).rfc1123Format());
     ASSERT_NO_THROW(log = state_.logFormatClockSkew());
+
     // We don't check the exact string for obvious reasons.
-    EXPECT_TRUE(log.find("s ahead") != std::string::npos) <<
+    EXPECT_TRUE(log.find("15s ahead") != std::string::npos) <<
                 " log content wrong: " << log;
+
 
     // Partner time is behind by 15s.
     state_.setPartnerTime(HttpDateTime(now - offset).rfc1123Format());
     ASSERT_NO_THROW(log = state_.logFormatClockSkew());
     // We don't check the exact string for obvious reasons.
-    EXPECT_TRUE(log.find("s behind") != std::string::npos) <<
+    EXPECT_TRUE(log.find("15s behind") != std::string::npos) <<
                 " log content wrong: " << log;
+
+    offset = hours(18) + minutes(37) + seconds(15);
+    ptime mytime(date(2019, Jul, 23), offset);
+
+    state_.my_time_at_skew_ = mytime;
+    state_.partner_time_at_skew_ = mytime + seconds(25);
+    state_.clock_skew_ = seconds(25);
+    ASSERT_NO_THROW(log = state_.logFormatClockSkew());
+    std::string expected("my time: 2019-07-23 18:37:15, "
+                         "partner's time: 2019-07-23 18:37:40, "
+                         "partner's clock is 25s ahead");
+    EXPECT_EQ(expected, log);
 }
 
 }

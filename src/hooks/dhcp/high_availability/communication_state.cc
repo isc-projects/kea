@@ -219,7 +219,6 @@ void
 CommunicationState::setPartnerTime(const std::string& time_text) {
     partner_time_at_skew_ = HttpDateTime().fromRfc1123(time_text).getPtime();
     my_time_at_skew_ = HttpDateTime().getPtime();
-
     clock_skew_ = partner_time_at_skew_ - my_time_at_skew_;
 }
 
@@ -234,8 +233,10 @@ CommunicationState::logFormatClockSkew() const {
         return ("skew not initialized");
     }
 
-    os << "my time: " << util::ptimeToText(my_time_at_skew_)
-       << ", partner's time: " << util::ptimeToText(partner_time_at_skew_)
+    // Note HttpTime resolution is only to seconds, so we use fractional
+    // precision of zero when logging.
+    os << "my time: " << util::ptimeToText(my_time_at_skew_, 0)
+       << ", partner's time: " << util::ptimeToText(partner_time_at_skew_, 0)
        << ", partner's clock is ";
 
     // If negative clock skew, the partner's time is behind our time.

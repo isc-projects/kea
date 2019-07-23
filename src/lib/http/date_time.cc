@@ -19,7 +19,7 @@ namespace isc {
 namespace http {
 
 HttpDateTime::HttpDateTime()
-    : time_(boost::posix_time::microsec_clock::universal_time()) {
+    : time_(boost::posix_time::second_clock::universal_time()) {
 }
 
 HttpDateTime::HttpDateTime(const boost::posix_time::ptime& t)
