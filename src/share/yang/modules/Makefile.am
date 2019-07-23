@@ -17,6 +17,7 @@ yangmodules_list += kea-dhcp4-server@2018-11-20.yang
 yangmodules_list += kea-dhcp6-server@2018-11-20.yang
 yangmodules_list += kea-logging@2018-11-20.yang
 yangmodules_list += kea-types@2018-11-20.yang
+yangmodules_list += keatest-module@2018-11-20.yang
 
 if HAVE_SYSREPO
 yangmodules_DATA  = ${yangmodules_list}
