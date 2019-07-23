@@ -12,11 +12,12 @@
 #include <config/command_mgr.h>
 #include <config/timeouts.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
@@ -136,7 +137,7 @@ public:
     }
 
     void createUnixChannelServer() {
-        ::remove(socket_path_.c_str());
+        static_cast<void>(::remove(socket_path_.c_str()));
 
         // Just a simple config. The important part here is the socket
         // location information.
@@ -179,7 +180,6 @@ public:
         // changed.
         CfgMgr::instance().commit();
 
-
         ASSERT_TRUE(answer);
 
         int status = 0;
@@ -208,7 +208,7 @@ public:
         CfgMgr::instance().clear();
 
         // Remove unix socket file
-        ::remove(socket_path_.c_str());
+        static_cast<void>(::remove(socket_path_.c_str()));
     }
 
     /// @brief Conducts a command/response exchange via UnixCommandSocket
@@ -412,7 +412,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
 }
 
 // Check that the "libreload" command will reload libraries
-
 TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     createUnixChannelServer();
 
@@ -427,9 +426,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     HooksManager::loadLibraries(libraries);
 
     // Check they are loaded.
-    std::vector<std::string> loaded_libraries =
-        HooksManager::getLibraryNames();
-    ASSERT_TRUE(extractNames(libraries) == loaded_libraries);
+    HookLibsCollection loaded_libraries =
+        HooksManager::getLibraryInfo();
+    ASSERT_TRUE(libraries == loaded_libraries);
 
     // ... which also included checking that the marker file created by the
     // load functions exists and holds the correct value (of "12" - the
@@ -453,6 +452,325 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
 
+// Check that the "config-set" command will replace current configuration
+TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
+    createUnixChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "       \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"192.2.2.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "       \"socket-type\": \"unix\", \n"
+        "       \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+    string logger_txt =
+        "    \"Logging\": { \n"
+        "        \"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output_options\": [{ \n"
+        "                \"output\": \"/dev/null\" \n"
+        "            }] \n"
+        "        }] \n"
+        "    } \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << option_def
+        << option_data
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp4
+        << ","
+        << logger_txt
+        << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendUnixCommand(os.str(), response);
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    OptionDefinitionPtr def = LibDHCP::getRuntimeOptionDef("dhcp4", 163);
+    ASSERT_TRUE(def);
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << bad_subnet
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp4
+        "}}";
+
+    // Send the config-set command
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with a syntax error
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
+              "parameter is missing for a subnet being configured (<wire>:19:17)\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    def = LibDHCP::getRuntimeOptionDef("dhcp4", 163);
+    ASSERT_TRUE(def);
+
+    // Create a valid config with two subnets and no command channel.
+    // It should succeed, client should still receive the response
+    os.str("");
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << ",\n"
+        << subnet2
+        << subnet_footer
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Verify the control channel socket exists.
+    ASSERT_TRUE(fileExists(socket_path_));
+
+    // Send the config-set command.
+    sendUnixCommand(os.str(), response);
+
+    // Verify the control channel socket no longer exists.
+    EXPECT_FALSE(fileExists(socket_path_));
+
+    // With no command channel, should still receive the response.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Verify that the "config-test" command will do what we expect.
+TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
+    createUnixChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
+    string config_test_txt = "{ \"command\": \"config-test\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "       \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"192.2.2.0/24\", \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "       \"socket-type\": \"unix\", \n"
+        "       \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+    string logger_txt =
+        "    \"Logging\": { \n"
+        "        \"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output_options\": [{ \n"
+        "                \"output\": \"/dev/null\" \n"
+        "            }] \n"
+        "        }] \n"
+        "    } \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp4
+        << ","
+        << logger_txt
+        << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendUnixCommand(os.str(), response);
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << config_test_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << bad_subnet
+        << subnet_footer
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << "}\n"                      // close dhcp4
+        "}}";
+
+    // Send the config-test command
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with a syntax error
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter "
+              "is missing for a subnet being configured (<wire>:19:17)\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a valid config with two subnets and no command channel.
+    os.str("");
+    os << config_test_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << ",\n"
+        << subnet2
+        << subnet_footer
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Verify the control channel socket exists.
+    ASSERT_TRUE(fileExists(socket_path_));
+
+    // Send the config-test command.
+    sendUnixCommand(os.str(), response);
+
+    // Verify the control channel socket still exists.
+    EXPECT_TRUE(fileExists(socket_path_));
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
+              "Control-socket, hook-libraries, and D2 configuration were "
+              "sanity checked, but not applied.\" }",
+              response);
+
+    // Check that the config was not applied.
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
 // This test checks which commands are registered by the DHCPv4 server.
 TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
 
@@ -473,6 +791,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
     ASSERT_TRUE(answer);
+
     ASSERT_TRUE(answer->get("arguments"));
     std::string command_list = answer->get("arguments")->str();
 
@@ -533,6 +852,24 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelShutdown) {
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
 }
 
+// This test verifies that the DHCP server handles version-get commands
+TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the build-report command
+    sendUnixCommand("{ \"command\": \"build-report\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
 // This test verifies that the DHCP server immediately reclaims expired
 // leases on leases-reclaim command
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
@@ -591,46 +928,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     EXPECT_TRUE(lease1->stateExpiredReclaimed());
 }
 
-// This test verifies that the DHCP server handles version-get commands
-TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
-    createUnixChannelServer();
-
-    std::string response;
-
-    // Send the version-get command
-    sendUnixCommand("{ \"command\": \"version-get\" }", response);
-    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
-
-    // Send the build-report command
-    sendUnixCommand("{ \"command\": \"build-report\" }", response);
-    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
-}
-
-// This test verifies that the DHCP server handles server-tag-get command
-TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
-    createUnixChannelServer();
-
-    std::string response;
-    std::string expected;
-
-    // Send the server-tag-get command
-    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
-    expected = "{ \"arguments\": { \"server-tag\": \"\" }, \"result\": 0 }";
-    EXPECT_EQ(expected, response);
-
-    // Set a value to the server tag
-    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
-
-    // Retry...
-    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
-    expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
-}
-
-// This test verifies that the DHCP server immediately removed expired
-// This test verifies that the DHCP server immediately removed expired
+// This test verifies that the DHCP server immediately reclaims expired
 // leases on leases-reclaim command with remove = true
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     createUnixChannelServer();
@@ -743,150 +1041,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
               response);
 }
 
-// Check that the "config-set" command will replace current configuration
-TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
-    createUnixChannelServer();
-
-    // Define strings to permutate the config arguments
-    // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"config-set\" \n";
-    string args_txt = " \"arguments\": { \n";
-    string dhcp4_cfg_txt =
-        "    \"Dhcp4\": { \n"
-        "        \"interfaces-config\": { \n"
-        "            \"interfaces\": [\"*\"] \n"
-        "        },   \n"
-        "        \"valid-lifetime\": 4000, \n"
-        "        \"renew-timer\": 1000, \n"
-        "        \"rebind-timer\": 2000, \n"
-        "        \"lease-database\": { \n"
-        "           \"type\": \"memfile\", \n"
-        "           \"persist\":false, \n"
-        "           \"lfc-interval\": 0  \n"
-        "        }, \n"
-        "       \"expired-leases-processing\": { \n"
-        "            \"reclaim-timer-wait-time\": 0, \n"
-        "            \"hold-reclaimed-time\": 0, \n"
-        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
-        "        },"
-        "        \"subnet4\": [ \n";
-    string subnet1 =
-        "               {\"subnet\": \"192.2.0.0/24\", \n"
-        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
-    string subnet2 =
-        "               {\"subnet\": \"192.2.1.0/24\", \n"
-        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
-    string bad_subnet =
-        "               {\"comment\": \"192.2.2.0/24\", \n"
-        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
-    string subnet_footer =
-        "          ] \n";
-    string control_socket_header =
-        "       ,\"control-socket\": { \n"
-        "       \"socket-type\": \"unix\", \n"
-        "       \"socket-name\": \"";
-    string control_socket_footer =
-        "\"   \n} \n";
-    string logger_txt =
-        "    \"Logging\": { \n"
-        "        \"loggers\": [ { \n"
-        "            \"name\": \"kea\", \n"
-        "            \"severity\": \"FATAL\", \n"
-        "            \"output_options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
-        "            }] \n"
-        "        }] \n"
-        "    } \n";
-
-    std::ostringstream os;
-
-    // Create a valid config with all the parts should parse
-    os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << subnet_footer
-        << control_socket_header
-        << socket_path_
-        << control_socket_footer
-        << "}\n"                      // close dhcp4
-        << ","
-        << logger_txt
-        << "}}";
-
-    // Send the config-set command
-    std::string response;
-    sendUnixCommand(os.str(), response);
-
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
-
-    // Check that the config was indeed applied.
-    const Subnet4Collection* subnets =
-        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
-
-    // Create a config with malformed subnet that should fail to parse.
-    os.str("");
-    os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << bad_subnet
-        << subnet_footer
-        << control_socket_header
-        << socket_path_
-        << control_socket_footer
-        << "}\n"                      // close dhcp4
-        "}}";
-
-    // Send the config-set command
-    sendUnixCommand(os.str(), response);
-
-    // Should fail with a syntax error
-    EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
-              "parameter is missing for a subnet being configured (<wire>:19:17)\" }",
-              response);
-
-    // Check that the config was not lost
-    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
-
-    // Create a valid config with two subnets and no command channel.
-    // It should succeed, client should still receive the response
-    os.str("");
-    os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << ",\n"
-        << subnet2
-        << subnet_footer
-        << "}\n"                      // close dhcp4
-        << "}}";
-
-    // Verify the control channel socket exists.
-    ASSERT_TRUE(fileExists(socket_path_));
-
-    // Send the config-set command.
-    sendUnixCommand(os.str(), response);
-
-    // Verify the control channel socket no longer exists.
-    EXPECT_FALSE(fileExists(socket_path_));
-
-    // With no command channel, should still receive the response.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
-
-    // Check that the config was not lost
-    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
-
-    // Clean up after the test.
-    CfgMgr::instance().clear();
-}
-
 // Tests that the server properly responds to shtudown command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
@@ -903,10 +1057,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "config-get");
     checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
+    checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
+    checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "server-tag-get");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
@@ -919,7 +1075,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "statistic-sample-age-set-all");
     checkListCommands(rsp, "statistic-sample-count-set");
     checkListCommands(rsp, "statistic-sample-count-set-all");
-    checkListCommands(rsp, "version-get");
 }
 
 // Tests if the server returns its configuration using config-get.
@@ -946,154 +1101,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
     EXPECT_TRUE(cfg->get("Dhcp4"));
 }
 
-// Verify that the "config-test" command will do what we expect.
-TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
-    createUnixChannelServer();
-
-    // Define strings to permutate the config arguments
-    // (Note the line feeds makes errors easy to find)
-    string set_config_txt = "{ \"command\": \"config-set\" \n";
-    string config_test_txt = "{ \"command\": \"config-test\" \n";
-    string args_txt = " \"arguments\": { \n";
-    string dhcp4_cfg_txt =
-        "    \"Dhcp4\": { \n"
-        "        \"interfaces-config\": { \n"
-        "            \"interfaces\": [\"*\"] \n"
-        "        },   \n"
-        "        \"valid-lifetime\": 4000, \n"
-        "        \"renew-timer\": 1000, \n"
-        "        \"rebind-timer\": 2000, \n"
-        "        \"lease-database\": { \n"
-        "           \"type\": \"memfile\", \n"
-        "           \"persist\":false, \n"
-        "           \"lfc-interval\": 0  \n"
-        "        }, \n"
-        "       \"expired-leases-processing\": { \n"
-        "            \"reclaim-timer-wait-time\": 0, \n"
-        "            \"hold-reclaimed-time\": 0, \n"
-        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
-        "        },"
-        "        \"subnet4\": [ \n";
-    string subnet1 =
-        "               {\"subnet\": \"192.2.0.0/24\", \n"
-        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
-    string subnet2 =
-        "               {\"subnet\": \"192.2.1.0/24\", \n"
-        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
-    string bad_subnet =
-        "               {\"comment\": \"192.2.2.0/24\", \n"
-        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
-    string subnet_footer =
-        "          ] \n";
-    string control_socket_header =
-        "       ,\"control-socket\": { \n"
-        "       \"socket-type\": \"unix\", \n"
-        "       \"socket-name\": \"";
-    string control_socket_footer =
-        "\"   \n} \n";
-    string logger_txt =
-        "    \"Logging\": { \n"
-        "        \"loggers\": [ { \n"
-        "            \"name\": \"kea\", \n"
-        "            \"severity\": \"FATAL\", \n"
-        "            \"output_options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
-        "            }] \n"
-        "        }] \n"
-        "    } \n";
-
-    std::ostringstream os;
-
-    // Create a valid config with all the parts should parse
-    os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << subnet_footer
-        << control_socket_header
-        << socket_path_
-        << control_socket_footer
-        << "}\n"                      // close dhcp4
-        << ","
-        << logger_txt
-        << "}}";
-
-    // Send the config-set command
-    std::string response;
-    sendUnixCommand(os.str(), response);
-
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
-
-    // Check that the config was indeed applied.
-    const Subnet4Collection* subnets =
-        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
-
-    // Create a config with malformed subnet that should fail to parse.
-    os.str("");
-    os << config_test_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << bad_subnet
-        << subnet_footer
-        << control_socket_header
-        << socket_path_
-        << control_socket_footer
-        << "}\n"                      // close dhcp4
-        "}}";
-
-    // Send the config-test command
-    sendUnixCommand(os.str(), response);
-
-    // Should fail with a syntax error
-    EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
-              "parameter is missing for a subnet being configured (<wire>:19:17)\" }",
-              response);
-
-    // Check that the config was not lost
-    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
-
-    // Create a valid config with two subnets and no command channel.
-    os.str("");
-    os << config_test_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << ",\n"
-        << subnet2
-        << subnet_footer
-        << "}\n"                      // close dhcp4
-        << "}}";
-
-    // Verify the control channel socket exists.
-    ASSERT_TRUE(fileExists(socket_path_));
-
-    // Send the config-test command
-    sendUnixCommand(os.str(), response);
-
-    // Verify the control channel socket still exists.
-    EXPECT_TRUE(fileExists(socket_path_));
-
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
-              "Control-socket, hook-libraries, and D2 configuration were "
-              "sanity checked, but not applied.\" }",
-              response);
-
-    // Check that the config was not applied
-    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
-
-    // Clean up after the test.
-    CfgMgr::instance().clear();
-}
-
 // Tests if config-write can be called without any parameters.
-TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigNoFilename) {
+TEST_F(CtrlChannelDhcpv4SrvTest, configWriteNoFilename) {
     createUnixChannelServer();
     std::string response;
 
@@ -1109,7 +1118,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigNoFilename) {
 }
 
 // Tests if config-write can be called with a valid filename as parameter.
-TEST_F(CtrlChannelDhcpv4SrvTest, writeConfigFilename) {
+TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFilename) {
     createUnixChannelServer();
     std::string response;
 
@@ -1472,7 +1481,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
 }
 
 // This test verifies that the server signals timeout if the transmission
-// takes too long, after receiving a partial command.
+// takes too long, having received a partial command.
 TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutPartialCommand) {
     createUnixChannelServer();
 
@@ -1522,7 +1531,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutPartialCommand) {
     // Check that the server has signalled a timeout.
     EXPECT_EQ("{ \"result\": 1, \"text\": "
               "\"Connection over control channel timed out, "
-              "discarded partial command of 19 bytes\" }" , response);
+              "discarded partial command of 19 bytes\" }", response);
 }
 
 // This test verifies that the server signals timeout if the transmission
@@ -1552,6 +1561,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutNoData) {
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
+        // Having sent nothing let's just wait and see if Server times us out.
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.

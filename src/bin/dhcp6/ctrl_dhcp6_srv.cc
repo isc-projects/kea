@@ -12,10 +12,11 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/parser_context.h>
+#include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
@@ -24,8 +25,8 @@
 
 using namespace isc::config;
 using namespace isc::db;
-using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace std;

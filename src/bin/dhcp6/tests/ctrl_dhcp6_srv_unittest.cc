@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -17,8 +18,8 @@
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
-#include <testutils/unix_control_client.h>
 #include <testutils/io_utils.h>
+#include <testutils/unix_control_client.h>
 #include <testutils/sandbox.h>
 
 #include "marker_file.h"
@@ -38,6 +39,7 @@
 #include <thread>
 
 using namespace std;
+using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
@@ -219,6 +221,8 @@ public:
     /// @brief Reset
     void reset() {
         CtrlDhcpv6SrvTest::reset();
+
+        // Remove unix socket file
         static_cast<void>(::remove(socket_path_.c_str()));
     }
 
@@ -392,7 +396,6 @@ public:
     }
 };
 
-
 TEST_F(CtrlDhcpv6SrvTest, commands) {
 
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
@@ -406,12 +409,12 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
 
     // Case 1: send bogus command
     ConstElementPtr result = ControlledDhcpv6Srv::processCommand("blah", params);
-    ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
+    ConstElementPtr comment = parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
 
     // Case 2: send shutdown command without any parameters
     result = ControlledDhcpv6Srv::processCommand("shutdown", params);
-    comment = isc::config::parseAnswer(rcode, result);
+    comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
     const pid_t pid(getpid());
@@ -420,8 +423,8 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
 
     // Case 3: send shutdown command with 1 parameter: pid
     result = ControlledDhcpv6Srv::processCommand("shutdown", params);
-    comment = isc::config::parseAnswer(rcode, result);
-    EXPECT_EQ(0, rcode); // Expect success
+    comment = parseAnswer(rcode, result);
+    EXPECT_EQ(0, rcode); // expect success
 }
 
 // Check that the "libreload" command will reload libraries
@@ -504,6 +507,28 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp6\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp6\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
     string control_socket_header =
         "       ,\"control-socket\": { \n"
         "       \"socket-type\": \"unix\", \n"
@@ -529,6 +554,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         << dhcp6_cfg_txt
         << subnet1
         << subnet_footer
+        << option_def
+        << option_data
         << control_socket_header
         << socket_path_
         << control_socket_footer
@@ -550,6 +577,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     EXPECT_EQ(1, subnets->size());
 
+    OptionDefinitionPtr def = LibDHCP::getRuntimeOptionDef("dhcp6", 163);
+    ASSERT_TRUE(def);
+
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
     os << set_config_txt << ","
@@ -568,15 +598,19 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
 
     // Should fail with a syntax error
     EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"subnet configuration failed: mandatory 'subnet' parameter is missing for a subnet being configured (<wire>:20:17)\" }",
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
+              "parameter is missing for a subnet being configured (<wire>:20:17)\" }",
               response);
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     EXPECT_EQ(1, subnets->size());
 
+    def = LibDHCP::getRuntimeOptionDef("dhcp6", 163);
+    ASSERT_TRUE(def);
+
     // Create a valid config with two subnets and no command channel.
-    // It should succeed but client will not receive a the response
+    // It should succeed, client should still receive the response
     os.str("");
     os << set_config_txt << ","
         << args_txt
@@ -609,7 +643,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     CfgMgr::instance().clear();
 }
 
-  // Verify that the "config-test" command will do what we expect.
+// Verify that the "config-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     createUnixChannelServer();
 
@@ -786,10 +820,10 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
@@ -1071,6 +1105,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
@@ -1177,7 +1212,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadBrokenFile) {
     // Although Kea is smart, its AI routines are not smart enough to handle
     // this one... at least not yet.
     ofstream f("test7.json", ios::trunc);
-    f << "gimme some addr, bro!";
+    f << "gimme some addrs, bro!";
     f.close();
 
     // Now tell Kea to reload its config.
@@ -1544,12 +1579,12 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
 
     // Check that the server has signalled a timeout.
     EXPECT_EQ("{ \"result\": 1, \"text\": "
-              "\"Connection over control channel timed out,"
-              " discarded partial command of 19 bytes\" }", response);
+              "\"Connection over control channel timed out, "
+              "discarded partial command of 19 bytes\" }", response);
 }
 
 // This test verifies that the server signals timeout if the transmission
-// takes too long, having received no data.
+// takes too long, having received no data from the client.
 TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
     createUnixChannelServer();
 

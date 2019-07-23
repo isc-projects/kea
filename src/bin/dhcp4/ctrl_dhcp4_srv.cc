@@ -8,13 +8,14 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_db_access.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4to6_ipc.h>
-#include <dhcp4/parser_context.h>
 #include <dhcp4/json_config_parser.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cfg_db_access.h>
+#include <dhcp4/parser_context.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -22,11 +23,11 @@
 #include <signal.h>
 #include <sstream>
 
-using namespace isc::data;
+using namespace isc::config;
 using namespace isc::db;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
-using namespace isc::config;
 using namespace isc::stats;
 using namespace std;
 
@@ -745,6 +746,10 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             TimerMgr::instance()->setup("Dhcp4CBFetchTimer");
         }
     }
+
+    // Finally, we can commit runtime option definitions in libdhcp++. This is
+    // exception free.
+    LibDHCP::commitRuntimeOptionDefs();
 
     // This hook point notifies hooks libraries that the configuration of the
     // DHCPv4 server has completed. It provides the hook library with the pointer
