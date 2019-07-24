@@ -217,6 +217,11 @@ public:
         subnet->setT1(null_timer);
         subnet->setT2(null_timer);
         subnet->setValid(null_timer);
+
+        subnet->getCfgOption()->add(test_options_[0]->option_,
+                                    test_options_[0]->persistent_,
+                                    test_options_[0]->space_name_);
+
         test_subnets_.push_back(subnet);
 
         // Add a subnet with all defaults.
@@ -278,6 +283,10 @@ public:
         shared_network->setT1(null_timer);
         shared_network->setT2(null_timer);
         shared_network->setValid(null_timer);
+
+        shared_network->getCfgOption()->add(test_options_[0]->option_,
+                                            test_options_[0]->persistent_,
+                                            test_options_[0]->space_name_);
         test_networks_.push_back(shared_network);
 
         shared_network.reset(new SharedNetwork4("level3"));
@@ -1964,27 +1973,43 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
 // Test that deleting a subnet triggers deletion of the options associated
 // with the subnet and pools.
 TEST_F(MySqlConfigBackendDHCPv4Test, subnetOptions) {
+    // Add the subnet with two pools and three options.
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
     EXPECT_EQ(2, countRows("dhcp4_pool"));
     EXPECT_EQ(3, countRows("dhcp4_options"));
 
+    // The second subnet uses the same subnet id, so this operation should replace
+    // the existing subnet and its options. The new instance has two pools, each
+    // including one option, so we should end up with two options.
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[1]));
     EXPECT_EQ(2, countRows("dhcp4_pool"));
     EXPECT_EQ(2, countRows("dhcp4_options"));
 
-    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[1]->getID()));
-    EXPECT_EQ(0, countRows("dhcp4_subnet"));
-    EXPECT_EQ(0, countRows("dhcp4_pool"));
-    EXPECT_EQ(0, countRows("dhcp4_options"));
-
-    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
+    // Add third subnet with a single option. The number of options in the database
+    // should now be 3.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]));
+    EXPECT_EQ(2, countRows("dhcp4_pool"));
     EXPECT_EQ(3, countRows("dhcp4_options"));
+
+    // Delete the subnet. All options and pools it contains should also be removed, leaving
+    // the last added subnet and its sole option.
+    EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[1]->getID()));
+    EXPECT_EQ(1, countRows("dhcp4_subnet"));
+    EXPECT_EQ(0, countRows("dhcp4_pool"));
+    EXPECT_EQ(1, countRows("dhcp4_options"));
+
+    // Add the first subnet again. We should now have 4 options: 3 options from the
+    // newly added subnet and one option from the existing subnet.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
+    EXPECT_EQ(4, countRows("dhcp4_options"));
     EXPECT_EQ(2, countRows("dhcp4_pool"));
 
+    // Delete the subnet including 3 options. The option from the other subnet should not
+    // be affected.
     EXPECT_NO_THROW(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[0]->getID()));
-    EXPECT_EQ(0, countRows("dhcp4_subnet"));
+    EXPECT_EQ(1, countRows("dhcp4_subnet"));
     EXPECT_EQ(0, countRows("dhcp4_pool"));
-    EXPECT_EQ(0, countRows("dhcp4_options"));
+    EXPECT_EQ(1, countRows("dhcp4_options"));
 }
 
 // Test that shared network can be inserted, fetched, updated and then
@@ -2757,24 +2782,38 @@ TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkLifetime) {
 // Test that deleting a shared network triggers deletion of the options
 // associated with the shared network.
 TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOptions) {
+    // Add shared network with three options.
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[0]));
     EXPECT_EQ(3, countRows("dhcp4_options"));
 
-    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[1]));
-    EXPECT_EQ(0, countRows("dhcp4_options"));
+    // Add another shared network with a single option. The numnber of options in the
+    // database should now be 4.
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[2]));
+    EXPECT_EQ(4, countRows("dhcp4_options"));
 
+    // The second shared network uses the same name as the first shared network, so
+    // this operation should replace the existing shared network and its options.
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[1]));
+    EXPECT_EQ(1, countRows("dhcp4_options"));
+
+    // Remove the shared network. This should not affect options assigned to the
+    // other shared network.
     EXPECT_NO_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                                  test_networks_[1]->getName()));
-    EXPECT_EQ(0, countRows("dhcp4_shared_network"));
-    EXPECT_EQ(0, countRows("dhcp4_options"));
+    EXPECT_EQ(1, countRows("dhcp4_shared_network"));
+    EXPECT_EQ(1, countRows("dhcp4_options"));
 
+    // Create the first option again. The number of options should be equal to the
+    // sum of options associated with both shared networks.
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[0]));
-    EXPECT_EQ(3, countRows("dhcp4_options"));
+    EXPECT_EQ(4, countRows("dhcp4_options"));
 
+    // Delete this shared netwiork. This should not affect the option associated
+    // with the remaining shared network.
     EXPECT_NO_THROW(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                                  test_networks_[0]->getName()));
-    EXPECT_EQ(0, countRows("dhcp4_shared_network"));
-    EXPECT_EQ(0, countRows("dhcp4_options"));
+    EXPECT_EQ(1, countRows("dhcp4_shared_network"));
+    EXPECT_EQ(1, countRows("dhcp4_options"));
 }
 
 // Test that option definition can be inserted, fetched, updated and then

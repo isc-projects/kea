@@ -248,6 +248,11 @@ public:
         subnet->setT2(null_timer);
         subnet->setValid(null_timer);
         subnet->setPreferred(null_timer);
+
+        subnet->getCfgOption()->add(test_options_[0]->option_,
+                                    test_options_[0]->persistent_,
+                                    test_options_[0]->space_name_);
+
         test_subnets_.push_back(subnet);
 
         // Add a subnet with all defaults.
@@ -316,6 +321,10 @@ public:
         shared_network->setT2(null_timer);
         shared_network->setValid(null_timer);
         shared_network->setPreferred(null_timer);
+
+        shared_network->getCfgOption()->add(test_options_[0]->option_,
+                                            test_options_[0]->persistent_,
+                                            test_options_[0]->space_name_);
         test_networks_.push_back(shared_network);
 
         shared_network.reset(new SharedNetwork6("level3"));
@@ -1976,31 +1985,49 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetworkSubnets6) {
 // Test that deleting a subnet triggers deletion of the options associated
 // with the subnet and pools.
 TEST_F(MySqlConfigBackendDHCPv6Test, subnetOptions) {
+    // Add the subnet with two pools and three options.
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[0]));
     EXPECT_EQ(2, countRows("dhcp6_pool"));
     EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
     EXPECT_EQ(3, countRows("dhcp6_options"));
 
+    // The second subnet uses the same subnet id, so this operation should replace
+    // the existing subnet and its options. The new instance has four pools, each
+    // including one option, so we should end up with four options.
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[1]));
     EXPECT_EQ(2, countRows("dhcp6_pool"));
     EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
     EXPECT_EQ(4, countRows("dhcp6_options"));
 
+    // Add third subnet with a single option. The number of options in the database
+    // should now be 5.
+    EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[2]));
+    EXPECT_EQ(2, countRows("dhcp6_pool"));
+    EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
+    EXPECT_EQ(5, countRows("dhcp6_options"));
+
+    // Delete the subnet. All options and pools it contains should also be removed, leaving
+    // the last added subnet and its sole option.
     EXPECT_NO_THROW(cbptr_->deleteSubnet6(ServerSelector::ALL(), test_subnets_[1]->getID()));
-    EXPECT_EQ(0, countRows("dhcp6_subnet"));
+    EXPECT_EQ(1, countRows("dhcp6_subnet"));
     EXPECT_EQ(0, countRows("dhcp6_pool"));
     EXPECT_EQ(0, countRows("dhcp6_pd_pool"));
-    EXPECT_EQ(0, countRows("dhcp6_options"));
+    EXPECT_EQ(1, countRows("dhcp6_options"));
 
+    // Add the first subnet again. We should now have 4 options: 3 options from the
+    // newly added subnet and one option from the existing subnet.
     EXPECT_NO_THROW(cbptr_->createUpdateSubnet6(ServerSelector::ALL(), test_subnets_[0]));
     EXPECT_EQ(2, countRows("dhcp6_pool"));
-    EXPECT_EQ(3, countRows("dhcp6_options"));
+    EXPECT_EQ(2, countRows("dhcp6_pd_pool"));
+    EXPECT_EQ(4, countRows("dhcp6_options"));
 
+    // Delete the subnet including 3 options. The option from the other subnet should not
+    // be affected.
     EXPECT_NO_THROW(cbptr_->deleteSubnet6(ServerSelector::ALL(), test_subnets_[0]->getID()));
-    EXPECT_EQ(0, countRows("dhcp6_subnet"));
+    EXPECT_EQ(1, countRows("dhcp6_subnet"));
     EXPECT_EQ(0, countRows("dhcp6_pool"));
     EXPECT_EQ(0, countRows("dhcp6_pd_pool"));
-    EXPECT_EQ(0, countRows("dhcp6_options"));
+    EXPECT_EQ(1, countRows("dhcp6_options"));
 }
 
 // Test that shared network can be inserted, fetched, updated and then
@@ -2775,24 +2802,38 @@ TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkLifetime) {
 // Test that deleting a shared network triggers deletion of the options
 // associated with the shared network.
 TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkOptions) {
+    // Add shared network with three options.
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[0]));
     EXPECT_EQ(3, countRows("dhcp6_options"));
 
-    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[1]));
-    EXPECT_EQ(0, countRows("dhcp6_options"));
+    // Add another shared network with a single option. The numnber of options in the
+    // database should now be 4.
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[2]));
+    EXPECT_EQ(4, countRows("dhcp6_options"));
 
+    // The second shared network uses the same name as the first shared network, so
+    // this operation should replace the existing shared network and its options.
+    EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[1]));
+    EXPECT_EQ(1, countRows("dhcp6_options"));
+
+    // Remove the shared network. This should not affect options assigned to the
+    // other shared network.
     EXPECT_NO_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
                                                  test_networks_[1]->getName()));
-    EXPECT_EQ(0, countRows("dhcp6_shared_network"));
-    EXPECT_EQ(0, countRows("dhcp6_options"));
+    EXPECT_EQ(1, countRows("dhcp6_shared_network"));
+    EXPECT_EQ(1, countRows("dhcp6_options"));
 
+    // Create the first option again. The number of options should be equal to the
+    // sum of options associated with both shared networks.
     EXPECT_NO_THROW(cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), test_networks_[0]));
-    EXPECT_EQ(3, countRows("dhcp6_options"));
+    EXPECT_EQ(4, countRows("dhcp6_options"));
 
+    // Delete this shared netwiork. This should not affect the option associated
+    // with the remaining shared network.
     EXPECT_NO_THROW(cbptr_->deleteSharedNetwork6(ServerSelector::ALL(),
                                                  test_networks_[0]->getName()));
-    EXPECT_EQ(0, countRows("dhcp6_shared_network"));
-    EXPECT_EQ(0, countRows("dhcp6_options"));
+    EXPECT_EQ(1, countRows("dhcp6_shared_network"));
+    EXPECT_EQ(1, countRows("dhcp6_options"));
 }
 
 // Test that option definition can be inserted, fetched, updated and then
