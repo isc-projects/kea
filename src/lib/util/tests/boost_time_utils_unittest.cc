@@ -25,17 +25,24 @@ TEST(BoostTimeUtilsTest, epoch) {
     time_t tepoch = 0;
     ptime pepoch = from_time_t(tepoch);
 
+    // We're going to loop through precision values starting with 0 throug 
+    // the max supported precision.  Each pass should after the first, should
+    // add an additional level of precision: secs, secs/10, secs/100,
+    // secs/1000 and so on.  The initial string has no fraction seconds.
     std::string expected("1970-01-01 00:00:00");
     std::string sepoch;
-    for (int precision = 0; precision <= DEFAULT_FRAC_SECS; ++precision) {
+    for (int precision = 0; precision <= MAX_FSECS_PRECISION; ++precision) {
         if (precision == 1) {
+            // Adding fractional seconds so we need append a decimal point.
             expected.push_back('.');
         }
 
         if (precision >= 1) {
+            // Adding an additional level of precision, append a zero.
             expected.push_back('0');
         }
 
+        // Now let's see if we get the correct precision in the text.
         sepoch = ptimeToText(pepoch, precision);
         EXPECT_EQ(expected, sepoch) << " test precision:" << precision;
     }
@@ -47,7 +54,7 @@ TEST(BoostTimeUtilsTest, epoch) {
 
     // Now test a requested precision beyond default.  We should
     // get the default precision.
-    sepoch = ptimeToText(pepoch, DEFAULT_FRAC_SECS + 1);
+    sepoch = ptimeToText(pepoch, MAX_FSECS_PRECISION + 1);
     EXPECT_EQ(expected, sepoch);
 
 }
@@ -58,16 +65,24 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
         hours(12) + minutes(13) + seconds(14) + milliseconds(500);
     ptime pbast(date(2015, Jul, 14), tdbast);
 
+    // We're going to loop through precision values starting with 0 throug 
+    // the max supported precision.  Each pass should after the first, should
+    // add an additional level of precision: secs, secs/10, secs/100,
+    // secs/1000 and so on.  The initial string has no fraction seconds.
     std::string expected("2015-07-14 12:13:14");
     std::string sbast;
-    for (int precision = 0; precision <= DEFAULT_FRAC_SECS; ++precision) {
+    for (int precision = 0; precision <= MAX_FSECS_PRECISION; ++precision) {
         if (precision == 1) {
+            // Adding fractional seconds so we need append a decimal point
+            // and the digit 5 (i.e. 500 ms = .5 secs).
             expected.push_back('.');
             expected.push_back('5');
         } else if (precision > 1) {
+            // Adding an additional level of precision, append a zero.
             expected.push_back('0');
         }
 
+        // Now let's see if we get the correct precision in the text.
         sbast = ptimeToText(pbast, precision);
         EXPECT_EQ(expected, sbast) << " test precision:" << precision;
     }
@@ -79,6 +94,6 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
 
     // Now test a requested precision beyond default.  We should
     // get the default precision.
-    sbast = ptimeToText(pbast, DEFAULT_FRAC_SECS + 1);
+    sbast = ptimeToText(pbast, MAX_FSECS_PRECISION + 1);
     EXPECT_EQ(expected, sbast);
 }

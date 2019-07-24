@@ -28,9 +28,11 @@ isc::util::durationToText(boost::posix_time::time_duration dur, size_t fsecs_pre
       << ":" << std::setw(2) << std::setfill('0') << dur.minutes()
       << ":" << std::setw(2) << std::setfill('0') << dur.seconds();
 
+    // If the requested precision is less than the maximum native precision
+    // we will divide the fractional seconds value by 10^(max - requested)
     if (fsecs_precision) {
         size_t fsecs = dur.fractional_seconds();
-        size_t width = DEFAULT_FRAC_SECS;
+        size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
             for (auto i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
@@ -39,9 +41,9 @@ isc::util::durationToText(boost::posix_time::time_duration dur, size_t fsecs_pre
             width = fsecs_precision;
         }
 
-      s << "." << std::setw(width)
-        << std::setfill('0')
-        << fsecs;
+        s << "." << std::setw(width)
+          << std::setfill('0')
+          << fsecs;
     }
 
     return (s.str());

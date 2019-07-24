@@ -13,7 +13,9 @@
 namespace isc {
 namespace util {
 
-const size_t DEFAULT_FRAC_SECS=boost::posix_time::time_duration::num_fractional_digits();
+/// @brief The number of digits of fractional seconds supplied by the
+/// underlying class, boost::posix_time.  Typically 6 = microseconds.
+const size_t MAX_FSECS_PRECISION=boost::posix_time::time_duration::num_fractional_digits();
 
 /// @brief Converts ptime structure to text
 ///
@@ -33,7 +35,7 @@ const size_t DEFAULT_FRAC_SECS=boost::posix_time::time_duration::num_fractional_
 ///
 /// @return a string representing time
 std::string ptimeToText(boost::posix_time::ptime t,
-                        size_t fsecs_precision = DEFAULT_FRAC_SECS);
+                        size_t fsecs_precision = MAX_FSECS_PRECISION);
 
 /// @brief Converts StatsDuration to text
 ///
@@ -46,7 +48,7 @@ std::string ptimeToText(boost::posix_time::ptime t,
 ///
 /// @return a string representing time
 std::string durationToText(boost::posix_time::time_duration dur,
-                          size_t fsecs_precision = DEFAULT_FRAC_SECS);
+                          size_t fsecs_precision = MAX_FSECS_PRECISION);
 
 }; // end of isc::util namespace
 }; // end of isc namespace
