@@ -32,7 +32,7 @@ isc::util::durationToText(boost::posix_time::time_duration dur, size_t fsecs_pre
         size_t fsecs = dur.fractional_seconds();
         size_t width = DEFAULT_FRAC_SECS;
         if (fsecs_precision < width) {
-            for (size_t diff = width - fsecs_precision; diff; --diff) {
+            for (auto i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
             }
 
