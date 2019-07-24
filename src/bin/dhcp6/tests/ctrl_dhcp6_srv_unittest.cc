@@ -468,6 +468,164 @@ TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
 
+typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
+
+// This test checks which commands are registered by the DHCPv6 server.
+TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
+
+    ConstElementPtr list_cmds = createCommand("list-commands");
+    ConstElementPtr answer;
+
+    // By default the list should be empty (except the standard list-commands
+    // supported by the CommandMgr itself)
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
+
+    // Created server should register several additional commands.
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0));
+    );
+
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+
+    ASSERT_TRUE(answer->get("arguments"));
+    std::string command_list = answer->get("arguments")->str();
+
+    EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-remove\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
+
+    // Ok, and now delete the server. It should deregister its commands.
+    srv.reset();
+
+    // The list should be (almost) empty again.
+    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
+    ASSERT_TRUE(answer);
+    ASSERT_TRUE(answer->get("arguments"));
+    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
+}
+
+// Tests that the server properly responds to invalid commands sent
+// via ControlChannel
+TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"bogus\" }", response);
+    EXPECT_EQ("{ \"result\": 2,"
+              " \"text\": \"'bogus' command not supported.\" }", response);
+
+    sendUnixCommand("utter nonsense", response);
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"invalid first character u\" }",
+              response);
+}
+
+// Tests that the server properly responds to shtudown command sent
+// via ControlChannel
+TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"shutdown\" }", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
+}
+
+// Tests that the server properly responds to statistics commands.  Note this
+// is really only intended to verify that the appropriate Statistics handler
+// is called based on the command.  It is not intended to be an exhaustive
+// test of Dhcpv6 statistics.
+TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
+    createUnixChannelServer();
+    std::string response;
+
+    // Check statistic-get
+    sendUnixCommand("{ \"command\" : \"statistic-get\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
+
+    // Check statistic-get-all
+    sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
+
+    // Check statistic-reset
+    sendUnixCommand("{ \"command\" : \"statistic-reset\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-reset-all
+    sendUnixCommand("{ \"command\" : \"statistic-reset-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"All statistics reset to neutral values.\" }", response);
+
+    // Check statistic-remove
+    sendUnixCommand("{ \"command\" : \"statistic-remove\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-remove-all
+    sendUnixCommand("{ \"command\" : \"statistic-remove-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
+              response);
+
+    // Check statistic-sample-age-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-age-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
+              response);
+
+    // Check statistic-sample-count-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-count-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
+              response);
+}
+
 // Check that the "config-set" command will replace current configuration
 TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     createUnixChannelServer();
@@ -643,6 +801,30 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     CfgMgr::instance().clear();
 }
 
+// Tests if the server returns its configuration using config-get.
+// Note there are separate tests that verify if toElement() called by the
+// get-config handler are actually converting the configuration correctly.
+TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-get\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // Ok, now roughly check if the response seems legit.
+    ASSERT_TRUE(cfg);
+    ASSERT_EQ(Element::map, cfg->getType());
+    EXPECT_TRUE(cfg->get("Dhcp6"));
+}
+
 // Verify that the "config-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     createUnixChannelServer();
@@ -790,90 +972,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     CfgMgr::instance().clear();
 }
 
-typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
-
-// This test checks which commands are registered by the DHCPv6 server.
-TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
-
-    ConstElementPtr list_cmds = createCommand("list-commands");
-    ConstElementPtr answer;
-
-    // By default the list should be empty (except the standard list-commands
-    // supported by the CommandMgr itself)
-    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
-    ASSERT_TRUE(answer);
-    ASSERT_TRUE(answer->get("arguments"));
-    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
-
-    // Created server should register several additional commands.
-    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
-    ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv6Srv(0));
-    );
-
-    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
-    ASSERT_TRUE(answer);
-
-    ASSERT_TRUE(answer->get("arguments"));
-    std::string command_list = answer->get("arguments")->str();
-
-    EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-remove\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
-
-    // Ok, and now delete the server. It should deregister its commands.
-    srv.reset();
-
-    // The list should be (almost) empty again.
-    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
-    ASSERT_TRUE(answer);
-    ASSERT_TRUE(answer->get("arguments"));
-    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
-}
-
-// Tests that the server properly responds to invalid commands sent
-// via ControlChannel
-TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
-    createUnixChannelServer();
-    std::string response;
-
-    sendUnixCommand("{ \"command\": \"bogus\" }", response);
-    EXPECT_EQ("{ \"result\": 2,"
-              " \"text\": \"'bogus' command not supported.\" }", response);
-
-    sendUnixCommand("utter nonsense", response);
-    EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"invalid first character u\" }",
-              response);
-}
-
-// Tests that the server properly responds to shtudown command sent
-// via ControlChannel
-TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
-    createUnixChannelServer();
-    std::string response;
-
-    sendUnixCommand("{ \"command\": \"shutdown\" }", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
-}
-
 // This test verifies that the DHCP server handles version-get commands
 TEST_F(CtrlChannelDhcpv6SrvTest, getversion) {
     createUnixChannelServer();
@@ -1017,80 +1115,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
     ASSERT_FALSE(lease1);
 }
 
-// Tests that the server properly responds to statistics commands.  Note this
-// is really only intended to verify that the appropriate Statistics handler
-// is called based on the command.  It is not intended to be an exhaustive
-// test of Dhcpv6 statistics.
-TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
-    createUnixChannelServer();
-    std::string response;
-
-    // Check statistic-get
-    sendUnixCommand("{ \"command\" : \"statistic-get\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
-
-    // Check statistic-get-all
-    sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
-                    "  \"arguments\": {}}", response);
-    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
-
-    // Check statistic-reset
-    sendUnixCommand("{ \"command\" : \"statistic-reset\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-reset-all
-    sendUnixCommand("{ \"command\" : \"statistic-reset-all\", "
-                    "  \"arguments\": {}}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": "
-              "\"All statistics reset to neutral values.\" }", response);
-
-    // Check statistic-remove
-    sendUnixCommand("{ \"command\" : \"statistic-remove\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-remove-all
-    sendUnixCommand("{ \"command\" : \"statistic-remove-all\", "
-                    "  \"arguments\": {}}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
-              response);
-
-    // Check statistic-sample-age-set
-    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-sample-age-set-all
-    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
-                    "  \"arguments\": {"
-                    "  \"duration\": 1245 }}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
-              response);
-
-    // Check statistic-sample-count-set
-    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-sample-count-set-all
-    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
-                    "  \"arguments\": {"
-                    "  \"max-samples\": 100 }}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
-              response);
-}
-
 // Tests that the server properly responds to shtudown command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
@@ -1125,30 +1149,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
     checkListCommands(rsp, "statistic-sample-age-set-all");
     checkListCommands(rsp, "statistic-sample-count-set");
     checkListCommands(rsp, "statistic-sample-count-set-all");
-}
-
-// Tests if the server returns its configuration using config-get.
-// Note there are separate tests that verify if toElement() called by the
-// get-config handler are actually converting the configuration correctly.
-TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
-    createUnixChannelServer();
-    std::string response;
-
-    sendUnixCommand("{ \"command\": \"config-get\" }", response);
-    ConstElementPtr rsp;
-
-    // The response should be a valid JSON.
-    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
-    ASSERT_TRUE(rsp);
-
-    int status;
-    ConstElementPtr cfg = parseAnswer(status, rsp);
-    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
-
-    // Ok, now roughly check if the response seems legit.
-    ASSERT_TRUE(cfg);
-    ASSERT_EQ(Element::map, cfg->getType());
-    EXPECT_TRUE(cfg->get("Dhcp6"));
 }
 
 // Tests if config-write can be called without any parameters.
