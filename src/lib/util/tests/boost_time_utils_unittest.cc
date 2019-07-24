@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,9 +30,9 @@ TEST(BoostTimeUtilsTest, epoch) {
     for (int precision = 0; precision <= DEFAULT_FRAC_SECS; ++precision) {
         if (precision == 1) {
             expected.push_back('.');
-        } 
+        }
 
-        if (precision >= 1) { 
+        if (precision >= 1) {
             expected.push_back('0');
         }
 
@@ -42,7 +42,7 @@ TEST(BoostTimeUtilsTest, epoch) {
 
     // Expected string should have same precision as default, so
     // test the default.
-    sepoch = ptimeToText(pepoch); 
+    sepoch = ptimeToText(pepoch);
     EXPECT_EQ(expected, sepoch);
 
     // Now test a requested precision beyond default.  We should
@@ -64,7 +64,7 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
         if (precision == 1) {
             expected.push_back('.');
             expected.push_back('5');
-        } else if (precision > 1) { 
+        } else if (precision > 1) {
             expected.push_back('0');
         }
 
@@ -74,7 +74,7 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
 
     // Expected string should have same precision as default, so
     // test the default.
-    sbast = ptimeToText(pbast); 
+    sbast = ptimeToText(pbast);
     EXPECT_EQ(expected, sbast);
 
     // Now test a requested precision beyond default.  We should

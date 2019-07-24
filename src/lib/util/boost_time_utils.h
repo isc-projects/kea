@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ const size_t DEFAULT_FRAC_SECS=boost::posix_time::time_duration::num_fractional_
 /// Zero omits the value.
 ///
 /// @return a string representing time
-std::string ptimeToText(boost::posix_time::ptime t, 
+std::string ptimeToText(boost::posix_time::ptime t,
                         size_t fsecs_precision = DEFAULT_FRAC_SECS);
 
 /// @brief Converts StatsDuration to text
