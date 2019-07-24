@@ -12,8 +12,8 @@
 namespace isc {
 
 /// @brief Replacement for assert() that throws if the expression is false.
-/// It exists because some of the original code has asserts and we'd rather
-/// they throw than crash the server or be compiled out.  
+/// It exists because some of the original code has asserts and we prefer to
+/// throw rather than crash the server or be compile out asserts.
 #define isc_throw_assert(expr) \
 {\
     if(!(static_cast<bool>(expr))) \

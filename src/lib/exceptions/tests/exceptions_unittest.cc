@@ -96,18 +96,21 @@ TEST_F(ExceptionTest, message) {
     }
 }
 
-// Sanity check that ISC_THROW_ASSERT macro operates correctly.
+// Sanity check that 'isc_throw_assert' macro operates correctly.
 TEST(IscThrowAssert, checkMessage) {
     int m = 5;
     int n = 7;
 
     ASSERT_NO_THROW(isc_throw_assert(m == m));
 
+    int line_no;
     try {
-        isc_throw_assert(m == n);
+        line_no = __LINE__; isc_throw_assert(m == n);
     } catch (const std::exception& ex) {
         std::string msg = ex.what();
-        EXPECT_EQ("exceptions_unittest.cc:107 (m == n) failed", msg);
+        std::ostringstream os;
+        os << __FILE__  << ":" << line_no << " (m == n) failed";
+        EXPECT_EQ(os.str(), msg);
     }
 }
 

@@ -852,16 +852,21 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
 }
 
 // Test that the server skips processing of a mal-formed Hostname options.
+// - First scenario the hostname has an empty label
+// - Second scenario the hostname option causes an internal parsing error
+// in dns::Name(). The content was created by fuzz testing.
 TEST_F(NameDhcpv4SrvTest, serverUpdateMalformedHostname) {
     Pkt4Ptr query;
+
+    // Hostname should not be able to have an emtpy label.
     ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
                                                     "abc..example.com"));
     OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname = processHostname(query));
     EXPECT_FALSE(hostname);
 
-    // The following vector matches a malformed hostname data produced by
-    // that caused the server to assert.
+    // The following vector matches malformed hostname data produced by
+    // fuzz testing that causes an internal error in dns::Name parsing logic.
     std::vector<uint8_t> badname  {
         0xff,0xff,0x7f,0x00,0x00,0x00,0x7f,0x00,0x00,0x00,0x00,
         0x00,0x00,0x04,0x63,0x82,0x53,0x63,0x35,0x01,0x01,0x3d,0x07,0x01,0x00,0x00,0x00,
