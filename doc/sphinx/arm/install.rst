@@ -114,7 +114,9 @@ the system:
 
 -  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
    texlive with its extensions and Doxygen, if using the --enable-generate-docs
-   configuration option to create the documentation.
+   configuration option to create the documentation. Particularly,
+   in case of Fedora: python3-sphinx, texlive and texlive-collection-latexextra;
+   in case of Ubuntu: python3-sphinx, python3-sphinx-rtd-theme and texlive???
 
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.

@@ -1442,27 +1442,49 @@ AC_ARG_WITH([sphinx],
   AC_HELP_STRING([--with-sphinx=PATH], [path to sphinx-build tool]),
   [sphinx_path="$withval"])
 
-if test "x$enable_generate_docs" != xno ; then
+AC_ARG_WITH([pdflatex],
+  AC_HELP_STRING([--with-pdflatex=PATH], [path to pdflatex tool]),
+  [pdflatex_path="$withval"])
 
-# Check for sphinx-build
+if test "x$enable_generate_docs" != xno ; then
+  # Check for sphinx-build
   if test -z "$sphinx_path"; then
      AC_PATH_PROGS([SPHINXBUILD], [sphinx-build sphinx-build-3])
   else
      SPHINXBUILD="$sphinx_path"
   fi
-  echo $SPHINXBUILD
+
   if test -z "$SPHINXBUILD"; then
     AC_MSG_ERROR([sphinx-build not found; it is required for --enable-generate-docs, please see http://www.sphinx-doc.org/en/master/usage/installation.html for details])
   else
     AC_MSG_CHECKING([whether $SPHINXBUILD works])
-    # run sphinx to see if it works
-    # We should probably do a more thorough checks
     $SPHINXBUILD --version
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $SPHINXBUILD --version")
     fi
     AC_MSG_RESULT(yes (found in $SPHINXBUILD))
   fi
+
+  # Check for pdflatex
+  if test -z "$pdflatex_path"; then
+     AC_PATH_PROG([PDFLATEX], [pdflatex])
+  else
+     PDFLATEX="$pdflatex_path"
+  fi
+
+  if test -z "$PDFLATEX"; then
+    AC_MSG_ERROR([pdflatex not found; it is expected for --enable-generate-docs if not explicitly disabled by ???])
+  elif test "x$PDFLATEX" == "xno"; then
+    :
+  else
+    AC_MSG_CHECKING([whether $PDFLATEX works])
+    $PDFLATEX --version
+    if test $? -ne 0 ; then
+      AC_MSG_ERROR("Error with $PDFLATEX --version")
+    fi
+    AC_MSG_RESULT(yes (found in $PDFLATEX))
+  fi
+  AM_CONDITIONAL(HAVE_PDFLATEX, test "x$PDFLATEX" != "xno")
 fi
 
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)

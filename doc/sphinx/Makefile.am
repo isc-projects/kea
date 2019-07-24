@@ -231,7 +231,10 @@ api_files+=$(srcdir)/api/version-get.json
 EXTRA_DIST += $(api_files)
 
 
-all: html mans pdf
+all: html mans
+if HAVE_PDFLATEX
+all: pdf
+endif
 
 $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
 	$(srcdir)/mes2doc.py -o $@ $(mes_files)
@@ -241,8 +244,22 @@ $(srcdir)/api.rst: $(api_files) api2doc.py
 	$(srcdir)/api2doc.py -o $@ $(api_files)
 
 
+PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
+
 pdf: $(main_sources)
-	$(SPHINXBUILD) -M latexpdf $(srcdir) $(sphinxbuilddir) $(sphinxopts)
+	$(SPHINXBUILD) -M latex $(srcdir) $(sphinxbuilddir) $(sphinxopts)
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	-cd $(sphinxbuilddir)/latex && makeindex -s python.ist kea-arm.idx
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	-cd $(sphinxbuilddir)/latex && makeindex -s python.ist kea-messages.idx
+	-cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	cd $(sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
 
 html: $(main_sources)
 	$(SPHINXBUILD) -M html $(srcdir) $(sphinxbuilddir) $(sphinxopts)

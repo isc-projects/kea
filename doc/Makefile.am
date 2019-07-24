@@ -1,4 +1,4 @@
-SUBDIRS = sphinx devel
+SUBDIRS = sphinx
 
 EXTRA_DIST = images/kea-logo-100x70.png
 

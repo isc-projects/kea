@@ -40,12 +40,21 @@ import xml.etree.ElementTree as ET
 
 
 SYSTEMS = {
-    'fedora': ['27', '28', '29', '30'],
+    'fedora': ['27',  # EOLed
+               '28',  # EOLed
+               '29',
+               '30'],
     'centos': ['7'],
     'rhel': ['8'],
-    'ubuntu': ['16.04', '18.04', '18.10', '19.04'],
-    'debian': ['8', '9', '10'],
-    'freebsd': ['11.2', '12.0'],
+    'ubuntu': ['16.04',
+               '18.04',
+               '18.10',  # EOLed
+               '19.04'],
+    'debian': ['8',
+               '9',
+               '10'],
+    'freebsd': ['11.2',
+                '12.0'],
 }
 
 # pylint: disable=C0326
@@ -1021,9 +1030,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'texlive', 'texlive-fncychap', 'texlive-tabulary',
-                             'texlive-framed', 'texlive-wrapfig', 'texlive-upquote',
-                             'texlive-capt-of', 'texlive-needspace', 'latexmk'])
+            packages.extend(['python3-sphinx', 'texlive', 'texlive-collection-latexextra'])
 
         if 'mysql' in features:
             execute('sudo dnf remove -y community-mysql-devel || true')
@@ -1061,7 +1068,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel'])
 
         if 'docs' in features:
-            packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
+            packages.extend(['python36-virtualenv'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
@@ -1076,6 +1083,12 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, check_times=check_times)
+
+        if 'docs' in features:
+            execute('virtualenv-3 ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -1145,7 +1158,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'latexmk'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1189,9 +1202,12 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'latexmk'])
-            if revision == '9':
-                packages.append('texlive-generic-extra')
+            if revision == '8':
+                packages.extend(['virtualenv'])
+            else:
+                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme'])
+                if revision == '9':
+                    packages.extend(['texlive-generic-extra'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1217,6 +1233,12 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
+
+        if 'docs' in features and revision == '8':
+            execute('virtualenv -p /usr/bin/python3 ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx typing sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
 
         if 'cql' in features and revision != '8':
             # there is no libuv1 package in case of debian 8
@@ -1334,6 +1356,11 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             raise NotImplementedError
     if 'docs' in features and not (system == 'rhel' and revision == '8'):
         cmd += ' --enable-generate-docs'
+        if system == 'debian' and revision == '8':
+            cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
+        elif system == 'centos' and revision == '7':
+            cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
+            cmd += ' --with-pdflatex=no'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
     if 'shell' in features:
@@ -1362,7 +1389,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'distcheck' in features:
         cmd = 'make distcheck'
     else:
-        cmd = 'make -j%s' % cpus
+        cmd = 'make -C doc/sphinx -j%s' % cpus
     execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
