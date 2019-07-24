@@ -25,7 +25,7 @@ TEST(BoostTimeUtilsTest, epoch) {
     time_t tepoch = 0;
     ptime pepoch = from_time_t(tepoch);
 
-    // We're going to loop through precision values starting with 0 throug 
+    // We're going to loop through precision values starting with 0 through
     // the max supported precision.  Each pass should after the first, should
     // add an additional level of precision: secs, secs/10, secs/100,
     // secs/1000 and so on.  The initial string has no fraction seconds.
@@ -65,7 +65,7 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
         hours(12) + minutes(13) + seconds(14) + milliseconds(500);
     ptime pbast(date(2015, Jul, 14), tdbast);
 
-    // We're going to loop through precision values starting with 0 throug 
+    // We're going to loop through precision values starting with 0 through
     // the max supported precision.  Each pass should after the first, should
     // add an additional level of precision: secs, secs/10, secs/100,
     // secs/1000 and so on.  The initial string has no fraction seconds.
