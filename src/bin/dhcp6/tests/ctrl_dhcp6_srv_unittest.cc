@@ -790,6 +790,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -851,6 +852,26 @@ TEST_F(CtrlChannelDhcpv6SrvTest, getversion) {
     sendUnixCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
+// This test verifies that the DHCP server handles server-tag-get command
+TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
+    createUnixChannelServer();
+
+    std::string response;
+    std::string expected;
+
+    // Send the server-tag-get command
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"\" }, \"result\": 0 }";
+    EXPECT_EQ(expected, response);
+
+    // Set a value to the server tag
+    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
+
+    // Retry...
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
 }
 
 // This test verifies that the DHCP server immediately reclaims expired
@@ -1025,6 +1046,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
     checkListCommands(rsp, "version-get");
+    checkListCommands(rsp, "server-tag-get");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");

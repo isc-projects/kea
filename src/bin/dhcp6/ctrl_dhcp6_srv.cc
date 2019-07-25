@@ -539,6 +539,17 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
     return (answer);
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandServerTagGetHandler(const std::string&,
+                                                ConstElementPtr) {
+    const std::string& tag =
+        CfgMgr::instance().getCurrentCfg()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, response));
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -592,6 +603,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "config-write") {
             return (srv->commandConfigWriteHandler(command, args));
+
+        } else if (command == "server-tag-get") {
+            return (srv->commandServerTagGetHandler(command, args));
 
         }
 
@@ -840,6 +854,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("server-tag-get",
+        boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
@@ -901,6 +918,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
+        CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

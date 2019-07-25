@@ -539,6 +539,17 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
+                                                ConstElementPtr) {
+    const std::string& tag =
+        CfgMgr::instance().getCurrentCfg()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, response));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -591,6 +602,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "config-write") {
             return (srv->commandConfigWriteHandler(command, args));
+
+        } else if (command == "server-tag-get") {
+            return (srv->commandServerTagGetHandler(command, args));
 
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
@@ -822,6 +836,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("server-tag-get",
+        boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
@@ -878,6 +895,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
+        CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

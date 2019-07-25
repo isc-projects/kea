@@ -628,6 +628,15 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
 }
 
 ConstElementPtr
+DControllerBase::serverTagGetHandler(const std::string&, ConstElementPtr) {
+    const std::string& tag = process_->getCfgMgr()->getContext()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(COMMAND_SUCCESS, response));
+}
+
+ConstElementPtr
 DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ConstElementPtr answer;
 
