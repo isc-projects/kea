@@ -128,8 +128,8 @@ public:
         DELETE_ALL_SUBNETS6_UNASSIGNED,
         DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
         DELETE_SUBNET6_SERVER,
-        DELETE_POOLS6_SUBNET_ID,
-        DELETE_PD_POOLS_SUBNET_ID,
+        DELETE_POOLS6,
+        DELETE_PD_POOLS,
         DELETE_SHARED_NETWORK6_NAME_WITH_TAG,
         DELETE_SHARED_NETWORK6_NAME_ANY,
         DELETE_ALL_SHARED_NETWORKS6,
@@ -1231,28 +1231,34 @@ public:
 
     /// @brief Deletes pools belonging to a subnet from the database.
     ///
+    /// The query deletes all pools associated with the subnet's
+    /// identifier or prefix.
     /// @param subnet Pointer to the subnet for which pools should be
     /// deleted.
     uint64_t deletePools6(const Subnet6Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint32_t>(subnet->getID())
+            MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+            MySqlBinding::createString(subnet->toText())
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_POOLS6_SUBNET_ID, in_bindings));
+        return (conn_.updateDeleteQuery(DELETE_POOLS6, in_bindings));
     }
 
     /// @brief Deletes pd pools belonging to a subnet from the database.
     ///
+    /// The query deletes all pools associated with the subnet's
+    /// identifier or prefix.
     /// @param subnet Pointer to the subnet for which pd pools should be
     /// deleted.
     uint64_t deletePdPools6(const Subnet6Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint32_t>(subnet->getID())
+            MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+            MySqlBinding::createString(subnet->toText())
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_PD_POOLS_SUBNET_ID, in_bindings));
+        return (conn_.updateDeleteQuery(DELETE_PD_POOLS, in_bindings));
     }
 
     /// @brief Sends query to the database to retrieve multiple shared
@@ -2850,12 +2856,12 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete pools for a subnet.
-    { MySqlConfigBackendDHCPv6Impl::DELETE_POOLS6_SUBNET_ID,
+    { MySqlConfigBackendDHCPv6Impl::DELETE_POOLS6,
       MYSQL_DELETE_POOLS(dhcp6)
     },
 
     // Delete pd pools for a subnet.
-    { MySqlConfigBackendDHCPv6Impl::DELETE_PD_POOLS_SUBNET_ID,
+    { MySqlConfigBackendDHCPv6Impl::DELETE_PD_POOLS,
       MYSQL_DELETE_PD_POOLS()
     },
 

@@ -123,7 +123,7 @@ public:
         DELETE_ALL_SUBNETS4_UNASSIGNED,
         DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
         DELETE_SUBNET4_SERVER,
-        DELETE_POOLS4_SUBNET_ID,
+        DELETE_POOLS4,
         DELETE_SHARED_NETWORK4_NAME_WITH_TAG,
         DELETE_SHARED_NETWORK4_NAME_ANY,
         DELETE_ALL_SHARED_NETWORKS4,
@@ -1044,15 +1044,18 @@ public:
 
     /// @brief Deletes pools belonging to a subnet from the database.
     ///
+    /// The query deletes all pools associated with the subnet's
+    /// identifier or prefix.
     /// @param subnet Pointer to the subnet for which pools should be
     /// deleted.
     uint64_t deletePools4(const Subnet4Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint32_t>(subnet->getID())
+            MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+            MySqlBinding::createString(subnet->toText())
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_POOLS4_SUBNET_ID, in_bindings));
+        return (conn_.updateDeleteQuery(DELETE_POOLS4, in_bindings));
     }
 
     /// @brief Sends query to the database to retrieve multiple shared
@@ -2491,7 +2494,7 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete pools for a subnet.
-    { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
+    { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4,
       MYSQL_DELETE_POOLS(dhcp4)
     },
 

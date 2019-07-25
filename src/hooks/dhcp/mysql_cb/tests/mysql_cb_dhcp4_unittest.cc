@@ -1989,6 +1989,44 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
     EXPECT_TRUE(isEquivalent(returned_list, test_list));
 }
 
+// Test that pools are properly updated as a result a subnet update.
+TEST_F(MySqlConfigBackendDHCPv4Test, subnetUpdatePools) {
+
+    auto test_subnet_update = [this](const std::string& subnet_prefix,
+                                     const SubnetID& subnet_id) {
+        // Add the subnet with two pools.
+        EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),
+                                                    test_subnets_[0]));
+        // Make sure that the pools have been added to the database.
+        EXPECT_EQ(2, countRows("dhcp4_pool"));
+
+        // Create the subnet without options which updates the existing
+        // subnet.
+        Subnet4Ptr subnet(new Subnet4(IOAddress(subnet_prefix), 24, 30, 40, 60,
+                                      subnet_id));
+        EXPECT_NO_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
+        // Check that options are gone.
+        EXPECT_EQ(0, countRows("dhcp4_pool"));
+    };
+
+    {
+        SCOPED_TRACE("update subnet, modify subnet id");
+        // Create another subnet with the same prefix as the original subnet but
+        // different id. This is legal to update the subnet id if the prefix is
+        // stable. However, the new subnet has no address pools, so we need to
+        // check of the pools associated with the existing subnet instance are
+        // gone after the update.
+        test_subnet_update("192.0.2.0", 2048);
+    }
+
+    {
+        SCOPED_TRACE("update subnet, modify prefix");
+        // Create a subnet with the same subnet id but different prefix.
+        // The prefix should be updated.
+        test_subnet_update("192.0.3.0", 1024);
+    }
+}
+
 // Test that deleting a subnet triggers deletion of the options associated
 // with the subnet and pools.
 TEST_F(MySqlConfigBackendDHCPv4Test, subnetOptions) {

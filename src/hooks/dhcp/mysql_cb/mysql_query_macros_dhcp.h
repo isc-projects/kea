@@ -743,13 +743,17 @@ namespace {
 #ifndef MYSQL_DELETE_POOLS
 #define MYSQL_DELETE_POOLS(table_prefix) \
     "DELETE FROM " #table_prefix "_pool " \
-    "WHERE subnet_id = ?"
+    "WHERE subnet_id = ? OR subnet_id = " \
+    "(SELECT subnet_id FROM " #table_prefix "_subnet" \
+    "    WHERE subnet_prefix = ?)"
 #endif
 
 #ifndef MYSQL_DELETE_PD_POOLS
 #define MYSQL_DELETE_PD_POOLS() \
     "DELETE FROM dhcp6_pd_pool " \
-    "WHERE subnet_id = ?"
+    "WHERE subnet_id = ? OR subnet_id = " \
+    "(SELECT subnet_id FROM dhcp6_subnet" \
+    "    WHERE subnet_prefix = ?)"
 #endif
 
 #ifndef MYSQL_DELETE_SHARED_NETWORK_COMMON
