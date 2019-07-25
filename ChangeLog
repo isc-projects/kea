@@ -1,3 +1,8 @@
+1628.	[bug]		fdupont
+	Improved the error message from MySQL CB -set commands when
+	a specified server does not exist.
+	(Gitlab #732,!429, git 82f34e60363eec72a117939a5526bdb1ececb53c)
+
 1627.	[func]		fdupont
 	Added new command server-tag-get to DHCPv4 and DHCPv6 servers.
 	(Gitlab #470,!386, git 3cb43f112662ba3f9d2fc7152dfa1639401b1491)
