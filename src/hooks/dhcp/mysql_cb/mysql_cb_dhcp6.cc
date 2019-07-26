@@ -1247,7 +1247,7 @@ public:
 
     /// @brief Deletes pd pools belonging to a subnet from the database.
     ///
-    /// The query deletes all pools associated with the subnet's
+    /// The query deletes all pd pools associated with the subnet's
     /// identifier or prefix.
     /// @param subnet Pointer to the subnet for which pd pools should be
     /// deleted.
