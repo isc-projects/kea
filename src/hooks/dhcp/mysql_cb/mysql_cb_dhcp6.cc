@@ -1031,10 +1031,10 @@ public:
         PoolCollection pools;
         std::vector<uint64_t> pool_ids;
 
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(pool_start_address.toText()),
                 MySqlBinding::createString(pool_end_address.toText())
             };
@@ -1066,10 +1066,10 @@ public:
         PoolCollection pd_pools;
         std::vector<uint64_t> pd_pool_ids;
 
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         for (auto tag : tags) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
+                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(pd_pool_prefix.toText()),
                 MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
             };
