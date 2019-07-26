@@ -231,17 +231,18 @@ api_files+=$(srcdir)/api/version-get.json
 EXTRA_DIST += $(api_files)
 
 
-all: html mans
 if HAVE_PDFLATEX
-all: pdf
+all: html mans pdf
+else
+all: html mans
 endif
 
 $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
-	$(srcdir)/mes2doc.py -o $@ $(mes_files)
+	$(PYTHON) $(srcdir)/mes2doc.py -o $@ $(mes_files)
 
 
 $(srcdir)/api.rst: $(api_files) api2doc.py
-	$(srcdir)/api2doc.py -o $@ $(api_files)
+	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
 
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
@@ -272,8 +273,10 @@ mans: $(man_sources)
 install-data-local:
 	mkdir -p $(DESTDIR)$(docdir)
 	cp -r $(sphinxbuilddir)/html $(DESTDIR)$(docdir)
+if HAVE_PDFLATEX
 	${INSTALL_DATA} $(sphinxbuilddir)/latex/kea-arm.pdf $(DESTDIR)$(docdir)
 	${INSTALL_DATA} $(sphinxbuilddir)/latex/kea-messages.pdf $(DESTDIR)$(docdir)
+endif
 	${MKDIR_P} ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} $(man8s) ${DESTDIR}${mandir}/man8/
 

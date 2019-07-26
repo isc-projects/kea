@@ -1068,7 +1068,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel'])
 
         if 'docs' in features:
-            packages.extend(['python36-virtualenv'])
+            packages.extend(['python-virtualenv'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
@@ -1085,7 +1085,7 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'docs' in features:
-            execute('virtualenv-3 ~/venv',
+            execute('virtualenv ~/venv',
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
@@ -1224,7 +1224,11 @@ def prepare_system_local(features, check_times):
                 packages.append('mariadb-server')
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+            packages.extend(['postgresql-client', 'libpq-dev'])
+            if revision == '8':
+                packages.extend(['postgresql', 'postgresql-client'])
+            else:
+                packages.append('postgresql-all')
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1360,7 +1364,6 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
         elif system == 'centos' and revision == '7':
             cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
-            cmd += ' --with-pdflatex=no'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
     if 'shell' in features:

@@ -435,45 +435,6 @@ fi
 AM_CONDITIONAL(PERFDHCP, test x$enable_perfdhcp != xno)
 AC_SUBST(DISTCHECK_PERFDHCP_CONFIGURE_FLAG)
 
-# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
-# It may likely work with earlier versions, but 2.7 was the oldest one we tested
-# it with. We require python only if kea-shell was enabled. It is disabled
-# by default to not introduce hard dependency on python.
-AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
-  [enable kea-shell, a text management client for Control Agent [default=no]])],
-  enable_shell=$enableval, enable_shell=no)
-
-DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
-PKGPYTHONDIR=
-m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
- [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
-  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
-if test "x$enable_shell" != xno ; then
-# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-# We try to find 3.x first. If not found, we can do with 2.7.
-  AM_PATH_PYTHON([2.7])
-  # pkgpythondir needs to be expanded
-  saved_prefix="$prefix"
-  if test "$prefix" = "NONE"; then
-    prefix=$ac_default_prefix
-  fi
-  PKGPYTHONDIR="$pkgpythondir"
-  OLD=
-  while test "x$OLD" != "x$PKGPYTHONDIR"; do
-    OLD="$PKGPYTHONDIR"
-    eval PKGPYTHONDIR="\"$OLD\""
-  done
-  prefix="$saved_prefix"
-  DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
-else
-  PYTHON=no
-fi
-
-# Export to makefiles the info whether we have shell enabled or not
-AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
-AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
-AC_SUBST(PKGPYTHONDIR)
-
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    KEA_CXXFLAGS="$KEA_CXXFLAGS -fPIC"
@@ -1434,9 +1395,50 @@ fi
 
 AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 
+# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
+# It may likely work with earlier versions, but 2.7 was the oldest one we tested
+# it with. We require python only if kea-shell was enabled. It is disabled
+# by default to not introduce hard dependency on python.
+AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
+  [enable kea-shell, a text management client for Control Agent [default=no]])],
+  enable_shell=$enableval, enable_shell=no)
+
+
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
   [regenerate documentation using Sphinx [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
+
+
+DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
+PKGPYTHONDIR=
+m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+ [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
+  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
+if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
+# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
+# We try to find 3.x first. If not found, we can do with 2.7.
+  AM_PATH_PYTHON([2.7])
+  # pkgpythondir needs to be expanded
+  saved_prefix="$prefix"
+  if test "$prefix" = "NONE"; then
+    prefix=$ac_default_prefix
+  fi
+  PKGPYTHONDIR="$pkgpythondir"
+  OLD=
+  while test "x$OLD" != "x$PKGPYTHONDIR"; do
+    OLD="$PKGPYTHONDIR"
+    eval PKGPYTHONDIR="\"$OLD\""
+  done
+  prefix="$saved_prefix"
+  DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
+else
+  PYTHON=no
+fi
+
+# Export to makefiles the info whether we have shell enabled or not
+AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
+AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
+AC_SUBST(PKGPYTHONDIR)
 
 AC_ARG_WITH([sphinx],
   AC_HELP_STRING([--with-sphinx=PATH], [path to sphinx-build tool]),
@@ -1445,9 +1447,11 @@ AC_ARG_WITH([sphinx],
 AC_ARG_WITH([pdflatex],
   AC_HELP_STRING([--with-pdflatex=PATH], [path to pdflatex tool]),
   [pdflatex_path="$withval"])
+PDFLATEX=no
 
 if test "x$enable_generate_docs" != xno ; then
   # Check for sphinx-build
+  AC_MSG_CHECKING([for sphinx-build])
   if test -z "$sphinx_path"; then
      AC_PATH_PROGS([SPHINXBUILD], [sphinx-build sphinx-build-3])
   else
@@ -1457,12 +1461,15 @@ if test "x$enable_generate_docs" != xno ; then
   if test -z "$SPHINXBUILD"; then
     AC_MSG_ERROR([sphinx-build not found; it is required for --enable-generate-docs, please see http://www.sphinx-doc.org/en/master/usage/installation.html for details])
   else
-    AC_MSG_CHECKING([whether $SPHINXBUILD works])
-    $SPHINXBUILD --version
+    AC_MSG_RESULT([$SPHINXBUILD])
+
+    AC_MSG_CHECKING([whether $SPHINXBUILD is runnable])
+    $SPHINXBUILD --version > conftest.err 2>&1
     if test $? -ne 0 ; then
-      AC_MSG_ERROR("Error with $SPHINXBUILD --version")
+      AC_MSG_ERROR([error with $SPHINXBUILD --version, check conftest.err for details])
     fi
-    AC_MSG_RESULT(yes (found in $SPHINXBUILD))
+    rm -f conftest.err
+    AC_MSG_RESULT([yes])
   fi
 
   # Check for pdflatex
@@ -1473,20 +1480,43 @@ if test "x$enable_generate_docs" != xno ; then
   fi
 
   if test -z "$PDFLATEX"; then
-    AC_MSG_ERROR([pdflatex not found; it is expected for --enable-generate-docs if not explicitly disabled by ???])
+    PDFLATEX=no
   elif test "x$PDFLATEX" == "xno"; then
-    :
+    AC_MSG_CHECKING([for pdflatex])
+    AC_MSG_RESULT([no (disabled)])
   else
-    AC_MSG_CHECKING([whether $PDFLATEX works])
-    $PDFLATEX --version
+    AC_MSG_CHECKING([whether $PDFLATEX is runnable])
+    $PDFLATEX --version > /dev/null 2>&1
     if test $? -ne 0 ; then
-      AC_MSG_ERROR("Error with $PDFLATEX --version")
+      AC_MSG_RESULT([no - disabled building docs in PDF])
+      PDFLATEX=no
+    else
+      AC_MSG_RESULT([yes])
     fi
-    AC_MSG_RESULT(yes (found in $PDFLATEX))
   fi
-  AM_CONDITIONAL(HAVE_PDFLATEX, test "x$PDFLATEX" != "xno")
+
+  if test -n "$SPHINXBUILD" -a "x$PDFLATEX" != "xno"; then
+    AC_MSG_CHECKING([whether $SPHINXBUILD and $PDFLATEX work])
+    ti=`mktemp -d`
+    to=`mktemp -d`
+    echo 'hello' > $ti/contents.rst
+    sphinx-build -b latex -C $ti $to > /dev/null 2>&1
+    pushd $to > /dev/null 2>&1
+    $PDFLATEX -interaction nonstopmode Python.tex > /dev/null 2>&1
+    popd > /dev/null 2>&1
+    file $to/Python.pdf | grep PDF > /dev/null 2>&1
+    if test $? -ne 0 ; then
+      AC_MSG_RESULT([no - disabled building docs in PDF])
+      PDFLATEX=no
+    else
+      AC_MSG_RESULT([ok])
+    fi
+    rm -rf $ti $to
+  fi
+
 fi
 
+AM_CONDITIONAL(HAVE_PDFLATEX, test "x$PDFLATEX" != "xno")
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
 AC_ARG_ENABLE(install-configurations,
