@@ -1,3 +1,7 @@
+1630.	[build]		fdupont
+	Added support for sysrepo 0.7.8 (and libyang 1.0-r3).
+	(Gitlab #742,!430, git 6776a829f90768225ea794145e522560d26fe959)
+
 1629.	[func]		tmark
 	High Availaiblity logging now also emits server and partner system
 	times when reporting clock skew issues.  Prior to this it reported
