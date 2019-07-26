@@ -10,5 +10,5 @@
         \"duration\": 1245
     }
 }",
-    "cmd-comment": "The server will respond with message about successfully setted limits for all statistics, with a result set to 0 indicating success and an empty parameters field."
+    "cmd-comment": "The server will respond with message about successfully setted limits for all statistics, with a result set to 0 indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
 }

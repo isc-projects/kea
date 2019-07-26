@@ -37,7 +37,7 @@ lease6-get-all
 lease6-update
 lease6-wipe
 leases-reclaim
-libreloadAle trzeba
+libreload
 list-commands
 network4-add
 network4-del
