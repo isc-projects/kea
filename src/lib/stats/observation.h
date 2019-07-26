@@ -66,8 +66,7 @@ typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
 /// @ref getDuration, @ref getString (appropriate type must be used) or
 /// @ref getJSON, which is generic and can be used for all types.
 ///
-/// @todo: Eventually it will be possible to retain multiple samples for the same
-/// observation, but that is outside of scope for 0.9.2.
+/// Since Kea 1.6 multiple samples are stored for the same observation.
 class Observation {
  public:
 
