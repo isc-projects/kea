@@ -1,0 +1,14 @@
+{
+    "name": "statistic-set-max-sample-age-all",
+    "brief": "The statistic-set-max-sample-age-all command sets time based limit for all statistics. It takes a single integer parameter called duration.",
+    "description": "See <xref linkend=\"command-statistic-set-max-sample-age-all\"/>",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "cmd-syntax": "{
+    \"command\": \"statistic-set-max-sample-age-all\",
+    \"arguments\": {
+        \"duration\": 1245
+    }
+}",
+    "cmd-comment": "The server will respond with message about successfully setted limits for all statistics, with a result set to 0 indicating success and an empty parameters field."
+}

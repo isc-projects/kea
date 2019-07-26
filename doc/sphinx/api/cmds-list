@@ -37,7 +37,7 @@ lease6-get-all
 lease6-update
 lease6-wipe
 leases-reclaim
-libreload
+libreloadAle trzeba
 list-commands
 network4-add
 network4-del
@@ -117,6 +117,10 @@ statistic-remove
 statistic-remove-all
 statistic-reset
 statistic-reset-all
+statistic-set-max-sample-age
+statistic-set-max-sample-age-all
+statistic-set-max-sample-count
+statistic-set-max-sample-count-all
 subnet4-add
 subnet4-del
 subnet4-get
