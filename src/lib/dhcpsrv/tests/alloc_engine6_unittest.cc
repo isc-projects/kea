@@ -3132,6 +3132,87 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
     EXPECT_TRUE(leases.empty());
 }
 
+// Verifies that client with a hostname reservation can get and
+// renew a dynamic lease from their selected subnet.
+TEST_F(AllocEngine6Test, hostDynamicAddress) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                 Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                 asiolink::IOAddress("0.0.0.0")));
+
+    host->setHostname("host1");
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setHostReservationMode(Network::HR_ALL);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("host1", current->getHostname());
+
+    // Check that we have been allocated a dynamic address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    // We  verify the "time" change in case the lease returned to us
+    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
+    --lease->cltt_;
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::10"), 128));
+
+    // Set test fixture hostname_ to the expected value. This gets checked in
+    // renewTest.
+    hostname_ = "host1";
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+
+    // Now let's verify that if the client returns via SARR, they get the same lease.
+    // Create a new context which will be used to try to allocate leases
+    query.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", false, query);
+    ctx2.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx2);
+
+    // Make sure we found our host.
+    current = ctx2.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("host1", current->getHostname());
+
+    // Check that we have been allocated the original dynamic address.
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
+}
+
 // Verifies that client with a global hostname reservation can get and
 // renew a dynamic lease from their selected subnet.
 TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
@@ -3191,6 +3272,25 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
         << "Lease lifetime was not extended, but it should";
+
+    // Now let's verify that if the client returns via SARR, they get the same lease.
+    // Create a new context which will be used to try to allocate leases
+    query.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", false, query);
+    ctx2.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx2);
+
+    // Make sure we found our host.
+    current = ctx2.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    // Check that we have been allocated a dynamic address.
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
 }
 
 // Verifies that client with a global address reservation can get and
