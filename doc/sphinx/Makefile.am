@@ -52,7 +52,7 @@ rst_arm_sources+=arm/netconf.rst
 rst_arm_sources+=arm/quickstart.rst
 rst_arm_sources+=arm/shell.rst
 rst_arm_sources+=arm/stats.rst
-rst_arm_sources+=$(srcdir)/api.rst
+#rst_arm_sources+=$(srcdir)/api.rst TODO: disabled for now
 rst_arm_sources+=$(srcdir)/kea-messages.rst
 
 main_sources=$(rst_arm_sources) conf.py $(static_sources)
@@ -72,7 +72,7 @@ rst_man_sources+=man/perfdhcp.8.rst
 man_sources=$(rst_man_sources) conf.py
 man8s=$(foreach rst,$(rst_man_sources), $(sphinxbuilddir)/$(basename $(rst)))
 
-EXTRA_DIST += $(main_sources) $(man_sources) api2doc.py mes2doc.py
+EXTRA_DIST += $(main_sources) $(man_sources) mes2doc.py  # api2doc.py
 
 
 # list of messages files that are used to generate kea-messages.rst and then kea-messages.pdf
@@ -228,7 +228,7 @@ api_files+=$(srcdir)/api/subnet6-list.json
 api_files+=$(srcdir)/api/subnet6-update.json
 api_files+=$(srcdir)/api/version-get.json
 
-EXTRA_DIST += $(api_files)
+#EXTRA_DIST += $(api_files)
 
 
 if HAVE_PDFLATEX
@@ -241,8 +241,8 @@ $(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
 	$(PYTHON) $(srcdir)/mes2doc.py -o $@ $(mes_files)
 
 
-$(srcdir)/api.rst: $(api_files) api2doc.py
-	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
+#$(srcdir)/api.rst: $(api_files) api2doc.py
+#	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
 
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
@@ -285,7 +285,7 @@ uninstall-local:
 
 clean-local:
 	rm -rf $(sphinxbuilddir)
-	rm -f $(srcdir)/api.rst $(srcdir)/kea-messages.rst
+	rm -f $(srcdir)/kea-messages.rst  # $(srcdir)/api.rst
 
 .PHONY: all pdf html mans
 
