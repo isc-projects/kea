@@ -1245,7 +1245,8 @@ public:
         return (conn_.updateDeleteQuery(DELETE_POOLS6, in_bindings));
     }
 
-    /// @brief Deletes pd pools belonging to a subnet from the database.
+    /// @brief Deletes prefix delegation pools belonging to a subnet from
+    /// the database.
     ///
     /// The query deletes all pd pools associated with the subnet's
     /// identifier or prefix.
