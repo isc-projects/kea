@@ -1514,6 +1514,13 @@ if test "x$enable_generate_docs" != xno ; then
     rm -rf $ti $to
   fi
 
+  if test "x$PDFLATEX" != "xno"; then
+    generate_docs_report="html, man and pdf"
+  else
+    generate_docs_report="html, man but no pdf"
+  fi
+else
+  generate_docs_report="no"
 fi
 
 AM_CONDITIONAL(HAVE_PDFLATEX, test "x$PDFLATEX" != "xno")
@@ -2050,7 +2057,7 @@ Developer:
   Valgrind:                  $found_valgrind
   C++ Code Coverage:         $USE_LCOV
   Logger checks:             $enable_logger_checks
-  Generate Documentation:    $enable_generate_docs
+  Generate Documentation:    $generate_docs_report
   Generate Parser:           $enable_generate_parser
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
