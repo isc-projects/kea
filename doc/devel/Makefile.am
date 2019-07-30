@@ -9,7 +9,7 @@ EXTRA_DIST += unit-tests.dox
 EXTRA_DIST += doc.dox
 EXTRA_DIST += congestion-handling.dox
 
-all: devel
+all: # do nothing, used only by developers manually
 
 devel:
 	mkdir -p $(builddir)/html
