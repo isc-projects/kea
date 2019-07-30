@@ -1,3 +1,9 @@
+1637.	[bug]		tmark
+	Corrected an issue in kea-dhcp6 where the server would assign
+	a different lease each time a client with a dynamic host
+	reservation returned via a SOLICIT.
+	(Gitlab #754,!440,	git TBD)
+
 1636.	[bug]		razvan
 	Http request and response parser accepts Content-Length set to 0.
 	(Gitlab #708,!423, git 09d75804e050083b502a96c8e77b0e98c735ae3d)

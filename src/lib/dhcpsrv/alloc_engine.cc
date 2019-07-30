@@ -1539,13 +1539,11 @@ void
 AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
                                       Lease6Collection& existing_leases) {
     // This method removes leases that are not reserved for this host.
-    // It will keep at least one lease, though.
-    if (existing_leases.empty()) {
+    // It will keep at least one lease, though, as a fallback.
+    int total = existing_leases.size();
+    if (total <= 1) {
         return;
     }
-
-    // This is the total number of leases. We should not remove the last one.
-    int total = existing_leases.size();
 
     // This is officially not scary code anymore. iterates and marks specified
     // leases for deletion, by setting appropriate pointers to NULL.
@@ -1560,6 +1558,9 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             continue;
         }
 
+        // @todo - If this is for a fake_allocation, we should probably
+        // not be deleting the lease or removing DNS entries.  We should
+        // simply remove it from the list.
         // We have reservations, but not for this lease. Release it.
         // Remove this lease from LeaseMgr
         LeaseMgrFactory::instance().deleteLease((*lease)->addr_);
