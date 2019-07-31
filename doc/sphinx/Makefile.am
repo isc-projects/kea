@@ -289,5 +289,9 @@ clean-local:
 
 .PHONY: all pdf html mans
 
+# There are sometimes conflicts when more then one sphinx-build is run at a time.
+# This target blocks running anything in parallel in this Makefile,
+# all is run serially.
+.NOTPARALLEL:
 
 endif

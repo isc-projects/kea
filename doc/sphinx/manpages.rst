@@ -14,6 +14,7 @@ Manual Pages
 ============
 
 .. toctree::
+   :maxdepth: 1
 
    man/kea-dhcp4.8
    man/kea-dhcp6.8
