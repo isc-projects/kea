@@ -1004,10 +1004,25 @@ AC_LINK_IFELSE(
                          ],
                          [using namespace log4cplus;
                           Logger logger = Logger::getInstance("main");
+                          return 0;
                          ])],
         [AC_MSG_RESULT([checking for log4cplus library... yes])],
         [AC_MSG_RESULT([checking for log4cplus library... no])
          AC_MSG_ERROR([Needs log4cplus library])]
+)
+
+# The same program fails at runtime if the library was built with
+# the implicit initialization disabled.
+AC_RUN_IFELSE(
+        [AC_LANG_PROGRAM([#include <log4cplus/logger.h>
+                         ],
+                         [using namespace log4cplus;
+                          Logger logger = Logger::getInstance("main");
+                          return 0;
+                         ])],
+        [AC_MSG_RESULT([checking for log4cplus initialization... yes])],
+        [AC_MSG_RESULT([checking for log4cplus initialization... no])
+         AC_MSG_ERROR([Needs log4cplus library built with implicit initialization])]
 )
 
 dnl Determine the log4cplus version, used mainly for config.report.
