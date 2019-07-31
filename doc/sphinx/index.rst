@@ -45,18 +45,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    :name: appendices
    :maxdepth: 1
 
-   arm/manpages
-   man/kea-shell.8
-   man/kea-admin.8
-   man/keactrl.8
-   man/kea-ctrl-agent.8
-   man/kea-dhcp4.8
-   man/kea-dhcp6.8
-   man/kea-dhcp-ddns.8
-   man/kea-lfc.8
-   man/kea-netconf.8
-   man/kea-shell.8
-   man/perfdhcp.8
+   manpages
    kea-messages
    arm/acknowledgments
 

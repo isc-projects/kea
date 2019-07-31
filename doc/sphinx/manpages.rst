@@ -12,3 +12,16 @@
 
 Manual Pages
 ============
+
+.. toctree::
+
+   man/kea-dhcp4.8
+   man/kea-dhcp6.8
+   man/kea-ctrl-agent.8
+   man/keactrl.8
+   man/kea-admin.8
+   man/kea-dhcp-ddns.8
+   man/kea-lfc.8
+   man/kea-shell.8
+   man/kea-netconf.8
+   man/perfdhcp.8
