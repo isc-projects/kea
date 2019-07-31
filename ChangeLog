@@ -178,6 +178,12 @@ Kea 1.6.0-beta2 released on July 24, 2019
 	Add support for associating subnets with the server tags in the
 	mysql_cb hooks library.
 	(Gitlab #717,!417, git e121ec4e0a04bc5bebdbfecf9cc1606b50e71263)
+=======
+16xx.	[bug]		tmark
+	Prevents DHCP servers from asserting when malformed hostname
+	or FQDN options are received.
+	(Gitlab #730,!2 git TBD)
+>>>>>>> [#730,!2] Reworded ChangeLog entry
 
 1618.	[func]		marcin
 	Add support for associating the shared networks with the server
