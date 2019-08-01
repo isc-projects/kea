@@ -78,7 +78,7 @@ if [ "$1" = "--libs" ]; then
 fi
 
 if [ "$1" = "--modversion" ]; then
-    VERSION=`sysrepoctl -v | tr -s " " | cut -d " " -f 7`
+    VERSION=$(sysrepoctl -v | tr -s " " | cut -d " " -f 7)
     echo "${VERSION}"
     exit 0
 fi
