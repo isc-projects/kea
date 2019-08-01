@@ -9554,13 +9554,14 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see
-	http://gitlab.isc.org/isc-projects/kea.git
+	http://git.bind10.isc.org/cgi-bin/cgit.cgi/bind10
 Specific git changesets can be accessed at:
-	http://gitlab.isc.org/isc-projects/kea/commit/rrr
+	http://git.bind10.isc.org/cgi-bin/cgit.cgi/bind10/commit/?id=rrr
 or after cloning the original git repository by executing:
 	% git diff rrrr^ rrrr
-Prior to gitlab, we used Trac for bug tickets. Those tickets
-can be accessed at: http://oldkea.isc.org/ticket/nnnn
+Subversion changesets are not accessible any more.  The subversion
+revision numbers will be replaced with corresponding git revisions.
+Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND
 [bug] general bug fix.  This is generally a backward compatible change,
