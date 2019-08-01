@@ -502,13 +502,13 @@ TEST_F(ObservationTest, timers) {
 /// for details.
 TEST_F(ObservationTest, integerToJSON) {
     // String which contains first added sample
-    std::string first_sample = ", 1234, \"" +
+    std::string first_sample = ", [ 1234, \"" +
         isc::util::ptimeToText(a.getInteger().second) + "\" ] ]";
 
     a.setValue(static_cast<int64_t>(1234));
 
     std::string exp = "[ [ 1234, \"" +
-        isc::util::ptimeToText(a.getInteger().second) + "\"" + first_sample;
+        isc::util::ptimeToText(a.getInteger().second) + "\" ]" + first_sample;
 
     std::cout << a.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, a.getJSON()->str());
@@ -520,7 +520,7 @@ TEST_F(ObservationTest, integerToJSON) {
 /// for details.
 TEST_F(ObservationTest, floatToJSON) {
     // String which contains first added sample
-    std::string first_sample = ", 12.34, \"" +
+    std::string first_sample = ", [ 12.34, \"" +
         isc::util::ptimeToText(b.getFloat().second) + "\" ] ]";
 
     // Let's use a value that converts easily to floating point.
@@ -529,7 +529,7 @@ TEST_F(ObservationTest, floatToJSON) {
     b.setValue(1234.5);
 
     std::string exp = "[ [ 1234.5, \"" +
-        isc::util::ptimeToText(b.getFloat().second) + "\"" + first_sample;
+        isc::util::ptimeToText(b.getFloat().second) + "\" ]" + first_sample;
 
     std::cout << b.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, b.getJSON()->str());
@@ -540,14 +540,14 @@ TEST_F(ObservationTest, floatToJSON) {
 // details.
 TEST_F(ObservationTest, durationToJSON) {
     // String which contains first added sample
-    std::string first_sample = ", \"01:02:03.000004\", \"" +
+    std::string first_sample = ", [ \"01:02:03.000004\", \"" +
         isc::util::ptimeToText(c.getDuration().second) + "\" ] ]";
 
     // 1 hour 2 minutes 3 seconds and 4 milliseconds
     c.setValue(time_duration(1, 2, 3, 4));
 
     std::string exp = "[ [ \"01:02:03.000004\", \"" +
-        isc::util::ptimeToText(c.getDuration().second) + "\"" + first_sample;
+        isc::util::ptimeToText(c.getDuration().second) + "\" ]" + first_sample;
 
     std::cout << c.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, c.getJSON()->str());
@@ -558,13 +558,13 @@ TEST_F(ObservationTest, durationToJSON) {
 // for details.
 TEST_F(ObservationTest, stringToJSON) {
     // String which contains first added sample
-    std::string first_sample = ", \"1234\", \"" +
+    std::string first_sample = ", [ \"1234\", \"" +
         isc::util::ptimeToText(d.getString().second) + "\" ] ]";
 
     d.setValue("Lorem ipsum dolor sit amet");
 
     std::string exp = "[ [ \"Lorem ipsum dolor sit amet\", \"" +
-        isc::util::ptimeToText(d.getString().second) + "\"" + first_sample;
+        isc::util::ptimeToText(d.getString().second) + "\" ]" + first_sample;
 
     std::cout << d.getJSON()->str() << std::endl;
     EXPECT_EQ(exp, d.getJSON()->str());
