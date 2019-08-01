@@ -55,7 +55,8 @@
     "loggers": [
         {
             "comment": "A logger",
-            "name": "kea-dhcp-ddns"
+            "name": "kea-dhcp-ddns",
+            "severity": "info"
         }
     ]
 }
