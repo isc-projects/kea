@@ -1,3 +1,9 @@
+1631.	[bug]		marcin
+	Corrected the bug in mysql_cb hooks library which in some cases
+	caused the pools to be orphaned and left in the database after
+	the subnet has been updated.
+	(Gitlab #632,!438, git ea15b537d62c66e03923b5fdce91db8795f436b4)
+
 1630.	[build]		fdupont
 	Added support for sysrepo 0.7.8 (and libyang 1.0-r3).
 	(Gitlab #742,!430, git 6776a829f90768225ea794145e522560d26fe959)
