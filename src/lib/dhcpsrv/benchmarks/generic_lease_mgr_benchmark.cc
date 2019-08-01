@@ -165,8 +165,6 @@ GenericLeaseMgrBenchmark::prepareLeases6(size_t const& lease_count) {
         const string prefix = string("2001:db8::") + n_lease;
         Lease6Ptr lease(new Lease6());
         lease->addr_ = IOAddress(prefix);
-        lease->t1_ = i;
-        lease->t2_ = i;
         lease->type_ = static_cast<Lease::Type>(i % 3);  // NA, TA or PD
         lease->prefixlen_ = i % 128;
         lease->iaid_ = i;
