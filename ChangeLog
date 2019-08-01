@@ -10146,7 +10146,7 @@ bind10-devel-20100421 released on April 21, 2010
 bind10-devel-20100319 released on March 19, 2010
 
 For complete code revision history, see
-	http://gitlab.isc.org/isc-projects/kea.git
+	http://gitlab.isc.org/isc-projects/kea
 Specific git changesets can be accessed at:
 	http://gitlab.isc.org/isc-projects/kea/commit/rrr
 or after cloning the original git repository by executing:
