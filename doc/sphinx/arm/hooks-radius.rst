@@ -1,7 +1,7 @@
 .. _hooks-radius:
 
 radius: RADIUS Server Support
-=============================
+-----------------------------
 
 The RADIUS hooks library allows Kea to interact with two types of RADIUS
 servers: access and accounting. Although the most common DHCP and RADIUS
@@ -44,7 +44,7 @@ specified for a particular class.
 .. _hooks-radius-install:
 
 Compilation and Installation of the RADIUS Hook
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following section describes how to compile and install the software
 on CentOS 7.0. Other systems may differ slightly.
@@ -289,7 +289,7 @@ option is recommended to speed up the build.
 .. _hooks-radius-config:
 
 RADIUS Hook Configuration
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The RADIUS hook is a library that has to be loaded by either DHCPv4 or
 DHCPv6 Kea servers. Unlike some other available hooks libraries, this one

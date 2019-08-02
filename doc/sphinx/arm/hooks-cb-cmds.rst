@@ -1,7 +1,7 @@
 .. _cb-cmds-library:
 
 cb_cmds: Configuration Backend Commands
-=======================================
+---------------------------------------
 
 This section describes the ``cb_cmds`` hooks library, which is used to
 manage Kea servers' configurations in the Configuration Backends. This
@@ -22,7 +22,7 @@ support contract.
    ``kea-dhcp6`` process.
 
 Commands Structure
-------------------
+~~~~~~~~~~~~~~~~~~
 
 There are 5 types of commands supported by this library:
 
@@ -78,7 +78,7 @@ the configuration of the server receiving the command.
 .. _cb-cmds-dhcp:
 
 Control Commands for DHCP Servers
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This section describes and gives some examples of the control commands
 implemented by the ``cb_cmds`` hooks library, to manage the
@@ -148,7 +148,7 @@ message created during the last modification, etc.
 .. _command-remote-server6-del:
 
 remote-server4-del, remote-server6-del commands
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to delete the information about a selected DHCP server from
 the configuration database. The server is identified by a unique case
@@ -214,7 +214,7 @@ The following is the successful response to the `remote-server4-del` command:
 .. _command-remote-server6-get:
 
 remote-server4-get, remote-server6-get commands
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to fetch the information about the selected DHCP server
 from the configuration database.  For example:
@@ -261,7 +261,7 @@ description of the server:
 .. _command-remote-server6-get-all:
 
 remote-server4-get-all, remote-server6-get-all commands
--------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to fetch all user defined DHCPv4 or DHCPv6 servers from the
 database. The command structure is very simple:
@@ -304,7 +304,7 @@ tag and description:
 .. _command-remote-server6-set:
 
 remote-server4-set, remote-server6-set commands
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create or replace an information about a DHCP server in
 the database. The information about the server must be created when there is a

@@ -1,7 +1,7 @@
 .. _lease-cmds:
 
 lease_cmds: Lease Commands
-==========================
+--------------------------
 
 This section describes the hook library with commands used to manage
 leases. Kea provides a way to store lease information in several
@@ -100,7 +100,7 @@ servers.
 .. _command-lease6-add:
 
 The lease4-add, lease6-add Commands
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``lease4-add`` and ``lease6-add`` commands allow for the creation of
 a new lease. Typically Kea creates a lease when it first sees a new

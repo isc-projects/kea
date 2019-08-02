@@ -1,7 +1,7 @@
 .. _hooks-host-cache:
 
 host_cache: Caching Host Reservations
-=====================================
+-------------------------------------
 
 Some database backends, such as RADIUS, are considered slow and may take
 a long time to respond. Since Kea in general is synchronous, backend
@@ -54,7 +54,7 @@ available.
 .. _command-cache-flush:
 
 The cache-flush Command
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This command allows removal of a specified number of cached host
 entries. It takes one parameter, which defines the number of hosts to be
@@ -74,7 +74,7 @@ hosts, please use cache-clear instead. The hosts are stored in FIFO
 .. _command-cache-clear:
 
 The cache-clear Command
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 This command allows removal of all cached host entries. An example usage
 looks as follows:
@@ -91,7 +91,7 @@ number of cached hosts, please use cache-flush instead.
 .. _command-cache-size:
 
 The cache-size Command
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 This command returns the number of host entries. An example usage looks
 as follows:
@@ -105,7 +105,7 @@ as follows:
 .. _command-cache-write:
 
 The cache-write Command
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 In general, the cache content is considered a runtime state and the
 server can be shut down or restarted as usual; the cache will then be
@@ -135,7 +135,7 @@ processed by any other tool that is able to understand JSON format.
 .. _command-cache-load:
 
 The cache-load Command
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 See the previous section for a discussion of use cases where it may be
 useful to write and load contents of the host cache to disk.
@@ -158,7 +158,7 @@ processed by any other tool that is able to understand JSON format.
 .. _command-cache-get:
 
 The cache-get Command
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 This command is similar to cache-write, but instead of writing the cache
 contents to disk, it returns the contents to whoever sent the command.
@@ -179,7 +179,7 @@ may be large.
 .. _command-cache-get-by-id:
 
 The cache-get-by-id Command
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is similar to cache-get, but instead of returning the whole
 content it returns only the entries matching the given identifier.
@@ -202,7 +202,7 @@ address.
 .. _command-cache-insert:
 
 The cache-insert Command
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command may be used to manually insert a host into the cache; there
 are very few use cases when this command might be useful. This command
@@ -263,7 +263,7 @@ looks as follows:
 .. _command-cache-remove:
 
 The cache-remove Command
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes it is useful to remove a single entry from the host cache. A
 good use case is a situation where the device is up, Kea has already

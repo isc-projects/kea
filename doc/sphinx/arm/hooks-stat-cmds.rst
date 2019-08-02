@@ -1,7 +1,7 @@
 .. _hooks-stat-cmds:
 
 stat_cmds: Supplemental Statistics Commands
-===========================================
+-------------------------------------------
 
 This library provides additional commands for retrieving lease
 statistics from Kea DHCP servers. These commands were added to address
@@ -62,7 +62,7 @@ configuration, Kea will not retrieve statistics for it.
 .. _command-stat-lease6-get:
 
 The stat-lease4-get, stat-lease6-get Commands
----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``stat-lease4-get`` and ``stat-lease6-get`` commands fetch lease
 statistics for a range of known subnets. The range of subnets is
