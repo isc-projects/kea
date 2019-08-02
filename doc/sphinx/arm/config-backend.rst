@@ -171,13 +171,14 @@ commands. Also, slightly different rules may apply to "all" keyword
 than to any user defined server when running the commands provided by
 the `cb_cmds` hooks library :ref:`cb-cmds-library`.
 
-In the simplest case there are no server tags defined in the configuration
-database and all connecting servers will get the same configuration
-regardless of the server tag they are using. The server tag that the
-particular Kea instance presents to the database to fetch its configuration
-is specified in the Kea configuration file, using the
-`config-control` map (please refer to the :ref:`dhcp4-cb-json` and
-:ref:`dhcp6-cb-json` for details).
+.. note::
+   In the simplest case there are no server tags defined in the
+   configuration database and all connecting servers will get the same
+   configuration regardless of the server tag they are using. The
+   server tag that the particular Kea instance presents to the
+   database to fetch its configuration is specified in the Kea
+   configuration file, using the `config-control` map (please refer to
+   the :ref:`dhcp4-cb-json` and :ref:`dhcp6-cb-json` for details).
 
 All Kea instances presenting the same server tag to the configuration database
 are given the same configuration. It is the administrator's choice whether
