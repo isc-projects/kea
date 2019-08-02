@@ -1,3 +1,7 @@
+1633.	[bug]		fdupont
+	Added missing YANG Kea test module in distributions.
+	(Gitlab #747,!436, git a800e79c7917acc723cbc71b626adc360e15a8d7)
+
 1632.	[doc]		razvan, tmark
 	Fixed doc examples.
 	(Gitlab #649,!381, git e14b90735ff57be0776270364064952d353d7e3a)
