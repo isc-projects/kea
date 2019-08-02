@@ -1,3 +1,7 @@
+1632.	[doc]		razvan, tmark
+	Fixed doc examples.
+	(Gitlab #649,!381, git e14b90735ff57be0776270364064952d353d7e3a)
+
 1631.	[bug]		marcin
 	Corrected the bug in mysql_cb hooks library which in some cases
 	caused the pools to be orphaned and left in the database after
