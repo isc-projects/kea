@@ -233,3 +233,131 @@ If the removal of all statistics is successful, the server responds with
 a status of 0, indicating success, and an empty parameters field. If an
 error is encountered, the server returns a status code of 1 (error) and
 the text field contains the error description.
+
+.. _command-statistic-set-max-sample-age:
+
+The statistic-set-max-sample-age Command
+----------------------------------------
+
+The ``statistic-set-max-sample-age`` command sets time based limit
+for collecting samples for given statistic. An example command may look
+like this:
+
+::
+
+   {
+       "command": "statistic-set-max-sample-age",
+       "arguments": {
+           "name": "pkt4-received",
+           "duration": 1245
+       }
+
+   }
+
+The server will respond with message about successfully set limit
+for the given statistic, with a result set to 0 indicating success
+and an empty parameters field. If an error is encountered (e.g. the
+requested statistic was not found), the server returns a status code
+of 1 (error) and the text field contains the error description.
+
+.. _command-statistic-set-max-sample-age-all:
+
+The statistic-set-max-sample-age-all Command
+--------------------------------------------
+
+The ``statistic-set-max-sample-age-all`` command sets time based limits
+for collecting samples for all statistics. An example command may look
+like this:
+
+::
+
+   {
+       "command": "statistic-set-max-sample-age-all",
+       "arguments": {
+           "duration": 1245
+       }
+
+   }
+
+The server will respond with message about successfully set limit
+for all statistics, with a result set to 0 indicating success
+and an empty parameters field. If an error is encountered, the server returns
+a status code of 1 (error) and the text field contains the error description.
+
+.. _command-statistic-set-max-sample-count:
+
+The statistic-set-max-sample-count Command
+------------------------------------------
+
+The ``statistic-set-max-sample-count`` command sets size based limit
+for collecting samples for given statistic. An example command may look
+like this:
+
+::
+
+   {
+       "command": "statistic-set-max-sample-count",
+       "arguments": {
+           "name": "pkt4-received",
+           "max-samples": 100
+       }
+
+   }
+
+The server will respond with message about successfully set limit
+for the given statistic, with a result set to 0 indicating success
+and an empty parameters field. If an error is encountered (e.g. the
+requested statistic was not found), the server returns a status code
+of 1 (error) and the text field contains the error description.
+
+.. _command-statistic-set-max-sample-count-all:
+
+The statistic-set-max-sample-count-all Command
+----------------------------------------------
+
+The ``statistic-set-max-sample-count-all`` command sets size based limits
+for collecting samples for all statistics. An example command may look
+like this:
+
+::
+
+   {
+       "command": "statistic-set-max-sample-count-all",
+       "arguments": {
+           "max-samples": 100
+       }
+
+   }
+
+The server will respond with message about successfully set limit
+for all statistics, with a result set to 0 indicating success
+and an empty parameters field. If an error is encountered, the server returns
+a status code of 1 (error) and the text field contains the error description.
+
+.. _time-series:
+
+Time series
+====================
+
+Previously, by default, each statistic holded only a single data point. When Kea
+attempted to record a new value, the existing previous value was
+overwritten. That approach has the benefit of taking up little memory and
+it covers most cases reasonably well. However, there may be cases where
+you need to have many data points for some process. For example, some
+processes, such as received packet size, packet processing time or number
+of database queries needed to process a packet, are not cumulative and it
+would be useful to keep many data points, perhaps to do some form of
+statistical analysis afterwards.
+
+
+Since Kea 1.6, by default, each statistic holds 20 data points. Setting such
+limit prevent unlimited memory consumption growth.
+There are two ways to define the limts: time based (e.g. keep samples from
+the last 5 minutes) and size based. It's possible to change the size based
+limit by using one of two commands: ``statistic-set-max-sample-count``,
+to set size limit for single statistic and ``statistic-set-max-sample-count-all``
+for setting size based limits for all statistics. To set time based
+limit for single statistic use ``statistic-set-max-sample-age``,
+and ``statistic-set-max-sample-age-all`` to set time based limits for all statistics.
+For given statistic only one type of limit can be active. It means that
+storage is limited only by time based limit or size based, never by both of them.
