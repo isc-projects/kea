@@ -44,18 +44,18 @@
 //                        "ip-address" : "<ip address>"
 //                       ,"port" : 53
 //                    }
-//                   ,
-//                   {
-//                       next DNS server for this DdnsDomain
-//                   }
-//                   :
+//                    ,
+//                    {
+//                        next DNS server for this DdnsDomain
+//                    }
+//                    :
 //                ]
 //            }
-//           ,
-//           {
-//                next Forward DdnsDomain
-//           }
-//           :
+//            ,
+//            {
+//                 next Forward DdnsDomain
+//            }
+//            :
         ]
     },
 
@@ -75,18 +75,18 @@
 //                        "ip-address" : "<ip address>"
 //                        ,"port" : 53
 //                    }
-//                   ,
-//                   {
-//                       next DNS server for this DdnsDomain
-//                   }
-//                   :
+//                    ,
+//                    {
+//                        next DNS server for this DdnsDomain
+//                    }
+//                    :
 //                ]
 //            }
-//           ,
-//           {
-//                next Reverse DdnsDomain
-//           }
-//           :
+//            ,
+//            {
+//                 next Reverse DdnsDomain
+//            }
+//            :
         ]
     },
 //
@@ -100,12 +100,12 @@
 //            Valid values for algorithm are:    HMAC-MD5, HMAC-SHA1,
 //                                               HMAC-SHA224, HMAC-SHA256,
 //                                               HMAC-SHA384, HMAC-SHA512
-//           "digest-bits" : 256,
-//           Minimum truncated length in bits.
-//           Default 0 (means truncation is forbidden).
+//            "digest-bits" : 256,
+//            Minimum truncated length in bits.
+//            Default 0 (means truncation is forbidden).
 //            "secret" : "<shared secret value>"
 //        }
-//       ,
+//        ,
 //        {
 //                next TSIG Key
 //        }
