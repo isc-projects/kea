@@ -108,6 +108,7 @@ reservation-del
 reservation-get
 reservation-get-all
 reservation-get-page
+server-tag-get
 shutdown
 stat-lease4-get
 stat-lease6-get

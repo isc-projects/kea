@@ -553,6 +553,18 @@ command-line argument. This command does not take any parameters.
        "command": "version-get"
    }
 
+The server-tag-get Command
+--------------------------
+
+The ``server-tag-get`` command returns the server tag. This command
+does not take any parameters.
+
+::
+
+   {
+       "command": "server-tag-get"
+   }
+
 Commands Supported by the D2 Server
 ===================================
 

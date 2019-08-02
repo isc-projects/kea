@@ -206,6 +206,7 @@ api_files+=$(srcdir)/api/reservation-del.json
 api_files+=$(srcdir)/api/reservation-get.json
 api_files+=$(srcdir)/api/reservation-get-all.json
 api_files+=$(srcdir)/api/reservation-get-page.json
+api_files+=$(srcdir)/api/erver-tag-get.json
 api_files+=$(srcdir)/api/shutdown.json
 api_files+=$(srcdir)/api/statistic-get-all.json
 api_files+=$(srcdir)/api/statistic-get.json

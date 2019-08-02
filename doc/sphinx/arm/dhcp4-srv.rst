@@ -5397,6 +5397,7 @@ The DHCPv4 server supports the following operational commands:
 -  dhcp-enable
 -  leases-reclaim
 -  list-commands
+-  server-tag-get
 -  shutdown
 -  version-get
 
