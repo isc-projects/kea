@@ -238,16 +238,16 @@ options. Some commonly used options are:
    The ``--runstatedir`` in the installation directories is particular.
    There are three cases:
 
-   - You use autoconf 2.70 or greater which supports this, but this autoconf
-     version has not been released yet.
+   1. You use autoconf 2.70 or greater which supports this, but this autoconf
+      version has not been released yet.
 
-   - You use autoconf 2.69 patched to add support of this. In this case and the
-     previous simply use when needed the``--runstatedir`` configure parameter.
+   2. You use autoconf 2.69 patched to add support of this. In this case and the
+      previous simply use when needed the``--runstatedir`` configure parameter.
 
-   - There is no support (the configure parameter is not recognized and configure
-     directly raises an error). For autoconf 2.69 the ``runstatedir`` environment
-     variable is supported so simply remove the ``--`` before ``runstatedir``
-     in the configure script call, e.g.: ``./configure runstatedir=/opt/run ...``
+   3. There is no support (the configure parameter is not recognized and configure
+      directly raises an error). For autoconf 2.69 the ``runstatedir`` environment
+      variable is supported so simply remove the ``--`` before ``runstatedir``
+      in the configure script call, e.g.: ``./configure runstatedir=/opt/run ...``
 
 ..
 
