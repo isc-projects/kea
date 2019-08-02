@@ -45,7 +45,7 @@
     // Agent will fail to start.
     "hooks-libraries": [
 //  {
-//      "library": "/opt/local/control-agent-commands.so",
+//      "library": "@libdir@/kea/hooks/control-agent-commands.so",
 //      "parameters": {
 //          "param1": "foo"
 //      }

@@ -47,7 +47,7 @@
     // existing hooks library or the Netconf agent will fail to start.
 //  "hooks-libraries": [
 //  {
-//      "library": "/opt/local/netconf-commands.so",
+//      "library": "@libdir@/kea/hooks/netconf-commands.so",
 //      "parameters": {
 //          "param1": "foo"
 //      }
