@@ -4939,412 +4939,412 @@ The DHCPv4 server supports the following statistics:
    :class: longtable
    :widths: 20 10 70
 
-   +--------------------------------+----------------+-----------------------------------+
-   | Statistic                      | Data Type      | Description                       |
-   +================================+================+===================================+
-   | pkt4-received                  | integer        | Number of DHCPv4 packets          |
-   |                                |                | received.  This includes all      |
-   |                                |                | packets: valid, bogus,            |
-   |                                |                | corrupted, rejected, etc. This    |
-   |                                |                | statistic is expected to grow     |
-   |                                |                | rapidly.                          |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-discover-received         | integer        | Number of                         |
-   |                                |                | DHCPDISCOVER packets              |
-   |                                |                | received. This                    |
-   |                                |                | statistic is expected             |
-   |                                |                | to grow; its increase             |
-   |                                |                | means that clients                |
-   |                                |                | that just booted                  |
-   |                                |                | started their                     |
-   |                                |                | configuration process             |
-   |                                |                | and their initial                 |
-   |                                |                | packets reached the               |
-   |                                |                | Kea server.                       |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-offer-received            | integer        | Number of DHCPOFFER               |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to remain                |
-   |                                |                | zero at all times, as             |
-   |                                |                | DHCPOFFER packets are             |
-   |                                |                | sent by the server                |
-   |                                |                | and the server is                 |
-   |                                |                | never expected to                 |
-   |                                |                | receive them. A                   |
-   |                                |                | non-zero value                    |
-   |                                |                | indicates an error.               |
-   |                                |                | One likely cause                  |
-   |                                |                | would be a                        |
-   |                                |                | misbehaving relay                 |
-   |                                |                | agent that                        |
-   |                                |                | incorrectly forwards              |
-   |                                |                | DHCPOFFER messages                |
-   |                                |                | towards the server,               |
-   |                                |                | rather than back to               |
-   |                                |                | the clients.                      |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-request-received          | integer        | Number of DHCPREQUEST             |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to grow. Its             |
-   |                                |                | increase means that               |
-   |                                |                | clients that just                 |
-   |                                |                | booted received the               |
-   |                                |                | server's response                 |
-   |                                |                | (DHCPOFFER) and                   |
-   |                                |                | accepted it, and are              |
-   |                                |                | now requesting an                 |
-   |                                |                | address                           |
-   |                                |                | (DHCPREQUEST).                    |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-ack-received              | integer        | Number of DHCPACK                 |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to remain                |
-   |                                |                | zero at all times, as             |
-   |                                |                | DHCPACK packets are               |
-   |                                |                | sent by the server                |
-   |                                |                | and the server is                 |
-   |                                |                | never expected to                 |
-   |                                |                | receive them. A                   |
-   |                                |                | non-zero value                    |
-   |                                |                | indicates an error.               |
-   |                                |                | One likely cause                  |
-   |                                |                | would be a                        |
-   |                                |                | misbehaving relay                 |
-   |                                |                | agent that                        |
-   |                                |                | incorrectly forwards              |
-   |                                |                | DHCPACK messages                  |
-   |                                |                | towards the server,               |
-   |                                |                | rather than back to               |
-   |                                |                | the clients.                      |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-nak-received              | integer        | Number of DHCPNAK                 |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to remain                |
-   |                                |                | zero at all times, as             |
-   |                                |                | DHCPNAK packets are               |
-   |                                |                | sent by the server                |
-   |                                |                | and the server is                 |
-   |                                |                | never expected to                 |
-   |                                |                | receive them. A                   |
-   |                                |                | non-zero value                    |
-   |                                |                | indicates an error.               |
-   |                                |                | One likely cause                  |
-   |                                |                | would be a                        |
-   |                                |                | misbehaving relay                 |
-   |                                |                | agent that                        |
-   |                                |                | incorrectly forwards              |
-   |                                |                | DHCPNAK messages                  |
-   |                                |                | towards the server,               |
-   |                                |                | rather than back to               |
-   |                                |                | the clients.                      |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-release-received          | integer        | Number of DHCPRELEASE             |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to grow. Its             |
-   |                                |                | increase means that               |
-   |                                |                | clients that had an               |
-   |                                |                | address are shutting              |
-   |                                |                | down or ceasing to                |
-   |                                |                | use their addresses.              |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-decline-received          | integer        | Number of DHCPDECLINE             |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to remain                |
-   |                                |                | close to zero. Its                |
-   |                                |                | increase means that a             |
-   |                                |                | client leased an                  |
-   |                                |                | address, but                      |
-   |                                |                | discovered that the               |
-   |                                |                | address is currently              |
-   |                                |                | used by an unknown                |
-   |                                |                | device in the                     |
-   |                                |                | network.                          |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-inform-received           | integer        | Number of DHCPINFORM              |
-   |                                |                | packets received.                 |
-   |                                |                | This statistic is                 |
-   |                                |                | expected to grow. Its             |
-   |                                |                | increase means that               |
-   |                                |                | there are clients                 |
-   |                                |                | that either do not                |
-   |                                |                | need an address or                |
-   |                                |                | already have an                   |
-   |                                |                | address and are                   |
-   |                                |                | interested only in                |
-   |                                |                | getting additional                |
-   |                                |                | configuration                     |
-   |                                |                | parameters.                       |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-unknown-received          | integer        | Number of packets                 |
-   |                                |                | received of an                    |
-   |                                |                | unknown type. A                   |
-   |                                |                | non-zero value of                 |
-   |                                |                | this statistic                    |
-   |                                |                | indicates that the                |
-   |                                |                | server received a                 |
-   |                                |                | packet that it wasn't             |
-   |                                |                | able to recognize,                |
-   |                                |                | either with an                    |
-   |                                |                | unsupported type or               |
-   |                                |                | possibly malformed                |
-   |                                |                | (without message type             |
-   |                                |                | option).                          |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-sent                      | integer        | Number of DHCPv4                  |
-   |                                |                | packets sent. This                |
-   |                                |                | statistic is expected             |
-   |                                |                | to grow every time                |
-   |                                |                | the server transmits              |
-   |                                |                | a packet. In general,             |
-   |                                |                | it should roughly                 |
-   |                                |                | match pkt4-received,              |
-   |                                |                | as most incoming                  |
-   |                                |                | packets cause the                 |
-   |                                |                | server to respond.                |
-   |                                |                | There are exceptions              |
-   |                                |                | (e.g. DHCPRELEASE),               |
-   |                                |                | so do not worry if it             |
-   |                                |                | is less than                      |
-   |                                |                | pkt4-received.                    |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-offer-sent                | integer        | Number of DHCPOFFER               |
-   |                                |                | packets sent. This                |
-   |                                |                | statistic is expected             |
-   |                                |                | to grow in most cases             |
-   |                                |                | after a DHCPDISCOVER              |
-   |                                |                | is processed. There               |
-   |                                |                | are certain uncommon,             |
-   |                                |                | but valid, cases                  |
-   |                                |                | where incoming                    |
-   |                                |                | DHCPDISCOVER packets              |
-   |                                |                | are dropped, but in               |
-   |                                |                | general this                      |
-   |                                |                | statistic is expected             |
-   |                                |                | to be close to                    |
-   |                                |                | pkt4-discover-received.           |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-ack-sent                  | integer        | Number of DHCPACK                 |
-   |                                |                | packets sent. This                |
-   |                                |                | statistic is expected             |
-   |                                |                | to grow in most cases             |
-   |                                |                | after a DHCPREQUEST               |
-   |                                |                | is processed. There               |
-   |                                |                | are certain cases                 |
-   |                                |                | where DHCPNAK is sent             |
-   |                                |                | instead. In general,              |
-   |                                |                | the sum of                        |
-   |                                |                | pkt4-ack-sent and                 |
-   |                                |                | pkt4-nak-sent should              |
-   |                                |                | be close to                       |
-   |                                |                | pkt4-request-received.            |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-nak-sent                  | integer        | Number of DHCPNAK                 |
-   |                                |                | packets sent. This                |
-   |                                |                | statistic is expected             |
-   |                                |                | to grow when the                  |
-   |                                |                | server chooses not to             |
-   |                                |                | honor the address                 |
-   |                                |                | requested by a                    |
-   |                                |                | client. In general,               |
-   |                                |                | the sum of                        |
-   |                                |                | pkt4-ack-sent and                 |
-   |                                |                | pkt4-nak-sent should              |
-   |                                |                | be close to                       |
-   |                                |                | pkt4-request-received.            |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-parse-failed              | integer        | Number of incoming                |
-   |                                |                | packets that could                |
-   |                                |                | not be parsed. A                  |
-   |                                |                | non-zero value of                 |
-   |                                |                | this statistic                    |
-   |                                |                | indicates that the                |
-   |                                |                | server received a                 |
-   |                                |                | malformed or                      |
-   |                                |                | truncated packet.                 |
-   |                                |                | This may indicate                 |
-   |                                |                | problems in the                   |
-   |                                |                | network, faulty                   |
-   |                                |                | clients, or a bug in              |
-   |                                |                | the server.                       |
-   +--------------------------------+----------------+-----------------------------------+
-   | pkt4-receive-drop              | integer        | Number of incoming                |
-   |                                |                | packets that were                 |
-   |                                |                | dropped. The exact                |
-   |                                |                | reason for dropping               |
-   |                                |                | packets is logged,                |
-   |                                |                | but the most common               |
-   |                                |                | reasons may be: an                |
-   |                                |                | unacceptable packet               |
-   |                                |                | type, direct                      |
-   |                                |                | responses are                     |
-   |                                |                | forbidden, or the                 |
-   |                                |                | server-id sent by the             |
-   |                                |                | client does not match             |
-   |                                |                | the server's                      |
-   |                                |                | server-id.                        |
-   +--------------------------------+----------------+-----------------------------------+
-   | subnet[id].total-addresses     | integer        | Total number of                   |
-   |                                |                | addresses available               |
-   |                                |                | for DHCPv4                        |
-   |                                |                | management; in other              |
-   |                                |                | words, this is the                |
-   |                                |                | sum of all addresses              |
-   |                                |                | in all configured                 |
-   |                                |                | pools. This statistic             |
-   |                                |                | changes only during               |
-   |                                |                | configuration                     |
-   |                                |                | changes. Note it does             |
-   |                                |                | not take into account             |
-   |                                |                | any addresses that                |
-   |                                |                | may be reserved due               |
-   |                                |                | to host reservation.              |
-   |                                |                | The *id* is the                   |
-   |                                |                | subnet-id of a given              |
-   |                                |                | subnet. This                      |
-   |                                |                | statistic is exposed              |
-   |                                |                | for each subnet                   |
-   |                                |                | separately, and is                |
-   |                                |                | reset during a                    |
-   |                                |                | reconfiguration                   |
-   |                                |                | event.                            |
-   +--------------------------------+----------------+-----------------------------------+
-   | subnet[id].assigned-addresses  | integer        | Number of assigned                |
-   |                                |                | addresses in a given              |
-   |                                |                | subnet. It increases              |
-   |                                |                | every time a new                  |
-   |                                |                | lease is allocated                |
-   |                                |                | (as a result of                   |
-   |                                |                | receiving a                       |
-   |                                |                | DHCPREQUEST message)              |
-   |                                |                | and is decreased                  |
-   |                                |                | every time a lease is             |
-   |                                |                | released (a                       |
-   |                                |                | DHCPRELEASE message               |
-   |                                |                | is received) or                   |
-   |                                |                | expires. The *id* is              |
-   |                                |                | the subnet-id of the              |
-   |                                |                | subnet. This                      |
-   |                                |                | statistic is exposed              |
-   |                                |                | for each subnet                   |
-   |                                |                | separately, and is                |
-   |                                |                | reset during a                    |
-   |                                |                | reconfiguration                   |
-   |                                |                | event.                            |
-   +--------------------------------+----------------+-----------------------------------+
-   | reclaimed-leases               | integer        | Number of expired                 |
-   |                                |                | leases that have been             |
-   |                                |                | reclaimed since                   |
-   |                                |                | server startup. It is             |
-   |                                |                | incremented each time             |
-   |                                |                | an expired lease is               |
-   |                                |                | reclaimed and is                  |
-   |                                |                | reset when the server             |
-   |                                |                | is reconfigured.                  |
-   +--------------------------------+----------------+-----------------------------------+
-   | subnet[id].reclaimed-leases    | integer        | Number of expired                 |
-   |                                |                | leases associated                 |
-   |                                |                | with a given subnet               |
-   |                                |                | (*id* is the                      |
-   |                                |                | subnet-id) that have              |
-   |                                |                | been reclaimed since              |
-   |                                |                | server startup. It is             |
-   |                                |                | incremented each time             |
-   |                                |                | an expired lease is               |
-   |                                |                | reclaimed and is                  |
-   |                                |                | reset when the server             |
-   |                                |                | is reconfigured.                  |
-   +--------------------------------+----------------+-----------------------------------+
-   | declined-addresses             | integer        | Number of IPv4                    |
-   |                                |                | addresses that are                |
-   |                                |                | currently declined; a             |
-   |                                |                | count of the number               |
-   |                                |                | of leases currently               |
-   |                                |                | unavailable. Once a               |
-   |                                |                | lease is recovered,               |
-   |                                |                | this statistic will               |
-   |                                |                | be decreased;                     |
-   |                                |                | ideally, this                     |
-   |                                |                | statistic should be               |
-   |                                |                | zero. If this                     |
-   |                                |                | statistic is non-zero             |
-   |                                |                | or increasing, a                  |
-   |                                |                | network administrator             |
-   |                                |                | should investigate                |
-   |                                |                | whether there is a                |
-   |                                |                | misbehaving device in             |
-   |                                |                | the network. This is              |
-   |                                |                | a global statistic                |
-   |                                |                | that covers all                   |
-   |                                |                | subnets.                          |
-   +--------------------------------+----------------+-----------------------------------+
-   | subnet[id].declined-addresses  | integer        | Number of IPv4                    |
-   |                                |                | addresses that are                |
-   |                                |                | currently declined in             |
-   |                                |                | a given subnet; a                 |
-   |                                |                | count of the number               |
-   |                                |                | of leases currently               |
-   |                                |                | unavailable. Once a               |
-   |                                |                | lease is recovered,               |
-   |                                |                | this statistic will               |
-   |                                |                | be decreased;                     |
-   |                                |                | ideally, this                     |
-   |                                |                | statistic should be               |
-   |                                |                | zero. If this                     |
-   |                                |                | statistic is non-zero             |
-   |                                |                | or increasing, a                  |
-   |                                |                | network administrator             |
-   |                                |                | should investigate                |
-   |                                |                | whether there is a                |
-   |                                |                | misbehaving device in             |
-   |                                |                | the network. The *id*             |
-   |                                |                | is the subnet-id of a             |
-   |                                |                | given subnet. This                |
-   |                                |                | statistic is exposed              |
-   |                                |                | for each subnet                   |
-   |                                |                | separately.                       |
-   +--------------------------------+----------------+-----------------------------------+
-   | reclaimed-declined-addresses   | integer        | Number of IPv4                    |
-   |                                |                | addresses that were               |
-   |                                |                | declined, but have                |
-   |                                |                | now been recovered.               |
-   |                                |                | Unlike                            |
-   |                                |                | declined-addresses,               |
-   |                                |                | this statistic never              |
-   |                                |                | decreases. It can be              |
-   |                                |                | used as a long-term               |
-   |                                |                | indicator of how many             |
-   |                                |                | actual valid Declines             |
-   |                                |                | were processed and                |
-   |                                |                | recovered from. This              |
-   |                                |                | is a global statistic             |
-   |                                |                | that covers all                   |
-   |                                |                | subnets.                          |
-   +--------------------------------+----------------+-----------------------------------+
-   | subnet[id].reclaimed           | integer        | Number of IPv4                    |
-   |  -declined-addresses           |                | addresses that were               |
-   |                                |                | declined, but have                |
-   |                                |                | now been recovered.               |
-   |                                |                | Unlike                            |
-   |                                |                | declined-addresses,               |
-   |                                |                | this statistic never              |
-   |                                |                | decreases. It can be              |
-   |                                |                | used as a long-term               |
-   |                                |                | indicator of how many             |
-   |                                |                | actual valid Declines             |
-   |                                |                | were processed and                |
-   |                                |                | recovered from. The               |
-   |                                |                | *id* is the subnet-id             |
-   |                                |                | of a given subnet.                |
-   |                                |                | This statistic is                 |
-   |                                |                | exposed for each                  |
-   |                                |                | subnet separately.                |
-   +--------------------------------+----------------+-----------------------------------+
+   +-----------------------------------------+----------------+-----------------------------------+
+   | Statistic                               | Data Type      | Description                       |
+   +=========================================+================+===================================+
+   | pkt4-received                           | integer        | Number of DHCPv4 packets          |
+   |                                         |                | received.  This includes all      |
+   |                                         |                | packets: valid, bogus,            |
+   |                                         |                | corrupted, rejected, etc. This    |
+   |                                         |                | statistic is expected to grow     |
+   |                                         |                | rapidly.                          |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-discover-received                  | integer        | Number of                         |
+   |                                         |                | DHCPDISCOVER packets              |
+   |                                         |                | received. This                    |
+   |                                         |                | statistic is expected             |
+   |                                         |                | to grow; its increase             |
+   |                                         |                | means that clients                |
+   |                                         |                | that just booted                  |
+   |                                         |                | started their                     |
+   |                                         |                | configuration process             |
+   |                                         |                | and their initial                 |
+   |                                         |                | packets reached the               |
+   |                                         |                | Kea server.                       |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-offer-received                     | integer        | Number of DHCPOFFER               |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to remain                |
+   |                                         |                | zero at all times, as             |
+   |                                         |                | DHCPOFFER packets are             |
+   |                                         |                | sent by the server                |
+   |                                         |                | and the server is                 |
+   |                                         |                | never expected to                 |
+   |                                         |                | receive them. A                   |
+   |                                         |                | non-zero value                    |
+   |                                         |                | indicates an error.               |
+   |                                         |                | One likely cause                  |
+   |                                         |                | would be a                        |
+   |                                         |                | misbehaving relay                 |
+   |                                         |                | agent that                        |
+   |                                         |                | incorrectly forwards              |
+   |                                         |                | DHCPOFFER messages                |
+   |                                         |                | towards the server,               |
+   |                                         |                | rather than back to               |
+   |                                         |                | the clients.                      |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-request-received                   | integer        | Number of DHCPREQUEST             |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to grow. Its             |
+   |                                         |                | increase means that               |
+   |                                         |                | clients that just                 |
+   |                                         |                | booted received the               |
+   |                                         |                | server's response                 |
+   |                                         |                | (DHCPOFFER) and                   |
+   |                                         |                | accepted it, and are              |
+   |                                         |                | now requesting an                 |
+   |                                         |                | address                           |
+   |                                         |                | (DHCPREQUEST).                    |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-ack-received                       | integer        | Number of DHCPACK                 |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to remain                |
+   |                                         |                | zero at all times, as             |
+   |                                         |                | DHCPACK packets are               |
+   |                                         |                | sent by the server                |
+   |                                         |                | and the server is                 |
+   |                                         |                | never expected to                 |
+   |                                         |                | receive them. A                   |
+   |                                         |                | non-zero value                    |
+   |                                         |                | indicates an error.               |
+   |                                         |                | One likely cause                  |
+   |                                         |                | would be a                        |
+   |                                         |                | misbehaving relay                 |
+   |                                         |                | agent that                        |
+   |                                         |                | incorrectly forwards              |
+   |                                         |                | DHCPACK messages                  |
+   |                                         |                | towards the server,               |
+   |                                         |                | rather than back to               |
+   |                                         |                | the clients.                      |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-nak-received                       | integer        | Number of DHCPNAK                 |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to remain                |
+   |                                         |                | zero at all times, as             |
+   |                                         |                | DHCPNAK packets are               |
+   |                                         |                | sent by the server                |
+   |                                         |                | and the server is                 |
+   |                                         |                | never expected to                 |
+   |                                         |                | receive them. A                   |
+   |                                         |                | non-zero value                    |
+   |                                         |                | indicates an error.               |
+   |                                         |                | One likely cause                  |
+   |                                         |                | would be a                        |
+   |                                         |                | misbehaving relay                 |
+   |                                         |                | agent that                        |
+   |                                         |                | incorrectly forwards              |
+   |                                         |                | DHCPNAK messages                  |
+   |                                         |                | towards the server,               |
+   |                                         |                | rather than back to               |
+   |                                         |                | the clients.                      |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-release-received                   | integer        | Number of DHCPRELEASE             |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to grow. Its             |
+   |                                         |                | increase means that               |
+   |                                         |                | clients that had an               |
+   |                                         |                | address are shutting              |
+   |                                         |                | down or ceasing to                |
+   |                                         |                | use their addresses.              |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-decline-received                   | integer        | Number of DHCPDECLINE             |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to remain                |
+   |                                         |                | close to zero. Its                |
+   |                                         |                | increase means that a             |
+   |                                         |                | client leased an                  |
+   |                                         |                | address, but                      |
+   |                                         |                | discovered that the               |
+   |                                         |                | address is currently              |
+   |                                         |                | used by an unknown                |
+   |                                         |                | device in the                     |
+   |                                         |                | network.                          |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-inform-received                    | integer        | Number of DHCPINFORM              |
+   |                                         |                | packets received.                 |
+   |                                         |                | This statistic is                 |
+   |                                         |                | expected to grow. Its             |
+   |                                         |                | increase means that               |
+   |                                         |                | there are clients                 |
+   |                                         |                | that either do not                |
+   |                                         |                | need an address or                |
+   |                                         |                | already have an                   |
+   |                                         |                | address and are                   |
+   |                                         |                | interested only in                |
+   |                                         |                | getting additional                |
+   |                                         |                | configuration                     |
+   |                                         |                | parameters.                       |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-unknown-received                   | integer        | Number of packets                 |
+   |                                         |                | received of an                    |
+   |                                         |                | unknown type. A                   |
+   |                                         |                | non-zero value of                 |
+   |                                         |                | this statistic                    |
+   |                                         |                | indicates that the                |
+   |                                         |                | server received a                 |
+   |                                         |                | packet that it wasn't             |
+   |                                         |                | able to recognize,                |
+   |                                         |                | either with an                    |
+   |                                         |                | unsupported type or               |
+   |                                         |                | possibly malformed                |
+   |                                         |                | (without message type             |
+   |                                         |                | option).                          |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-sent                               | integer        | Number of DHCPv4                  |
+   |                                         |                | packets sent. This                |
+   |                                         |                | statistic is expected             |
+   |                                         |                | to grow every time                |
+   |                                         |                | the server transmits              |
+   |                                         |                | a packet. In general,             |
+   |                                         |                | it should roughly                 |
+   |                                         |                | match pkt4-received,              |
+   |                                         |                | as most incoming                  |
+   |                                         |                | packets cause the                 |
+   |                                         |                | server to respond.                |
+   |                                         |                | There are exceptions              |
+   |                                         |                | (e.g. DHCPRELEASE),               |
+   |                                         |                | so do not worry if it             |
+   |                                         |                | is less than                      |
+   |                                         |                | pkt4-received.                    |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-offer-sent                         | integer        | Number of DHCPOFFER               |
+   |                                         |                | packets sent. This                |
+   |                                         |                | statistic is expected             |
+   |                                         |                | to grow in most cases             |
+   |                                         |                | after a DHCPDISCOVER              |
+   |                                         |                | is processed. There               |
+   |                                         |                | are certain uncommon,             |
+   |                                         |                | but valid, cases                  |
+   |                                         |                | where incoming                    |
+   |                                         |                | DHCPDISCOVER packets              |
+   |                                         |                | are dropped, but in               |
+   |                                         |                | general this                      |
+   |                                         |                | statistic is expected             |
+   |                                         |                | to be close to                    |
+   |                                         |                | pkt4-discover-received.           |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-ack-sent                           | integer        | Number of DHCPACK                 |
+   |                                         |                | packets sent. This                |
+   |                                         |                | statistic is expected             |
+   |                                         |                | to grow in most cases             |
+   |                                         |                | after a DHCPREQUEST               |
+   |                                         |                | is processed. There               |
+   |                                         |                | are certain cases                 |
+   |                                         |                | where DHCPNAK is sent             |
+   |                                         |                | instead. In general,              |
+   |                                         |                | the sum of                        |
+   |                                         |                | pkt4-ack-sent and                 |
+   |                                         |                | pkt4-nak-sent should              |
+   |                                         |                | be close to                       |
+   |                                         |                | pkt4-request-received.            |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-nak-sent                           | integer        | Number of DHCPNAK                 |
+   |                                         |                | packets sent. This                |
+   |                                         |                | statistic is expected             |
+   |                                         |                | to grow when the                  |
+   |                                         |                | server chooses not to             |
+   |                                         |                | honor the address                 |
+   |                                         |                | requested by a                    |
+   |                                         |                | client. In general,               |
+   |                                         |                | the sum of                        |
+   |                                         |                | pkt4-ack-sent and                 |
+   |                                         |                | pkt4-nak-sent should              |
+   |                                         |                | be close to                       |
+   |                                         |                | pkt4-request-received.            |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-parse-failed                       | integer        | Number of incoming                |
+   |                                         |                | packets that could                |
+   |                                         |                | not be parsed. A                  |
+   |                                         |                | non-zero value of                 |
+   |                                         |                | this statistic                    |
+   |                                         |                | indicates that the                |
+   |                                         |                | server received a                 |
+   |                                         |                | malformed or                      |
+   |                                         |                | truncated packet.                 |
+   |                                         |                | This may indicate                 |
+   |                                         |                | problems in the                   |
+   |                                         |                | network, faulty                   |
+   |                                         |                | clients, or a bug in              |
+   |                                         |                | the server.                       |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | pkt4-receive-drop                       | integer        | Number of incoming                |
+   |                                         |                | packets that were                 |
+   |                                         |                | dropped. The exact                |
+   |                                         |                | reason for dropping               |
+   |                                         |                | packets is logged,                |
+   |                                         |                | but the most common               |
+   |                                         |                | reasons may be: an                |
+   |                                         |                | unacceptable packet               |
+   |                                         |                | type, direct                      |
+   |                                         |                | responses are                     |
+   |                                         |                | forbidden, or the                 |
+   |                                         |                | server-id sent by the             |
+   |                                         |                | client does not match             |
+   |                                         |                | the server's                      |
+   |                                         |                | server-id.                        |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | subnet[id].total-addresses              | integer        | Total number of                   |
+   |                                         |                | addresses available               |
+   |                                         |                | for DHCPv4                        |
+   |                                         |                | management; in other              |
+   |                                         |                | words, this is the                |
+   |                                         |                | sum of all addresses              |
+   |                                         |                | in all configured                 |
+   |                                         |                | pools. This statistic             |
+   |                                         |                | changes only during               |
+   |                                         |                | configuration                     |
+   |                                         |                | changes. Note it does             |
+   |                                         |                | not take into account             |
+   |                                         |                | any addresses that                |
+   |                                         |                | may be reserved due               |
+   |                                         |                | to host reservation.              |
+   |                                         |                | The *id* is the                   |
+   |                                         |                | subnet-id of a given              |
+   |                                         |                | subnet. This                      |
+   |                                         |                | statistic is exposed              |
+   |                                         |                | for each subnet                   |
+   |                                         |                | separately, and is                |
+   |                                         |                | reset during a                    |
+   |                                         |                | reconfiguration                   |
+   |                                         |                | event.                            |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | subnet[id].assigned-addresses           | integer        | Number of assigned                |
+   |                                         |                | addresses in a given              |
+   |                                         |                | subnet. It increases              |
+   |                                         |                | every time a new                  |
+   |                                         |                | lease is allocated                |
+   |                                         |                | (as a result of                   |
+   |                                         |                | receiving a                       |
+   |                                         |                | DHCPREQUEST message)              |
+   |                                         |                | and is decreased                  |
+   |                                         |                | every time a lease is             |
+   |                                         |                | released (a                       |
+   |                                         |                | DHCPRELEASE message               |
+   |                                         |                | is received) or                   |
+   |                                         |                | expires. The *id* is              |
+   |                                         |                | the subnet-id of the              |
+   |                                         |                | subnet. This                      |
+   |                                         |                | statistic is exposed              |
+   |                                         |                | for each subnet                   |
+   |                                         |                | separately, and is                |
+   |                                         |                | reset during a                    |
+   |                                         |                | reconfiguration                   |
+   |                                         |                | event.                            |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | reclaimed-leases                        | integer        | Number of expired                 |
+   |                                         |                | leases that have been             |
+   |                                         |                | reclaimed since                   |
+   |                                         |                | server startup. It is             |
+   |                                         |                | incremented each time             |
+   |                                         |                | an expired lease is               |
+   |                                         |                | reclaimed and is                  |
+   |                                         |                | reset when the server             |
+   |                                         |                | is reconfigured.                  |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | subnet[id].reclaimed-leases             | integer        | Number of expired                 |
+   |                                         |                | leases associated                 |
+   |                                         |                | with a given subnet               |
+   |                                         |                | (*id* is the                      |
+   |                                         |                | subnet-id) that have              |
+   |                                         |                | been reclaimed since              |
+   |                                         |                | server startup. It is             |
+   |                                         |                | incremented each time             |
+   |                                         |                | an expired lease is               |
+   |                                         |                | reclaimed and is                  |
+   |                                         |                | reset when the server             |
+   |                                         |                | is reconfigured.                  |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | declined-addresses                      | integer        | Number of IPv4                    |
+   |                                         |                | addresses that are                |
+   |                                         |                | currently declined; a             |
+   |                                         |                | count of the number               |
+   |                                         |                | of leases currently               |
+   |                                         |                | unavailable. Once a               |
+   |                                         |                | lease is recovered,               |
+   |                                         |                | this statistic will               |
+   |                                         |                | be decreased;                     |
+   |                                         |                | ideally, this                     |
+   |                                         |                | statistic should be               |
+   |                                         |                | zero. If this                     |
+   |                                         |                | statistic is non-zero             |
+   |                                         |                | or increasing, a                  |
+   |                                         |                | network administrator             |
+   |                                         |                | should investigate                |
+   |                                         |                | whether there is a                |
+   |                                         |                | misbehaving device in             |
+   |                                         |                | the network. This is              |
+   |                                         |                | a global statistic                |
+   |                                         |                | that covers all                   |
+   |                                         |                | subnets.                          |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | subnet[id].declined-addresses           | integer        | Number of IPv4                    |
+   |                                         |                | addresses that are                |
+   |                                         |                | currently declined in             |
+   |                                         |                | a given subnet; a                 |
+   |                                         |                | count of the number               |
+   |                                         |                | of leases currently               |
+   |                                         |                | unavailable. Once a               |
+   |                                         |                | lease is recovered,               |
+   |                                         |                | this statistic will               |
+   |                                         |                | be decreased;                     |
+   |                                         |                | ideally, this                     |
+   |                                         |                | statistic should be               |
+   |                                         |                | zero. If this                     |
+   |                                         |                | statistic is non-zero             |
+   |                                         |                | or increasing, a                  |
+   |                                         |                | network administrator             |
+   |                                         |                | should investigate                |
+   |                                         |                | whether there is a                |
+   |                                         |                | misbehaving device in             |
+   |                                         |                | the network. The *id*             |
+   |                                         |                | is the subnet-id of a             |
+   |                                         |                | given subnet. This                |
+   |                                         |                | statistic is exposed              |
+   |                                         |                | for each subnet                   |
+   |                                         |                | separately.                       |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | reclaimed-declined-addresses            | integer        | Number of IPv4                    |
+   |                                         |                | addresses that were               |
+   |                                         |                | declined, but have                |
+   |                                         |                | now been recovered.               |
+   |                                         |                | Unlike                            |
+   |                                         |                | declined-addresses,               |
+   |                                         |                | this statistic never              |
+   |                                         |                | decreases. It can be              |
+   |                                         |                | used as a long-term               |
+   |                                         |                | indicator of how many             |
+   |                                         |                | actual valid Declines             |
+   |                                         |                | were processed and                |
+   |                                         |                | recovered from. This              |
+   |                                         |                | is a global statistic             |
+   |                                         |                | that covers all                   |
+   |                                         |                | subnets.                          |
+   +-----------------------------------------+----------------+-----------------------------------+
+   | subnet[id].reclaimed-declined-addresses | integer        | Number of IPv4                    |
+   |                                         |                | addresses that were               |
+   |                                         |                | declined, but have                |
+   |                                         |                | now been recovered.               |
+   |                                         |                | Unlike                            |
+   |                                         |                | declined-addresses,               |
+   |                                         |                | this statistic never              |
+   |                                         |                | decreases. It can be              |
+   |                                         |                | used as a long-term               |
+   |                                         |                | indicator of how many             |
+   |                                         |                | actual valid Declines             |
+   |                                         |                | were processed and                |
+   |                                         |                | recovered from. The               |
+   |                                         |                | *id* is the subnet-id             |
+   |                                         |                | of a given subnet.                |
+   |                                         |                | This statistic is                 |
+   |                                         |                | exposed for each                  |
+   |                                         |                | subnet separately.                |
+   +-----------------------------------------+----------------+-----------------------------------+
 
 .. _dhcp4-ctrl-channel:
 
