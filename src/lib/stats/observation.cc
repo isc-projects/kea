@@ -389,7 +389,6 @@ std::string Observation::typeToText(Type type) {
 
 isc::data::ConstElementPtr
 Observation::getJSON() const {
-
     ElementPtr list = isc::data::Element::createList(); // multiple observations
     ElementPtr entry;
     ElementPtr value;
