@@ -408,8 +408,7 @@ class StatsMgr : public boost::noncopyable {
     /// @brief Handles statistic-sample-count-set-all command
     ///
     /// This method handles statistic-sample-count-set-all command,
-    /// which set max_sample_count_ limit of a given statistic
-    /// and leaves max_sample_age_ disabled.
+    /// which set max_sample_count_ limit of all statistics.
     /// It expects one parameter stored in params map:
     /// max-samples: count limit
     ///
