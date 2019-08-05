@@ -343,7 +343,6 @@ std::string Observation::typeToText(Type type) {
 
 isc::data::ConstElementPtr
 Observation::getJSON() const {
-
     ElementPtr entry = isc::data::Element::createList(); // multiple observations
     ElementPtr value;
     ElementPtr timestamp;
