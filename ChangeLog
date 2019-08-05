@@ -1,3 +1,8 @@
+1634.	[func]		franek, razvan
+	Kea statistics improvements: Added commands for set sample age and
+	set sample count.
+	(Gitlab #731,!459, git dde1b96b33ed20dbe2c815f1168e62b66635e39f)
+
 1633.	[bug]		fdupont
 	Added missing YANG Kea test module in distributions.
 	(Gitlab #747,!436, git a800e79c7917acc723cbc71b626adc360e15a8d7)
