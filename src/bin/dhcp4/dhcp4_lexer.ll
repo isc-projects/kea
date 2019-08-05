@@ -1001,6 +1001,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"pattern\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp4Parser::make_PATTERN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("pattern", driver.loc_);
+    }
+}
+
 \"severity\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
