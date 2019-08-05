@@ -1,11 +1,11 @@
 {
-    "name": "statistic-set-max-sample-age",
-    "brief": "The statistic-set-max-sample-age command sets time based limit for single statistic. It takes two parameters: a string called name and an integer value called duration.",
-    "description": "See <xref linkend=\"command-statistic-set-max-sample-age\"/>",
+    "name": "statistic-sample-age-set",
+    "brief": "The statistic-sample-age-set command sets time based limit for single statistic. It takes two parameters: a string called name and an integer value called duration.",
+    "description": "See <xref linkend=\"command-statistic-sample-age-set\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.6.0",
     "cmd-syntax": "{
-    \"command\": \"statistic-set-max-sample-age\",
+    \"command\": \"statistic-sample-age-set\",
     \"arguments\": {
         \"name\": \"pkt4-received\",
         \"duration\": 1245

@@ -117,10 +117,10 @@ statistic-remove
 statistic-remove-all
 statistic-reset
 statistic-reset-all
-statistic-set-max-sample-age
-statistic-set-max-sample-age-all
-statistic-set-max-sample-count
-statistic-set-max-sample-count-all
+statistic-sample-age-set
+statistic-sample-age-set-all
+statistic-sample-count-set
+statistic-sample-count-set-all
 subnet4-add
 subnet4-del
 subnet4-get

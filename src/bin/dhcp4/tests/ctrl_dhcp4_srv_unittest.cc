@@ -491,10 +491,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-age\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-age-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-count\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-set-max-sample-count-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -714,29 +714,29 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
               response);
 
-    // Check statistic-set-max-sample-age
-    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-age\", "
+    // Check statistic-sample-age-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
                     "  \"arguments\": {"
                     "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
     EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
               response);
 
-    // Check statistic-set-max-sample-age-all
-    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-age-all\", "
+    // Check statistic-sample-age-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
                     "  \"arguments\": {"
                     "  \"duration\": 1245 }}", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
               response);
 
-    // Check statistic-set-max-sample-count
-    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-count\", "
+    // Check statistic-sample-count-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
                     "  \"arguments\": {"
                     "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
     EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
               response);
 
-    // Check statistic-set-max-sample-count-all
-    sendUnixCommand("{ \"command\" : \"statistic-set-max-sample-count-all\", "
+    // Check statistic-sample-count-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
                     "  \"arguments\": {"
                     "  \"max-samples\": 100 }}", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
@@ -915,10 +915,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");
     checkListCommands(rsp, "statistic-reset-all");
-    checkListCommands(rsp, "statistic-set-max-sample-age");
-    checkListCommands(rsp, "statistic-set-max-sample-age-all");
-    checkListCommands(rsp, "statistic-set-max-sample-count");
-    checkListCommands(rsp, "statistic-set-max-sample-count-all");
+    checkListCommands(rsp, "statistic-sample-age-set");
+    checkListCommands(rsp, "statistic-sample-age-set-all");
+    checkListCommands(rsp, "statistic-sample-count-set");
+    checkListCommands(rsp, "statistic-sample-count-set-all");
     checkListCommands(rsp, "version-get");
 }
 

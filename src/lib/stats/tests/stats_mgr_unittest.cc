@@ -772,7 +772,7 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
-// This test checks whether statistic-set-max-sample-age command really set
+// This test checks whether statistic-sample-age-set command really set
 // max_sample_age_ limit correctly.
 TEST_F(StatsMgrTest, commandSetMaxSampleAge) {
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
@@ -782,7 +782,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAge) {
     params->set("duration", Element::create(1245)); // time_duration(0, 20, 45, 0)
 
     ConstElementPtr rsp =
-        StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+        StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-sample-age-set", params);
     int status_code;
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
@@ -794,7 +794,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAge) {
     EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
 }
 
-// Test checks if statistic-set-max-sample-age is able to handle:
+// Test checks if statistic-sample-age-set is able to handle:
 // - a request without parameters
 // - a request without duration parameter
 // - a request with missing statistic name
@@ -802,7 +802,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAge) {
 TEST_F(StatsMgrTest, commandSetMaxSampleAgeNegative) {
     // Case 1: a request without parameters
     ConstElementPtr rsp =
-        StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", ElementPtr());
+        StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-sample-age-set", ElementPtr());
     int status_code;
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
@@ -810,20 +810,20 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAgeNegative) {
     // Case 2: a request without duration parameter
     ElementPtr params = Element::createMap();
     params->set("name", Element::create("alpha"));
-    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-sample-age-set", params);
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
 
     // Case 3: a request with missing statistic name
     params = Element::createMap();
     params->set("duration", Element::create(100));
-    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-sample-age-set", params);
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
 
     // Case 4: a request for non-existing statistic
     params->set("name", Element::create("alpha"));
-    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-set-max-sample-age", params);
+    rsp = StatsMgr::instance().statisticSetMaxSampleAgeHandler("statistic-sample-age-set", params);
     EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
               rsp->str());
 }
@@ -839,7 +839,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAgeAll) {
     params->set("duration", Element::create(3765)); // time_duration(1, 2, 45, 0)
 
     ConstElementPtr rsp =
-        StatsMgr::instance().statisticSetMaxSampleAgeAllHandler("statistic-set-max-sample-age-all", params);
+        StatsMgr::instance().statisticSetMaxSampleAgeAllHandler("statistic-sample-age-set-all", params);
     int status_code;
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
@@ -866,7 +866,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAgeAll) {
     EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, false);
 }
 
-// This test checks whether statistic-set-max-sample-count command really set
+// This test checks whether statistic-sample-count-set command really set
 // max_sample_count_ limit correctly.
 TEST_F(StatsMgrTest, commandSetMaxSampleCount) {
     StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
@@ -876,7 +876,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCount) {
     params->set("max-samples", Element::create(15));
 
     ConstElementPtr rsp =
-        StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+        StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-sample-count-set", params);
     int status_code;
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
@@ -887,7 +887,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCount) {
     EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
 }
 
-// Test checks if statistic-set-max-sample-count is able to handle:
+// Test checks if statistic-sample-count-set is able to handle:
 // - a request without parameters
 // - a request without max-samples parameter
 // - a request with missing statistic name
@@ -895,7 +895,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCount) {
 TEST_F(StatsMgrTest, commandSetMaxSampleCountNegative) {
     // Case 1: a request without parameters
     ConstElementPtr rsp =
-        StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", ElementPtr());
+        StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-sample-count-set", ElementPtr());
     int status_code;
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
@@ -903,20 +903,20 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCountNegative) {
     // Case 2: a request without max-samples parameter
     ElementPtr params = Element::createMap();
     params->set("name", Element::create("alpha"));
-    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-sample-count-set", params);
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
 
     // Case 3: a request with missing statistic name
     params = Element::createMap();
     params->set("max-samples", Element::create(10));
-    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-sample-count-set", params);
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(status_code, CONTROL_RESULT_ERROR);
 
     // Case 4: a request for non-existing statistic
     params->set("name", Element::create("alpha"));
-    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-set-max-sample-count", params);
+    rsp = StatsMgr::instance().statisticSetMaxSampleCountHandler("statistic-sample-count-set", params);
     EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'alpha' statistic found\" }",
               rsp->str());
 }
@@ -932,7 +932,7 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCountAll) {
     params->set("max-samples", Element::create(200));
 
     ConstElementPtr rsp =
-        StatsMgr::instance().statisticSetMaxSampleCountAllHandler("statistic-set-max-sample-count-all", params);
+        StatsMgr::instance().statisticSetMaxSampleCountAllHandler("statistic-sample-count-set-all", params);
     int status_code;
     ASSERT_NO_THROW(parseAnswer(status_code, rsp));
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);

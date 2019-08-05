@@ -888,16 +888,16 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-set-max-sample-age",
+    CommandMgr::instance().registerCommand("statistic-sample-age-set",
         boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-set-max-sample-count",
-        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("statistic-set-max-sample-age-all",
+    CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
         boost::bind(&StatsMgr::statisticSetMaxSampleAgeAllHandler, _1, _2));
 
-    CommandMgr::instance().registerCommand("statistic-set-max-sample-count-all",
+    CommandMgr::instance().registerCommand("statistic-sample-count-set",
+        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
         boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
@@ -938,10 +938,10 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-reset-all");
-        CommandMgr::instance().deregisterCommand("statistic-set-max-sample-age");
-        CommandMgr::instance().deregisterCommand("statistic-set-max-sample-count");
-        CommandMgr::instance().deregisterCommand("statistic-set-max-sample-age-all");
-        CommandMgr::instance().deregisterCommand("statistic-set-max-sample-count-all");
+        CommandMgr::instance().deregisterCommand("statistic-sample-age-set");
+        CommandMgr::instance().deregisterCommand("statistic-sample-age-set-all");
+        CommandMgr::instance().deregisterCommand("statistic-sample-count-set");
+        CommandMgr::instance().deregisterCommand("statistic-sample-count-set-all");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {

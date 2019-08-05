@@ -1,11 +1,11 @@
 {
-    "name": "statistic-set-max-sample-count",
-    "brief": "The statistic-set-max-sample-count command sets size based limit for single statistic. It takes two parameters: a string called name and an integer value called max-samples.",
-    "description": "See <xref linkend=\"command-statistic-set-max-sample-count\"/>",
+    "name": "statistic-sample-count-set",
+    "brief": "The statistic-sample-count-set command sets size based limit for single statistic. It takes two parameters: a string called name and an integer value called max-samples.",
+    "description": "See <xref linkend=\"command-statistic-sample-count-set\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.6.0",
     "cmd-syntax": "{
-    \"command\": \"statistic-set-max-sample-count\",
+    \"command\": \"statistic-sample-count-set\",
     \"arguments\": {
         \"name\": \"pkt4-received\",
         \"max-samples\": 100

@@ -234,19 +234,19 @@ a status of 0, indicating success, and an empty parameters field. If an
 error is encountered, the server returns a status code of 1 (error) and
 the text field contains the error description.
 
-.. _command-statistic-set-max-sample-age:
+.. _command-statistic-sample-age-set:
 
-The statistic-set-max-sample-age Command
+The statistic-sample-age-set Command
 ----------------------------------------
 
-The ``statistic-set-max-sample-age`` command sets time based limit
+The ``statistic-sample-age-set`` command sets time based limit
 for collecting samples for given statistic. An example command may look
 like this:
 
 ::
 
    {
-       "command": "statistic-set-max-sample-age",
+       "command": "statistic-sample-age-set",
        "arguments": {
            "name": "pkt4-received",
            "duration": 1245
@@ -260,19 +260,19 @@ and an empty parameters field. If an error is encountered (e.g. the
 requested statistic was not found), the server returns a status code
 of 1 (error) and the text field contains the error description.
 
-.. _command-statistic-set-max-sample-age-all:
+.. _command-statistic-sample-age-set-all:
 
-The statistic-set-max-sample-age-all Command
+The statistic-sample-age-set-all Command
 --------------------------------------------
 
-The ``statistic-set-max-sample-age-all`` command sets time based limits
+The ``statistic-sample-age-set-all`` command sets time based limits
 for collecting samples for all statistics. An example command may look
 like this:
 
 ::
 
    {
-       "command": "statistic-set-max-sample-age-all",
+       "command": "statistic-sample-age-set-all",
        "arguments": {
            "duration": 1245
        }
@@ -284,19 +284,19 @@ for all statistics, with a result set to 0 indicating success
 and an empty parameters field. If an error is encountered, the server returns
 a status code of 1 (error) and the text field contains the error description.
 
-.. _command-statistic-set-max-sample-count:
+.. _command-statistic-sample-count-set:
 
-The statistic-set-max-sample-count Command
+The statistic-sample-count-set Command
 ------------------------------------------
 
-The ``statistic-set-max-sample-count`` command sets size based limit
+The ``statistic-sample-count-set`` command sets size based limit
 for collecting samples for given statistic. An example command may look
 like this:
 
 ::
 
    {
-       "command": "statistic-set-max-sample-count",
+       "command": "statistic-sample-count-set",
        "arguments": {
            "name": "pkt4-received",
            "max-samples": 100
@@ -310,19 +310,19 @@ and an empty parameters field. If an error is encountered (e.g. the
 requested statistic was not found), the server returns a status code
 of 1 (error) and the text field contains the error description.
 
-.. _command-statistic-set-max-sample-count-all:
+.. _command-statistic-sample-count-set-all:
 
-The statistic-set-max-sample-count-all Command
+The statistic-sample-count-set-all Command
 ----------------------------------------------
 
-The ``statistic-set-max-sample-count-all`` command sets size based limits
+The ``statistic-sample-count-set-all`` command sets size based limits
 for collecting samples for all statistics. An example command may look
 like this:
 
 ::
 
    {
-       "command": "statistic-set-max-sample-count-all",
+       "command": "statistic-sample-count-set-all",
        "arguments": {
            "max-samples": 100
        }
@@ -353,10 +353,10 @@ Since Kea 1.6, by default, each statistic holds 20 data points. Setting such
 limit prevent unlimited memory consumption growth.
 There are two ways to define the limts: time based (e.g. keep samples from
 the last 5 minutes) and size based. It's possible to change the size based
-limit by using one of two commands: ``statistic-set-max-sample-count``,
-to set size limit for single statistic and ``statistic-set-max-sample-count-all``
+limit by using one of two commands: ``statistic-sample-count-set``,
+to set size limit for single statistic and ``statistic-sample-count-set-all``
 for setting size based limits for all statistics. To set time based
-limit for single statistic use ``statistic-set-max-sample-age``,
-and ``statistic-set-max-sample-age-all`` to set time based limits for all statistics.
-For given statistic only one type of limit can be active. It means that
-storage is limited only by time based limit or size based, never by both of them.
+limit for single statistic use ``statistic-sample-age-set``, and
+``statistic-sample-age-set-all`` to set time based limits for all statistics.
+For given statistic only one type of limit can be active. It means that storage
+is limited only by time based limit or size based, never by both of them.
