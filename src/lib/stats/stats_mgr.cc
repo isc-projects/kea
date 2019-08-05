@@ -189,13 +189,13 @@ StatsMgr::statisticSetMaxSampleAgeHandler(const std::string& /*name*/,
                                           const isc::data::ConstElementPtr& params) {
     std::string name, error;
     StatsDuration duration;
-    if (!getStatName(params, name, error)) {
+    if (!StatsMgr::getStatName(params, name, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (!getStatDuration(params, duration, error)) {
+    if (!StatsMgr::getStatDuration(params, duration, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (setMaxSampleAge(name, duration)) {
+    if (StatsMgr::instance().setMaxSampleAge(name, duration)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                             "Statistic '" + name + "' duration limit is set."));
     } else {
@@ -209,13 +209,13 @@ StatsMgr::statisticSetMaxSampleCountHandler(const std::string& /*name*/,
                                             const isc::data::ConstElementPtr& params) {
     std::string name, error;
     uint32_t max_samples;
-    if (!getStatName(params, name, error)) {
+    if (!StatsMgr::getStatName(params, name, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (!getStatMaxSamples(params, max_samples, error)) {
+    if (!StatsMgr::getStatMaxSamples(params, max_samples, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (setMaxSampleCount(name, max_samples)) {
+    if (StatsMgr::instance().setMaxSampleCount(name, max_samples)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                             "Statistic '" + name + "' count limit is set."));
     } else {
@@ -228,22 +228,22 @@ isc::data::ConstElementPtr
 StatsMgr::statisticGetHandler(const std::string& /*name*/,
                               const isc::data::ConstElementPtr& params) {
     std::string name, error;
-    if (!getStatName(params, name, error)) {
+    if (!StatsMgr::getStatName(params, name, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS,
-                         instance().get(name)));
+                         StatsMgr::instance().get(name)));
 }
 
 isc::data::ConstElementPtr
 StatsMgr::statisticResetHandler(const std::string& /*name*/,
                                 const isc::data::ConstElementPtr& params) {
     std::string name, error;
-    if (!getStatName(params, name, error)) {
+    if (!StatsMgr::getStatName(params, name, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
 
-    if (instance().reset(name)) {
+    if (StatsMgr::instance().reset(name)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                              "Statistic '" + name + "' reset."));
     } else {
@@ -256,10 +256,10 @@ isc::data::ConstElementPtr
 StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
                                  const isc::data::ConstElementPtr& params) {
     std::string name, error;
-    if (!getStatName(params, name, error)) {
+    if (!StatsMgr::getStatName(params, name, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (instance().del(name)) {
+    if (StatsMgr::instance().del(name)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                              "Statistic '" + name + "' removed."));
     } else {
@@ -272,7 +272,7 @@ StatsMgr::statisticRemoveHandler(const std::string& /*name*/,
 isc::data::ConstElementPtr
 StatsMgr::statisticRemoveAllHandler(const std::string& /*name*/,
                                     const isc::data::ConstElementPtr& /*params*/) {
-    instance().removeAll();
+    StatsMgr::instance().removeAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics removed."));
 }
@@ -280,14 +280,14 @@ StatsMgr::statisticRemoveAllHandler(const std::string& /*name*/,
 isc::data::ConstElementPtr
 StatsMgr::statisticGetAllHandler(const std::string& /*name*/,
                                  const isc::data::ConstElementPtr& /*params*/) {
-    ConstElementPtr all_stats = instance().getAll();
+    ConstElementPtr all_stats = StatsMgr::instance().getAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS, all_stats));
 }
 
 isc::data::ConstElementPtr
 StatsMgr::statisticResetAllHandler(const std::string& /*name*/,
                                    const isc::data::ConstElementPtr& /*params*/) {
-    instance().resetAll();
+    StatsMgr::instance().resetAll();
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics reset to neutral values."));
 }
@@ -297,10 +297,10 @@ StatsMgr::statisticSetMaxSampleAgeAllHandler(const std::string& /*name*/,
                                              const isc::data::ConstElementPtr& params) {
     std::string error;
     StatsDuration duration;
-    if (!getStatDuration(params, duration, error)) {
+    if (!StatsMgr::getStatDuration(params, duration, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    setMaxSampleAgeAll(duration);
+    StatsMgr::instance().setMaxSampleAgeAll(duration);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics duration limit are set."));
 }
@@ -310,10 +310,10 @@ StatsMgr::statisticSetMaxSampleCountAllHandler(const std::string& /*name*/,
                                                const isc::data::ConstElementPtr& params) {
     std::string error;
     uint32_t max_samples;
-    if (!getStatMaxSamples(params, max_samples, error)) {
+    if (!StatsMgr::getStatMaxSamples(params, max_samples, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    setMaxSampleCountAll(max_samples);
+    StatsMgr::instance().setMaxSampleCountAll(max_samples);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics count limit are set."));
 }
