@@ -1089,7 +1089,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
     checkListCommands(rsp, "statistic-set-max-sample-age");
     checkListCommands(rsp, "statistic-set-max-sample-age-all");
     checkListCommands(rsp, "statistic-set-max-sample-count");
-    checkListCommands(rsp, "statistic-set-max-sample-count-all");    
+    checkListCommands(rsp, "statistic-set-max-sample-count-all");
 }
 
 // Tests if the server returns its configuration using config-get.

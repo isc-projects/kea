@@ -339,15 +339,14 @@ a status code of 1 (error) and the text field contains the error description.
 Time series
 ====================
 
-Previously, by default, each statistic holded only a single data point. When Kea
-attempted to record a new value, the existing previous value was
-overwritten. That approach has the benefit of taking up little memory and
-it covers most cases reasonably well. However, there may be cases where
-you need to have many data points for some process. For example, some
-processes, such as received packet size, packet processing time or number
-of database queries needed to process a packet, are not cumulative and it
-would be useful to keep many data points, perhaps to do some form of
-statistical analysis afterwards.
+Previously, by default, each statistic held only a single data point. When Kea
+attempted to record a new value, the existing previous value was overwritten.
+That approach has the benefit of taking up little memory and it covers most
+cases reasonably well. However, there may be cases where you need to have many
+data points for some process. For example, some processes, such as received
+packet size, packet processing time or number of database queries needed to
+process a packet, are not cumulative and it would be useful to keep many data
+points, perhaps to do some form of statistical analysis afterwards.
 
 
 Since Kea 1.6, by default, each statistic holds 20 data points. Setting such

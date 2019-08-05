@@ -875,8 +875,6 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
 
     CommandMgr::instance().registerCommand("statistic-set-max-sample-count-all",
         boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
-
-
 }
 
 void ControlledDhcpv4Srv::shutdown() {
@@ -921,7 +919,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-set-max-sample-age-all");
         CommandMgr::instance().deregisterCommand("statistic-set-max-sample-count-all");
         CommandMgr::instance().deregisterCommand("version-get");
-
 
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server

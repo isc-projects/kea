@@ -941,7 +941,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("statistic-set-max-sample-age");
         CommandMgr::instance().deregisterCommand("statistic-set-max-sample-count");
         CommandMgr::instance().deregisterCommand("statistic-set-max-sample-age-all");
-        CommandMgr::instance().deregisterCommand("statistic-set-max-sample-count-all");        
+        CommandMgr::instance().deregisterCommand("statistic-set-max-sample-count-all");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {

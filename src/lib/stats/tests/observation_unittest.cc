@@ -449,14 +449,31 @@ TEST_F(ObservationTest, getLimits) {
     EXPECT_EQ(c.getMaxSampleCount().second, 20);
     EXPECT_EQ(d.getMaxSampleCount().second, 20);
 
-    // Change limit to max_sample_age_
-    a.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3));
+    // change limit to time duration
+    ASSERT_NOT_THROW(a.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NOT_THROW(b.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NOT_THROW(c.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NOT_THROW(d.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+
     EXPECT_EQ(a.getMaxSampleAge().first, true);
+    EXPECT_EQ(b.getMaxSampleAge().first, true);
+    EXPECT_EQ(c.getMaxSampleAge().first, true);
+    EXPECT_EQ(d.getMaxSampleAge().first, true);
+
     EXPECT_EQ(a.getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+    EXPECT_EQ(b.getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+    EXPECT_EQ(c.getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+    EXPECT_EQ(d.getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
 
     EXPECT_EQ(a.getMaxSampleCount().first, false);
-    EXPECT_EQ(a.getMaxSampleCount().second, 20);
+    EXPECT_EQ(b.getMaxSampleCount().first, false);
+    EXPECT_EQ(c.getMaxSampleCount().first, false);
+    EXPECT_EQ(d.getMaxSampleCount().first, false);
 
+    EXPECT_EQ(a.getMaxSampleCount().second, 20);
+    EXPECT_EQ(b.getMaxSampleCount().second, 20);
+    EXPECT_EQ(c.getMaxSampleCount().second, 20);
+    EXPECT_EQ(d.getMaxSampleCount().second, 20);
 }
 
 // Test checks whether timing is reported properly.

@@ -195,7 +195,7 @@ StatsMgr::statisticSetMaxSampleAgeHandler(const std::string& /*name*/,
     if (!getStatDuration(params, duration, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (instance().setMaxSampleAge(name, duration)) {
+    if (setMaxSampleAge(name, duration)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                             "Statistic '" + name + "' duration limit is set."));
     } else {
@@ -215,7 +215,7 @@ StatsMgr::statisticSetMaxSampleCountHandler(const std::string& /*name*/,
     if (!getStatMaxSamples(params, max_samples, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    if (instance().setMaxSampleCount(name, max_samples)) {
+    if (setMaxSampleCount(name, max_samples)) {
         return (createAnswer(CONTROL_RESULT_SUCCESS,
                             "Statistic '" + name + "' count limit is set."));
     } else {
@@ -300,7 +300,7 @@ StatsMgr::statisticSetMaxSampleAgeAllHandler(const std::string& /*name*/,
     if (!getStatDuration(params, duration, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    instance().setMaxSampleAgeAll(duration);
+    setMaxSampleAgeAll(duration);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics duration limit are set."));
 }
@@ -313,7 +313,7 @@ StatsMgr::statisticSetMaxSampleCountAllHandler(const std::string& /*name*/,
     if (!getStatMaxSamples(params, max_samples, error)) {
         return (createAnswer(CONTROL_RESULT_ERROR, error));
     }
-    instance().setMaxSampleCountAll(max_samples);
+    setMaxSampleCountAll(max_samples);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "All statistics count limit are set."));
 }
@@ -354,16 +354,16 @@ StatsMgr::getStatDuration(const isc::data::ConstElementPtr& params,
         return (false);
     }
 
-    int64_t dur = stat_duration->intValue();
+    int64_t time_duration = stat_duration->intValue();
 
-    int64_t hours = dur/3600;
-    dur = dur - hours*3600;
+    int64_t hours = time_duration / 3600;
+    time_duration -= hours * 3600;
 
-    int64_t minutes = dur/60;
-    dur = dur - minutes*60;
+    int64_t minutes = time_duration / 60;
+    time_duration -= minutes * 60;
 
-    int64_t seconds = dur;
-    duration = boost::posix_time::time_duration(hours,minutes,seconds,0);
+    int64_t seconds = time_duration;
+    duration = boost::posix_time::time_duration(hours, minutes, seconds, 0);
     return (true);
 }
 
