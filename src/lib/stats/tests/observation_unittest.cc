@@ -450,10 +450,10 @@ TEST_F(ObservationTest, getLimits) {
     EXPECT_EQ(d.getMaxSampleCount().second, 20);
 
     // change limit to time duration
-    ASSERT_NOT_THROW(a.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
-    ASSERT_NOT_THROW(b.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
-    ASSERT_NOT_THROW(c.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
-    ASSERT_NOT_THROW(d.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NO_THROW(a.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NO_THROW(b.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NO_THROW(c.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
+    ASSERT_NO_THROW(d.setMaxSampleAge(millisec::time_duration(0, 4, 5, 3)));
 
     EXPECT_EQ(a.getMaxSampleAge().first, true);
     EXPECT_EQ(b.getMaxSampleAge().first, true);
