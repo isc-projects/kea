@@ -1,30 +1,38 @@
 {
-    "name": "subnet4-update",
-    "brief": "This command is used to update a subnet in the existing server configuration.",
-    "description": "See <xref linkend=\"idp69\"/>",
-    "support": [ "kea-dhcp4"],
     "avail": "1.6.0",
+    "brief": [
+        "This command is used to update a subnet in the existing server configuration."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet4-update\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [ {",
+        "            \"id\": 123,",
+        "            \"subnet\": \"10.20.30.0/24\",",
+        "            ...",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp69\"/>",
     "hook": "subnet_cmds",
-    "cmd-syntax": "{
-    \"command\": \"subnet4-update\",
-    \"arguments\": {
-        \"subnets\": [ {
-            \"id\": 123,
-            \"subnet\": \"10.20.30.0/24\",
-            ...
-        } ]
-    }
-}",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"IPv4 subnet updated\",
-    \"arguments\": {
-        \"subnets\": [
-            {
-                \"id\": 123,
-                \"subnet\": \"10.20.30.0/24\"
-            }
-        ]
-    }
-}"
+    "name": "subnet4-update",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv4 subnet updated\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": 123,",
+        "                \"subnet\": \"10.20.30.0/24\"",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
 }

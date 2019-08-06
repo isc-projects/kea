@@ -1,14 +1,23 @@
 {
-    "name": "statistic-sample-age-set-all",
-    "brief": "The statistic-sample-age-set-all command sets time based limit for all statistics. It takes a single integer parameter called duration.",
-    "description": "See <xref linkend=\"command-statistic-sample-age-set-all\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.6.0",
-    "cmd-syntax": "{
-    \"command\": \"statistic-sample-age-set-all\",
-    \"arguments\": {
-        \"duration\": 1245
-    }
-}",
-    "cmd-comment": "The server will respond with message about successfully set limits for all statistics, with a result set to 0 indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
+    "brief": [
+        "The statistic-sample-age-set-all command sets time based limit for all statistics. It takes a single integer parameter called duration."
+    ],
+    "cmd-comment": [
+        "The server will respond with message about successfully set limits for all statistics, with a result set to 0 indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"statistic-sample-age-set-all\",",
+        "    \"arguments\": {",
+        "        \"duration\": 1245",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-statistic-sample-age-set-all\"/>",
+    "name": "statistic-sample-age-set-all",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
 }

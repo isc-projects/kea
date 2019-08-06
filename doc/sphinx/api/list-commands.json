@@ -1,12 +1,23 @@
 {
-    "name": "list-commands",
-    "brief": "The list-commands command retrieves a list of all commands supported by the server.",
-    "description": "See <xref linkend=\"command-list-commands\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.0.0",
-    "cmd-syntax": "{
-    \"command\": \"list-commands\",
-    \"arguments\": { }
-}",
-    "cmd-comment": "The server will respond with a list of all supported commands."
+    "brief": [
+        "The list-commands command retrieves a list of all commands supported by the server."
+    ],
+    "cmd-comment": [
+        "The server will respond with a list of all supported commands."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"list-commands\",",
+        "    \"arguments\": { }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-list-commands\"/>",
+    "name": "list-commands",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
 }

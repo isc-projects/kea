@@ -1,39 +1,51 @@
 {
-    "name": "remote-global-parameter6-get-all",
-    "brief": "This command is used to fetch all global parameters for the server from the specified database.",
-    "support": [ "kea-dhcp6" ],
     "avail": "1.6.0",
+    "brief": [
+        "This command is used to fetch all global parameters for the server from the specified database."
+    ],
+    "cmd-comment": [
+        "The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global parameters shared by all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-global-parameter6-get-all\",",
+        "    \"arguments\": {",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
     "hook": "cb_cmds",
-    "cmd-syntax": "{
-    \"command\": \"remote-global-parameter6-get-all\",
-    \"arguments\": {
-        \"remote\": {
-            <specification of the database to connect to>
-        },
-        \"server-tags\": [ <single server tag as string> ]
-    }
-}",
-    "cmd-comment": "The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global parameters shared by all servers.",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"DHCPv6 global parameters found.\",
-    \"arguments\": {
-        \"parameters\": [
-            {
-                <first parameter name>: <first parameter value>,
-                \"metadata\": {
-                    \"server-tags\": [ <server tag> ]
-                }
-            },
-            {
-                <second parameter name>: <second parameter value>,
-                \"metadata\": {
-                    \"server-tags\": [ <server tag> ]
-                }
-            }
-        ],
-        \"count\": 2
-    }
-}",
-    "resp-comment": "The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects. If the server tag \"all\" is included in the command, the response contains the global parameters shared between all servers. It excludes server specific global parameters. If an explicit server tag is included in the command, the response contains all global parameters directly associated with the given server and the global parameters associated with all servers when server specific values are not present."
+    "name": "remote-global-parameter6-get-all",
+    "resp-comment": [
+        "The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real or boolean. The metadata is appended to each parameter and it provides database specific information associated with the returned objects. If the server tag \"all\" is included in the command, the response contains the global parameters shared between all servers. It excludes server specific global parameters. If an explicit server tag is included in the command, the response contains all global parameters directly associated with the given server and the global parameters associated with all servers when server specific values are not present."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 global parameters found.\",",
+        "    \"arguments\": {",
+        "        \"parameters\": [",
+        "            {",
+        "                <first parameter name>: <first parameter value>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <server tag> ]",
+        "                }",
+        "            },",
+        "            {",
+        "                <second parameter name>: <second parameter value>,",
+        "                \"metadata\": {",
+        "                    \"server-tags\": [ <server tag> ]",
+        "                }",
+        "            }",
+        "        ],",
+        "        \"count\": 2",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
 }

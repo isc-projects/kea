@@ -1,30 +1,40 @@
 {
-    "name": "remote-option4-global-del",
-    "brief": "This command is used to delete a DHCPv4 global option from the configuration database.",
-    "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
+    "brief": [
+        "This command is used to delete a DHCPv4 global option from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one option specification comprising an option name and code. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option4-global-del\",",
+        "    \"arguments\": {",
+        "        \"options\": [",
+        "            {",
+        "                \"code\": <option code>",
+        "                \"space\": <option space>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
     "hook": "cb_cmds",
-    "cmd-syntax": "{
-    \"command\": \"remote-option4-global-del\",
-    \"arguments\": {
-        \"options\": [
-            {
-                \"code\": <option code>
-                \"space\": <option space>
-            }
-        ],
-        \"remote\": {
-            <specification of the database to connect to>
-        },
-        \"server-tags\": [ <single server tag as string> ]
-    }
-}",
-    "cmd-comment": "This command includes a list with exactly one option specification comprising an option name and code. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"1 DHCPv4 option(s) deleted.\",
-    \"arguments\": {
-        \"count\": 1
-    }
-}"
+    "name": "remote-option4-global-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv4 option(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
 }

@@ -1,32 +1,42 @@
 {
-    "name": "remote-global-parameter4-set",
-    "brief": "This command is used to create or update one more global parameters in the configuration database.",
-    "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
+    "brief": [
+        "This command is used to create or update one more global parameters in the configuration database."
+    ],
+    "cmd-comment": [
+        "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter4-get-all</command> may be useful to verify the contents of the database after the update. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified parameters with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-global-parameter4-set\"",
+        "    \"arguments\": {",
+        "        \"parameters\": {",
+        "            <first parameter name>: <first parameter value>,",
+        "            <second parameter name>: <second parameter value>",
+        "        },",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
     "hook": "cb_cmds",
-    "cmd-syntax": "{
-    \"command\": \"remote-global-parameter4-set\"
-    \"arguments\": {
-        \"parameters\": {
-            <first parameter name>: <first parameter value>,
-            <second parameter name>: <second parameter value>
-        },
-        \"remote\": {
-            <specification of the database to connect to>
-        },
-        \"server-tags\": [ <single server tag as string> ]
-    }
-}",
-    "cmd-comment": "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter4-get-all</command> may be useful to verify the contents of the database after the update. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified parameters with all servers.",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"DHCPv4 global parameter(s) successfully set.\",
-    \"arguments\": {
-        \"parameters\": {
-            <first parameter name>: <first parameter value>,
-            <second parameter name>: <second parameter value>
-        },
-        \"count\": 2
-    }
-}"
+    "name": "remote-global-parameter4-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv4 global parameter(s) successfully set.\",",
+        "    \"arguments\": {",
+        "        \"parameters\": {",
+        "            <first parameter name>: <first parameter value>,",
+        "            <second parameter name>: <second parameter value>",
+        "        },",
+        "        \"count\": 2",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
 }

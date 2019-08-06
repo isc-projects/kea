@@ -1,20 +1,31 @@
 {
-    "name": "config-get",
-    "brief": "Retrieves the current configuration used by the server. The configuration
-              is roughtly equal to the configuration file, but includes additional
-              changes made by other commands and due to parameters inheritance.",
-    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.2.0",
-
-    "cmd-syntax": "{
-    \"command\": \"config-get\"
-}",
-    "cmd-comment": "This command takes no parameters.",
-
-    "resp-syntax": "{
-    \"result\": <integer>,
-    \"arguments\": {
-        <JSON configuration here, starting with Dhcp4, Dhcp6, or Control-agent object>
-    }
-}"
+    "brief": [
+        "Retrieves the current configuration used by the server. The configuration",
+        "              is roughtly equal to the configuration file, but includes additional",
+        "              changes made by other commands and due to parameters inheritance."
+    ],
+    "cmd-comment": [
+        "This command takes no parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"config-get\"",
+        "}"
+    ],
+    "name": "config-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": <integer>,",
+        "    \"arguments\": {",
+        "        <JSON configuration here, starting with Dhcp4, Dhcp6, or Control-agent object>",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
 }

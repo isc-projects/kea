@@ -1,33 +1,43 @@
 {
-    "name": "remote-subnet6-set",
-    "brief": "This command is used to create or replace an IPv6 subnet the configuration database.",
-    "support": [ "kea-dhcp6" ],
     "avail": "1.6.0",
+    "brief": [
+        "This command is used to create or replace an IPv6 subnet the configuration database."
+    ],
+    "cmd-comment": [
+        "The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the subnet with one or more user defined servers. It may include the special server tag \"all\" to associate the subnet with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-subnet6-set\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": <subnet identifier>,",
+        "                \"subnet\": <subnet prefix>,",
+        "                \"shared-network-name\": <shared network name> | null,",
+        "                <the rest of the subnet specification here>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "    }",
+        "}"
+    ],
     "hook": "cb_cmds",
-    "cmd-syntax": "{
-    \"command\": \"remote-subnet6-set\",
-    \"arguments\": {
-        \"subnets\": [
-            {
-                \"id\": <subnet identifier>,
-                \"subnet\": <subnet prefix>,
-                \"shared-network-name\": <shared network name> | null,
-                <the rest of the subnet specification here>
-            }
-        ],
-        \"remote\": {
-            <specification of the database to connect to>
-        },
-        \"server-tags\": [ <first server tag>, <second server tag>, ... ]
-    }
-}",
-    "cmd-comment": "The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the subnet with one or more user defined servers. It may include the special server tag \"all\" to associate the subnet with all servers.",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"IPv6 subnet successfully set.\",
-    \"arguments\": {
-        \"id\": <subnet identifier>,
-        \"subnet\": <subnet prefix>
-    }
-}"
+    "name": "remote-subnet6-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 subnet successfully set.\",",
+        "    \"arguments\": {",
+        "        \"id\": <subnet identifier>,",
+        "        \"subnet\": <subnet prefix>",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
 }
