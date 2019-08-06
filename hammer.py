@@ -1094,7 +1094,7 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(system, env, check_times)
+            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare rhel
     elif system == 'rhel':
@@ -1142,14 +1142,14 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(system, env, check_times)
+            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare ubuntu
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev']
+                    'libboost-system-dev', 'gnupg']
 
         if 'unittest' in features:
             if revision.startswith('16.'):
@@ -1192,7 +1192,7 @@ def prepare_system_local(features, check_times):
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
-                    'liblog4cplus-dev', 'libboost-system-dev']
+                    'liblog4cplus-dev', 'libboost-system-dev', 'gnupg']
 
         if 'unittest' in features:
             if revision == '8':
