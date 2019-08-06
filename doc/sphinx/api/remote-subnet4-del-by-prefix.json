@@ -4,7 +4,7 @@
         "This command is used to delete an IPv4 subnet by prefix from the configuration database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one prefix of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command."
+        "This command includes a list with exactly one prefix of the subnet to be deleted. The ``server-tags`` parameter must not be specified for this command."
     ],
     "cmd-syntax": [
         "{",

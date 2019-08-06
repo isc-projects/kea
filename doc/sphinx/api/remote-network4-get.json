@@ -4,7 +4,7 @@
         "This command is used to fetch selected IPv4 shared network for the server from the specified database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one name of the shared network to be returned. The <command>subnets-include</command> optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned. The <command>server-tags</command> parameter must not be specified for this command."
+        "This command includes a list with exactly one name of the shared network to be returned. The ``subnets-include`` optional parameter allows for specifying whether the subnets belonging to the shared network should also be returned. The ``server-tags`` parameter must not be specified for this command."
     ],
     "cmd-syntax": [
         "{",
@@ -25,7 +25,7 @@
     "hook": "cb_cmds",
     "name": "remote-network4-get",
     "resp-comment": [
-        "If the subnets are returned with the shared network they are carried in the <command>subnet4</command> list within the shared network definition. The metadata is included in the returned shared network definition and it provides the database specific information associated with the returned object."
+        "If the subnets are returned with the shared network they are carried in the ``subnet4`` list within the shared network definition. The metadata is included in the returned shared network definition and it provides the database specific information associated with the returned object."
     ],
     "resp-syntax": [
         "{",

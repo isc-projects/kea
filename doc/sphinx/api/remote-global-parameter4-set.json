@@ -4,7 +4,7 @@
         "This command is used to create or update one more global parameters in the configuration database."
     ],
     "cmd-comment": [
-        "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the <command>remote-global-parameter4-get-all</command> may be useful to verify the contents of the database after the update. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified parameters with all servers."
+        "This command carries multiple global parameters with their values. Care should be taken when specifying more than one parameter because in some cases only a subset of the parameters may be successfully stored in the database and other parameters may fail to be stored. In such cases the ``remote-global-parameter4-get-all`` may be useful to verify the contents of the database after the update. The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified parameters with all servers."
     ],
     "cmd-syntax": [
         "{",

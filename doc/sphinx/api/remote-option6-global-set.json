@@ -4,7 +4,7 @@
         "This command is used to create or replace a DHCPv6 global option in the configuration database."
     ],
     "cmd-comment": [
-        "The provided list must cotain exactly one option specification. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified option with all servers."
+        "The provided list must cotain exactly one option specification. The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified option with all servers."
     ],
     "cmd-syntax": [
         "{",

@@ -4,7 +4,7 @@
         "This command is used to create or replace information about the DHCPv6 server in the database."
     ],
     "cmd-comment": [
-        "The provided list must contain exactly one server specification. The <command>server-tag</command> must be unique accross all servers within the configuration database. The <command>description</command> is the arbitrary text describing the server, its location within the network etc."
+        "The provided list must contain exactly one server specification. The ``server-tag`` must be unique accross all servers within the configuration database. The ``description`` is the arbitrary text describing the server, its location within the network etc."
     ],
     "cmd-syntax": [
         "{",

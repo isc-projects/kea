@@ -4,7 +4,7 @@
         "This command is used to delete an IPv6 shared network from the configuration database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one name of the shared network to be deleted. The <command>subnets-action</command> denotes whether the subnets in this shared network should be deleted or not. The <command>server-tags</command> parameter must not be specified for this command."
+        "This command includes a list with exactly one name of the shared network to be deleted. The ``subnets-action`` denotes whether the subnets in this shared network should be deleted or not. The ``server-tags`` parameter must not be specified for this command."
     ],
     "cmd-syntax": [
         "{",

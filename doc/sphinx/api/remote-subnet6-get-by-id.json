@@ -4,7 +4,7 @@
         "This command is used to fetch selected IPv6 subnet by ID for the server from the configuration database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one id of the subnet to be returned. The <command>server-tags</command> parameter must not be specified for this command."
+        "This command includes a list with exactly one id of the subnet to be returned. The ``server-tags`` parameter must not be specified for this command."
     ],
     "cmd-syntax": [
         "{",

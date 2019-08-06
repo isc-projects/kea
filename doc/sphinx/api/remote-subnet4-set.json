@@ -4,7 +4,7 @@
         "This command is used to create or replace an IPv4 subnet the configuration database."
     ],
     "cmd-comment": [
-        "The provided list must contain exactly one subnet specification. The <command>shared-network-name</command> parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the <command>null</command> value must be specified for the shared network name. The <command>server-tags</command> list is mandatory and it must contain one or more server tags as strings to explicitly associate the subnet with one or more user defined servers. It may include the special server tag \"all\" to associate the subnet with all servers."
+        "The provided list must contain exactly one subnet specification. The ``shared-network-name`` parameter is required for these commands. It associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (global subnet), the ``null`` value must be specified for the shared network name. The ``server-tags`` list is mandatory and it must contain one or more server tags as strings to explicitly associate the subnet with one or more user defined servers. It may include the special server tag \"all\" to associate the subnet with all servers."
     ],
     "cmd-syntax": [
         "{",

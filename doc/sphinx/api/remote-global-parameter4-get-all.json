@@ -4,7 +4,7 @@
         "This command is used to fetch all global parameters for the server from the specified database."
     ],
     "cmd-comment": [
-        "The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global parameters shared by all servers."
+        "The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global parameters shared by all servers."
     ],
     "cmd-syntax": [
         "{",
