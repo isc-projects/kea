@@ -54,7 +54,7 @@ public:
     ///
     /// This is below the maximum size of data that we will allow Kea to put
     /// into a single UDP datagram so as to avoid any "data too big" errors
-    /// when trying to send it to the port on which Kea lsutens.
+    /// when trying to send it to the port on which Kea listens.
     static constexpr size_t MAX_SEND_SIZE = 64000;
 
     /// @brief Number of packets Kea will process before shutting down.
@@ -62,7 +62,7 @@ public:
     /// After the shutdown, AFL will restart it. This safety switch is here for
     /// eliminating cases where Kea goes into a weird state and stops
     /// processing packets properly.  This can be overridden by setting the
-    /// environment variable FUZZ_AFL_LOOP_MAX.
+    /// environment variable KEA_AFL_LOOP_MAX.
     static constexpr long MAX_LOOP_COUNT = 1000;
 
 
@@ -88,7 +88,7 @@ public:
     /// Called immediately prior to Kea reading data, this reads stdin (where
     /// AFL will have sent the packet being tested) and copies the data to the
     /// interface on which Kea is listening.
-    void transfer(void);
+    void transfer(void) const;
 
     /// @brief Return Max Loop Count
     ///
@@ -103,23 +103,25 @@ public:
     }
 
 private:
-    /// @brief Populate address structures
+    /// @brief Create address structures
     ///
-    /// Decodes the environment variables used to pass address/port information
-    /// to the program and sets up the appropriate address structures.
+    /// Create the address structures describing the address/port on whick Kea
+    /// is listening for packets from AFL.
     ///
     /// @param ipversion Either 4 or 6 depending on which IP version address
     ///                  is expected.
+    /// @param interface Interface through which the fuzzer is sending packets
+    ///                  to Kea.
+    /// @param address   Address on the interface that will be used.
+    /// @param port      Port to be used.
     ///
     /// @throws FuzzInitFail Thrown if the address is not in the expected
     ///                      format.
-    void setAddress(int ipversion);
+    void createAddressStructures(int ipversion, const char* interface,
+                                 const char* address, uint16_t port);
 
     // Other member variables.
-    const char*         address_;       //< Pointer to address string
-    const char*         interface_;     //< Pointer to interface string
     long                loop_max_;      //< Maximum number of loop iterations
-    uint16_t            port_;          //< Port number to use
     size_t              sockaddr_len_;  //< Length of the structure
     struct sockaddr*    sockaddr_ptr_;  //< Pointer to structure used
     struct sockaddr_in  servaddr4_;     //< IPv6 address information
