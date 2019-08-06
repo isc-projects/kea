@@ -41,14 +41,6 @@ IPv6 specific.",
 {
     \"result\": <integer>,
     \"text\": <string>
-}",
-    "resp-comment": "Result is an integer representation of the status. Currently supported statuses are:
-<itemizedlist>
-  <listitem><para>0 - success</para></listitem>
-  <listitem><para>1 - error</para></listitem>
-  <listitem><para>2 - unsupported</para></listitem>
-  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)
-  </para></listitem>
-</itemizedlist>"
+}"
 }
 
