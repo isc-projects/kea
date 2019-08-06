@@ -101,7 +101,7 @@ ElementPtr
 
     default:
         isc_throw(NotImplemented,
-                  "value called with unupported type: " << s_val->type());
+                  "value called with unsupported type: " << s_val->type());
     }
 }
 
@@ -269,10 +269,37 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
 
     default:
         isc_throw(NotImplemented,
-                  "value called with unupported type: " << type);
+                  "value called with unsupported type: " << type);
     }
 
     return (s_val);
+}
+
+void
+TranslatorBasic::setItem(S_Val const& value) {
+    setItem(value->xpath(), value);
+}
+
+void
+TranslatorBasic::setItemMaybe(S_Val const& value) {
+    switch (value->type()) {
+    case SR_CONTAINER_T:
+    case SR_CONTAINER_PRESENCE_T:
+        return;
+    default:
+        setItem(value);
+    }
+}
+
+void
+TranslatorBasic::setItem(string const& xpath, S_Val const& value) {
+    try {
+        session_->set_item(xpath.c_str(), value);
+    } catch (const sysrepo_exception& ex) {
+        isc_throw(SysrepoError,
+                  "sysrepo error setting item '" << value->to_string()
+                  << "' at '" << value->xpath() << "': " << ex.what());
+    }
 }
 
 void
@@ -282,17 +309,16 @@ TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
     if (!s_val && (type != SR_LIST_T)) {
         return;
     }
-    try {
-        session_->set_item(xpath.c_str(), s_val);
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting item '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
-    }
+    setItem(xpath, s_val);
 }
 
 void
-TranslatorBasic::delItem(const std::string& xpath) {
+TranslatorBasic::delItem(S_Val const& value) {
+    delItem(value->xpath());
+}
+
+void
+TranslatorBasic::delItem(const string& xpath) {
     try {
         session_->delete_item(xpath.c_str());
     } catch (const sysrepo_exception& ex) {
@@ -302,9 +328,8 @@ TranslatorBasic::delItem(const std::string& xpath) {
     }
 }
 
-
 S_Iter_Value
-TranslatorBasic::getIter(const std::string& xpath) {
+TranslatorBasic::getIter(const string& xpath) {
     return (session_->get_items_iter(xpath.c_str()));
 }
 
@@ -326,5 +351,45 @@ TranslatorBasic::getNext(S_Iter_Value iter) {
     return (s_val->xpath());
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+void TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
+                                      string const& xpath,
+                                      string const& name) {
+    ConstElementPtr x(getItem(xpath + "/" + name));
+    if (x) {
+        storage->set(name, x);
+    }
+}
+
+void TranslatorBasic::checkAndGetLeafList(ElementPtr& storage,
+                                          const string& xpath,
+                                          const string& name) {
+    ConstElementPtr x(getItems(xpath + "/" + name));
+    if (x) {
+        storage->set(name, x);
+    }
+}
+
+void TranslatorBasic::checkAndSetLeaf(ConstElementPtr& from,
+                                      string const& xpath,
+                                      string const& name,
+                                      sr_type_t const& type) {
+    ConstElementPtr x(from->get(name));
+    if (x) {
+        setItem(xpath + "/" + name, x, type);
+    }
+}
+
+void TranslatorBasic::checkAndSetLeafList(ConstElementPtr& from,
+                                          string const& xpath,
+                                          string const& name,
+                                          sr_type_t const& type) {
+    ConstElementPtr x(from->get(name));
+    if (x) {
+        for (ConstElementPtr i : x->listValue()) {
+            setItem(xpath + "/" + name, i, type);
+        }
+    }
+}
+
+}  // namespace yang
+}  // namespace isc

@@ -71,6 +71,33 @@ public:
     /// null when not found.
     isc::data::ElementPtr getItems(const std::string& xpath);
 
+    template <typename T>
+    isc::data::ElementPtr
+    getList(std::string const& xpath,
+            T& t,
+            isc::data::ElementPtr (T::*f)(std::string const& xpath)) {
+        isc::data::ElementPtr result(isc::data::Element::createList());
+        S_Iter_Value iter(getIter(xpath));
+        if (!iter) {
+            // Can't happen.
+            isc_throw(isc::Unexpected, "TranslatorBasic::getList(): can't get iterator: " << xpath);
+        }
+        while (true) {
+            std::string const& element(getNext(iter));
+            if (element.empty()) {
+                break;
+            }
+            isc::data::ElementPtr x((t.*f)(element));
+            if (x) {
+                result->add(x);
+            }
+        }
+        if (result->empty()) {
+            result.reset();
+        }
+        return result;
+    }
+
     /// @brief Translate basic value from JSON to YANG.
     ///
     /// @note Please don't use this outside tests.
@@ -84,6 +111,12 @@ public:
     static S_Val value(isc::data::ConstElementPtr elem, sr_type_t type);
 #endif
 
+    void setItem(std::string const& xpath, sysrepo::S_Val const& value);
+
+    void setItem(sysrepo::S_Val const& value);
+
+    void setItemMaybe(sysrepo::S_Val const& value);
+
     /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
@@ -91,6 +124,8 @@ public:
     /// @param type The sysrepo type.
     void setItem(const std::string& xpath, isc::data::ConstElementPtr elem,
                  sr_type_t type);
+
+    void delItem(sysrepo::S_Val const& value);
 
     /// @brief Delete basic value from YANG.
     ///
@@ -119,6 +154,99 @@ public:
 #else
     std::string getNext(S_Iter_Value iter);
 #endif
+
+    /// @brief Retrieves an item and stores in the specified storage.
+    ///
+    /// This will attempt to retrieve an item and, if exists, will
+    /// store it in the storage.
+    ///
+    /// @param storage ElementMap (result will be stored here)
+    /// @param xpath xpath location (data will be extracted from sysrepo)
+    /// @param name name of the parameter
+    void checkAndGetLeaf(isc::data::ElementPtr& storage,
+                         const std::string& xpath,
+                         const std::string& name);
+
+    void checkAndGetLeafList(isc::data::ElementPtr& storage,
+                             const std::string& xpath,
+                             const std::string& name);
+
+    template <typename T>
+    void checkAndGet(isc::data::ElementPtr& to,
+                     std::string const& xpath,
+                     std::string const& name,
+                     T& t,
+                     isc::data::ElementPtr (T::*f)(std::string const& xpath)) {
+        isc::data::ConstElementPtr x((t.*f)(xpath + "/" + name));
+        if (x) {
+            to->set(name, x);
+        }
+    }
+
+    template <typename T>
+    void checkAndGetList(isc::data::ElementPtr& to,
+                         std::string const& xpath,
+                         std::string const& name,
+                         T& t,
+                         isc::data::ElementPtr (T::*f)(std::string const& xpath)) {
+        isc::data::ElementPtr x(getList(xpath + "/" + name, t, f));
+        if (x && !x->empty()) {
+            to->set(name, x);
+        }
+    }
+
+    void checkAndSetLeaf(isc::data::ConstElementPtr& from,
+                         std::string const& xpath,
+                         std::string const& name,
+                         sr_type_t const& type);
+
+    void checkAndSetLeafList(isc::data::ConstElementPtr& from,
+                             std::string const& xpath,
+                             std::string const& name,
+                             sr_type_t const& type);
+
+    template <typename T>
+    void checkAndSet(isc::data::ConstElementPtr& from,
+                     std::string const& xpath,
+                     std::string const& name,
+                     T& t,
+                     void (T::*f)(std::string const& xpath,
+                                  isc::data::ConstElementPtr elem,
+                                  bool skip)) {
+        isc::data::ConstElementPtr x(from->get(name));
+        if (x) {
+            (t.*f)(xpath + "/" + name, x, false);
+        }
+    }
+
+    template <typename T>
+    void checkAndSetList(isc::data::ConstElementPtr& from,
+                         std::string const& xpath,
+                         std::string const& name,
+                         std::string const& key,
+                         T& t,
+                         void (T::*f)(std::string const& xpath,
+                                      isc::data::ConstElementPtr elem,
+                                      bool skip)) {
+        isc::data::ConstElementPtr list(from->get(name));
+        if (!list) {
+            return;
+        }
+
+        for (isc::data::ConstElementPtr i : list->listValue()) {
+            isc::data::ConstElementPtr k(i->get(key));
+            if (k) {
+                std::string key_string;
+                if (k->getType() == isc::data::Element::string) {
+                    // To avoid quotes
+                    key_string = k->stringValue();
+                } else {
+                    key_string = k->str();
+                }
+                (t.*f)(xpath + "/" + name + "[" + key + "='" + key_string + "']", i, false);
+            }
+        }
+    }
 
 protected:
     /// @brief The sysrepo session.
