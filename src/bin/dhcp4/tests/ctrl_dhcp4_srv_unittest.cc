@@ -628,7 +628,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         "           \"persist\":false, \n"
         "           \"lfc-interval\": 0  \n"
         "        }, \n"
-        "       \"expired-leases-processing\": { \n"
+        "        \"expired-leases-processing\": { \n"
         "            \"reclaim-timer-wait-time\": 0, \n"
         "            \"hold-reclaimed-time\": 0, \n"
         "            \"flush-reclaimed-timer-wait-time\": 0 \n"
@@ -1082,8 +1082,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     // Leases should have been removed.
     ASSERT_NO_THROW(lease0 = lease_mgr.getLease4(IOAddress("10.0.0.1")));
     ASSERT_NO_THROW(lease1 = lease_mgr.getLease4(IOAddress("10.0.0.2")));
-    EXPECT_FALSE(lease0);
-    EXPECT_FALSE(lease1);
+    ASSERT_FALSE(lease0);
+    ASSERT_FALSE(lease1);
 }
 
 // Tests that the server properly responds to shtudown command sent
