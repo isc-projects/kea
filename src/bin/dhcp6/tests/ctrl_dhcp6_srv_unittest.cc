@@ -803,7 +803,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
 
 // Tests if the server returns its configuration using config-get.
 // Note there are separate tests that verify if toElement() called by the
-// get-config handler are actually converting the configuration correctly.
+// config-get handler are actually converting the configuration correctly.
 TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
     createUnixChannelServer();
     std::string response;
@@ -973,7 +973,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
 }
 
 // This test verifies that the DHCP server handles version-get commands
-TEST_F(CtrlChannelDhcpv6SrvTest, getversion) {
+TEST_F(CtrlChannelDhcpv6SrvTest, getVersion) {
     createUnixChannelServer();
 
     std::string response;
@@ -1117,7 +1117,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
 
 // Tests that the server properly responds to shtudown command sent
 // via ControlChannel
-TEST_F(CtrlChannelDhcpv6SrvTest, commandsList) {
+TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     createUnixChannelServer();
     std::string response;
 

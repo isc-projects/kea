@@ -952,7 +952,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 }
 
 // This test verifies that the DHCP server handles version-get commands
-TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
+TEST_F(CtrlChannelDhcpv4SrvTest, getVersion) {
     createUnixChannelServer();
 
     std::string response;
