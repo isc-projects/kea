@@ -581,6 +581,101 @@ the oldest file, "log-name.maxver", will be discarded each time the log
 rotates. In other words, at most there will be the active log file plus
 maxver rotated files. The minimum and default value is 1.
 
+The pattern (string) Option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This option can be used to specify the layout pattern of log messages for a looger.
+Kea logging is implemented using the Log4Cplus library and it's output formatting
+is based, conceptually, on the printf formatting from C and is discussed
+in detail in the the next section :ref:`logging-message-format`.
+
+Each output type (stdout, file, or syslog) has a default pattern. This parameter can
+be used to specifiy your own pattern.  The pattern for each logger is governed
+individually so each configured logger can have it's own pattern. Omitting the
+``pattern`` parameter or setting it to an empty string, "", will cause Kea to use
+the default pattern for that logger's output type.
+
+In addition to the log text itself, the default patterns used for ``stdout`` and
+files contain information such as date and time, logger level, and process information.
+The default pattern for ``syslog`` is limited primarily to log level, source, and
+the log text.  This avoids duplicating information which is usually supplied by syslog.
+
+.. _logging-message-format:
+
+Logging Message Format
+----------------------
+
+As mentioned above, Kea log message content is controlled via a scheme similar to the
+C language's printf formatting. The "pattern" used for each message is described by a
+string containing one or more format components as part of a text string.  In addition
+to the components the string may contain any other arbitrary text you find useful.
+It is probably easiest to understand this by examining the default pattern for stdout
+and files.  That pattern is shown below:
+
+::
+
+    "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
+
+and a typical log produced by this pattern would look somethng like this:
+
+::
+
+    2019-08-05 14:27:45.871 DEBUG [kea-dhcp4.dhcpsrv/8475] DHCPSRV_TIMERMGR_START_TIMER starting timer: reclaim-expired-leases
+
+That breaks down as like so:
+
+- ``%D{%Y-%m-%d %H:%M:%S.%q}`` : '%D' is the date and time the log message is generated
+    while everything between the curly braces, '{}' are date and time components. From the
+    example log above this produces: ``2019-08-05 14:27:45.871``
+
+- ``%-5p`` : the is severity of message, output as a minimum of five characters, using
+    right-padding with spaces. In our example log: ``DEBUG``
+
+- ``%c`` : is the log source. This includes two elements: the Kea process generating
+   the message, in this case, ``kea-dhcp4``; and the component within the program
+   from which the message originated, ``dhcpsrv`` (e.g. the name of the common library
+   used by DHCP server implementations).
+
+- ``%i`` : process ID. From the example log: ``8475``
+
+- ``%m`` : log message. Keg log messages all begin with a message identifier followed
+    by arbitrary log text. Every message in Kea has a unique identifier, which can be
+    used as an index to the
+    `Kea Messages Manual <https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html>`__,
+    where more information can be obtained.  In our example log above, the identifier
+    is ``DHCPSRV_TIMERMGR_START_TIMER``.   The log text is typically a brief description
+    detailing the condition that caused the message to be logged. In our example, the
+    information logged, ``starting timer: reclaim-expired-leases``, explains that the
+    timer for the expired lease reclamation cycle has been started.
+
+.. note::
+    Omitting ``%m`` will render your log output meaningless and should be considered
+    mandatory.
+
+Finally, note that spacing between components, the square brackets around the log
+source and PID, and the final carriage return '\n' are all literal text specified as
+part of the pattern.
+
+The default for pattern for syslog output is as follows:
+
+::
+
+    "%-5p [%c] %m\n";
+
+You can see that it omits the date and time as well the process ID as this information
+is typically output by syslog.  Note that Kea uses the pattern to construct the text
+it sends to syslog (or any other destination). It has no influence on the content
+syslog may add or formatting it may do.
+
+The best place to go for the supported components and how to use them is the Log4Cplus
+documentation itself:
+
+    https://log4cplus.sourceforge.io/docs/html/classlog4cplus_1_1PatternLayout.html
+
+.. note::
+    You are strongly encouraged to test your pattern(s) on a local, non-production
+    instance of Kea, running in the foreground and logging to ``stdout``.
+
 Example Logger Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -626,56 +721,6 @@ logfile grows to 2MB, it will be renamed and a new file will be created.
            }
       ]
    }
-
-.. _logging-message-format:
-
-Logging Message Format
-----------------------
-
-Each message written to the configured logging destinations comprises a
-number of components that identify the origin of the message and, if the
-message indicates a problem, information about the problem that may be
-useful in fixing it.
-
-Consider the message below logged to a file:
-
-::
-
-   2014-04-11 12:58:01.005 INFO  [kea-dhcp4.dhcpsrv/27456]
-       DHCPSRV_MEMFILE_DB opening memory file lease database: type=memfile universe=4
-
-Note: the layout of messages written to the system logging file (syslog)
-may be slightly different. This message has been split across two lines
-here for display reasons; in the logging file, it will appear on one
-line.
-
-The log message comprises a number of components:
-
-2014-04-11 12:58:01.005
-   The date and time at which the message was generated.
-
-INFO
-   The severity of the message.
-
-[kea-dhcp4.dhcpsrv/27456]
-   The source of the message. This includes two elements: the Kea
-   process generating the message (in this case, ``kea-dhcp4``) and the
-   component within the program from which the message originated
-   (``dhcpsrv``, which is the name of the common library used by DHCP
-   server implementations). The number after the slash is a process ID
-   (PID).
-
-DHCPSRV_MEMFILE_DB
-   The message identification. Every message in Kea has a unique
-   identification, which can be used as an index to the `Kea Messages
-   Manual <https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html>`__,
-   where more information can be obtained.
-
-opening memory file lease database: type=memfile universe=4
-   A brief description. Within this text, information relating to the
-   condition that caused the message to be logged will be included. In
-   this example, the information is logged that the in-memory lease
-   database backend will be used to store DHCP leases.
 
 .. _logging-during-startup:
 
