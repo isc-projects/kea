@@ -12,6 +12,7 @@
 #include <set>
 #include <ctime>
 
+#include <boost/algorithm/string.hpp>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 
@@ -62,8 +63,9 @@ public:
 
                     sanityCheck(f, x);
 
+                    writeToFile(f, x);
+
                     cmds_.insert(make_pair(cmd, x));
-                    cout << " looks ok." << endl;
 
                 } catch (const exception& e) {
                     cout << "ERROR: " << e.what() << endl;
@@ -109,6 +111,13 @@ public:
         }
     }
 
+    void writeToFile(const string& fname, ElementPtr& x) {
+        string outname = fname; // + "2";
+        ofstream out(outname, ios::trunc);
+        out << prettyPrint(x,0,4);
+        cout << "Content written to " << outname << endl;
+    }
+
     /// @brief checks if mandatory list parameter is specified
     ///
     /// @param x a map that is being checked
@@ -135,17 +144,48 @@ public:
         // todo: check that every element is a string
     }
 
+    ElementPtr stringConvertToList(ConstElementPtr& x) {
+        if (x->getType() != Element::string) {
+            return (ElementPtr());
+        }
+        string txt = x->stringValue();
+
+        std::vector<std::string> split;
+
+        boost::split(split, txt, [](char c){return c == '\n';});
+
+        ElementPtr val = Element::createList();
+        for (auto y : split) {
+            val->add(Element::create(y));
+        }
+        return (val);
+    }
+
+    void convertToList(ElementPtr& x, const string& name, const string& fname) {
+        ConstElementPtr s = x->get(name);
+        if (!s) {
+            return;
+        }
+        ElementPtr l = stringConvertToList(s);
+        x->set(name, l);
+    }
+
     /// @brief Checks that the essential parameters for each command are defined
     ///
     /// @param fname name of the file the data was read from (printed if error is detected)
     /// @param x a JSON map that contains content of the file
-    void sanityCheck(const string& fname, const ElementPtr& x) {
+    void sanityCheck(const string& fname, ElementPtr& x) {
         requireString(x, "name", fname);
         requireString(x, "brief", fname);
         requireList  (x, "support", fname);
         requireString(x, "avail", fname);
-        requireString(x, "brief", fname);
 
+        convertToList(x, "brief", fname);
+        convertToList(x, "cmd-syntax", fname);
+        convertToList(x, "cmd-comment", fname);
+        convertToList(x, "resp-syntax", fname);
+        convertToList(x, "resp-comment", fname);
+        
         // They're optional.
         //requireString(x, "cmd-syntax", fname);
         //requireString(x, "cmd-comment", fname);
@@ -479,7 +519,7 @@ int main(int argc, const char*argv[]) {
 
         doc_gen.loadFiles(files);
 
-        doc_gen.generateOutput();
+        //doc_gen.generateOutput();
     } catch (const exception& e) {
         cerr << "ERROR: " << e.what() << endl;
     }

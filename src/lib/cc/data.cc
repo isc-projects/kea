@@ -1281,7 +1281,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
             isc_throw(BadValue, "prettyPrint got a null pointer");
         }
         int first_type = element->get(0)->getType();
-        bool complex = false;
+        bool complex = true;
         if ((first_type == Element::list) || (first_type == Element::map)) {
             complex = true;
         }
