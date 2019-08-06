@@ -47,7 +47,7 @@ for this are:
    AFL may be downloaded from  http://lcamtuf.coredump.cx/afl.  At the time of
    writing (August 2019), the latest version is 2.52b.  AFL should be built as
    per the instructions in the README file in the distribution.  The LLVM-based
-   instrumentation programs should also be build, as per the instructions in
+   instrumentation programs should also be built, as per the instructions in
    the file llvm_mode/README.llvm (also in the distribution).  Note that this
    requires that LLVM be installed on the machine used for the fuzzing.
 
@@ -91,7 +91,7 @@ for this are:
    being fuzzed.
 
 -# Once the interface has been decided, these need to be set in the
-   configuration file used for the test.  For example, if fuzzing Kea-dhcp4
+   configuration file used for the test.  For example, to fuzz Kea-dhcp4
    using the loopback interface "lo" and IPv4 address 10.53.0.1, the
    configuration file would contain the following snippet:
    @code
@@ -228,7 +228,7 @@ while (not shutting down) {
 @endcode
 
 Implementation is via an object of class "Fuzz".  When created, it identifies
-an interface, adress and port on which Kea is listening and creates the
+an interface, address and port on which Kea is listening and creates the
 appropriate address structures for these.  The port is passed as an argument to
 the constructor because at the point at which the object is constructed, that
 information is readily available.  The interface and address are picked up from
@@ -250,7 +250,7 @@ In practice, the "while" line is actually:
 @code{.unparsed}
 while (__AFL_LOOP(count)) {
 @endcode
-__AFL_LOOP is a token recognised and expanded by the AFL compiler (so no need
+__AFL_LOOP is a token recognized and expanded by the AFL compiler (so no need
 to "#include" a file defining it) that implements the logic for the fuzzing.
 Each time through the loop (apart from the first), it raises a SIGSTOP signal
 telling AFL that the packet has been processed and instructing it to provide

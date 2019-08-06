@@ -1,4 +1,4 @@
-// Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019  Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,7 @@ namespace isc {
 ///
 /// Persistent-mode AFL fuzzing has the AFL fuzzer send packets of data to
 /// stdin of the program being tested. The program processes the data and
-/// signals to AFL that it it complete.
+/// signals to AFL that it is complete.
 ///
 /// To reduce the code changes required, the scheme adopted for Kea is that
 /// the AFL data read from stdin is written to an address/port on which Kea
@@ -57,7 +57,7 @@ public:
     /// when trying to send it to the port on which Kea lsutens.
     static constexpr size_t MAX_SEND_SIZE = 64000;
 
-    /// @brief Number of many packets Kea will process until shutting down.
+    /// @brief Number of packets Kea will process before shutting down.
     ///
     /// After the shutdown, AFL will restart it. This safety switch is here for
     /// eliminating cases where Kea goes into a weird state and stops

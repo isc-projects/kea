@@ -1,4 +1,4 @@
-// Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019  Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,7 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
         // Set up address structures.
         setAddress(ipversion);
 
-        // Create the socket throw which packets read from stdin will be send
+        // Create the socket through which packets read from stdin will be sent
         // to the port on which Kea is listening.  This is closed in the
         // destructor.
         sockfd_ = socket((ipversion == 4) ? AF_INET : AF_INET6, SOCK_DGRAM, 0);
