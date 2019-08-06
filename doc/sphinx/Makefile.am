@@ -263,6 +263,9 @@ pdf: $(main_sources)
 html: $(main_sources)
 	$(SPHINXBUILD) -M html $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
+# This target is not used anywhere, but people who prefer single page docs
+# can do make -C doc/sphinx singlehtml and then enjoy their docs being
+# generated in doc/sphinx/_build/singlehtml
 singlehtml: $(main_sources)
 	$(SPHINXBUILD) -M singlehtml $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
