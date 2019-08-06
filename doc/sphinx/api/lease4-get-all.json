@@ -5,9 +5,9 @@
     "support": [ "kea-dhcp4"],
     "avail": "1.4.0",
     "hook": "lease_cmds",
-    "cmd-syntax": {
-        "command": "lease4-get-all",
-        "arguments": "subnets"
-    },
+    "cmd-syntax": "{
+    \"command\": \"lease4-get-all\"
+    \"arguments\": \"subnets\"
+}",
     "cmd-comment": "The lease4-get-all command may result in very large responses."
 }

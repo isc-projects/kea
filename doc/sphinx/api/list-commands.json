@@ -4,9 +4,9 @@
     "description": "See <xref linkend=\"command-list-commands\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.0.0",
-    "cmd-syntax": {
-        "command": "list-commands",
-        "arguments": { }
-    },
+    "cmd-syntax": "{
+    \"command\": \"list-commands\",
+    \"arguments\": { }
+}",
     "cmd-comment": "The server will respond with a list of all supported commands."
 }

@@ -4,9 +4,9 @@
     "description": "See <xref linkend=\"command-libreload\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.2.0",
-    "cmd-syntax": {
-        "command": "libreload",
-        "arguments": { }
-    },
+    "cmd-syntax": "{
+    \"command\": \"libreload\",
+    \"arguments\": { }
+}",
     "cmd-comment": "The server will respond with a result of 0 indicating success, or 1 indicating a failure."
 }

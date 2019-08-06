@@ -1,13 +1,14 @@
 {
     "name": "config-write",
-    "brief": "The config-write command instructs the Kea server to write its current configuration to a file on disk.",
+    "brief": "The config-write command instructs the Kea server to write its
+              current configuration to a file on disk.",
     "description": "See <xref linkend=\"command-config-write\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.2.0",
-    "cmd-syntax": {
-        "command": "config-write",
-        "arguments": {
-            "filename": "config-modified-2017-03-15.json"
-        }
+    "cmd-syntax": "{
+    \"command\": \"config-write\",
+    \"arguments\": {
+        \"filename\": \"config-modified-2017-03-15.json\"
     }
+}"
 }

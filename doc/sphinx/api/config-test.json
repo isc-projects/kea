@@ -4,17 +4,17 @@
     "description": "See <xref linkend=\"command-config-test\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.2.0",
-    "cmd-syntax": {
-        "command": "config-test",
-        "arguments":  {
-            "<server>": {
-            }
+    "cmd-syntax": "{
+    \"command\": \"config-test\",
+    \"arguments\":  {
+        \"<server>\": {
         }
-    },
-    "cmd-comment": "where <server> is the configuration element name for a given server such as 'Dhcp4' or 'Dhcp6'",
-    "resp-syntax": [{
-        "result": 0, "text": "Configuration seems sane..."
-    }, {
-        "result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)"
-    }]
+     }
+}",
+    "cmd-comment": "where &gt;server&lt; is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\"",
+    "resp-syntax": "{\"result\": 0, \"text\": \"Configuration seems sane...\" }
+
+    or
+
+    {\"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
 }

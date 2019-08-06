@@ -4,11 +4,11 @@
     "description": "See <xref linkend=\"command-statistic-reset\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.0.0",
-    "cmd-syntax": {
-        "command": "statistic-reset",
-        "arguments": {
-            "name": "pkt4-received"
-        }
-    },
+    "cmd-syntax": "{
+    \"command\": \"statistic-reset\",
+    \"arguments\": {
+        \"name\": \"pkt4-received\"
+    }
+}",
     "cmd-comment": "If the specific statistic is found and reset was successful, the server will respond with a status of 0, indicating success and an empty parameters field. If an error is encountered (e.g. requested statistic was not found), the server will return a status code of 1 (error) and the text field will contain the error description."
 }

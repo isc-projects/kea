@@ -5,11 +5,11 @@
     "support": [ "kea-dhcp4"],
     "avail": "1.3.0",
     "hook": "lease_cmds",
-    "cmd-syntax": {
-        "command": "lease4-del",
-        "arguments": {
-            "ip-address": "192.0.2.202"
-        }
-    },
+    "cmd-syntax": "{
+    \"command\": \"lease4-del\",
+    \"arguments\": {
+        \"ip-address\": \"192.0.2.202\"
+    }
+}",
     "cmd-comment": "Specify the lease to be deleted either by IP address, or by identifier-type and identifier value. Currently supported identifiers are \"hw-address\" and \"client-id\"."
 }

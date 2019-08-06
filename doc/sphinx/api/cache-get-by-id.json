@@ -4,15 +4,14 @@
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.6.0",
     "hook": "host_cache",
-    "cmd-syntax": {
-        "command": "cache-get-by-id",
-        "arguments": {
-            "hw-address": "01:02:03:04:05:06"
-        }
-    },
-    "resp-syntax": {
-        "result": 0,
-        "text": "2 entries returned.",
-        "arguments": "<list of host reservations>"
-    }
+    "cmd-syntax": "{
+    \"command\": \"cache-get-by-id\",
+    \"arguments\": {
+        \"hw-address\": \"01:02:03:04:05:06\"
+    }",
+    "resp-syntax": "{
+    \"result\": 0
+    \"text\": \"2 entries returned.\"
+    \"arguments\": <list of host reservations>
+}"
 }
