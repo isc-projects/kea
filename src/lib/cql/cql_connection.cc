@@ -262,8 +262,15 @@ CqlConnection::openDatabase() {
                       "castable to int, instead got \""
                           << reconnect_wait_time << "\", " << ex.what());
         }
+#if (CASS_VERSION_MAJOR > 2) || \
+    ((CASS_VERSION_MAJOR == 2) && (CASS_VERSION_MINOR >= 13))
+        cass_uint64_t delay_ms =
+            static_cast<cass_uint64_t>(reconnect_wait_time_number);
+        cass_cluster_set_constant_reconnect(cluster_, delay_ms);
+#else
         cass_cluster_set_reconnect_wait_time(cluster_,
                                              reconnect_wait_time_number);
+#endif
     }
 
     if (connect_timeout) {
