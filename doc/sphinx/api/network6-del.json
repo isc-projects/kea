@@ -5,7 +5,7 @@
     ],
     "cmd-comment": [
         "The network6-del command uses exactly the same syntax for",
-        "                    both the command and the response."
+        "both the command and the response."
     ],
     "cmd-syntax": [
         "{",

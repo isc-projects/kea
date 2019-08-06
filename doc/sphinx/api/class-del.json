@@ -16,9 +16,9 @@
     "name": "class-del",
     "resp-comment": [
         "The command will return a result of 3 (empty) if the client",
-        "                    class doesn't exist. If the client class exists, the retured",
-        "                    result is 0 if the deletion was successful and the result is 1",
-        "                    if the deletion is unsuccessful."
+        "class doesn't exist. If the client class exists, the retured",
+        "result is 0 if the deletion was successful and the result is 1",
+        "if the deletion is unsuccessful."
     ],
     "resp-syntax": [
         "{",

@@ -2,7 +2,7 @@
     "avail": "1.4.0",
     "brief": [
         "The stat-lease6-get command fetches lease statistics for a range",
-        "              of known IPv6 subnets."
+        "of known IPv6 subnets."
     ],
     "cmd-syntax": [
         "{",

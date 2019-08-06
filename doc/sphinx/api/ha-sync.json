@@ -2,7 +2,7 @@
     "avail": "1.4.0",
     "brief": [
         "The command is issued to instruct the server running in HA mode to ",
-        "              synchronize its local lease database with the selected peer."
+        "synchronize its local lease database with the selected peer."
     ],
     "cmd-syntax": [
         "{",

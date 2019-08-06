@@ -22,7 +22,8 @@
     "name": "lease6-add",
     "resp-syntax": [
         "{ \"result\": 0, \"text\": \"Lease added.\" }",
-        "    { \"result\": 1, \"text\": \"missing parameter 'ip-address' (<string>:3:19)\" }"
+        " or ",
+        "{ \"result\": 1, \"text\": \"missing parameter 'ip-address' (<string>:3:19)\" }"
     ],
     "support": [
         "kea-dhcp6"

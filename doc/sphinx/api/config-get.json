@@ -2,8 +2,8 @@
     "avail": "1.2.0",
     "brief": [
         "Retrieves the current configuration used by the server. The configuration",
-        "              is roughtly equal to the configuration file, but includes additional",
-        "              changes made by other commands and due to parameters inheritance."
+        "is roughtly equal to the configuration file, but includes additional",
+        "changes made by other commands and due to parameters inheritance."
     ],
     "cmd-comment": [
         "This command takes no parameters."

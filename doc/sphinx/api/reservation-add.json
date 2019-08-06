@@ -1,10 +1,10 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "adds a new host reservation. The reservation may include IPv4 address,",
-        "        IPv6 addresses, IPv6 prefixes, various identifiers, a class",
-        "        the client will be assigned to, DHCPv4 and DHCPv6 options and",
-        "        more."
+        "Adds a new host reservation. The reservation may include IPv4 address,",
+        "IPv6 addresses, IPv6 prefixes, various identifiers, a class",
+        "the client will be assigned to, DHCPv4 and DHCPv6 options and",
+        "more."
     ],
     "cmd-comment": [
         "Note the ip-address, client-id, next-server, server-hostname and",

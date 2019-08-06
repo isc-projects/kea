@@ -2,13 +2,11 @@
     "avail": "1.5.0",
     "brief": [
         "This command is used to create and add a new class to the existing",
-        "              server configuration."
+        "server configuration."
     ],
     "cmd-comment": [
-        "The <command>next-server</command>,",
-        "                    <command>server-hostname</command> and",
-        "                    <command>boot-file-name</command> are DHCPv4 specific. Only",
-        "                    one client class can be added with a single command. "
+        "The ``next-server``, ``server-hostname`` and ``boot-file-name`` are DHCPv4 specific. Only",
+        "one client class can be added with a single command. "
     ],
     "cmd-syntax": [
         "{",
@@ -31,7 +29,7 @@
     "name": "class-add",
     "resp-comment": [
         "The command will be successful (result 0), unless the",
-        "                     class name is a duplicate or another error occurs (result 1)."
+        "class name is a duplicate or another error occurs (result 1)."
     ],
     "resp-syntax": [
         "{",

@@ -2,7 +2,7 @@
     "avail": "1.2.0",
     "brief": [
         "The config-write command instructs the Kea server to write its",
-        "              current configuration to a file on disk."
+        "current configuration to a file on disk."
     ],
     "cmd-syntax": [
         "{",

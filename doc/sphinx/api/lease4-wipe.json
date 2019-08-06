@@ -5,10 +5,10 @@
     ],
     "cmd-syntax": [
         "{",
-        "  \"command\": \"lease4-wipe\",",
-        "  \"arguments\": {",
-        "    \"subnet-id\": 44",
-        "  }",
+        "    \"command\": \"lease4-wipe\",",
+        "    \"arguments\": {",
+        "        \"subnet-id\": 44",
+        "    }",
         "}"
     ],
     "description": "See <xref linkend=\"idp63\"/>",

@@ -2,7 +2,7 @@
     "avail": "1.4.0",
     "brief": [
         "The stat-lease4-get command fetches lease statistics for a range",
-        "              of known IPv4 subnets."
+        "of known IPv4 subnets."
     ],
     "cmd-syntax": [
         "{",
