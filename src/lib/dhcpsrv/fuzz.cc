@@ -39,26 +39,30 @@ constexpr long          Fuzz::MAX_LOOP_COUNT;
 
 // Constructor
 Fuzz::Fuzz(int ipversion, uint16_t port) :
-    address_(nullptr), interface_(nullptr), loop_max_(MAX_LOOP_COUNT),
-    port_(port), sockaddr_len_(0), sockaddr_ptr_(nullptr), sockfd_(-1) {
+    loop_max_(MAX_LOOP_COUNT), sockaddr_len_(0), sockaddr_ptr_(nullptr),
+    sockfd_(-1) {
 
     try {
         stringstream reason;    // Used to construct exception messages
 
-        // Set up address structures.
-        setAddress(ipversion);
+        // Get the values of the environment variables used to control the
+        // fuzzing.
 
-        // Create the socket through which packets read from stdin will be sent
-        // to the port on which Kea is listening.  This is closed in the
-        // destructor.
-        sockfd_ = socket((ipversion == 4) ? AF_INET : AF_INET6, SOCK_DGRAM, 0);
-        if (sockfd_ < 0) {
-            LOG_FATAL(fuzz_logger, FUZZ_SOCKET_CREATE_FAIL)
-                      .arg(strerror(errno));
-            return;
+        // Specfies the interface to be used to pass packets from AFL to Kea.
+        const char* interface = getenv("KEA_AFL_INTERFACE");
+        if (! interface) {
+            isc_throw(FuzzInitFail, "no fuzzing interface has been set");
         }
 
-        // Check if the hard-coded maximum loop count is being overridden
+        // The address on the interface to be used.
+        const char* address = getenv("KEA_AFL_ADDRESS");
+        if (address == 0) {
+            isc_throw(FuzzInitFail, "no fuzzing address has been set");
+        }
+
+        // Number of Kea packet-read loops before Kea exits and AFL starts a
+        // new instance.  This is optional: the default is set by the constant
+        // MAX_LOOP_COUNT.
         const char *loop_max_ptr = getenv("KEA_AFL_LOOP_MAX");
         if (loop_max_ptr != 0) {
             try {
@@ -76,15 +80,28 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
             }
         }
 
+        // Set up address structures used to route the packets from AFL to Kea.
+        createAddressStructures(ipversion, interface, address, port);
+
+        // Create the socket through which packets read from stdin will be sent
+        // to the port on which Kea is listening.  This is closed in the
+        // destructor.
+        sockfd_ = socket((ipversion == 4) ? AF_INET : AF_INET6, SOCK_DGRAM, 0);
+        if (sockfd_ < 0) {
+            LOG_FATAL(fuzz_logger, FUZZ_SOCKET_CREATE_FAIL)
+                      .arg(strerror(errno));
+            return;
+        }
+
+        LOG_INFO(fuzz_logger, FUZZ_INIT_COMPLETE).arg(interface).arg(address)
+                 .arg(port).arg(loop_max_);
+
     } catch (const FuzzInitFail& e) {
         // AFL tends to make it difficult to find out what exactly has failed:
         // make sure that the error is logged.
         LOG_FATAL(fuzz_logger, FUZZ_INIT_FAIL).arg(e.what());
         throw;
     }
-
-    LOG_INFO(fuzz_logger, FUZZ_INIT_COMPLETE).arg(interface_).arg(address_)
-             .arg(port_).arg(loop_max_);
 }
 
 // Destructor
@@ -92,69 +109,57 @@ Fuzz::~Fuzz() {
     static_cast<void>(close(sockfd_));
 }
 
-// Parse IP address/port/interface and set up address structures.
+// Set up address structures.
 void
-Fuzz::setAddress(int ipversion) {
+Fuzz::createAddressStructures(int ipversion, const char* interface,
+                              const char* address, uint16_t port) {
     stringstream reason;    // Used in error messages
 
-    // Get the environment for the fuzzing: interface, address and port.
-    interface_ = getenv("KEA_AFL_INTERFACE");
-    if (! interface_) {
-        isc_throw(FuzzInitFail, "no fuzzing interface has been set");
-    }
-
-    // Now the address. (The port is specified via the "-p" command-line
-    // switch and passed to this object through the constructor.)
-    address_ = getenv("KEA_AFL_ADDRESS");
-    if (address_ == 0) {
-        isc_throw(FuzzInitFail, "no fuzzing address has been set");
-    }
-
     // Set up the appropriate data structure depending on the address given.
-    if ((strstr(address_, ":") != NULL) && (ipversion == 6)) {
+    if ((ipversion == 6) && (strstr(address, ":") != NULL)) {
         // Expecting IPv6 and the address contains a colon, so assume it is an
         // an IPv6 address.
         memset(&servaddr6_, 0, sizeof (servaddr6_));
 
         servaddr6_.sin6_family = AF_INET6;
-        if (inet_pton(AF_INET6, address_, &servaddr6_.sin6_addr) != 1) {
+        if (inet_pton(AF_INET6, address, &servaddr6_.sin6_addr) != 1) {
             reason << "inet_pton() failed: can't convert "
-                   << address_ << " to an IPv6 address" << endl;
+                   << address << " to an IPv6 address" << endl;
             isc_throw(FuzzInitFail, reason.str());
         }
-        servaddr6_.sin6_port = htons(port_);
+        servaddr6_.sin6_port = htons(port);
 
         // Interface ID is needed for IPv6 address structures.
-        servaddr6_.sin6_scope_id = if_nametoindex(interface_);
+        servaddr6_.sin6_scope_id = if_nametoindex(interface);
         if (servaddr6_.sin6_scope_id == 0) {
             reason << "error retrieving interface ID for "
-                   << interface_ << ": " << strerror(errno);
+                   << interface << ": " << strerror(errno);
             isc_throw(FuzzInitFail, reason.str());
         }
 
         sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr6_);
         sockaddr_len_ = sizeof(servaddr6_);
 
-    } else if ((strstr(address_, ".") != NULL) && (ipversion == 4)) {
+    } else if ((ipversion == 4) && (strstr(address, ".") != NULL)) {
         // Expecting an IPv4 address and it contains a dot, so assume it is.
         // This check is done after the IPv6 check, as it is possible for an
-        // IPv4 address to be emnbedded in an IPv6 one.
+        // IPv4 address to be embedded in an IPv6 one.
         memset(&servaddr4_, 0, sizeof(servaddr4_));
 
         servaddr4_.sin_family = AF_INET;
-        if (inet_pton(AF_INET, address_, &servaddr4_.sin_addr) != 1) {
+        if (inet_pton(AF_INET, address, &servaddr4_.sin_addr) != 1) {
             reason << "inet_pton() failed: can't convert "
-                   << address_ << " to an IPv6 address" << endl;
+                   << address << " to an IPv6 address" << endl;
             isc_throw(FuzzInitFail, reason.str());
         }
-        servaddr4_.sin_port = htons(port_);
+        servaddr4_.sin_port = htons(port);
 
         sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr4_);
         sockaddr_len_ = sizeof(servaddr4_);
 
     } else {
         reason << "Expected IP version (" << ipversion << ") is not "
-               << "4 or 6, or the given address " << address_ << " does not "
+               << "4 or 6, or the given address " << address << " does not "
                << "match the IP version expected";
         isc_throw(FuzzInitFail, reason.str());
     }
@@ -165,7 +170,7 @@ Fuzz::setAddress(int ipversion) {
 // This is the main fuzzing function. It receives data from fuzzing engine over
 // stdin and then sends it to the configured UDP socket.
 void
-Fuzz::transfer(void) {
+Fuzz::transfer(void) const {
 
     // Read from stdin.  Just return if nothing is read (or there is an error)
     // and hope that this does not cause a hang.
@@ -175,8 +180,7 @@ Fuzz::transfer(void) {
     // Save the errno in case there was an error because if debugging is
     // enabled, the following LOG_DEBUG call may destroy its value.
     int errnum = errno;
-    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_DATA_READ)
-              .arg(length);
+    LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_DATA_READ).arg(length);
 
     if (length > 0) {
         // Now send the data to the UDP port on which Kea is listening.
