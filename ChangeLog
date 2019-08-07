@@ -1,6 +1,6 @@
 1638.	[bug]		franek, razvan
 	Kea statistics improvements: Correct statistic-get{all} commands.
-	(Gitlab #756,!470, git e5f9de794801724528753566fa58af985a0985af)
+	(Gitlab #756,!470, git 59fb24794af8a9ca8ee3621bc01dfd507350b2c1)
 
 1637.	[bug]		tmark
 	Corrected an issue in kea-dhcp6 where the server would assign
