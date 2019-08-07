@@ -1,3 +1,7 @@
+1635.	[doc]		godfryd, tomek
+	Converted API documentation to Sphinx format.
+	(Gitlab #777,!464, git 3ba1a265537330308c313a38b85e84cbe02704ae)
+
 1634.	[func]		franek, razvan
 	Kea statistics improvements: Added commands for set sample age and
 	set sample count.
