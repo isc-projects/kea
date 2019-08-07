@@ -3169,7 +3169,7 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
     EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We  verify the "time" change in case the lease returned to us
+    // We verify the "time" change in case the lease returned to us
     // by expectOneLease ever becomes a copy and not what is in the lease mgr.
     --lease->cltt_;
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -3249,7 +3249,7 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We  verify the "time" change in case the lease returned to us
+    // We verify the "time" change in case the lease returned to us
     // by expectOneLease ever becomes a copy and not what is in the lease mgr.
     --lease->cltt_;
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
