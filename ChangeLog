@@ -1,3 +1,7 @@
+1636.	[bug]		razvan
+	Http request and response parser accepts Content-Length set to 0.
+	(Gitlab #708,!423, git 09d75804e050083b502a96c8e77b0e98c735ae3d)
+
 1635.	[doc]		godfryd, tomek
 	Converted API documentation to Sphinx format.
 	(Gitlab #777,!464, git 3ba1a265537330308c313a38b85e84cbe02704ae)
