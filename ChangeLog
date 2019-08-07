@@ -1,11 +1,15 @@
+1638.	[bug]		franek, razvan
+	Kea statistics improvements: Correct statistic-get{all} commands.
+	(Gitlab #756,!470, git e5f9de794801724528753566fa58af985a0985af)
+
 1637.	[bug]		tmark
 	Corrected an issue in kea-dhcp6 where the server would assign
 	a different lease each time a client with a dynamic host
 	reservation returned via a SOLICIT.
-	(Gitlab #754,!440,	git c548d9330e6f626e538343c5e6361457057efdd7)
+	(Gitlab #754,!440, git c548d9330e6f626e538343c5e6361457057efdd7)
 
 1636.	[bug]		razvan
-	Http request and response parser accepts Content-Length set to 0.
+	Http request and response parser now accepts 0 for Content-Length.
 	(Gitlab #708,!423, git 09d75804e050083b502a96c8e77b0e98c735ae3d)
 
 1635.	[doc]		godfryd, tomek
