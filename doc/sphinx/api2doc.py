@@ -30,7 +30,7 @@ def read_input_files(files):
     for f in files:
         name = os.path.basename(f)[:-5]
         # Skip special names starting with _ (such as _template.json)
-        if name[:1] == '_':
+        if name[0] == '_':
             print("Skipping %s (starts with underscore)" % f)
             continue
         with open(f) as fp:
@@ -149,9 +149,6 @@ API Reference
                 for line in resp_syntax:
                     rst += '    %s\n' % line
 
-                #txt = json.dumps(resp_syntax, indent=4, separators=(',', ': '))
-                #lines = [ '    %s' % l for l in txt.splitlines()]
-                #rst += '\n'.join(lines)
         else:
             rst += '   {\n'
             rst += '       "result": "<integer>",\n'
