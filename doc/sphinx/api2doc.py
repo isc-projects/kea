@@ -113,7 +113,7 @@ API Reference
 
         # command syntax
         rst += 'Command syntax:\n\n'
-        rst += '.. code-block:: \n\n'
+        rst += '::\n\n'
         if 'cmd-syntax' in func:
             cmd_syntaxes = [func['cmd-syntax']]
             if isinstance(cmd_syntaxes, dict):
@@ -139,7 +139,7 @@ API Reference
 
         # response syntax
         rst += 'Response syntax:\n\n'
-        rst += '.. code-block:: \n\n'
+        rst += '::\n\n'
         if 'resp-syntax' in func:
             resp_syntaxes = [func['resp-syntax']]
             if isinstance(resp_syntaxes, dict):
