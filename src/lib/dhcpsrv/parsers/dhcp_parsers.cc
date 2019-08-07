@@ -29,6 +29,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -1198,16 +1199,6 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id);
     subnet_.reset(subnet6);
 
-    std::ostringstream output;
-    output << addr << "/" << static_cast<int>(len)
-           << " with params "
-           << " preferred-lifetime=" << pref.get()
-           << ", valid-lifetime=" << subnet6->getValid().get()
-           << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
-
-
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET6).arg(output.str());
-
     // Parse timers that are common for v4 and v6.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);
     parseCommonTimers(params, network);
@@ -1216,6 +1207,28 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     if (!rapid_commit.unspecified()) {
         subnet6->setRapidCommit(rapid_commit);
     }
+
+    std::ostringstream output;
+    output << addr << "/" << static_cast<int>(len) << " with params: ";
+    // t1 and t2 are optional may be not specified.
+    if (!subnet6->getT1().unspecified()) {
+        output << "t1=" << subnet6->getT1().get() << ", ";
+    }
+    if (!subnet6->getT2().unspecified()) {
+        output << "t2=" << subnet6->getT2().get() << ", ";
+    }
+    if (!subnet6->getPreferred().unspecified()) {
+        output << "preferred-lifetime=" << subnet6->getPreferred().get() << ", ";
+    }
+    if (!subnet6->getValid().unspecified()) {
+        output << "valid-lifetime=" << subnet6->getValid().get();
+    }
+    if (!subnet6->getRapidCommit().unspecified()) {
+        output << ", rapid-commit is "
+               << boolalpha << subnet6->getRapidCommit().get();
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET6).arg(output.str());
 
     // Get interface-id option content. For now we support string
     // representation only
