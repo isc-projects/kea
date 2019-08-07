@@ -2,7 +2,7 @@
 	Corrected an issue in kea-dhcp6 where the server would assign
 	a different lease each time a client with a dynamic host
 	reservation returned via a SOLICIT.
-	(Gitlab #754,!440,	git TBD)
+	(Gitlab #754,!440,	git c548d9330e6f626e538343c5e6361457057efdd7)
 
 1636.	[bug]		razvan
 	Http request and response parser accepts Content-Length set to 0.
