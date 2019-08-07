@@ -5731,6 +5731,7 @@ Configuration Backend for the DHCPv6 server:
 
    {
        "Dhcp6": {
+       "server-tag": "my DHCPv6 server",
            "config-control": {
                "config-databases": [
                    {

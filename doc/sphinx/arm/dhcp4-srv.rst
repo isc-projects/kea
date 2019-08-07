@@ -5681,6 +5681,7 @@ Consider the following configuration snippet:
 ::
 
    "Dhcp4": {
+       "server-tag": "my DHCPv4 server",
        "config-control": {
            "config-databases": [{
                "type": "mysql",

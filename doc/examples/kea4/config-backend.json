@@ -6,6 +6,9 @@
 { "Dhcp4":
 
 {
+    // Set the server tag for the configuration backend.
+    "server-tag": "my DHCPv4 server",
+
     // Kea is told to listen on ethX interface only.
     "interfaces-config": {
         "interfaces": [ "ethX" ]

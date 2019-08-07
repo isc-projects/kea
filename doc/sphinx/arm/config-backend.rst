@@ -29,6 +29,7 @@ network grows, the usefulness of the CB becomes obvious.
 A good example of a use case for the CB is a pair of Kea DHCP servers which can be configured
 to support High Availability as described in
 :ref:`high-availability-library`. The configurations of both servers
+(as known as the server tag: the value of the "server-tag" parameter)
 are almost exactly the same. They may differ by the server identifier
 and designation of the server as a primary or standby (or secondary).
 They may also differ by the interfaces configuration. Typically, the
