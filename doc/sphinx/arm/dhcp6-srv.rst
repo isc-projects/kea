@@ -3505,6 +3505,10 @@ indirectly) and not only-if-required is evaluated.
    "reserved-class1" from the previous example, add a
    "member('KNOWN')" statement in the expression.
 
+   Beware that classes from reservations are added after: a
+   "member('reserved-class1')" works only for only-if-required
+   classes.
+
 .. _reservations6-mysql-pgsql-cql:
 
 Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
