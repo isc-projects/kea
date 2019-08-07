@@ -14,6 +14,14 @@
         "    }",
         "}"
     ],
+    "resp-syntax": [
+        "{",
+        "   \"result\": 0",
+        "   \"arguments\": {",
+        "       \"pkt4-received\": [ [ \"first_value\", \"2019-07-30 10:11:19.498739\" ], [ \"second_value\", \"2019-07-30 10:11:19.498662\" ] ]",
+        "       }",
+        "}"
+    ],
     "description": "See <xref linkend=\"command-statistic-get\"/>",
     "name": "statistic-get",
     "support": [
