@@ -934,6 +934,8 @@ def _install_cassandra_deb(system, revision, env, check_times):
         execute('wget -qO- https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -',
                 env=env, check_times=check_times)
         _apt_update(system, revision, env=env, check_times=check_times)
+        # ca-certificates-java needs to be installed first because it fails if installed together with cassandra
+        install_pkgs('ca-certificates-java', env=env, check_times=check_times)
         install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
@@ -1158,7 +1160,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1205,7 +1207,7 @@ def prepare_system_local(features, check_times):
             if revision == '8':
                 packages.extend(['virtualenv'])
             else:
-                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme'])
+                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
                 if revision == '9':
                     packages.extend(['texlive-generic-extra'])
 
