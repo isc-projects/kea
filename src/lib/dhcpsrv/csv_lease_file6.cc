@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,7 +91,7 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
 
         lease.reset(new Lease6(readType(row), readAddress(row), readDUID(row),
                                readIAID(row), readPreferred(row),
-                               readValid(row), 0, 0, // t1, t2 = 0
+                               readValid(row),
                                readSubnetID(row),
                                readHWAddr(row),
                                readPrefixLen(row)));

@@ -194,10 +194,18 @@ public:
         // that it have proper parameters
         EXPECT_EQ(exp_type, lease->type_);
         EXPECT_EQ(iaid_, lease->iaid_);
-        EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
-        EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
-        EXPECT_EQ(subnet_->getT1(), lease->t1_);
-        EXPECT_EQ(subnet_->getT2(), lease->t2_);
+        if (subnet_->getValid().getMin() == subnet_->getValid().getMax()) {
+            EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
+        } else {
+            EXPECT_LE(subnet_->getValid().getMin(), lease->valid_lft_);
+            EXPECT_GE(subnet_->getValid().getMax(), lease->valid_lft_);
+        }
+        if (subnet_->getPreferred().getMin() == subnet_->getPreferred().getMax()) {
+            EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
+        } else {
+            EXPECT_LE(subnet_->getPreferred().getMin(), lease->preferred_lft_);
+            EXPECT_GE(subnet_->getPreferred().getMax(), lease->preferred_lft_);
+        }
         EXPECT_EQ(exp_pd_len, lease->prefixlen_);
         EXPECT_EQ(fqdn_fwd_, lease->fqdn_fwd_);
         EXPECT_EQ(fqdn_rev_, lease->fqdn_rev_);
@@ -260,6 +268,22 @@ public:
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint,
                                bool fake, bool in_pool = true);
+
+    /// @brief Checks if the simple allocation can succeed with lifetimes.
+    ///
+    /// The type of lease is determined by pool type (pool->getType())
+    ///
+    /// @param pool pool from which the lease will be allocated from
+    /// @param hint address to be used as a hint
+    /// @param preferred preferred lifetime to be used as a hint
+    /// @param valid valid lifetime to be used as a hint
+    /// @param exp_preferred expected lease preferred lifetime
+    /// @param exp_valid expected lease valid lifetime
+    /// @return allocated lease (or NULL)
+    Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
+                               const asiolink::IOAddress& hint,
+                               uint32_t preferred, uint32_t valid,
+                               uint32_t exp_preferred, uint32_t exp_valid);
 
     /// @brief Checks if the simple allocation can succeed for custom DUID.
     ///
@@ -461,9 +485,12 @@ public:
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
 
         // Check that it has proper parameters
-        EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
-        EXPECT_EQ(subnet_->getT1(), lease->t1_);
-        EXPECT_EQ(subnet_->getT2(), lease->t2_);
+        if (subnet_->getValid().getMin() == subnet_->getValid().getMax()) {
+            EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
+        } else {
+            EXPECT_LE(subnet_->getValid().getMin(), lease->valid_lft_);
+            EXPECT_GE(subnet_->getValid().getMax(), lease->valid_lft_);
+        }
         if (lease->client_id_ && !clientid_) {
             ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
         } else

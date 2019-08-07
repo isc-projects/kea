@@ -233,21 +233,21 @@ typedef boost::multi_index_container<
             >
         >,
         // Start definition of index #3.
-        // Use StampedElement::getModificationTime as a key.
+        // Use BaseStampedElement::getModificationTime as a key.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::const_mem_fun<
-                data::StampedElement,
+                data::BaseStampedElement,
                 boost::posix_time::ptime,
-                &data::StampedElement::getModificationTime
+                &data::BaseStampedElement::getModificationTime
             >
         >,
 
         // Start definition of index #4.
-        // Use StampedElement::getId as a key.
+        // Use BaseStampedElement::getId as a key.
         boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<OptionIdIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
-                                              &data::StampedElement::getId>
+            boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
+                                              &data::BaseStampedElement::getId>
         >
     >
 > OptionContainer;

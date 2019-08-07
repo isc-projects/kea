@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 
 # We now build doc after src/, because docgen, a tool to generate API
 # documentation requires libkea-exceptions and libkea-cc.
-SUBDIRS = compatcheck tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
+SUBDIRS = tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -53,7 +53,7 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_CONTRIB_CONFIGURE_FLAG)
 # keerp the sysrepo config
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
 
-dist_doc_DATA = AUTHORS COPYING ChangeLog README contributors-guide.md
+dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md
 
 .PHONY: check-valgrind check-valgrind-suppress
 
@@ -147,21 +147,15 @@ cppcheck:
 		src
 
 # this is a shortcut that builds only documentation dependecies and documentation itself
-gen-docs:
-	$(MAKE) -C src/lib/exceptions
-	$(MAKE) -C src/lib/asiolink
-	$(MAKE) -C src/lib/util
-	$(MAKE) -C src/lib/cc
-	$(MAKE) -C tools
-	$(MAKE) -C doc api
-	$(MAKE) -C doc
-	$(MAKE) -C doc/guide pdf
+docs:
+	$(MAKE) -C doc/sphinx
 
 
 # These steps are necessary during installation
 install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/log/
-	mkdir -p $(DESTDIR)${localstatedir}/run/${PACKAGE_NAME}
+	mkdir -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
+	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
 
 EXTRA_DIST  = tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh

@@ -11,24 +11,8 @@ endif
 
 CLEANFILES  = *.gcno *.gcda
 
-man_MANS = kea-ctrl-agent.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-ctrl-agent.xml
-EXTRA_DIST += agent.dox agent_hooks.dox
+EXTRA_DIST = agent.dox agent_hooks.dox
 
-if GENERATE_DOCS
-kea-ctrl-agent.8: kea-ctrl-agent.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/kea-ctrl-agent.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
 
 # convenience archive
 

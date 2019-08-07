@@ -404,4 +404,19 @@ TEST_F(NetworkTest, getPropertyGlobalNoParentNoChild) {
     EXPECT_EQ("global_iface", net_child->getIface().get());
 }
 
+// Test that getSiaddr() never fails.
+TEST_F(NetworkTest, getSiaddrNeverFail) {
+    TestNetworkPtr net_child(new TestNetwork4());
+
+    // Set the next-server textual address to the empty string.
+    // Note that IOAddress("") throws IOError.
+    globals_->set("next-server", Element::create(""));
+
+    net_child->setFetchGlobalsFn(getFetchGlobalsFn());
+
+    // Get an IPv4 view of the test network.
+    auto net4_child = boost::dynamic_pointer_cast<Network4>(net_child);
+    EXPECT_NO_THROW(net4_child->getSiaddr());
+}
+
 }

@@ -79,7 +79,7 @@ void generateTestLeases(std::vector<Lease4Ptr>& leases) {
         Lease4Ptr lease(new Lease4(IOAddress(lease_address),
                                    HWAddrPtr(new HWAddr(hwaddr, HTYPE_ETHER)),
                                    ClientIdPtr(),
-                                   60, 30, 40,
+                                   60,
                                    static_cast<time_t>(1000 + i),
                                    SubnetID(i)));
         leases.push_back(lease);
@@ -96,7 +96,7 @@ void generateTestLeases(std::vector<Lease6Ptr>& leases) {
         address_bytes[6] += i;
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA,
                                    IOAddress::fromBytes(AF_INET6, &address_bytes[0]),
-                                   duid, 1, 50, 60, 30, 40, SubnetID(i)));
+                                   duid, 1, 50, 60, SubnetID(i)));
         leases.push_back(lease);
     }
 }
@@ -226,15 +226,21 @@ public:
     ///
     /// @param str1 First string which must be included in the request.
     /// @param str2 Second string which must be included in the request.
+    /// @param str3 Third string which must be included in the request.
+    /// It is optional and defaults to empty string which means "do not
+    /// match".
     ///
     /// @return Pointer to the request found, or null pointer if there is
     /// no such request.
     ConstPostHttpRequestJsonPtr
-    findRequest(const std::string& str1, const std::string& str2) {
+    findRequest(const std::string& str1, const std::string& str2,
+                const std::string& str3 = "") {
         for (auto r = requests_.begin(); r < requests_.end(); ++r) {
             std::string request_as_string = (*r)->toString();
             if (request_as_string.find(str1) != std::string::npos) {
                 if (request_as_string.find(str2) != std::string::npos) {
+                    if (str3.empty() ||
+                        (request_as_string.find(str3) != std::string::npos))
                     return (*r);
                 }
             }
@@ -673,14 +679,14 @@ public:
         HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
         Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
                                     static_cast<const uint8_t*>(0), 0,
-                                    60, 30, 40, 0, 1));
+                                    60, 0, 1));
         leases4->push_back(lease4);
 
         // Create deleted leases collection and put the lease there too.
         Lease4CollectionPtr deleted_leases4(new Lease4Collection());
         Lease4Ptr deleted_lease4(new Lease4(IOAddress("192.2.3.4"), hwaddr,
                                             static_cast<const uint8_t*>(0), 0,
-                                            60, 30, 40, 0, 1));
+                                            60, 0, 1));
         deleted_leases4->push_back(deleted_lease4);
 
         // The communication state is the member of the HAServce object. We have to
@@ -760,13 +766,13 @@ public:
         Lease6CollectionPtr leases6(new Lease6Collection());
         DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
         Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
-                                    1234, 50, 60, 30, 40, 1));
+                                    1234, 50, 60, 1));
         leases6->push_back(lease6);
 
         // Create deleted leases collection and put the lease there too.
         Lease6CollectionPtr deleted_leases6(new Lease6Collection());
         Lease6Ptr deleted_lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::efac"),
-                                            duid, 1234, 50, 60, 30, 40, 1));
+                                            duid, 1234, 50, 60, 1));
         deleted_leases6->push_back(deleted_lease6);
 
         // The communication state is the member of the HAServce object. We have to
@@ -1332,31 +1338,23 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates6) {
     // to be successful.
     EXPECT_TRUE(unpark_called);
 
-    // The server 2 should have received two commands.
-    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
 
-    // Check that the server 2 has received lease6-update command.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
     EXPECT_TRUE(update_request2);
 
-    // Check that the server 2 has received lease6-del command.
-    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease6-del",
-                                                                        "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request2);
-
     // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
 
-    // Check that the server 3 has received lease6-update command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
-    EXPECT_TRUE(update_request3);
-
-    // Check that the server 3 has received lease6-del command.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease6-del",
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request3);
+    EXPECT_TRUE(update_request3);
 }
 
 // Test scenario when lease updates are sent successfully to the backup server
@@ -1379,28 +1377,20 @@ TEST_F(HAServiceTest, sendUpdatesPartnerDown6) {
     // to be successful.
     EXPECT_TRUE(unpark_called);
 
-    // Server 2 should not receive lease6-update.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
+    // Server 2 should not receive lease6-bulk-apply.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
     EXPECT_FALSE(update_request2);
 
-    // Server 2 should not receive lease6-del.
-    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease6-del",
-                                                                        "2001:db8:1::efac");
-    EXPECT_FALSE(delete_request2);
-
     // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
 
-    // Check that the server 3 has received lease6-update command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
-    EXPECT_TRUE(update_request3);
-
-    // Check that the server 3 has received lease6-del command.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease6-del",
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request3);
+    EXPECT_TRUE(update_request3);
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
@@ -1416,28 +1406,20 @@ TEST_F(HAServiceTest, sendUpdatesActiveServerOffline6) {
             " is dropped";
     }, false, 2);
 
-    // Server 2 should not receive lease6-update.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
+    // Server 2 should not receive lease6-bulk-apply.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
     EXPECT_FALSE(update_request2);
 
-    // Server 2 should not receive lease6-del.
-    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease6-del",
-                                                                        "2001:db8:1::efac");
-    EXPECT_FALSE(delete_request2);
-
     // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
 
-    // Check that the server 3 has received lease6-update command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
-    EXPECT_TRUE(update_request3);
-
-    // Check that the server 3 has received lease6-del command.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease6-del",
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request3);
+    EXPECT_TRUE(update_request3);
 }
 
 // Test scenario when one of the servers to which updates are sent is offline.
@@ -1455,28 +1437,20 @@ TEST_F(HAServiceTest, sendUpdatesBackupServerOffline6) {
 
     EXPECT_TRUE(unpark_called);
 
-    // The server 2 should have received two commands.
-    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
 
-    // Check that the server 2 has received lease6-update command.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
     EXPECT_TRUE(update_request2);
 
-    // Check that the server 2 has received lease6-del command.
-    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease6-del",
+    // Server 3 should not receive lease6-bulk-apply.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request2);
-
-    // Server 3 should not receive lease6-update.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
     EXPECT_FALSE(update_request3);
-
-    // Server 3 should not receive lease6-del.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease6-del",
-                                                                        "2001:db8:1::efac");
-    EXPECT_FALSE(delete_request3);
 }
 
 // Test scenario when one of the servers to which a lease update is sent
@@ -1498,30 +1472,94 @@ TEST_F(HAServiceTest, sendUpdatesControlResultError6) {
     }, false, 2);
 
     // The updates should be sent to server 2 and this server should return error code.
-    EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
 
-    // Server 2 should receive lease6-update.
-    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
+    // Server 2 should receive lease6-bulk-apply.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
     EXPECT_TRUE(update_request2);
 
-    // Server 2 should receive lease6-del.
-    auto delete_request2 = factory2_->getResponseCreator()->findRequest("lease6-del",
+    // Lease updates should be successfully sent to server3.
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request2);
+    EXPECT_TRUE(update_request3);
+}
+
+// This test verifies that the server accepts the response to the lease6-bulk-apply
+// command including failed-deleted-leases and failed-leases parameters.
+TEST_F(HAServiceTest, sendUpdatesFailedLeases6) {
+    // Create a dummy lease which failed to be deleted.
+    auto failed_deleted_lease = Element::createMap();
+    failed_deleted_lease->set("type", Element::create("IA_NA"));
+    failed_deleted_lease->set("ip-address", Element::create("2001:db8:1::1"));
+    failed_deleted_lease->set("subnet-id", Element::create(1));
+    failed_deleted_lease->set("result", Element::create(CONTROL_RESULT_EMPTY));
+    failed_deleted_lease->set("error-message", Element::create("no lease found"));
+
+    // Crate a dummy lease which failed to be created.
+    auto failed_lease = Element::createMap();
+    failed_lease->set("type", Element::create("IA_PD"));
+    failed_lease->set("ip-address", Element::create("2001:db8:1::"));
+    failed_lease->set("subnet-id", Element::create(2));
+    failed_lease->set("result", Element::create(CONTROL_RESULT_ERROR));
+    failed_lease->set("error-message", Element::create("failed to create lease"));
+
+    // Create the "failed-deleted-leases" list.
+    auto failed_deleted_leases = Element::createList();
+    failed_deleted_leases->add(failed_deleted_lease);
+
+    // Create the "failed-leases" list.
+    auto failed_leases = Element::createList();
+    failed_leases->add(failed_lease);
+
+    // Add both lists to the arguments.
+    ElementPtr arguments = Element::createMap();
+    arguments->set("failed-deleted-leases", failed_deleted_leases);
+    arguments->set("failed-leases", failed_leases);
+
+    // Configure the server to return this response.
+    factory2_->getResponseCreator()->setArguments("lease6-bulk-apply",
+                                                  arguments);
+
+    // Start HTTP servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    // This flag will be set to true if unpark is called.
+    bool unpark_called = false;
+    testSendLeaseUpdates6([&unpark_called] {
+        unpark_called = true;
+    }, true, 2);
+
+    // Expecting that the packet was unparked because lease updates are expected
+    // to be successful.
+    EXPECT_TRUE(unpark_called);
+
+    // The server 2 should have received one command.
+    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+    // Check that the server 2 has received lease6-bulk-apply command.
+    auto update_request2 = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
+                                                                        "2001:db8:1::efac");
+    EXPECT_TRUE(update_request2);
 
     // Lease updates should be successfully sent to server3.
-    EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+    EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
 
-    // Check that the server 3 has received lease6-update command.
-    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-update",
-                                                                        "2001:db8:1::cafe");
-    EXPECT_TRUE(update_request3);
-
-    // Check that the server 3 has received lease6-del command.
-    auto delete_request3 = factory3_->getResponseCreator()->findRequest("lease6-del",
+    // Check that the server 3 has received lease6-bulk-apply command.
+    auto update_request3 = factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                        "2001:db8:1::cafe",
                                                                         "2001:db8:1::efac");
-    EXPECT_TRUE(delete_request3);
+    EXPECT_TRUE(update_request3);
 }
 
 // This test verifies that the heartbeat command is processed successfully.

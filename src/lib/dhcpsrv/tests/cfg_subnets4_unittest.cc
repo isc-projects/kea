@@ -910,11 +910,14 @@ TEST(CfgSubnets4Test, duplication) {
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.1"), 26, 1, 2, 3, 125));
 
     ASSERT_NO_THROW(cfg.add(subnet1));
     EXPECT_NO_THROW(cfg.add(subnet2));
     // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
     EXPECT_THROW(cfg.add(subnet3), isc::dhcp::DuplicateSubnetID);
+    // Subnet 4 has a similar but different subnet as subnet 1.
+    EXPECT_NO_THROW(cfg.add(subnet4));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the IPv6 address.
@@ -1016,6 +1019,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
 
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("10.0.0.1"));
+    subnet2->setValid(Triplet<uint32_t>(100));
 
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
@@ -1029,6 +1033,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet3->setSiaddr(IOAddress("192.0.2.2"));
     subnet3->setSname("frog");
     subnet3->setFilename("/dev/null");
+    subnet3->setValid(Triplet<uint32_t>(100, 200, 300));
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -1064,7 +1069,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ \"10.0.0.1\" ] },\n"
-        "    \"valid-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 100,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
@@ -1082,7 +1087,9 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
-        "    \"valid-lifetime\": 3,\n"
+        "    \"valid-lifetime\": 200,\n"
+        "    \"min-valid-lifetime\": 100,\n"
+        "    \"max-valid-lifetime\": 300,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
@@ -1248,9 +1255,7 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
         "            \"reservation-mode\": \"all\", \n"
         "            \"4o6-interface\": \"\", \n"
         "            \"4o6-interface-id\": \"\", \n"
-        "            \"4o6-subnet\": \"\", \n"
-        "            \"dhcp4o6-port\": 0, \n"
-        "            \"decline-probation-period\": 86400 \n"
+        "            \"4o6-subnet\": \"\" \n"
         "        }";
 
 
@@ -1292,6 +1297,247 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
             EXPECT_TRUE(util::areDoublesEquivalent((*test).t1_percent, subnet->getT1Percent()));
             EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()));
         }
+    }
+}
+
+// This test verifies the Subnet4 parser's validation logic for
+// valid-lifetime and indirectly shared lifetime parsing.
+TEST(CfgSubnets4Test, validLifetimeValidation) {
+    // First we create a set of elements that provides all
+    // required for a Subnet4.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"match-client-id\": false, \n"
+        "            \"authoritative\": false, \n"
+        "            \"next-server\": \"\", \n"
+        "            \"server-hostname\": \"\", \n"
+        "            \"boot-file-name\": \"\", \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\", \n"
+        "            \"4o6-interface\": \"\", \n"
+        "            \"4o6-interface-id\": \"\", \n"
+        "            \"4o6-subnet\": \"\" \n"
+        "        }";
+
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    {
+        SCOPED_TRACE("no valid-lifetime");
+
+        data::ElementPtr copied = data::copy(elems);
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_TRUE(subnet->getValid().unspecified());
+        data::ConstElementPtr repr = subnet->toElement();
+        EXPECT_FALSE(repr->get("valid-lifetime"));
+        EXPECT_FALSE(repr->get("min-valid-lifetime"));
+        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("valid-lifetime only");
+
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("valid-lifetime", data::Element::create(100));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(100, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        EXPECT_FALSE(repr->get("min-valid-lifetime"));
+        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-valid-lifetime only");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(100));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(100, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        // Bound only: forgot it was a bound.
+        EXPECT_FALSE(repr->get("min-valid-lifetime"));
+        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("max-valid-lifetime only");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("max-valid-lifetime", data::Element::create(100));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(100, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        // Bound only: forgot it was a bound.
+        EXPECT_FALSE(repr->get("min-valid-lifetime"));
+        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-valid-lifetime and valid-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(100));
+        // Use a different (and greater) value for the default.
+        copied->set("valid-lifetime", data::Element::create(200));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(200, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(200, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("200", value->str());
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        EXPECT_FALSE(repr->get("max-valid-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("max-valid-lifetime and valid-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("max-valid-lifetime", data::Element::create(200));
+        // Use a different (and smaller) value for the default.
+        copied->set("valid-lifetime", data::Element::create(100));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(200, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("200", max_value->str());
+        EXPECT_FALSE(repr->get("min-valid-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-valid-lifetime and max-valid-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(100));
+        copied->set("max-valid-lifetime", data::Element::create(200));
+        Subnet4ConfigParser parser;
+        // No idea about the value to use for the default so failing.
+        ASSERT_THROW(parser.parse(copied), DhcpConfigError);
+    }
+
+    {
+        SCOPED_TRACE("all 3 (min, max and default) valid-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(100));
+        // Use a different (and greater) value for the default.
+        copied->set("valid-lifetime", data::Element::create(200));
+        // Use a different (and greater than both) value for max.
+        copied->set("max-valid-lifetime", data::Element::create(300));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(200, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(300, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("200", value->str());
+        data::ConstElementPtr min_value = repr->get("min-valid-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        data::ConstElementPtr max_value = repr->get("max-valid-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("300", max_value->str());
+    }
+
+    {
+        SCOPED_TRACE("default value too small");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(200));
+        // 100 < 200 so it will fail.
+        copied->set("valid-lifetime", data::Element::create(100));
+        // Use a different (and greater than both) value for max.
+        copied->set("max-valid-lifetime", data::Element::create(300));
+        Subnet4ConfigParser parser;
+        ASSERT_THROW(parser.parse(copied), DhcpConfigError);
+    }
+
+    {
+        SCOPED_TRACE("default value too large");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(100));
+        // Use a different (and greater) value for the default.
+        copied->set("valid-lifetime", data::Element::create(300));
+        // 300 > 200 so it will fail.
+        copied->set("max-valid-lifetime", data::Element::create(200));
+        Subnet4ConfigParser parser;
+        ASSERT_THROW(parser.parse(copied), DhcpConfigError);
+    }
+
+    {
+        SCOPED_TRACE("equal bounds are ignored");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-valid-lifetime", data::Element::create(100));
+        copied->set("valid-lifetime", data::Element::create(100));
+        copied->set("max-valid-lifetime", data::Element::create(100));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getValid().unspecified());
+        EXPECT_EQ(100, subnet->getValid());
+        EXPECT_EQ(100, subnet->getValid().getMin());
+        EXPECT_EQ(100, subnet->getValid().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("valid-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        EXPECT_FALSE(repr->get("min-valid-lifetime"));
+        EXPECT_FALSE(repr->get("max-valid-lifetime"));
     }
 }
 

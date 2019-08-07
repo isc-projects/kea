@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,6 @@
 #include <stdlib.h>
 
 using namespace std;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace {
@@ -267,6 +266,9 @@ TEST(AddrUtilitiesTest, prefixLengthFromRange4) {
     // Fail if a network boundary is crossed
     EXPECT_EQ(-1, plfr(IOAddress("10.0.0.255"), IOAddress("10.0.1.1")));
 
+    // Fail if first is not at the begin
+    EXPECT_EQ(-1, plfr(IOAddress("10.0.0.2"), IOAddress("10.0.0.5")));
+
     // The upper bound cannot be smaller than the lower bound
     EXPECT_THROW(plfr(IOAddress("192.0.2.5"), IOAddress("192.0.2.4")),
                  isc::BadValue);
@@ -323,6 +325,13 @@ TEST(AddrUtilitiesTest, prefixLengthFromRange6) {
     // Fail if a network boundary is crossed
     EXPECT_EQ(-1, plfr(IOAddress("2001:db8::ffff"),
                        IOAddress("2001:db8::1:1")));
+
+    // Fail if first is not at the begin
+    EXPECT_EQ(-1, plfr(IOAddress("2001:db8::2"), IOAddress("2001:db8::5")));
+    EXPECT_EQ(-1, plfr(IOAddress("2001:db8::2:0"),
+                       IOAddress("2001:db8::5:ffff")));
+    EXPECT_EQ(-1, plfr(IOAddress("2001:db8::2:ff00:0"),
+                       IOAddress("2001:db8::3:00ff:ffff")));
 
     // The upper bound cannot be smaller than the lower bound
     EXPECT_THROW(plfr(IOAddress("fe80::5"), IOAddress("fe80::4")),

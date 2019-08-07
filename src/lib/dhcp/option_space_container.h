@@ -48,7 +48,10 @@ public:
     /// @param option_space name or vendor-id of the option space
     void addItem(const ItemType& item, const Selector& option_space) {
         ItemsContainerPtr items = getItems(option_space);
-        items->push_back(item);
+        // Assume that the push_back() can't fail even when the
+        // ContainerType is a multi index container, i.e., assume
+        // there is no unique index which can raise a conflict.
+        static_cast<void>(items->push_back(item));
         option_space_map_[option_space] = items;
     }
 

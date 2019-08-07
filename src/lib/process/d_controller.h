@@ -307,7 +307,7 @@ public:
 
     /// @brief handler for config-set command
     ///
-    /// This method handles the config-set command, which checks
+    /// This method handles the config-set command, which loads
     /// configuration specified in args parameter.
     ///
     /// @param command (ignored)
@@ -327,6 +327,18 @@ public:
     isc::data::ConstElementPtr
     shutdownHandler(const std::string& command,
                     isc::data::ConstElementPtr args);
+
+    /// @brief handler for server-tag-get command
+    ///
+    /// This method handles the server-tag-get command, which retrieves
+    /// the current server tag and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    serverTagGetHandler(const std::string& command,
+                        isc::data::ConstElementPtr args);
 
 protected:
     /// @brief Virtual method that provides derivations the opportunity to
@@ -600,6 +612,15 @@ protected:
     /// invoked.
     /// @return a string containing additional version info
     virtual std::string getVersionAddendum() { return (""); }
+
+    /// @brief Deals with other (i.e. not application name) global objects.
+    ///
+    /// Code shared between configuration handlers:
+    ///  - check obsolete or unknown (aka unsupported) objects.
+    ///  - relocate Logging.
+    ///
+    /// @param args Command arguments.
+    void handleOtherObjects(isc::data::ConstElementPtr args);
 
 private:
     /// @brief Name of the service under control.

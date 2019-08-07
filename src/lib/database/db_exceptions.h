@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,6 +42,13 @@ public:
 class DuplicateEntry : public Exception {
 public:
     DuplicateEntry(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Key is NULL but was specified NOT NULL
+class NullKeyError : public Exception {
+public:
+    NullKeyError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 

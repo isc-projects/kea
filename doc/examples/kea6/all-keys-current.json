@@ -412,8 +412,14 @@
             }
         ],
 
-        // Global value of the preferred lifetime.
+        // Global (default) value of the preferred lifetime.
         "preferred-lifetime": 50,
+
+        // Global min value of the preferred lifetime.
+        "min-preferred-lifetime": 40,
+
+        // Global max value of the preferred lifetime.
+        "max-preferred-lifetime": 60,
 
         // Global value for the rebind timer, i.e. the time after which the
         // DHCP client enters rebind state if it fails to renew the lease.
@@ -481,8 +487,14 @@
                 // List of shared network specific DHCP options.
                 "option-data": [],
 
-                // Shared network specific preferred lifetime.
+                // Shared network specific (default) preferred lifetime.
                 "preferred-lifetime": 2000,
+
+                // Shared network specific min preferred lifetime.
+                "min-preferred-lifetime": 1500,
+
+                // Shared network specific ma xpreferred lifetime.
+                "max-preferred-lifetime": 2500,
 
                 // Boolen flag indicating if the server can respond to
                 // a Solicit message including a Rapid Commit option with
@@ -569,13 +581,30 @@
                         // clients.
                         "pd-pools": [
                             {
+                                // Restricts this prefix pool to be used only for the client
+                                // requests belonging to a particular client class.
                                 "client-class": "phones_server1",
+
+                                // Length of prefixes delegated to clients.
                                 "delegated-len": 64,
+
+                                // Excluded prefix (address) from client assignments.
                                 "excluded-prefix": "2001:db8::",
+
+                                // Excluded prefix (length) from client assignments.
                                 "excluded-prefix-len": 48,
+
+                                // Prefix pool level list of DHCP options.
                                 "option-data": [],
+
+                                // Prefix range (address) used for client assignments.
                                 "prefix": "2001:db8::",
+
+                                // Prefix range (length) used for client assignments.
                                 "prefix-len": 40,
+
+                                // List of client classes which must be evaluated
+                                // when this prefix pool is selected for client assignments.
                                 "require-client-classes": []
                             }
                         ],
@@ -613,8 +642,14 @@
                             }
                         ],
 
-                        // Subnet specific preferred lifetime.
+                        // Subnet specific (default) preferred lifetime.
                         "preferred-lifetime": 2000,
+
+                        // Subnet specific min preferred lifetime.
+                        "min-preferred-lifetime": 1500,
+
+                        // Subnet specific max referred lifetime.
+                        "max-preferred-lifetime": 2500,
 
                         // Boolen flag indicating if the server can respond to
                         // a Solicit message including a Rapid Commit option with
@@ -685,21 +720,39 @@
                         // Subnet prefix.
                         "subnet": "2001:db8::/32",
 
-                        // Subnet level valid lifetime.
-                        "valid-lifetime": 6000
+                        // Subnet level (default) valid lifetime.
+                        "valid-lifetime": 6000,
+
+                        // Subnet level min valid lifetime.
+                        "min-valid-lifetime": 4000,
+
+                        // Subnet level max valid lifetime.
+                        "max-valid-lifetime": 8000
                     }
                 ],
 
-                // Shared network level valid lifetime.
-                "valid-lifetime": 6001
+                // Shared network level (default) valid lifetime.
+                "valid-lifetime": 6001,
+
+                // Shared network level min valid lifetime.
+                "min-valid-lifetime": 4001,
+
+                // Shared network level max valid lifetime.
+                "max-valid-lifetime": 8001
             }
         ],
 
         // List of IPv6 subnets which don't belong to any shared network.
         "subnet6": [],
 
-        // Global valid lifetime value.
+        // Global (default) valid lifetime value.
         "valid-lifetime": 6000,
+
+        // Global min valid lifetime value.
+        "min-valid-lifetime": 4000,
+
+        // Global max valid lifetime value.
+        "max-valid-lifetime": 8000,
 
         // Reservations (examples are in other files).
         "reservations": [],
@@ -750,6 +803,16 @@
 
         // T2 = valid lifetime * .75.
         "t2-percent": .75,
+
+        // String of zero or more characters with which to replace each
+        // invalid character in the hostname or Client FQDN. The default
+        // value is an empty string which will cause invalid characters
+        // to be omitted rather than replaced.
+        "hostname-char-replacement": "x",
+
+        // Regular expression describing the invalid character set in
+        // the hostname or Client FQDN.
+        "hostname-char-set": "[^A-Za-z0-9.-]",
 
         // List of loggers used by the servers using this configuration file.
         "loggers": [

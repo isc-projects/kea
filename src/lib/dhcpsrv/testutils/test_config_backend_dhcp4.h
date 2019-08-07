@@ -10,6 +10,8 @@
 #include <config.h>
 
 #include <database/database_connection.h>
+#include <database/server.h>
+#include <database/server_collection.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/testutils/test_config_backend.h>
 
@@ -27,6 +29,11 @@ namespace test {
 /// This backend should be used for unit testing the DHCPv4 server and the
 /// commands which manpiluate the configuration information stored in the
 /// database.
+///
+/// Server selectors supported by this test configuration backend are a
+/// superset of the server selectors allowed by the API. Therefore, if
+/// additional server selectors are allowed by the API in the future
+/// this backend should not require any additional changes to support them.
 ///
 /// This backend stores server configuration information in memory.
 class TestConfigBackendDHCPv4 : public TestConfigBackend<ConfigBackendDHCPv4> {
@@ -218,6 +225,20 @@ public:
     getRecentAuditEntries(const db::ServerSelector& server_selector,
                           const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves all servers.
+    ///
+    /// @return Collection of servers from the backend.
+    virtual db::ServerCollection
+    getAllServers4() const;
+
+    /// @brief Retrieves a server.
+    ///
+    /// @param server_tag Tag of the server to be retrieved.
+    /// @return Pointer to the server instance or null pointer if no server
+    /// with the particular tag was found.
+    virtual db::ServerPtr
+    getServer4(const data::ServerTag& server_tag) const;
+
     /// @brief Creates or updates a subnet.
     ///
     /// @param server_selector Server selector.
@@ -292,6 +313,12 @@ public:
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
+
+    /// @brief Creates or updates a server.
+    ///
+    /// @param server Instance of the server to be stored.
+    virtual void
+    createUpdateServer4(const db::ServerPtr& server);
 
     /// @brief Deletes subnet by prefix.
     ///
@@ -428,6 +455,20 @@ public:
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector);
 
+    /// @brief Deletes a server from the backend.
+    ///
+    /// @param server_tag Tag of the server to be deleted.
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteServer4(const data::ServerTag& server_tag);
+
+    /// @brief Deletes all servers from the backend except the logical
+    /// server 'all'.
+    ///
+    /// @return Number of deleted servers.
+    virtual uint64_t
+    deleteAllServers4();
+
 /// @{
 /// @brief Containers used to house the "database" entries
     Subnet4Collection subnets_;
@@ -435,6 +476,7 @@ public:
     OptionDefContainer option_defs_;
     OptionContainer options_;
     data::StampedValueCollection globals_;
+    db::ServerCollection servers_;
 /// @}
 };
 

@@ -6,6 +6,8 @@
 
 #include <config.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/option_int.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
@@ -128,6 +130,152 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     EXPECT_TRUE(testStatistics("assigned-addresses", 2, subnet_->getID()));
 }
 
+// This test checks that simple allocation uses the default valid lifetime.
+TEST_F(AllocEngine4Test, defaultAlloc4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease4(lease);
+
+    // Check the valid lifetime has the default.
+    EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+// This test checks that simple allocation uses the specified valid lifetime.
+TEST_F(AllocEngine4Test, hintAlloc4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Speficy the valid lifetime we want.
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 4));
+    ctx.query_->addOption(opt);
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease4(lease);
+
+    // Check the valid lifetime has the wanted value.
+    EXPECT_EQ(opt->getValue(), lease->valid_lft_);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+// This test checks that simple allocation uses the min valid lifetime.
+TEST_F(AllocEngine4Test, minAlloc4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(2, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Speficy the valid lifetime we want, as it is lower than the min value
+    // we'll get this min value instead.
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1));
+    ctx.query_->addOption(opt);
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease4(lease);
+
+    // Check the valid lifetime has the wanted value.
+    EXPECT_EQ(subnet_->getValid().getMin(), lease->valid_lft_);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+// This test checks that simple allocation uses the max valid lifetime.
+TEST_F(AllocEngine4Test, maxAlloc4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Speficy the valid lifetime we want, as it is greater than the max value
+    // we'll get this max value instead.
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 6));
+    ctx.query_->addOption(opt);
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Do all checks on the lease
+    checkLease4(lease);
+
+    // Check the valid lifetime has the wanted value.
+    EXPECT_EQ(subnet_->getValid().getMax(), lease->valid_lft_);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
 // This test checks if the fake allocation (for DHCPDISCOVER) can succeed
 TEST_F(AllocEngine4Test, fakeAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -212,7 +360,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              clientid2, sizeof(clientid2), 1, 2, 3, now, subnet_->getID()));
+                              clientid2, sizeof(clientid2), 1, now, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Another client comes in and request an address that is in pool, but
@@ -365,6 +513,172 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
 
     // Should NOT have bumped assigned-addresses
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+}
+
+// This test checks simple renewal uses the default valid lifetime.
+TEST_F(AllocEngine4Test, defaultRenew4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease);
+    checkLease4(lease);
+
+    // Check the valid lifetime has the default.
+    EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Do it again, this should amount to the renew of an existing lease
+    Lease4Ptr lease2 = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease2);
+    checkLease4(lease2);
+
+    // Lease already existed, so old_lease should be set.
+    EXPECT_TRUE(ctx.old_lease_);
+
+    // Check the renewed valid lifetime has the default.
+    EXPECT_EQ(subnet_->getValid(), lease2->valid_lft_);
+}
+
+// This test checks simple renewal uses the specified valid lifetime.
+TEST_F(AllocEngine4Test, hintRenew4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Speficy the valid lifetime we want.
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 4));
+    ctx.query_->addOption(opt);
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease);
+    checkLease4(lease);
+
+    // Check the valid lifetime has the wanted value.
+    EXPECT_EQ(opt->getValue(), lease->valid_lft_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Do it again, this should amount to the renew of an existing lease
+    Lease4Ptr lease2 = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease2);
+    checkLease4(lease2);
+
+    // Lease already existed, so old_lease should be set.
+    EXPECT_TRUE(ctx.old_lease_);
+
+    // Check the renewed valid lifetime has the wanted value.
+    EXPECT_EQ(opt->getValue(), lease2->valid_lft_);
+}
+
+// This test checks simple renewal uses the min valid lifetime.
+TEST_F(AllocEngine4Test, minRenew4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(2, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Speficy the valid lifetime we want, as it is lower than the min value
+    // we'll get this min value instead.
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 1));
+    ctx.query_->addOption(opt);
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease);
+    checkLease4(lease);
+
+    // Check the valid lifetime has the min value.
+    EXPECT_EQ(subnet_->getValid().getMin(), lease->valid_lft_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Do it again, this should amount to the renew of an existing lease
+    Lease4Ptr lease2 = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease2);
+    checkLease4(lease2);
+
+    // Lease already existed, so old_lease should be set.
+    EXPECT_TRUE(ctx.old_lease_);
+
+    // Check the renewed valid lifetime has the min value.
+    EXPECT_EQ(subnet_->getValid().getMin(), lease2->valid_lft_);
+}
+
+// This test checks simple renewal uses the max valid lifetime.
+TEST_F(AllocEngine4Test, maxRenew4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 0, false)));
+    ASSERT_TRUE(engine);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
+                                    false, true, "somehost.example.com.", false);
+    subnet_->setValid(Triplet<uint32_t>(1, 3, 5));
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Speficy the valid lifetime we want, as it is greater than the max value
+    // we'll get this max value instead.
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME, 6));
+    ctx.query_->addOption(opt);
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease);
+    checkLease4(lease);
+
+    // Check the valid lifetime has the max value.
+    EXPECT_EQ(subnet_->getValid().getMax(), lease->valid_lft_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx.old_lease_);
+
+    // Do it again, this should amount to the renew of an existing lease
+    Lease4Ptr lease2 = engine->allocateLease4(ctx);
+
+    // Check that we got a lease and it's sane
+    ASSERT_TRUE(lease2);
+    checkLease4(lease2);
+
+    // Lease already existed, so old_lease should be set.
+    EXPECT_TRUE(ctx.old_lease_);
+
+    // Check the renewed valid lifetime has the max value.
+    EXPECT_EQ(subnet_->getValid().getMax(), lease2->valid_lft_);
 }
 
 // This test verifies that the allocator picks addresses that belong to the
@@ -529,7 +843,7 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
     Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2,
-                               sizeof(clientid2), 501, 502, 503, now,
+                               sizeof(clientid2), 501, now,
                                subnet_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -592,7 +906,7 @@ public:
     Lease4Ptr
     insertLease(std::string addr, SubnetID subnet_id) {
         Lease4Ptr lease(new Lease4(IOAddress(addr), hwaddr2_, ClientIdPtr(),
-                                   501, 502, 503, time(NULL), subnet_id));
+                                   501, time(NULL), subnet_id));
         lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
         if (!LeaseMgrFactory::instance().addLease(lease)) {
             ADD_FAILURE() << "Attempt to add a lease for IP " << addr
@@ -832,7 +1146,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is offerred.
     Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
-                                501, 502, 503, time(NULL), subnet1_->getID()));
+                                501, time(NULL), subnet1_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
@@ -875,7 +1189,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsNoColl) {
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is offerred.
     Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
-                                501, 502, 503, time(NULL), subnet1_->getID()));
+                                501, time(NULL), subnet1_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
@@ -1136,7 +1450,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is allocated again.
     Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
-                                501, 502, 503, time(NULL), subnet1_->getID()));
+                                501, time(NULL), subnet1_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
@@ -1182,7 +1496,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is allocated again.
     Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
-                                501, 502, 503, time(NULL), subnet1_->getID()));
+                                501, time(NULL), subnet1_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
@@ -1217,7 +1531,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
     Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
-                               495, 100, 200, now, subnet_->getID()));
+                               495, now, subnet_->getID()));
     // Copy the lease, so as it can be compared with the old lease returned
     // by the allocation engine.
     Lease4 original_lease(*lease);
@@ -1282,7 +1596,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
 
     Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
-                               495, 100, 200, now, subnet_->getID()));
+                               495, now, subnet_->getID()));
     // Make a copy of the lease, so as we can compare that with the old lease
     // instance returned by the allocation engine.
     Lease4 original_lease(*lease);
@@ -1476,7 +1790,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 // identifier and HW address.
 TEST_F(AllocEngine4Test, identifyClientLease) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, clientid_,
-                               100, 30, 60, time(NULL), subnet_->getID()));
+                               100, time(NULL), subnet_->getID()));
     LeaseMgrFactory::instance().addLease(lease);
 
     AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
@@ -1544,7 +1858,7 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     // Create the second lease. Note that we use the same client id here and
     // we expect that the allocation engine will figure out that the hardware
@@ -1552,7 +1866,7 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.102"), hwaddr2_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     // Add leases for both clients to the Lease Manager.
     LeaseMgrFactory::instance().addLease(lease);
@@ -1769,7 +2083,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -1818,7 +2132,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     // Allocate a lease for the client A for the same address as reserved
     // for the client B.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.123"), hwaddr2_, 0, 0,
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -1875,7 +2189,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
 
     // Create a lease for the client A.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.123"), hwaddr2_, 0, 0,
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -1935,7 +2249,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
 
     // Create a lease for the client for a different address than reserved.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_, ClientIdPtr(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -1991,7 +2305,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -2056,7 +2370,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -2108,7 +2422,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -2172,7 +2486,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
@@ -2547,7 +2861,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
                                &clientid_->getClientId()[0],
                                clientid_->getClientId().size(),
-                               100, 30, 60, time(NULL), subnet_->getID(),
+                               100, time(NULL), subnet_->getID(),
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 

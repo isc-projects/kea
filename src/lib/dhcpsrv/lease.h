@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,8 +78,6 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Constructor
     ///
     /// @param addr IP address
-    /// @param t1 renewal time
-    /// @param t2 rebinding time
     /// @param valid_lft Lifetime of the lease
     /// @param subnet_id Subnet identification
     /// @param cltt Client last transmission time
@@ -87,7 +85,7 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
     /// @param hostname FQDN of the client which gets the lease.
     /// @param hwaddr Hardware/MAC address
-    Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
+    Lease(const isc::asiolink::IOAddress& addr,
           uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
           const bool fqdn_fwd, const bool fqdn_rev,
           const std::string& hostname,
@@ -100,24 +98,6 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     ///
     /// IPv4, IPv6 address or, in the case of a prefix delegation, the prefix.
     isc::asiolink::IOAddress addr_;
-
-    /// @brief Renewal timer
-    ///
-    /// Specifies renewal time. Although technically it is a property of the
-    /// IA container and not the address itself, since our data model does not
-    /// define a separate IA entity, we are keeping it in the lease. In the
-    /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is specified in seconds since cltt.
-    uint32_t t1_;
-
-    /// @brief Rebinding timer
-    ///
-    /// Specifies rebinding time. Although technically it is a property of the
-    /// IA container and not the address itself, since our data model does not
-    /// define a separate IA entity, we are keeping it in the lease. In the
-    /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is specified in seconds since cltt.
-    uint32_t t2_;
 
     /// @brief Valid lifetime
     ///
@@ -215,9 +195,9 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Sets lease to DECLINED state.
     ///
     /// All client identifying parameters will be stripped off (HWaddr,
-    /// client_id, hostname), timers set to 0 (t1, t2), cltt will be set
-    /// to current time and valid_lft to parameter specified as probation
-    /// period. Note that This method only sets fields in the structure.
+    /// client_id, hostname), cltt will be set to current time and
+    /// valid_lft to parameter specified as probation period.
+    /// Note that This method only sets fields in the structure.
     /// It is caller's responsibility to clean up DDNS, bump up stats,
     /// log, call hooks ets.
     ///
@@ -268,8 +248,6 @@ struct Lease4 : public Lease {
     /// @param clientid Client identification buffer
     /// @param clientid_len Length of client identification buffer
     /// @param valid_lft Lifetime of the lease
-    /// @param t1 renewal time
-    /// @param t2 rebinding time
     /// @param cltt Client last transmission time
     /// @param subnet_id Subnet identification
     /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
@@ -277,10 +255,10 @@ struct Lease4 : public Lease {
     /// @param hostname FQDN of the client which gets the lease.
     Lease4(const isc::asiolink::IOAddress& addr, const HWAddrPtr& hwaddr,
            const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
-           uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id,
+           time_t cltt, uint32_t subnet_id,
            const bool fqdn_fwd = false, const bool fqdn_rev = false,
            const std::string& hostname = "")
-        : Lease(addr, t1, t2, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
+        : Lease(addr, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
                 hostname, hwaddr) {
         if (clientid_len) {
             client_id_.reset(new ClientId(clientid, clientid_len));
@@ -293,8 +271,6 @@ struct Lease4 : public Lease {
     /// @param hw_address Pointer to client's HW addresss.
     /// @param client_id  pointer to the client id structure.
     /// @param valid_lifetime Valid lifetime value.
-    /// @param t1 Renew timer.
-    /// @param t2 Rebind timer.
     /// @param cltt Timestamp when the lease is acquired, renewed.
     /// @param subnet_id Subnet identifier.
     /// @param fqdn_fwd Forward DNS update performed.
@@ -304,8 +280,6 @@ struct Lease4 : public Lease {
            const HWAddrPtr& hw_address,
            const ClientIdPtr& client_id,
            const uint32_t valid_lifetime,
-           const uint32_t t1,
-           const uint32_t t2,
            const time_t cltt,
            const SubnetID subnet_id,
            const bool fqdn_fwd = false,
@@ -316,7 +290,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr())
+    Lease4() : Lease(0, 0, 0, 0, false, false, "", HWAddrPtr())
     {
     }
 
@@ -505,14 +479,12 @@ struct Lease6 : public Lease {
     /// @param iaid IAID.
     /// @param preferred Preferred lifetime.
     /// @param valid Valid lifetime.
-    /// @param t1 A value of the T1 timer.
-    /// @param t2 A value of the T2 timer.
     /// @param subnet_id A Subnet identifier.
     /// @param hwaddr hardware/MAC address (optional)
     /// @param prefixlen An address prefix length (optional, defaults to 128)
     Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
-           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, const HWAddrPtr& hwaddr = HWAddrPtr(),
+           uint32_t iaid, uint32_t preferred, uint32_t valid,
+           SubnetID subnet_id, const HWAddrPtr& hwaddr = HWAddrPtr(),
            uint8_t prefixlen = 128);
 
     /// @brief Constructor, including FQDN data.
@@ -523,8 +495,6 @@ struct Lease6 : public Lease {
     /// @param iaid IAID.
     /// @param preferred Preferred lifetime.
     /// @param valid Valid lifetime.
-    /// @param t1 A value of the T1 timer.
-    /// @param t2 A value of the T2 timer.
     /// @param subnet_id A Subnet identifier.
     /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
     /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
@@ -532,8 +502,8 @@ struct Lease6 : public Lease {
     /// @param hwaddr hardware address (MAC), may be NULL
     /// @param prefixlen An address prefix length (optional, defaults to 128)
     Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
-           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
+           uint32_t iaid, uint32_t preferred, uint32_t valid,
+           SubnetID subnet_id, const bool fqdn_fwd,
            const bool fqdn_rev, const std::string& hostname,
            const HWAddrPtr& hwaddr = HWAddrPtr(), uint8_t prefixlen = 128);
 

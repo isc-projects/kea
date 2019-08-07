@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ namespace isc {
 namespace http {
 
 HttpDateTime::HttpDateTime()
-    : time_(boost::posix_time::microsec_clock::universal_time()) {
+    : time_(boost::posix_time::second_clock::universal_time()) {
 }
 
 HttpDateTime::HttpDateTime(const boost::posix_time::ptime& t)

@@ -726,13 +726,25 @@
                         // Subnet prefix.
                         "subnet": "192.0.0.0/8",
 
-                        // Subnet level valid lifetime.
-                        "valid-lifetime": 6000
+                        // Subnet level (default) valid lifetime.
+                        "valid-lifetime": 6000,
+
+                        // Subnet level min valid lifetime.
+                        "min-valid-lifetime": 4000,
+
+                        // Subnet level max valid lifetime.
+                        "max-valid-lifetime": 8000
                     }
                 ],
 
-                // Shared network level valid lifetime.
-                "valid-lifetime": 6001
+                // Shared network level (default) valid lifetime.
+                "valid-lifetime": 6001,
+
+                // Subnet level min valid lifetime.
+                "min-valid-lifetime": 4001,
+
+                // Subnet level max valid lifetime.
+                "max-valid-lifetime": 8001
             }
         ],
 
@@ -742,8 +754,14 @@
         // List of IPv4 subnets which don't belong to any shared network.
         "subnet4": [],
 
-        // Global valid lifetime value.
+        // Global valid (default) lifetime value.
         "valid-lifetime": 6000,
+
+        // Global min valid lifetime value.
+        "min-valid-lifetime": 4000,
+
+        // Global max valid lifetime value.
+        "max-valid-lifetime": 8000,
 
         // Reservations (examples are in other files).
         "reservations": [],
@@ -791,6 +809,16 @@
 
         // T2 = valid lifetime * .75.
         "t2-percent": .75,
+
+        // String of zero or more characters with which to replace each
+        // invalid character in the hostname or Client FQDN. The default
+        // value is an empty string which will cause invalid characters
+        // to be omitted rather than replaced.
+	"hostname-char-replacement": "x",
+
+        // Regular expression describing the invalid character set in
+        // the hostname or Client FQDN.
+        "hostname-char-set": "[^A-Za-z0-9.-]",
 
         // List of loggers used by the servers using this configuration file.
         "loggers": [

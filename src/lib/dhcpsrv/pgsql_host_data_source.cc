@@ -256,7 +256,7 @@ public:
             bind_array->add(host->getBootFileName());
 
             // add auth keys
-            std::string key = host->getKey().ToText();
+            std::string key = host->getKey().toText();
             if (key.empty()) {
                 bind_array->addNull();
             } else {

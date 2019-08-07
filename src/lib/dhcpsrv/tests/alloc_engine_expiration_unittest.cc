@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1270,8 +1270,8 @@ ExpirationAllocEngine6Test::createLeases() {
         IOAddress address(address_s.str());
 
         // Create lease.
-        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60, 10,
-                                   20, SubnetID(1), true, true,
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60,
+                                   SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);
         // Copy the lease before adding it to the lease manager. We want to
@@ -1422,7 +1422,7 @@ ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
                                         msg_type == DHCPV6_SOLICIT,
                                         Pkt6Ptr(new Pkt6(msg_type, 0x1234)));
         ctx.currentIA().iaid_ = 1;
-        ctx.currentIA().hints_.push_back(std::make_pair(leases_[i]->addr_, 128));
+        ctx.currentIA().addHint(leases_[i]->addr_);
 
         // Depending on the message type, we will call a different function.
         if (msg_type == DHCPV6_RENEW) {
@@ -1832,7 +1832,7 @@ ExpirationAllocEngine4Test::createLeases() {
         IOAddress address(address_s.str());
 
         // Create lease.
-        Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60, 10, 20,
+        Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60,
                                    time(NULL), SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         leases_.push_back(lease);

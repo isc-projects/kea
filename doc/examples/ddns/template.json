@@ -1,9 +1,7 @@
 // This file may be used a template for constructing DHCP-DDNS JSON
 // configuration.
 //
-// Default values that may be omitted are '//' commented out.
-
-// If in a file by itself, it must start with a left-curly-bracket.
+// It must start with a left-curly-bracket.
 {
 
 "DhcpDdns" :
@@ -37,27 +35,27 @@
     {
         "ddns-domains" :
         [
-            {
-                "name" : "<zone name 1>",
+//            {
+//                "name" : "<zone name 1>",
 //                "key-name" : "<key name>",
-                "dns-servers" :
-                [
-                    {
-                        "ip-address" : "<ip address>"
+//                "dns-servers" :
+//                [
+//                    {
+//                        "ip-address" : "<ip address>"
 //                       ,"port" : 53
-                    }
-//                   ,
-//                   {
-//                       next DNS server for this DdnsDomain
-//                   }
-//                   :
-                ]
-            }
-//           ,
-//           {
-//                next Forward DdnsDomain
-//           }
-//           :
+//                    }
+//                    ,
+//                    {
+//                        next DNS server for this DdnsDomain
+//                    }
+//                    :
+//                ]
+//            }
+//            ,
+//            {
+//                 next Forward DdnsDomain
+//            }
+//            :
         ]
     },
 
@@ -68,27 +66,27 @@
     {
         "ddns-domains" :
         [
-            {
-                "name" : "<reverse zone name 1>",
+//            {
+//                "name" : "<reverse zone name 1>",
 //                "key-name" : "<key name>",
-                "dns-servers" :
-                [
-                    {
-                        "ip-address" : "<ip address>"
+//                "dns-servers" :
+//                [
+//                    {
+//                        "ip-address" : "<ip address>"
 //                        ,"port" : 53
-                    }
-//                   ,
-//                   {
-//                       next DNS server for this DdnsDomain
-//                   }
-//                   :
-                ]
-            }
-//           ,
-//           {
-//                next Reverse DdnsDomain
-//           }
-//           :
+//                    }
+//                    ,
+//                    {
+//                        next DNS server for this DdnsDomain
+//                    }
+//                    :
+//                ]
+//            }
+//            ,
+//            {
+//                 next Reverse DdnsDomain
+//            }
+//            :
         ]
     },
 //
@@ -96,23 +94,32 @@
 //
     "tsig-keys" :
     [
-        {
-            "name" : "<key name>",
-            "algorithm" : "<algorithm name>",
+//        {
+//            "name" : "<key name>",
+//            "algorithm" : "<algorithm name>",
 //            Valid values for algorithm are:    HMAC-MD5, HMAC-SHA1,
 //                                               HMAC-SHA224, HMAC-SHA256,
 //                                               HMAC-SHA384, HMAC-SHA512
-//           "digest-bits" : 256,
-//           Minimum truncated length in bits.
-//           Default 0 (means truncation is forbidden).
-            "secret" : "<shared secret value>"
-        }
-//       ,
+//            "digest-bits" : 256,
+//            Minimum truncated length in bits.
+//            Default 0 (means truncation is forbidden).
+//            "secret" : "<shared secret value>"
+//        }
+//        ,
 //        {
 //                next TSIG Key
 //        }
     ]
+
+// Logging
+//    ,"loggers":
+//    [
+//        {
+//            "name": "kea-dhcp-ddns",
+//            "severity": "info"
+//        }
+//    ]
 }
 
-// If in a file by itself, it must end with an right-curly-bracket.
+// It must end with an right-curly-bracket.
 }

@@ -20,10 +20,6 @@ the process name, the second contains the PID and PID file.
 This debug message is issued just before the controller attempts
 to disconnect from its session with the Kea control channel.
 
-% DCTL_CCSESSION_STARTING %1 starting control channel session, specfile: %2
-This debug message is issued just before the controller attempts
-to establish a session with the Kea control channel.
-
 % DCTL_CFG_FILE_RELOAD_ERROR configuration reload failed: %1, reverting to current configuration.
 This is an error message indicating that the application attempted to reload
 its configuration from file and encountered an error.  This is likely due to
@@ -107,9 +103,9 @@ This is an error message that occurs when the server is unable to create
 its PID file.  The log message should contain details sufficient to
 determine the underlying cause.  The most likely culprits are that
 some portion of the pathname does not exist or a permissions issue. The
-default path is determined by --localstatedir configure parameter but
-may be overridden by setting environment variable, KEA_PIDFILE_DIR.  The
-first argument is the process name.
+default path is determined by --localstatedir or --runstatedir configure
+parameters but may be overridden by setting environment variable,
+KEA_PIDFILE_DIR.  The first argument is the process name.
 
 % DCTL_PROCESS_FAILED %1 application execution failed: %2
 The controller has encountered a fatal error while running the

@@ -550,6 +550,236 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     checkClientId(reply, clientid);
 }
 
+// This test verifies that ADVERTISE returns default lifetimes when
+// the client does not add an IAADDR sub option.
+TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add no IAADDR sub option.
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                subnet_->getT2());
+    ASSERT_TRUE(addr);
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that ADVERTISE returns default lifetimes when
+// the client adds an IAPREFIX sub option with zero lifetime hints.
+TEST_F(Dhcpv6SrvTest, hintZeroLifetimeSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iapd = generateIA(D6O_IA_PD, 234, 1500, 3000);
+    sol->addOption(iapd);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAPREFIX sub option with zero preferred and valid lifetimes.
+    OptionPtr subopt(new Option6IAPrefix(D6O_IAPREFIX,
+                                         IOAddress("::"),
+                                         0, 0, 0));
+    iapd->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_PD was returned and that there's an address included
+    boost::shared_ptr<Option6IAPrefix> prefix = checkIA_PD(reply, 234,
+                                                           subnet_->getT1(),
+                                                           subnet_->getT2());
+    ASSERT_TRUE(prefix);
+
+    // Check that the assigned prefix is indeed from the configured pool
+    checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD,
+                subnet_->getPreferred(), subnet_->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that ADVERTISE returns specified lifetimes when
+// the client adds an IAADDR sub option with in-bound lifetime hints.
+TEST_F(Dhcpv6SrvTest, hintLifetimeSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iana = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    sol->addOption(iana);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAADDR sub option.
+    uint32_t hint_pref = 3001;
+    uint32_t hint_valid = 3999;
+    OptionPtr subopt(new Option6IAAddr(D6O_IAADDR, IOAddress("::"),
+                                       hint_pref, hint_valid));
+    iana->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                subnet_->getT2());
+    ASSERT_TRUE(addr);
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA,
+                hint_pref, hint_valid);
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that ADVERTISE returns min lifetimes when
+// the client adds an IAPREFIX sub option with too small lifetime hints.
+TEST_F(Dhcpv6SrvTest, minLifetimeSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iapd = generateIA(D6O_IA_PD, 234, 1500, 3000);
+    sol->addOption(iapd);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAPREFIX sub option with too small hints so min values will
+    // be returned in the ADVERTISE.
+    OptionPtr subopt(new Option6IAPrefix(D6O_IAPREFIX,  IOAddress("::"), 0,
+                                         1000, 2000));
+    iapd->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_PD was returned and that there's an address included
+    boost::shared_ptr<Option6IAPrefix> prefix = checkIA_PD(reply, 234,
+                                                           subnet_->getT1(),
+                                                           subnet_->getT2());
+    ASSERT_TRUE(prefix);
+
+    // Check that the assigned prefix is indeed from the configured pool
+    checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD,
+                subnet_->getPreferred().getMin(),
+                subnet_->getValid().getMin());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that ADVERTISE returns max lifetimes when
+// the client adds an IAADDR sub option with too large lifetime hints.
+TEST_F(Dhcpv6SrvTest, maxLifetimeSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iana = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    sol->addOption(iana);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAADDR sub option with too large hints so max values will
+    // be returned in the ADVERTISE.
+    OptionPtr subopt(new Option6IAAddr(D6O_IAADDR, IOAddress("::"),
+                                       5000, 6000));
+    iana->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
+                                                subnet_->getT2());
+    ASSERT_TRUE(addr);
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred().getMax(),
+                subnet_->getValid().getMax());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
 // This test verifies that incoming SOLICIT can be handled properly, that an
 // ADVERTISE is generated, that the response has an address and that address
 // really belongs to the configured pool.
@@ -1032,6 +1262,86 @@ TEST_F(Dhcpv6SrvTest, RenewWrongIAID) {
 // scenarios tests by old RenewReject test.
 TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
     testRenewSomeoneElsesLease(Lease::TYPE_NA, IOAddress("2001:db8::1"));
+}
+
+// This test verifies that a renewal returns default lifetimes when
+// the client adds an IAPREFIX sub option with zero lifetime hints.
+TEST_F(Dhcpv6SrvTest, defaultLifetimeRenew) {
+    // Defaults are 3000 and 4000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, false, 0, 0, 3000, 4000);
+}
+
+// This test verifies that a renewal returns specified lifetimes when
+// the client adds an IAPREFIX sub option with in-bound lifetime hints.
+TEST_F(Dhcpv6SrvTest, hintLifetimeRenew) {
+    testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
+                   "2001:db8:1:2::", pd_pool_->getLength(),
+                   true, false, 2999, 4001, 2999, 4001);
+}
+
+// This test verifies that a renewal returns min lifetimes when
+// the client adds an IAADDR sub option with too small lifetime hints.
+TEST_F(Dhcpv6SrvTest, minLifetimeRenew) {
+    // Min values are 2000 and 3000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, false, 1000, 2000, 2000, 3000);
+}
+
+// This test verifies that a renewal returns max ifetimes when
+// the client adds an IAPREFIX sub option with too large lifetime hints.
+TEST_F(Dhcpv6SrvTest, maxLifetimeRenew) {
+    // Max  values are 4000 and 5000.
+    testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
+                   "2001:db8:1:2::", pd_pool_->getLength(),
+                   true, false, 5000, 6000, 4000, 5000);
+}
+
+// This test is a mixed of FqdnDhcpv6SrvTest.processRequestReuseExpiredLease
+// and testRenewBasic. The idea is to force the reuse of an expired lease
+// so the allocation engine reuseExpiredLease routine is called instead
+// of the two other routines computing lease lifetimes createLease6
+// and extendLease6.
+TEST_F(Dhcpv6SrvTest, reuseExpiredBasic) {
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128, true, true);
+}
+
+// This test verifies that an expired reuse returns default lifetimes when
+// the client adds an IAADDR sub option with zero lifetime hints.
+TEST_F(Dhcpv6SrvTest, defaultLifetimeReuseExpired) {
+    // Defaults are 3000 and 4000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 0, 0, 3000, 4000);
+}
+
+// This test verifies that an expired reuse returns specified lifetimes when
+// the client adds an IAADDR sub option with in-bound lifetime hints.
+TEST_F(Dhcpv6SrvTest, hintLifetimeReuseExpired) {
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 2999, 4001, 2999, 4001);
+}
+
+// This test verifies that an expired reuse returns min lifetimes when
+// the client adds an IAADDR sub option with too small lifetime hints.
+TEST_F(Dhcpv6SrvTest, minLifetimeReuseExpired) {
+    // Min values are 2000 and 3000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 1000, 2000, 2000, 3000);
+}
+
+// This test verifies that an expired reuse returns max lifetimes when
+// the client adds an IAADDR sub option with too large lifetime hints.
+TEST_F(Dhcpv6SrvTest, maxLifetimeReuseExpired) {
+    // Max  values are 4000 and 5000.
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 5000, 6000, 4000, 5000);
 }
 
 // This test verifies that incoming (positive) RELEASE with address can be

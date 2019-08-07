@@ -7,17 +7,16 @@
 #ifndef STAMPED_ELEMENT_H
 #define STAMPED_ELEMENT_H
 
-#include <cc/data.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <cstdint>
-#include <string>
+#include <cc/base_stamped_element.h>
+#include <cc/server_tag.h>
+#include <set>
 
 namespace isc {
 namespace data {
 
 /// @brief This class represents configuration element which is
-/// associated with database identifier and the modification
-/// timestamp.
+/// associated with database identifier, modification timestamp
+/// and servers.
 ///
 /// Classes storing Kea configuration should derive from this object
 /// to track ids and modification times of the configuration objects.
@@ -31,8 +30,8 @@ namespace data {
 /// Those classes are used to represent JSON structures, whereas this
 /// class represents data fetched from the database.
 ///
-/// @todo Find a better name for @c StamepedElement.
-class StampedElement {
+/// @todo Find a better name for @c StampedElement.
+class StampedElement : public BaseStampedElement {
 public:
 
     /// @brief Constructor.
@@ -40,44 +39,39 @@ public:
     /// Sets timestamp to the current time.
     StampedElement();
 
-    /// @brief Sets element's database identifier.
+    /// @brief Adds new server tag.
     ///
-    /// @param id New id.
-    void setId(const uint64_t id) {
-        id_ = id;
-    }
-
-    /// @brief Returns element's database identifier.
-    uint64_t getId() const {
-        return (id_);
-    }
-
-    /// @brief Sets timestamp to the explicitly provided value.
-    ///
-    /// @param timestamp New timestamp value.
-    void setModificationTime(const boost::posix_time::ptime& timestamp) {
-        timestamp_ = timestamp;
-    }
-
-    /// @brief Sets timestmp to the current time.
-    void updateModificationTime();
-
-    /// @brief Returns timestamp.
-    boost::posix_time::ptime getModificationTime() const {
-        return (timestamp_);
-    }
-
-    /// @brief Sets new server tag.
-    ///
-    /// @param server_tag
+    /// @param server_tag new server tag.
+    /// @throw BadValue if the server tag length exceeds 256 characters.
     void setServerTag(const std::string& server_tag) {
-        server_tag_ = server_tag;
+        server_tags_.insert(ServerTag(server_tag));
     }
 
-    /// @brief Returns server tag.
-    std::string getServerTag() const {
-        return (server_tag_);
+    /// @brief Deletes server tag.
+    ///
+    /// Remove the first occurrence of the given server tag.
+    ///
+    /// @param server_tag server tag to delete.
+    /// @throw NotFound if the server tag cannot be found.
+    void delServerTag(const std::string& server_tag);
+
+    /// @brief Returns server tags.
+    ///
+    /// @return Server tags.
+    std::set<ServerTag> getServerTags() const {
+        return (server_tags_);
     }
+
+    /// @brief Checks if the element has the given server tag.
+    ///
+    /// @param server_tag Server tag to be found.
+    /// @return true if the server tag was found, false otherwise.
+    bool hasServerTag(const ServerTag& server_tag) const;
+
+    /// @brief Checks if the element has 'all' server tag.
+    ///
+    /// @return true if the server tag was found, false otherwise.
+    bool hasAllServerTag() const;
 
     /// @brief Returns an object representing metadata to be returned
     /// with objects from the configuration backend.
@@ -87,17 +81,8 @@ public:
 
 private:
 
-    /// @brief Database identifier of the configuration element.
-    ///
-    /// The default value of 0 indicates that the identifier is
-    /// not set. 
-    uint64_t id_;
-
-    /// @brief Holds timestamp value.
-    boost::posix_time::ptime timestamp_;
-
-    /// @brief Holds server tag.
-    std::string server_tag_;
+    /// @brief Holds server tags.
+    std::set<ServerTag> server_tags_;
 };
 
 } // end of namespace isc::data

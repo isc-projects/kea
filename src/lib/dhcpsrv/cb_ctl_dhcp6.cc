@@ -8,6 +8,7 @@
 #include <dhcpsrv/cb_ctl_dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 
 using namespace isc::db;
 using namespace isc::data;
@@ -49,6 +50,9 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             data::StampedValueCollection globals;
             globals = getMgr().getPool()->getAllGlobalParameters6(backend_selector, server_selector);
             addGlobalsToConfig(external_cfg, globals);
+
+            // Add defaults.
+            external_cfg->applyDefaultsConfiguredGlobals(SimpleParser6::GLOBAL6_DEFAULTS);
 
             // Now that we successfully fetched the new global parameters, let's
             // remove existing ones and merge them into the current configuration.

@@ -13,6 +13,8 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/foreach.hpp>
@@ -34,6 +36,13 @@ OptionDataParser::OptionDataParser(const uint16_t address_family,
 
 std::pair<OptionDescriptor, std::string>
 OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
+
+    // Check parameters.
+    if (address_family_ == AF_INET) {
+        checkKeywords(SimpleParser4::OPTION4_PARAMETERS, single_option);
+    } else {
+        checkKeywords(SimpleParser6::OPTION6_PARAMETERS, single_option);
+    }
 
     // Try to create the option instance.
     std::pair<OptionDescriptor, std::string> opt = createOption(single_option);

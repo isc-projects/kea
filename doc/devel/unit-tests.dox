@@ -191,6 +191,22 @@ keatest=> \q
   privilege is granted only on the tables that the <i>keatest</i> user can access
   within the public schema.
 
+  It seems this no longer works on recent versions of PostgreSQL: if you get
+  a permission problem on SELECT on the schema_version table for
+  eatest_readonly, please try with the schema loaded:
+
+@verbatim
+$ psql -h localhost -U keatest -d keatest
+Password for user keatest:
+psql (11.3 (Debian 11.3-1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
+
+keatest=> GRANT SELECT ON ALL TABLES IN SCHEMA public TO keatest_readonly;
+GRANT
+keatest=> \q
+@endverbatim
+
   Now we  should be able to log into the newly created database using both user
   names:
 @verbatim

@@ -1,5 +1,6 @@
 SUBDIRS = . testutils tests
-dhcp_data_dir = @localstatedir@/@PACKAGE@
+# DATA_DIR is the directory where to put PID files.
+dhcp_data_dir = @runstatedir@/@PACKAGE@
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
 
@@ -32,7 +33,7 @@ libkea_process_la_SOURCES += process_messages.cc process_messages.h
 libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_process_la_LDFLAGS += -no-undefined -version-info 4:0:0
+libkea_process_la_LDFLAGS += -no-undefined -version-info 5:0:1
 
 libkea_process_la_LIBADD  =
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la

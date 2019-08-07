@@ -86,7 +86,11 @@ using namespace std;
   TCP_NODELAY "tcp-nodelay"
 
   PREFERRED_LIFETIME "preferred-lifetime"
+  MIN_PREFERRED_LIFETIME "min-preferred-lifetime"
+  MAX_PREFERRED_LIFETIME "max-preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
+  MIN_VALID_LIFETIME "min-valid-lifetime"
+  MAX_VALID_LIFETIME "max-valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   CALCULATE_TEE_TIMES "calculate-tee-times"
@@ -445,7 +449,11 @@ global_params: global_param
 // Dhcp6.
 global_param: data_directory
             | preferred_lifetime
+            | min_preferred_lifetime
+            | max_preferred_lifetime
             | valid_lifetime
+            | min_valid_lifetime
+            | max_valid_lifetime
             | renew_timer
             | rebind_timer
             | decline_probation_period
@@ -479,6 +487,8 @@ global_param: data_directory
             | t1_percent
             | t2_percent
             | loggers
+            | hostname_char_set
+            | hostname_char_replacement
             | unknown_map_entry
             ;
 
@@ -495,9 +505,29 @@ preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
     ctx.stack_.back()->set("preferred-lifetime", prf);
 };
 
+min_preferred_lifetime: MIN_PREFERRED_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("min-preferred-lifetime", prf);
+};
+
+max_preferred_lifetime: MAX_PREFERRED_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-preferred-lifetime", prf);
+};
+
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("valid-lifetime", prf);
+};
+
+min_valid_lifetime: MIN_VALID_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("min-valid-lifetime", prf);
+};
+
+max_valid_lifetime: MAX_VALID_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-valid-lifetime", prf);
 };
 
 renew_timer: RENEW_TIMER COLON INTEGER {
@@ -1079,7 +1109,11 @@ subnet6_params: subnet6_param
 
 // This defines a list of allowed parameters for each subnet.
 subnet6_param: preferred_lifetime
+             | min_preferred_lifetime
+             | max_preferred_lifetime
              | valid_lifetime
+             | min_valid_lifetime
+             | max_valid_lifetime
              | renew_timer
              | rebind_timer
              | option_data_list
@@ -1215,8 +1249,12 @@ shared_network_param: name
                     | client_class
                     | require_client_classes
                     | preferred_lifetime
+                    | min_preferred_lifetime
+                    | max_preferred_lifetime
                     | rapid_commit
                     | valid_lifetime
+                    | min_valid_lifetime
+                    | max_valid_lifetime
                     | user_context
                     | comment
                     | calculate_tee_times

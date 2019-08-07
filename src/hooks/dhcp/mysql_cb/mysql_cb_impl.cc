@@ -91,6 +91,22 @@ MySqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) {
     return (MySqlBinding::createInteger<uint32_t>(triplet.get()));
 }
 
+MySqlBindingPtr
+MySqlConfigBackendImpl::createMinBinding(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified() || (triplet.getMin() == triplet.get())) {
+        return (MySqlBinding::createNull());
+    }
+    return (MySqlBinding::createInteger<uint32_t>(triplet.getMin()));
+}
+
+MySqlBindingPtr
+MySqlConfigBackendImpl::createMaxBinding(const Triplet<uint32_t>& triplet) {
+    if (triplet.unspecified() || (triplet.getMax() == triplet.get())) {
+        return (MySqlBinding::createNull());
+    }
+    return (MySqlBinding::createInteger<uint32_t>(triplet.getMax()));
+}
+
 Triplet<uint32_t>
 MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) {
     if (!binding) {
@@ -105,6 +121,34 @@ MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) {
     return (Triplet<uint32_t>(binding->getInteger<uint32_t>()));
 }
 
+Triplet<uint32_t>
+MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& def_binding,
+                                      const MySqlBindingPtr& min_binding,
+                                      const MySqlBindingPtr& max_binding) {
+    if (!def_binding || !min_binding || !max_binding) {
+        isc_throw(Unexpected, "MySQL configuration backend internal error: "
+                  "binding pointer is NULL when creating a triplet value");
+    }
+
+    // This code assumes the database was filled using the API, e.g. it
+    // is not possible (so not handled) to have only the min_binding not NULL.
+    if (def_binding->amNull()) {
+        return (Triplet<uint32_t>());
+    }
+
+    uint32_t value = def_binding->getInteger<uint32_t>();
+    uint32_t min_value = value;
+    if (!min_binding->amNull()) {
+        min_value = min_binding->getInteger<uint32_t>();
+    }
+    uint32_t max_value = value;
+    if (!max_binding->amNull()) {
+        max_value = max_binding->getInteger<uint32_t>();
+    }
+
+    return (Triplet<uint32_t>(min_value, value, max_value));
+}
+
 void
 MySqlConfigBackendImpl::createAuditRevision(const int index,
                                             const ServerSelector& server_selector,
@@ -116,8 +160,17 @@ MySqlConfigBackendImpl::createAuditRevision(const int index,
         return;
     }
 
-    auto tag = getServerTag(server_selector, "creating new configuration "
-                            "audit revision");
+    /// @todo The audit trail is not really well prepared to handle multiple server
+    /// tags or no server tags. Therefore, if the server selector appears to be
+    /// pointing to multiple servers, no servers or any server we simply associate the
+    /// audit revision with all servers. The only case when we create a dedicated
+    /// audit entry is when there is a single server tag, i.e. "all" or explicit
+    /// server name. In fact, these are the most common two cases.
+    std::string tag = ServerTag::ALL;
+    auto tags = server_selector.getTags();
+    if (tags.size() == 1) {
+        tag = tags.begin()->get();
+    }
 
     MySqlBindingCollection in_bindings = {
         MySqlBinding::createTimestamp(audit_ts),
@@ -149,13 +202,13 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
         MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH) // log_message
     };
 
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
 
     for (auto tag : tags) {
 
         // There is only one input binding, modification time.
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
 
@@ -183,6 +236,12 @@ uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index,
                                         const ServerSelector& server_selector,
                                         const std::string& operation) {
+    // When deleting multiple objects we must not use ANY server.
+    if (server_selector.amAny()) {
+        isc_throw(InvalidOperation, "deleting multiple objects for ANY server is not"
+                  " supported");
+    }
+
     MySqlBindingCollection in_bindings;
     return (deleteFromTable(index, server_selector, operation, in_bindings));
 }
@@ -206,23 +265,68 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
         MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
     };
 
+    StampedValuePtr last_param;
+
+    StampedValueCollection local_parameters;
+
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&parameters] (MySqlBindingCollection& out_bindings) {
-        if (!out_bindings[1]->getString().empty()) {
+                      [&last_param, &local_parameters]
+                      (MySqlBindingCollection& out_bindings) {
 
-            // Convert value read as string from the database to the actual
-            // data type known from the database as binding #3.
-            StampedValuePtr stamped_value =
-                StampedValue::create(out_bindings[1]->getString(),
-                                     out_bindings[2]->getString(),
-                                     static_cast<Element::types>
-                                     (out_bindings[3]->getInteger<uint8_t>()));
+        uint64_t id = out_bindings[0]->getInteger<uint64_t>();
 
-            stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
-            stamped_value->setServerTag(out_bindings[5]->getString());
-            parameters.insert(stamped_value);
+        // If we're starting or if this is new parameter being processed...
+        if (!last_param || (last_param->getId() != id)) {
+
+            // parameter name
+            std::string name = out_bindings[1]->getString();
+
+            if (!name.empty()) {
+                last_param = StampedValue::create(name,
+                                                  out_bindings[2]->getString(),
+                                                  static_cast<Element::types>
+                                                  (out_bindings[3]->getInteger<uint8_t>()));
+
+                // id
+                last_param->setId(id);
+
+                // modification_ts
+                last_param->setModificationTime(out_bindings[4]->getTimestamp());
+
+                // server_tag
+                ServerTag last_param_server_tag(out_bindings[5]->getString());
+                last_param->setServerTag(last_param_server_tag.get());
+                // If we're fetching parameters for a given server (explicit server
+                // tag is provided), it takes precedence over the same parameter
+                // specified for all servers. Therefore, we check if the given
+                // parameter already exists and belongs to 'all'.
+                auto& index = local_parameters.get<StampedValueNameIndexTag>();
+                auto existing = index.find(name);
+                if (existing != index.end()) {
+                    // This parameter was already fetched. Let's check if we should
+                    // replace it or not.
+                    if (!last_param_server_tag.amAll() && (*existing)->hasAllServerTag()) {
+                        // Replace parameter specified for 'all' with the one associated
+                        // with the particular server tag.
+                        local_parameters.replace(existing, last_param);
+                        return;
+                    }
+
+                }
+
+                // If there is no such parameter yet or the existing parameter
+                // belongs to a different server and the inserted parameter is
+                // not for all servers.
+                if ((existing == index.end()) ||
+                    (!(*existing)->hasServerTag(last_param_server_tag) &&
+                     !last_param_server_tag.amAll())) {
+                    local_parameters.insert(last_param);
+                }
+            }
         }
     });
+
+    parameters.insert(local_parameters.begin(), local_parameters.end());
 }
 
 OptionDefinitionPtr
@@ -252,10 +356,10 @@ void
 MySqlConfigBackendImpl::getAllOptionDefs(const int index,
                      const ServerSelector& server_selector,
                      OptionDefContainer& option_defs) {
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag)
+            MySqlBinding::createString(tag.get())
         };
         getOptionDefs(index, in_bindings, option_defs);
     }
@@ -266,10 +370,10 @@ MySqlConfigBackendImpl::getModifiedOptionDefs(const int index,
                                               const ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time,
                                               OptionDefContainer& option_defs) {
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
         getOptionDefs(index, in_bindings, option_defs);
@@ -298,14 +402,16 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
 
     uint64_t last_def_id = 0;
 
+    OptionDefContainer local_option_defs;
+
     // Run select query.
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&option_defs, &last_def_id]
+                      [&local_option_defs, &last_def_id]
                       (MySqlBindingCollection& out_bindings) {
         // Get pointer to last fetched option definition.
         OptionDefinitionPtr last_def;
-        if (!option_defs.empty()) {
-            last_def = *option_defs.rbegin();
+        if (!local_option_defs.empty()) {
+            last_def = *local_option_defs.rbegin();
         }
 
         // See if the last fetched definition is the one for which we now got
@@ -364,12 +470,47 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             last_def->setModificationTime(out_bindings[5]->getTimestamp());
 
             // server_tag
-            last_def->setServerTag(out_bindings[10]->getString());
+            ServerTag last_def_server_tag(out_bindings[10]->getString());
+            last_def->setServerTag(last_def_server_tag.get());
 
-            // Store created option definition.
-            option_defs.push_back(last_def);
+            // If we're fetching option definitions for a given server
+            // (explicit server tag is provided), it takes precedence over
+            // the same option definition specified for all servers.
+            // Therefore, we check if the given option already exists and
+            // belongs to 'all'.
+            auto& index = local_option_defs.get<1>();
+            auto existing_it_pair = index.equal_range(last_def->getCode());
+            auto existing_it = existing_it_pair.first;
+            bool found = false;
+            for ( ; existing_it != existing_it_pair.second; ++existing_it) {
+                if ((*existing_it)->getOptionSpaceName() == last_def->getOptionSpaceName()) {
+                    found = true;
+                    // This option definition was already fetched. Let's check
+                    // if we should replace it or not.
+                    if (!last_def_server_tag.amAll() && (*existing_it)->hasAllServerTag()) {
+                        index.replace(existing_it, last_def);
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            // If there is no such option definition yet or the existing option
+            // definition belongs to a different server and the inserted option
+            // definition is not for all servers.
+            if (!found ||
+                (!(*existing_it)->hasServerTag(last_def_server_tag) &&
+                 !last_def_server_tag.amAll())) {
+                static_cast<void>(local_option_defs.push_back(last_def));
+            }
         }
     });
+
+    // Append the option definition fetched by this function into the container
+    // supplied by the caller. The container supplied by the caller may already
+    // hold some option definitions fetched for other server tags.
+    option_defs.insert(option_defs.end(), local_option_defs.begin(),
+                       local_option_defs.end());
 }
 
 void
@@ -406,25 +547,13 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
         MySqlBinding::createBool(option_def->getArrayType()),
         MySqlBinding::createString(option_def->getEncapsulatedSpace()),
         record_types_binding,
-        createInputContextBinding(option_def)
+        createInputContextBinding(option_def),
+        MySqlBinding::createString(tag),
+        MySqlBinding::createInteger<uint16_t>(option_def->getCode()),
+        MySqlBinding::createString(option_def->getOptionSpaceName())
     };
 
     MySqlTransaction transaction(conn_);
-
-    // Need to check if this definition already exists. We can't follow
-    // the same pattern as for shared networks and subnets, to try to insert
-    // the definition first and fall back to update if the DuplicateEntry
-    // exception is thrown, because the option code/space is not unique
-    // within the dhcpX_option_def table. Inserting another option definition
-    // with existing option code/name would not violate the key and the
-    // option definition instance would be inserted successfully. Therefore,
-    // we first fetch the option definition for the given server, code and
-    // space name. If it exists, we simply update it.
-    OptionDefinitionPtr existing_definition =
-        getOptionDef(get_option_def_code_space,
-                     server_selector,
-                     option_def->getCode(),
-                     option_def->getOptionSpaceName());
 
     // Create scoped audit revision. As long as this instance exists
     // no new audit revisions are created in any subsequent calls.
@@ -434,29 +563,20 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
                                        "option definition set",
                                        true);
 
-    if (existing_definition) {
-        // Need to add three more bindings for WHERE clause.
-        in_bindings.push_back(MySqlBinding::createString(tag));
-        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(existing_definition->getCode()));
-        in_bindings.push_back(MySqlBinding::createString(existing_definition->getOptionSpaceName()));
-        conn_.updateDeleteQuery(update_option_def, in_bindings);
-
-    } else {
-        // If the option definition doesn't exist, let's insert it.
+    if (conn_.updateDeleteQuery(update_option_def, in_bindings) == 0) {
+        // Remove the bindings used only during the update.
+        in_bindings.resize(in_bindings.size() - 3);
         conn_.insertQuery(insert_option_def, in_bindings);
 
         // Fetch unique identifier of the inserted option definition and use it
         // as input to the next query.
         uint64_t id = mysql_insert_id(conn_.mysql_);
 
-        MySqlBindingCollection in_server_bindings = {
-            MySqlBinding::createInteger<uint64_t>(id), // option_def_id
-            MySqlBinding::createString(tag), // tag used to obtain server_id
-            MySqlBinding::createTimestamp(option_def->getModificationTime()), // modification_ts
-        };
-
-        // Insert association.
-        conn_.insertQuery(insert_option_def_server, in_server_bindings);
+        // Insert associations of the option definition with servers.
+        attachElementToServers(insert_option_def_server,
+                               server_selector,
+                               MySqlBinding::createInteger<uint64_t>(id),
+                               MySqlBinding::createTimestamp(option_def->getModificationTime()));
     }
 
     transaction.commit();
@@ -496,10 +616,10 @@ MySqlConfigBackendImpl::getAllOptions(const int index,
                                       const ServerSelector& server_selector) {
     OptionContainer options;
 
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag)
+            MySqlBinding::createString(tag.get())
         };
         getOptions(index, in_bindings, universe, options);
     }
@@ -514,10 +634,10 @@ MySqlConfigBackendImpl::getModifiedOptions(const int index,
                                            const boost::posix_time::ptime& modification_time) {
     OptionContainer options;
 
-    auto tags = getServerTags(server_selector);
+    auto tags = server_selector.getTags();
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
+            MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
         getOptions(index, in_bindings, universe, options);
@@ -671,8 +791,10 @@ MySqlConfigBackendImpl::getOptions(const int index,
 
     uint64_t last_option_id = 0;
 
+    OptionContainer local_options;
+
     conn_.selectQuery(index, in_bindings, out_bindings,
-                      [this, universe, &options, &last_option_id]
+                      [this, universe, &local_options, &last_option_id]
                       (MySqlBindingCollection& out_bindings) {
         // Parse option.
         if (!out_bindings[0]->amNull() &&
@@ -683,11 +805,46 @@ MySqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
             if (desc) {
                 // server_tag for the global option
-                desc->setServerTag(out_bindings[12]->getString());
-                options.push_back(*desc);
+                ServerTag last_option_server_tag(out_bindings[12]->getString());
+                desc->setServerTag(last_option_server_tag.get());
+
+                // If we're fetching options for a given server (explicit server
+                // tag is provided), it takes precedence over the same option
+                // specified for all servers. Therefore, we check if the given
+                // option already exists and belongs to 'all'.
+                auto& index = local_options.get<1>();
+                auto existing_it_pair = index.equal_range(desc->option_->getType());
+                auto existing_it = existing_it_pair.first;
+                bool found = false;
+                for ( ; existing_it != existing_it_pair.second; ++existing_it) {
+                    if (existing_it->space_name_ == desc->space_name_) {
+                        found = true;
+                        // This option was already fetched. Let's check if we should
+                        // replace it or not.
+                        if (!last_option_server_tag.amAll() && existing_it->hasAllServerTag()) {
+                            index.replace(existing_it, *desc);
+                            return;
+                        }
+                        break;
+                    }
+                }
+
+                // If there is no such global option yet or the existing option
+                // belongs to a different server and the inserted option is not
+                // for all servers.
+                if (!found ||
+                    (!existing_it->hasServerTag(last_option_server_tag) &&
+                     !last_option_server_tag.amAll())) {
+                    static_cast<void>(local_options.push_back(*desc));
+                }
             }
         }
     });
+
+    // Append the options fetched by this function into the container supplied
+    // by the caller. The container supplied by the caller may already hold
+    // some options fetched for other server tags.
+    options.insert(options.end(), local_options.begin(), local_options.end());
 }
 
 OptionDescriptorPtr
@@ -740,6 +897,27 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     return (desc);
 }
 
+void
+MySqlConfigBackendImpl::attachElementToServers(const int index,
+                                               const ServerSelector& server_selector,
+                                               const MySqlBindingPtr& first_binding,
+                                               const MySqlBindingPtr& in_bindings...) {
+    // Create the vector from the parameter pack.
+    MySqlBindingCollection in_server_bindings = { first_binding, in_bindings };
+    for (auto tag : server_selector.getTags()) {
+        in_server_bindings.push_back(MySqlBinding::createString(tag.get()));
+        // Handles the case where the server does not exists.
+        try {
+            conn_.insertQuery(index, in_server_bindings);
+        } catch (const NullKeyError&) {
+            // The message should give the tag value.
+            isc_throw(NullKeyError,
+                      "server '" << tag.get() << "' does not exist");
+        }
+        in_server_bindings.pop_back();
+    }
+}
+
 MySqlBindingPtr
 MySqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
@@ -784,6 +962,97 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
     }
 
     return (MySqlBinding::createNull());
+}
+
+ServerPtr
+MySqlConfigBackendImpl::getServer(const int index, const ServerTag& server_tag) {
+    ServerCollection servers;
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(server_tag.get())
+    };
+    getServers(index, in_bindings, servers);
+
+    return (servers.empty() ? ServerPtr() : *servers.begin());
+}
+
+void
+MySqlConfigBackendImpl::getAllServers(const int index, db::ServerCollection& servers) {
+    MySqlBindingCollection in_bindings;
+    getServers(index, in_bindings, servers);
+}
+
+void
+MySqlConfigBackendImpl::getServers(const int index,
+                                   const MySqlBindingCollection& in_bindings,
+                                   ServerCollection& servers) {
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(),
+        MySqlBinding::createString(SERVER_TAG_BUF_LENGTH),
+        MySqlBinding::createString(SERVER_DESCRIPTION_BUF_LENGTH),
+        MySqlBinding::createTimestamp()
+    };
+
+    conn_.selectQuery(index, in_bindings, out_bindings,
+                      [&servers](MySqlBindingCollection& out_bindings) {
+
+        ServerPtr last_server;
+        uint64_t id = out_bindings[0]->getInteger<uint64_t>();
+        if (!last_server || (last_server->getId() != id)) {
+
+            // Set description if it is non-null.
+            auto desc = (out_bindings[2]->amNull() ? "" : out_bindings[2]->getString());
+            last_server = Server::create(ServerTag(out_bindings[1]->getString()),
+                                         desc);
+
+            // id
+            last_server->setId(id);
+
+            // modification_ts
+            last_server->setModificationTime(out_bindings[3]->getTimestamp());
+
+            // New server fetched. Let's store it.
+            servers.insert(last_server);
+        }
+    });
+}
+
+void
+MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
+                                           const int& create_index,
+                                           const int& update_index,
+                                           const ServerPtr& server) {
+    // The server tag 'all' is reserved.
+    if (server->getServerTag().amAll()) {
+        isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
+                  " associates the configuration elements with all servers connecting"
+                  " to the database and a server with this name may not be created");
+    }
+
+    // Create scoped audit revision. As long as this instance exists
+    // no new audit revisions are created in any subsequent calls.
+    ScopedAuditRevision audit_revision(this,
+                                       create_audit_revision,
+                                       ServerSelector::ALL(),
+                                       "server set",
+                                       true);
+
+    MySqlTransaction transaction(conn_);
+
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(server->getServerTagAsText()),
+        MySqlBinding::createString(server->getDescription()),
+        MySqlBinding::createTimestamp(server->getModificationTime())
+    };
+
+    try {
+        conn_.insertQuery(create_index, in_bindings);
+
+    } catch (const DuplicateEntry&) {
+        in_bindings.push_back(MySqlBinding::createString(server->getServerTagAsText()));
+        conn_.updateDeleteQuery(update_index, in_bindings);
+    }
+
+    transaction.commit();
 }
 
 std::string

@@ -181,11 +181,14 @@ public:
     /// boost::shared_ptr<Pkt4> pkt2(new Pkt4(...));
     /// // Add new packet to the container, it will be available through
     /// // both indexes
-    /// packets_collection.push_back(pkt1);
+    /// static_cast<void>(packets_collection.push_back(pkt1));
     /// // Here is another way to add packet to the container. The result
     /// // is exactly the same as previously.
-    /// packets_collection.template get<0>().push_back(pkt2);
+    /// static_cast<void>(packets_collection.template get<0>().push_back(pkt2));
     /// \endcode
+    ///
+    /// @note The multi index has no unique index so insertion should never
+    /// fail and there is no need to check the return of push_back().
     ///
     /// Example 2: Access elements through sequential index
     /// \code
@@ -277,8 +280,8 @@ public:
         if (!packet) {
             isc_throw(BadValue, "Packet is null");
         }
+        static_cast<void>(sent_packets_.template get<0>().push_back(packet));
         ++sent_packets_num_;
-        sent_packets_.template get<0>().push_back(packet);
     }
 
     /// \brief Add new packet to list of received packets.
@@ -291,7 +294,7 @@ public:
         if (!packet) {
             isc_throw(BadValue, "Packet is null");
         }
-        rcvd_packets_.push_back(packet);
+        static_cast<void>(rcvd_packets_.push_back(packet));
     }
 
     ///  \brief Update delay counters.
@@ -545,7 +548,7 @@ private:
             // move it to list of archived packets. List of
             // archived packets may be used for diagnostics
             // when test is completed.
-            archived_packets_.push_back(*it);
+            static_cast<void>(archived_packets_.push_back(*it));
         }
         // get<0>() template returns sequential index to
         // container.

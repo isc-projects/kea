@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,8 +66,7 @@ typedef std::pair<std::string, boost::posix_time::ptime> StringSample;
 /// @ref getDuration, @ref getString (appropriate type must be used) or
 /// @ref getJSON, which is generic and can be used for all types.
 ///
-/// @todo: Eventually it will be possible to retain multiple samples for the same
-/// observation, but that is outside of scope for 0.9.2.
+/// Since Kea 1.6 multiple samples are stored for the same observation.
 class Observation {
  public:
 
@@ -80,7 +79,7 @@ class Observation {
     /// int64_t and double. If convincing use cases appear to change them
     /// to something else, we may change the underlying type.
     enum Type {
-        STAT_INTEGER, ///< this statistic is unsinged 64-bit integer value
+        STAT_INTEGER, ///< this statistic is unsigned 64-bit integer value
         STAT_FLOAT,   ///< this statistic is a floating point value
         STAT_DURATION,///< this statistic represents time duration
         STAT_STRING   ///< this statistic represents a string
@@ -109,6 +108,37 @@ class Observation {
     /// @param name observation name
     /// @param value string observed.
     Observation(const std::string& name, const std::string& value);
+
+    /// @brief Determines maximum age of samples.
+    ///
+    /// Specifies that statistic name should be stored not as a single value,
+    /// but rather as a set of values. The duration determines the timespan.
+    /// Samples older than duration will be discarded. This is time-constrained
+    /// approach. For sample count constrained approach, see @ref
+    /// setMaxSampleCount() below.
+    ///
+    ///
+    /// @param duration determines maximum age of samples
+    /// Example:
+    /// To set a statistic to keep observations for the last 5 minutes, call:
+    /// setMaxSampleAge(time_duration(0, 5, 0, 0));
+    /// To revert statistic to a single value, call:
+    /// setMaxSampleAge(time_duration(0, 0, 0, 0));
+    void setMaxSampleAge(const StatsDuration& duration);
+
+    /// @brief Determines how many samples of a given statistic should be kept.
+    ///
+    /// Specifies that statistic name should be stored not as a single value,
+    /// but rather as a set of values. In this form, at most max_samples will
+    /// be kept. When adding max_samples + 1 sample, the oldest sample will be
+    /// discarded.
+    ///
+    ///
+    /// @param max_samples how many samples of a given statistic should be kept
+    /// Example:
+    /// To set a statistic to keep the last 100 observations, call:
+    /// setMaxSampleCount(100);
+    void setMaxSampleCount(uint32_t max_samples);
 
     /// @brief Records absolute integer observation
     ///
@@ -158,9 +188,25 @@ class Observation {
     /// @throw InvalidStatType if statistic is not a string
     void addValue(const std::string& value);
 
+    /// @brief Returns size of observed storage
+    ///
+    /// @return size of storage
+    size_t getSize() const;
+
+    /// @brief Returns both values of max_sample_age_ of statistic.
+    ///
+    /// @return max_sample_age_.
+    std::pair<bool, StatsDuration> getMaxSampleAge() const;
+
+    /// @brief Returns both values of max_sample_count_ of statistic.
+    ///
+    /// @return max_sample_count_.
+    std::pair<bool, uint32_t> getMaxSampleCount() const;
+
     /// @brief Resets statistic.
     ///
-    /// Sets statistic to a neutral (0, 0.0 or "") value.
+    /// Sets statistic to a neutral (0, 0.0 or "") value and
+    /// clears the underlying storage.
     void reset();
 
     /// @brief Returns statistic type
@@ -189,6 +235,26 @@ class Observation {
     /// @throw InvalidStatType if statistic is not a string
     StringSample getString() const;
 
+    /// @brief Returns observed integer samples
+    /// @return list of observed samples (value + timestamp)
+    /// @throw InvalidStatType if statistic is not integer
+    std::list<IntegerSample> getIntegers() const;
+
+    /// @brief Returns observed float samples
+    /// @return list of observed samples (value + timestamp)
+    /// @throw InvalidStatType if statistic is not fp
+    std::list<FloatSample> getFloats() const;
+
+    /// @brief Returns observed duration samples
+    /// @return list of observed samples (value + timestamp)
+    /// @throw InvalidStatType if statistic is not time duration
+    std::list<DurationSample> getDurations() const;
+
+    /// @brief Returns observed string samples
+    /// @return list of observed samples (value + timestamp)
+    /// @throw InvalidStatType if statistic is not a string
+    std::list<StringSample> getStrings() const;
+
     /// @brief Returns as a JSON structure
     /// @return JSON structures representing all observations
     isc::data::ConstElementPtr getJSON() const;
@@ -203,6 +269,19 @@ class Observation {
     }
 
 private:
+
+    /// @brief Returns size of observed storage
+    ///
+    /// This method returns size of observed storage.
+    /// It is used by public methods to return size of
+    /// available storages.
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param storage storage which size will be returned
+    /// @param exp_type expected observation type (used for sanity checking)
+    /// @return size of storage
+    template<typename StorageType>
+    size_t getSizeInternal(StorageType& storage, Type exp_type) const;
+
     /// @brief Records absolute sample (internal version)
     ///
     /// This method records an absolute value of an observation.
@@ -230,11 +309,66 @@ private:
     template<typename SampleType, typename Storage>
     SampleType getValueInternal(Storage& storage, Type exp_type) const;
 
+    /// @brief Returns samples (internal version)
+    ///
+    /// @tparam SampleType type of samples (e.g. IntegerSample)
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param observation storage
+    /// @param exp_type expected observation type (used for sanity checking)
+    /// @throw InvalidStatType if observation type mismatches
+    /// @return list of observed samples
+    template<typename SampleType, typename Storage>
+    std::list<SampleType> getValuesInternal(Storage& storage,
+                                            Type exp_type) const;
+
+    /// @brief Determines maximum age of samples.
+    ///
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param storage storage on which limit will be set
+    /// @param duration determines maximum age of samples
+    /// @param exp_type expected observation type (used for sanity checking)
+    template<typename StorageType>
+    void setMaxSampleAgeInternal(StorageType& storage,
+                                 const StatsDuration& duration, Type exp_type);
+
+    /// @brief Determines how many samples of a given statistic should be kept.
+    ///
+    /// @tparam Storage type of storage (e.g. list<IntegerSample>)
+    /// @param storage storage on which limit will be set
+    /// @param max_samples determines maximum number of samples
+    /// @param exp_type expected observation type (used for sanity checking)
+    template<typename StorageType>
+    void setMaxSampleCountInternal(StorageType& storage,
+                                   uint32_t max_samples, Type exp_type);
+
     /// @brief Observation (statistic) name
     std::string name_;
 
     /// @brief Observation (statistic) type)
     Type type_;
+
+    /// @brief Maximum number of samples
+    /// The limit is represented as a pair
+    /// of bool value and uint32_t
+    /// Only one kind of limit can be active
+    /// The bool value informs which limit
+    /// is available
+    /// True means active limit, false means inactive limit
+    /// By default the MaxSampleCount is set to 20
+    /// and MaxSampleAge is disabled
+    std::pair<bool, uint32_t> max_sample_count_ = std::make_pair(true, 20);
+
+    /// @brief Maximum timespan of samples
+    /// The limit is represented as a pair
+    /// of bool value and StatsDuration(boost::posix_time::time_duration)
+    /// Only one kind of limit can be active
+    /// The bool value informs which limit
+    /// is available
+    /// True means active limit, false means inactive limit
+    /// By default the MaxSampleCount is set to 20
+    /// and MaxSampleAge is disabled
+    std::pair<bool, StatsDuration> max_sample_age_ = std::make_pair(false,
+            boost::posix_time::time_duration(0, 0, 0, 0));
 
     /// @defgroup samples_storage Storage for supported observations
     ///

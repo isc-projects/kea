@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,34 +22,51 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-AuthKey::AuthKey(const std::string key) {
+AuthKey::AuthKey(const std::vector<uint8_t>& key) {
     setAuthKey(key);
 }
 
-AuthKey::AuthKey(void) {
+AuthKey::AuthKey(const std::string& key) {
+    setAuthKey(key);
+}
+
+AuthKey::AuthKey() {
     authKey_ = AuthKey::getRandomKeyString();
 }
 
-std::string
+std::vector<uint8_t>
 AuthKey::getRandomKeyString() {
-    std::vector<uint8_t> rs = isc::cryptolink::random(AuthKey::KEY_LEN);
-    std::string result;
-    result.resize(rs.size());
-    memmove(&result[0], &rs[0], result.size());
-    return (result);
+    return (isc::cryptolink::random(AUTH_KEY_LEN));
 }
 
-std::string 
-AuthKey::ToText() const {
-    // this will need enhancement if the stored container is not a string
-    return (authKey_);
+std::string
+AuthKey::toText() const {
+    if (authKey_.empty()) {
+        return ("");
+    }
+    return (util::encode::encodeHex(authKey_));
+}
+
+void
+AuthKey::setAuthKey(const std::vector<uint8_t>& key) {
+    authKey_ = key;
+    if (authKey_.size() > AUTH_KEY_LEN) {
+        authKey_.resize(AUTH_KEY_LEN);
+    }
 }
 
 void
 AuthKey::setAuthKey(const std::string& key) {
-    authKey_ = key;
-    if (authKey_.size() > AuthKey::KEY_LEN) {
-        authKey_.resize(AuthKey::KEY_LEN);
+    if (key.empty()) {
+        authKey_.clear();
+        return;
+    }
+    try {
+        std::vector<uint8_t> bin;
+        util::encode::decodeHex(key, bin);
+        setAuthKey(bin);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "bad auth key: " << ex.what());
     }
 }
 
@@ -138,7 +155,7 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false), 
+      cfg_option6_(new CfgOption()), negative_(false),
       key_(auth_key) {
 
     // Initialize host identifier.
@@ -575,8 +592,8 @@ Host::toElement6() const {
 
     // Set auth key
     //@todo: uncomment once storing in configuration file is enabled
-    //map->set("auth-key", Element::create(getKey().ToText()));
-    
+    //map->set("auth-key", Element::create(getKey().toText()));
+
     return (map);
 }
 
@@ -614,7 +631,7 @@ Host::toText() const {
     // Add boot file name.
     s << " file=" << (boot_file_name_.empty() ? "(empty)" : boot_file_name_);
 
-    s << " key=" << (key_.ToText().empty() ? "(empty)" : key_.ToText());
+    s << " key=" << (key_.toText().empty() ? "(empty)" : key_.toText());
 
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";

@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 22 2019 18:12
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Jul 16 2019 11:03
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -89,6 +89,7 @@ extern const isc::log::MessageID DHCP6_NO_SOCKETS_OPEN;
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET;
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED;
+extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_PARSE_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_SERVERID_MISMATCH;
 extern const isc::log::MessageID DHCP6_PACKET_DROP_UNICAST;
@@ -98,6 +99,7 @@ extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL;
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL;
+extern const isc::log::MessageID DHCP6_PACKET_SEND;
 extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL;
 extern const isc::log::MessageID DHCP6_PACK_FAIL;
 extern const isc::log::MessageID DHCP6_PARSER_COMMIT_EXCEPTION;

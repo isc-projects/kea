@@ -10,7 +10,7 @@ libkea_stats_la_SOURCES += context.h context.cc
 libkea_stats_la_SOURCES += stats_mgr.h stats_mgr.cc
 
 libkea_stats_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_stats_la_LDFLAGS = -no-undefined -version-info 2:2:0
+libkea_stats_la_LDFLAGS = -no-undefined -version-info 3:0:0
 
 libkea_stats_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_stats_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la

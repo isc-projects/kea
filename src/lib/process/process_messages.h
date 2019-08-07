@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes on Wed May 22 2019 18:44
+// File created from ../../../src/lib/process/process_messages.mes on Thu Jun 13 2019 01:25
 
 #ifndef PROCESS_MESSAGES_H
 #define PROCESS_MESSAGES_H
@@ -10,7 +10,6 @@ namespace process {
 
 extern const isc::log::MessageID DCTL_ALREADY_RUNNING;
 extern const isc::log::MessageID DCTL_CCSESSION_ENDING;
-extern const isc::log::MessageID DCTL_CCSESSION_STARTING;
 extern const isc::log::MessageID DCTL_CFG_FILE_RELOAD_ERROR;
 extern const isc::log::MessageID DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD;
 extern const isc::log::MessageID DCTL_COMMAND_RECEIVED;

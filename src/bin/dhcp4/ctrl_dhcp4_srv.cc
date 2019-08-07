@@ -232,7 +232,7 @@ ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
         LOG_ERROR(dhcp4_logger, DHCP4_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Config reload failed:" + string(ex.what())));
+                             "Config reload failed: " + string(ex.what())));
     }
 }
 
@@ -372,6 +372,12 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     isc::config::parseAnswer(rcode, result);
     if (rcode == 0) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Update the fetch globals callback.
+        auto cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+        cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
+            return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+        });
 
         // Use new configuration.
         CfgMgr::instance().commit();
@@ -533,6 +539,17 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
+                                                ConstElementPtr) {
+    const std::string& tag =
+        CfgMgr::instance().getCurrentCfg()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, response));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -585,6 +602,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "config-write") {
             return (srv->commandConfigWriteHandler(command, args));
+
+        } else if (command == "server-tag-get") {
+            return (srv->commandServerTagGetHandler(command, args));
 
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
@@ -816,6 +836,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("server-tag-get",
+        boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
@@ -841,6 +864,17 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
 
+    CommandMgr::instance().registerCommand("statistic-sample-age-set",
+        boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
+        boost::bind(&StatsMgr::statisticSetMaxSampleAgeAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-count-set",
+        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
+        boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
 void ControlledDhcpv4Srv::shutdown() {
@@ -872,6 +906,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
+        CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
@@ -879,6 +914,10 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-sample-age-set");
+        CommandMgr::instance().deregisterCommand("statistic-sample-age-set-all");
+        CommandMgr::instance().deregisterCommand("statistic-sample-count-set");
+        CommandMgr::instance().deregisterCommand("statistic-sample-count-set-all");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {

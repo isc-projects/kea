@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -810,11 +810,11 @@ const char* NETWORKS_CONFIG[] = {
     "                },"
     "                {"
     "                    \"subnet\": \"2001:db8:2::/64\","
-    "                    \"id\": 10,"
+    "                    \"id\": 11,"
     "                    \"interface-id\": \"vlan10\","
     "                    \"pools\": ["
     "                        {"
-    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                            \"pool\": \"2001:db8:2::10 - 2001:db8:2::10\""
     "                        }"
     "                    ]"
     "                }"
@@ -823,7 +823,7 @@ const char* NETWORKS_CONFIG[] = {
     "    ],"
     "    \"subnet6\": ["
     "        {"
-    "            \"subnet\": \"2001:db8:2::/64\","
+    "            \"subnet\": \"2001:db8:2::1/64\","
     "            \"id\": 1000,"
     "            \"interface-id\": \"vlan1000\","
     "            \"pools\": ["
@@ -1171,8 +1171,7 @@ public:
                 // Get the nested list which should have two elements, of which first
                 // is the statistics value we're looking for.
                 ConstElementPtr second_list = first_list->get(0);
-                if (second_list && (second_list->getType() == Element::list) &&
-                    (second_list->size() == 2)) {
+                if (second_list && (second_list->getType() == Element::list)) {
                     ConstElementPtr addresses_element = second_list->get(0);
                     if (addresses_element && (addresses_element->getType() == Element::integer)) {
                         return (addresses_element->intValue());

@@ -473,6 +473,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // early.
         Dhcp6ConfigParser global_parser;
 
+        // D2 client configuration.
+        D2ClientConfigPtr d2_client_cfg;
+
         BOOST_FOREACH(config_pair, values_map) {
             // In principle we could have the following code structured as a series
             // of long if else if clauses. That would give a marginal performance
@@ -567,8 +570,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 // Apply defaults
                 D2ClientConfigParser::setAllDefaults(config_pair.second);
                 D2ClientConfigParser parser;
-                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
-                srv_config->setD2ClientConfig(cfg);
+                d2_client_cfg = parser.parse(config_pair.second);
                 continue;
             }
 
@@ -666,7 +668,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "preferred-lifetime") ||
+                 (config_pair.first == "min-preferred-lifetime") ||
+                 (config_pair.first == "max-preferred-lifetime") ||
                  (config_pair.first == "valid-lifetime") ||
+                 (config_pair.first == "min-valid-lifetime") ||
+                 (config_pair.first == "max-valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "server-tag") ||
@@ -674,7 +680,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||
-                 (config_pair.first == "loggers")) {
+                 (config_pair.first == "loggers") ||
+                 (config_pair.first == "hostname-char-set") ||
+                 (config_pair.first == "hostname-char-replacement")) {
 
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
@@ -705,6 +713,16 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // it checks that there is no conflict between plain subnets and those
         // defined as part of shared networks.
         global_parser.sanityChecks(srv_config, mutable_cfg);
+
+        // Validate D2 client confuguration.
+        if (!d2_client_cfg) {
+            d2_client_cfg.reset(new D2ClientConfig());
+            d2_client_cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
+                return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+             });
+        }
+        d2_client_cfg->validateContents();
+        srv_config->setD2ClientConfig(d2_client_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
@@ -755,10 +773,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
-
-            // If there are config backends, fetch and merge into staging config
-            server.getCBControl()->databaseConfigFetch(srv_config,
-                                                       CBControlDHCPv6::FetchMode::FETCH_ALL);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -770,6 +784,33 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(2, "undefined configuration"
                                                " parsing error");
+            // An error occurred, so make sure to restore the original data.
+            rollback = true;
+        }
+    }
+
+    // Moved from the commit block to add the config backend indication.
+    if (!rollback) {
+        try {
+
+            // If there are config backends, fetch and merge into staging config
+            server.getCBControl()->databaseConfigFetch(srv_config,
+                                                       CBControlDHCPv6::FetchMode::FETCH_ALL);
+        }
+        catch (const isc::Exception& ex) {
+            std::ostringstream err;
+            err << "during update from config backend database: " << ex.what();
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(err.str());
+            answer = isc::config::createAnswer(2, err.str());
+            // An error occurred, so make sure to restore the original data.
+            rollback = true;
+        } catch (...) {
+            // for things like bad_cast in boost::lexical_cast
+            std::ostringstream err;
+            err << "during update from config backend database: "
+                << "undefined configuration parsing error";
+            LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(err.str());
+            answer = isc::config::createAnswer(2, err.str());
             // An error occurred, so make sure to restore the original data.
             rollback = true;
         }

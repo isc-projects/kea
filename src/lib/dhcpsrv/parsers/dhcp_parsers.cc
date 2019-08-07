@@ -15,6 +15,8 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
@@ -118,6 +120,13 @@ OptionDefParser::OptionDefParser(const uint16_t address_family)
 
 std::pair<isc::dhcp::OptionDefinitionPtr, std::string>
 OptionDefParser::parse(ConstElementPtr option_def) {
+
+    // Check parameters.
+    if (address_family_ == AF_INET) {
+        checkKeywords(SimpleParser4::OPTION4_DEF_PARAMETERS, option_def);
+    } else {
+        checkKeywords(SimpleParser6::OPTION6_DEF_PARAMETERS, option_def);
+    }
 
     // Get mandatory parameters.
     std::string name = getString(option_def, "name");
@@ -368,6 +377,12 @@ void
 PoolParser::parse(PoolStoragePtr pools,
                   ConstElementPtr pool_structure,
                   const uint16_t address_family) {
+
+    if (address_family == AF_INET) {
+        checkKeywords(SimpleParser4::POOL4_PARAMETERS, pool_structure);
+    } else {
+        checkKeywords(SimpleParser6::POOL6_PARAMETERS, pool_structure);
+    }
 
     ConstElementPtr text_pool = pool_structure->get("pool");
 
@@ -653,7 +668,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // In order to take advantage of the dynamic inheritance of global
     // parameters to a subnet we need to set a callback function for each
     // subnet to allow for fetching global parameters.
-     subnet_->setFetchGlobalsFn([]() -> ConstElementPtr {
+    subnet_->setFetchGlobalsFn([]() -> ConstElementPtr {
         return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
 
@@ -667,6 +682,9 @@ Subnet4ConfigParser::Subnet4ConfigParser()
 
 Subnet4Ptr
 Subnet4ConfigParser::parse(ConstElementPtr subnet) {
+    // Check parameters.
+    checkKeywords(SimpleParser4::SUBNET4_PARAMETERS, subnet);
+
     /// Parse Pools first.
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
@@ -944,7 +962,11 @@ Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
         Subnet4Ptr subnet = parser.parse(subnet_json);
         if (subnet) {
             try {
-                subnets.push_back(subnet);
+                auto ret = subnets.push_back(subnet);
+                if (!ret.second) {
+                    isc_throw(Unexpected,
+                              "can't store subnet because of conflict");
+                }
                 ++cnt;
             } catch (const std::exception& ex) {
                 isc_throw(DhcpConfigError, ex.what() << " ("
@@ -990,6 +1012,8 @@ PdPoolParser::PdPoolParser() : options_(new CfgOption()) {
 
 void
 PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
+    checkKeywords(SimpleParser6::PD_POOL6_PARAMETERS, pd_pool_);
+
     std::string addr_str = getString(pd_pool_, "prefix");
 
     uint8_t prefix_len = getUint8(pd_pool_, "prefix-len");
@@ -1090,6 +1114,9 @@ Subnet6ConfigParser::Subnet6ConfigParser()
 
 Subnet6Ptr
 Subnet6ConfigParser::parse(ConstElementPtr subnet) {
+    // Check parameters.
+    checkKeywords(SimpleParser6::SUBNET6_PARAMETERS, subnet);
+
     /// Parse all pools first.
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
@@ -1161,10 +1188,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     // Parse preferred lifetime as it is not parsed by the common function.
-    Triplet<uint32_t> pref;
-    if (params->contains("preferred-lifetime")) {
-        pref = getInteger(params, "preferred-lifetime");
-    }
+    Triplet<uint32_t> pref = parseLifetime(params, "preferred-lifetime");
 
     // Create a new subnet.
     Subnet6* subnet6 = new Subnet6(addr, len, Triplet<uint32_t>(),
@@ -1311,12 +1335,18 @@ Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
 
         Subnet6ConfigParser parser;
         Subnet6Ptr subnet = parser.parse(subnet_json);
-        try {
-            subnets.push_back(subnet);
-            ++cnt;
-        } catch (const std::exception& ex) {
-            isc_throw(DhcpConfigError, ex.what() << " ("
-                      << subnet_json->getPosition() << ")");
+        if (subnet) {
+            try {
+                auto ret = subnets.push_back(subnet);
+                if (!ret.second) {
+                    isc_throw(Unexpected,
+                              "can't store subnet because of conflict");
+                }
+                ++cnt;
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet_json->getPosition() << ")");
+            }
         }
     }
     return (cnt);
@@ -1384,11 +1414,16 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string generated_prefix =
         getString(client_config, "generated-prefix");
 
-    std::string hostname_char_set =
-        getString(client_config, "hostname-char-set");
+    Optional<std::string> hostname_char_set(D2ClientConfig::DFT_HOSTNAME_CHAR_SET, true);
+    if (client_config->contains("hostname-char-set")) {
+        hostname_char_set = getString(client_config, "hostname-char-set");
+    }
 
-    std::string hostname_char_replacement =
-        getString(client_config, "hostname-char-replacement");
+    Optional<std::string> hostname_char_replacement(D2ClientConfig::DFT_HOSTNAME_CHAR_REPLACEMENT, true);
+    if (client_config->contains("hostname-char-replacement")) {
+        hostname_char_replacement =
+            getString(client_config, "hostname-char-replacement");
+    }
 
     // qualifying-suffix is the only parameter which has no default
     std::string qualifying_suffix = "";
@@ -1484,6 +1519,13 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
         new_config->setContext(user_context);
     }
 
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a subnet we need to set a callback function for
+    // the d2 client config to allow for fetching global parameters.
+    new_config->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+
     return(new_config);
 }
 
@@ -1502,9 +1544,8 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "override-no-update", Element::boolean, "false" },
     { "override-client-update", Element::boolean, "false" },
     { "replace-client-name", Element::string, "never" },
-    { "generated-prefix", Element::string, "myhost" },
-    { "hostname-char-set", Element::string, "" },
-    { "hostname-char-replacement", Element::string, "" }
+    { "generated-prefix", Element::string, "myhost" }
+    // hostname-char-set and hostname-char-replacement moved to global
     // qualifying-suffix has no default
 };
 

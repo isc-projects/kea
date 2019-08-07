@@ -1192,8 +1192,7 @@ public:
                 // Get the nested list which should have two elements, of which first
                 // is the statistics value we're looking for.
                 ConstElementPtr second_list = first_list->get(0);
-                if (second_list && (second_list->getType() == Element::list) &&
-                    (second_list->size() == 2)) {
+                if (second_list && (second_list->getType() == Element::list)) {
                     ConstElementPtr addresses_element = second_list->get(0);
                     if (addresses_element && (addresses_element->getType() == Element::integer)) {
                         return (addresses_element->intValue());

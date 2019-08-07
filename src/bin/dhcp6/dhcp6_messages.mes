@@ -282,9 +282,9 @@ This error is output if the IPv6 DHCP server fails to send an assembled
 DHCPv4o6 message to a client. The reason for the error is included in the
 message.
 
-% DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
+% DHCP6_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
 This is the info message logged when the DHCPv6 server starts reconfiguration
-as a result of receiving SIGHUP signal.
+as a result of receiving SIGHUP signal or config-reload command.
 
 % DHCP6_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
 This is an error message logged when the dynamic reconfiguration of the
@@ -429,13 +429,13 @@ be many reasons for such failure. Each failure is logged in a separate
 log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
 
-% DHCP6_LEASE_ALLOC %1: lease for address %2 and iaid=%3 has been allocated
+% DHCP6_LEASE_ALLOC %1: lease for address %2 and iaid=%3 has been allocated for %4 seconds
 This informational message indicates that in response to a client's REQUEST
 message, the server successfully granted a non-temporary address
 lease. This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
-information. The remaining arguments hold the allocated address and
-IAID.
+information. The remaining arguments hold the allocated address,
+IAID and validity lifetime.
 
 % DHCP6_LEASE_ALLOC_FAIL %1: failed to grant an address lease for iaid=%2
 This message indicates that in response to a received REQUEST, the server
@@ -505,6 +505,10 @@ has been temporarily disabled. This affects all received DHCP packets. The
 service may be enabled by the "dhcp-enable" control command or automatically
 after a specified amount of time since receiving "dhcp-disable" command.
 
+% DHCP6_PACKET_DROP_DROP_CLASS dropped as member of the special class 'DROP': %1
+This debug message is emitted when an incoming packet was classified
+into the special class 'DROP' and dropped. The packet details are displayed.
+
 % DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv6 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
@@ -554,6 +558,12 @@ message has been received.
 The IPv6 DHCP server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
+
+% DHCP6_PACKET_SEND %1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8
+The arguments specify the client identification information (HW address
+and client identifier), DHCP message name and type, source IPv6
+address and port, destination IPv6 address and port and the
+interface name.
 
 % DHCP6_PACKET_SEND_FAIL failed to send DHCPv6 packet: %1
 This error is output if the IPv6 DHCP server fails to send an assembled
@@ -612,13 +622,13 @@ be many reasons for such failure. Each failure is logged in a separate
 log entry. The first argument holds the client and transaction identification
 information. The second argument holds the IAID.
 
-% DHCP6_PD_LEASE_ALLOC %1: lease for prefix %2/%3 and iaid=%4 has been allocated
+% DHCP6_PD_LEASE_ALLOC %1: lease for prefix %2/%3 and iaid=%4 has been allocated for %5 seconds
 This informational message indicates that in response to a client's REQUEST
 message, the server successfully granted a prefix lease.
 This is a normal behavior and indicates successful operation.
 The first argument includes the client and transaction identification
 information. The remaining arguments hold the allocated prefix,
-prefix length and and IAID.
+prefix length, IAID and validity lifetime.
 
 % DHCP6_PD_LEASE_ALLOC_FAIL %1: failed to grant a prefix lease for iaid=%2
 This message indicates that in response to a received REQUEST, the server

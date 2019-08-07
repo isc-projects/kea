@@ -483,6 +483,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -490,6 +491,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -537,11 +542,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     // (valid lifetime = 60, cltt = now - 100).
     HWAddrPtr hwaddr0(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
     Lease4Ptr lease0(new Lease4(IOAddress("10.0.0.1"), hwaddr0,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
     HWAddrPtr hwaddr1(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
     Lease4Ptr lease1(new Lease4(IOAddress("10.0.0.2"), hwaddr1,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
 
     // Add leases to the database.
@@ -604,6 +609,26 @@ TEST_F(CtrlChannelDhcpv4SrvTest, getversion) {
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }
 
+// This test verifies that the DHCP server handles server-tag-get command
+TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
+    createUnixChannelServer();
+
+    std::string response;
+    std::string expected;
+
+    // Send the server-tag-get command
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"\" }, \"result\": 0 }";
+    EXPECT_EQ(expected, response);
+
+    // Set a value to the server tag
+    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
+
+    // Retry...
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
+}
+
 // This test verifies that the DHCP server immediately removed expired
 // This test verifies that the DHCP server immediately removed expired
 // leases on leases-reclaim command with remove = true
@@ -614,11 +639,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     // (valid lifetime = 60, cltt = now - 100).
     HWAddrPtr hwaddr0(new HWAddr(HWAddr::fromText("00:01:02:03:04:05")));
     Lease4Ptr lease0(new Lease4(IOAddress("10.0.0.1"), hwaddr0,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
     HWAddrPtr hwaddr1(new HWAddr(HWAddr::fromText("01:02:03:04:05:06")));
     Lease4Ptr lease1(new Lease4(IOAddress("10.0.0.2"), hwaddr1,
-                                ClientIdPtr(), 60, 10, 20,
+                                ClientIdPtr(), 60,
                                 time(NULL) - 100, SubnetID(1)));
 
     // Add leases to the database.
@@ -688,6 +713,34 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
                     "  \"arguments\": {}}", response);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
               response);
+
+    // Check statistic-sample-age-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-age-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
+              response);
+
+    // Check statistic-sample-count-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-count-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
+              response);
 }
 
 // Check that the "config-set" command will replace current configuration
@@ -724,7 +777,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         "               {\"subnet\": \"192.2.1.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
     string bad_subnet =
-        "               {\"BOGUS\": \"192.2.2.0/24\", \n"
+        "               {\"comment\": \"192.2.2.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -854,6 +907,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "libreload");
+    checkListCommands(rsp, "server-tag-get");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
@@ -861,6 +915,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");
     checkListCommands(rsp, "statistic-reset-all");
+    checkListCommands(rsp, "statistic-sample-age-set");
+    checkListCommands(rsp, "statistic-sample-age-set-all");
+    checkListCommands(rsp, "statistic-sample-count-set");
+    checkListCommands(rsp, "statistic-sample-count-set-all");
     checkListCommands(rsp, "version-get");
 }
 
@@ -923,7 +981,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         "               {\"subnet\": \"192.2.1.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
     string bad_subnet =
-        "               {\"BOGUS\": \"192.2.2.0/24\", \n"
+        "               {\"comment\": \"192.2.2.0/24\", \n"
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -1076,7 +1134,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadMissingFile) {
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed: "
               "configuration error using file 'test6.json': Unable to open file "
               "test6.json\" }",
               response);
@@ -1102,7 +1160,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload will fail.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed:"
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed: "
               "configuration error using file 'test7.json': "
               "test7.json:1.1: Invalid character: g\" }",
               response);

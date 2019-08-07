@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the End User License
 // Agreement. See COPYING file in the premium/ directory.
@@ -33,7 +33,7 @@ public:
 
     /// @brief Remove a host from the cache.
     ///
-    /// Does the same than @c del, @c del4 or @c del6 but with
+    /// Does the same as @c del, @c del4 or @c del6 but with
     /// a more uniform interface and a different purpose.
     ///
     /// @note A pointer to a copy does not remove the object.

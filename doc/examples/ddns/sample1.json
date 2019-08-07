@@ -10,11 +10,11 @@
 
 // --------------  Global Parameters ----------------
 //
-//   D2 will listen for update requests for Kea DHCP servers at 172.16.1.10
+//   D2 will listen for update requests for Kea DHCP servers at 127.0.0.1
 //   on port 53001.  Maximum time to we will  wait for a DNS server to
 //   respond to us is 1000 ms.
 
-    "ip-address": "172.16.1.10",
+    "ip-address": "127.0.0.1",
     "port": 53001,
     "dns-server-timeout" : 1000,
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <http/response_creator_factory.h>
 #include <boost/shared_ptr.hpp>
-#include <stdint.h>
+#include <cstdint>
 
 namespace isc {
 namespace http {
@@ -126,11 +126,10 @@ public:
     /// @brief Stops all active connections and shuts down the service.
     void stop();
 
-private:
+protected:
 
     /// @brief Pointer to the implementation of the @ref HttpListener.
     boost::shared_ptr<HttpListenerImpl> impl_;
-
 };
 
 /// @brief Pointer to the @ref HttpListener.

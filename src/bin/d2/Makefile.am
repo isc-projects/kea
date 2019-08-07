@@ -12,9 +12,7 @@ endif
 
 CLEANFILES  = *.gcno *.gcda
 
-man_MANS = kea-dhcp-ddns.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml d2.dox
+EXTRA_DIST = d2.dox
 EXTRA_DIST += d2_parser.yy
 
 EXTRA_DIST += images/abstract_app_classes.svg images/add_state_model.svg
@@ -25,19 +23,6 @@ EXTRA_DIST += images/nc_trans_sequence.svg images/remove_state_model.svg
 EXTRA_DIST += images/request_mgt_classes.svg images/state_model_classes.svg
 EXTRA_DIST += images/trans_classes.svg images/update_exec_classes.svg
 
-if GENERATE_DOCS
-kea-dhcp-ddns.8: kea-dhcp-ddns.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/kea-dhcp-ddns.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
 
 # convenience archive
 

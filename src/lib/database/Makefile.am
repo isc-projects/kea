@@ -18,7 +18,9 @@ libkea_database_la_SOURCES += dbaccess_parser.h dbaccess_parser.cc
 libkea_database_la_SOURCES += db_exceptions.h
 libkea_database_la_SOURCES += db_log.cc db_log.h
 libkea_database_la_SOURCES += db_messages.cc db_messages.h
-libkea_database_la_SOURCES += server_selector.h
+libkea_database_la_SOURCES += server.cc server.h
+libkea_database_la_SOURCES += server_collection.cc server_collection.h
+libkea_database_la_SOURCES += server_selector.cc server_selector.h
 
 libkea_database_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -28,7 +30,7 @@ libkea_database_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_database_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_database_la_LDFLAGS = -no-undefined -version-info 2:0:0
+libkea_database_la_LDFLAGS = -no-undefined -version-info 3:0:0
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for
@@ -73,4 +75,6 @@ libkea_database_include_HEADERS = \
 	db_exceptions.h \
 	db_log.h \
 	db_messages.h \
+	server.h \
+	server_collection.h \
 	server_selector.h

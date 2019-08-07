@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -550,7 +550,7 @@ public:
 
             Lease4Ptr result(new Lease4(addr4_, hwaddr,
                                          client_id_buffer_, client_id_length_,
-                                         valid_lifetime_, 0, 0, cltt_,
+                                         valid_lifetime_, cltt_,
                                          subnet_id_, fqdn_fwd_, fqdn_rev_,
                                          hostname_));
 
@@ -614,6 +614,31 @@ private:
     static const size_t LEASE_COLUMNS = 17;
 
 public:
+
+    /// @brief Union for marshalling IAID into and out of the database
+    /// IAID is defined in the RFC as 4 octets, which Kea code handles as
+    /// a uint32_t.  Postgresql however, offers only signed integer types
+    /// of sizes 2, 4, and 8 bytes (SMALLINT, INT, and BIGINT respectively).
+    /// IAID is used in several indexes so rather than use the BIGINT, we
+    /// use this union to safely move the value into and out of an INT column.
+    union Uiaid {
+        /// @brief Constructor
+        /// @param val unsigned 32 bit value for the IAID.
+        Uiaid(uint32_t val) : uval_(val){};
+
+        /// @brief Constructor
+        /// @param val signed 32 bit value for the IAID.
+        Uiaid(int32_t val) : ival_(val){};
+
+        /// @brief Return a string representing the signed 32-bit value.
+        std::string dbInputString() {
+            return (boost::lexical_cast<std::string>(ival_));
+        };
+
+        uint32_t uval_;
+        int32_t ival_;
+    };
+
     PgSqlLease6Exchange()
         : lease_(), duid_length_(0), duid_(), iaid_u_(0), iaid_str_(""),
           lease_type_(Lease6::TYPE_NA), lease_type_str_(""), prefix_len_(0),
@@ -691,7 +716,7 @@ public:
             // lexically cast from an integer version to avoid out of range
             // exception failure upon insert.
             iaid_u_.uval_ = lease_->iaid_;
-            iaid_str_ = boost::lexical_cast<std::string>(iaid_u_.ival_);
+            iaid_str_ = iaid_u_.dbInputString();
             bind_array.add(iaid_str_);
 
             prefix_len_str_ = boost::lexical_cast<std::string>
@@ -830,7 +855,7 @@ public:
 
             Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr,
                                         iaid_u_.uval_, pref_lifetime_,
-                                        valid_lifetime_, 0, 0,
+                                        valid_lifetime_,
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
                                         hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
@@ -889,20 +914,7 @@ private:
     size_t                 duid_length_;
     vector<uint8_t>        duid_;
     uint8_t                duid_buffer_[DUID::MAX_DUID_LEN];
-
-    /// @brief Union for marshalling IAID into and out of the database
-    /// IAID is defined in the RFC as 4 octets, which Kea code handles as
-    /// a uint32_t.  Postgresql however, offers only signed integer types
-    /// of sizes 2, 4, and 8 bytes (SMALLINT, INT, and BIGINT respectively).
-    /// IAID is used in several indexes so rather than use the BIGINT, we
-    /// use this union to safely move the value into and out of an INT column.
-    union Uiaid {
-        Uiaid(uint32_t val) : uval_(val){};
-        Uiaid(int32_t val) : ival_(val){};
-        uint32_t uval_;
-        int32_t ival_;
-    }                      iaid_u_;
-
+    union Uiaid            iaid_u_;
     std::string            iaid_str_;
     Lease6::Type           lease_type_;
     std::string            lease_type_str_;
@@ -1454,7 +1466,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     bind_array.add(duid.getDuid());
 
     // IAID
-    std::string iaid_str = boost::lexical_cast<std::string>(iaid);
+    std::string iaid_str = PgSqlLease6Exchange::Uiaid(iaid).dbInputString();
     bind_array.add(iaid_str);
 
     // LEASE_TYPE
@@ -1486,7 +1498,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     bind_array.add(duid.getDuid());
 
     // IAID
-    std::string iaid_str = boost::lexical_cast<std::string>(iaid);
+    std::string iaid_str = PgSqlLease6Exchange::Uiaid(iaid).dbInputString();
     bind_array.add(iaid_str);
 
     // SUBNET ID

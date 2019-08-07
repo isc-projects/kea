@@ -117,6 +117,24 @@ Network::hrModeFromString(const std::string& hr_mode_name) {
     }
 }
 
+Optional<IOAddress>
+Network::getGlobalProperty(Optional<IOAddress> property,
+                           const std::string& global_name) const {
+    if (!global_name.empty() && fetch_globals_fn_) {
+        ConstElementPtr globals = fetch_globals_fn_();
+        if (globals && (globals->getType() == Element::map)) {
+            ConstElementPtr global_param = globals->get(global_name);
+            if (global_param) {
+                std::string global_str = global_param->stringValue();
+                if (!global_str.empty()) {
+                    return (IOAddress(global_str));
+                }
+            }
+        }
+    }
+    return (property);
+}
+
 ElementPtr
 Network::toElement() const {
     ElementPtr map = Element::createMap();
@@ -173,6 +191,14 @@ Network::toElement() const {
     if (!valid_.unspecified()) {
         map->set("valid-lifetime",
                  Element::create(static_cast<long long>(valid_.get())));
+        if (valid_.getMin() < valid_.get()) {
+            map->set("min-valid-lifetime",
+                     Element::create(static_cast<long long>(valid_.getMin())));
+        }
+        if (valid_.getMax() > valid_.get()) {
+            map->set("max-valid-lifetime",
+                     Element::create(static_cast<long long>(valid_.getMax())));
+        }
     }
 
     // Set reservation mode
@@ -293,6 +319,14 @@ Network6::toElement() const {
     if (!preferred_.unspecified()) {
         map->set("preferred-lifetime",
                  Element::create(static_cast<long long>(preferred_.get())));
+        if (preferred_.getMin() < preferred_.get()) {
+            map->set("min-preferred-lifetime",
+                     Element::create(static_cast<long long>(preferred_.getMin())));
+        }
+        if (preferred_.getMax() > preferred_.get()) {
+            map->set("max-preferred-lifetime",
+                     Element::create(static_cast<long long>(preferred_.getMax())));
+        }
     }
 
     // Set interface-id

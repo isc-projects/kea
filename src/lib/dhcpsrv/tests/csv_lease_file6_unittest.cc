@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -244,7 +244,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
 
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                makeDUID(DUID0, sizeof(DUID0)),
-                               7, 100, 200, 50, 80, 8, true, true,
+                               7, 100, 200, 8, true, true,
                                "host.example.com"));
     lease->cltt_ = 0;
     {
@@ -255,7 +255,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
 
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
                            makeDUID(DUID1, sizeof(DUID1)),
-                           8, 150, 300, 40, 70, 6, false, false,
+                           8, 150, 300, 6, false, false,
                            "", HWAddrPtr(), 128));
     lease->cltt_ = 0;
     {
@@ -266,7 +266,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
 
     lease.reset(new Lease6(Lease::TYPE_PD, IOAddress("3000:1:1::"),
                            makeDUID(DUID0, sizeof(DUID0)),
-                           7, 150, 300, 40, 70, 10, false, false,
+                           7, 150, 300, 10, false, false,
                            "", HWAddrPtr(), 64));
     lease->cltt_ = 0;
     lease->setContext(Element::fromJSON("{ \"foobar\": true }"));
@@ -551,7 +551,7 @@ TEST_F(CSVLeaseFile6Test, highLeaseLifetime) {
     // Write lease with very high lease lifetime and current time.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                makeDUID(DUID0, sizeof(DUID0)),
-                               7, 100, 0xFFFFFFFF, 50, 80, 8, true, true,
+                               7, 100, 0xFFFFFFFF, 8, true, true,
                                "host.example.com"));
 
     // Write this lease out to the lease file.

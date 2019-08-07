@@ -1,5 +1,6 @@
 #!/bin/sh
 
+prefix=@prefix@
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
@@ -968,7 +969,6 @@ CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
                                     OLD.host_id, OLD.shared_network_name, OLD.pool_id, OLD.pd_pool_id);
     END $$
 DELIMITER ;
-
 
 # Update the schema version number
 UPDATE schema_version

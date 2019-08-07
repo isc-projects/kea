@@ -28,6 +28,7 @@
 #include <hooks/hooks_config.h>
 #include <cc/data.h>
 #include <cc/user_context.h>
+#include <cc/simple_parser.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <stdint.h>
@@ -610,7 +611,15 @@ public:
     }
 
     /// @brief Removes all configured global parameters.
+    /// @note This removes the default values too so either
+    /// @c applyDefaultsConfiguredGlobals and @c mergeGlobals,
+    /// or @c isc::data::SimpleParser::setDefaults and
+    /// @c extractConfiguredGlobals should be called after.
     void clearConfiguredGlobals();
+
+    /// @brief Applies defaults to global parameters.
+    /// @param defaults vector of (name, type, value) defaults to apply.
+    void applyDefaultsConfiguredGlobals(const isc::data::SimpleDefaults& defaults);
 
     /// @brief Saves scalar elements from the global scope of a configuration
     void extractConfiguredGlobals(isc::data::ConstElementPtr config);

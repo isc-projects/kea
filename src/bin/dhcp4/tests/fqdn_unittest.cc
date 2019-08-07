@@ -197,6 +197,31 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"example.org\""
         "}"
     "}",
+    // 7
+    // Configuration which enables DNS updates and hostname sanitization.
+    // the second at the global scope.
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ],"
+        "    \"reservations\": ["
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"hostname\":   \"unique-xxx-host.example.org\""
+        "       }"
+        "    ]"
+        " }],"
+        "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
+        "\"hostname-char-replacement\" : \"x\""
+    "}"
 };
 
 class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
@@ -291,7 +316,7 @@ public:
         Lease4Ptr lease(new Lease4(addr, hwaddr,
                                    &generateClientId()->getData()[0],
                                    generateClientId()->getData().size(),
-                                   100, 50, 75, time(NULL), subnet_->getID()));
+                                   100, time(NULL), subnet_->getID()));
         // @todo Set this through the Lease4 constructor.
         lease->hostname_ = hostname;
         lease->fqdn_fwd_ = fqdn_fwd;
@@ -503,11 +528,11 @@ public:
             "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
             " }],"
             "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\","
-            "\"hostname-char-set\": \"[^A-Za-z0-9.-]\","
-            "\"hostname-char-replacement\": \"x\","
-            "\"replace-client-name\": \"%s\""
+            "  \"enable-updates\": true,"
+            "  \"qualifying-suffix\": \"fake-suffix.isc.org.\","
+            "  \"hostname-char-set\": \"[^A-Za-z0-9.-]\","
+            "  \"hostname-char-replacement\": \"x\","
+            "  \"replace-client-name\": \"%s\""
             "}}";
 
         // Create the configuration and configure the server
@@ -1798,6 +1823,68 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
     }
 }
 
+// Verifies that setting global hostname-char-set sanitizes Hostname option
+// values received from clients.
+TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[7], *client.getServer());
+
+    // Make sure that DDNS is not enabled.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified host name with invalid characters",
+            "one-&$_-host",
+            "one-xxx-host"
+        },
+        {
+            "qualified host name with invalid characters",
+            "two-&$_-host.other.org",
+            "two-xxx-host.other.org"
+        },
+        {
+            "unqualified host name with all valid characters",
+            "three-ok-host",
+            "three-ok-host"
+        },
+        {
+            "qualified host name with valid characters",
+            "four-ok-host.other.org",
+            "four-ok-host.other.org"
+        }
+    };
+
+    Pkt4Ptr resp;
+    OptionStringPtr hostname;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE((scenario).description_);
+        {
+            // Set the hostname option.
+            ASSERT_NO_THROW(client.includeHostname((scenario).original_));
+
+            // Send the DHCPDISCOVER and make sure that the server responded.
+            ASSERT_NO_THROW(client.doDiscover());
+            resp = client.getContext().response_;
+            ASSERT_TRUE(resp);
+            ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+            // Make sure the response hostname is what we expect.
+            hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+            ASSERT_TRUE(hostname);
+            EXPECT_EQ((scenario).sanitized_, hostname->getValue());
+        }
+    }
+}
+
 // Verifies that setting hostname-char-set sanitizes FQDN option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
@@ -1867,5 +1954,72 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
     }
 }
 
+// Verifies that setting global hostname-char-set sanitizes FQDN option
+// values received from clients.
+TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[7], *client.getServer());
+
+    // Make sure that DDNS is not enabled.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        Option4ClientFqdn::DomainNameType name_type_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified FQDN with invalid characters",
+            "one-&*_-host",
+            Option4ClientFqdn::PARTIAL,
+            "one-xxx-host."
+        },
+        {
+            "qualified FQDN with invalid characters",
+            "two-&*_-host.other.org",
+            Option4ClientFqdn::FULL,
+            "two-xxx-host.other.org."
+        },
+        {
+            "unqualified FQDN name with all valid characters",
+            "three-ok-host",
+            Option4ClientFqdn::PARTIAL,
+            "three-ok-host."
+        },
+        {
+            "qualified FQDN name with valid characters",
+            "four-ok-host.other.org",
+            Option4ClientFqdn::FULL,
+            "four-ok-host.other.org."
+        }
+    };
+
+    Pkt4Ptr resp;
+    Option4ClientFqdnPtr fqdn;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+        // Set the hostname option.
+        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+
+        // Send the DHCPDISCOVER and make sure that the server responded.
+        ASSERT_NO_THROW(client.doDiscover());
+        resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+        // Make sure the response fqdn is what we expect.
+        fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+        ASSERT_TRUE(fqdn);
+        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
+        }
+    }
+}
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -382,7 +382,7 @@ private:
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
 
 /// @brief List of built-in client class names.
-/// i.e. ALL, KNOWN and UNKNOWN.
+/// i.e. ALL, KNOWN and UNKNOWN but not DROP.
 extern std::list<std::string> builtinNames;
 
 /// @brief List of built-in client class prefixes

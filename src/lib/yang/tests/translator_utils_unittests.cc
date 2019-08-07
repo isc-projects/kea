@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,32 +84,56 @@ TEST(YangReprTest, getTest) {
 
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u8));
+#else
     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u16));
+#else
     s_val.reset(new Val(u16, SR_UINT16_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u32));
+#else
     s_val.reset(new Val(u32, SR_UINT32_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s8));
+#else
     s_val.reset(new Val(s8, SR_INT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s16));
+#else
     s_val.reset(new Val(s16, SR_INT16_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s32));
+#else
     s_val.reset(new Val(s32, SR_INT32_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/id_ref";

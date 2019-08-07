@@ -1,0 +1,39 @@
+{
+    "name": "remote-option6-global-get-all",
+    "brief": "This command is used to fetch all DHCPv6 global options for the server from the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-option6-global-get-all\",
+    \"arguments\": {
+        \"remote\": {
+            <specification of the database to connect to>
+        },
+        \"server-tags\": [ <single server tag as string> ]
+    }
+}",
+    "cmd-comment": "The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global options shared by all servers.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"2 DHCPv6 option(s) found.\",
+    \"arguments\": {
+        \"options\": [
+            {
+                <first option specification>,
+                \"metadata\": {
+                    \"server-tags\": [ <server tag> ]
+                }
+            },
+            {
+                <second option specification>,
+                \"metadata\": {
+                    \"server-tags\": [ <server tag> ]
+                }
+            }
+        ],
+        \"count\": 2
+    }
+}",
+    "resp-comment": "The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object. If the server tag \"all\" is included in the command, the response contains the global options shared between all servers. It excludes server specific global options. If an explicit server tag is included in the command, the response contains all global options directly associated with the given server and the options associated with all servers when server specific options are not present."
+}

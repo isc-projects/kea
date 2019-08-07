@@ -1,0 +1,39 @@
+{
+    "name": "remote-option-def6-get",
+    "brief": "This command is used to fetch a DHCPv6 option definition from the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-option-def6-get\",
+    \"arguments\": {
+        \"option-defs\": [
+            {
+                \"code\": <option code>,
+                \"space\": <option space>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        },
+        \"server-tags\": [ <single server tag as string> ]
+    }
+}",
+    "cmd-comment": "The desired option definition is identified by the pair of the option code/space values. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed to fetch the option definition instance shared by all servers.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv6 option definition found.\",
+    \"arguments\": {
+        \"option-defs\": [
+            {
+                <option definition>,
+                \"metadata\": {
+                    \"server-tags\": [ <server tag> ]
+                }
+            }
+        ],
+        \"count\": 1
+    }
+}",
+    "resp-comment": "The metadata is included and it provides database specific information associated with the returned object. If the \"all\" server tag was specified, the command attempts to fetch the option definition associated with all servers. If the explicit server tag is specified, the command will fetch the option definition associated with the given server. If the server specific option definition doesn't exist, it will try to fetch the option definition associated with all servers."
+}

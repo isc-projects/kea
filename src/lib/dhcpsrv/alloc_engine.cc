@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/option_int.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
@@ -460,23 +461,45 @@ AllocEngine::ClientContext6::IAContext::IAContext()
 void
 AllocEngine::ClientContext6::
 IAContext::addHint(const asiolink::IOAddress& prefix,
-                   const uint8_t prefix_len) {
-    hints_.push_back(std::make_pair(prefix, prefix_len));
+                   const uint8_t prefix_len,
+                   const uint32_t preferred,
+                   const uint32_t valid) {
+    hints_.push_back(Resource(prefix, prefix_len, preferred, valid));
+}
+
+void
+AllocEngine::ClientContext6::
+IAContext::addHint(const Option6IAAddrPtr& iaaddr) {
+    if (!iaaddr) {
+        isc_throw(BadValue, "IAADDR option pointer is null.");
+    }
+    addHint(iaaddr->getAddress(), 128,
+            iaaddr->getPreferred(), iaaddr->getValid());
+}
+
+void
+AllocEngine::ClientContext6::
+IAContext::addHint(const Option6IAPrefixPtr& iaprefix) {
+    if (!iaprefix) {
+        isc_throw(BadValue, "IAPREFIX option pointer is null.");
+    }
+    addHint(iaprefix->getAddress(), iaprefix->getLength(),
+            iaprefix->getPreferred(), iaprefix->getValid());
 }
 
 void
 AllocEngine::ClientContext6::
 addAllocatedResource(const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len) {
-    static_cast<void>(allocated_resources_.insert(std::make_pair(prefix,
-                                                                 prefix_len)));
+    static_cast<void>(allocated_resources_.insert(Resource(prefix,
+                                                           prefix_len)));
 }
 
 bool
 AllocEngine::ClientContext6::
 isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
     return (static_cast<bool>
-            (allocated_resources_.count(std::make_pair(prefix, prefix_len))));
+            (allocated_resources_.count(Resource(prefix, prefix_len))));
 }
 
 ConstHostPtr
@@ -815,7 +838,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
     if (!ctx.currentIA().hints_.empty()) {
         /// @todo: We support only one hint for now
-        hint = ctx.currentIA().hints_[0].first;
+        hint = ctx.currentIA().hints_[0].getAddress();
     }
 
     Subnet6Ptr original_subnet = ctx.subnet_;
@@ -1597,10 +1620,24 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.currentIA().iaid_;
     expired->duid_ = ctx.duid_;
-    expired->preferred_lft_ = ctx.subnet_->getPreferred();
-    expired->valid_lft_ = ctx.subnet_->getValid();
-    expired->t1_ = ctx.subnet_->getT1();
-    expired->t2_ = ctx.subnet_->getT2();
+    // Use subnet's preferred triplet to conditionally determine
+    // preferred lifetime based on hint
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getPreferred()) {
+        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
+        expired->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+    } else {
+        expired->preferred_lft_ = ctx.subnet_->getPreferred();
+    }
+    // Use subnet's valid triplet to conditionally determine
+    // valid lifetime based on hint
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getValid()) {
+        uint32_t valid = ctx.currentIA().hints_[0].getValid();
+        expired->valid_lft_ = ctx.subnet_->getValid().get(valid);
+    } else {
+        expired->valid_lft_ = ctx.subnet_->getValid();
+    }
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
     expired->hostname_ = ctx.hostname_;
@@ -1696,10 +1733,21 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         prefix_len = 128; // non-PD lease types must be always /128
     }
 
+    uint32_t preferred = ctx.subnet_->getPreferred();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getPreferred()) {
+        preferred = ctx.currentIA().hints_[0].getPreferred();
+        preferred = ctx.subnet_->getPreferred().get(preferred);
+    }
+    uint32_t valid = ctx.subnet_->getValid();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getValid()) {
+        valid = ctx.currentIA().hints_[0].getValid();
+        valid = ctx.subnet_->getValid().get(valid);
+    }
     Lease6Ptr lease(new Lease6(ctx.currentIA().type_, addr, ctx.duid_,
-                               ctx.currentIA().iaid_, ctx.subnet_->getPreferred(),
-                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
-                               ctx.subnet_->getT2(), ctx.subnet_->getID(),
+                               ctx.currentIA().iaid_, preferred,
+                               valid, ctx.subnet_->getID(),
                                ctx.hwaddr_, prefix_len));
 
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
@@ -1939,10 +1987,20 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     // Keep the old data in case the callout tells us to skip update.
     Lease6Ptr old_data(new Lease6(*lease));
 
-    lease->preferred_lft_ = ctx.subnet_->getPreferred();
-    lease->valid_lft_ = ctx.subnet_->getValid();
-    lease->t1_ = ctx.subnet_->getT1();
-    lease->t2_ = ctx.subnet_->getT2();
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getPreferred()) {
+        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
+        lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+    } else {
+        lease->preferred_lft_ = ctx.subnet_->getPreferred();
+    }
+    if (!ctx.currentIA().hints_.empty() &&
+        ctx.currentIA().hints_[0].getValid()) {
+        uint32_t valid = ctx.currentIA().hints_[0].getValid();
+        lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
+    } else {
+        lease->valid_lft_ = ctx.subnet_->getValid();
+    }
     lease->hostname_ = ctx.hostname_;
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
@@ -3442,6 +3500,17 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         isc_throw(BadValue, "Can't create a lease without a subnet");
     }
 
+    // Use the dhcp-lease-time content or the default for lease length.
+    uint32_t valid_lft = ctx.subnet_->getValid();
+    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
+    OptionUint32Ptr opt_lft;
+    if (opt) {
+        opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
+    }
+    if (opt_lft) {
+        valid_lft = ctx.subnet_->getValid().get(opt_lft->getValue());
+    }
+
     time_t now = time(NULL);
 
     // @todo: remove this kludge?
@@ -3452,9 +3521,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     const uint8_t* local_copy0 = local_copy.empty() ? 0 : &local_copy[0];
 
     Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, local_copy0, local_copy.size(),
-                               ctx.subnet_->getValid(), ctx.subnet_->getT1(),
-                               ctx.subnet_->getT2(),
-                               now, ctx.subnet_->getID()));
+                               valid_lft, now, ctx.subnet_->getID()));
 
     // Set FQDN specific lease parameters.
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
@@ -3858,9 +3925,17 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->hwaddr_ = ctx.hwaddr_;
     lease->client_id_ = ctx.subnet_->getMatchClientId() ? ctx.clientid_ : ClientIdPtr();
     lease->cltt_ = time(NULL);
-    lease->t1_ = ctx.subnet_->getT1();
-    lease->t2_ = ctx.subnet_->getT2();
-    lease->valid_lft_ = ctx.subnet_->getValid();
+    // Use the dhcp-lease-time content or the default for lease length.
+    OptionPtr opt = ctx.query_->getOption(DHO_DHCP_LEASE_TIME);
+    OptionUint32Ptr opt_lft;
+    if (opt) {
+        opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
+    }
+    if (opt_lft) {
+        lease->valid_lft_ = ctx.subnet_->getValid().get(opt_lft->getValue());
+    } else {
+        lease->valid_lft_ = ctx.subnet_->getValid();
+    }
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;

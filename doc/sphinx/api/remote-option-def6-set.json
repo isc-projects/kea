@@ -1,0 +1,26 @@
+{
+    "name": "remote-option-def6-set",
+    "brief": "This command is used to create or replace DHCPv6 option definition in the configuration database.",
+    "support": [ "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-option-def6-set\",
+    \"arguments\": {
+        \"option-defs\": [
+            {
+                <option definition specification>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        },
+        \"server-tags\": [ <single server tag as string> ]
+    }
+}",
+    "cmd-comment": "The provided list must contain exactly one option definition specification. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified option definition with all servers.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"DHCPv6 option definition set.\"
+}"
+}

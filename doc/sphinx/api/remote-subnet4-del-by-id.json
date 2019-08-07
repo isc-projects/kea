@@ -1,0 +1,28 @@
+{
+    "name": "remote-subnet4-del-by-id",
+    "brief": "This command is used to delete an IPv4 subnet by ID from the configuration database.",
+    "support": [ "kea-dhcp4" ],
+    "avail": "1.6.0",
+    "hook": "cb_cmds",
+    "cmd-syntax": "{
+    \"command\": \"remote-subnet4-del-by-id\",
+    \"arguments\": {
+        \"subnets\": [
+            {
+                \"id\": <subnet identifier>
+            }
+        ],
+        \"remote\": {
+            <specification of the database to connect to>
+        }
+    }
+}",
+    "cmd-comment": "This command includes a list with exactly one id of the subnet to be deleted. The <command>server-tags</command> parameter must not be specified for this command.",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"1 IPv4 subnet(s) deleted.\",
+    \"arguments\": {
+        \"count\": 1
+    }
+}"
+}

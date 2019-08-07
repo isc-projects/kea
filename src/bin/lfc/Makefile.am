@@ -9,23 +9,8 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-man_MANS = kea-lfc.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-lfc.xml lfc.dox
+EXTRA_DIST = lfc.dox
 
-if GENERATE_DOCS
-kea-lfc.8: kea-lfc.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/kea-lfc.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
 
 # convenience archive
 

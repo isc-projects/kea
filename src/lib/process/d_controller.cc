@@ -191,28 +191,8 @@ DControllerBase::checkConfigOnly() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Check obsolete or unknown (aka unsupported) objects.
-        for (auto obj : whole_config->mapValue()) {
-            const std::string& app_name = getAppName();
-            const std::string& obj_name = obj.first;
-            if (obj_name == app_name) {
-                continue;
-            }
-            if (obj_name == "Logging") {
-                LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                    .arg("'Logging' defined in top level. This is deprecated."
-                         " Please define it in the '" + app_name + "' scope.");
-                continue;
-            }
-            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("'" + obj_name + "', defining anything in global level besides '"
-                     + app_name + "' is no longer supported.");
-        }
-
-        // Relocate Logging: if there is a global Logging object takes its
-        // loggers entry, move the entry to AppName object and remove
-        // now empty Logging.
-        Daemon::relocateLogging(whole_config, getAppName());
+        // Handle other (i.e. not application name) objects (e.g. Logging).
+        handleOtherObjects(whole_config);
 
         // Get an application process object.
         initProcess();
@@ -384,28 +364,8 @@ DControllerBase::configFromFile() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Check obsolete or unknown (aka unsupported) objects.
-        for (auto obj : whole_config->mapValue()) {
-            const std::string& app_name = getAppName();
-            const std::string& obj_name = obj.first;
-            if (obj_name == app_name) {
-                continue;
-            }
-            if (obj_name == "Logging") {
-                LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                    .arg("Logging defined in top level. This is deprecated."
-                         " Please define it in the '" + app_name + "' scope.");
-                continue;
-            }
-            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
-                .arg("'" + obj_name + "', defining anything in global level besides '"
-                     + app_name + "' is no longer supported.");
-        }
-
-        // Relocate Logging: if there is a global Logging object takes its
-        // loggers entry, move the entry to AppName object and remove
-        // now empty Logging.
-        Daemon::relocateLogging(whole_config, getAppName());
+        // Handle other (i.e. not application name) objects (e.g. Logging).
+        handleOtherObjects(whole_config);
 
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.
@@ -413,8 +373,7 @@ DControllerBase::configFromFile() {
         // Temporary storage for logging configuration
         ConfigPtr storage(new ConfigBase());
 
-        // Get 'Logging' element from the config and use it to set up
-        // logging. If there's no such element, we'll just pass NULL.
+        // Configure logging to the tempoary storage.
         Daemon::configureLogger(module_config, storage);
 
         // Let's apply the new logging. We do it early, so we'll be able
@@ -508,30 +467,6 @@ DControllerBase::configWriteHandler(const std::string&,
     size_t size = 0;
     ElementPtr cfg = process_->getCfgMgr()->getContext()->toElement();
 
-    // Logging storage is messed up in CA. During its configuration (see
-    // DControllerBase::configFromFile() it calls Daemon::configureLogger()
-    // that stores the logging info in isc::dhcp::CfgMgr::getStagingCfg().
-    // This is later moved to getCurrentCfg() when the configuration is
-    // commited. All control-agent specific configuration is stored in
-    // a structure accessible by process_->getCfgMgr()->getContext(). Note
-    // logging information is not stored there.
-    //
-    // As a result, we need to extract the CA configuration from one
-    // place and logging from another.
-    if (!cfg->contains("Logging")) {
-        ConfigPtr base_cfg = process_->getCfgMgr()->getContext();
-
-        ConstElementPtr loginfo = base_cfg->toElement();
-        if (loginfo) {
-            // If there was a config stored in dhcp::CfgMgr, try to get Logging info from it.
-            loginfo = loginfo->get("Logging");
-        }
-        if (loginfo) {
-            // If there is some logging information, add it to our config.
-            cfg->set("Logging", loginfo);
-        }
-    }
-
     try {
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
@@ -553,6 +488,33 @@ DControllerBase::configWriteHandler(const std::string&,
                          + filename + " successful", params));
 }
 
+void
+DControllerBase::handleOtherObjects(ConstElementPtr args) {
+    // Check obsolete or unknown (aka unsupported) objects.
+    const std::string& app_name = getAppName();
+    for (auto obj : args->mapValue()) {
+        const std::string& obj_name = obj.first;
+        if (obj_name == app_name) {
+            continue;
+        }
+        if (obj_name == "Logging") {
+            LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+                .arg("The top level element, 'Logging', has been deprecated."
+                     "  Loggers should be defined with the 'loggers[]'"
+                     " element within the '" +  app_name + "' scope.");
+            continue;
+        }
+        LOG_WARN(dctl_logger, DCTL_CONFIG_DEPRECATED)
+            .arg("'" + obj_name + "', defining anything in global level besides '"
+                 + app_name + "' is no longer supported.");
+    }
+
+    // Relocate Logging: if there is a global Logging object takes its
+    // loggers entry, move the entry to AppName object and remove
+    // now empty Logging.
+    Daemon::relocateLogging(args, app_name);
+}
+
 ConstElementPtr
 DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     const int status_code = COMMAND_ERROR; // 1 indicates an error
@@ -561,13 +523,11 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     std::string message;
 
     // Command arguments are expected to be:
-    // { "Module": { ... }, "Logging": { ... } }
-    // The Logging component is technically optional. If it's not supplied
-    // logging will revert to default logging.
+    // { "Module": { ... } }
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
-      module_config = args->get(app_name);
+        module_config = args->get(app_name);
         if (!module_config) {
             message = "Missing mandatory '" + app_name + "' parameter.";
         } else if (module_config->getType() != Element::map) {
@@ -581,6 +541,9 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
                                                            message);
         return (result);
     }
+
+    // Handle other (i.e. not application name) objects (e.g. Logging).
+    handleOtherObjects(args);
 
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
@@ -606,13 +569,11 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
     std::string message;
 
     // Command arguments are expected to be:
-    // { "Module": { ... }, "Logging": { ... } }
-    // The Logging component is technically optional. If it's not supplied
-    // logging will revert to default logging.
+    // { "Module": { ... } }
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
-      module_config = args->get(app_name);
+        module_config = args->get(app_name);
         if (!module_config) {
             message = "Missing mandatory '" + app_name + "' parameter.";
         } else if (module_config->getType() != Element::map) {
@@ -627,30 +588,52 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         return (result);
     }
 
-    // We are starting the configuration process so we should remove any
-    // staging configuration that has been created during previous
-    // configuration attempts.
-    // We're not using cfgmgr to store logging information anymore.
-    // isc::dhcp::CfgMgr::instance().rollback();
+    try {
 
-    // Temporary storage for logging configuration
-    ConfigPtr storage = process_->getCfgMgr()->getContext();
+        // Handle other (i.e. not application name) objects (e.g. Logging).
+        handleOtherObjects(args);
 
-    // Get 'Logging' element from the config and use it to set up
-    // logging. If there's no such element, we'll just pass NULL.
-    Daemon::configureLogger(args->get("Logging"), storage);
+        // We are starting the configuration process so we should remove any
+        // staging configuration that has been created during previous
+        // configuration attempts.
+        // We're not using cfgmgr to store logging information anymore.
+        // isc::dhcp::CfgMgr::instance().rollback();
 
-    // Now we check the server proper.
-    ConstElementPtr answer = updateConfig(module_config);
-    int rcode = 0;
-    parseAnswer(rcode, answer);
-    if (!rcode) {
-        // Configuration successful, so apply the logging configuration
-        // to log4cplus.
+        // Temporary storage for logging configuration
+        ConfigPtr storage(new ConfigBase());
+
+        // Configure logging to the tempoary storage.
+        Daemon::configureLogger(module_config, storage);
+
+        // Let's apply the new logging. We do it early, so we'll be able
+        // to print out what exactly is wrong with the new config in
+        // case of problems.
         storage->applyLoggingCfg();
-    }
 
-    return (answer);
+        ConstElementPtr answer = updateConfig(module_config);
+        int rcode = 0;
+        parseAnswer(rcode, answer);
+        // In all cases the right logging configuration is in the context.
+        process_->getCfgMgr()->getContext()->applyLoggingCfg();
+        return (answer);
+    } catch (const std::exception& ex) {
+        // Rollback logging configuration.
+        process_->getCfgMgr()->getContext()->applyLoggingCfg();
+
+        // build an error result
+        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+                 std::string("Configuration parsing failed: ") + ex.what());
+        return (error);
+    }
+}
+
+ConstElementPtr
+DControllerBase::serverTagGetHandler(const std::string&, ConstElementPtr) {
+    const std::string& tag = process_->getCfgMgr()->getContext()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(COMMAND_SUCCESS, response));
 }
 
 ConstElementPtr

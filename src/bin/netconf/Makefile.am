@@ -13,24 +13,7 @@ endif
 
 CLEANFILES  = *.gcno *.gcda
 
-man_MANS = kea-netconf.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-netconf.xml
 #EXTRA_DIST += netconf.dox netconf_hooks.dox
-
-if GENERATE_DOCS
-kea-netconf.8: kea-netconf.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-	$(srcdir)/kea-netconf.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
 
 # convenience archive
 
@@ -54,7 +37,7 @@ libnetconf_la_SOURCES += location.hh position.hh stack.hh
 libnetconf_la_SOURCES += netconf_lexer.ll netconf_parser.yy
 libnetconf_la_SOURCES += netconf_messages.h netconf_messages.cc
 
-EXTRA_DIST += netconf_messages.mes
+EXTRA_DIST = netconf_messages.mes
 EXTRA_DIST += netconf_lexer.ll
 EXTRA_DIST += netconf_parser.yy
 

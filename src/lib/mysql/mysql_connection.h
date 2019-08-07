@@ -443,6 +443,10 @@ public:
             if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
                 isc_throw(DuplicateEntry, "Database duplicate entry error");
             }
+            // Failure: check for the special case of WHERE returning NULL.
+            if (mysql_errno(mysql_) == ER_BAD_NULL_ERROR) {
+                isc_throw(NullKeyError, "Database bad NULL error");
+            }
             checkError(status, index, "unable to execute");
         }
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <http/http_log.h>
 #include <http/http_messages.h>
 #include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 
 using namespace isc::asiolink;
 
@@ -27,6 +28,30 @@ constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 namespace isc {
 namespace http {
 
+HttpConnection::Transaction::Transaction(const HttpResponseCreatorPtr& response_creator,
+                                         const HttpRequestPtr& request)
+    : request_(request ? request : response_creator->createNewHttpRequest()),
+      parser_(new HttpRequestParser(*request_)),
+      input_buf_(),
+      output_buf_() {
+    parser_->initModel();
+}
+
+HttpConnection::TransactionPtr
+HttpConnection::Transaction::create(const HttpResponseCreatorPtr& response_creator) {
+    return (boost::make_shared<Transaction>(response_creator));
+}
+
+HttpConnection::TransactionPtr
+HttpConnection::Transaction::spawn(const HttpResponseCreatorPtr& response_creator,
+                                   const TransactionPtr& transaction) {
+    if (transaction) {
+        return (boost::make_shared<Transaction>(response_creator,
+                                                transaction->getRequest()));
+    }
+    return (create(response_creator));
+}
+
 void
 HttpConnection::
 SocketCallback::operator()(boost::system::error_code ec, size_t length) {
@@ -36,13 +61,13 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
     callback_(ec, length);
 }
 
-HttpConnection:: HttpConnection(asiolink::IOService& io_service,
-                                HttpAcceptor& acceptor,
-                                HttpConnectionPool& connection_pool,
-                                const HttpResponseCreatorPtr& response_creator,
-                                const HttpAcceptorCallback& callback,
-                                const long request_timeout,
-                                const long idle_timeout)
+HttpConnection::HttpConnection(asiolink::IOService& io_service,
+                               HttpAcceptor& acceptor,
+                               HttpConnectionPool& connection_pool,
+                               const HttpResponseCreatorPtr& response_creator,
+                               const HttpAcceptorCallback& callback,
+                               const long request_timeout,
+                               const long idle_timeout)
     : request_timer_(io_service),
       request_timeout_(request_timeout),
       idle_timeout_(idle_timeout),
@@ -50,12 +75,7 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
-      request_(response_creator_->createNewHttpRequest()),
-      parser_(new HttpRequestParser(*request_)),
-      acceptor_callback_(callback),
-      buf_(),
-      output_buf_() {
-    parser_->initModel();
+      acceptor_callback_(callback) {
 }
 
 HttpConnection::~HttpConnection() {
@@ -98,17 +118,26 @@ HttpConnection::asyncAccept() {
 }
 
 void
-HttpConnection::doRead() {
+HttpConnection::doRead(TransactionPtr transaction) {
     try {
         TCPEndpoint endpoint;
+
+        // Transaction hasn't been created if we are starting to read the
+        // new request.
+        if (!transaction) {
+            transaction = Transaction::create(response_creator_);
+        }
+
         // Create instance of the callback. It is safe to pass the local instance
         // of the callback, because the underlying boost functions make copies
         // as needed.
         SocketCallback cb(boost::bind(&HttpConnection::socketReadCallback,
                                       shared_from_this(),
+                                      transaction,
                                       boost::asio::placeholders::error,
                                       boost::asio::placeholders::bytes_transferred));
-        socket_.asyncReceive(static_cast<void*>(buf_.data()), buf_.size(),
+        socket_.asyncReceive(static_cast<void*>(transaction->getInputBufData()),
+                             transaction->getInputBufSize(),
                              0, &endpoint, cb);
 
     } catch (...) {
@@ -117,25 +146,34 @@ HttpConnection::doRead() {
 }
 
 void
-HttpConnection::doWrite() {
+HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
     try {
-        if (!output_buf_.empty()) {
+        if (transaction->outputDataAvail()) {
             // Create instance of the callback. It is safe to pass the local instance
             // of the callback, because the underlying boost functions make copies
             // as needed.
             SocketCallback cb(boost::bind(&HttpConnection::socketWriteCallback,
                                           shared_from_this(),
+                                          transaction,
                                           boost::asio::placeholders::error,
                                           boost::asio::placeholders::bytes_transferred));
-            socket_.asyncSend(output_buf_.data(),
-                              output_buf_.length(),
+            socket_.asyncSend(transaction->getOutputBufData(),
+                              transaction->getOutputBufSize(),
                               cb);
         } else {
-            if (!request_->isPersistent()) {
+            // The isPersistent() function may throw if the request hasn't
+            // been created, i.e. the HTTP headers weren't parsed. We catch
+            // this exception below and close the connection since we're
+            // unable to tell if the connection should remain persistent
+            // or not. The default is to close it.
+            if (!transaction->getRequest()->isPersistent()) {
                 stopThisConnection();
 
             } else {
-                reinitProcessingState();
+                // The connection is persistent and we are done sending
+                // the previous response. Start listening for the next
+                // requests.
+                setupIdleTimer();
                 doRead();
             }
         }
@@ -145,9 +183,10 @@ HttpConnection::doWrite() {
 }
 
 void
-HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response) {
-    output_buf_ = response->toString();
-    doWrite();
+HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response,
+                                  TransactionPtr transaction) {
+    transaction->setOutputBuf(response->toString());
+    doWrite(transaction);
 }
 
 
@@ -175,7 +214,8 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 }
 
 void
-HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) {
+HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
+                                   boost::system::error_code ec, size_t length) {
     if (ec) {
         // IO service has been stopped and the connection is probably
         // going to be shutting down.
@@ -198,7 +238,7 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
     }
 
     // Receiving is in progress, so push back the timeout.
-    setupRequestTimer();
+    setupRequestTimer(transaction);
 
     if (length != 0) {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
@@ -206,17 +246,20 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
             .arg(length)
             .arg(getRemoteEndpointAddressAsText());
 
-        std::string s(&buf_[0], buf_[0] + length);
-        parser_->postBuffer(static_cast<void*>(buf_.data()), length);
-        parser_->poll();
+        transaction->getParser()->postBuffer(static_cast<void*>(transaction->getInputBufData()),
+                                             length);
+        transaction->getParser()->poll();
     }
 
-    if (parser_->needData()) {
-        doRead();
+    if (transaction->getParser()->needData()) {
+        // The parser indicates that the some part of the message being
+        // received is still missing, so continue to read.
+        doRead(transaction);
 
     } else {
         try {
-            request_->finalize();
+            // The whole message has been received, so let's finalize it.
+            transaction->getRequest()->finalize();
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                       HTTP_CLIENT_REQUEST_RECEIVED)
@@ -225,7 +268,7 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
-                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+                .arg(transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
 
         } catch (const std::exception& ex) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
@@ -236,13 +279,15 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                       HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
-                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+                .arg(transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
         }
 
         // Don't want to timeout if creation of the response takes long.
         request_timer_.cancel();
 
-        HttpResponsePtr response = response_creator_->createHttpResponse(request_);
+        // Create the response from the received request using the custom
+        // response creator.
+        HttpResponsePtr response = response_creator_->createHttpResponse(transaction->getRequest());
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_SERVER_RESPONSE_SEND)
             .arg(response->toBriefString())
@@ -254,15 +299,17 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
             .arg(HttpMessageParserBase::logFormatHttpMessage(response->toString(),
                                                              MAX_LOGGED_MESSAGE_SIZE));
 
-        // Response created. Active timer again.
-        setupRequestTimer();
+        // Response created. Activate the timer again.
+        setupRequestTimer(transaction);
 
-        asyncSendResponse(response);
+        // Start sending the response.
+        asyncSendResponse(response, transaction);
     }
 }
 
 void
-HttpConnection::socketWriteCallback(boost::system::error_code ec, size_t length) {
+HttpConnection::socketWriteCallback(HttpConnection::TransactionPtr transaction,
+                                    boost::system::error_code ec, size_t length) {
     if (ec) {
         // IO service has been stopped and the connection is probably
         // going to be shutting down.
@@ -279,49 +326,41 @@ HttpConnection::socketWriteCallback(boost::system::error_code ec, size_t length)
         // read something from the socket on the next attempt.
         } else {
             // Sending is in progress, so push back the timeout.
-            setupRequestTimer();
+            setupRequestTimer(transaction);
 
-            doWrite();
+            doWrite(transaction);
         }
     }
 
+    // Since each transaction has its own output buffer, it is not really
+    // possible that the number of bytes written is larger than the size
+    // of the buffer. But, let's be safe and set the length to the size
+    // of the buffer if that unexpected condition occurs.
+    if (length > transaction->getOutputBufSize()) {
+        length = transaction->getOutputBufSize();
+    }
 
-    if (length <= output_buf_.size()) {
+    if (length <= transaction->getOutputBufSize()) {
         // Sending is in progress, so push back the timeout.
-        setupRequestTimer();
-
-        output_buf_.erase(0, length);
-        doWrite();
-
-    } else {
-        output_buf_.clear();
-
-        if (!request_->isPersistent()) {
-            stopThisConnection();
-
-        } else {
-            reinitProcessingState();
-            doRead();
-        }
+        setupRequestTimer(transaction);
     }
+
+    // Eat the 'length' number of bytes from the output buffer and only
+    // leave the part of the response that hasn't been sent.
+    transaction->consumeOutputBuf(length);
+
+    // Schedule the write of the unsent data.
+    doWrite(transaction);
 }
 
 void
-HttpConnection::reinitProcessingState() {
-    request_ = response_creator_->createNewHttpRequest();
-    parser_.reset(new HttpRequestParser(*request_));
-    parser_->initModel();
-    setupIdleTimer();
-}
-
-void
-HttpConnection::setupRequestTimer() {
+HttpConnection::setupRequestTimer(TransactionPtr transaction) {
     // Pass raw pointer rather than shared_ptr to this object,
     // because IntervalTimer already passes shared pointer to the
     // IntervalTimerImpl to make sure that the callback remains
     // valid.
     request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
-                                     this),
+                                     this, transaction),
                          request_timeout_, IntervalTimer::ONE_SHOT);
 }
 
@@ -333,14 +372,39 @@ HttpConnection::setupIdleTimer() {
 }
 
 void
-HttpConnection::requestTimeoutCallback() {
+HttpConnection::requestTimeoutCallback(TransactionPtr transaction) {
     LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
               HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
+
+    // We need to differentiate the transactions between a normal response and the
+    // timeout. We create new transaction from the current transaction. It is
+    // to preserve the request we're responding to.
+    auto spawned_transaction = Transaction::spawn(response_creator_, transaction);
+
+    // The new transaction inherits the request from the original transaction
+    // if such transaction exists.
+    auto request = spawned_transaction->getRequest();
+
+    // Depending on when the timeout occured, the HTTP version of the request
+    // may or may not be available. Therefore we check if the HTTP version is
+    // set in the request. If it is not available, we need to create a dummy
+    // request with the default HTTP/1.0 version. This version will be used
+    // in the response.
+    if (request->context()->http_version_major_ == 0) {
+        request.reset(new HttpRequest(HttpRequest::Method::HTTP_POST, "/",
+                                      HttpVersion::HTTP_10(),
+                                      HostHttpHeader("dummy")));
+        request->finalize();
+    }
+
+    // Create the timeout response.
     HttpResponsePtr response =
-        response_creator_->createStockHttpResponse(request_,
+        response_creator_->createStockHttpResponse(request,
                                                    HttpStatusCode::REQUEST_TIMEOUT);
-    asyncSendResponse(response);
+
+    // Send the HTTP 408 status.
+    asyncSendResponse(response, spawned_transaction);
 }
 
 void

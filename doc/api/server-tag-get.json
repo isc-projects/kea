@@ -1,0 +1,10 @@
+{
+    "name": "server-tag-get",
+    "brief": "The server-tag-get command returns the server tag.",
+    "description": "See <xref linkend=\"command-server-tag-get\"/>",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.6.0",
+    "cmd-syntax": "{
+    \"command\": \"server-tag-get\"
+}"
+}

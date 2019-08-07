@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -44,7 +44,7 @@
 #ifndef YY_EVAL_PARSER_H_INCLUDED
 # define YY_EVAL_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "parser.yy" // lalr1.cc:401
+#line 17 "parser.yy"
 
 #include <string>
 #include <eval/token.h>
@@ -55,7 +55,7 @@
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 59 "parser.h" // lalr1.cc:401
+#line 59 "parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -177,9 +177,10 @@ using namespace isc::eval;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined EVALDEBUG */
 
-#line 14 "parser.yy" // lalr1.cc:401
+#line 14 "parser.yy"
 namespace isc { namespace eval {
-#line 183 "parser.h" // lalr1.cc:401
+#line 183 "parser.h"
+
 
 
 
@@ -2296,9 +2297,10 @@ switch (yytype)
     return token_type (yytoken_number_[type]);
   }
 
-#line 14 "parser.yy" // lalr1.cc:401
+#line 14 "parser.yy"
 } } // isc::eval
-#line 2302 "parser.h" // lalr1.cc:401
+#line 2303 "parser.h"
+
 
 
 

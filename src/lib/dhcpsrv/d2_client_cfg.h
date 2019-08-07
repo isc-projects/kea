@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
 #include <util/strutil.h>
+#include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -27,7 +28,6 @@
 
 namespace isc {
 namespace dhcp {
-
 
 /// An exception that is thrown if an error occurs while configuring
 /// the D2 DHCP DDNS client.
@@ -42,6 +42,10 @@ public:
     D2ClientError(const char* file, size_t line, const char* what)
         : isc::Exception(file, line, what) {}
 };
+
+/// @brief Callback function for @c D2ClientConfig that retrieves globally
+/// configured parameters.
+typedef std::function<data::ConstElementPtr()> FetchNetworkGlobalsFn;
 
 
 /// @brief Acts as a storage vault for D2 client configuration
@@ -97,7 +101,7 @@ public:
     /// @param generated_prefix Prefix to use when generating domain-names.
     /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
     /// @param hostname_char_set regular expression string which describes invalid
-    /// characters to be scrubbed from client host names 
+    /// characters to be scrubbed from client host names
     /// @param hostname_char_replacement string of zero or more characters to
     /// replace invalid chars when sanitizing client host names
     ///
@@ -118,8 +122,8 @@ public:
                    const ReplaceClientNameMode replace_client_name_mode,
                    const std::string& generated_prefix,
                    const std::string& qualifying_suffix,
-                   const std::string& hostname_char_set,
-                   const std::string& hostname_char_replacement);
+                   util::Optional<std::string> hostname_char_set,
+                   util::Optional<std::string> hostname_char_replacement);
 
 
     /// @brief Default constructor
@@ -195,19 +199,57 @@ public:
     }
 
     /// @brief Return the char set regexp used to sanitize client hostnames.
-    const std::string& getHostnameCharSet() const {
-        return(hostname_char_set_);
-    }
+    util::Optional<std::string> getHostnameCharSet() const {
+        if (hostname_char_set_.unspecified() && fetch_globals_fn_) {
+            data::ConstElementPtr globals = fetch_globals_fn_();
+            if (globals && (globals->getType() == data::Element::map)) {
+                data::ConstElementPtr global_param =
+                    globals->get("hostname-char-set");
+                if (global_param) {
+                    return (global_param->stringValue());
+                }
+            }
+        }
+
+        return (hostname_char_set_);
+        }
 
     /// @brief Return the invalid char replacement used to sanitize client hostnames.
-    const std::string& getHostnameCharReplacement() const {
-        return(hostname_char_replacement_);
+    util::Optional<std::string> getHostnameCharReplacement() const {
+        if (hostname_char_replacement_.unspecified() && fetch_globals_fn_) {
+            data::ConstElementPtr globals = fetch_globals_fn_();
+            if (globals && (globals->getType() == data::Element::map)) {
+                data::ConstElementPtr global_param =
+                    globals->get("hostname-char-replacement");
+                if (global_param) {
+                    return (global_param->stringValue());
+                }
+            }
+        }
+
+        return (hostname_char_replacement_);
     }
 
     /// @brief Return pointer to compiled regular expression string sanitizer
     /// Will be empty if hostname-char-set is empty.
     util::str::StringSanitizerPtr getHostnameSanitizer() const {
         return(hostname_sanitizer_);
+    }
+
+    /// @brief Sets the optional callback function used to fetch globally
+    /// configured parameters.
+    ///
+    /// @param fetch_globals_fn Pointer to the function.
+    void setFetchGlobalsFn(FetchNetworkGlobalsFn fetch_globals_fn) {
+        fetch_globals_fn_ = fetch_globals_fn;
+    }
+
+    /// @brief Checks if the D2 client config is associated with a function
+    /// used to fetch globally configured parameters.
+    ///
+    /// @return true if it is associated, false otherwise.
+    bool hasFetchGlobalsFn() const {
+        return (static_cast<bool>(fetch_globals_fn_));
     }
 
     /// @brief Compares two D2ClientConfigs for equality
@@ -253,10 +295,11 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
-protected:
     /// @brief Validates member values.
     ///
     /// Method is used by the constructor to validate member contents.
+    /// Should be called when parsing is complete to (re)compute
+    /// the hostname sanitizer.
     ///
     /// @throw D2ClientError if given an invalid protocol or format.
     virtual void validateContents();
@@ -306,14 +349,18 @@ private:
 
     /// @brief Regular expression describing invalid characters for client hostnames.
     /// If empty, host name scrubbing is not done.
-    std::string hostname_char_set_;
+    util::Optional<std::string> hostname_char_set_;
 
     /// @brief A string to replace invalid characters when scrubbing hostnames.
     /// Meaningful only if hostname_char_set_ is not empty.
-    std::string hostname_char_replacement_;
+    util::Optional<std::string> hostname_char_replacement_;
 
     /// @brief Pointer to compiled regular expression string sanitizer
     util::str::StringSanitizerPtr hostname_sanitizer_;
+
+    /// @brief Pointer to the optional callback used to fetch globally
+    /// configured parameters inherited to the @c D2ClientConfig object.
+    FetchNetworkGlobalsFn fetch_globals_fn_;
 };
 
 std::ostream&

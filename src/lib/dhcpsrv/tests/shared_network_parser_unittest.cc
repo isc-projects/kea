@@ -130,6 +130,8 @@ public:
                 "    \"require-client-classes\": [ \"runner\" ],"
                 "    \"user-context\": { \"comment\": \"example\" },"
                 "    \"valid-lifetime\": 399,"
+                "    \"min-valid-lifetime\": 299,"
+                "    \"max-valid-lifetime\": 499,"
                 "    \"calculate-tee-times\": true,"
                 "    \"t1-percent\": 0.345,"
                 "    \"t2-percent\": 0.721,"
@@ -147,6 +149,8 @@ public:
                 "            \"renew-timer\": 100,"
                 "            \"rebind-timer\": 200,"
                 "            \"valid-lifetime\": 300,"
+                "            \"min-valid-lifetime\": 200,"
+                "            \"max-valid-lifetime\": 400,"
                 "            \"match-client-id\": false,"
                 "            \"authoritative\": false,"
                 "            \"next-server\": \"\","
@@ -158,8 +162,6 @@ public:
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
                 "            \"4o6-subnet\": \"\","
-                "            \"dhcp4o6-port\": 0,"
-                "            \"decline-probation-period\": 86400,"
                 "            \"reservation-mode\": \"all\","
                 "            \"calculate-tee-times\": true,"
                 "            \"t1-percent\": .45,"
@@ -183,8 +185,6 @@ public:
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
                 "            \"4o6-subnet\": \"\","
-                "            \"dhcp4o6-port\": 0,"
-                "            \"decline-probation-period\": 86400,"
                 "            \"reservation-mode\": \"all\","
                 "            \"calculate-tee-times\": false,"
                 "            \"t1-percent\": .40,"
@@ -237,6 +237,8 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(99, network->getT1());
     EXPECT_EQ(199, network->getT2());
     EXPECT_EQ(399, network->getValid());
+    EXPECT_EQ(299, network->getValid().getMin());
+    EXPECT_EQ(499, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
@@ -264,11 +266,17 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     Subnet4Ptr subnet1 = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet1);
     EXPECT_EQ("10.1.2.0", subnet1->get().first.toText());
+    EXPECT_EQ(300, subnet1->getValid());
+    EXPECT_EQ(200, subnet1->getValid().getMin());
+    EXPECT_EQ(400, subnet1->getValid().getMax());
 
     // Subnet with id 2
     Subnet4Ptr subnet2 = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet2);
     EXPECT_EQ("192.0.2.0", subnet2->get().first.toText());
+    EXPECT_EQ(30, subnet2->getValid());
+    EXPECT_EQ(30, subnet2->getValid().getMin());
+    EXPECT_EQ(30, subnet2->getValid().getMax());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -422,6 +430,8 @@ public:
                 "\"eth1\","
                 "    \"name\": \"bird\","
                 "    \"preferred-lifetime\": 211,"
+                "    \"min-preferred-lifetime\": 111,"
+                "    \"max-preferred-lifetime\": 311,"
                 "    \"rapid-commit\": true,"
                 "    \"rebind-timer\": 199,"
                 "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\" ] },"
@@ -430,6 +440,8 @@ public:
                 "    \"reservation-mode\": \"out-of-pool\","
                 "    \"user-context\": { },"
                 "    \"valid-lifetime\": 399,"
+                "    \"min-valid-lifetime\": 299,"
+                "    \"max-valid-lifetime\": 499,"
                 "    \"calculate-tee-times\": true,"
                 "    \"t1-percent\": 0.345,"
                 "    \"t2-percent\": 0.721,"
@@ -448,12 +460,14 @@ public:
                 "            \"renew-timer\": 100,"
                 "            \"rebind-timer\": 200,"
                 "            \"preferred-lifetime\": 300,"
+                "            \"min-preferred-lifetime\": 200,"
+                "            \"max-preferred-lifetime\": 400,"
                 "            \"valid-lifetime\": 400,"
+                "            \"min-valid-lifetime\": 300,"
+                "            \"max-valid-lifetime\": 500,"
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
-                "            \"decline-probation-period\": 86400,"
-                "            \"dhcp4o6-port\": 0,"
                 "            \"rapid-commit\": false"
                 "        },"
                 "        {"
@@ -468,8 +482,6 @@ public:
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
-                "            \"decline-probation-period\": 86400,"
-                "            \"dhcp4o6-port\": 0,"
                 "            \"rapid-commit\": false"
                 "        }"
                 "    ]"
@@ -514,10 +526,14 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1", network->getIface().get());
     EXPECT_EQ(211, network->getPreferred());
+    EXPECT_EQ(111, network->getPreferred().getMin());
+    EXPECT_EQ(311, network->getPreferred().getMax());
     EXPECT_TRUE(network->getRapidCommit());
     EXPECT_EQ(99, network->getT1());
     EXPECT_EQ(199, network->getT2());
     EXPECT_EQ(399, network->getValid());
+    EXPECT_EQ(299, network->getValid().getMin());
+    EXPECT_EQ(499, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
@@ -541,11 +557,23 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     Subnet6Ptr subnet1 = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet1);
     EXPECT_EQ("3000::", subnet1->get().first.toText());
+    EXPECT_EQ(300, subnet1->getPreferred());
+    EXPECT_EQ(200, subnet1->getPreferred().getMin());
+    EXPECT_EQ(400, subnet1->getPreferred().getMax());
+    EXPECT_EQ(400, subnet1->getValid());
+    EXPECT_EQ(300, subnet1->getValid().getMin());
+    EXPECT_EQ(500, subnet1->getValid().getMax());
 
     // Subnet with id 2
     Subnet6Ptr subnet2 = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet2);
     EXPECT_EQ("2001:db8:1::", subnet2->get().first.toText());
+    EXPECT_EQ(30, subnet2->getPreferred());
+    EXPECT_EQ(30, subnet2->getPreferred().getMin());
+    EXPECT_EQ(30, subnet2->getPreferred().getMax());
+    EXPECT_EQ(40, subnet2->getValid());
+    EXPECT_EQ(40, subnet2->getValid().getMin());
+    EXPECT_EQ(40, subnet2->getValid().getMax());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();

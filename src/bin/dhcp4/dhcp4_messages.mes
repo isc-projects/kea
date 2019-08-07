@@ -270,9 +270,9 @@ information. The second and third argument contains the packet name
 and type respectively. The fourth argument contains detailed packet
 information.
 
-% DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
+% DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
 This is the info message logged when the DHCPv4 server starts reconfiguration
-as a result of receiving SIGHUP signal.
+as a result of receiving SIGHUP signal or config-reload command.
 
 % DHCP4_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
 This is an error message logged when the dynamic reconfiguration of the
@@ -399,12 +399,13 @@ those which offered leases and continue allocation with that server.
 The first argument specifies the client and the transaction identification
 information. The second argument specifies the IPv4 address to be offered.
 
-% DHCP4_LEASE_ALLOC %1: lease %2 has been allocated
+% DHCP4_LEASE_ALLOC %1: lease %2 has been allocated for %3 seconds
 This informational message indicates that the server successfully granted a
 lease in response to client's DHCPREQUEST message. The lease information will
 be sent to the client in the DHCPACK message. The first argument contains the
 client and the transaction identification information. The second argument
-contains the allocated IPv4 address.
+contains the allocated IPv4 address. The third argument is the validity
+lifetime.
 
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
 This debug message is issued when the server is starting to send
@@ -507,6 +508,10 @@ after a specified amount of time since receiving "dhcp-disable" command.
 This debug message is issued when a packet is dropped because it did contain
 option 53 and thus has no DHCP message type. The most likely explanation is
 that it was BOOTP packet.
+
+% DHCP4_PACKET_DROP_0010 dropped as member of the special class 'DROP': %1
+This debug message is emitted when an incoming packet was classified
+into the special class 'DROP' and dropped. The packet details are displayed.
 
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
