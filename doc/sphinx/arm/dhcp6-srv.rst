@@ -5513,17 +5513,30 @@ The following standards are currently supported:
 -  *Dynamic Host Configuration Protocol for IPv6*, `RFC
    3315 <https://tools.ietf.org/html/rfc3315>`__: Supported messages are
    SOLICIT, ADVERTISE, REQUEST, RELEASE, RENEW, REBIND,
-   INFORMATION-REQUEST, CONFIRM and REPLY.
+   INFORMATION-REQUEST, CONFIRM, DECLINE and REPLY. The only not
+   supported message is RECONFIGURE.
+
+-  *Dynamic Host Configuration Protocol (DHCPv6) Options for
+   Session Initiation Protocol (SIP) Servers*, `RFC 3319
+   <https://tools.ietf.org/html/rfc3319>`__: All defined options are supported.
 
 -  *IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP)
    version 6*, `RFC 3633 <https://tools.ietf.org/html/rfc3633>`__:
    Supported options are IA_PD and IA_PREFIX. Also supported is the
    status code NoPrefixAvail.
 
--  *DNS Configuration options for Dynamic Host Configuration Protocol
-   for IPv6 (DHCPv6)*, `RFC
-   3646 <https://tools.ietf.org/html/rfc3646>`__: Supported option is
-   DNS_SERVERS.
+-  *DNS Configuration options for Dynamic Host Configuration Protocol for IPv6
+   (DHCPv6)*, `RFC 3646 <https://tools.ietf.org/html/rfc3646>`__: All defined
+   options are supported.
+
+-  *Stateless Dynamic Host Configuration Protocol (DHCP) Service for IPv6*, `RFC
+   3736 <https://tools.ietf.org/html/rfc3736>`__: The server operation in
+   stateless mode is supported. Kea is currently server only, so the client side
+   is not implemented.
+
+-  *Information Refresh Time Option for Dynamic Host Configuration Protocol for
+   IPv6 (DHCPv6)*, `RFC 4242 <https://tools.ietf.org/html/rfc4242>`__: The
+   sole defined option (information-refresh-time) is supported.
 
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Relay
    Agent Remote-ID Option*, `RFC
@@ -5562,10 +5575,11 @@ The following standards are currently supported:
    options indicated in this specification are supported by the DHCPv6
    server.
 
--  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC
-   8415 <https://tools.ietf.org/html/rfc8415>`__: New DHCPv6 protocol
-   specification which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242,
-   RFC 7083, RFC 7283, and RFC 7550.
+-  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC 8415
+   <https://tools.ietf.org/html/rfc8415>`__: New DHCPv6 protocol specification
+   which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283,
+   and RFC 7550. All features, with the exception of Reconfigure mechanism and
+   the now deprecated temporary addresses (IA_TA) mechanism, are supported.
 
 .. _dhcp6-limit:
 
@@ -5581,7 +5595,8 @@ treated as “not implemented yet”, rather than actual limitations.
    8415 <https://tools.ietf.org/html/rfc8415>`__ allows for multiple
    addresses or prefixes to be allocated for a single IA.
 
--  Temporary addresses are not supported.
+-  Temporary addresses are not supported. There is no intention to ever
+   implement this feature, as it is deprecated in RFC8415.
 
 -  Client reconfiguration (RECONFIGURE) is not yet supported.
 
