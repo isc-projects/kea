@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "The lease6-bulk-apply command can be used to create, update and delete multiple IPv6 leases in a single transaction. This is used to communicate lease changes between the HA peers but may be used in all cases when it is desired to apply multiple lease updates in a single transaction."
+        "The lease6-bulk-apply command can be used to create, update, and delete multiple IPv6 leases in a single transaction. This is used to communicate lease changes between the HA peers, but may be used in all cases where it is desirable to apply multiple lease updates in a single transaction."
     ],
     "cmd-comment": [
-        "If any of the leases is malformed, all changes are rolled back. If the leases are well formed but the operation fails for one or more leases, the these leases are listed in the response but the changes are preserved for all leases for which the operation was successful. The \"deleted-leases\" and \"leases\" are optional parameters but one of them must be specified."
+        "If any of the leases is malformed, all changes are rolled back. If the leases are well-formed but the operation fails for one or more leases, these leases are listed in the response; however, the changes are preserved for all leases for which the operation was successful. The \"deleted-leases\" and \"leases\" are optional parameters but one of them must be specified."
     ],
     "cmd-syntax": [
         "{",
@@ -42,7 +42,7 @@
     "hook": "lease_cmds",
     "name": "lease6-bulk-apply",
     "resp-comment": [
-        "The \"failed-deleted-leases\" holds the list of leases which failed to delete. This includes leases which were not found in the database. The \"failed-leases\" includes the list of leases which failed to create or update. For each lease for which there was an error while processing the lease, inserting it into the database etc. the result is set to 1. For each lease which was not deleted because the server didn't find it in the database the result of 3 is returned."
+        "The \"failed-deleted-leases\" holds the list of leases which failed to delete. This includes leases which were not found in the database. The \"failed-leases\" includes the list of leases which failed to create or update. For each lease for which there was an error during processing, inserting it into the database, etc., the result is set to 1. For each lease which was not deleted because the server did not find it in the database, the result of 3 is returned."
     ],
     "resp-syntax": [
         " {",

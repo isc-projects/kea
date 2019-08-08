@@ -1,7 +1,7 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "Returns entries matching the given identifier from  the host cache."
+        "Returns entries matching the given identifier from the host cache."
     ],
     "cmd-syntax": [
         "{",

@@ -1,12 +1,11 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "The stat-lease4-get command fetches lease statistics for a range",
-        "of known IPv4 subnets."
+        "This command fetches lease statistics for a range of known IPv4 subnets."
     ],
     "cmd-syntax": [
         "{",
-        "  \"command\": \"stat-lease4-get\"",
+        "  \"command\": \"stat-lease4-get\",",
         "}"
     ],
     "description": "See <xref linkend=\"command-stat-lease4-get\"/>",
@@ -21,7 +20,7 @@
         "        \"columns\": [ \"subnet-id\",",
         "                       \"total-addresses\",",
         "                       \"assigned-addresses\",",
-        "                       \"declined-addresses\" ]",
+        "                       \"declined-addresses\" ],",
         "        \"rows\": [",
         "          [ 10, 256, 111, 0 ],",
         "          [ 20, 4098, 2034, 4 ]",

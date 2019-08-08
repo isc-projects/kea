@@ -1,14 +1,14 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to fetch selected IPv4 subnet by ID for the server from the configuration database."
+        "This command is used to fetch the selected IPv4 subnet by ID for the server from the configuration database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one id of the subnet to be returned. The ``server-tags`` parameter must not be specified for this command."
+        "This command includes a list with exactly one ID of the subnet to be returned. The ``server-tags`` parameter must not be specified for this command."
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"remote-subnet4-get-by-id\"",
+        "    \"command\": \"remote-subnet4-get-by-id\",",
         "    \"arguments\": {",
         "        \"subnets\": [ {",
         "            \"id\": <subnet identifier>",
@@ -22,7 +22,7 @@
     "hook": "cb_cmds",
     "name": "remote-subnet4-get-by-id",
     "resp-comment": [
-        "If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and it provides database specific information associated with the returned object."
+        "If the shared network name is null, it means that the returned subnet does not belong to any shared network (global subnet). The metadata is included in the returned subnet definition and provides database-specific information associated with the returned object."
     ],
     "resp-syntax": [
         "{",

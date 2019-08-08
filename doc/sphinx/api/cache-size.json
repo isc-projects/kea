@@ -1,7 +1,7 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "Returns number of entries of the host cache."
+        "Returns the number of entries in the host cache."
     ],
     "hook": "host_cache",
     "name": "cache-size",

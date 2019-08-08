@@ -5,7 +5,7 @@
         "the server configuration."
     ],
     "cmd-comment": [
-        "The ``next-server``, ``server-hostname`` and ``boot-file-name`` are DHCPv4 specific. Only",
+        "The ``next-server``, ``server-hostname``, and ``boot-file-name`` are DHCPv4-specific. Only",
         "one client class can be updated with a single command. "
     ],
     "cmd-syntax": [
@@ -16,7 +16,7 @@
         "           \"name\": <name of the class>,",
         "           \"test\": <test expression to be evaluated on incoming packets>,",
         "           \"option-data\": [ <option values here> ],",
-        "           \"option-def\": [ <option defintions here> ],",
+        "           \"option-def\": [ <option definitions here> ],",
         "           \"next-server\": <ipv4 address>,",
         "           \"server-hostname\": <string>,",
         "           \"boot-file-name\": <name of the boot file>",
@@ -29,8 +29,8 @@
     "name": "class-update",
     "resp-comment": [
         "The command will return the result of 3 (empty) if the client",
-        "class doesn't exist. If the client class exists, the retured",
-        "result is 0 if the update was successful and the result is 1",
+        "class doesn't exist. If the client class exists, the returned",
+        "result is 0 if the update was successful; the result is 1",
         "if the update is unsuccessful."
     ],
     "resp-syntax": [

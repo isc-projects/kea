@@ -5,7 +5,7 @@
         "server configuration."
     ],
     "cmd-comment": [
-        "The ``next-server``, ``server-hostname`` and ``boot-file-name`` are DHCPv4 specific. Only",
+        "The ``next-server``, ``server-hostname``, and ``boot-file-name`` are DHCPv4-specific. Only",
         "one client class can be added with a single command. "
     ],
     "cmd-syntax": [
@@ -16,7 +16,7 @@
         "           \"name\": <name of the class>,",
         "           \"test\": <test expression to be evaluated on incoming packets>,",
         "           \"option-data\": [ <option values here> ],",
-        "           \"option-def\": [ <option defintions here> ],",
+        "           \"option-def\": [ <option definitions here> ],",
         "           \"next-server\": <ipv4 address>,",
         "           \"server-hostname\": <string>,",
         "           \"boot-file-name\": <name of the boot file>",

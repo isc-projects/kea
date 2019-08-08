@@ -1,8 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "The stat-lease6-get command fetches lease statistics for a range",
-        "of known IPv6 subnets."
+        "This command fetches lease statistics for a range of known IPv6 subnets."
     ],
     "cmd-syntax": [
         "{",
@@ -21,7 +20,7 @@
         "    \"text\": \"stat-lease6-get: 2 rows found\",",
         "    \"arguments\": {",
         "      \"result-set\": {",
-        "        \"columns\": [ \"subnet-id\", \"total-nas\", \"assigned-nas\", \"declined-nas\", \"total-pds\", \"assigned-pds\" ]",
+        "        \"columns\": [ \"subnet-id\", \"total-nas\", \"assigned-nas\", \"declined-nas\", \"total-pds\", \"assigned-pds\" ],",
         "        \"rows\": [",
         "          [ 10, 4096, 2400, 3, 0, 0],",
         "          [ 20, 0, 0, 0, 1048, 233 ]",
