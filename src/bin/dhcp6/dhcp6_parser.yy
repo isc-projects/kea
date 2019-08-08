@@ -220,6 +220,7 @@ using namespace std;
   FLUSH "flush"
   MAXSIZE "maxsize"
   MAXVER "maxver"
+  PATTERN "pattern"
 
   DHCP4 "Dhcp4"
   DHCPDDNS "DhcpDdns"
@@ -2421,6 +2422,7 @@ output_params: output
              | flush
              | maxsize
              | maxver
+             | pattern
              ;
 
 output: OUTPUT {
@@ -2444,6 +2446,14 @@ maxsize: MAXSIZE COLON INTEGER {
 maxver: MAXVER COLON INTEGER {
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
+};
+
+pattern: PATTERN {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("pattern", sev);
+    ctx.leave();
 };
 
 %%
