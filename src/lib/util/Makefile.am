@@ -88,8 +88,7 @@ libkea_util_io_include_HEADERS = \
 	io/fd.h \
 	io/fd_share.h \
 	io/pktinfo_utilities.h \
-	io/sockaddr_util.h \
-	io/socketsession.h
+	io/sockaddr_util.h
 
 libkea_util_random_includedir = $(pkgincludedir)/util/random
 libkea_util_random_include_HEADERS = \
