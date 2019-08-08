@@ -12,7 +12,7 @@
         "    \"arguments\": {",
         "        \"option-defs\": [ {",
         "            \"code\": <option code>,",
-        "            \"space\": <option space",
+        "            \"space\": <option space>",
         "        } ],",
         "        \"remote\": {",
         "            <specification of the database to connect to>",

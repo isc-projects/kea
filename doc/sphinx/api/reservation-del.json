@@ -12,7 +12,7 @@
         "    \"arguments\": {",
         "        \"subnet-id\": <integer>,",
         "        \"ip-address\": <string>,",
-        "        \"identifier-type\": <one of \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" and \"flex-id\">,",
+        "        \"identifier-type\": <one of 'hw-address', 'duid', 'circuit-id', 'client-id' and 'flex-id'>,",
         "        \"identifier\": <string>",
         "    }",
         "}"

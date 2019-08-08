@@ -11,8 +11,8 @@
         "    \"command\": \"reservation-get\",",
         "    \"arguments\": {",
         "        \"subnet-id\": <integer>,",
-        "        \"identifier-type\": <one of \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" and \"flex-id\">,",
-        "        \"identifier\": <string>;",
+        "        \"identifier-type\": <one of 'hw-address', 'duid', 'circuit-id', 'client-id' and 'flex-id'>,",
+        "        \"identifier\": <string>",
         "    }",
         "}"
     ],

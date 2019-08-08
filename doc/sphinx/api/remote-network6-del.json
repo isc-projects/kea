@@ -15,7 +15,7 @@
         "                \"name\": <shared network name>",
         "            }",
         "        ],",
-        "        \"subnets-action\": \"keep\" | \"delete\",",
+        "        \"subnets-action\": <'keep' | 'delete'>,",
         "        \"remote\": {",
         "            <specification of the database to connect to>",
         "        }",

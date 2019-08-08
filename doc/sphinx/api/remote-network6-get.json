@@ -15,7 +15,7 @@
         "                \"name\": <shared network name>",
         "            }",
         "        ],",
-        "        \"subnets-include\": \"full\" | \"no\",",
+        "        \"subnets-include\": <'full' | 'no'>,",
         "        \"remote\": {",
         "            <specification of the database to connect to>",
         "        }",

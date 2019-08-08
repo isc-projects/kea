@@ -17,7 +17,7 @@
         "    \"arguments\": {",
         "        \"reservation\": {",
         "            \"boot-file-name\": <string>,",
-        "            \"comment\": <string>",
+        "            \"comment\": <string>,",
         "            \"client-id\": <string>,",
         "            \"circuit-id\": <string>,",
         "            \"duid\": <string>,",
@@ -32,7 +32,7 @@
         "            \"reservation-client-classes\": [ <comma separated strings> ],",
         "            \"server-hostname\": <string>,",
         "            \"subnet-id\": <integer>,",
-        "            \"user-context\": <any valid JSON>,",
+        "            \"user-context\": <any valid JSON>",
         "        }",
         "    }",
         "}"

@@ -13,7 +13,7 @@
         "        \"options\": [",
         "            {",
         "                \"code\": <option code>,",
-        "                \"space\": <option space>,",
+        "                \"space\": <option space>",
         "            }",
         "        ],",
         "        \"remote\": {",
