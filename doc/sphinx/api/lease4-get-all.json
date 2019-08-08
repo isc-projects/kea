@@ -8,7 +8,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"lease4-get-all\"",
+        "    \"command\": \"lease4-get-all\",",
         "    \"arguments\": \"subnets\"",
         "}"
     ],

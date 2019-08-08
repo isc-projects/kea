@@ -7,7 +7,7 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"ha-sync\",",
-        "    \"service\": [ <service affected: \"dhcp4\" or \"dhcp6\" ],",
+        "    \"service\": [ <service affected: 'dhcp4' or 'dhcp6'> ],",
         "    \"arguments\": {",
         "        \"server-name\": <name of the partner server>,",
         "        \"max-period\": <integer, in seconds>",

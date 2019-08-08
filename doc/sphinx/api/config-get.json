@@ -18,7 +18,7 @@
         "{",
         "    \"result\": <integer>,",
         "    \"arguments\": {",
-        "        <JSON configuration here, starting with Dhcp4, Dhcp6, or Control-agent object>",
+        "        <Dhcp4, Dhcp6, or Control-agent object>: <JSON configuration here> ",
         "    }",
         "}"
     ],

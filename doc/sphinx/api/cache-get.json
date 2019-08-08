@@ -7,8 +7,8 @@
     "name": "cache-get",
     "resp-syntax": [
         "{",
-        "    \"result\": 0",
-        "    \"text\": \"123 entries returned.\"",
+        "    \"result\": 0,",
+        "    \"text\": \"123 entries returned.\",",
         "    \"arguments\": <list of host reservations>",
         "}"
     ],

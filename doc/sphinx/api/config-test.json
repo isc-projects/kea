@@ -10,7 +10,7 @@
         "{",
         "    \"command\": \"config-test\",",
         "    \"arguments\":  {",
-        "        \"<server>\": {",
+        "        \"'<server>'\": {",
         "        }",
         "     }",
         "}"
@@ -20,7 +20,7 @@
     "resp-syntax": [
         "{ \"result\": 0, \"text\": \"Configuration seems sane...\" }",
         "",
-        "    or",
+        "or",
         "",
         "{ \"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
     ],

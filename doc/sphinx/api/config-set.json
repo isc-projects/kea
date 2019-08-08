@@ -4,13 +4,13 @@
         "The config-set command instructs the server to replace its current configuration with the new configuration supplied in the command's arguments."
     ],
     "cmd-comment": [
-        "where `<server>` is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\""
+        "where '<server>' is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\""
     ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"config-set\",",
         "    \"arguments\":  {",
-        "        \"<server>\": {",
+        "        \"'<server>'\": {",
         "        }",
         "     }",
         "}"
@@ -18,11 +18,11 @@
     "description": "See <xref linkend=\"command-config-set\"/>",
     "name": "config-set",
     "resp-syntax": [
-        "    {\"result\": 0, \"text\": \"Configuration successful.\" }",
+        "{\"result\": 0, \"text\": \"Configuration successful.\" }",
         "",
-        "    or",
+        "or",
         "",
-        "    {\"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
+        "{\"result\": 1, \"text\": \"unsupported parameter: BOGUS (<string>:16:26)\" }"
     ],
     "support": [
         "kea-dhcp4",

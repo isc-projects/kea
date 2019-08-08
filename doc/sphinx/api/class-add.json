@@ -34,7 +34,7 @@
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"Class '<class-name>' added.\",",
+        "    \"text\": \"Class '<class-name>' added.\"",
         "}"
     ],
     "support": [

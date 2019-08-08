@@ -9,13 +9,14 @@
         "    \"arguments\": {",
         "        \"hw-address\": \"01:02:03:04:05:06\"",
         "    }"
+        "}"
     ],
     "hook": "host_cache",
     "name": "cache-get-by-id",
     "resp-syntax": [
         "{",
-        "    \"result\": 0",
-        "    \"text\": \"2 entries returned.\"",
+        "    \"result\": 0,",
+        "    \"text\": \"2 entries returned.\",",
         "    \"arguments\": <list of host reservations>",
         "}"
     ],

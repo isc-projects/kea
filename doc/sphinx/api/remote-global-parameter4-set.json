@@ -8,7 +8,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"remote-global-parameter4-set\"",
+        "    \"command\": \"remote-global-parameter4-set\",",
         "    \"arguments\": {",
         "        \"parameters\": {",
         "            <first parameter name>: <first parameter value>,",

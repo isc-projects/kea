@@ -9,10 +9,11 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"ha-scopes\",",
-        "    \"service\": [ <service, typically \"dhcp4\" or \"dhcp6\"> ],",
+        "    \"service\": [ <service, typically 'dhcp4' or 'dhcp6'> ],",
         "    \"arguments\": {",
         "        \"scopes\": [ \"HA_server1\", \"HA_server2\" ]",
         "    }"
+        "}"
     ],
     "description": "See <xref linkend=\"command-ha-scopes\"/>",
     "hook": "high_availability",

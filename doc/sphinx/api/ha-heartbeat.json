@@ -6,7 +6,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"ha-heartbeat\",",
+        "    \"command\": \"ha-heartbeat\"",
         "    }"
     ],
     "description": "See <xref linkend=\"ha-server-states\"/>",
