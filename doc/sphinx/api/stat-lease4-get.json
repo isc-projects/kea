@@ -5,7 +5,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "  \"command\": \"stat-lease4-get\",",
+        "  \"command\": \"stat-lease4-get\"",
         "}"
     ],
     "description": "See <xref linkend=\"command-stat-lease4-get\"/>",
