@@ -191,7 +191,9 @@
                       // kept.
                       "flush": true,
                       "maxsize": 204800,
-                      "maxver": 4
+                      "maxver": 4,
+                      // We use pattern to specify custom log message layout
+                      "pattern": "%d{%y.%m.%d %H:%M:%S.%q} %-5p [%c/%i] %m\n"
                   }
               ],
               "severity": "INFO"

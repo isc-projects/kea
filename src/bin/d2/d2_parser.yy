@@ -89,6 +89,7 @@ using namespace std;
   FLUSH "flush"
   MAXSIZE "maxsize"
   MAXVER "maxver"
+  PATTERN "pattern"
 
   // Not real tokens, just a way to signal what the parser is expected to
   // parse.
@@ -848,6 +849,7 @@ output_params: output
              | flush
              | maxsize
              | maxver
+             | pattern
              ;
 
 output: OUTPUT {
@@ -872,6 +874,14 @@ maxver: MAXVER COLON INTEGER {
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
 }
+
+pattern: PATTERN {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("pattern", sev);
+    ctx.leave();
+};
 
 %%
 
