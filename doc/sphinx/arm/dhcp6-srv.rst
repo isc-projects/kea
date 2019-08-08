@@ -5543,6 +5543,11 @@ The following standards are currently supported:
    4649 <https://tools.ietf.org/html/rfc4649>`__: REMOTE-ID option is
    supported.
 
+-  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
+   Configuration Protocol (DHCP) Clients*, `RFC 4703
+   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses DHCP-DDNS
+   server to resolve conflicts.
+
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
    Fully Qualified Domain Name (FQDN) Option*, `RFC
    4704 <https://tools.ietf.org/html/rfc4704>`__: Supported option is

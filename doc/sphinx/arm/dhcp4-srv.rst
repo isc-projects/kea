@@ -5503,6 +5503,18 @@ The following standards are currently supported:
    Vendor Class and Vendor-Identifying Vendor-Specific Information
    options are supported.
 
+-  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
+   Qualified Domain Name (FQDN) Option*, `RFC 4702
+   <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to
+   handle the Client FQDN option. Also, it is able to use
+   kea-dhcp-ddns compontent do initiate appropriate DNS Update
+   operations.
+
+-  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
+   Configuration Protocol (DHCP) Clients*, `RFC 4703
+   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses DHCP-DDNS
+   server to resolve conflicts.
+
 -  *Client Identifier Option in DHCP Server Replies*, `RFC
    6842 <https://tools.ietf.org/html/rfc6842>`__: Server by default sends
    back client-id option. That capability may be disabled. See :ref:`dhcp4-echo-client-id` for details.
