@@ -843,7 +843,10 @@
                         "maxver": 1,
 
                         // Specifies logging destination.
-                        "output": "stdout"
+                        "output": "stdout",
+
+                        // Specifies log entry content
+                        "pattern": "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n"
                     }
                 ],
 

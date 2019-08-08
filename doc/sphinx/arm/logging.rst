@@ -584,33 +584,50 @@ maxver rotated files. The minimum and default value is 1.
 The pattern (string) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This option can be used to specify the layout pattern of log messages for a looger.
-Kea logging is implemented using the Log4Cplus library and it's output formatting
-is based, conceptually, on the printf formatting from C and is discussed
-in detail in the the next section :ref:`logging-message-format`.
+This option can be used to specify the layout pattern of log messages for
+a logger. Kea logging is implemented using the Log4Cplus library and whose
+output formatting is based, conceptually, on the printf formatting from C
+and is discussed in detail in the the next section
+:ref:`logging-message-format`.
 
-Each output type (stdout, file, or syslog) has a default pattern. This parameter can
-be used to specifiy your own pattern.  The pattern for each logger is governed
-individually so each configured logger can have it's own pattern. Omitting the
-``pattern`` parameter or setting it to an empty string, "", will cause Kea to use
-the default pattern for that logger's output type.
+Each output type (stdout, file, or syslog) has a default ``pattern`` which
+describes the content of its log messages. This parameter can be used to
+specifiy your own pattern.  The pattern for each logger is governed
+individually so each configured logger can have it's own pattern. Omitting
+the ``pattern`` parameter or setting it to an empty string, "", will cause
+Kea to use the default pattern for that logger's output type.
 
-In addition to the log text itself, the default patterns used for ``stdout`` and
-files contain information such as date and time, logger level, and process information.
-The default pattern for ``syslog`` is limited primarily to log level, source, and
-the log text.  This avoids duplicating information which is usually supplied by syslog.
+In addition to the log text itself, the default patterns used for ``stdout``
+and files contain information such as date and time, logger level, and
+process information.  The default pattern for ``syslog`` is limited primarily
+to log level, source, and the log text.  This avoids duplicating information
+which is usually supplied by syslog.
+
+.. warning::
+    You are strongly encouraged to test your pattern(s) on a local,
+    non-production instance of Kea, running in the foreground and
+    logging to ``stdout``.
+
 
 .. _logging-message-format:
 
 Logging Message Format
 ----------------------
 
-As mentioned above, Kea log message content is controlled via a scheme similar to the
-C language's printf formatting. The "pattern" used for each message is described by a
-string containing one or more format components as part of a text string.  In addition
-to the components the string may contain any other arbitrary text you find useful.
-It is probably easiest to understand this by examining the default pattern for stdout
-and files.  That pattern is shown below:
+As mentioned above, Kea log message content is controlled via a scheme similar
+to the C language's printf formatting. The "pattern" used for each message is
+described by a string containing one or more format components as part of a
+text string.  In addition to the components the string may contain any other
+arbitrary text you find useful.
+
+The Log4Cplus documentation provides a concise discussion of the supported
+components and formatting behavior and can be seen here:
+
+    https://log4cplus.sourceforge.io/docs/html/classlog4cplus_1_1PatternLayout.html
+
+It is probably easiest to understand this by examining the default pattern
+for stdout and files (currently they are the same).  That pattern is shown
+below:
 
 ::
 
@@ -624,37 +641,54 @@ and a typical log produced by this pattern would look somethng like this:
 
 That breaks down as like so:
 
-- ``%D{%Y-%m-%d %H:%M:%S.%q}`` : '%D' is the date and time the log message is generated
-    while everything between the curly braces, '{}' are date and time components. From the
-    example log above this produces: ``2019-08-05 14:27:45.871``
+- %D{%Y-%m-%d %H:%M:%S.%q}
+    '%D' is the date and time in local time that the log message is generated,
+    while everything between the curly braces, '{}' are date and time components.
+    From the example log above this produces:
+    ``2019-08-05 14:27:45.871``
 
-- ``%-5p`` : the is severity of message, output as a minimum of five characters, using
-    right-padding with spaces. In our example log: ``DEBUG``
+- %-5p
+    The severity of message, output as a minimum of five characters,
+    using right-padding with spaces. In our example log: ``DEBUG``
 
-- ``%c`` : is the log source. This includes two elements: the Kea process generating
-   the message, in this case, ``kea-dhcp4``; and the component within the program
-   from which the message originated, ``dhcpsrv`` (e.g. the name of the common library
-   used by DHCP server implementations).
+- %c
+    The log source. This includes two elements: the Kea process generating the
+    message, in this case, ``kea-dhcp4``; and the component within the program
+    from which the message originated, ``dhcpsrv`` (e.g.  the name of the
+    library used by DHCP server implementations).
 
-- ``%i`` : process ID. From the example log: ``8475``
+- %i
+    The process ID. From the example log: ``8475``
 
-- ``%m`` : log message. Keg log messages all begin with a message identifier followed
-    by arbitrary log text. Every message in Kea has a unique identifier, which can be
-    used as an index to the
+- %m
+    The log message itself. Keg log messages all begin with a message
+    identifier followed by arbitrary log text. Every message in Kea has
+    a unique identifier, which can be used as an index to the
     `Kea Messages Manual <https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html>`__,
-    where more information can be obtained.  In our example log above, the identifier
-    is ``DHCPSRV_TIMERMGR_START_TIMER``.   The log text is typically a brief description
-    detailing the condition that caused the message to be logged. In our example, the
-    information logged, ``starting timer: reclaim-expired-leases``, explains that the
-    timer for the expired lease reclamation cycle has been started.
+    where more information can be obtained.  In our example log above, the
+    identifier is ``DHCPSRV_TIMERMGR_START_TIMER``.   The log text is typically
+    a brief description detailing the condition that caused the message to be
+    logged. In our example, the information logged,
+    ``starting timer: reclaim-expired-leases``, explains that the timer for
+    the expired lease reclamation cycle has been started.
 
-.. note::
-    Omitting ``%m`` will render your log output meaningless and should be considered
-    mandatory.
+.. Warning::
 
-Finally, note that spacing between components, the square brackets around the log
-source and PID, and the final carriage return '\n' are all literal text specified as
-part of the pattern.
+    Omitting ``%m`` will omit the log message text from your output making it
+    rather useless. You should consider ``%m`` mandatory.
+
+Finally, note that spacing between components, the square brackets around the
+log source and PID, and the final carriage return '\n' are all literal text
+specified as part of the pattern.
+
+.. Warning::
+
+    In order to ensure each log entry is a separate line, your patterns
+    must end with an ``\n``.  There may be use cases where it is not desired
+    so we do not enforce its inclusion.  Be aware that if you omit it from
+    your pattern that to common text tools or displays, the log entries
+    will run together in one long, endless "line".
+
 
 The default for pattern for syslog output is as follows:
 
@@ -662,19 +696,14 @@ The default for pattern for syslog output is as follows:
 
     "%-5p [%c] %m\n";
 
-You can see that it omits the date and time as well the process ID as this information
-is typically output by syslog.  Note that Kea uses the pattern to construct the text
-it sends to syslog (or any other destination). It has no influence on the content
-syslog may add or formatting it may do.
+You can see that it omits the date and time as well the process ID as this
+information is typically output by syslog.  Note that Kea uses the pattern
+to construct the text it sends to syslog (or any other destination). It has
+no influence on the content syslog may add or formatting it may do.
 
-The best place to go for the supported components and how to use them is the Log4Cplus
-documentation itself:
+Consult your OS documentation for "syslog" behavior as there are multiple
+implementations.
 
-    https://log4cplus.sourceforge.io/docs/html/classlog4cplus_1_1PatternLayout.html
-
-.. note::
-    You are strongly encouraged to test your pattern(s) on a local, non-production
-    instance of Kea, running in the foreground and logging to ``stdout``.
 
 Example Logger Configurations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -714,6 +743,7 @@ logfile grows to 2MB, it will be renamed and a new file will be created.
                        "maxver": 8,
                        "maxsize": 204800,
                        "flush": true
+                       "pattern": "%d{%j %H:%M:%S.%q} %c %m\n"
                    }
                ],
                "severity": "DEBUG",
@@ -721,6 +751,13 @@ logfile grows to 2MB, it will be renamed and a new file will be created.
            }
       ]
    }
+
+Notice that the above configuration uses a custom pattern which produces output like this:
+
+::
+
+    220 13:50:31.783 kea-dhcp4.dhcp4 DHCP4_STARTED Kea DHCPv4 server version 1.6.0-beta2-git started
+
 
 .. _logging-during-startup:
 
