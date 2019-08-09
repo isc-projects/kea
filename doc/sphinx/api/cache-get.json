@@ -1,7 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "Returns full content of the host cache."
+        "This command returns the full content of the host cache."
     ],
     "hook": "host_cache",
     "name": "cache-get",

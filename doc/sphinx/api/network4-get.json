@@ -1,7 +1,7 @@
 {
     "avail": "1.3.0",
     "brief": [
-        "The network4-get command is used to retrieve detailed information about shared networks, including subnets currently being part of a given network."
+        "This command retrieves detailed information about shared networks, including subnets that are currently part of a given network."
     ],
     "cmd-syntax": [
         "{",
@@ -37,12 +37,12 @@
         "                {",
         "                    \"subnet\": \"192.0.2.0/24\",",
         "                    \"id\": 5,",
-        "                    // many other subnet specific details here",
+        "                    // many other subnet-specific details here",
         "                },",
         "                {",
         "                    \"subnet\": \"192.0.3.0/31\",",
         "                    \"id\": 6,",
-        "                    // many other subnet specific details here",
+        "                    // many other subnet-specific details here",
         "                }",
         "            ],",
         "            \"valid-lifetime\": 120",

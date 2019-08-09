@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to delete an IPv4 shared network from the configuration database."
+        "This command deletes an IPv4 shared network from the configuration database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one name of the shared network to be deleted. The ``subnets-action`` denotes whether the subnets in this shared network should be deleted or not. The ``server-tags`` parameter must not be specified for this command."
+        "This command includes a list with exactly one name of the shared network to be deleted. The ``subnets-action`` parameter denotes whether the subnets in this shared network should be deleted. The ``server-tags`` parameter must not be specified for this command."
     ],
     "cmd-syntax": [
         "{",

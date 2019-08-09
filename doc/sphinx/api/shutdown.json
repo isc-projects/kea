@@ -1,11 +1,10 @@
 {
     "avail": "1.0.0",
     "brief": [
-        "The shutdown command instructs the server to initiate its shutdown procedure."
+        "This command instructs the server to initiate its shutdown procedure."
     ],
     "cmd-comment": [
-        "The server will respond with a confirmation that the shutdown",
-        "procedure has been initiated."
+        "The server responds with a confirmation that the shutdown procedure has been initiated."
     ],
     "cmd-syntax": [
         "{",

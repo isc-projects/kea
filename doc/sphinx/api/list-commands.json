@@ -1,10 +1,10 @@
 {
     "avail": "1.0.0",
     "brief": [
-        "The list-commands command retrieves a list of all commands supported by the server."
+        "This command retrieves a list of all commands supported by the server."
     ],
     "cmd-comment": [
-        "The server will respond with a list of all supported commands."
+        "The server responds with a list of all supported commands."
     ],
     "cmd-syntax": [
         "{",

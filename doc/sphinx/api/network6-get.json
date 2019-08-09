@@ -1,7 +1,7 @@
 {
     "avail": "1.3.0",
     "brief": [
-        "The network6-get command is used to retrieve detailed information about shared networks, including subnets currently being part of a given network."
+        "The network6-get command retrieves detailed information about shared networks, including subnets that are currently part of a given network."
     ],
     "cmd-syntax": [
         "{",

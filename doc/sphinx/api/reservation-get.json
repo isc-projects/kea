@@ -1,7 +1,7 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "This command is used to retrieve an existing host reservation."
+        "This command retrieves an existing host reservation."
     ],
     "cmd-comment": [
         "The host reservation can be identified by either the (subnet-id, ip-address) pair or a triplet of (subnet-id, identifier-type, identifier)."
@@ -19,8 +19,7 @@
     "hook": "host_cmds",
     "name": "reservation-get",
     "resp-comment": [
-        "The arguments object appears only if a host is found. Many fields in the arguments",
-        "object appear only if a specific field is set."
+        "The arguments object appears only if a host is found. Many fields in the arguments object appear only if a specific field is set."
     ],
     "resp-syntax": [
         "{",

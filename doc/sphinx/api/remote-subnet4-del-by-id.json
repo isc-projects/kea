@@ -1,7 +1,7 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to delete an IPv4 subnet by ID from the configuration database."
+        "This command deletes an IPv4 subnet by ID from the configuration database."
     ],
     "cmd-comment": [
         "This command includes a list with exactly one ID of the subnet to be deleted. The ``server-tags`` parameter must not be specified for this command."

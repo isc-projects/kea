@@ -1,7 +1,7 @@
 {
     "avail": "1.0.0",
     "brief": [
-        "The leases-reclaim command instructs the server to reclaim all expired leases immediately."
+        "This command instructs the server to reclaim all expired leases immediately."
     ],
     "cmd-syntax": [
         "{",

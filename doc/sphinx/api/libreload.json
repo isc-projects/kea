@@ -1,10 +1,10 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "The libreload command will first unload and then load all currently loaded hook libraries."
+        "This command first unloads and then reloads all currently loaded hooks libraries."
     ],
     "cmd-comment": [
-        "The server will respond with a result of 0 indicating success, or 1 indicating a failure."
+        "The server responds with 0, indicating success, or 1, indicating a failure."
     ],
     "cmd-syntax": [
         "{",

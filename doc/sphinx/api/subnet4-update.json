@@ -1,7 +1,7 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to update a subnet in the existing server configuration."
+        "This command updates a subnet in the existing server configuration. This operation has no impact on other subnets."
     ],
     "cmd-syntax": [
         "{",

@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "Retrieve host reservations for a specified subnet by page."
+        "This command retrieves host reservations for a specified subnet by page."
     ],
     "cmd-comment": [
-        "the subnet id and the page size limit are mandatory. The source index and from host id are optional and default to 0. Values to use to next the next page are returned in responses in a next map."
+        "The subnet-id and the page size limit are mandatory. The source-index and from host id are optional and default to 0. Values to use to load the next page are returned in responses in a next map."
     ],
     "cmd-syntax": [
         "{",

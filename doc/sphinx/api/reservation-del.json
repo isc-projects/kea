@@ -1,7 +1,7 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "Deletes an existing host reservation."
+        "This command deletes an existing host reservation."
     ],
     "cmd-comment": [
         "The host reservation can be identified by either the (subnet-id, ip-address) pair or a triplet of (subnet-id, identifier-type, identifier)."

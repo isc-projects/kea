@@ -1,10 +1,10 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "The config-test command instructs the server to check whether the new configuration supplied in the command's arguments can be loaded."
+        "This command instructs the server to check whether the new configuration supplied in the command's arguments can be loaded."
     ],
     "cmd-comment": [
-        "where <server> is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\"."
+        "In the example below, <server> is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\"."
     ],
     "cmd-syntax": [
         "{",

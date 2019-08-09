@@ -1,7 +1,7 @@
 {
     "avail": "1.3.0",
     "brief": [
-        "The lease6-update command can be used to update existing leases."
+        "This command updates existing leases."
     ],
     "cmd-syntax": [
         "{",

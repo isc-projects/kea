@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to fetch all DHCPv6 global options for the server from the configuration database."
+        "This command fetches all DHCPv6 global options for the server from the configuration database."
     ],
     "cmd-comment": [
-        "The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error. The special server tag \"all\" is allowed to fetch the global options shared by all servers."
+        "The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The special server tag \"all\" is allowed, to fetch the global options shared by all servers."
     ],
     "cmd-syntax": [
         "{",
@@ -20,7 +20,7 @@
     "hook": "cb_cmds",
     "name": "remote-option6-global-get-all",
     "resp-comment": [
-        "The returned response contains a list of maps. Each map contains a global option specification and the metadata including database specific information associated with the returned object. If the server tag \"all\" is included in the command, the response contains the global options shared between all servers. It excludes server specific global options. If an explicit server tag is included in the command, the response contains all global options directly associated with the given server and the options associated with all servers when server specific options are not present."
+        "The returned response contains a list of maps. Each map contains a global option specification and the metadata, including database-specific information associated with the returned object. If the server tag \"all\" is included in the command, the response contains the global options shared between all servers. It excludes server-specific global options. If an explicit server tag is included in the command, the response contains all global options directly associated with the given server, and the options associated with all servers when server-specific options are not present."
     ],
     "resp-syntax": [
         "{",

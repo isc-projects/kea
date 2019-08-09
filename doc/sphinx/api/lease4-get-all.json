@@ -1,10 +1,10 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "lease4-get-all is used to retrieve all IPv4 leases or all leases for the specified set of subnets."
+        "This command retrieves all IPv4 leases or all leases for the specified set of subnets."
     ],
     "cmd-comment": [
-        "The lease4-get-all command may result in very large responses."
+        "The ``lease4-get-all`` command may result in very large responses."
     ],
     "cmd-syntax": [
         "{",

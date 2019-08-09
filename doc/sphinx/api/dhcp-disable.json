@@ -1,7 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "The dhcp-disable command globally disables the DHCP service."
+        "This command globally disables the DHCP service."
     ],
     "cmd-syntax": [
         "{",

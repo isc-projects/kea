@@ -1,9 +1,7 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "The version-get command returns extended information about",
-        "Kea version. The returned string is the same as if Kea would",
-        "be run with ``-V`` command line option."
+        "This command returns extended information about the Kea version that is running. The returned string is the same as if Kea were run with the ``-V`` command-line option."
     ],
     "cmd-syntax": [
         "{",

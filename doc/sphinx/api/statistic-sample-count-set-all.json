@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "The statistic-sample-count-set-all command sets size based limit for all statistics. It takes a single integer parameter called max-samples."
+        "This command sets a size-based limit for all statistics. It takes a single integer parameter called max-samples."
     ],
     "cmd-comment": [
-        "The server will respond with message about successfully set limits for all statistics, with a result set to 0 indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
+        "The server responds with a message about successfully set limits for all statistics, with a result of 0 indicating success, and an empty parameters field. If an error is encountered, the server returns a status code of 1 (error) and the text field contains the error description."
     ],
     "cmd-syntax": [
         "{",

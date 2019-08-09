@@ -1,10 +1,14 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to delete a DHCPv6 option definition from the configuration database."
+        "This command deletes a DHCPv6 option definition from the configuration database."
     ],
     "cmd-comment": [
+<<<<<<< HEAD
         "This command includes a list with exactly one option definition specification, comprising an option name and code. The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error."
+=======
+        "This command includes a list with exactly one option definition specification, comprising an option name and code. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error."
+>>>>>>> Fix grammar, typos, a few JSON errors
     ],
     "cmd-syntax": [
         "{",

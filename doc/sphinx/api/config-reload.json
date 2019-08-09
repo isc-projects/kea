@@ -1,7 +1,7 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "The config-reload command instructs Kea to load again the configuration file that was used previously."
+        "This command instructs Kea to reload the configuration file that was used previously."
     ],
     "cmd-syntax": [
         "{",

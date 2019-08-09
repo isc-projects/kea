@@ -1,11 +1,11 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "Returns a list of compilation options that this particular binary was built with"
+        "This command returns the list of compilation options that this particular binary was built with."
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"build-report\"",
+        "    \"command\": \"build-report\",",
         "}"
     ],
     "name": "build-report",

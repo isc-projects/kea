@@ -1,15 +1,10 @@
 {
     "avail": "1.2.0",
     "brief": [
-        "Adds a new host reservation. The reservation may include IPv4 address,",
-        "IPv6 addresses, IPv6 prefixes, various identifiers, a class",
-        "the client will be assigned to, DHCPv4 and DHCPv6 options and",
-        "more."
+        "This command adds a new host reservation. The reservation may include IPv4 addresses, IPv6 addresses, IPv6 prefixes, various identifiers, a class the client will be assigned to, DHCPv4 and DHCPv6 options, and more."
     ],
     "cmd-comment": [
-        "Note the ip-address, client-id, next-server, server-hostname and",
-        "boot-file-name are IPv4 specific. duid, ip-addresses and prefixes are",
-        "IPv6 specific."
+        "Note that ip-address, client-id, next-server, server-hostname, and boot-file-name are IPv4-specific. duid, ip-addresses, and prefixes are IPv6-specific."
     ],
     "cmd-syntax": [
         "{",
@@ -23,13 +18,13 @@
         "            \"duid\": <string>,",
         "            \"flex-id\": <string>,",
         "            \"ip-address\": <string (IPv4 address)>,",
-        "            \"ip-addresses\": [ <comma separated strings> ],",
+        "            \"ip-addresses\": [ <comma-separated strings> ],",
         "            \"hw-address\": <string>,",
         "            \"hostname\": <string>,",
         "            \"next-server\": <string (IPv4 address)>,",
-        "            \"option-data-list\": [ <comma separated structures defining options> ],",
-        "            \"prefixes\": [ <comma separated IPv6 prefixes> ],",
-        "            \"reservation-client-classes\": [ <comma separated strings> ],",
+        "            \"option-data-list\": [ <comma-separated structures defining options> ],",
+        "            \"prefixes\": [ <comma-separated IPv6 prefixes> ],",
+        "            \"reservation-client-classes\": [ <comma-separated strings> ],",
         "            \"server-hostname\": <string>,",
         "            \"subnet-id\": <integer>,",
         "            \"user-context\": <any valid JSON>",

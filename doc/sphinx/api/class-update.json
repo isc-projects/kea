@@ -1,12 +1,10 @@
 {
     "avail": "1.5.0",
     "brief": [
-        "This command is used to update an existing client class in",
-        "the server configuration."
+        "This command updates an existing client class in the server configuration."
     ],
     "cmd-comment": [
-        "The ``next-server``, ``server-hostname``, and ``boot-file-name`` are DHCPv4-specific. Only",
-        "one client class can be updated with a single command. "
+        "The ``next-server``, ``server-hostname``, and ``boot-file-name`` are DHCPv4-specific. Only one client class can be updated with a single command. "
     ],
     "cmd-syntax": [
         "{",
@@ -28,10 +26,14 @@
     "hook": "class_cmds",
     "name": "class-update",
     "resp-comment": [
+<<<<<<< HEAD
         "The command will return the result of 3 (empty) if the client",
         "class doesn't exist. If the client class exists, the returned",
         "result is 0 if the update was successful and the result is 1",
         "if the update is unsuccessful."
+=======
+        "The command returns the result of 3 (empty) if the client class does not exist. If the client class exists, the returned result is 0 if the update was successful or 1 if the update is unsuccessful."
+>>>>>>> Fix grammar, typos, a few JSON errors
     ],
     "resp-syntax": [
         "{",

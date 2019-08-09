@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to create or replace DHCPv6 option definition in the configuration database."
+        "This command creates or replaces a DHCPv6 option definition in the configuration database."
     ],
     "cmd-comment": [
-        "The provided list must contain exactly one option definition specification. The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error. The server tag \"all\" is allowed and it associates the specified option definition with all servers."
+        "The provided list must contain exactly one option definition specification. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it associates the specified option definition with all servers."
     ],
     "cmd-syntax": [
         "{",

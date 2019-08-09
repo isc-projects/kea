@@ -1,10 +1,10 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "Instructs Kea to write its host cache content to disk."
+        "This command instructs Kea to write its host cache content to disk."
     ],
     "cmd-comment": [
-        "The command takes one mandatory argument that specifies a filename path of a file to be written."
+        "The command takes one mandatory argument that specifies the filename path of a file to be written."
     ],
     "cmd-syntax": [
         "{",

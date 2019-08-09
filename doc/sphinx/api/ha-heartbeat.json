@@ -1,8 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "This command is sent internally by a Kea partner when operating",
-        "in High-Availability (HA) mode. It retrieves the server's HA state and clock value."
+        "This command is sent internally by a Kea partner when operating in High-Availability (HA) mode. It retrieves the server's HA state and clock value."
     ],
     "cmd-syntax": [
         "{",

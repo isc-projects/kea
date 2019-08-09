@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to create or replace an IPv4 shared network in the configuration database."
+        "This command creates or replaces an IPv4 shared network in the configuration database."
     ],
     "cmd-comment": [
-        "The provided list must contain exactly one shared network specification. It must not contain subnets (\"subnet4\" parameter). The subnets are added to the shared network using ``remote-subnet4-set`` command. The ``server-tags`` list is mandatory and it must contain one or more server tags as strings to explicitly associate the shared network with one or more user defined servers. It may include the special server tag \"all\" to associate the network with all servers."
+        "The provided list must contain exactly one shared network specification, and must not contain subnets (the \"subnet4\" parameter). The subnets are added to the shared network using the ``remote-subnet4-set`` command. The ``server-tags`` list is mandatory and must contain one or more server tags as strings to explicitly associate the shared network with one or more user-defined servers. It may include the special server tag \"all\" to associate the network with all servers."
     ],
     "cmd-syntax": [
         "{",

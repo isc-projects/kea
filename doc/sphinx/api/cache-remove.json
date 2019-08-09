@@ -1,7 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "The cache-remove command works similarly to reservation-get command."
+        "This command works similarly to the ``reservation-get`` command."
     ],
     "cmd-syntax": [
         "{",
@@ -12,7 +12,7 @@
         "    }",
         "}",
         "",
-        "Another example that removes IPv6 host identifier by DUID and specific subnet-id is:",
+        "Another example that removes the IPv6 host identifier by DUID and specific subnet-id is:",
         "{",
         "    \"command\": \"cache-remove\",",
         "    \"arguments\": {",

@@ -1,9 +1,9 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "This command is used to resume the operation of the paused HA state machine."
+        "This command resumes the operation of a paused HA state machine."
     ],
-    "description": "See <xref linkend=\"anchor-in-the-docs\"/>",
+    "description": "See <xref linkend=\"command-ha-continue\"/>",
     "hook": "high_availability",
     "name": "ha-continue",
     "support": [

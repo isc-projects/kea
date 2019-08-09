@@ -1,7 +1,7 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "Retrieve all host reservations for a specified subnet."
+        "This command retrieves all host reservations for a specified subnet."
     ],
     "cmd-syntax": [
         "{",
@@ -14,7 +14,7 @@
     "hook": "host_cmds",
     "name": "reservation-get-all",
     "resp-comment": [
-        "reservation-get-all command may result in very large responses."
+        "The reservation-get-all command may result in very large responses."
     ],
     "support": [
         "kea-dhcp4",

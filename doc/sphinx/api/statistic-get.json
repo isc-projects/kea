@@ -1,10 +1,10 @@
 {
     "avail": "1.0.0",
     "brief": [
-        "The statistic-get command retrieves a single statistic. It takes a single string parameter called name that specifies the statistic name."
+        "This command retrieves a single statistic. It takes a single string parameter called name that specifies the statistic name."
     ],
     "cmd-comment": [
-        "The server will respond with details of the requested statistic, with a result set to 0 indicating success and the specified statistic as the value of the \"arguments\" parameter."
+        "The server responds with the details of the requested statistic, with a result of 0 indicating success, and the specified statistic as the value of the \"arguments\" parameter."
     ],
     "cmd-syntax": [
         "{",

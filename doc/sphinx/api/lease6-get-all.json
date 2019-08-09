@@ -1,7 +1,7 @@
 {
     "avail": "1.3.0",
     "brief": [
-        "lease6-get-all is used to retrieve all IPv6 leases or all leases for the specified set of subnets."
+        "This command retrieves all IPv6 leases or all leases for the specified set of subnets."
     ],
     "cmd-syntax": [
         "{",

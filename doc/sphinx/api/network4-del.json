@@ -1,7 +1,7 @@
 {
     "avail": "1.3.0",
     "brief": [
-        "The network4-del command is used to delete existing shared networks."
+        "This command deletes existing shared networks."
     ],
     "cmd-syntax": [
         "{",

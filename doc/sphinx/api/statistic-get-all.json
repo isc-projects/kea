@@ -1,10 +1,10 @@
 {
     "avail": "1.0.0",
     "brief": [
-        "The statistic-get-all command retrieves all statistics recorded."
+        "This command retrieves all recorded statistics."
     ],
     "cmd-comment": [
-        "The server will respond with details of all recorded statistics, with result set to 0 indicating that it iterated over all statistics (even when the total number of statistics is zero)."
+        "The server responds with the details of all recorded statistics, with a result of 0 indicating that it iterated over all statistics (even when the total number of statistics is zero)."
     ],
     "cmd-syntax": [
         "{",

@@ -1,11 +1,11 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "The dhcp-enable command globally enables the DHCP service."
+        "This command globally enables the DHCP service."
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"dhcp-enable\"",
+        "    \"command\": \"dhcp-enable\",",
         "}"
     ],
     "description": "See <xref linkend=\"command-dhcp-enable\"/>",

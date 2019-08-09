@@ -1,10 +1,10 @@
 {
     "avail": "1.6.0",
     "brief": [
-        "This command is used to fetch a global DHCPv4 option for the server from the specified database."
+        "This command fetches a global DHCPv4 option for the server from the specified database."
     ],
     "cmd-comment": [
-        "The option is identified by the pair of option code/space values. The ``server-tags`` list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of ``null`` or multiple server tags will result in an error. The server tag \"all\" is allowed to fetch the global option instance shared by all servers."
+        "The option is identified by the pair of option code/space values. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed, to fetch the global option instance shared by all servers."
     ],
     "cmd-syntax": [
         "{",
@@ -26,12 +26,12 @@
     "hook": "cb_cmds",
     "name": "remote-option4-global-get",
     "resp-comment": [
-        "The metadata is included and it provides database specific information associated with the returned object. If the \"all\" server tag was specified, the command attempts to fetch the global option associated with all servers. If the explicit server tag is specified, the command will fetch the global option associated with the given server. If the server specific option doesn't exist, it will try to fetch the option associated with all servers."
+        "The metadata is included and provides database specific information associated with the returned object. If the \"all\" server tag is specified, the command fetches the global option associated with all servers. If the explicit server tag is specified, the command fetches the global option associated with the given server. If the server specific option does not exist, it fetches the option associated with all servers."
     ],
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"DHCPv4 option in found.\",",
+        "    \"text\": \"DHCPv4 option is found.\",",
         "    \"arguments\": {",
         "        \"options\": [",
         "            {",

@@ -1,10 +1,10 @@
 {
     "avail": "1.0.0",
     "brief": [
-        "The statistic-remove-all command attempts to delete all statistics."
+        "This command deletes all statistics."
     ],
     "cmd-comment": [
-        "If the removal of all statistics was successful, the server will respond with a status of 0, indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
+        "If the removal of all statistics is successful, the server responds with a status of 0, indicating success, and an empty parameters field. If an error is encountered, the server returns a status code of 1 (error) and the text field contains the error description."
     ],
     "cmd-syntax": [
         "{",
