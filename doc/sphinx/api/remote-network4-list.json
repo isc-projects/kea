@@ -4,11 +4,7 @@
         "This command fetches a list of all IPv4 shared networks from the configuration database."
     ],
     "cmd-comment": [
-<<<<<<< HEAD
-        "The ``server-tags`` list is required for this command and must not be empty. It may either contain one or multiple server tags as strings or a single ``null`` value."
-=======
         "The ``server-tags`` list is required for this command, and must not be empty. It may either contain one or multiple server tags as strings, or a single ``null`` value."
->>>>>>> Fix grammar, typos, a few JSON errors
     ],
     "cmd-syntax": [
         "{",

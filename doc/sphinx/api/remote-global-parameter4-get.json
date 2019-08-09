@@ -1,11 +1,7 @@
 {
     "avail": "1.6.0",
     "brief": [
-<<<<<<< HEAD
-        "This command is used to fetch the selected global parameter for the server from the specified database."
-=======
         "This command fetches the selected global parameter for the server from the specified database."
->>>>>>> Fix grammar, typos, a few JSON errors
     ],
     "cmd-comment": [
         "This command carries a list including exactly one name of the parameter to be fetched. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it fetches the global parameter value shared by all servers."

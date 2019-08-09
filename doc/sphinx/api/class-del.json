@@ -15,14 +15,7 @@
     "hook": "class_cmds",
     "name": "class-del",
     "resp-comment": [
-<<<<<<< HEAD
-        "The command will return a result of 3 (empty) if the client",
-        "class doesn't exist. If the client class exists, the returned",
-        "result is 0 if the deletion was successful and the result is 1",
-        "if the deletion is unsuccessful."
-=======
         "The command returns a result of 3 (empty) if the client class does not exist. If the client class exists, the returned result is 0 if the deletion was successful; the result is 1 if the deletion is unsuccessful."
->>>>>>> Fix grammar, typos, a few JSON errors
     ],
     "resp-syntax": [
         "{",

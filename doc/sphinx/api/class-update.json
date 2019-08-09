@@ -26,14 +26,7 @@
     "hook": "class_cmds",
     "name": "class-update",
     "resp-comment": [
-<<<<<<< HEAD
-        "The command will return the result of 3 (empty) if the client",
-        "class doesn't exist. If the client class exists, the returned",
-        "result is 0 if the update was successful and the result is 1",
-        "if the update is unsuccessful."
-=======
-        "The command returns the result of 3 (empty) if the client class does not exist. If the client class exists, the returned result is 0 if the update was successful or 1 if the update is unsuccessful."
->>>>>>> Fix grammar, typos, a few JSON errors
+        "The command returns the result of 3 (empty) if the client class does not exist. If the client class exists, the returned result is 0 if the update was successful, or 1 if the update is unsuccessful."
     ],
     "resp-syntax": [
         "{",
