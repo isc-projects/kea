@@ -169,11 +169,19 @@ namespace isc { namespace dhcp {
     typedef typename S::reverse_iterator iterator;
     typedef typename S::const_reverse_iterator const_iterator;
     typedef typename S::size_type size_type;
+<<<<<<< HEAD
 
     stack (size_type n = 200)
       : seq_ (n)
     {}
 
+=======
+
+    stack (size_type n = 200)
+      : seq_ (n)
+    {}
+
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     /// Random access.
     ///
     /// Index 0 returns the topmost element.
@@ -591,6 +599,7 @@ namespace isc { namespace dhcp {
         TOKEN_TCP_KEEPALIVE = 309,
         TOKEN_TCP_NODELAY = 310,
 <<<<<<< HEAD
+<<<<<<< HEAD
         TOKEN_VALID_LIFETIME = 311,
         TOKEN_MIN_VALID_LIFETIME = 312,
         TOKEN_MAX_VALID_LIFETIME = 313,
@@ -693,6 +702,8 @@ namespace isc { namespace dhcp {
         TOKEN_MAXVER = 410,
         TOKEN_PATTERN = 411,
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         TOKEN_MAX_ROW_ERRORS = 311,
         TOKEN_VALID_LIFETIME = 312,
         TOKEN_MIN_VALID_LIFETIME = 313,
@@ -794,6 +805,9 @@ namespace isc { namespace dhcp {
         TOKEN_FLUSH = 409,
         TOKEN_MAXSIZE = 410,
         TOKEN_MAXVER = 411,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         TOKEN_DHCP6 = 412,
         TOKEN_DHCPDDNS = 413,
@@ -864,6 +878,7 @@ namespace isc { namespace dhcp {
 
       /// Destroy contents, and record that is empty.
 <<<<<<< HEAD
+<<<<<<< HEAD
       void clear ()
       {
         // User destructor.
@@ -912,6 +927,9 @@ switch (yytype)
 
         Base::clear ();
       }
+=======
+      void clear ();
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
       void clear ();
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -970,6 +988,7 @@ switch (yytype)
     };
 
     /// "External" symbols: returned by the scanner.
+<<<<<<< HEAD
 <<<<<<< HEAD
     struct symbol_type : basic_symbol<by_type>
     {
@@ -1049,6 +1068,9 @@ switch (yytype)
 =======
     typedef basic_symbol<by_type> symbol_type;
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+    typedef basic_symbol<by_type> symbol_type;
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
     /// Build a parser object.
     Dhcp4Parser (isc::dhcp::Parser4Context& ctx_yyarg);
@@ -1084,6 +1106,7 @@ switch (yytype)
     /// Report a syntax error.
     void error (const syntax_error& err);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     // Implementation of make_symbol for each symbol type.
 #if 201103L <= YY_CPLUSPLUS
@@ -3711,10 +3734,13 @@ switch (yytype)
         return symbol_type (token::TOKEN_FLOAT, v, l);
       }
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     // Symbol constructors declarations.
     static
     symbol_type
     make_END (YY_COPY (location_type) l);
+<<<<<<< HEAD
 
     static
     symbol_type
@@ -5405,6 +5431,1696 @@ switch (yytype)
   Dhcp4Parser::make_SERVER_TAG (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SERVER_TAG, YY_MOVE (l));
+=======
+
+    static
+    symbol_type
+    make_COMMA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_COLON (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LSQUARE_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RSQUARE_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LCURLY_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RCURLY_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NULL_TYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONFIG_CONTROL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONFIG_DATABASES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONFIG_FETCH_WAIT_TIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_INTERFACES_CONFIG (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_INTERFACES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP_SOCKET_TYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RAW (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_UDP (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OUTBOUND_INTERFACE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SAME_AS_INBOUND (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_USE_ROUTING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RE_DETECT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SANITY_CHECKS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LEASE_CHECKS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ECHO_CLIENT_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MATCH_CLIENT_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_AUTHORITATIVE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NEXT_SERVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SERVER_HOSTNAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_BOOT_FILE_NAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LEASE_DATABASE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOSTS_DATABASE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOSTS_DATABASES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MEMFILE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MYSQL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_POSTGRESQL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CQL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_USER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PASSWORD (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOST (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PORT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PERSIST (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LFC_INTERVAL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_READONLY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONNECT_TIMEOUT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONTACT_POINTS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_KEYSPACE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONSISTENCY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SERIAL_CONSISTENCY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAX_RECONNECT_TRIES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RECONNECT_WAIT_TIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_REQUEST_TIMEOUT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TCP_KEEPALIVE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TCP_NODELAY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAX_ROW_ERRORS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_VALID_LIFETIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MIN_VALID_LIFETIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAX_VALID_LIFETIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RENEW_TIMER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_REBIND_TIMER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CALCULATE_TEE_TIMES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_T1_PERCENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_T2_PERCENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DECLINE_PROBATION_PERIOD (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SERVER_TAG (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBNET4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBNET_4O6_INTERFACE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBNET_4O6_INTERFACE_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBNET_4O6_SUBNET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OPTION_DEF (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OPTION_DATA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DATA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CODE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SPACE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CSV_FORMAT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ALWAYS_SEND (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RECORD_TYPES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ENCAPSULATE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ARRAY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SHARED_NETWORKS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_POOLS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_POOL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_USER_CONTEXT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_COMMENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBNET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_INTERFACE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RESERVATION_MODE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DISABLED (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OUT_OF_POOL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_GLOBAL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ALL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOST_RESERVATION_IDENTIFIERS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CLIENT_CLASSES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_REQUIRE_CLIENT_CLASSES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TEST (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ONLY_IF_REQUIRED (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CLIENT_CLASS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RESERVATIONS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DUID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HW_ADDRESS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CIRCUIT_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CLIENT_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOSTNAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_FLEX_ID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RELAY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_IP_ADDRESS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_IP_ADDRESSES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOOKS_LIBRARIES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LIBRARY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PARAMETERS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_EXPIRED_LEASES_PROCESSING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RECLAIM_TIMER_WAIT_TIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOLD_RECLAIMED_TIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAX_RECLAIM_LEASES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAX_RECLAIM_TIME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_UNWARNED_RECLAIM_CYCLES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP4O6_PORT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONTROL_SOCKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SOCKET_TYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SOCKET_NAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP_QUEUE_CONTROL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP_DDNS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ENABLE_UPDATES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_QUALIFYING_SUFFIX (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SERVER_IP (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SERVER_PORT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SENDER_IP (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SENDER_PORT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAX_QUEUE_SIZE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NCR_PROTOCOL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NCR_FORMAT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OVERRIDE_NO_UPDATE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OVERRIDE_CLIENT_UPDATE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_REPLACE_CLIENT_NAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_GENERATED_PREFIX (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TCP (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_JSON (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_WHEN_PRESENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NEVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ALWAYS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_WHEN_NOT_PRESENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOSTNAME_CHAR_SET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOSTNAME_CHAR_REPLACEMENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LOGGING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LOGGERS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OUTPUT_OPTIONS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OUTPUT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DEBUGLEVEL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SEVERITY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_FLUSH (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAXSIZE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAXVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP6 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCPDDNS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONTROL_AGENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TOPLEVEL_JSON (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TOPLEVEL_DHCP4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_DHCP4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_INTERFACES4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_SUBNET4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_POOL4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_RESERVATION (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_OPTION_DEFS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_OPTION_DEF (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_OPTION_DATA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_HOOKS_LIBRARY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_DHCP_DDNS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_LOGGING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUB_CONFIG_CONTROL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_INTEGER (YY_COPY (int64_t) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_FLOAT (YY_COPY (double) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_BOOLEAN (YY_COPY (bool) v, YY_COPY (location_type) l);
+
+
+
+  private:
+    /// This class is not copyable.
+    Dhcp4Parser (const Dhcp4Parser&);
+    Dhcp4Parser& operator= (const Dhcp4Parser&);
+
+    /// State numbers.
+    typedef int state_type;
+
+    /// Generate an error message.
+    /// \param yystate   the state where the error occurred.
+    /// \param yyla      the lookahead token.
+    virtual std::string yysyntax_error_ (state_type yystate,
+                                         const symbol_type& yyla) const;
+
+    /// Compute post-reduction state.
+    /// \param yystate   the current state
+    /// \param yysym     the nonterminal to push on the stack
+    state_type yy_lr_goto_state_ (state_type yystate, int yysym);
+
+    /// Whether the given \c yypact_ value indicates a defaulted state.
+    /// \param yyvalue   the value to check
+    static bool yy_pact_value_is_default_ (int yyvalue);
+
+    /// Whether the given \c yytable_ value indicates a syntax error.
+    /// \param yyvalue   the value to check
+    static bool yy_table_value_is_error_ (int yyvalue);
+
+    static const short yypact_ninf_;
+    static const signed char yytable_ninf_;
+
+    /// Convert a scanner token number \a t to a symbol number.
+    static token_number_type yytranslate_ (token_type t);
+
+    // Tables.
+  // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+  // STATE-NUM.
+  static const short yypact_[];
+
+  // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+  // Performed when YYTABLE does not specify something else to do.  Zero
+  // means the default is an error.
+  static const unsigned short yydefact_[];
+
+  // YYPGOTO[NTERM-NUM].
+  static const short yypgoto_[];
+
+  // YYDEFGOTO[NTERM-NUM].
+  static const short yydefgoto_[];
+
+  // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+  // positive, shift that token.  If negative, reduce the rule whose
+  // number is the opposite.  If YYTABLE_NINF, syntax error.
+  static const unsigned short yytable_[];
+
+  static const short yycheck_[];
+
+  // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
+  // symbol of state STATE-NUM.
+  static const unsigned short yystos_[];
+
+  // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
+  static const unsigned short yyr1_[];
+
+  // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
+  static const unsigned char yyr2_[];
+
+
+    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+    static std::string yytnamerr_ (const char *n);
+
+
+    /// For a symbol, its name in clear.
+    static const char* const yytname_[];
+#if PARSER4_DEBUG
+  // YYRLINE[YYN] -- Source line where rule number YYN was defined.
+  static const unsigned short yyrline_[];
+    /// Report on the debug stream that the rule \a r is going to be reduced.
+    virtual void yy_reduce_print_ (int r);
+    /// Print the state stack on the debug stream.
+    virtual void yystack_print_ ();
+
+    /// Debugging level.
+    int yydebug_;
+    /// Debug stream.
+    std::ostream* yycdebug_;
+
+    /// \brief Display a symbol type, value and location.
+    /// \param yyo    The output stream.
+    /// \param yysym  The symbol.
+    template <typename Base>
+    void yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const;
+#endif
+
+    /// \brief Reclaim the memory associated to a symbol.
+    /// \param yymsg     Why this token is reclaimed.
+    ///                  If null, print nothing.
+    /// \param yysym     The symbol.
+    template <typename Base>
+    void yy_destroy_ (const char* yymsg, basic_symbol<Base>& yysym) const;
+
+  private:
+    /// Type access provider for state based symbols.
+    struct by_state
+    {
+      /// Default constructor.
+      by_state ();
+
+      /// The symbol type as needed by the constructor.
+      typedef state_type kind_type;
+
+      /// Constructor.
+      by_state (kind_type s);
+
+      /// Copy constructor.
+      by_state (const by_state& other);
+
+      /// Record that this symbol is empty.
+      void clear ();
+
+      /// Steal the symbol type from \a that.
+      void move (by_state& that);
+
+      /// The (internal) type number (corresponding to \a state).
+      /// \a empty_symbol when empty.
+      symbol_number_type type_get () const;
+
+      /// The state number used to denote an empty symbol.
+      enum { empty_state = -1 };
+
+      /// The state.
+      /// \a empty when empty.
+      state_type state;
+    };
+
+    /// "Internal" symbol: element of the stack.
+    struct stack_symbol_type : basic_symbol<by_state>
+    {
+      /// Superclass.
+      typedef basic_symbol<by_state> super_type;
+      /// Construct an empty symbol.
+      stack_symbol_type ();
+      /// Move or copy construction.
+      stack_symbol_type (YY_RVREF (stack_symbol_type) that);
+      /// Steal the contents from \a sym to build this.
+      stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) sym);
+#if !defined __cplusplus || __cplusplus < 201103L
+      /// Assignment, needed by push_back by some old implementations.
+      /// Moves the contents of that.
+      stack_symbol_type& operator= (stack_symbol_type& that);
+#endif
+    };
+
+    /// Stack type.
+    typedef stack<stack_symbol_type> stack_type;
+
+    /// The stack.
+    stack_type yystack_;
+
+    /// Push a new state on the stack.
+    /// \param m    a debug message to display
+    ///             if null, no trace is output.
+    /// \param sym  the symbol
+    /// \warning the contents of \a s.value is stolen.
+    void yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym);
+
+    /// Push a new look ahead token on the state on the stack.
+    /// \param m    a debug message to display
+    ///             if null, no trace is output.
+    /// \param s    the state
+    /// \param sym  the symbol (for its value and location).
+    /// \warning the contents of \a sym.value is stolen.
+    void yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym);
+
+    /// Pop \a n symbols from the stack.
+    void yypop_ (int n = 1);
+
+    /// Constants.
+    enum
+    {
+      yyeof_ = 0,
+      yylast_ = 1054,     ///< Last index in yytable_.
+      yynnts_ = 384,  ///< Number of nonterminal symbols.
+      yyfinal_ = 30, ///< Termination state number.
+      yyterror_ = 1,
+      yyerrcode_ = 256,
+      yyntokens_ = 178  ///< Number of tokens.
+    };
+
+
+    // User arguments.
+    isc::dhcp::Parser4Context& ctx;
+  };
+
+  // Symbol number corresponding to token number t.
+  inline
+  Dhcp4Parser::token_number_type
+  Dhcp4Parser::yytranslate_ (token_type t)
+  {
+    static
+    const token_number_type
+    translate_table[] =
+    {
+     0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
+      45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
+      55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
+      65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
+      75,    76,    77,    78,    79,    80,    81,    82,    83,    84,
+      85,    86,    87,    88,    89,    90,    91,    92,    93,    94,
+      95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
+     105,   106,   107,   108,   109,   110,   111,   112,   113,   114,
+     115,   116,   117,   118,   119,   120,   121,   122,   123,   124,
+     125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
+     135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
+     145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
+     155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
+     165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
+     175,   176,   177
+    };
+    const unsigned user_token_number_max_ = 432;
+    const token_number_type undef_token_ = 2;
+
+    if (static_cast<int> (t) <= yyeof_)
+      return yyeof_;
+    else if (static_cast<unsigned> (t) <= user_token_number_max_)
+      return translate_table[t];
+    else
+      return undef_token_;
+  }
+
+  inline
+  Dhcp4Parser::syntax_error::syntax_error (const location_type& l, const std::string& m)
+    : std::runtime_error (m)
+    , location (l)
+  {}
+
+  // basic_symbol.
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol ()
+    : value ()
+    , location ()
+  {}
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (YY_RVREF (basic_symbol) other)
+    : Base (YY_MOVE (other))
+    , value ()
+    , location (YY_MOVE (other.location))
+  {
+    switch (other.type_get ())
+    {
+      case 194: // value
+      case 198: // map_value
+      case 244: // socket_type
+      case 247: // outbound_interface_value
+      case 269: // db_type
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+        value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (other.value));
+        break;
+
+      case 177: // "boolean"
+        value.YY_MOVE_OR_COPY< bool > (YY_MOVE (other.value));
+        break;
+
+      case 176: // "floating point"
+        value.YY_MOVE_OR_COPY< double > (YY_MOVE (other.value));
+        break;
+
+      case 175: // "integer"
+        value.YY_MOVE_OR_COPY< int64_t > (YY_MOVE (other.value));
+        break;
+
+      case 174: // "constant string"
+        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (other.value));
+        break;
+
+      default:
+        break;
+    }
+
+  }
+
+
+  // Implementation of basic_symbol constructor for each type.
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (location_type) l)
+    : Base (t)
+    , location (YY_MOVE (l))
+  {}
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (ElementPtr) v, YY_RVREF (location_type) l)
+    : Base (t)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
+  {}
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (bool) v, YY_RVREF (location_type) l)
+    : Base (t)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
+  {}
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (double) v, YY_RVREF (location_type) l)
+    : Base (t)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
+  {}
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (int64_t) v, YY_RVREF (location_type) l)
+    : Base (t)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
+  {}
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (std::string) v, YY_RVREF (location_type) l)
+    : Base (t)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
+  {}
+
+
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::~basic_symbol ()
+  {
+    clear ();
+  }
+
+  template <typename Base>
+  void
+  Dhcp4Parser::basic_symbol<Base>::clear ()
+  {
+    // User destructor.
+    symbol_number_type yytype = this->type_get ();
+    basic_symbol<Base>& yysym = *this;
+    (void) yysym;
+    switch (yytype)
+    {
+   default:
+      break;
+    }
+
+    // Type destructor.
+  switch (yytype)
+    {
+      case 194: // value
+      case 198: // map_value
+      case 244: // socket_type
+      case 247: // outbound_interface_value
+      case 269: // db_type
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+        value.template destroy< ElementPtr > ();
+        break;
+
+      case 177: // "boolean"
+        value.template destroy< bool > ();
+        break;
+
+      case 176: // "floating point"
+        value.template destroy< double > ();
+        break;
+
+      case 175: // "integer"
+        value.template destroy< int64_t > ();
+        break;
+
+      case 174: // "constant string"
+        value.template destroy< std::string > ();
+        break;
+
+      default:
+        break;
+    }
+
+    Base::clear ();
+  }
+
+  template <typename Base>
+  bool
+  Dhcp4Parser::basic_symbol<Base>::empty () const
+  {
+    return Base::type_get () == empty_symbol;
+  }
+
+  template <typename Base>
+  void
+  Dhcp4Parser::basic_symbol<Base>::move (basic_symbol& s)
+  {
+    super_type::move (s);
+    switch (this->type_get ())
+    {
+      case 194: // value
+      case 198: // map_value
+      case 244: // socket_type
+      case 247: // outbound_interface_value
+      case 269: // db_type
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+        value.move< ElementPtr > (YY_MOVE (s.value));
+        break;
+
+      case 177: // "boolean"
+        value.move< bool > (YY_MOVE (s.value));
+        break;
+
+      case 176: // "floating point"
+        value.move< double > (YY_MOVE (s.value));
+        break;
+
+      case 175: // "integer"
+        value.move< int64_t > (YY_MOVE (s.value));
+        break;
+
+      case 174: // "constant string"
+        value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      default:
+        break;
+    }
+
+    location = YY_MOVE (s.location);
+  }
+
+  // by_type.
+  inline
+  Dhcp4Parser::by_type::by_type ()
+    : type (empty_symbol)
+  {}
+
+  inline
+  Dhcp4Parser::by_type::by_type (const by_type& other)
+    : type (other.type)
+  {}
+
+  inline
+  Dhcp4Parser::by_type::by_type (token_type t)
+    : type (yytranslate_ (t))
+  {}
+
+  inline
+  void
+  Dhcp4Parser::by_type::clear ()
+  {
+    type = empty_symbol;
+  }
+
+  inline
+  void
+  Dhcp4Parser::by_type::move (by_type& that)
+  {
+    type = that.type;
+    that.clear ();
+  }
+
+  inline
+  int
+  Dhcp4Parser::by_type::type_get () const
+  {
+    return type;
+  }
+
+  inline
+  Dhcp4Parser::token_type
+  Dhcp4Parser::by_type::token () const
+  {
+    // YYTOKNUM[NUM] -- (External) token number corresponding to the
+    // (internal) symbol number NUM (which must be that of a token).  */
+    static
+    const unsigned short
+    yytoken_number_[] =
+    {
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
+     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
+     305,   306,   307,   308,   309,   310,   311,   312,   313,   314,
+     315,   316,   317,   318,   319,   320,   321,   322,   323,   324,
+     325,   326,   327,   328,   329,   330,   331,   332,   333,   334,
+     335,   336,   337,   338,   339,   340,   341,   342,   343,   344,
+     345,   346,   347,   348,   349,   350,   351,   352,   353,   354,
+     355,   356,   357,   358,   359,   360,   361,   362,   363,   364,
+     365,   366,   367,   368,   369,   370,   371,   372,   373,   374,
+     375,   376,   377,   378,   379,   380,   381,   382,   383,   384,
+     385,   386,   387,   388,   389,   390,   391,   392,   393,   394,
+     395,   396,   397,   398,   399,   400,   401,   402,   403,   404,
+     405,   406,   407,   408,   409,   410,   411,   412,   413,   414,
+     415,   416,   417,   418,   419,   420,   421,   422,   423,   424,
+     425,   426,   427,   428,   429,   430,   431,   432
+    };
+    return static_cast<token_type> (yytoken_number_[type]);
+  }
+
+  // Implementation of make_symbol for each symbol type.
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_END (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_END, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_COMMA (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_COMMA, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_COLON (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_COLON, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LSQUARE_BRACKET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LSQUARE_BRACKET, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RSQUARE_BRACKET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RSQUARE_BRACKET, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LCURLY_BRACKET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LCURLY_BRACKET, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RCURLY_BRACKET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RCURLY_BRACKET, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NULL_TYPE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_NULL_TYPE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP4, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONFIG_CONTROL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONFIG_CONTROL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONFIG_DATABASES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONFIG_DATABASES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONFIG_FETCH_WAIT_TIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONFIG_FETCH_WAIT_TIME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACES_CONFIG (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_INTERFACES_CONFIG, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_INTERFACES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_SOCKET_TYPE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RAW (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RAW, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_UDP (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_UDP, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTBOUND_INTERFACE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_OUTBOUND_INTERFACE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SAME_AS_INBOUND (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SAME_AS_INBOUND, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_USE_ROUTING (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_USE_ROUTING, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RE_DETECT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RE_DETECT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SANITY_CHECKS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SANITY_CHECKS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LEASE_CHECKS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LEASE_CHECKS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ECHO_CLIENT_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ECHO_CLIENT_ID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MATCH_CLIENT_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MATCH_CLIENT_ID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_AUTHORITATIVE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_AUTHORITATIVE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NEXT_SERVER (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_NEXT_SERVER, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_HOSTNAME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SERVER_HOSTNAME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_BOOT_FILE_NAME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_BOOT_FILE_NAME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LEASE_DATABASE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LEASE_DATABASE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTS_DATABASE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOSTS_DATABASE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTS_DATABASES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOSTS_DATABASES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TYPE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_TYPE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MEMFILE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MEMFILE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MYSQL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MYSQL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_POSTGRESQL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_POSTGRESQL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CQL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CQL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_USER (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_USER, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PASSWORD (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_PASSWORD, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOST (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOST, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PORT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_PORT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PERSIST (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_PERSIST, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LFC_INTERVAL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LFC_INTERVAL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_READONLY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_READONLY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONNECT_TIMEOUT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONNECT_TIMEOUT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONTACT_POINTS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONTACT_POINTS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_KEYSPACE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_KEYSPACE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONSISTENCY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONSISTENCY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERIAL_CONSISTENCY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SERIAL_CONSISTENCY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_RECONNECT_TRIES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECONNECT_TRIES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RECONNECT_WAIT_TIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RECONNECT_WAIT_TIME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REQUEST_TIMEOUT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_REQUEST_TIMEOUT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TCP_KEEPALIVE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_TCP_KEEPALIVE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TCP_NODELAY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_TCP_NODELAY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_ROW_ERRORS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAX_ROW_ERRORS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_VALID_LIFETIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_VALID_LIFETIME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MIN_VALID_LIFETIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MIN_VALID_LIFETIME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_VALID_LIFETIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAX_VALID_LIFETIME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RENEW_TIMER (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RENEW_TIMER, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REBIND_TIMER (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_REBIND_TIMER, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CALCULATE_TEE_TIMES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CALCULATE_TEE_TIMES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_T1_PERCENT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_T1_PERCENT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_T2_PERCENT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_T2_PERCENT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DECLINE_PROBATION_PERIOD (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DECLINE_PROBATION_PERIOD, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_TAG (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SERVER_TAG, YY_MOVE (l));
   }
 
   inline
@@ -5741,6 +7457,410 @@ switch (yytype)
   Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUBNET4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUBNET4, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_RECLAIM_TIMER_WAIT_TIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RECLAIM_TIMER_WAIT_TIME, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE_ID, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_HOLD_RECLAIMED_TIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOLD_RECLAIMED_TIME, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUBNET_4O6_SUBNET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUBNET_4O6_SUBNET, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_MAX_RECLAIM_LEASES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECLAIM_LEASES, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_OPTION_DEF (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_OPTION_DEF, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_MAX_RECLAIM_TIME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECLAIM_TIME, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_OPTION_DATA (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_OPTION_DATA, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_UNWARNED_RECLAIM_CYCLES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_UNWARNED_RECLAIM_CYCLES, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_NAME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_NAME, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_DHCP4O6_PORT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP4O6_PORT, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_DATA (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DATA, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_CONTROL_SOCKET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_SOCKET, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_CODE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CODE, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SOCKET_TYPE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_TYPE, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SPACE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SPACE, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SOCKET_NAME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_NAME, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_CSV_FORMAT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CSV_FORMAT, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_ALWAYS_SEND (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ALWAYS_SEND, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RECORD_TYPES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RECORD_TYPES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ENCAPSULATE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ENCAPSULATE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ARRAY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ARRAY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SHARED_NETWORKS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SHARED_NETWORKS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_POOLS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_POOLS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_POOL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_POOL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_USER_CONTEXT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_USER_CONTEXT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_COMMENT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_COMMENT, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUBNET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUBNET, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTERFACE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_INTERFACE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RESERVATION_MODE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RESERVATION_MODE, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DISABLED (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DISABLED, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUT_OF_POOL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_OUT_OF_POOL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_GLOBAL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_GLOBAL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ALL, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOST_RESERVATION_IDENTIFIERS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOST_RESERVATION_IDENTIFIERS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASSES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASSES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_REQUIRE_CLIENT_CLASSES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TEST (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_TEST, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ONLY_IF_REQUIRED (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ONLY_IF_REQUIRED, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RESERVATIONS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RESERVATIONS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DUID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DUID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HW_ADDRESS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HW_ADDRESS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CIRCUIT_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CIRCUIT_ID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_ID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLEX_ID (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_FLEX_ID, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RELAY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_RELAY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESSES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESSES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOOKS_LIBRARIES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LIBRARY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LIBRARY, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PARAMETERS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_PARAMETERS, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, YY_MOVE (l));
   }
 
   inline
@@ -5811,45 +7931,81 @@ switch (yytype)
   Dhcp4Parser::make_SOCKET_NAME (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SOCKET_NAME, YY_MOVE (l));
-  }
-
-  inline
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, YY_MOVE (l));
-  }
-
-  inline
-  Dhcp4Parser::symbol_type
+=======
   Dhcp4Parser::make_DHCP_DDNS (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_DHCP_DDNS, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   }
 
   inline
   Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, YY_MOVE (l));
+=======
   Dhcp4Parser::make_ENABLE_UPDATES (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_ENABLE_UPDATES, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   }
 
   inline
   Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_DHCP_DDNS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP_DDNS, YY_MOVE (l));
+=======
   Dhcp4Parser::make_QUALIFYING_SUFFIX (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_QUALIFYING_SUFFIX, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   }
 
   inline
   Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_ENABLE_UPDATES (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_ENABLE_UPDATES, YY_MOVE (l));
+=======
   Dhcp4Parser::make_SERVER_IP (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SERVER_IP, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   }
 
   inline
   Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_QUALIFYING_SUFFIX (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_QUALIFYING_SUFFIX, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SERVER_PORT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SERVER_PORT, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SERVER_IP (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SERVER_IP, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SENDER_IP (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SENDER_IP, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
   Dhcp4Parser::make_SERVER_PORT (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SERVER_PORT, YY_MOVE (l));
@@ -5864,6 +8020,8 @@ switch (yytype)
 
   inline
   Dhcp4Parser::symbol_type
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   Dhcp4Parser::make_SENDER_PORT (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SENDER_PORT, YY_MOVE (l));
@@ -5919,6 +8077,7 @@ switch (yytype)
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     /// Constants.
     enum
     {
@@ -5931,12 +8090,17 @@ switch (yytype)
       yyntokens_ = 178  ///< Number of tokens.
     };
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   inline
   Dhcp4Parser::symbol_type
   Dhcp4Parser::make_TCP (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_TCP, YY_MOVE (l));
   }
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
   inline
@@ -5957,6 +8121,7 @@ switch (yytype)
   Dhcp4Parser::symbol_type
   Dhcp4Parser::make_NEVER (YY_COPY (location_type) l)
   {
+<<<<<<< HEAD
 <<<<<<< HEAD
     // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
     // TOKEN-NUM as returned by yylex.
@@ -6015,6 +8180,10 @@ switch (yytype)
     return symbol_type (token::TOKEN_NEVER, YY_MOVE (l));
   }
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+    return symbol_type (token::TOKEN_NEVER, YY_MOVE (l));
+  }
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
   inline
   Dhcp4Parser::symbol_type
@@ -6027,6 +8196,7 @@ switch (yytype)
   Dhcp4Parser::symbol_type
   Dhcp4Parser::make_WHEN_NOT_PRESENT (YY_COPY (location_type) l)
   {
+<<<<<<< HEAD
 <<<<<<< HEAD
     switch (this->type_get ())
     {
@@ -6058,6 +8228,8 @@ switch (yytype)
         break;
 =======
     return symbol_type (token::TOKEN_WHEN_NOT_PRESENT, YY_MOVE (l));
+=======
+    return symbol_type (token::TOKEN_WHEN_NOT_PRESENT, YY_MOVE (l));
   }
 
   inline
@@ -6083,6 +8255,48 @@ switch (yytype)
 
   inline
   Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGERS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LOGGERS, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_HOSTNAME_CHAR_SET (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_SET, YY_MOVE (l));
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_REPLACEMENT, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_OUTPUT_OPTIONS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_LOGGING (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_LOGGING, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_OUTPUT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
   Dhcp4Parser::make_LOGGERS (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_LOGGERS, YY_MOVE (l));
@@ -6138,6 +8352,10 @@ switch (yytype)
         break;
 =======
     return symbol_type (token::TOKEN_DEBUGLEVEL, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_DEBUGLEVEL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DEBUGLEVEL, YY_MOVE (l));
   }
 
   inline
@@ -6166,6 +8384,54 @@ switch (yytype)
   Dhcp4Parser::make_MAXVER (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_MAXVER, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SEVERITY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SEVERITY, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_DHCP6 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCP6, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_FLUSH (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_FLUSH, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_DHCPDDNS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_DHCPDDNS, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_MAXSIZE (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAXSIZE, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_CONTROL_AGENT (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_AGENT, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_MAXVER (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_MAXVER, YY_MOVE (l));
   }
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
@@ -6174,10 +8440,23 @@ switch (yytype)
   Dhcp4Parser::make_DHCP6 (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_DHCP6, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_TOPLEVEL_JSON (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_TOPLEVEL_JSON, YY_MOVE (l));
   }
 
   inline
   Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_DHCP4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_TOPLEVEL_DHCP4, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
   Dhcp4Parser::make_DHCPDDNS (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_DHCPDDNS, YY_MOVE (l));
@@ -6240,6 +8519,10 @@ switch (yytype)
         break;
 =======
     return symbol_type (token::TOKEN_SUB_DHCP4, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SUB_DHCP4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP4, YY_MOVE (l));
   }
 
   inline
@@ -6268,6 +8551,54 @@ switch (yytype)
   Dhcp4Parser::make_SUB_RESERVATION (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SUB_RESERVATION, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_INTERFACES4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_INTERFACES4, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SUB_OPTION_DEFS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEFS, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_SUBNET4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_SUBNET4, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SUB_OPTION_DEF (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEF, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_POOL4 (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_POOL4, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SUB_OPTION_DATA (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DATA, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_RESERVATION (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_RESERVATION, YY_MOVE (l));
   }
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
@@ -6276,24 +8607,7 @@ switch (yytype)
   Dhcp4Parser::make_SUB_OPTION_DEFS (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SUB_OPTION_DEFS, YY_MOVE (l));
-  }
-
-  inline
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_OPTION_DEF (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOKEN_SUB_OPTION_DEF, YY_MOVE (l));
-  }
-
-  inline
-  Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_OPTION_DATA (YY_COPY (location_type) l)
-  {
-    return symbol_type (token::TOKEN_SUB_OPTION_DATA, YY_MOVE (l));
-  }
-
-  inline
-  Dhcp4Parser::symbol_type
+=======
   Dhcp4Parser::make_SUB_HOOKS_LIBRARY (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SUB_HOOKS_LIBRARY, YY_MOVE (l));
@@ -6304,10 +8618,64 @@ switch (yytype)
   Dhcp4Parser::make_SUB_DHCP_DDNS (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SUB_DHCP_DDNS, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   }
 
   inline
   Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_OPTION_DEF (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEF, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SUB_LOGGING (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_LOGGING, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_OPTION_DATA (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DATA, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_SUB_CONFIG_CONTROL (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_CONFIG_CONTROL, YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_HOOKS_LIBRARY (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_HOOKS_LIBRARY, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_STRING, YY_MOVE (v), YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
+  Dhcp4Parser::make_SUB_DHCP_DDNS (YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP_DDNS, YY_MOVE (l));
+=======
+  Dhcp4Parser::make_INTEGER (YY_COPY (int64_t) v, YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_INTEGER, YY_MOVE (v), YY_MOVE (l));
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+  }
+
+  inline
+  Dhcp4Parser::symbol_type
+<<<<<<< HEAD
   Dhcp4Parser::make_SUB_LOGGING (YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_SUB_LOGGING, YY_MOVE (l));
@@ -6374,12 +8742,22 @@ switch (yytype)
     return symbol_type (token::TOKEN_FLOAT, YY_MOVE (v), YY_MOVE (l));
   }
 
+=======
+  Dhcp4Parser::make_FLOAT (YY_COPY (double) v, YY_COPY (location_type) l)
+  {
+    return symbol_type (token::TOKEN_FLOAT, YY_MOVE (v), YY_MOVE (l));
+  }
+
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   inline
   Dhcp4Parser::symbol_type
   Dhcp4Parser::make_BOOLEAN (YY_COPY (bool) v, YY_COPY (location_type) l)
   {
     return symbol_type (token::TOKEN_BOOLEAN, YY_MOVE (v), YY_MOVE (l));
   }
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
 

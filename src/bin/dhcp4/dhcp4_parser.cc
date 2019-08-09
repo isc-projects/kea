@@ -251,9 +251,15 @@ namespace isc { namespace dhcp {
       case 247: // outbound_interface_value
       case 269: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
       case 356: // hr_mode
       case 505: // ncr_protocol_value
@@ -299,9 +305,15 @@ namespace isc { namespace dhcp {
       case 247: // outbound_interface_value
       case 269: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
       case 356: // hr_mode
       case 505: // ncr_protocol_value
@@ -347,9 +359,15 @@ namespace isc { namespace dhcp {
       case 247: // outbound_interface_value
       case 269: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
       case 356: // hr_mode
       case 505: // ncr_protocol_value
@@ -411,6 +429,7 @@ namespace isc { namespace dhcp {
         << yysym.location << ": ";
     switch (yytype)
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
       case 174: // "constant string"
 #line 256 "dhcp4_parser.yy"
@@ -568,6 +587,92 @@ namespace isc { namespace dhcp {
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         break;
 
+=======
+            case 174: // "constant string"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< std::string > (); }
+#line 401 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 175: // "integer"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< int64_t > (); }
+#line 408 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 176: // "floating point"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< double > (); }
+#line 415 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 177: // "boolean"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< bool > (); }
+#line 422 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 194: // value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 429 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 198: // map_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 436 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 244: // socket_type
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 443 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 247: // outbound_interface_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 450 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 269: // db_type
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 457 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 356: // hr_mode
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 464 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 505: // ncr_protocol_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 471 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 512: // replace_client_name_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 478 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
       default:
         break;
@@ -781,9 +886,15 @@ namespace isc { namespace dhcp {
       case 247: // outbound_interface_value
       case 269: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
       case 356: // hr_mode
       case 505: // ncr_protocol_value
@@ -830,7 +941,11 @@ namespace isc { namespace dhcp {
             {
   case 2:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 265 "dhcp4_parser.yy"
+=======
+#line 265 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 265 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -840,7 +955,11 @@ namespace isc { namespace dhcp {
 
   case 4:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 266 "dhcp4_parser.yy"
+=======
+#line 266 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 266 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -850,7 +969,11 @@ namespace isc { namespace dhcp {
 
   case 6:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 267 "dhcp4_parser.yy"
+=======
+#line 267 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 267 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -860,7 +983,11 @@ namespace isc { namespace dhcp {
 
   case 8:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 268 "dhcp4_parser.yy"
+=======
+#line 268 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 268 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -870,7 +997,11 @@ namespace isc { namespace dhcp {
 
   case 10:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 269 "dhcp4_parser.yy"
+=======
+#line 269 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 269 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -880,7 +1011,11 @@ namespace isc { namespace dhcp {
 
   case 12:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 270 "dhcp4_parser.yy"
+=======
+#line 270 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 270 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -890,7 +1025,11 @@ namespace isc { namespace dhcp {
 
   case 14:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 271 "dhcp4_parser.yy"
+=======
+#line 271 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 271 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -900,7 +1039,11 @@ namespace isc { namespace dhcp {
 
   case 16:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 272 "dhcp4_parser.yy"
+=======
+#line 272 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 272 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -910,7 +1053,11 @@ namespace isc { namespace dhcp {
 
   case 18:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 273 "dhcp4_parser.yy"
+=======
+#line 273 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 273 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -920,7 +1067,11 @@ namespace isc { namespace dhcp {
 
   case 20:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 274 "dhcp4_parser.yy"
+=======
+#line 274 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 274 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -930,7 +1081,11 @@ namespace isc { namespace dhcp {
 
   case 22:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 275 "dhcp4_parser.yy"
+=======
+#line 275 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 275 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -940,7 +1095,11 @@ namespace isc { namespace dhcp {
 
   case 24:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 276 "dhcp4_parser.yy"
+=======
+#line 276 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 276 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -950,7 +1109,11 @@ namespace isc { namespace dhcp {
 
   case 26:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 277 "dhcp4_parser.yy"
+=======
+#line 277 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 277 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -960,7 +1123,11 @@ namespace isc { namespace dhcp {
 
   case 28:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 278 "dhcp4_parser.yy"
+=======
+#line 278 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 278 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -969,6 +1136,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 30:
+<<<<<<< HEAD
 <<<<<<< HEAD
 #line 286 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
@@ -1058,6 +1226,51 @@ namespace isc { namespace dhcp {
   case 37:
 #line 295 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 286 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location))); }
+#line 822 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 31:
+#line 287 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location))); }
+#line 828 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 32:
+#line 288 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location))); }
+#line 834 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 33:
+#line 289 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location))); }
+#line 840 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 34:
+#line 290 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
+#line 846 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 35:
+#line 291 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 852 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 36:
+#line 292 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 858 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 37:
+#line 295 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as< ElementPtr > ());
@@ -1067,7 +1280,11 @@ namespace isc { namespace dhcp {
 
   case 38:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 300 "dhcp4_parser.yy"
+=======
+#line 300 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 300 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1082,7 +1299,11 @@ namespace isc { namespace dhcp {
 
   case 39:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 305 "dhcp4_parser.yy"
+=======
+#line 305 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 305 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1096,6 +1317,7 @@ namespace isc { namespace dhcp {
 
   case 40:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 311 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 897 "dhcp4_parser.cc"
@@ -1103,6 +1325,15 @@ namespace isc { namespace dhcp {
 
   case 43:
 #line 318 "dhcp4_parser.yy"
+=======
+#line 311 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 894 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 43:
+#line 318 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 311 "dhcp4_parser.yy" // lalr1.cc:907
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
@@ -1121,7 +1352,11 @@ namespace isc { namespace dhcp {
 
   case 44:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 322 "dhcp4_parser.yy"
+=======
+#line 322 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 322 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1135,7 +1370,11 @@ namespace isc { namespace dhcp {
 
   case 45:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 329 "dhcp4_parser.yy"
+=======
+#line 329 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 329 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1148,7 +1387,11 @@ namespace isc { namespace dhcp {
 
   case 46:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 332 "dhcp4_parser.yy"
+=======
+#line 332 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 332 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1160,7 +1403,11 @@ namespace isc { namespace dhcp {
 
   case 49:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 340 "dhcp4_parser.yy"
+=======
+#line 340 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 340 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1173,7 +1420,11 @@ namespace isc { namespace dhcp {
 
   case 50:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 344 "dhcp4_parser.yy"
+=======
+#line 344 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 344 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1186,7 +1437,11 @@ namespace isc { namespace dhcp {
 
   case 51:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 351 "dhcp4_parser.yy"
+=======
+#line 351 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 351 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1198,7 +1453,11 @@ namespace isc { namespace dhcp {
 
   case 52:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 353 "dhcp4_parser.yy"
+=======
+#line 353 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 353 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1211,7 +1470,11 @@ namespace isc { namespace dhcp {
 
   case 55:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 362 "dhcp4_parser.yy"
+=======
+#line 362 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 362 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1224,7 +1487,11 @@ namespace isc { namespace dhcp {
 
   case 56:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 366 "dhcp4_parser.yy"
+=======
+#line 366 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 366 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1237,7 +1504,11 @@ namespace isc { namespace dhcp {
 
   case 57:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 377 "dhcp4_parser.yy"
+=======
+#line 377 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 377 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1252,7 +1523,11 @@ namespace isc { namespace dhcp {
 
   case 58:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 387 "dhcp4_parser.yy"
+=======
+#line 387 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 387 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1267,7 +1542,11 @@ namespace isc { namespace dhcp {
 
   case 59:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 392 "dhcp4_parser.yy"
+=======
+#line 392 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 392 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1284,7 +1563,11 @@ namespace isc { namespace dhcp {
 
   case 68:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 416 "dhcp4_parser.yy"
+=======
+#line 416 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 416 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1301,7 +1584,11 @@ namespace isc { namespace dhcp {
 
   case 69:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 423 "dhcp4_parser.yy"
+=======
+#line 423 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 423 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1315,7 +1602,11 @@ namespace isc { namespace dhcp {
 
   case 70:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 431 "dhcp4_parser.yy"
+=======
+#line 431 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 431 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1329,7 +1620,11 @@ namespace isc { namespace dhcp {
 
   case 71:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 435 "dhcp4_parser.yy"
+=======
+#line 435 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 435 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1342,7 +1637,11 @@ namespace isc { namespace dhcp {
 
   case 116:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 490 "dhcp4_parser.yy"
+=======
+#line 490 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 490 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1355,7 +1654,11 @@ namespace isc { namespace dhcp {
 
   case 117:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 495 "dhcp4_parser.yy"
+=======
+#line 495 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 495 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1368,7 +1671,11 @@ namespace isc { namespace dhcp {
 
   case 118:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 500 "dhcp4_parser.yy"
+=======
+#line 500 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 500 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1381,7 +1688,11 @@ namespace isc { namespace dhcp {
 
   case 119:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 505 "dhcp4_parser.yy"
+=======
+#line 505 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 505 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1394,7 +1705,11 @@ namespace isc { namespace dhcp {
 
   case 120:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 510 "dhcp4_parser.yy"
+=======
+#line 510 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 510 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1407,7 +1722,11 @@ namespace isc { namespace dhcp {
 
   case 121:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 515 "dhcp4_parser.yy"
+=======
+#line 515 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 515 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1420,7 +1739,11 @@ namespace isc { namespace dhcp {
 
   case 122:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 520 "dhcp4_parser.yy"
+=======
+#line 520 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 520 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1433,7 +1756,11 @@ namespace isc { namespace dhcp {
 
   case 123:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 525 "dhcp4_parser.yy"
+=======
+#line 525 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 525 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1446,7 +1773,11 @@ namespace isc { namespace dhcp {
 
   case 124:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 530 "dhcp4_parser.yy"
+=======
+#line 530 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 530 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1459,7 +1790,11 @@ namespace isc { namespace dhcp {
 
   case 125:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 535 "dhcp4_parser.yy"
+=======
+#line 535 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 535 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1471,7 +1806,11 @@ namespace isc { namespace dhcp {
 
   case 126:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 537 "dhcp4_parser.yy"
+=======
+#line 537 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 537 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1485,7 +1824,11 @@ namespace isc { namespace dhcp {
 
   case 127:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 543 "dhcp4_parser.yy"
+=======
+#line 543 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 543 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1498,7 +1841,11 @@ namespace isc { namespace dhcp {
 
   case 128:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 548 "dhcp4_parser.yy"
+=======
+#line 548 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 548 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1511,7 +1858,11 @@ namespace isc { namespace dhcp {
 
   case 129:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 553 "dhcp4_parser.yy"
+=======
+#line 553 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 553 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1524,7 +1875,11 @@ namespace isc { namespace dhcp {
 
   case 130:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 559 "dhcp4_parser.yy"
+=======
+#line 559 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 559 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1539,7 +1894,11 @@ namespace isc { namespace dhcp {
 
   case 131:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 564 "dhcp4_parser.yy"
+=======
+#line 564 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 564 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1553,7 +1912,11 @@ namespace isc { namespace dhcp {
 
   case 141:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 583 "dhcp4_parser.yy"
+=======
+#line 583 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 583 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1567,7 +1930,11 @@ namespace isc { namespace dhcp {
 
   case 142:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 587 "dhcp4_parser.yy"
+=======
+#line 587 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 587 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1580,7 +1947,11 @@ namespace isc { namespace dhcp {
 
   case 143:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 592 "dhcp4_parser.yy"
+=======
+#line 592 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 592 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1595,7 +1966,11 @@ namespace isc { namespace dhcp {
 
   case 144:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 597 "dhcp4_parser.yy"
+=======
+#line 597 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 597 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1608,7 +1983,11 @@ namespace isc { namespace dhcp {
 
   case 145:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 602 "dhcp4_parser.yy"
+=======
+#line 602 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 602 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1620,7 +1999,11 @@ namespace isc { namespace dhcp {
 
   case 146:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 604 "dhcp4_parser.yy"
+=======
+#line 604 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 604 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1632,6 +2015,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 147:
+<<<<<<< HEAD
 <<<<<<< HEAD
 #line 609 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
@@ -1661,6 +2045,21 @@ namespace isc { namespace dhcp {
   case 149:
 #line 613 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 609 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
+#line 1269 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 148:
+#line 610 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("udp", ctx.loc2pos(yystack_[0].location))); }
+#line 1275 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 149:
+#line 613 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.OUTBOUND_INTERFACE);
 }
@@ -1669,7 +2068,11 @@ namespace isc { namespace dhcp {
 
   case 150:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 615 "dhcp4_parser.yy"
+=======
+#line 615 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 615 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1682,7 +2085,11 @@ namespace isc { namespace dhcp {
 
   case 151:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 620 "dhcp4_parser.yy"
+=======
+#line 620 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 620 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1694,7 +2101,11 @@ namespace isc { namespace dhcp {
 
   case 152:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 622 "dhcp4_parser.yy"
+=======
+#line 622 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 622 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1706,7 +2117,11 @@ namespace isc { namespace dhcp {
 
   case 153:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 626 "dhcp4_parser.yy"
+=======
+#line 626 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 626 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1719,7 +2134,11 @@ namespace isc { namespace dhcp {
 
   case 154:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 632 "dhcp4_parser.yy"
+=======
+#line 632 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 632 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1734,7 +2153,11 @@ namespace isc { namespace dhcp {
 
   case 155:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 637 "dhcp4_parser.yy"
+=======
+#line 637 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 637 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1749,7 +2172,11 @@ namespace isc { namespace dhcp {
 
   case 156:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 644 "dhcp4_parser.yy"
+=======
+#line 644 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 644 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1764,7 +2191,11 @@ namespace isc { namespace dhcp {
 
   case 157:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 649 "dhcp4_parser.yy"
+=======
+#line 649 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 649 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1777,7 +2208,11 @@ namespace isc { namespace dhcp {
 
   case 161:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 659 "dhcp4_parser.yy"
+=======
+#line 659 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 659 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1789,7 +2224,11 @@ namespace isc { namespace dhcp {
 
   case 162:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 661 "dhcp4_parser.yy"
+=======
+#line 661 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 661 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1813,7 +2252,11 @@ namespace isc { namespace dhcp {
 
   case 163:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 677 "dhcp4_parser.yy"
+=======
+#line 677 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 677 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1828,7 +2271,11 @@ namespace isc { namespace dhcp {
 
   case 164:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 682 "dhcp4_parser.yy"
+=======
+#line 682 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 682 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1843,7 +2290,11 @@ namespace isc { namespace dhcp {
 
   case 165:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 689 "dhcp4_parser.yy"
+=======
+#line 689 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 689 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1858,7 +2309,11 @@ namespace isc { namespace dhcp {
 
   case 166:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 694 "dhcp4_parser.yy"
+=======
+#line 694 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 694 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1871,7 +2326,11 @@ namespace isc { namespace dhcp {
 
   case 171:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 707 "dhcp4_parser.yy"
+=======
+#line 707 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 707 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1885,7 +2344,11 @@ namespace isc { namespace dhcp {
 
   case 172:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 711 "dhcp4_parser.yy"
+=======
+#line 711 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 711 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
@@ -1898,8 +2361,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 195:
 #line 743 "dhcp4_parser.yy"
+=======
+  case 196:
+#line 744 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 196:
 #line 744 "dhcp4_parser.yy" // lalr1.cc:907
@@ -1911,8 +2379,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 196:
 #line 745 "dhcp4_parser.yy"
+=======
+  case 197:
+#line 746 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 197:
 #line 746 "dhcp4_parser.yy" // lalr1.cc:907
@@ -1921,6 +2394,7 @@ namespace isc { namespace dhcp {
     ctx.stack_.back()->set("type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
+<<<<<<< HEAD
 <<<<<<< HEAD
 #line 1469 "dhcp4_parser.cc"
     break;
@@ -1974,6 +2448,30 @@ namespace isc { namespace dhcp {
     break;
 
   case 201:
+=======
+#line 1466 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 198:
+#line 751 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
+#line 1472 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 199:
+#line 752 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
+#line 1478 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 200:
+#line 753 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
+#line 1484 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 201:
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 #line 754 "dhcp4_parser.yy" // lalr1.cc:907
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("cql", ctx.loc2pos(yystack_[0].location))); }
 #line 1490 "dhcp4_parser.cc" // lalr1.cc:907
@@ -1981,6 +2479,9 @@ namespace isc { namespace dhcp {
 
   case 202:
 #line 757 "dhcp4_parser.yy" // lalr1.cc:907
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1989,8 +2490,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 202:
 #line 758 "dhcp4_parser.yy"
+=======
+  case 203:
+#line 759 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 203:
 #line 759 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2004,8 +2510,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 203:
 #line 764 "dhcp4_parser.yy"
+=======
+  case 204:
+#line 765 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 204:
 #line 765 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2017,8 +2528,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 204:
 #line 766 "dhcp4_parser.yy"
+=======
+  case 205:
+#line 767 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 205:
 #line 767 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2032,8 +2548,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 205:
 #line 772 "dhcp4_parser.yy"
+=======
+  case 206:
+#line 773 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 206:
 #line 773 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2045,8 +2566,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 206:
 #line 774 "dhcp4_parser.yy"
+=======
+  case 207:
+#line 775 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 207:
 #line 775 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2060,8 +2586,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 207:
 #line 780 "dhcp4_parser.yy"
+=======
+  case 208:
+#line 781 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 208:
 #line 781 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2074,8 +2605,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 208:
 #line 785 "dhcp4_parser.yy"
+=======
+  case 209:
+#line 786 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 209:
 #line 786 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2087,8 +2623,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 209:
 #line 787 "dhcp4_parser.yy"
+=======
+  case 210:
+#line 788 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 210:
 #line 788 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2102,8 +2643,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 210:
 #line 793 "dhcp4_parser.yy"
+=======
+  case 211:
+#line 794 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 211:
 #line 794 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2116,8 +2662,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 211:
 #line 798 "dhcp4_parser.yy"
+=======
+  case 212:
+#line 799 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 212:
 #line 799 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2130,8 +2681,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 212:
 #line 803 "dhcp4_parser.yy"
+=======
+  case 213:
+#line 804 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 213:
 #line 804 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2144,8 +2700,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 213:
 #line 808 "dhcp4_parser.yy"
+=======
+  case 214:
+#line 809 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 214:
 #line 809 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2158,8 +2719,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 214:
 #line 813 "dhcp4_parser.yy"
+=======
+  case 215:
+#line 814 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 215:
 #line 814 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2172,8 +2738,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 215:
 #line 818 "dhcp4_parser.yy"
+=======
+  case 216:
+#line 819 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 216:
 #line 819 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2186,8 +2757,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 216:
 #line 823 "dhcp4_parser.yy"
+=======
+  case 217:
+#line 824 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 217:
 #line 824 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2200,8 +2776,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 217:
 #line 828 "dhcp4_parser.yy"
+=======
+  case 218:
+#line 829 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 218:
 #line 829 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2213,8 +2794,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 218:
 #line 830 "dhcp4_parser.yy"
+=======
+  case 219:
+#line 831 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 219:
 #line 831 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2228,8 +2814,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 219:
 #line 836 "dhcp4_parser.yy"
+=======
+  case 220:
+#line 837 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 220:
 #line 837 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2241,8 +2832,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 220:
 #line 838 "dhcp4_parser.yy"
+=======
+  case 221:
+#line 839 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 221:
 #line 839 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2256,8 +2852,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 221:
 #line 844 "dhcp4_parser.yy"
+=======
+  case 222:
+#line 845 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 222:
 #line 845 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2269,8 +2870,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 222:
 #line 846 "dhcp4_parser.yy"
+=======
+  case 223:
+#line 847 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 223:
 #line 847 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2284,8 +2890,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 223:
 #line 852 "dhcp4_parser.yy"
+=======
+  case 224:
+#line 853 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 224:
 #line 853 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2297,8 +2908,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 224:
 #line 854 "dhcp4_parser.yy"
+=======
+  case 225:
+#line 855 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 225:
 #line 855 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2312,8 +2928,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 225:
 #line 860 "dhcp4_parser.yy"
+=======
+  case 226:
+#line 861 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 226:
 #line 861 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2326,8 +2947,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 226:
 #line 865 "dhcp4_parser.yy"
+=======
+  case 227:
+#line 866 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 227:
 #line 866 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2340,9 +2966,12 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 227:
 #line 870 "dhcp4_parser.yy"
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   case 228:
 #line 871 "dhcp4_parser.yy" // lalr1.cc:907
     {
@@ -2354,6 +2983,9 @@ namespace isc { namespace dhcp {
 
   case 229:
 #line 877 "dhcp4_parser.yy" // lalr1.cc:907
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2365,8 +2997,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 228:
 #line 875 "dhcp4_parser.yy"
+=======
+  case 230:
+#line 882 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 230:
 #line 882 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2379,8 +3016,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 236:
 #line 891 "dhcp4_parser.yy"
+=======
+  case 238:
+#line 898 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 238:
 #line 898 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2393,8 +3035,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 237:
 #line 896 "dhcp4_parser.yy"
+=======
+  case 239:
+#line 903 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 239:
 #line 903 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2407,8 +3054,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 238:
 #line 901 "dhcp4_parser.yy"
+=======
+  case 240:
+#line 908 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 240:
 #line 908 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2421,8 +3073,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 239:
 #line 906 "dhcp4_parser.yy"
+=======
+  case 241:
+#line 913 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 241:
 #line 913 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2435,8 +3092,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 240:
 #line 911 "dhcp4_parser.yy"
+=======
+  case 242:
+#line 918 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 242:
 #line 918 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2449,8 +3111,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 241:
 #line 916 "dhcp4_parser.yy"
+=======
+  case 243:
+#line 923 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 243:
 #line 923 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2465,8 +3132,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 242:
 #line 921 "dhcp4_parser.yy"
+=======
+  case 244:
+#line 928 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 244:
 #line 928 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2479,8 +3151,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 247:
 #line 934 "dhcp4_parser.yy"
+=======
+  case 249:
+#line 941 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 249:
 #line 941 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2494,8 +3171,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 248:
 #line 938 "dhcp4_parser.yy"
+=======
+  case 250:
+#line 945 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 250:
 #line 945 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2509,8 +3191,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 249:
 #line 944 "dhcp4_parser.yy"
+=======
+  case 251:
+#line 951 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 251:
 #line 951 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2524,8 +3211,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 250:
 #line 948 "dhcp4_parser.yy"
+=======
+  case 252:
+#line 955 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 252:
 #line 955 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2539,8 +3231,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 256:
 #line 963 "dhcp4_parser.yy"
+=======
+  case 258:
+#line 970 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 258:
 #line 970 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2552,8 +3249,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 257:
 #line 965 "dhcp4_parser.yy"
+=======
+  case 259:
+#line 972 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 259:
 #line 972 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2567,8 +3269,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 258:
 #line 971 "dhcp4_parser.yy"
+=======
+  case 260:
+#line 978 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 260:
 #line 978 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2580,8 +3287,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 259:
 #line 973 "dhcp4_parser.yy"
+=======
+  case 261:
+#line 980 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 261:
 #line 980 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2594,8 +3306,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 260:
 #line 979 "dhcp4_parser.yy"
+=======
+  case 262:
+#line 986 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 262:
 #line 986 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2610,8 +3327,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 261:
 #line 984 "dhcp4_parser.yy"
+=======
+  case 263:
+#line 991 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 263:
 #line 991 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2625,8 +3347,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 270:
 #line 1002 "dhcp4_parser.yy"
+=======
+  case 272:
+#line 1009 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 272:
 #line 1009 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2639,8 +3366,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 271:
 #line 1007 "dhcp4_parser.yy"
+=======
+  case 273:
+#line 1014 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 273:
 #line 1014 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2653,8 +3385,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 272:
 #line 1012 "dhcp4_parser.yy"
+=======
+  case 274:
+#line 1019 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 274:
 #line 1019 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2667,8 +3404,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 273:
 #line 1017 "dhcp4_parser.yy"
+=======
+  case 275:
+#line 1024 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 275:
 #line 1024 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2681,8 +3423,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 274:
 #line 1022 "dhcp4_parser.yy"
+=======
+  case 276:
+#line 1029 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 276:
 #line 1029 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2695,8 +3442,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 275:
 #line 1027 "dhcp4_parser.yy"
+=======
+  case 277:
+#line 1034 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 277:
 #line 1034 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2709,8 +3461,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 276:
 #line 1035 "dhcp4_parser.yy"
+=======
+  case 278:
+#line 1042 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 278:
 #line 1042 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2725,8 +3482,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 277:
 #line 1040 "dhcp4_parser.yy"
+=======
+  case 279:
+#line 1047 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 279:
 #line 1047 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2739,8 +3501,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 282:
 #line 1060 "dhcp4_parser.yy"
+=======
+  case 284:
+#line 1067 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 284:
 #line 1067 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2754,8 +3521,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 283:
 #line 1064 "dhcp4_parser.yy"
+=======
+  case 285:
+#line 1071 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 285:
 #line 1071 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2785,8 +3557,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 284:
 #line 1086 "dhcp4_parser.yy"
+=======
+  case 286:
+#line 1093 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 286:
 #line 1093 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2800,8 +3577,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 285:
 #line 1090 "dhcp4_parser.yy"
+=======
+  case 287:
+#line 1097 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 287:
 #line 1097 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2815,8 +3597,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 317:
 #line 1133 "dhcp4_parser.yy"
+=======
+  case 319:
+#line 1140 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 319:
 #line 1140 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2828,8 +3615,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 318:
 #line 1135 "dhcp4_parser.yy"
+=======
+  case 320:
+#line 1142 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 320:
 #line 1142 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2843,8 +3635,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 319:
 #line 1141 "dhcp4_parser.yy"
+=======
+  case 321:
+#line 1148 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 321:
 #line 1148 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2856,8 +3653,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 320:
 #line 1143 "dhcp4_parser.yy"
+=======
+  case 322:
+#line 1150 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 322:
 #line 1150 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2871,8 +3673,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 321:
 #line 1149 "dhcp4_parser.yy"
+=======
+  case 323:
+#line 1156 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 323:
 #line 1156 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2884,8 +3691,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 322:
 #line 1151 "dhcp4_parser.yy"
+=======
+  case 324:
+#line 1158 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 324:
 #line 1158 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2899,8 +3711,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 323:
 #line 1157 "dhcp4_parser.yy"
+=======
+  case 325:
+#line 1164 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 325:
 #line 1164 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2912,8 +3729,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 324:
 #line 1159 "dhcp4_parser.yy"
+=======
+  case 326:
+#line 1166 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 326:
 #line 1166 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2927,8 +3749,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 325:
 #line 1165 "dhcp4_parser.yy"
+=======
+  case 327:
+#line 1172 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 327:
 #line 1172 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2940,8 +3767,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 326:
 #line 1167 "dhcp4_parser.yy"
+=======
+  case 328:
+#line 1174 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 328:
 #line 1174 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2955,8 +3787,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 327:
 #line 1173 "dhcp4_parser.yy"
+=======
+  case 329:
+#line 1180 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 329:
 #line 1180 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2968,8 +3805,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 328:
 #line 1175 "dhcp4_parser.yy"
+=======
+  case 330:
+#line 1182 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 330:
 #line 1182 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2983,8 +3825,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 329:
 #line 1181 "dhcp4_parser.yy"
+=======
+  case 331:
+#line 1188 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 331:
 #line 1188 "dhcp4_parser.yy" // lalr1.cc:907
@@ -2999,8 +3846,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 330:
 #line 1186 "dhcp4_parser.yy"
+=======
+  case 332:
+#line 1193 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 332:
 #line 1193 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3013,8 +3865,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 331:
 #line 1191 "dhcp4_parser.yy"
+=======
+  case 333:
+#line 1198 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 333:
 #line 1198 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3026,8 +3883,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 332:
 #line 1193 "dhcp4_parser.yy"
+=======
+  case 334:
+#line 1200 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 334:
 #line 1200 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3039,6 +3901,7 @@ namespace isc { namespace dhcp {
 #line 2189 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   case 333:
 #line 1198 "dhcp4_parser.yy"
@@ -3094,6 +3957,34 @@ namespace isc { namespace dhcp {
   case 339:
 #line 1211 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+  case 335:
+#line 1205 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
+#line 2195 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 336:
+#line 1206 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(yystack_[0].location))); }
+#line 2201 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 337:
+#line 1207 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("global", ctx.loc2pos(yystack_[0].location))); }
+#line 2207 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 338:
+#line 1208 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("all", ctx.loc2pos(yystack_[0].location))); }
+#line 2213 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 339:
+#line 1211 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr id(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("id", id);
@@ -3102,8 +3993,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 338:
 #line 1211 "dhcp4_parser.yy"
+=======
+  case 340:
+#line 1218 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 340:
 #line 1218 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3118,8 +4014,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 339:
 #line 1216 "dhcp4_parser.yy"
+=======
+  case 341:
+#line 1223 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 341:
 #line 1223 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3132,8 +4033,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 344:
 #line 1231 "dhcp4_parser.yy"
+=======
+  case 346:
+#line 1238 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 346:
 #line 1238 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3147,8 +4053,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 345:
 #line 1235 "dhcp4_parser.yy"
+=======
+  case 347:
+#line 1242 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 347:
 #line 1242 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3160,8 +4071,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 372:
 #line 1273 "dhcp4_parser.yy"
+=======
+  case 374:
+#line 1280 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 374:
 #line 1280 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3176,8 +4092,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 373:
 #line 1278 "dhcp4_parser.yy"
+=======
+  case 375:
+#line 1285 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 375:
 #line 1285 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3190,8 +4111,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 374:
 #line 1286 "dhcp4_parser.yy"
+=======
+  case 376:
+#line 1293 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 376:
 #line 1293 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3204,8 +4130,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 375:
 #line 1289 "dhcp4_parser.yy"
+=======
+  case 377:
+#line 1296 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 377:
 #line 1296 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3217,8 +4148,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 380:
 #line 1305 "dhcp4_parser.yy"
+=======
+  case 382:
+#line 1312 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 382:
 #line 1312 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3232,8 +4168,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 381:
 #line 1309 "dhcp4_parser.yy"
+=======
+  case 383:
+#line 1316 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 383:
 #line 1316 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3249,8 +4190,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 382:
 #line 1320 "dhcp4_parser.yy"
+=======
+  case 384:
+#line 1327 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 384:
 #line 1327 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3264,8 +4210,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 383:
 #line 1324 "dhcp4_parser.yy"
+=======
+  case 385:
+#line 1331 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 385:
 #line 1331 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3281,8 +4232,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 399:
 #line 1356 "dhcp4_parser.yy"
+=======
+  case 401:
+#line 1363 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 401:
 #line 1363 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3295,8 +4251,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 401:
 #line 1363 "dhcp4_parser.yy"
+=======
+  case 403:
+#line 1370 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 403:
 #line 1370 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3308,8 +4269,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 402:
 #line 1365 "dhcp4_parser.yy"
+=======
+  case 404:
+#line 1372 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 404:
 #line 1372 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3323,8 +4289,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 403:
 #line 1371 "dhcp4_parser.yy"
+=======
+  case 405:
+#line 1378 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 405:
 #line 1378 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3336,8 +4307,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 404:
 #line 1373 "dhcp4_parser.yy"
+=======
+  case 406:
+#line 1380 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 406:
 #line 1380 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3351,8 +4327,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 405:
 #line 1379 "dhcp4_parser.yy"
+=======
+  case 407:
+#line 1386 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 407:
 #line 1386 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3364,8 +4345,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 406:
 #line 1381 "dhcp4_parser.yy"
+=======
+  case 408:
+#line 1388 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 408:
 #line 1388 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3379,8 +4365,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 408:
 #line 1389 "dhcp4_parser.yy"
+=======
+  case 410:
+#line 1396 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 410:
 #line 1396 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3392,8 +4383,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 409:
 #line 1391 "dhcp4_parser.yy"
+=======
+  case 411:
+#line 1398 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 411:
 #line 1398 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3407,8 +4403,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 410:
 #line 1397 "dhcp4_parser.yy"
+=======
+  case 412:
+#line 1404 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 412:
 #line 1404 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3421,8 +4422,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 411:
 #line 1406 "dhcp4_parser.yy"
+=======
+  case 413:
+#line 1413 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 413:
 #line 1413 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3437,8 +4443,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 412:
 #line 1411 "dhcp4_parser.yy"
+=======
+  case 414:
+#line 1418 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 414:
 #line 1418 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3451,8 +4462,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 417:
 #line 1430 "dhcp4_parser.yy"
+=======
+  case 419:
+#line 1437 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 419:
 #line 1437 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3466,8 +4482,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 418:
 #line 1434 "dhcp4_parser.yy"
+=======
+  case 420:
+#line 1441 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 420:
 #line 1441 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3480,8 +4501,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 419:
 #line 1442 "dhcp4_parser.yy"
+=======
+  case 421:
+#line 1449 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 421:
 #line 1449 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3495,8 +4521,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 420:
 #line 1446 "dhcp4_parser.yy"
+=======
+  case 422:
+#line 1453 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 422:
 #line 1453 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3509,8 +4540,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 435:
 #line 1479 "dhcp4_parser.yy"
+=======
+  case 437:
+#line 1486 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 437:
 #line 1486 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3522,8 +4558,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 436:
 #line 1481 "dhcp4_parser.yy"
+=======
+  case 438:
+#line 1488 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 438:
 #line 1488 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3537,8 +4578,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 439:
 #line 1491 "dhcp4_parser.yy"
+=======
+  case 441:
+#line 1498 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 441:
 #line 1498 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3551,8 +4597,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 440:
 #line 1496 "dhcp4_parser.yy"
+=======
+  case 442:
+#line 1503 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 442:
 #line 1503 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3565,8 +4616,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 441:
 #line 1504 "dhcp4_parser.yy"
+=======
+  case 443:
+#line 1511 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 443:
 #line 1511 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3581,8 +4637,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 442:
 #line 1509 "dhcp4_parser.yy"
+=======
+  case 444:
+#line 1516 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 444:
 #line 1516 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3595,8 +4656,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 447:
 #line 1524 "dhcp4_parser.yy"
+=======
+  case 449:
+#line 1531 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 449:
 #line 1531 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3610,8 +4676,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 448:
 #line 1528 "dhcp4_parser.yy"
+=======
+  case 450:
+#line 1535 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 450:
 #line 1535 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3625,8 +4696,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 449:
 #line 1534 "dhcp4_parser.yy"
+=======
+  case 451:
+#line 1541 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 451:
 #line 1541 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3640,8 +4716,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 450:
 #line 1538 "dhcp4_parser.yy"
+=======
+  case 452:
+#line 1545 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 452:
 #line 1545 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3655,8 +4736,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 460:
 #line 1557 "dhcp4_parser.yy"
+=======
+  case 462:
+#line 1564 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 462:
 #line 1564 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3668,8 +4754,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 461:
 #line 1559 "dhcp4_parser.yy"
+=======
+  case 463:
+#line 1566 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 463:
 #line 1566 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3683,8 +4774,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 462:
 #line 1565 "dhcp4_parser.yy"
+=======
+  case 464:
+#line 1572 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 464:
 #line 1572 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3696,8 +4792,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 463:
 #line 1567 "dhcp4_parser.yy"
+=======
+  case 465:
+#line 1574 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 465:
 #line 1574 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3728,8 +4829,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 464:
 #line 1590 "dhcp4_parser.yy"
+=======
+  case 466:
+#line 1597 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 466:
 #line 1597 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3741,8 +4847,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 465:
 #line 1592 "dhcp4_parser.yy"
+=======
+  case 467:
+#line 1599 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 467:
 #line 1599 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3775,8 +4886,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 466:
 #line 1620 "dhcp4_parser.yy"
+=======
+  case 468:
+#line 1627 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 468:
 #line 1627 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3791,8 +4907,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 467:
 #line 1625 "dhcp4_parser.yy"
+=======
+  case 469:
+#line 1632 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 469:
 #line 1632 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3805,8 +4926,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 472:
 #line 1638 "dhcp4_parser.yy"
+=======
+  case 474:
+#line 1645 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 474:
 #line 1645 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3820,8 +4946,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 473:
 #line 1642 "dhcp4_parser.yy"
+=======
+  case 475:
+#line 1649 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 475:
 #line 1649 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3834,8 +4965,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 474:
 #line 1647 "dhcp4_parser.yy"
+=======
+  case 476:
+#line 1654 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 476:
 #line 1654 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3849,8 +4985,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 475:
 #line 1651 "dhcp4_parser.yy"
+=======
+  case 477:
+#line 1658 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 477:
 #line 1658 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3863,8 +5004,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 495:
 #line 1682 "dhcp4_parser.yy"
+=======
+  case 497:
+#line 1689 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 497:
 #line 1689 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3876,8 +5022,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 496:
 #line 1684 "dhcp4_parser.yy"
+=======
+  case 498:
+#line 1691 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 498:
 #line 1691 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3891,8 +5042,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 497:
 #line 1690 "dhcp4_parser.yy"
+=======
+  case 499:
+#line 1697 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 499:
 #line 1697 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3904,8 +5060,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 498:
 #line 1692 "dhcp4_parser.yy"
+=======
+  case 500:
+#line 1699 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 500:
 #line 1699 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3919,8 +5080,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 499:
 #line 1698 "dhcp4_parser.yy"
+=======
+  case 501:
+#line 1705 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 501:
 #line 1705 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3932,8 +5098,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 500:
 #line 1700 "dhcp4_parser.yy"
+=======
+  case 502:
+#line 1707 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 502:
 #line 1707 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3947,8 +5118,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 501:
 #line 1706 "dhcp4_parser.yy"
+=======
+  case 503:
+#line 1713 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 503:
 #line 1713 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3960,8 +5136,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 502:
 #line 1708 "dhcp4_parser.yy"
+=======
+  case 504:
+#line 1715 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 504:
 #line 1715 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3975,8 +5156,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 503:
 #line 1714 "dhcp4_parser.yy"
+=======
+  case 505:
+#line 1721 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 505:
 #line 1721 "dhcp4_parser.yy" // lalr1.cc:907
@@ -3991,8 +5177,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 504:
 #line 1719 "dhcp4_parser.yy"
+=======
+  case 506:
+#line 1726 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 506:
 #line 1726 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4005,8 +5196,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 505:
 #line 1724 "dhcp4_parser.yy"
+=======
+  case 507:
+#line 1731 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 507:
 #line 1731 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4018,8 +5214,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 506:
 #line 1726 "dhcp4_parser.yy"
+=======
+  case 508:
+#line 1733 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 508:
 #line 1733 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4033,8 +5234,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 507:
 #line 1732 "dhcp4_parser.yy"
+=======
+  case 509:
+#line 1739 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 509:
 #line 1739 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4046,8 +5252,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 508:
 #line 1734 "dhcp4_parser.yy"
+=======
+  case 510:
+#line 1741 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 510:
 #line 1741 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4061,8 +5272,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 509:
 #line 1740 "dhcp4_parser.yy"
+=======
+  case 511:
+#line 1747 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 511:
 #line 1747 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4074,8 +5290,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 510:
 #line 1742 "dhcp4_parser.yy"
+=======
+  case 512:
+#line 1749 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 512:
 #line 1749 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4089,8 +5310,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 511:
 #line 1748 "dhcp4_parser.yy"
+=======
+  case 513:
+#line 1755 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 513:
 #line 1755 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4102,8 +5328,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 512:
 #line 1750 "dhcp4_parser.yy"
+=======
+  case 514:
+#line 1757 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 514:
 #line 1757 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4117,8 +5348,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 513:
 #line 1756 "dhcp4_parser.yy"
+=======
+  case 515:
+#line 1763 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 515:
 #line 1763 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4130,8 +5366,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 514:
 #line 1758 "dhcp4_parser.yy"
+=======
+  case 516:
+#line 1765 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 516:
 #line 1765 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4145,8 +5386,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 515:
 #line 1764 "dhcp4_parser.yy"
+=======
+  case 517:
+#line 1771 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 517:
 #line 1771 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4158,8 +5404,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 516:
 #line 1766 "dhcp4_parser.yy"
+=======
+  case 518:
+#line 1773 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 518:
 #line 1773 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4173,8 +5424,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 517:
 #line 1772 "dhcp4_parser.yy"
+=======
+  case 519:
+#line 1779 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 519:
 #line 1779 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4189,8 +5445,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 518:
 #line 1777 "dhcp4_parser.yy"
+=======
+  case 520:
+#line 1784 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 520:
 #line 1784 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4203,8 +5464,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 519:
 #line 1785 "dhcp4_parser.yy"
+=======
+  case 521:
+#line 1792 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 521:
 #line 1792 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4219,8 +5485,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 520:
 #line 1790 "dhcp4_parser.yy"
+=======
+  case 522:
+#line 1797 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 522:
 #line 1797 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4233,8 +5504,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 523:
 #line 1802 "dhcp4_parser.yy"
+=======
+  case 525:
+#line 1809 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 525:
 #line 1809 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4249,8 +5525,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 524:
 #line 1807 "dhcp4_parser.yy"
+=======
+  case 526:
+#line 1814 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 526:
 #line 1814 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4263,8 +5544,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 527:
 #line 1816 "dhcp4_parser.yy"
+=======
+  case 529:
+#line 1823 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 529:
 #line 1823 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4278,8 +5564,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 528:
 #line 1820 "dhcp4_parser.yy"
+=======
+  case 530:
+#line 1827 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 530:
 #line 1827 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4293,8 +5584,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 545:
 #line 1849 "dhcp4_parser.yy"
+=======
+  case 547:
+#line 1856 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 547:
 #line 1856 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4306,8 +5602,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 546:
 #line 1851 "dhcp4_parser.yy"
+=======
+  case 548:
+#line 1858 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 548:
 #line 1858 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4321,8 +5622,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 547:
 #line 1857 "dhcp4_parser.yy"
+=======
+  case 549:
+#line 1864 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 549:
 #line 1864 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4335,8 +5641,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 548:
 #line 1866 "dhcp4_parser.yy"
+=======
+  case 550:
+#line 1873 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 550:
 #line 1873 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4349,8 +5660,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 549:
 #line 1873 "dhcp4_parser.yy"
+=======
+  case 551:
+#line 1880 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 551:
 #line 1880 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4365,8 +5681,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 550:
 #line 1878 "dhcp4_parser.yy"
+=======
+  case 552:
+#line 1885 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 552:
 #line 1885 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4379,8 +5700,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 558:
 #line 1894 "dhcp4_parser.yy"
+=======
+  case 560:
+#line 1901 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 560:
 #line 1901 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4392,8 +5718,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 559:
 #line 1896 "dhcp4_parser.yy"
+=======
+  case 561:
+#line 1903 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 561:
 #line 1903 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4407,8 +5738,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 560:
 #line 1902 "dhcp4_parser.yy"
+=======
+  case 562:
+#line 1909 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 562:
 #line 1909 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4420,8 +5756,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 561:
 #line 1904 "dhcp4_parser.yy"
+=======
+  case 563:
+#line 1911 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 563:
 #line 1911 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4435,8 +5776,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 562:
 #line 1913 "dhcp4_parser.yy"
+=======
+  case 564:
+#line 1920 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 564:
 #line 1920 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4448,8 +5794,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 563:
 #line 1915 "dhcp4_parser.yy"
+=======
+  case 565:
+#line 1922 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 565:
 #line 1922 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4491,8 +5842,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 564:
 #line 1951 "dhcp4_parser.yy"
+=======
+  case 566:
+#line 1958 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 566:
 #line 1958 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4507,8 +5863,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 565:
 #line 1956 "dhcp4_parser.yy"
+=======
+  case 567:
+#line 1963 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 567:
 #line 1963 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4523,8 +5884,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 566:
 #line 1963 "dhcp4_parser.yy"
+=======
+  case 568:
+#line 1970 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 568:
 #line 1970 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4538,8 +5904,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 567:
 #line 1967 "dhcp4_parser.yy"
+=======
+  case 569:
+#line 1974 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 569:
 #line 1974 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4553,8 +5924,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 588:
 #line 1997 "dhcp4_parser.yy"
+=======
+  case 590:
+#line 2004 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 590:
 #line 2004 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4567,8 +5943,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 589:
 #line 2002 "dhcp4_parser.yy"
+=======
+  case 591:
+#line 2009 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 591:
 #line 2009 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4580,8 +5961,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 590:
 #line 2004 "dhcp4_parser.yy"
+=======
+  case 592:
+#line 2011 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 592:
 #line 2011 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4595,8 +5981,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 591:
 #line 2010 "dhcp4_parser.yy"
+=======
+  case 593:
+#line 2017 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 593:
 #line 2017 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4608,8 +5999,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 592:
 #line 2012 "dhcp4_parser.yy"
+=======
+  case 594:
+#line 2019 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 594:
 #line 2019 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4623,8 +6019,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 593:
 #line 2018 "dhcp4_parser.yy"
+=======
+  case 595:
+#line 2025 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 595:
 #line 2025 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4637,8 +6038,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 594:
 #line 2023 "dhcp4_parser.yy"
+=======
+  case 596:
+#line 2030 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 596:
 #line 2030 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4650,8 +6056,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 595:
 #line 2025 "dhcp4_parser.yy"
+=======
+  case 597:
+#line 2032 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 597:
 #line 2032 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4665,8 +6076,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 596:
 #line 2031 "dhcp4_parser.yy"
+=======
+  case 598:
+#line 2038 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 598:
 #line 2038 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4679,8 +6095,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 597:
 #line 2036 "dhcp4_parser.yy"
+=======
+  case 599:
+#line 2043 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 599:
 #line 2043 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4693,8 +6114,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 598:
 #line 2041 "dhcp4_parser.yy"
+=======
+  case 600:
+#line 2048 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 600:
 #line 2048 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4706,8 +6132,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 599:
 #line 2043 "dhcp4_parser.yy"
+=======
+  case 601:
+#line 2050 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 601:
 #line 2050 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4719,6 +6150,7 @@ namespace isc { namespace dhcp {
 #line 3300 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   case 600:
 #line 2049 "dhcp4_parser.yy"
@@ -4750,6 +6182,22 @@ namespace isc { namespace dhcp {
   case 604:
 #line 2060 "dhcp4_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+  case 602:
+#line 2056 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
+#line 3306 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 603:
+#line 2057 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
+#line 3312 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 604:
+#line 2060 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NCR_FORMAT);
 }
@@ -4757,8 +6205,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 603:
 #line 2055 "dhcp4_parser.yy"
+=======
+  case 605:
+#line 2062 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 605:
 #line 2062 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4772,8 +6225,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 604:
 #line 2061 "dhcp4_parser.yy"
+=======
+  case 606:
+#line 2068 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 606:
 #line 2068 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4786,8 +6244,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 605:
 #line 2066 "dhcp4_parser.yy"
+=======
+  case 607:
+#line 2073 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 607:
 #line 2073 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4800,8 +6263,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 606:
 #line 2071 "dhcp4_parser.yy"
+=======
+  case 608:
+#line 2078 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 608:
 #line 2078 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4813,8 +6281,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 607:
 #line 2073 "dhcp4_parser.yy"
+=======
+  case 609:
+#line 2080 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 609:
 #line 2080 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4827,8 +6300,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 608:
 #line 2079 "dhcp4_parser.yy"
+=======
+  case 610:
+#line 2086 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 610:
 #line 2086 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4840,8 +6318,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 609:
 #line 2082 "dhcp4_parser.yy"
+=======
+  case 611:
+#line 2089 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 611:
 #line 2089 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4853,8 +6336,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 610:
 #line 2085 "dhcp4_parser.yy"
+=======
+  case 612:
+#line 2092 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 612:
 #line 2092 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4866,8 +6354,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 611:
 #line 2088 "dhcp4_parser.yy"
+=======
+  case 613:
+#line 2095 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 613:
 #line 2095 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4879,8 +6372,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 612:
 #line 2091 "dhcp4_parser.yy"
+=======
+  case 614:
+#line 2098 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 614:
 #line 2098 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4893,8 +6391,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 613:
 #line 2097 "dhcp4_parser.yy"
+=======
+  case 615:
+#line 2104 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 615:
 #line 2104 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4906,8 +6409,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 614:
 #line 2099 "dhcp4_parser.yy"
+=======
+  case 616:
+#line 2106 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 616:
 #line 2106 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4921,8 +6429,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 615:
 #line 2105 "dhcp4_parser.yy"
+=======
+  case 617:
+#line 2112 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 617:
 #line 2112 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4934,8 +6447,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 616:
 #line 2107 "dhcp4_parser.yy"
+=======
+  case 618:
+#line 2114 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 618:
 #line 2114 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4949,8 +6467,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 617:
 #line 2113 "dhcp4_parser.yy"
+=======
+  case 619:
+#line 2120 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 619:
 #line 2120 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4962,8 +6485,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 618:
 #line 2115 "dhcp4_parser.yy"
+=======
+  case 620:
+#line 2122 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 620:
 #line 2122 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4977,8 +6505,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 619:
 #line 2124 "dhcp4_parser.yy"
+=======
+  case 621:
+#line 2131 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 621:
 #line 2131 "dhcp4_parser.yy" // lalr1.cc:907
@@ -4990,8 +6523,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 620:
 #line 2126 "dhcp4_parser.yy"
+=======
+  case 622:
+#line 2133 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 622:
 #line 2133 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5004,8 +6542,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 621:
 #line 2131 "dhcp4_parser.yy"
+=======
+  case 623:
+#line 2138 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 623:
 #line 2138 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5017,8 +6560,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 622:
 #line 2133 "dhcp4_parser.yy"
+=======
+  case 624:
+#line 2140 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 624:
 #line 2140 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5031,8 +6579,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 623:
 #line 2138 "dhcp4_parser.yy"
+=======
+  case 625:
+#line 2145 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 625:
 #line 2145 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5044,8 +6597,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 624:
 #line 2140 "dhcp4_parser.yy"
+=======
+  case 626:
+#line 2147 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 626:
 #line 2147 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5058,8 +6616,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 625:
 #line 2145 "dhcp4_parser.yy"
+=======
+  case 627:
+#line 2152 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 627:
 #line 2152 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5074,8 +6637,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 626:
 #line 2150 "dhcp4_parser.yy"
+=======
+  case 628:
+#line 2157 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 628:
 #line 2157 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5089,8 +6657,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 627:
 #line 2156 "dhcp4_parser.yy"
+=======
+  case 629:
+#line 2163 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 629:
 #line 2163 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5104,8 +6677,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 628:
 #line 2160 "dhcp4_parser.yy"
+=======
+  case 630:
+#line 2167 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 630:
 #line 2167 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5118,8 +6696,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 633:
 #line 2175 "dhcp4_parser.yy"
+=======
+  case 635:
+#line 2182 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 635:
 #line 2182 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5134,8 +6717,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 634:
 #line 2180 "dhcp4_parser.yy"
+=======
+  case 636:
+#line 2187 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 636:
 #line 2187 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5148,8 +6736,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 635:
 #line 2185 "dhcp4_parser.yy"
+=======
+  case 637:
+#line 2192 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 637:
 #line 2192 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5162,8 +6755,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 636:
 #line 2195 "dhcp4_parser.yy"
+=======
+  case 638:
+#line 2202 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 638:
 #line 2202 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5178,8 +6776,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 637:
 #line 2200 "dhcp4_parser.yy"
+=======
+  case 639:
+#line 2207 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 639:
 #line 2207 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5192,8 +6795,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 638:
 #line 2205 "dhcp4_parser.yy"
+=======
+  case 640:
+#line 2212 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 640:
 #line 2212 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5207,8 +6815,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 639:
 #line 2209 "dhcp4_parser.yy"
+=======
+  case 641:
+#line 2216 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 641:
 #line 2216 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5220,8 +6833,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 643:
 #line 2225 "dhcp4_parser.yy"
+=======
+  case 645:
+#line 2232 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 645:
 #line 2232 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5236,8 +6854,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 644:
 #line 2230 "dhcp4_parser.yy"
+=======
+  case 646:
+#line 2237 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 646:
 #line 2237 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5250,8 +6873,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 647:
 #line 2242 "dhcp4_parser.yy"
+=======
+  case 649:
+#line 2249 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 649:
 #line 2249 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5265,8 +6893,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 648:
 #line 2246 "dhcp4_parser.yy"
+=======
+  case 650:
+#line 2253 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 650:
 #line 2253 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5278,8 +6911,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 658:
 #line 2263 "dhcp4_parser.yy"
+=======
+  case 660:
+#line 2270 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 660:
 #line 2270 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5292,8 +6930,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 659:
 #line 2268 "dhcp4_parser.yy"
+=======
+  case 661:
+#line 2275 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 661:
 #line 2275 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5305,8 +6948,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 660:
 #line 2270 "dhcp4_parser.yy"
+=======
+  case 662:
+#line 2277 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 662:
 #line 2277 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5320,8 +6968,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 661:
 #line 2276 "dhcp4_parser.yy"
+=======
+  case 663:
+#line 2283 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 663:
 #line 2283 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5336,8 +6989,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 662:
 #line 2281 "dhcp4_parser.yy"
+=======
+  case 664:
+#line 2288 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 664:
 #line 2288 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5350,8 +7008,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 665:
 #line 2290 "dhcp4_parser.yy"
+=======
+  case 667:
+#line 2297 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 667:
 #line 2297 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5365,8 +7028,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 666:
 #line 2294 "dhcp4_parser.yy"
+=======
+  case 668:
+#line 2301 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 668:
 #line 2301 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5378,8 +7046,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 674:
 #line 2309 "dhcp4_parser.yy"
+=======
+  case 675:
+#line 2315 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 675:
 #line 2315 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5391,8 +7064,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 675:
 #line 2311 "dhcp4_parser.yy"
+=======
+  case 676:
+#line 2317 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 676:
 #line 2317 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5406,8 +7084,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 676:
 #line 2317 "dhcp4_parser.yy"
+=======
+  case 677:
+#line 2323 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 677:
 #line 2323 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5420,8 +7103,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 677:
 #line 2322 "dhcp4_parser.yy"
+=======
+  case 678:
+#line 2328 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 678:
 #line 2328 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5434,8 +7122,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 678:
 #line 2327 "dhcp4_parser.yy"
+=======
+  case 679:
+#line 2333 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
   case 679:
 #line 2333 "dhcp4_parser.yy" // lalr1.cc:907
@@ -5445,6 +7138,7 @@ namespace isc { namespace dhcp {
     ctx.stack_.back()->set("maxver", maxver);
 }
 #line 3766 "dhcp4_parser.cc" // lalr1.cc:907
+<<<<<<< HEAD
     break;
 
   case 679:
@@ -5470,6 +7164,12 @@ namespace isc { namespace dhcp {
 #line 3782 "dhcp4_parser.cc"
 
 =======
+#line 3770 "dhcp4_parser.cc" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+    break;
+
+
 #line 3770 "dhcp4_parser.cc" // lalr1.cc:907
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
             default:
@@ -5737,6 +7437,7 @@ namespace isc { namespace dhcp {
   Dhcp4Parser::yypact_[] =
   {
 <<<<<<< HEAD
+<<<<<<< HEAD
      317,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
     -837,  -837,  -837,  -837,  -837,    32,    21,    71,    80,    98,
      114,   132,   136,   155,   183,   192,   209,   252,   260,   263,
@@ -5848,6 +7549,8 @@ namespace isc { namespace dhcp {
      838,    13,  -837,   708,  -837,  -837,  -837,   709,  -837,  -837,
     -837
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      494,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
     -840,  -840,  -840,  -840,  -840,    47,    21,    56,    76,   105,
      118,   135,   137,   149,   170,   172,   183,   193,   225,   257,
@@ -5957,6 +7660,9 @@ namespace isc { namespace dhcp {
     -840,  -840,   196,  -840,   -49,   781,  -840,  -840,   798,   807,
      808,   314,  -840,  -840,  -840,  -840,  -840,  -840,   813,   642,
      653,   661,   -49,  -840,   681,  -840,  -840,  -840,  -840,  -840
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -6049,6 +7755,7 @@ namespace isc { namespace dhcp {
      131,     0,     0,   157,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
 <<<<<<< HEAD
+<<<<<<< HEAD
        0,   155,   164,     0,   166,     0,     0,   277,     0,   384,
      373,     0,   421,   412,     0,     0,   339,     0,     0,   228,
      529,     0,   524,   476,   467,     0,     0,   242,     0,     0,
@@ -6075,6 +7782,8 @@ namespace isc { namespace dhcp {
        0,     0,   666,     0,   676,   677,   678,     0,   668,   675,
      680
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        0,     0,     0,     0,   155,   164,     0,   166,     0,     0,
      279,     0,   386,   375,     0,   423,   414,     0,     0,   341,
        0,     0,   230,   531,     0,   526,   478,   469,     0,     0,
@@ -6099,12 +7808,16 @@ namespace isc { namespace dhcp {
      662,   667,     0,   665,     0,     0,   664,   675,     0,     0,
        0,     0,   669,   671,   672,   673,   674,   666,     0,     0,
        0,     0,     0,   668,     0,   677,   678,   679,   670,   676
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const short
   Dhcp4Parser::yypgoto_[] =
   {
+<<<<<<< HEAD
 <<<<<<< HEAD
     -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
     -837,  -837,  -837,  -837,  -837,  -837,   -46,  -837,  -468,  -837,
@@ -6146,6 +7859,8 @@ namespace isc { namespace dhcp {
     -837,  -837,  -837,  -837,  -136,  -837,  -837,  -155,  -837,  -837,
     -837,  -837,  -837,  -837,  -837
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
     -840,  -840,  -840,  -840,  -840,  -840,   -46,  -840,  -481,  -840,
      298,  -840,  -840,  -840,  -840,  -840,  -840,  -534,  -840,  -840,
@@ -6185,6 +7900,9 @@ namespace isc { namespace dhcp {
      311,   432,   -57,  -840,  -840,    25,  -840,  -840,  -120,  -840,
     -840,  -840,  -840,  -840,  -840,  -139,  -840,  -840,  -155,  -840,
     -840,  -840,  -840,  -840
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -6198,6 +7916,7 @@ namespace isc { namespace dhcp {
      145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
      155,   156,   403,   157,   158,   159,   160,   383,   193,   194,
       47,    72,   195,   425,   196,   426,   650,   197,   427,   653,
+<<<<<<< HEAD
 <<<<<<< HEAD
      198,   161,   391,   162,   384,   701,   702,   703,   829,   163,
      392,   164,   393,   746,   747,   748,   853,   723,   724,   725,
@@ -6232,6 +7951,8 @@ namespace isc { namespace dhcp {
     1040,  1004,  1038,  1058,  1059,  1060,  1068,  1069,  1070,  1076,
     1071,  1072,  1073,  1074,  1080
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      198,   161,   391,   162,   384,   701,   702,   703,   831,   163,
      392,   164,   393,   748,   749,   750,   856,   724,   725,   726,
      834,  1020,   727,   835,   728,   836,   729,   837,   730,   731,
@@ -6264,6 +7985,9 @@ namespace isc { namespace dhcp {
      360,   361,   187,   422,   815,   816,   895,  1004,  1005,  1006,
     1007,  1044,  1008,  1042,  1062,  1063,  1064,  1071,  1072,  1073,
     1078,  1074,  1075,  1076
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -6271,6 +7995,7 @@ namespace isc { namespace dhcp {
   Dhcp4Parser::yytable_[] =
   {
       95,   144,   192,   211,   243,   260,   307,   286,   305,   322,
+<<<<<<< HEAD
 <<<<<<< HEAD
      340,   278,   308,   744,   237,   238,   358,   267,   212,   213,
      359,   239,    83,   268,   362,   660,    31,    89,    32,   945,
@@ -6365,6 +8090,8 @@ namespace isc { namespace dhcp {
      564,   931,   573,   821,  1049,   811,   602,   698,   992,   697,
      606,   603,   978,   979,  1053,  1075,  1088,     0,  1005,     0,
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      340,   278,   308,   746,   237,   238,   358,   267,   212,   213,
      359,   239,    83,   268,   362,   660,    31,    89,    32,   949,
       33,   664,   683,   199,   235,   250,   262,   950,   300,   318,
@@ -6458,6 +8185,9 @@ namespace isc { namespace dhcp {
      984,  1012,  1053,   823,   602,   996,   573,   606,   982,   813,
      697,  1009,   603,   698,   564,  1057,  1077,  1088,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
@@ -6478,6 +8208,7 @@ namespace isc { namespace dhcp {
   {
       70,    71,    72,    73,    74,    75,    78,    77,    78,    79,
       80,    76,    78,   620,    73,    73,    80,    75,    73,    73,
+<<<<<<< HEAD
 <<<<<<< HEAD
       80,    73,    68,    75,    81,   559,     5,    10,     7,   865,
        9,   565,     0,    72,    73,    74,    75,   865,    77,    78,
@@ -6571,6 +8302,8 @@ namespace isc { namespace dhcp {
      444,   862,   455,   662,  1033,   642,   488,   613,   889,   609,
      494,   490,   871,   873,  1041,  1061,  1081,    -1,   893,    -1,
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
       80,    73,    68,    75,    81,   559,     5,    10,     7,   868,
        9,   565,    18,    72,    73,    74,    75,   868,    77,    78,
      868,    80,    77,    78,    15,    16,    73,     0,    19,    73,
@@ -6662,10 +8395,17 @@ namespace isc { namespace dhcp {
      870,  1032,   864,   862,   465,   470,   903,   867,   865,   876,
      878,   901,  1037,   662,   488,   892,   455,   494,   874,   642,
      609,   896,   490,   613,   444,  1045,  1065,  1082,    -1,    -1,
+<<<<<<< HEAD
+=======
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+<<<<<<< HEAD
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
       -1,    -1,  1032,    -1,    -1,    -1,    -1,  1037,    -1,    -1,
       -1,    -1,  1037,    -1,  1032,  1045,    -1,  1032,  1032,  1037,
     1032,    -1,    -1,    -1,    -1,  1037,    -1,    -1,    -1,    -1,
@@ -6685,6 +8425,7 @@ namespace isc { namespace dhcp {
      169,   170,   171,   172,   173,   179,   180,   181,   182,   183,
      184,   185,   186,   187,   188,   189,   190,   191,   192,   193,
        0,     5,     7,     9,   174,   175,   176,   177,   194,   195,
+<<<<<<< HEAD
 <<<<<<< HEAD
      196,   201,     7,   210,     7,   216,     7,   238,     7,   335,
        7,   415,     7,   431,     7,   367,     7,   373,     7,   397,
@@ -6733,6 +8474,8 @@ namespace isc { namespace dhcp {
        4,     4,   503,   506,     4,     4,   510,   513,     3,     8,
        3,     8,   531,     4,     3,     8,   194,   194,   174,     4,
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      196,   201,     7,   210,     7,   216,     7,   238,     7,   336,
        7,   416,     7,   432,     7,   368,     7,   374,     7,   398,
        7,   312,     7,   489,     7,   536,     7,   527,   202,   197,
@@ -6779,6 +8522,9 @@ namespace isc { namespace dhcp {
        3,   317,   319,     3,     8,     4,   495,   497,     4,   500,
        4,     4,   504,   507,     4,     4,   511,   514,     3,     8,
        3,     8,   532,     4,     3,     8,   194,   194,   174,     4,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        4,     4,     4,     4,   213,     4,     4,     4,   177,   177,
      177,     4,     4,     4,     4,     4,     4,   175,   175,   175,
@@ -6786,6 +8532,7 @@ namespace isc { namespace dhcp {
        4,     4,     4,     4,     4,     4,     4,     4,     4,   175,
        4,     4,     4,     4,     4,     4,   219,     4,     4,     4,
      177,   237,     4,     4,     4,     4,     4,     4,   175,     4,
+<<<<<<< HEAD
 <<<<<<< HEAD
        4,     4,   338,     4,   418,     4,     4,     4,     4,     4,
        4,     4,     4,   435,     4,     4,   175,     4,     4,     4,
@@ -6796,6 +8543,8 @@ namespace isc { namespace dhcp {
        7,     5,   174,     5,     5,     5,     5,   196,   198,   174,
       90,    91,    92,    93,   355,     5,     5,     5,     5,     7,
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        4,     4,   339,     4,   419,     4,     4,     4,     4,     4,
        4,     4,     4,   436,     4,     4,   175,     4,     4,     4,
      177,   378,     4,   177,   177,   402,     4,     4,   315,   177,
@@ -6804,11 +8553,15 @@ namespace isc { namespace dhcp {
      194,   194,   194,     7,     7,     7,   174,   174,   174,     7,
        7,     5,   174,     5,     5,     5,     5,   196,   198,   174,
       91,    92,    93,    94,   356,     5,     5,     5,     5,     7,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        7,   198,     7,   174,   174,     5,     5,   205,    17,    18,
      244,    20,    21,   247,   174,   174,   174,     5,   174,   174,
      205,   174,     7,   174,   205,   174,   174,   174,   174,   174,
      174,   174,   174,   174,   174,   174,   174,   174,   174,   194,
+<<<<<<< HEAD
 <<<<<<< HEAD
      174,   174,   174,    18,   139,   504,   140,   141,   142,   143,
      144,   177,   511,   174,     5,   194,   218,   537,   528,   236,
@@ -6853,6 +8606,8 @@ namespace isc { namespace dhcp {
      562,     3,     8,     4,   177,   175,   175,     4,   555,   174,
      174
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      174,   174,   174,    18,   140,   505,   141,   142,   143,   144,
      145,   177,   512,   174,     5,   194,   218,   538,   529,   236,
       24,   253,   254,   255,    34,    39,    40,    41,    42,    43,
@@ -6894,6 +8649,9 @@ namespace isc { namespace dhcp {
      174,     7,   552,   553,   554,     3,     6,   151,   154,   155,
      156,   555,   556,   557,   559,   560,   561,   553,   558,     4,
        4,     4,     3,     8,     4,   177,   175,   175,   556,   174
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -6919,6 +8677,7 @@ namespace isc { namespace dhcp {
      254,   256,   255,   258,   257,   260,   259,   261,   261,   262,
      262,   264,   263,   265,   265,   266,   266,   266,   266,   266,
      266,   266,   266,   266,   266,   266,   266,   266,   266,   266,
+<<<<<<< HEAD
 <<<<<<< HEAD
      266,   266,   266,   266,   266,   268,   267,   269,   269,   269,
      269,   271,   270,   273,   272,   275,   274,   276,   278,   277,
@@ -6971,6 +8730,8 @@ namespace isc { namespace dhcp {
      555,   555,   555,   555,   557,   556,   558,   559,   560,   562,
      561
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      266,   266,   266,   266,   266,   266,   268,   267,   269,   269,
      269,   269,   271,   270,   273,   272,   275,   274,   276,   278,
      277,   279,   280,   281,   282,   283,   284,   285,   287,   286,
@@ -7020,6 +8781,9 @@ namespace isc { namespace dhcp {
      543,   545,   545,   546,   546,   546,   546,   546,   546,   546,
      547,   549,   548,   551,   550,   552,   552,   554,   553,   555,
      555,   556,   556,   556,   556,   558,   557,   559,   560,   561
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -7086,6 +8850,7 @@ namespace isc { namespace dhcp {
        1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
 <<<<<<< HEAD
+<<<<<<< HEAD
        1,     1,     1,     1,     1,     1,     1,     1,     3,     0,
        4,     0,     4,     3,     0,     4,     3,     3,     0,     4,
        1,     1,     0,     4,     3,     3,     0,     4,     1,     1,
@@ -7098,6 +8863,8 @@ namespace isc { namespace dhcp {
        1,     1,     1,     1,     0,     4,     3,     3,     3,     0,
        4
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        3,     0,     4,     0,     4,     3,     0,     4,     3,     3,
        0,     4,     1,     1,     0,     4,     3,     3,     0,     4,
        1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
@@ -7107,6 +8874,9 @@ namespace isc { namespace dhcp {
        4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
        3,     0,     4,     0,     6,     1,     3,     0,     4,     1,
        3,     1,     1,     1,     1,     0,     4,     3,     3,     3
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -7285,6 +9055,7 @@ namespace isc { namespace dhcp {
      704,   707,   707,   717,   718,   721,   722,   723,   724,   725,
      726,   727,   728,   729,   730,   731,   732,   733,   734,   735,
 <<<<<<< HEAD
+<<<<<<< HEAD
      736,   737,   738,   739,   740,   743,   743,   750,   751,   752,
      753,   756,   756,   764,   764,   772,   772,   780,   785,   785,
      793,   798,   803,   808,   813,   818,   823,   828,   828,   836,
@@ -7336,6 +9107,8 @@ namespace isc { namespace dhcp {
     2303,  2304,  2305,  2306,  2309,  2309,  2317,  2322,  2327,  2332,
     2332
 =======
+=======
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
      736,   737,   738,   739,   740,   741,   744,   744,   751,   752,
      753,   754,   757,   757,   765,   765,   773,   773,   781,   786,
      786,   794,   799,   804,   809,   814,   819,   824,   829,   829,
@@ -7385,6 +9158,9 @@ namespace isc { namespace dhcp {
     2249,  2257,  2258,  2261,  2262,  2263,  2264,  2265,  2266,  2267,
     2270,  2275,  2275,  2283,  2283,  2293,  2294,  2297,  2297,  2305,
     2306,  2309,  2310,  2311,  2312,  2315,  2315,  2323,  2328,  2333
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
@@ -7421,9 +9197,14 @@ namespace isc { namespace dhcp {
 #line 14 "dhcp4_parser.yy" // lalr1.cc:1218
 } } // isc::dhcp
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 5118 "dhcp4_parser.cc"
 
 #line 2341 "dhcp4_parser.yy"
+=======
+#line 5087 "dhcp4_parser.cc" // lalr1.cc:1218
+#line 2338 "dhcp4_parser.yy" // lalr1.cc:1219
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
 #line 5087 "dhcp4_parser.cc" // lalr1.cc:1218
 #line 2338 "dhcp4_parser.yy" // lalr1.cc:1219
