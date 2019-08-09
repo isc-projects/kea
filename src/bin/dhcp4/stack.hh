@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // A Bison parser, made by GNU Bison 3.4.1.
+=======
+// A Bison parser, made by GNU Bison 3.2.1.
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
 // Starting with Bison 3.2, this file is useless: the structure it
 // used to define is now defined with the parser itself.

@@ -460,6 +460,59 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     }
 }
 
+// This test verifies that max-row-errors works correctly for
+// DHCPv4 lease files
+TEST_F(LeaseFileLoaderTest, maxRowErrors4) {
+    // We have 9 rows: 2 that are good, 7 that are flawed (too few fields).
+    std::vector<std::string> rows = {
+        "192.0.2.100,08:00:27:25:d3:f4,31:31:31:31,3600,1565356064,1,0,0,,0,\n",
+        "192.0.2.101,FF:FF:FF:FF:FF:01,32:32:32:31,3600,1565356073,1,0,0\n",
+        "192.0.2.102,FF:FF:FF:FF:FF:02,32:32:32:32,3600,1565356073,1,0,0\n",
+        "192.0.2.103,FF:FF:FF:FF:FF:03,32:32:32:33,3600,1565356073,1,0,0\n",
+        "192.0.2.104,FF:FF:FF:FF:FF:04,32:32:32:34,3600,1565356073,1,0,0\n",
+        "192.0.2.105,FF:FF:FF:FF:FF:05,32:32:32:35,3600,1565356073,1,0,0\n",
+        "192.0.2.106,FF:FF:FF:FF:FF:06,32:32:32:36,3600,1565356073,1,0,0\n",
+        "192.0.2.107,FF:FF:FF:FF:FF:07,32:32:32:37,3600,1565356073,1,0,0\n",
+        "192.0.2.108,08:00:27:25:d3:f4,32:32:32:32,3600,1565356073,1,0,0,,0,\n"
+    };
+
+    std::ostringstream os;
+    os << v4_hdr_;
+    for (auto row : rows) {
+        os << row;
+    }
+
+    io_.writeFile(os.str());
+
+    boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
+    ASSERT_NO_THROW(lf->open());
+
+    // Let's limit the number of errors to 5 (we have 7 in the data) and
+    // try to load the leases.
+    uint32_t max_errors = 5;
+    Lease4Storage storage;
+    ASSERT_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, max_errors), util::CSVFileError);
+
+    // We should have made 7 reads, with 1 lease read, and 6 errors.
+    {
+        SCOPED_TRACE("Failed load stats");
+        checkStats(*lf, 7, 1, 6, 0, 0, 0);
+    }
+
+    // Now let's disable the error limit and try again.
+    max_errors = 0;
+
+    // Load leases from the file. Note, we have to reopen the file.
+    ASSERT_NO_THROW(lf->open());
+    ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, max_errors));
+
+    // We should have made 10 reads, with 2 leases read, and 7 errors.
+    {
+        SCOPED_TRACE("Good load stats");
+        checkStats(*lf, 10, 2, 7, 0, 0, 0);
+    }
+}
+
 // This test verifies that the DHCPv6 leases can be loaded from the lease
 // file and that only the most recent entry for each lease is loaded and
 // the previous entries are discarded.

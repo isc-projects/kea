@@ -100,6 +100,7 @@ using namespace std;
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
+  MAX_ROW_ERRORS "max-row-errors"
 
   VALID_LIFETIME "valid-lifetime"
   MIN_VALID_LIFETIME "min-valid-lifetime"
@@ -737,6 +738,7 @@ database_map_param: database_type
                   | keyspace
                   | consistency
                   | serial_consistency
+                  | max_row_errors
                   | unknown_map_entry
                   ;
 
@@ -866,6 +868,12 @@ reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 };
+
+max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-row-errors", n);
+};
+
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));

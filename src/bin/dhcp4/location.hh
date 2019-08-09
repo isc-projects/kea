@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 // A Bison parser, made by GNU Bison 3.4.1.
+=======
+// A Bison parser, made by GNU Bison 3.2.1.
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
 // Locations for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -54,10 +58,9 @@
 #  endif
 # endif
 
-#line 14 "dhcp4_parser.yy"
+#line 14 "dhcp4_parser.yy" // location.cc:339
 namespace isc { namespace dhcp {
-#line 60 "location.hh"
-
+#line 60 "location.hh" // location.cc:339
   /// A point in a source file.
   class position
   {
@@ -317,8 +320,7 @@ namespace isc { namespace dhcp {
     return ostr;
   }
 
-#line 14 "dhcp4_parser.yy"
+#line 14 "dhcp4_parser.yy" // location.cc:339
 } } // isc::dhcp
-#line 323 "location.hh"
-
+#line 322 "location.hh" // location.cc:339
 #endif // !YY_PARSER4_LOCATION_HH_INCLUDED

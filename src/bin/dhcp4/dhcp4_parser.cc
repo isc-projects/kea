@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.4.1.
+// A Bison parser, made by GNU Bison 3.2.1.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,11 +43,11 @@
 
 
 // Unqualified %code blocks.
-#line 34 "dhcp4_parser.yy"
+#line 34 "dhcp4_parser.yy" // lalr1.cc:438
 
 #include <dhcp4/parser_context.h>
 
-#line 51 "dhcp4_parser.cc"
+#line 51 "dhcp4_parser.cc" // lalr1.cc:438
 
 
 #ifndef YY_
@@ -88,7 +88,7 @@
         {                                                               \
           (Current).begin = (Current).end = YYRHSLOC (Rhs, 0).end;      \
         }                                                               \
-    while (false)
+    while (/*CONSTCOND*/ false)
 # endif
 
 
@@ -140,10 +140,9 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 14 "dhcp4_parser.yy"
+#line 14 "dhcp4_parser.yy" // lalr1.cc:513
 namespace isc { namespace dhcp {
-#line 146 "dhcp4_parser.cc"
-
+#line 146 "dhcp4_parser.cc" // lalr1.cc:513
 
   /* Return YYSTR after stripping away unnecessary quotes and
      backslashes, so that it's suitable for yyerror.  The heuristic is
@@ -155,7 +154,7 @@ namespace isc { namespace dhcp {
   {
     if (*yystr == '"')
       {
-        std::string yyr;
+        std::string yyr = "";
         char const *yyp = yystr;
 
         for (;;)
@@ -168,10 +167,7 @@ namespace isc { namespace dhcp {
             case '\\':
               if (*++yyp != '\\')
                 goto do_not_strip_quotes;
-              else
-                goto append;
-
-            append:
+              // Fall through.
             default:
               yyr += *yyp;
               break;
@@ -199,8 +195,6 @@ namespace isc { namespace dhcp {
   Dhcp4Parser::~Dhcp4Parser ()
   {}
 
-  Dhcp4Parser::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
-  {}
 
   /*---------------.
   | Symbol types.  |
@@ -209,16 +203,16 @@ namespace isc { namespace dhcp {
 
 
   // by_state.
-  Dhcp4Parser::by_state::by_state () YY_NOEXCEPT
+  Dhcp4Parser::by_state::by_state ()
     : state (empty_state)
   {}
 
-  Dhcp4Parser::by_state::by_state (const by_state& that) YY_NOEXCEPT
-    : state (that.state)
+  Dhcp4Parser::by_state::by_state (const by_state& other)
+    : state (other.state)
   {}
 
   void
-  Dhcp4Parser::by_state::clear () YY_NOEXCEPT
+  Dhcp4Parser::by_state::clear ()
   {
     state = empty_state;
   }
@@ -230,12 +224,12 @@ namespace isc { namespace dhcp {
     that.clear ();
   }
 
-  Dhcp4Parser::by_state::by_state (state_type s) YY_NOEXCEPT
+  Dhcp4Parser::by_state::by_state (state_type s)
     : state (s)
   {}
 
   Dhcp4Parser::symbol_number_type
-  Dhcp4Parser::by_state::type_get () const YY_NOEXCEPT
+  Dhcp4Parser::by_state::type_get () const
   {
     if (state == empty_state)
       return empty_symbol;
@@ -256,9 +250,15 @@ namespace isc { namespace dhcp {
       case 244: // socket_type
       case 247: // outbound_interface_value
       case 269: // db_type
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (that.value));
         break;
 
@@ -282,7 +282,7 @@ namespace isc { namespace dhcp {
         break;
     }
 
-#if 201103L <= YY_CPLUSPLUS
+#if defined __cplusplus && 201103L <= __cplusplus
     // that is emptied.
     that.state = empty_state;
 #endif
@@ -298,9 +298,15 @@ namespace isc { namespace dhcp {
       case 244: // socket_type
       case 247: // outbound_interface_value
       case 269: // db_type
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         value.move< ElementPtr > (YY_MOVE (that.value));
         break;
 
@@ -328,7 +334,7 @@ namespace isc { namespace dhcp {
     that.type = empty_symbol;
   }
 
-#if YY_CPLUSPLUS < 201103L
+#if !defined __cplusplus || __cplusplus < 201103L
   Dhcp4Parser::stack_symbol_type&
   Dhcp4Parser::stack_symbol_type::operator= (stack_symbol_type& that)
   {
@@ -340,9 +346,15 @@ namespace isc { namespace dhcp {
       case 244: // socket_type
       case 247: // outbound_interface_value
       case 269: // db_type
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         value.move< ElementPtr > (that.value);
         break;
 
@@ -390,17 +402,16 @@ namespace isc { namespace dhcp {
     std::ostream& yyoutput = yyo;
     YYUSE (yyoutput);
     symbol_number_type yytype = yysym.type_get ();
-#if defined __GNUC__ && ! defined __clang__ && ! defined __ICC && __GNUC__ * 100 + __GNUC_MINOR__ <= 408
     // Avoid a (spurious) G++ 4.8 warning about "array subscript is
     // below array bounds".
     if (yysym.empty ())
       std::abort ();
-#endif
     yyo << (yytype < yyntokens_ ? "token" : "nterm")
         << ' ' << yytname_[yytype] << " ("
         << yysym.location << ": ";
     switch (yytype)
     {
+<<<<<<< HEAD
       case 174: // "constant string"
 #line 256 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < std::string > (); }
@@ -471,7 +482,92 @@ namespace isc { namespace dhcp {
 #line 256 "dhcp4_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
 #line 474 "dhcp4_parser.cc"
+=======
+            case 174: // "constant string"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< std::string > (); }
+#line 401 "dhcp4_parser.cc" // lalr1.cc:672
         break;
+
+      case 175: // "integer"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< int64_t > (); }
+#line 408 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 176: // "floating point"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< double > (); }
+#line 415 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 177: // "boolean"
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< bool > (); }
+#line 422 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 194: // value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 429 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 198: // map_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 436 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 244: // socket_type
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 443 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 247: // outbound_interface_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 450 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 269: // db_type
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 457 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 356: // hr_mode
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 464 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 505: // ncr_protocol_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 471 "dhcp4_parser.cc" // lalr1.cc:672
+        break;
+
+      case 512: // replace_client_name_value
+
+#line 256 "dhcp4_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 478 "dhcp4_parser.cc" // lalr1.cc:672
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+        break;
+
 
       default:
         break;
@@ -491,7 +587,7 @@ namespace isc { namespace dhcp {
   void
   Dhcp4Parser::yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym)
   {
-#if 201103L <= YY_CPLUSPLUS
+#if defined __cplusplus && 201103L <= __cplusplus
     yypush_ (m, stack_symbol_type (s, std::move (sym)));
 #else
     stack_symbol_type ss (s, sym);
@@ -595,22 +691,17 @@ namespace isc { namespace dhcp {
     yystack_.clear ();
     yypush_ (YY_NULLPTR, 0, YY_MOVE (yyla));
 
-  /*-----------------------------------------------.
-  | yynewstate -- push a new symbol on the stack.  |
-  `-----------------------------------------------*/
+    // A new symbol was pushed on the stack.
   yynewstate:
     YYCDEBUG << "Entering state " << yystack_[0].state << '\n';
 
     // Accept?
     if (yystack_[0].state == yyfinal_)
-      YYACCEPT;
+      goto yyacceptlab;
 
     goto yybackup;
 
-
-  /*-----------.
-  | yybackup.  |
-  `-----------*/
+    // Backup.
   yybackup:
     // Try to take a decision without lookahead.
     yyn = yypact_[yystack_[0].state];
@@ -631,7 +722,6 @@ namespace isc { namespace dhcp {
 #if YY_EXCEPTIONS
         catch (const syntax_error& yyexc)
           {
-            YYCDEBUG << "Caught exception: " << yyexc.what() << '\n';
             error (yyexc);
             goto yyerrlab1;
           }
@@ -663,7 +753,6 @@ namespace isc { namespace dhcp {
     yypush_ ("Shifting", yyn, YY_MOVE (yyla));
     goto yynewstate;
 
-
   /*-----------------------------------------------------------.
   | yydefault -- do the default action for the current state.  |
   `-----------------------------------------------------------*/
@@ -673,9 +762,8 @@ namespace isc { namespace dhcp {
       goto yyerrlab;
     goto yyreduce;
 
-
   /*-----------------------------.
-  | yyreduce -- do a reduction.  |
+  | yyreduce -- Do a reduction.  |
   `-----------------------------*/
   yyreduce:
     yylen = yyr2_[yyn];
@@ -692,9 +780,15 @@ namespace isc { namespace dhcp {
       case 244: // socket_type
       case 247: // outbound_interface_value
       case 269: // db_type
+<<<<<<< HEAD
       case 355: // hr_mode
       case 504: // ncr_protocol_value
       case 511: // replace_client_name_value
+=======
+      case 356: // hr_mode
+      case 505: // ncr_protocol_value
+      case 512: // replace_client_name_value
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
         yylhs.value.emplace< ElementPtr > ();
         break;
 
@@ -721,8 +815,8 @@ namespace isc { namespace dhcp {
 
       // Default location.
       {
-        stack_type::slice range (yystack_, yylen);
-        YYLLOC_DEFAULT (yylhs.location, range, yylen);
+        slice<stack_symbol_type, stack_type> slice (yystack_, yylen);
+        YYLLOC_DEFAULT (yylhs.location, slice, yylen);
         yyerror_range[1].location = yylhs.location;
       }
 
@@ -735,90 +829,147 @@ namespace isc { namespace dhcp {
           switch (yyn)
             {
   case 2:
+<<<<<<< HEAD
 #line 265 "dhcp4_parser.yy"
+=======
+#line 265 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.NO_KEYWORD; }
-#line 741 "dhcp4_parser.cc"
+#line 738 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 4:
+<<<<<<< HEAD
 #line 266 "dhcp4_parser.yy"
+=======
+#line 266 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.CONFIG; }
-#line 747 "dhcp4_parser.cc"
+#line 744 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 6:
+<<<<<<< HEAD
 #line 267 "dhcp4_parser.yy"
+=======
+#line 267 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.DHCP4; }
-#line 753 "dhcp4_parser.cc"
+#line 750 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 8:
+<<<<<<< HEAD
 #line 268 "dhcp4_parser.yy"
+=======
+#line 268 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.INTERFACES_CONFIG; }
-#line 759 "dhcp4_parser.cc"
+#line 756 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 10:
+<<<<<<< HEAD
 #line 269 "dhcp4_parser.yy"
+=======
+#line 269 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.SUBNET4; }
-#line 765 "dhcp4_parser.cc"
+#line 762 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 12:
+<<<<<<< HEAD
 #line 270 "dhcp4_parser.yy"
+=======
+#line 270 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.POOLS; }
-#line 771 "dhcp4_parser.cc"
+#line 768 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 14:
+<<<<<<< HEAD
 #line 271 "dhcp4_parser.yy"
+=======
+#line 271 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.RESERVATIONS; }
-#line 777 "dhcp4_parser.cc"
+#line 774 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 16:
+<<<<<<< HEAD
 #line 272 "dhcp4_parser.yy"
+=======
+#line 272 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.DHCP4; }
-#line 783 "dhcp4_parser.cc"
+#line 780 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 18:
+<<<<<<< HEAD
 #line 273 "dhcp4_parser.yy"
+=======
+#line 273 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.OPTION_DEF; }
-#line 789 "dhcp4_parser.cc"
+#line 786 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 20:
+<<<<<<< HEAD
 #line 274 "dhcp4_parser.yy"
+=======
+#line 274 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.OPTION_DATA; }
-#line 795 "dhcp4_parser.cc"
+#line 792 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 22:
+<<<<<<< HEAD
 #line 275 "dhcp4_parser.yy"
+=======
+#line 275 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.HOOKS_LIBRARIES; }
-#line 801 "dhcp4_parser.cc"
+#line 798 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 24:
+<<<<<<< HEAD
 #line 276 "dhcp4_parser.yy"
+=======
+#line 276 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.DHCP_DDNS; }
-#line 807 "dhcp4_parser.cc"
+#line 804 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 26:
+<<<<<<< HEAD
 #line 277 "dhcp4_parser.yy"
+=======
+#line 277 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.LOGGING; }
-#line 813 "dhcp4_parser.cc"
+#line 810 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 28:
+<<<<<<< HEAD
 #line 278 "dhcp4_parser.yy"
+=======
+#line 278 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     { ctx.ctx_ = ctx.CONFIG_CONTROL; }
-#line 819 "dhcp4_parser.cc"
+#line 816 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 30:
+<<<<<<< HEAD
 #line 286 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
 #line 825 "dhcp4_parser.cc"
@@ -862,35 +1013,89 @@ namespace isc { namespace dhcp {
 
   case 37:
 #line 295 "dhcp4_parser.yy"
+=======
+#line 286 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location))); }
+#line 822 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 31:
+#line 287 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location))); }
+#line 828 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 32:
+#line 288 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location))); }
+#line 834 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 33:
+#line 289 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location))); }
+#line 840 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 34:
+#line 290 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
+#line 846 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 35:
+#line 291 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 852 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 36:
+#line 292 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 858 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 37:
+#line 295 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Push back the JSON value on the stack
-    ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.push_back(yystack_[0].value.as< ElementPtr > ());
 }
-#line 870 "dhcp4_parser.cc"
+#line 867 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 38:
+<<<<<<< HEAD
 #line 300 "dhcp4_parser.yy"
+=======
+#line 300 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 881 "dhcp4_parser.cc"
+#line 878 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 39:
+<<<<<<< HEAD
 #line 305 "dhcp4_parser.yy"
+=======
+#line 305 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 891 "dhcp4_parser.cc"
+#line 888 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 40:
+<<<<<<< HEAD
 #line 311 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 897 "dhcp4_parser.cc"
@@ -898,117 +1103,174 @@ namespace isc { namespace dhcp {
 
   case 43:
 #line 318 "dhcp4_parser.yy"
+=======
+#line 311 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 894 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 43:
+#line 318 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
                   // map containing a single entry
-                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
+                  ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
                   }
-#line 906 "dhcp4_parser.cc"
+#line 903 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 44:
+<<<<<<< HEAD
 #line 322 "dhcp4_parser.yy"
+=======
+#line 322 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
                   // map consisting of a shorter map followed by
                   // comma and string:value
-                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
+                  ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
                   }
-#line 916 "dhcp4_parser.cc"
+#line 913 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 45:
+<<<<<<< HEAD
 #line 329 "dhcp4_parser.yy"
+=======
+#line 329 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 925 "dhcp4_parser.cc"
+#line 922 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 46:
+<<<<<<< HEAD
 #line 332 "dhcp4_parser.yy"
+=======
+#line 332 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // list parsing complete. Put any sanity checking here
 }
-#line 933 "dhcp4_parser.cc"
+#line 930 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 49:
+<<<<<<< HEAD
 #line 340 "dhcp4_parser.yy"
+=======
+#line 340 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
                   // List consisting of a single element.
-                  ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
+                  ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
                   }
-#line 942 "dhcp4_parser.cc"
+#line 939 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 50:
+<<<<<<< HEAD
 #line 344 "dhcp4_parser.yy"
+=======
+#line 344 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
                   // List ending with , and a value.
-                  ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
+                  ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
                   }
-#line 951 "dhcp4_parser.cc"
+#line 948 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 51:
+<<<<<<< HEAD
 #line 351 "dhcp4_parser.yy"
+=======
+#line 351 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // List parsing about to start
 }
-#line 959 "dhcp4_parser.cc"
+#line 956 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 52:
+<<<<<<< HEAD
 #line 353 "dhcp4_parser.yy"
+=======
+#line 353 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // list parsing complete. Put any sanity checking here
     //ctx.stack_.pop_back();
 }
-#line 968 "dhcp4_parser.cc"
+#line 965 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 55:
+<<<<<<< HEAD
 #line 362 "dhcp4_parser.yy"
+=======
+#line 362 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-                          ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+                          ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
                           ctx.stack_.back()->add(s);
                           }
-#line 977 "dhcp4_parser.cc"
+#line 974 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 56:
+<<<<<<< HEAD
 #line 366 "dhcp4_parser.yy"
+=======
+#line 366 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-                          ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+                          ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
                           ctx.stack_.back()->add(s);
                           }
-#line 986 "dhcp4_parser.cc"
+#line 983 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 57:
+<<<<<<< HEAD
 #line 377 "dhcp4_parser.yy"
+=======
+#line 377 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     const std::string& where = ctx.contextName();
-    const std::string& keyword = yystack_[1].value.as < std::string > ();
+    const std::string& keyword = yystack_[1].value.as< std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 997 "dhcp4_parser.cc"
+#line 994 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 58:
+<<<<<<< HEAD
 #line 387 "dhcp4_parser.yy"
+=======
+#line 387 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1008 "dhcp4_parser.cc"
+#line 1005 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 59:
+<<<<<<< HEAD
 #line 392 "dhcp4_parser.yy"
+=======
+#line 392 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -1017,11 +1279,15 @@ namespace isc { namespace dhcp {
     // Dhcp4 is required
     ctx.require("Dhcp4", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
 }
-#line 1021 "dhcp4_parser.cc"
+#line 1018 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 68:
+<<<<<<< HEAD
 #line 416 "dhcp4_parser.yy"
+=======
+#line 416 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -1030,242 +1296,343 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP4);
 }
-#line 1034 "dhcp4_parser.cc"
+#line 1031 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 69:
+<<<<<<< HEAD
 #line 423 "dhcp4_parser.yy"
+=======
+#line 423 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No global parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1044 "dhcp4_parser.cc"
+#line 1041 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 70:
+<<<<<<< HEAD
 #line 431 "dhcp4_parser.yy"
+=======
+#line 431 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the Dhcp4 map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1054 "dhcp4_parser.cc"
+#line 1051 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 71:
+<<<<<<< HEAD
 #line 435 "dhcp4_parser.yy"
+=======
+#line 435 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No global parameter is required
     // parsing completed
 }
-#line 1063 "dhcp4_parser.cc"
+#line 1060 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 116:
+<<<<<<< HEAD
 #line 490 "dhcp4_parser.yy"
+=======
+#line 490 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("valid-lifetime", prf);
 }
-#line 1072 "dhcp4_parser.cc"
+#line 1069 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 117:
+<<<<<<< HEAD
 #line 495 "dhcp4_parser.yy"
+=======
+#line 495 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("min-valid-lifetime", prf);
 }
-#line 1081 "dhcp4_parser.cc"
+#line 1078 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 118:
+<<<<<<< HEAD
 #line 500 "dhcp4_parser.yy"
+=======
+#line 500 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-valid-lifetime", prf);
 }
-#line 1090 "dhcp4_parser.cc"
+#line 1087 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 119:
+<<<<<<< HEAD
 #line 505 "dhcp4_parser.yy"
+=======
+#line 505 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("renew-timer", prf);
 }
-#line 1099 "dhcp4_parser.cc"
+#line 1096 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 120:
+<<<<<<< HEAD
 #line 510 "dhcp4_parser.yy"
+=======
+#line 510 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("rebind-timer", prf);
 }
-#line 1108 "dhcp4_parser.cc"
+#line 1105 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 121:
+<<<<<<< HEAD
 #line 515 "dhcp4_parser.yy"
+=======
+#line 515 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr ctt(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr ctt(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("calculate-tee-times", ctt);
 }
-#line 1117 "dhcp4_parser.cc"
+#line 1114 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 122:
+<<<<<<< HEAD
 #line 520 "dhcp4_parser.yy"
+=======
+#line 520 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr t1(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr t1(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("t1-percent", t1);
 }
-#line 1126 "dhcp4_parser.cc"
+#line 1123 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 123:
+<<<<<<< HEAD
 #line 525 "dhcp4_parser.yy"
+=======
+#line 525 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr t2(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr t2(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("t2-percent", t2);
 }
-#line 1135 "dhcp4_parser.cc"
+#line 1132 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 124:
+<<<<<<< HEAD
 #line 530 "dhcp4_parser.yy"
+=======
+#line 530 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr dpp(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr dpp(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
 }
-#line 1144 "dhcp4_parser.cc"
+#line 1141 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 125:
+<<<<<<< HEAD
 #line 535 "dhcp4_parser.yy"
+=======
+#line 535 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1152 "dhcp4_parser.cc"
+#line 1149 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 126:
+<<<<<<< HEAD
 #line 537 "dhcp4_parser.yy"
+=======
+#line 537 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr stag(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr stag(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
 }
-#line 1162 "dhcp4_parser.cc"
+#line 1159 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 127:
+<<<<<<< HEAD
 #line 543 "dhcp4_parser.yy"
+=======
+#line 543 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr echo(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr echo(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("echo-client-id", echo);
 }
-#line 1171 "dhcp4_parser.cc"
+#line 1168 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 128:
+<<<<<<< HEAD
 #line 548 "dhcp4_parser.yy"
+=======
+#line 548 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr match(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr match(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("match-client-id", match);
 }
-#line 1180 "dhcp4_parser.cc"
+#line 1177 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 129:
+<<<<<<< HEAD
 #line 553 "dhcp4_parser.yy"
+=======
+#line 553 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("authoritative", prf);
 }
-#line 1189 "dhcp4_parser.cc"
+#line 1186 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 130:
+<<<<<<< HEAD
 #line 559 "dhcp4_parser.yy"
+=======
+#line 559 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
 }
-#line 1200 "dhcp4_parser.cc"
+#line 1197 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 131:
+<<<<<<< HEAD
 #line 564 "dhcp4_parser.yy"
+=======
+#line 564 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No interfaces config param is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1210 "dhcp4_parser.cc"
+#line 1207 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 141:
+<<<<<<< HEAD
 #line 583 "dhcp4_parser.yy"
+=======
+#line 583 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1220 "dhcp4_parser.cc"
+#line 1217 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 142:
+<<<<<<< HEAD
 #line 587 "dhcp4_parser.yy"
+=======
+#line 587 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No interfaces config param is required
     // parsing completed
 }
-#line 1229 "dhcp4_parser.cc"
+#line 1226 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 143:
+<<<<<<< HEAD
 #line 592 "dhcp4_parser.yy"
+=======
+#line 592 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1240 "dhcp4_parser.cc"
+#line 1237 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 144:
+<<<<<<< HEAD
 #line 597 "dhcp4_parser.yy"
+=======
+#line 597 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1249 "dhcp4_parser.cc"
+#line 1246 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 145:
+<<<<<<< HEAD
 #line 602 "dhcp4_parser.yy"
+=======
+#line 602 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.DHCP_SOCKET_TYPE);
 }
-#line 1257 "dhcp4_parser.cc"
+#line 1254 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 146:
+<<<<<<< HEAD
 #line 604 "dhcp4_parser.yy"
+=======
+#line 604 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("dhcp-socket-type", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("dhcp-socket-type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1266 "dhcp4_parser.cc"
+#line 1263 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 147:
+<<<<<<< HEAD
 #line 609 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
 #line 1272 "dhcp4_parser.cc"
@@ -1279,192 +1646,282 @@ namespace isc { namespace dhcp {
 
   case 149:
 #line 613 "dhcp4_parser.yy"
+=======
+#line 609 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
+#line 1269 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 148:
+#line 610 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("udp", ctx.loc2pos(yystack_[0].location))); }
+#line 1275 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 149:
+#line 613 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.OUTBOUND_INTERFACE);
 }
-#line 1286 "dhcp4_parser.cc"
+#line 1283 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 150:
+<<<<<<< HEAD
 #line 615 "dhcp4_parser.yy"
+=======
+#line 615 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("outbound-interface", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("outbound-interface", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1295 "dhcp4_parser.cc"
+#line 1292 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 151:
+<<<<<<< HEAD
 #line 620 "dhcp4_parser.yy"
+=======
+#line 620 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(yystack_[0].location)));
+    yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(yystack_[0].location)));
 }
-#line 1303 "dhcp4_parser.cc"
+#line 1300 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 152:
+<<<<<<< HEAD
 #line 622 "dhcp4_parser.yy"
+=======
+#line 622 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("use-routing", ctx.loc2pos(yystack_[0].location)));
+    yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("use-routing", ctx.loc2pos(yystack_[0].location)));
     }
-#line 1311 "dhcp4_parser.cc"
+#line 1308 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 153:
+<<<<<<< HEAD
 #line 626 "dhcp4_parser.yy"
+=======
+#line 626 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("re-detect", b);
 }
-#line 1320 "dhcp4_parser.cc"
+#line 1317 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 154:
+<<<<<<< HEAD
 #line 632 "dhcp4_parser.yy"
+=======
+#line 632 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.LEASE_DATABASE);
 }
-#line 1331 "dhcp4_parser.cc"
+#line 1328 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 155:
+<<<<<<< HEAD
 #line 637 "dhcp4_parser.yy"
+=======
+#line 637 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1342 "dhcp4_parser.cc"
+#line 1339 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 156:
+<<<<<<< HEAD
 #line 644 "dhcp4_parser.yy"
+=======
+#line 644 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sanity-checks", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SANITY_CHECKS);
 }
-#line 1353 "dhcp4_parser.cc"
+#line 1350 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 157:
+<<<<<<< HEAD
 #line 649 "dhcp4_parser.yy"
+=======
+#line 649 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1362 "dhcp4_parser.cc"
+#line 1359 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 161:
+<<<<<<< HEAD
 #line 659 "dhcp4_parser.yy"
+=======
+#line 659 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1370 "dhcp4_parser.cc"
+#line 1367 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 162:
+<<<<<<< HEAD
 #line 661 "dhcp4_parser.yy"
+=======
+#line 661 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
 
-    if ( (string(yystack_[0].value.as < std::string > ()) == "none") ||
-         (string(yystack_[0].value.as < std::string > ()) == "warn") ||
-         (string(yystack_[0].value.as < std::string > ()) == "fix") ||
-         (string(yystack_[0].value.as < std::string > ()) == "fix-del") ||
-         (string(yystack_[0].value.as < std::string > ()) == "del")) {
-        ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    if ( (string(yystack_[0].value.as< std::string > ()) == "none") ||
+         (string(yystack_[0].value.as< std::string > ()) == "warn") ||
+         (string(yystack_[0].value.as< std::string > ()) == "fix") ||
+         (string(yystack_[0].value.as< std::string > ()) == "fix-del") ||
+         (string(yystack_[0].value.as< std::string > ()) == "del")) {
+        ElementPtr user(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
         ctx.stack_.back()->set("lease-checks", user);
         ctx.leave();
     } else {
-        error(yystack_[0].location, "Unsupported 'lease-checks value: " + string(yystack_[0].value.as < std::string > ()) +
+        error(yystack_[0].location, "Unsupported 'lease-checks value: " + string(yystack_[0].value.as< std::string > ()) +
               ", supported values are: none, warn, fix, fix-del, del");
     }
 }
-#line 1390 "dhcp4_parser.cc"
+#line 1387 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 163:
+<<<<<<< HEAD
 #line 677 "dhcp4_parser.yy"
+=======
+#line 677 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hosts-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1401 "dhcp4_parser.cc"
+#line 1398 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 164:
+<<<<<<< HEAD
 #line 682 "dhcp4_parser.yy"
+=======
+#line 682 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1412 "dhcp4_parser.cc"
+#line 1409 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 165:
+<<<<<<< HEAD
 #line 689 "dhcp4_parser.yy"
+=======
+#line 689 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hosts-databases", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1423 "dhcp4_parser.cc"
+#line 1420 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 166:
+<<<<<<< HEAD
 #line 694 "dhcp4_parser.yy"
+=======
+#line 694 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1432 "dhcp4_parser.cc"
+#line 1429 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 171:
+<<<<<<< HEAD
 #line 707 "dhcp4_parser.yy"
+=======
+#line 707 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1442 "dhcp4_parser.cc"
+#line 1439 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 172:
+<<<<<<< HEAD
 #line 711 "dhcp4_parser.yy"
+=======
+#line 711 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1452 "dhcp4_parser.cc"
+#line 1449 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 195:
 #line 743 "dhcp4_parser.yy"
+=======
+  case 196:
+#line 744 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.DATABASE_TYPE);
 }
-#line 1460 "dhcp4_parser.cc"
+#line 1457 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 196:
 #line 745 "dhcp4_parser.yy"
+=======
+  case 197:
+#line 746 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("type", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
+<<<<<<< HEAD
 #line 1469 "dhcp4_parser.cc"
     break;
 
@@ -1494,505 +1951,815 @@ namespace isc { namespace dhcp {
 
   case 201:
 #line 756 "dhcp4_parser.yy"
-    {
-    ctx.enter(ctx.NO_KEYWORD);
-}
-#line 1501 "dhcp4_parser.cc"
+=======
+#line 1466 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 198:
+#line 751 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
+#line 1472 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 199:
+#line 752 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
+#line 1478 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 200:
+#line 753 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
+#line 1484 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 201:
+#line 754 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("cql", ctx.loc2pos(yystack_[0].location))); }
+#line 1490 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 202:
-#line 758 "dhcp4_parser.yy"
+#line 757 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.enter(ctx.NO_KEYWORD);
+}
+#line 1498 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+<<<<<<< HEAD
+  case 202:
+#line 758 "dhcp4_parser.yy"
+=======
+  case 203:
+#line 759 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+    {
+    ElementPtr user(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("user", user);
     ctx.leave();
 }
-#line 1511 "dhcp4_parser.cc"
+#line 1508 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 203:
 #line 764 "dhcp4_parser.yy"
+=======
+  case 204:
+#line 765 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1519 "dhcp4_parser.cc"
+#line 1516 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 204:
 #line 766 "dhcp4_parser.yy"
+=======
+  case 205:
+#line 767 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr pwd(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr pwd(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("password", pwd);
     ctx.leave();
 }
-#line 1529 "dhcp4_parser.cc"
+#line 1526 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 205:
 #line 772 "dhcp4_parser.yy"
+=======
+  case 206:
+#line 773 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1537 "dhcp4_parser.cc"
+#line 1534 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 206:
 #line 774 "dhcp4_parser.yy"
+=======
+  case 207:
+#line 775 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr h(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr h(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host", h);
     ctx.leave();
 }
-#line 1547 "dhcp4_parser.cc"
+#line 1544 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 207:
 #line 780 "dhcp4_parser.yy"
+=======
+  case 208:
+#line 781 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr p(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr p(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", p);
 }
-#line 1556 "dhcp4_parser.cc"
+#line 1553 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 208:
 #line 785 "dhcp4_parser.yy"
+=======
+  case 209:
+#line 786 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1564 "dhcp4_parser.cc"
+#line 1561 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 209:
 #line 787 "dhcp4_parser.yy"
+=======
+  case 210:
+#line 788 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1574 "dhcp4_parser.cc"
+#line 1571 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 210:
 #line 793 "dhcp4_parser.yy"
+=======
+  case 211:
+#line 794 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("persist", n);
 }
-#line 1583 "dhcp4_parser.cc"
+#line 1580 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 211:
 #line 798 "dhcp4_parser.yy"
+=======
+  case 212:
+#line 799 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lfc-interval", n);
 }
-#line 1592 "dhcp4_parser.cc"
+#line 1589 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 212:
 #line 803 "dhcp4_parser.yy"
+=======
+  case 213:
+#line 804 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("readonly", n);
 }
-#line 1601 "dhcp4_parser.cc"
+#line 1598 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 213:
 #line 808 "dhcp4_parser.yy"
+=======
+  case 214:
+#line 809 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("connect-timeout", n);
 }
-#line 1610 "dhcp4_parser.cc"
+#line 1607 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 214:
 #line 813 "dhcp4_parser.yy"
+=======
+  case 215:
+#line 814 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("request-timeout", n);
 }
-#line 1619 "dhcp4_parser.cc"
+#line 1616 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 215:
 #line 818 "dhcp4_parser.yy"
+=======
+  case 216:
+#line 819 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-keepalive", n);
 }
-#line 1628 "dhcp4_parser.cc"
+#line 1625 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 216:
 #line 823 "dhcp4_parser.yy"
+=======
+  case 217:
+#line 824 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-nodelay", n);
 }
-#line 1637 "dhcp4_parser.cc"
+#line 1634 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 217:
 #line 828 "dhcp4_parser.yy"
+=======
+  case 218:
+#line 829 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1645 "dhcp4_parser.cc"
+#line 1642 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 218:
 #line 830 "dhcp4_parser.yy"
+=======
+  case 219:
+#line 831 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr cp(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr cp(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
 }
-#line 1655 "dhcp4_parser.cc"
+#line 1652 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 219:
 #line 836 "dhcp4_parser.yy"
+=======
+  case 220:
+#line 837 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1663 "dhcp4_parser.cc"
+#line 1660 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 220:
 #line 838 "dhcp4_parser.yy"
+=======
+  case 221:
+#line 839 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr ks(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr ks(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
 }
-#line 1673 "dhcp4_parser.cc"
+#line 1670 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 221:
 #line 844 "dhcp4_parser.yy"
+=======
+  case 222:
+#line 845 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1681 "dhcp4_parser.cc"
+#line 1678 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 222:
 #line 846 "dhcp4_parser.yy"
+=======
+  case 223:
+#line 847 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr c(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr c(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("consistency", c);
     ctx.leave();
 }
-#line 1691 "dhcp4_parser.cc"
+#line 1688 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 223:
 #line 852 "dhcp4_parser.yy"
+=======
+  case 224:
+#line 853 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1699 "dhcp4_parser.cc"
+#line 1696 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 224:
 #line 854 "dhcp4_parser.yy"
+=======
+  case 225:
+#line 855 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr c(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr c(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("serial-consistency", c);
     ctx.leave();
 }
-#line 1709 "dhcp4_parser.cc"
+#line 1706 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 225:
 #line 860 "dhcp4_parser.yy"
+=======
+  case 226:
+#line 861 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
 }
-#line 1718 "dhcp4_parser.cc"
+#line 1715 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 226:
 #line 865 "dhcp4_parser.yy"
+=======
+  case 227:
+#line 866 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 }
-#line 1727 "dhcp4_parser.cc"
+#line 1724 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 227:
 #line 870 "dhcp4_parser.yy"
+=======
+  case 228:
+#line 871 "dhcp4_parser.yy" // lalr1.cc:907
+    {
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("max-row-errors", n);
+}
+#line 1733 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 229:
+#line 877 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host-reservation-identifiers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);
 }
-#line 1738 "dhcp4_parser.cc"
+#line 1744 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 228:
 #line 875 "dhcp4_parser.yy"
+=======
+  case 230:
+#line 882 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1747 "dhcp4_parser.cc"
+#line 1753 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 236:
 #line 891 "dhcp4_parser.yy"
+=======
+  case 238:
+#line 898 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(duid);
 }
-#line 1756 "dhcp4_parser.cc"
+#line 1762 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 237:
 #line 896 "dhcp4_parser.yy"
+=======
+  case 239:
+#line 903 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(hwaddr);
 }
-#line 1765 "dhcp4_parser.cc"
+#line 1771 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 238:
 #line 901 "dhcp4_parser.yy"
+=======
+  case 240:
+#line 908 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr circuit(new StringElement("circuit-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(circuit);
 }
-#line 1774 "dhcp4_parser.cc"
+#line 1780 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 239:
 #line 906 "dhcp4_parser.yy"
+=======
+  case 241:
+#line 913 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr client(new StringElement("client-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(client);
 }
-#line 1783 "dhcp4_parser.cc"
+#line 1789 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 240:
 #line 911 "dhcp4_parser.yy"
+=======
+  case 242:
+#line 918 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(flex_id);
 }
-#line 1792 "dhcp4_parser.cc"
+#line 1798 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 241:
 #line 916 "dhcp4_parser.yy"
+=======
+  case 243:
+#line 923 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1803 "dhcp4_parser.cc"
+#line 1809 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 242:
 #line 921 "dhcp4_parser.yy"
+=======
+  case 244:
+#line 928 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1812 "dhcp4_parser.cc"
+#line 1818 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 247:
 #line 934 "dhcp4_parser.yy"
+=======
+  case 249:
+#line 941 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1822 "dhcp4_parser.cc"
+#line 1828 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 248:
 #line 938 "dhcp4_parser.yy"
+=======
+  case 250:
+#line 945 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1832 "dhcp4_parser.cc"
+#line 1838 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 249:
 #line 944 "dhcp4_parser.yy"
+=======
+  case 251:
+#line 951 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the hooks-libraries list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1842 "dhcp4_parser.cc"
+#line 1848 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 250:
 #line 948 "dhcp4_parser.yy"
+=======
+  case 252:
+#line 955 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 1852 "dhcp4_parser.cc"
+#line 1858 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 256:
 #line 963 "dhcp4_parser.yy"
+=======
+  case 258:
+#line 970 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1860 "dhcp4_parser.cc"
+#line 1866 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 257:
 #line 965 "dhcp4_parser.yy"
+=======
+  case 259:
+#line 972 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr lib(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1870 "dhcp4_parser.cc"
+#line 1876 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 258:
 #line 971 "dhcp4_parser.yy"
+=======
+  case 260:
+#line 978 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1878 "dhcp4_parser.cc"
+#line 1884 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 259:
 #line 973 "dhcp4_parser.yy"
+=======
+  case 261:
+#line 980 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("parameters", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1887 "dhcp4_parser.cc"
+#line 1893 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 260:
 #line 979 "dhcp4_parser.yy"
+=======
+  case 262:
+#line 986 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 }
-#line 1898 "dhcp4_parser.cc"
+#line 1904 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 261:
 #line 984 "dhcp4_parser.yy"
+=======
+  case 263:
+#line 991 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No expired lease parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1908 "dhcp4_parser.cc"
+#line 1914 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 270:
 #line 1002 "dhcp4_parser.yy"
+=======
+  case 272:
+#line 1009 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reclaim-timer-wait-time", value);
 }
-#line 1917 "dhcp4_parser.cc"
+#line 1923 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 271:
 #line 1007 "dhcp4_parser.yy"
+=======
+  case 273:
+#line 1014 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
 }
-#line 1926 "dhcp4_parser.cc"
+#line 1932 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 272:
 #line 1012 "dhcp4_parser.yy"
+=======
+  case 274:
+#line 1019 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hold-reclaimed-time", value);
 }
-#line 1935 "dhcp4_parser.cc"
+#line 1941 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 273:
 #line 1017 "dhcp4_parser.yy"
+=======
+  case 275:
+#line 1024 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-leases", value);
 }
-#line 1944 "dhcp4_parser.cc"
+#line 1950 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 274:
 #line 1022 "dhcp4_parser.yy"
+=======
+  case 276:
+#line 1029 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-time", value);
 }
-#line 1953 "dhcp4_parser.cc"
+#line 1959 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 275:
 #line 1027 "dhcp4_parser.yy"
+=======
+  case 277:
+#line 1034 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 }
-#line 1962 "dhcp4_parser.cc"
+#line 1968 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 276:
 #line 1035 "dhcp4_parser.yy"
+=======
+  case 278:
+#line 1042 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet4", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SUBNET4);
 }
-#line 1973 "dhcp4_parser.cc"
+#line 1979 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 277:
 #line 1040 "dhcp4_parser.yy"
+=======
+  case 279:
+#line 1047 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1982 "dhcp4_parser.cc"
+#line 1988 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 282:
 #line 1060 "dhcp4_parser.yy"
+=======
+  case 284:
+#line 1067 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1992 "dhcp4_parser.cc"
+#line 1998 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 283:
 #line 1064 "dhcp4_parser.yy"
+=======
+  case 285:
+#line 1071 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Once we reached this place, the subnet parsing is now complete.
     // If we want to, we can implement default values here.
@@ -2014,174 +2781,265 @@ namespace isc { namespace dhcp {
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2018 "dhcp4_parser.cc"
+#line 2024 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 284:
 #line 1086 "dhcp4_parser.yy"
+=======
+  case 286:
+#line 1093 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the subnet4 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2028 "dhcp4_parser.cc"
+#line 2034 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 285:
 #line 1090 "dhcp4_parser.yy"
+=======
+  case 287:
+#line 1097 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The subnet subnet4 parameter is required
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2038 "dhcp4_parser.cc"
+#line 2044 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 317:
 #line 1133 "dhcp4_parser.yy"
+=======
+  case 319:
+#line 1140 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2046 "dhcp4_parser.cc"
+#line 2052 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 318:
 #line 1135 "dhcp4_parser.yy"
+=======
+  case 320:
+#line 1142 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr subnet(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr subnet(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet", subnet);
     ctx.leave();
 }
-#line 2056 "dhcp4_parser.cc"
+#line 2062 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 319:
 #line 1141 "dhcp4_parser.yy"
+=======
+  case 321:
+#line 1148 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2064 "dhcp4_parser.cc"
+#line 2070 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 320:
 #line 1143 "dhcp4_parser.yy"
+=======
+  case 322:
+#line 1150 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-interface", iface);
     ctx.leave();
 }
-#line 2074 "dhcp4_parser.cc"
+#line 2080 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 321:
 #line 1149 "dhcp4_parser.yy"
+=======
+  case 323:
+#line 1156 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2082 "dhcp4_parser.cc"
+#line 2088 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 322:
 #line 1151 "dhcp4_parser.yy"
+=======
+  case 324:
+#line 1158 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-interface-id", iface);
     ctx.leave();
 }
-#line 2092 "dhcp4_parser.cc"
+#line 2098 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 323:
 #line 1157 "dhcp4_parser.yy"
+=======
+  case 325:
+#line 1164 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2100 "dhcp4_parser.cc"
+#line 2106 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 324:
 #line 1159 "dhcp4_parser.yy"
+=======
+  case 326:
+#line 1166 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-subnet", iface);
     ctx.leave();
 }
-#line 2110 "dhcp4_parser.cc"
+#line 2116 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 325:
 #line 1165 "dhcp4_parser.yy"
+=======
+  case 327:
+#line 1172 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2118 "dhcp4_parser.cc"
+#line 2124 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 326:
 #line 1167 "dhcp4_parser.yy"
+=======
+  case 328:
+#line 1174 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interface", iface);
     ctx.leave();
 }
-#line 2128 "dhcp4_parser.cc"
+#line 2134 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 327:
 #line 1173 "dhcp4_parser.yy"
+=======
+  case 329:
+#line 1180 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2136 "dhcp4_parser.cc"
+#line 2142 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 328:
 #line 1175 "dhcp4_parser.yy"
+=======
+  case 330:
+#line 1182 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr cls(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr cls(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-class", cls);
     ctx.leave();
 }
-#line 2146 "dhcp4_parser.cc"
+#line 2152 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 329:
 #line 1181 "dhcp4_parser.yy"
+=======
+  case 331:
+#line 1188 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2157 "dhcp4_parser.cc"
+#line 2163 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 330:
 #line 1186 "dhcp4_parser.yy"
+=======
+  case 332:
+#line 1193 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2166 "dhcp4_parser.cc"
+#line 2172 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 331:
 #line 1191 "dhcp4_parser.yy"
+=======
+  case 333:
+#line 1198 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.RESERVATION_MODE);
 }
-#line 2174 "dhcp4_parser.cc"
+#line 2180 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 332:
 #line 1193 "dhcp4_parser.yy"
+=======
+  case 334:
+#line 1200 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("reservation-mode", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("reservation-mode", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 2183 "dhcp4_parser.cc"
+#line 2189 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 333:
 #line 1198 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
@@ -2208,100 +3066,178 @@ namespace isc { namespace dhcp {
 
   case 337:
 #line 1204 "dhcp4_parser.yy"
-    {
-    ElementPtr id(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("id", id);
-}
-#line 2216 "dhcp4_parser.cc"
+=======
+  case 335:
+#line 1205 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
+#line 2195 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 336:
+#line 1206 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(yystack_[0].location))); }
+#line 2201 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 337:
+#line 1207 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("global", ctx.loc2pos(yystack_[0].location))); }
+#line 2207 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 338:
+#line 1208 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("all", ctx.loc2pos(yystack_[0].location))); }
+#line 2213 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 339:
+#line 1211 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+    {
+    ElementPtr id(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("id", id);
+}
+#line 2222 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+<<<<<<< HEAD
+  case 338:
 #line 1211 "dhcp4_parser.yy"
+=======
+  case 340:
+#line 1218 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("shared-networks", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SHARED_NETWORK);
 }
-#line 2227 "dhcp4_parser.cc"
+#line 2233 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 339:
 #line 1216 "dhcp4_parser.yy"
+=======
+  case 341:
+#line 1223 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2236 "dhcp4_parser.cc"
+#line 2242 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 344:
 #line 1231 "dhcp4_parser.yy"
+=======
+  case 346:
+#line 1238 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2246 "dhcp4_parser.cc"
+#line 2252 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 345:
 #line 1235 "dhcp4_parser.yy"
+=======
+  case 347:
+#line 1242 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
 }
-#line 2254 "dhcp4_parser.cc"
+#line 2260 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 372:
 #line 1273 "dhcp4_parser.yy"
+=======
+  case 374:
+#line 1280 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("option-def", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DEF);
 }
-#line 2265 "dhcp4_parser.cc"
+#line 2271 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 373:
 #line 1278 "dhcp4_parser.yy"
+=======
+  case 375:
+#line 1285 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2274 "dhcp4_parser.cc"
+#line 2280 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 374:
 #line 1286 "dhcp4_parser.yy"
+=======
+  case 376:
+#line 1293 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2283 "dhcp4_parser.cc"
+#line 2289 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 375:
 #line 1289 "dhcp4_parser.yy"
+=======
+  case 377:
+#line 1296 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // parsing completed
 }
-#line 2291 "dhcp4_parser.cc"
+#line 2297 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 380:
 #line 1305 "dhcp4_parser.yy"
+=======
+  case 382:
+#line 1312 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2301 "dhcp4_parser.cc"
+#line 2307 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 381:
 #line 1309 "dhcp4_parser.yy"
+=======
+  case 383:
+#line 1316 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -2309,21 +3245,31 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2313 "dhcp4_parser.cc"
+#line 2319 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 382:
 #line 1320 "dhcp4_parser.yy"
+=======
+  case 384:
+#line 1327 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the option-def list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2323 "dhcp4_parser.cc"
+#line 2329 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 383:
 #line 1324 "dhcp4_parser.yy"
+=======
+  case 385:
+#line 1331 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -2331,284 +3277,434 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2335 "dhcp4_parser.cc"
+#line 2341 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 399:
 #line 1356 "dhcp4_parser.yy"
+=======
+  case 401:
+#line 1363 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr code(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr code(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("code", code);
 }
-#line 2344 "dhcp4_parser.cc"
+#line 2350 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 401:
 #line 1363 "dhcp4_parser.yy"
+=======
+  case 403:
+#line 1370 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2352 "dhcp4_parser.cc"
+#line 2358 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 402:
 #line 1365 "dhcp4_parser.yy"
+=======
+  case 404:
+#line 1372 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr prf(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr prf(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("type", prf);
     ctx.leave();
 }
-#line 2362 "dhcp4_parser.cc"
+#line 2368 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 403:
 #line 1371 "dhcp4_parser.yy"
+=======
+  case 405:
+#line 1378 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2370 "dhcp4_parser.cc"
+#line 2376 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 404:
 #line 1373 "dhcp4_parser.yy"
+=======
+  case 406:
+#line 1380 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr rtypes(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr rtypes(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("record-types", rtypes);
     ctx.leave();
 }
-#line 2380 "dhcp4_parser.cc"
+#line 2386 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 405:
 #line 1379 "dhcp4_parser.yy"
+=======
+  case 407:
+#line 1386 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2388 "dhcp4_parser.cc"
+#line 2394 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 406:
 #line 1381 "dhcp4_parser.yy"
+=======
+  case 408:
+#line 1388 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr space(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr space(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("space", space);
     ctx.leave();
 }
-#line 2398 "dhcp4_parser.cc"
+#line 2404 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 408:
 #line 1389 "dhcp4_parser.yy"
+=======
+  case 410:
+#line 1396 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2406 "dhcp4_parser.cc"
+#line 2412 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 409:
 #line 1391 "dhcp4_parser.yy"
+=======
+  case 411:
+#line 1398 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr encap(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr encap(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("encapsulate", encap);
     ctx.leave();
 }
-#line 2416 "dhcp4_parser.cc"
+#line 2422 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 410:
 #line 1397 "dhcp4_parser.yy"
+=======
+  case 412:
+#line 1404 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr array(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr array(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("array", array);
 }
-#line 2425 "dhcp4_parser.cc"
+#line 2431 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 411:
 #line 1406 "dhcp4_parser.yy"
+=======
+  case 413:
+#line 1413 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("option-data", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DATA);
 }
-#line 2436 "dhcp4_parser.cc"
+#line 2442 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 412:
 #line 1411 "dhcp4_parser.yy"
+=======
+  case 414:
+#line 1418 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2445 "dhcp4_parser.cc"
+#line 2451 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 417:
 #line 1430 "dhcp4_parser.yy"
+=======
+  case 419:
+#line 1437 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2455 "dhcp4_parser.cc"
+#line 2461 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 418:
 #line 1434 "dhcp4_parser.yy"
+=======
+  case 420:
+#line 1441 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     /// @todo: the code or name parameters are required.
     ctx.stack_.pop_back();
 }
-#line 2464 "dhcp4_parser.cc"
+#line 2470 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 419:
 #line 1442 "dhcp4_parser.yy"
+=======
+  case 421:
+#line 1449 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the option-data list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2474 "dhcp4_parser.cc"
+#line 2480 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 420:
 #line 1446 "dhcp4_parser.yy"
+=======
+  case 422:
+#line 1453 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     /// @todo: the code or name parameters are required.
     // parsing completed
 }
-#line 2483 "dhcp4_parser.cc"
+#line 2489 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 435:
 #line 1479 "dhcp4_parser.yy"
+=======
+  case 437:
+#line 1486 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2491 "dhcp4_parser.cc"
+#line 2497 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 436:
 #line 1481 "dhcp4_parser.yy"
+=======
+  case 438:
+#line 1488 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr data(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr data(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("data", data);
     ctx.leave();
 }
-#line 2501 "dhcp4_parser.cc"
+#line 2507 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 439:
 #line 1491 "dhcp4_parser.yy"
+=======
+  case 441:
+#line 1498 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr space(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr space(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("csv-format", space);
 }
-#line 2510 "dhcp4_parser.cc"
+#line 2516 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 440:
 #line 1496 "dhcp4_parser.yy"
+=======
+  case 442:
+#line 1503 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr persist(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr persist(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("always-send", persist);
 }
-#line 2519 "dhcp4_parser.cc"
+#line 2525 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 441:
 #line 1504 "dhcp4_parser.yy"
+=======
+  case 443:
+#line 1511 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pools", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.POOLS);
 }
-#line 2530 "dhcp4_parser.cc"
+#line 2536 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 442:
 #line 1509 "dhcp4_parser.yy"
+=======
+  case 444:
+#line 1516 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2539 "dhcp4_parser.cc"
+#line 2545 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 447:
 #line 1524 "dhcp4_parser.yy"
+=======
+  case 449:
+#line 1531 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2549 "dhcp4_parser.cc"
+#line 2555 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 448:
 #line 1528 "dhcp4_parser.yy"
+=======
+  case 450:
+#line 1535 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2559 "dhcp4_parser.cc"
+#line 2565 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 449:
 #line 1534 "dhcp4_parser.yy"
+=======
+  case 451:
+#line 1541 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the pool list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2569 "dhcp4_parser.cc"
+#line 2575 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 450:
 #line 1538 "dhcp4_parser.yy"
+=======
+  case 452:
+#line 1545 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2579 "dhcp4_parser.cc"
+#line 2585 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 460:
 #line 1557 "dhcp4_parser.yy"
+=======
+  case 462:
+#line 1564 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2587 "dhcp4_parser.cc"
+#line 2593 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 461:
 #line 1559 "dhcp4_parser.yy"
+=======
+  case 463:
+#line 1566 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr pool(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr pool(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
 }
-#line 2597 "dhcp4_parser.cc"
+#line 2603 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 462:
 #line 1565 "dhcp4_parser.yy"
+=======
+  case 464:
+#line 1572 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2605 "dhcp4_parser.cc"
+#line 2611 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 463:
 #line 1567 "dhcp4_parser.yy"
+=======
+  case 465:
+#line 1574 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr parent = ctx.stack_.back();
-    ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
+    ElementPtr user_context = yystack_[0].value.as< ElementPtr > ();
     ConstElementPtr old = parent->get("user-context");
 
     // Handle already existing user context
@@ -2628,23 +3724,33 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 2632 "dhcp4_parser.cc"
+#line 2638 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 464:
 #line 1590 "dhcp4_parser.yy"
+=======
+  case 466:
+#line 1597 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2640 "dhcp4_parser.cc"
+#line 2646 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 465:
 #line 1592 "dhcp4_parser.yy"
+=======
+  case 467:
+#line 1599 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
-    ElementPtr comment(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr comment(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     user_context->set("comment", comment);
 
     // Handle already existing user context
@@ -2665,451 +3771,691 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 2669 "dhcp4_parser.cc"
+#line 2675 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 466:
 #line 1620 "dhcp4_parser.yy"
+=======
+  case 468:
+#line 1627 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.RESERVATIONS);
 }
-#line 2680 "dhcp4_parser.cc"
+#line 2686 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 467:
 #line 1625 "dhcp4_parser.yy"
+=======
+  case 469:
+#line 1632 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2689 "dhcp4_parser.cc"
+#line 2695 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 472:
 #line 1638 "dhcp4_parser.yy"
+=======
+  case 474:
+#line 1645 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2699 "dhcp4_parser.cc"
+#line 2705 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 473:
 #line 1642 "dhcp4_parser.yy"
+=======
+  case 475:
+#line 1649 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     /// @todo: an identifier parameter is required.
     ctx.stack_.pop_back();
 }
-#line 2708 "dhcp4_parser.cc"
+#line 2714 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 474:
 #line 1647 "dhcp4_parser.yy"
+=======
+  case 476:
+#line 1654 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the reservations list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2718 "dhcp4_parser.cc"
+#line 2724 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 475:
 #line 1651 "dhcp4_parser.yy"
+=======
+  case 477:
+#line 1658 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     /// @todo: an identifier parameter is required.
     // parsing completed
 }
-#line 2727 "dhcp4_parser.cc"
+#line 2733 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 495:
 #line 1682 "dhcp4_parser.yy"
+=======
+  case 497:
+#line 1689 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2735 "dhcp4_parser.cc"
+#line 2741 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 496:
 #line 1684 "dhcp4_parser.yy"
+=======
+  case 498:
+#line 1691 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr next_server(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr next_server(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("next-server", next_server);
     ctx.leave();
 }
-#line 2745 "dhcp4_parser.cc"
+#line 2751 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 497:
 #line 1690 "dhcp4_parser.yy"
+=======
+  case 499:
+#line 1697 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2753 "dhcp4_parser.cc"
+#line 2759 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 498:
 #line 1692 "dhcp4_parser.yy"
+=======
+  case 500:
+#line 1699 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr srv(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr srv(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-hostname", srv);
     ctx.leave();
 }
-#line 2763 "dhcp4_parser.cc"
+#line 2769 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 499:
 #line 1698 "dhcp4_parser.yy"
+=======
+  case 501:
+#line 1705 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2771 "dhcp4_parser.cc"
+#line 2777 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 500:
 #line 1700 "dhcp4_parser.yy"
+=======
+  case 502:
+#line 1707 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr bootfile(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr bootfile(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("boot-file-name", bootfile);
     ctx.leave();
 }
-#line 2781 "dhcp4_parser.cc"
+#line 2787 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 501:
 #line 1706 "dhcp4_parser.yy"
+=======
+  case 503:
+#line 1713 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2789 "dhcp4_parser.cc"
+#line 2795 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 502:
 #line 1708 "dhcp4_parser.yy"
+=======
+  case 504:
+#line 1715 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr addr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr addr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 }
-#line 2799 "dhcp4_parser.cc"
+#line 2805 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 503:
 #line 1714 "dhcp4_parser.yy"
+=======
+  case 505:
+#line 1721 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2810 "dhcp4_parser.cc"
+#line 2816 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 504:
 #line 1719 "dhcp4_parser.yy"
+=======
+  case 506:
+#line 1726 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2819 "dhcp4_parser.cc"
+#line 2825 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 505:
 #line 1724 "dhcp4_parser.yy"
+=======
+  case 507:
+#line 1731 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2827 "dhcp4_parser.cc"
+#line 2833 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 506:
 #line 1726 "dhcp4_parser.yy"
+=======
+  case 508:
+#line 1733 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr d(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr d(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("duid", d);
     ctx.leave();
 }
-#line 2837 "dhcp4_parser.cc"
+#line 2843 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 507:
 #line 1732 "dhcp4_parser.yy"
+=======
+  case 509:
+#line 1739 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2845 "dhcp4_parser.cc"
+#line 2851 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 508:
 #line 1734 "dhcp4_parser.yy"
+=======
+  case 510:
+#line 1741 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hw-address", hw);
     ctx.leave();
 }
-#line 2855 "dhcp4_parser.cc"
+#line 2861 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 509:
 #line 1740 "dhcp4_parser.yy"
+=======
+  case 511:
+#line 1747 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2863 "dhcp4_parser.cc"
+#line 2869 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 510:
 #line 1742 "dhcp4_parser.yy"
+=======
+  case 512:
+#line 1749 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-id", hw);
     ctx.leave();
 }
-#line 2873 "dhcp4_parser.cc"
+#line 2879 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 511:
 #line 1748 "dhcp4_parser.yy"
+=======
+  case 513:
+#line 1755 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2881 "dhcp4_parser.cc"
+#line 2887 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 512:
 #line 1750 "dhcp4_parser.yy"
+=======
+  case 514:
+#line 1757 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("circuit-id", hw);
     ctx.leave();
 }
-#line 2891 "dhcp4_parser.cc"
+#line 2897 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 513:
 #line 1756 "dhcp4_parser.yy"
+=======
+  case 515:
+#line 1763 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2899 "dhcp4_parser.cc"
+#line 2905 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 514:
 #line 1758 "dhcp4_parser.yy"
+=======
+  case 516:
+#line 1765 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flex-id", hw);
     ctx.leave();
 }
-#line 2909 "dhcp4_parser.cc"
+#line 2915 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 515:
 #line 1764 "dhcp4_parser.yy"
+=======
+  case 517:
+#line 1771 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2917 "dhcp4_parser.cc"
+#line 2923 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 516:
 #line 1766 "dhcp4_parser.yy"
+=======
+  case 518:
+#line 1773 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr host(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr host(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname", host);
     ctx.leave();
 }
-#line 2927 "dhcp4_parser.cc"
+#line 2933 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 517:
 #line 1772 "dhcp4_parser.yy"
+=======
+  case 519:
+#line 1779 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2938 "dhcp4_parser.cc"
+#line 2944 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 518:
 #line 1777 "dhcp4_parser.yy"
+=======
+  case 520:
+#line 1784 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2947 "dhcp4_parser.cc"
+#line 2953 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 519:
 #line 1785 "dhcp4_parser.yy"
+=======
+  case 521:
+#line 1792 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("relay", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.RELAY);
 }
-#line 2958 "dhcp4_parser.cc"
+#line 2964 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 520:
 #line 1790 "dhcp4_parser.yy"
+=======
+  case 522:
+#line 1797 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2967 "dhcp4_parser.cc"
+#line 2973 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 523:
 #line 1802 "dhcp4_parser.yy"
+=======
+  case 525:
+#line 1809 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-classes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CLIENT_CLASSES);
 }
-#line 2978 "dhcp4_parser.cc"
+#line 2984 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 524:
 #line 1807 "dhcp4_parser.yy"
+=======
+  case 526:
+#line 1814 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2987 "dhcp4_parser.cc"
+#line 2993 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 527:
 #line 1816 "dhcp4_parser.yy"
+=======
+  case 529:
+#line 1823 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2997 "dhcp4_parser.cc"
+#line 3003 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 528:
 #line 1820 "dhcp4_parser.yy"
+=======
+  case 530:
+#line 1827 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The name client class parameter is required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 3007 "dhcp4_parser.cc"
+#line 3013 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 545:
 #line 1849 "dhcp4_parser.yy"
+=======
+  case 547:
+#line 1856 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3015 "dhcp4_parser.cc"
+#line 3021 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 546:
 #line 1851 "dhcp4_parser.yy"
+=======
+  case 548:
+#line 1858 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr test(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr test(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 }
-#line 3025 "dhcp4_parser.cc"
+#line 3031 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 547:
 #line 1857 "dhcp4_parser.yy"
+=======
+  case 549:
+#line 1864 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("only-if-required", b);
 }
-#line 3034 "dhcp4_parser.cc"
+#line 3040 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 548:
 #line 1866 "dhcp4_parser.yy"
+=======
+  case 550:
+#line 1873 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr time(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr time(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 }
-#line 3043 "dhcp4_parser.cc"
+#line 3049 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 549:
 #line 1873 "dhcp4_parser.yy"
+=======
+  case 551:
+#line 1880 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 3054 "dhcp4_parser.cc"
+#line 3060 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 550:
 #line 1878 "dhcp4_parser.yy"
+=======
+  case 552:
+#line 1885 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3063 "dhcp4_parser.cc"
+#line 3069 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 558:
 #line 1894 "dhcp4_parser.yy"
+=======
+  case 560:
+#line 1901 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3071 "dhcp4_parser.cc"
+#line 3077 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 559:
 #line 1896 "dhcp4_parser.yy"
+=======
+  case 561:
+#line 1903 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr stype(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr stype(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
     ctx.leave();
 }
-#line 3081 "dhcp4_parser.cc"
+#line 3087 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 560:
 #line 1902 "dhcp4_parser.yy"
+=======
+  case 562:
+#line 1909 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3089 "dhcp4_parser.cc"
+#line 3095 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 561:
 #line 1904 "dhcp4_parser.yy"
+=======
+  case 563:
+#line 1911 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 3099 "dhcp4_parser.cc"
+#line 3105 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 562:
 #line 1913 "dhcp4_parser.yy"
+=======
+  case 564:
+#line 1920 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3107 "dhcp4_parser.cc"
+#line 3113 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 563:
 #line 1915 "dhcp4_parser.yy"
+=======
+  case 565:
+#line 1922 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr qc = yystack_[0].value.as < ElementPtr > ();
+    ElementPtr qc = yystack_[0].value.as< ElementPtr > ();
     ctx.stack_.back()->set("dhcp-queue-control", qc);
 
     // Doing this manually, because dhcp-queue-control
@@ -3141,158 +4487,239 @@ namespace isc { namespace dhcp {
 
     ctx.leave();
 }
-#line 3145 "dhcp4_parser.cc"
+#line 3151 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 564:
 #line 1951 "dhcp4_parser.yy"
+=======
+  case 566:
+#line 1958 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP_DDNS);
 }
-#line 3156 "dhcp4_parser.cc"
+#line 3162 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 565:
 #line 1956 "dhcp4_parser.yy"
+=======
+  case 567:
+#line 1963 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3167 "dhcp4_parser.cc"
+#line 3173 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 566:
 #line 1963 "dhcp4_parser.yy"
+=======
+  case 568:
+#line 1970 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the dhcp-ddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3177 "dhcp4_parser.cc"
+#line 3183 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 567:
 #line 1967 "dhcp4_parser.yy"
+=======
+  case 569:
+#line 1974 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 3187 "dhcp4_parser.cc"
+#line 3193 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 588:
 #line 1997 "dhcp4_parser.yy"
+=======
+  case 590:
+#line 2004 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enable-updates", b);
 }
-#line 3196 "dhcp4_parser.cc"
+#line 3202 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 589:
 #line 2002 "dhcp4_parser.yy"
+=======
+  case 591:
+#line 2009 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3204 "dhcp4_parser.cc"
+#line 3210 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 590:
 #line 2004 "dhcp4_parser.yy"
+=======
+  case 592:
+#line 2011 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("qualifying-suffix", s);
     ctx.leave();
 }
-#line 3214 "dhcp4_parser.cc"
+#line 3220 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 591:
 #line 2010 "dhcp4_parser.yy"
+=======
+  case 593:
+#line 2017 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3222 "dhcp4_parser.cc"
+#line 3228 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 592:
 #line 2012 "dhcp4_parser.yy"
+=======
+  case 594:
+#line 2019 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-ip", s);
     ctx.leave();
 }
-#line 3232 "dhcp4_parser.cc"
+#line 3238 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 593:
 #line 2018 "dhcp4_parser.yy"
+=======
+  case 595:
+#line 2025 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-port", i);
 }
-#line 3241 "dhcp4_parser.cc"
+#line 3247 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 594:
 #line 2023 "dhcp4_parser.yy"
+=======
+  case 596:
+#line 2030 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3249 "dhcp4_parser.cc"
+#line 3255 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 595:
 #line 2025 "dhcp4_parser.yy"
+=======
+  case 597:
+#line 2032 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-ip", s);
     ctx.leave();
 }
-#line 3259 "dhcp4_parser.cc"
+#line 3265 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 596:
 #line 2031 "dhcp4_parser.yy"
+=======
+  case 598:
+#line 2038 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-port", i);
 }
-#line 3268 "dhcp4_parser.cc"
+#line 3274 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 597:
 #line 2036 "dhcp4_parser.yy"
+=======
+  case 599:
+#line 2043 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-queue-size", i);
 }
-#line 3277 "dhcp4_parser.cc"
+#line 3283 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 598:
 #line 2041 "dhcp4_parser.yy"
+=======
+  case 600:
+#line 2048 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NCR_PROTOCOL);
 }
-#line 3285 "dhcp4_parser.cc"
+#line 3291 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 599:
 #line 2043 "dhcp4_parser.yy"
+=======
+  case 601:
+#line 2050 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3294 "dhcp4_parser.cc"
+#line 3300 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 600:
 #line 2049 "dhcp4_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
@@ -3307,456 +4734,717 @@ namespace isc { namespace dhcp {
 
   case 602:
 #line 2053 "dhcp4_parser.yy"
-    {
-    ctx.enter(ctx.NCR_FORMAT);
-}
-#line 3314 "dhcp4_parser.cc"
+=======
+  case 602:
+#line 2056 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
+#line 3306 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 603:
+#line 2057 "dhcp4_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
+#line 3312 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+  case 604:
+#line 2060 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+    {
+    ctx.enter(ctx.NCR_FORMAT);
+}
+#line 3320 "dhcp4_parser.cc" // lalr1.cc:907
+    break;
+
+<<<<<<< HEAD
+  case 603:
 #line 2055 "dhcp4_parser.yy"
+=======
+  case 605:
+#line 2062 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 }
-#line 3324 "dhcp4_parser.cc"
+#line 3330 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 604:
 #line 2061 "dhcp4_parser.yy"
+=======
+  case 606:
+#line 2068 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("override-no-update", b);
 }
-#line 3333 "dhcp4_parser.cc"
+#line 3339 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 605:
 #line 2066 "dhcp4_parser.yy"
+=======
+  case 607:
+#line 2073 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("override-client-update", b);
 }
-#line 3342 "dhcp4_parser.cc"
+#line 3348 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 606:
 #line 2071 "dhcp4_parser.yy"
+=======
+  case 608:
+#line 2078 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
 }
-#line 3350 "dhcp4_parser.cc"
+#line 3356 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 607:
 #line 2073 "dhcp4_parser.yy"
+=======
+  case 609:
+#line 2080 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("replace-client-name", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("replace-client-name", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3359 "dhcp4_parser.cc"
+#line 3365 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 608:
 #line 2079 "dhcp4_parser.yy"
+=======
+  case 610:
+#line 2086 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location)));
+      yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3367 "dhcp4_parser.cc"
+#line 3373 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 609:
 #line 2082 "dhcp4_parser.yy"
+=======
+  case 611:
+#line 2089 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("never", ctx.loc2pos(yystack_[0].location)));
+      yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("never", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3375 "dhcp4_parser.cc"
+#line 3381 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 610:
 #line 2085 "dhcp4_parser.yy"
+=======
+  case 612:
+#line 2092 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("always", ctx.loc2pos(yystack_[0].location)));
+      yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("always", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3383 "dhcp4_parser.cc"
+#line 3389 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 611:
 #line 2088 "dhcp4_parser.yy"
+=======
+  case 613:
+#line 2095 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-      yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(yystack_[0].location)));
+      yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3391 "dhcp4_parser.cc"
+#line 3397 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 612:
 #line 2091 "dhcp4_parser.yy"
+=======
+  case 614:
+#line 2098 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
       error(yystack_[0].location, "boolean values for the replace-client-name are "
                 "no longer supported");
       }
-#line 3400 "dhcp4_parser.cc"
+#line 3406 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 613:
 #line 2097 "dhcp4_parser.yy"
+=======
+  case 615:
+#line 2104 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3408 "dhcp4_parser.cc"
+#line 3414 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 614:
 #line 2099 "dhcp4_parser.yy"
+=======
+  case 616:
+#line 2106 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("generated-prefix", s);
     ctx.leave();
 }
-#line 3418 "dhcp4_parser.cc"
+#line 3424 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 615:
 #line 2105 "dhcp4_parser.yy"
+=======
+  case 617:
+#line 2112 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3426 "dhcp4_parser.cc"
+#line 3432 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 616:
 #line 2107 "dhcp4_parser.yy"
+=======
+  case 618:
+#line 2114 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-set", s);
     ctx.leave();
 }
-#line 3436 "dhcp4_parser.cc"
+#line 3442 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 617:
 #line 2113 "dhcp4_parser.yy"
+=======
+  case 619:
+#line 2120 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3444 "dhcp4_parser.cc"
+#line 3450 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 618:
 #line 2115 "dhcp4_parser.yy"
+=======
+  case 620:
+#line 2122 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
 }
-#line 3454 "dhcp4_parser.cc"
+#line 3460 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 619:
 #line 2124 "dhcp4_parser.yy"
+=======
+  case 621:
+#line 2131 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3462 "dhcp4_parser.cc"
+#line 3468 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 620:
 #line 2126 "dhcp4_parser.yy"
+=======
+  case 622:
+#line 2133 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3471 "dhcp4_parser.cc"
+#line 3477 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 621:
 #line 2131 "dhcp4_parser.yy"
+=======
+  case 623:
+#line 2138 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3479 "dhcp4_parser.cc"
+#line 3485 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 622:
 #line 2133 "dhcp4_parser.yy"
+=======
+  case 624:
+#line 2140 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3488 "dhcp4_parser.cc"
+#line 3494 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 623:
 #line 2138 "dhcp4_parser.yy"
+=======
+  case 625:
+#line 2145 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3496 "dhcp4_parser.cc"
+#line 3502 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 624:
 #line 2140 "dhcp4_parser.yy"
+=======
+  case 626:
+#line 2147 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ctx.stack_.back()->set("Control-agent", yystack_[0].value.as < ElementPtr > ());
+    ctx.stack_.back()->set("Control-agent", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3505 "dhcp4_parser.cc"
+#line 3511 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 625:
 #line 2145 "dhcp4_parser.yy"
+=======
+  case 627:
+#line 2152 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-control", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.CONFIG_CONTROL);
 }
-#line 3516 "dhcp4_parser.cc"
+#line 3522 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 626:
 #line 2150 "dhcp4_parser.yy"
+=======
+  case 628:
+#line 2157 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No config control params are required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3526 "dhcp4_parser.cc"
+#line 3532 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 627:
 #line 2156 "dhcp4_parser.yy"
+=======
+  case 629:
+#line 2163 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the config-control map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3536 "dhcp4_parser.cc"
+#line 3542 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 628:
 #line 2160 "dhcp4_parser.yy"
+=======
+  case 630:
+#line 2167 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // No config_control params are required
     // parsing completed
 }
-#line 3545 "dhcp4_parser.cc"
+#line 3551 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 633:
 #line 2175 "dhcp4_parser.yy"
+=======
+  case 635:
+#line 2182 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-databases", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CONFIG_DATABASE);
 }
-#line 3556 "dhcp4_parser.cc"
+#line 3562 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 634:
 #line 2180 "dhcp4_parser.yy"
+=======
+  case 636:
+#line 2187 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3565 "dhcp4_parser.cc"
+#line 3571 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 635:
 #line 2185 "dhcp4_parser.yy"
+=======
+  case 637:
+#line 2192 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-fetch-wait-time", value);
 }
-#line 3574 "dhcp4_parser.cc"
+#line 3580 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 636:
 #line 2195 "dhcp4_parser.yy"
+=======
+  case 638:
+#line 2202 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 3585 "dhcp4_parser.cc"
+#line 3591 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 637:
 #line 2200 "dhcp4_parser.yy"
+=======
+  case 639:
+#line 2207 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3594 "dhcp4_parser.cc"
+#line 3600 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 638:
 #line 2205 "dhcp4_parser.yy"
+=======
+  case 640:
+#line 2212 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // Parse the Logging map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3604 "dhcp4_parser.cc"
+#line 3610 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 639:
 #line 2209 "dhcp4_parser.yy"
+=======
+  case 641:
+#line 2216 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     // parsing completed
 }
-#line 3612 "dhcp4_parser.cc"
+#line 3618 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 643:
 #line 2225 "dhcp4_parser.yy"
+=======
+  case 645:
+#line 2232 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 3623 "dhcp4_parser.cc"
+#line 3629 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 644:
 #line 2230 "dhcp4_parser.yy"
+=======
+  case 646:
+#line 2237 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3632 "dhcp4_parser.cc"
+#line 3638 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 647:
 #line 2242 "dhcp4_parser.yy"
+=======
+  case 649:
+#line 2249 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 3642 "dhcp4_parser.cc"
+#line 3648 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 648:
 #line 2246 "dhcp4_parser.yy"
+=======
+  case 650:
+#line 2253 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
 }
-#line 3650 "dhcp4_parser.cc"
+#line 3656 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 658:
 #line 2263 "dhcp4_parser.yy"
+=======
+  case 660:
+#line 2270 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr dl(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 3659 "dhcp4_parser.cc"
+#line 3665 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 659:
 #line 2268 "dhcp4_parser.yy"
+=======
+  case 661:
+#line 2275 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3667 "dhcp4_parser.cc"
+#line 3673 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 660:
 #line 2270 "dhcp4_parser.yy"
+=======
+  case 662:
+#line 2277 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 3677 "dhcp4_parser.cc"
+#line 3683 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 661:
 #line 2276 "dhcp4_parser.yy"
+=======
+  case 663:
+#line 2283 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 3688 "dhcp4_parser.cc"
+#line 3694 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 662:
 #line 2281 "dhcp4_parser.yy"
+=======
+  case 664:
+#line 2288 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3697 "dhcp4_parser.cc"
+#line 3703 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 665:
 #line 2290 "dhcp4_parser.yy"
+=======
+  case 667:
+#line 2297 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3707 "dhcp4_parser.cc"
+#line 3713 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 666:
 #line 2294 "dhcp4_parser.yy"
+=======
+  case 668:
+#line 2301 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.stack_.pop_back();
 }
-#line 3715 "dhcp4_parser.cc"
+#line 3721 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 674:
 #line 2309 "dhcp4_parser.yy"
+=======
+  case 675:
+#line 2315 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3723 "dhcp4_parser.cc"
+#line 3729 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 675:
 #line 2311 "dhcp4_parser.yy"
+=======
+  case 676:
+#line 2317 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 3733 "dhcp4_parser.cc"
+#line 3739 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 676:
 #line 2317 "dhcp4_parser.yy"
+=======
+  case 677:
+#line 2323 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr flush(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 3742 "dhcp4_parser.cc"
+#line 3748 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 677:
 #line 2322 "dhcp4_parser.yy"
+=======
+  case 678:
+#line 2328 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr maxsize(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 3751 "dhcp4_parser.cc"
+#line 3757 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
   case 678:
 #line 2327 "dhcp4_parser.yy"
+=======
+  case 679:
+#line 2333 "dhcp4_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
     {
-    ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr maxver(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 3760 "dhcp4_parser.cc"
+#line 3766 "dhcp4_parser.cc" // lalr1.cc:907
     break;
 
   case 679:
@@ -3778,8 +5466,12 @@ namespace isc { namespace dhcp {
     break;
 
 
+<<<<<<< HEAD
 #line 3782 "dhcp4_parser.cc"
 
+=======
+#line 3770 "dhcp4_parser.cc" // lalr1.cc:907
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
             default:
               break;
             }
@@ -3787,7 +5479,6 @@ namespace isc { namespace dhcp {
 #if YY_EXCEPTIONS
       catch (const syntax_error& yyexc)
         {
-          YYCDEBUG << "Caught exception: " << yyexc.what() << '\n';
           error (yyexc);
           YYERROR;
         }
@@ -3801,7 +5492,6 @@ namespace isc { namespace dhcp {
       yypush_ (YY_NULLPTR, YY_MOVE (yylhs));
     }
     goto yynewstate;
-
 
   /*--------------------------------------.
   | yyerrlab -- here on detecting error.  |
@@ -3839,17 +5529,17 @@ namespace isc { namespace dhcp {
   | yyerrorlab -- error raised explicitly by YYERROR.  |
   `---------------------------------------------------*/
   yyerrorlab:
-    /* Pacify compilers when the user code never invokes YYERROR and
-       the label yyerrorlab therefore never appears in user code.  */
-    if (false)
-      YYERROR;
 
+    /* Pacify compilers like GCC when the user code never invokes
+       YYERROR and the label yyerrorlab therefore never appears in user
+       code.  */
+    if (false)
+      goto yyerrorlab;
     /* Do not reclaim the symbols of the rule whose action triggered
        this YYERROR.  */
     yypop_ (yylen);
     yylen = 0;
     goto yyerrlab1;
-
 
   /*-------------------------------------------------------------.
   | yyerrlab1 -- common code for both syntax error and YYERROR.  |
@@ -3891,26 +5581,16 @@ namespace isc { namespace dhcp {
     }
     goto yynewstate;
 
-
-  /*-------------------------------------.
-  | yyacceptlab -- YYACCEPT comes here.  |
-  `-------------------------------------*/
+    // Accept.
   yyacceptlab:
     yyresult = 0;
     goto yyreturn;
 
-
-  /*-----------------------------------.
-  | yyabortlab -- YYABORT comes here.  |
-  `-----------------------------------*/
+    // Abort.
   yyabortlab:
     yyresult = 1;
     goto yyreturn;
 
-
-  /*-----------------------------------------------------.
-  | yyreturn -- parsing is finished, return the result.  |
-  `-----------------------------------------------------*/
   yyreturn:
     if (!yyla.empty ())
       yy_destroy_ ("Cleanup: discarding lookahead", yyla);
@@ -4049,13 +5729,14 @@ namespace isc { namespace dhcp {
   }
 
 
-  const short Dhcp4Parser::yypact_ninf_ = -837;
+  const short Dhcp4Parser::yypact_ninf_ = -840;
 
   const signed char Dhcp4Parser::yytable_ninf_ = -1;
 
   const short
   Dhcp4Parser::yypact_[] =
   {
+<<<<<<< HEAD
      317,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
     -837,  -837,  -837,  -837,  -837,    32,    21,    71,    80,    98,
      114,   132,   136,   155,   183,   192,   209,   252,   260,   263,
@@ -4166,6 +5847,117 @@ namespace isc { namespace dhcp {
     -837,  -837,  -837,  -837,  -837,  -837,   781,   648,   661,   664,
      838,    13,  -837,   708,  -837,  -837,  -837,   709,  -837,  -837,
     -837
+=======
+     494,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,    47,    21,    56,    76,   105,
+     118,   135,   137,   149,   170,   172,   183,   193,   225,   257,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,    21,   -93,
+      17,   155,    29,    60,    55,   413,   154,    18,   270,   -37,
+     479,    97,   211,  -840,    94,   254,   267,   280,   272,  -840,
+    -840,  -840,  -840,  -840,   322,  -840,    70,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,   327,   328,   334,  -840,
+    -840,  -840,  -840,  -840,  -840,   335,   336,   338,   345,   346,
+     347,   348,   350,   353,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,   354,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,    93,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,   360,  -840,   108,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,   361,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,   123,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,   150,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,   291,   363,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,   359,  -840,
+    -840,   364,  -840,  -840,  -840,   365,  -840,  -840,   362,   369,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,   371,   372,  -840,  -840,  -840,  -840,   370,
+     374,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,   159,  -840,  -840,  -840,   375,  -840,  -840,
+     376,  -840,   377,   380,  -840,  -840,   384,   387,  -840,  -840,
+    -840,  -840,  -840,   186,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+     230,  -840,  -840,  -840,   388,   236,  -840,  -840,  -840,  -840,
+      21,    21,  -840,   199,   389,   390,   392,   395,   397,  -840,
+      17,  -840,   402,   404,   405,   234,   235,   238,   409,   415,
+     416,   417,   419,   425,   263,   283,   284,   286,   287,   268,
+     288,   289,   292,   462,   464,   466,   467,   468,   469,   470,
+     471,   472,   473,   474,   475,   477,   309,   478,   482,   483,
+     487,   488,   489,   155,  -840,   490,   491,   492,   320,    29,
+    -840,   496,   497,   498,   499,   500,   501,   331,   503,   504,
+     506,    60,  -840,   507,    55,  -840,   508,   509,   510,   517,
+     519,   520,   521,   522,  -840,   413,  -840,   523,   524,   355,
+     525,   530,   531,   366,  -840,    18,   532,   373,   378,  -840,
+     270,   533,   535,   142,  -840,   379,   536,   538,   382,   543,
+     385,   391,   544,   545,   386,   394,   547,   549,   479,  -840,
+      97,  -840,   550,   393,   211,  -840,  -840,  -840,   558,   476,
+     560,    21,    21,    21,  -840,   562,   566,   567,  -840,  -840,
+    -840,   403,   406,   407,   569,   572,   578,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,   410,   580,   581,   583,
+     584,   585,   420,   243,   586,   588,   591,   592,   593,  -840,
+     595,   585,   597,   424,   431,   594,  -840,   614,   218,   307,
+    -840,  -840,   446,   448,   450,   622,   454,   455,  -840,   614,
+     457,   625,  -840,   459,  -840,   614,   502,   505,   511,   512,
+     513,   514,   515,  -840,   516,   518,  -840,   526,   527,   528,
+    -840,  -840,   529,  -840,  -840,  -840,   534,    21,  -840,  -840,
+     537,   539,  -840,   540,  -840,  -840,    14,   449,  -840,  -840,
+      28,   541,  -840,  -840,   663,  -840,  -840,    21,   155,    97,
+    -840,  -840,  -840,   211,    29,   646,  -840,  -840,  -840,   596,
+     596,   664,  -840,   665,   666,   667,   668,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,    31,   670,   671,   673,    91,
+     -15,  -840,   479,  -840,  -840,   674,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,   675,  -840,  -840,
+    -840,  -840,   176,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,   664,  -840,   239,   240,   250,   262,
+    -840,   264,  -840,  -840,  -840,  -840,  -840,  -840,   679,   680,
+     687,   689,   690,  -840,  -840,  -840,  -840,   691,   692,   693,
+     694,   695,   700,  -840,   265,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,   271,  -840,   699,   703,
+    -840,  -840,   701,   706,  -840,  -840,   704,   709,  -840,  -840,
+     710,   714,  -840,  -840,   712,   716,  -840,  -840,  -840,  -840,
+    -840,  -840,    59,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+      74,  -840,  -840,   715,   717,  -840,  -840,   718,   719,  -840,
+     721,   722,   723,   724,   725,   726,   275,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,   279,
+    -840,  -840,  -840,   281,  -840,   107,  -840,   557,  -840,   727,
+     720,  -840,  -840,  -840,  -840,   728,   729,  -840,  -840,  -840,
+    -840,   730,   646,  -840,   733,   734,   735,   736,   568,   555,
+     570,   564,   571,   738,   740,   743,   744,   574,   575,   576,
+     577,   579,   582,   596,  -840,  -840,   596,  -840,   664,    60,
+    -840,   665,    18,  -840,   666,   270,  -840,   667,   233,  -840,
+     668,    31,  -840,   460,   670,  -840,   413,  -840,   671,   -37,
+    -840,   673,   587,   589,   590,   598,   599,   600,    91,  -840,
+     749,   750,   -15,  -840,  -840,    78,   674,  -840,  -840,   752,
+     756,    55,  -840,   675,   751,  -840,  -840,   602,  -840,   325,
+     603,   604,   605,  -840,  -840,  -840,  -840,  -840,   606,   607,
+     608,   609,  -840,  -840,  -840,  -840,  -840,  -840,  -840,   295,
+    -840,   304,  -840,   753,  -840,   755,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,   305,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,   762,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,   759,   757,  -840,  -840,
+    -840,  -840,  -840,   760,  -840,   306,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,   610,   611,  -840,  -840,   765,  -840,
+    -840,  -840,  -840,  -840,   308,  -840,  -840,  -840,  -840,  -840,
+    -840,   612,   312,  -840,   614,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,   233,  -840,   767,   613,  -840,   460,  -840,  -840,
+    -840,  -840,   768,   616,   783,    78,  -840,  -840,  -840,  -840,
+    -840,   620,  -840,  -840,   791,  -840,   623,  -840,  -840,   781,
+    -840,  -840,   196,  -840,   -49,   781,  -840,  -840,   798,   807,
+     808,   314,  -840,  -840,  -840,  -840,  -840,  -840,   813,   642,
+     653,   661,   -49,  -840,   681,  -840,  -840,  -840,  -840,  -840
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const unsigned short
@@ -4175,39 +5967,39 @@ namespace isc { namespace dhcp {
       20,    22,    24,    26,    28,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        1,    45,    38,    34,    33,    30,    31,    32,    37,     3,
-      35,    36,    58,     5,    70,     7,   141,     9,   284,    11,
-     449,    13,   474,    15,   374,    17,   382,    19,   419,    21,
-     249,    23,   566,    25,   638,    27,   627,    29,    47,    41,
-       0,     0,     0,     0,     0,   476,     0,   384,   421,     0,
+      35,    36,    58,     5,    70,     7,   141,     9,   286,    11,
+     451,    13,   476,    15,   376,    17,   384,    19,   421,    21,
+     251,    23,   568,    25,   640,    27,   629,    29,    47,    41,
+       0,     0,     0,     0,     0,   478,     0,   386,   423,     0,
        0,     0,     0,    49,     0,    48,     0,     0,    42,    68,
-     636,   619,   621,   623,     0,    67,     0,    60,    62,    64,
-      65,    66,    63,   625,   130,   156,     0,     0,     0,   495,
-     497,   499,   154,   163,   165,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   125,   276,   372,   411,   338,   462,
-     464,   331,   227,   523,   466,   241,   260,     0,   549,   562,
-     564,   615,   617,   643,   115,     0,    72,    74,    75,    76,
+     638,   621,   623,   625,     0,    67,     0,    60,    62,    64,
+      65,    66,    63,   627,   130,   156,     0,     0,     0,   497,
+     499,   501,   154,   163,   165,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   125,   278,   374,   413,   340,   464,
+     466,   333,   229,   525,   468,   243,   262,     0,   551,   564,
+     566,   617,   619,   645,   115,     0,    72,    74,    75,    76,
       77,    78,   109,   110,   111,    79,   107,    96,    97,    98,
       82,    83,   104,    84,    85,    86,    90,    91,    80,   108,
       81,    88,    89,   102,   103,   105,    99,   100,   101,    87,
       92,    93,    94,    95,   113,   114,   106,   112,   143,   145,
      149,     0,   140,     0,   132,   134,   135,   136,   137,   138,
-     139,   319,   321,   323,   441,   317,   325,     0,   329,   327,
-     519,   316,   288,   289,   290,   291,   292,   313,   314,   315,
-     303,   304,     0,   286,   295,   308,   309,   310,   296,   298,
-     299,   301,   297,   293,   294,   311,   312,   300,   305,   306,
-     307,   302,   460,   459,   455,   456,   454,     0,   451,   453,
-     457,   458,   517,   505,   507,   511,   509,   515,   513,   501,
-     494,   488,   492,   493,     0,   477,   478,   489,   490,   491,
-     485,   480,   486,   482,   483,   484,   487,   481,     0,   401,
-     208,     0,   405,   403,   408,     0,   397,   398,     0,   385,
-     386,   388,   400,   389,   390,   391,   407,   392,   393,   394,
-     395,   396,   435,     0,     0,   433,   434,   437,   438,     0,
-     422,   423,   425,   426,   427,   428,   429,   430,   431,   432,
-     256,   258,   253,     0,   251,   254,   255,     0,   589,   591,
-       0,   594,     0,     0,   598,   602,     0,     0,   606,   613,
-     587,   585,   586,     0,   568,   570,   571,   572,   573,   574,
-     575,   576,   577,   578,   579,   580,   581,   582,   583,   584,
-       0,   640,   642,   633,     0,     0,   629,   631,   632,    46,
+     139,   321,   323,   325,   443,   319,   327,     0,   331,   329,
+     521,   318,   290,   291,   292,   293,   294,   315,   316,   317,
+     305,   306,     0,   288,   297,   310,   311,   312,   298,   300,
+     301,   303,   299,   295,   296,   313,   314,   302,   307,   308,
+     309,   304,   462,   461,   457,   458,   456,     0,   453,   455,
+     459,   460,   519,   507,   509,   513,   511,   517,   515,   503,
+     496,   490,   494,   495,     0,   479,   480,   491,   492,   493,
+     487,   482,   488,   484,   485,   486,   489,   483,     0,   403,
+     209,     0,   407,   405,   410,     0,   399,   400,     0,   387,
+     388,   390,   402,   391,   392,   393,   409,   394,   395,   396,
+     397,   398,   437,     0,     0,   435,   436,   439,   440,     0,
+     424,   425,   427,   428,   429,   430,   431,   432,   433,   434,
+     258,   260,   255,     0,   253,   256,   257,     0,   591,   593,
+       0,   596,     0,     0,   600,   604,     0,     0,   608,   615,
+     589,   587,   588,     0,   570,   572,   573,   574,   575,   576,
+     577,   578,   579,   580,   581,   582,   583,   584,   585,   586,
+       0,   642,   644,   635,     0,     0,   631,   633,   634,    46,
        0,     0,    39,     0,     0,     0,     0,     0,     0,    57,
        0,    59,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
@@ -4215,47 +6007,48 @@ namespace isc { namespace dhcp {
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,    71,     0,     0,     0,     0,     0,
      142,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,   285,     0,     0,   450,     0,     0,     0,     0,
-       0,     0,     0,     0,   475,     0,   375,     0,     0,     0,
-       0,     0,     0,     0,   383,     0,     0,     0,     0,   420,
-       0,     0,     0,     0,   250,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   567,
-       0,   639,     0,     0,     0,   628,    50,    43,     0,     0,
+       0,     0,   287,     0,     0,   452,     0,     0,     0,     0,
+       0,     0,     0,     0,   477,     0,   377,     0,     0,     0,
+       0,     0,     0,     0,   385,     0,     0,     0,     0,   422,
+       0,     0,     0,     0,   252,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,   569,
+       0,   641,     0,     0,     0,   630,    50,    43,     0,     0,
        0,     0,     0,     0,    61,     0,     0,     0,   127,   128,
      129,     0,     0,     0,     0,     0,     0,   116,   117,   118,
      119,   120,   121,   122,   123,   124,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   548,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,   550,
        0,     0,     0,     0,     0,     0,    73,     0,     0,     0,
-     153,   133,     0,     0,     0,     0,     0,     0,   337,     0,
-       0,     0,   287,     0,   452,     0,     0,     0,     0,     0,
-       0,     0,     0,   479,     0,     0,   399,     0,     0,     0,
-     410,   387,     0,   439,   440,   424,     0,     0,   252,   588,
-       0,     0,   593,     0,   596,   597,     0,     0,   604,   605,
-       0,     0,   569,   641,     0,   635,   630,     0,     0,     0,
-     620,   622,   624,     0,     0,     0,   496,   498,   500,     0,
-       0,   167,   126,   278,   376,   413,   340,    40,   463,   465,
-     333,   334,   335,   336,   332,     0,     0,   468,   243,     0,
-       0,   563,     0,   616,   618,     0,    51,   144,   147,   148,
-     146,   151,   152,   150,   320,   322,   324,   443,   318,   326,
-     330,   328,     0,   461,   518,   506,   508,   512,   510,   516,
-     514,   502,   402,   209,   406,   404,   409,   436,   257,   259,
-     590,   592,   595,   600,   601,   599,   603,   608,   609,   610,
-     611,   612,   607,   614,   167,    44,     0,     0,     0,     0,
-     161,     0,   158,   160,   195,   201,   203,   205,     0,     0,
-       0,     0,     0,   217,   219,   221,   223,     0,     0,     0,
-       0,     0,   194,     0,   173,   175,   176,   177,   178,   179,
-     180,   181,   182,   183,   184,   188,   189,   190,   185,   191,
-     192,   193,   186,   187,     0,   171,     0,   168,   169,   282,
-       0,   279,   280,   380,     0,   377,   378,   417,     0,   414,
-     415,   344,     0,   341,   342,   236,   237,   238,   239,   240,
-       0,   229,   231,   232,   233,   234,   235,   527,     0,   525,
-     472,     0,   469,   470,   247,     0,   244,   245,     0,     0,
-       0,     0,     0,     0,     0,   262,   264,   265,   266,   267,
-     268,   269,   558,   560,   557,   555,   556,     0,   551,   553,
-     554,     0,   647,     0,   645,    53,   447,     0,   444,   445,
-     503,   521,   522,     0,     0,    69,   637,   626,   131,     0,
-       0,   157,     0,     0,     0,     0,     0,     0,     0,     0,
+     153,   133,     0,     0,     0,     0,     0,     0,   339,     0,
+       0,     0,   289,     0,   454,     0,     0,     0,     0,     0,
+       0,     0,     0,   481,     0,     0,   401,     0,     0,     0,
+     412,   389,     0,   441,   442,   426,     0,     0,   254,   590,
+       0,     0,   595,     0,   598,   599,     0,     0,   606,   607,
+       0,     0,   571,   643,     0,   637,   632,     0,     0,     0,
+     622,   624,   626,     0,     0,     0,   498,   500,   502,     0,
+       0,   167,   126,   280,   378,   415,   342,    40,   465,   467,
+     335,   336,   337,   338,   334,     0,     0,   470,   245,     0,
+       0,   565,     0,   618,   620,     0,    51,   144,   147,   148,
+     146,   151,   152,   150,   322,   324,   326,   445,   320,   328,
+     332,   330,     0,   463,   520,   508,   510,   514,   512,   518,
+     516,   504,   404,   210,   408,   406,   411,   438,   259,   261,
+     592,   594,   597,   602,   603,   601,   605,   610,   611,   612,
+     613,   614,   609,   616,   167,    44,     0,     0,     0,     0,
+     161,     0,   158,   160,   196,   202,   204,   206,     0,     0,
+       0,     0,     0,   218,   220,   222,   224,     0,     0,     0,
+       0,     0,     0,   195,     0,   173,   175,   176,   177,   178,
+     179,   180,   181,   182,   183,   184,   188,   189,   190,   185,
+     191,   192,   193,   186,   187,   194,     0,   171,     0,   168,
+     169,   284,     0,   281,   282,   382,     0,   379,   380,   419,
+       0,   416,   417,   346,     0,   343,   344,   238,   239,   240,
+     241,   242,     0,   231,   233,   234,   235,   236,   237,   529,
+       0,   527,   474,     0,   471,   472,   249,     0,   246,   247,
+       0,     0,     0,     0,     0,     0,     0,   264,   266,   267,
+     268,   269,   270,   271,   560,   562,   559,   557,   558,     0,
+     553,   555,   556,     0,   649,     0,   647,    53,   449,     0,
+     446,   447,   505,   523,   524,     0,     0,    69,   639,   628,
+     131,     0,     0,   157,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+<<<<<<< HEAD
        0,   155,   164,     0,   166,     0,     0,   277,     0,   384,
      373,     0,   421,   412,     0,     0,   339,     0,     0,   228,
      529,     0,   524,   476,   467,     0,     0,   242,     0,     0,
@@ -4281,11 +6074,38 @@ namespace isc { namespace dhcp {
      669,   670,   671,   672,   673,   664,     0,     0,     0,     0,
        0,     0,   666,     0,   676,   677,   678,     0,   668,   675,
      680
+=======
+       0,     0,     0,     0,   155,   164,     0,   166,     0,     0,
+     279,     0,   386,   375,     0,   423,   414,     0,     0,   341,
+       0,     0,   230,   531,     0,   526,   478,   469,     0,     0,
+     244,     0,     0,     0,     0,     0,     0,     0,     0,   263,
+       0,     0,     0,   552,   567,     0,     0,   646,    55,     0,
+      54,     0,   444,     0,     0,   522,   636,     0,   159,     0,
+       0,     0,     0,   208,   211,   212,   213,   214,     0,     0,
+       0,     0,   226,   227,   215,   216,   217,   228,   174,     0,
+     170,     0,   283,     0,   381,     0,   418,   373,   365,   366,
+     367,   353,   354,   370,   371,   372,   356,   357,   350,   351,
+     352,   363,   364,   362,     0,   348,   355,   368,   369,   358,
+     359,   360,   361,   345,   232,   547,     0,   545,   546,   538,
+     539,   543,   544,   540,   541,   542,     0,   532,   533,   535,
+     536,   537,   528,     0,   473,     0,   248,   272,   273,   274,
+     275,   276,   277,   265,     0,     0,   554,   663,     0,   661,
+     659,   653,   657,   658,     0,   651,   655,   656,   654,   648,
+      52,     0,     0,   448,     0,   162,   198,   199,   200,   201,
+     197,   203,   205,   207,   219,   221,   223,   225,   172,   285,
+     383,   420,     0,   347,     0,     0,   530,     0,   475,   250,
+     561,   563,     0,     0,     0,     0,   650,    56,   450,   506,
+     349,     0,   549,   534,     0,   660,     0,   652,   548,     0,
+     662,   667,     0,   665,     0,     0,   664,   675,     0,     0,
+       0,     0,   669,   671,   672,   673,   674,   666,     0,     0,
+       0,     0,     0,   668,     0,   677,   678,   679,   670,   676
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const short
   Dhcp4Parser::yypgoto_[] =
   {
+<<<<<<< HEAD
     -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,  -837,
     -837,  -837,  -837,  -837,  -837,  -837,   -46,  -837,  -468,  -837,
      180,  -837,  -837,  -837,  -837,  -837,  -837,  -534,  -837,  -837,
@@ -4325,6 +6145,47 @@ namespace isc { namespace dhcp {
      431,   -57,  -837,  -837,    35,  -837,  -837,  -117,  -837,  -837,
     -837,  -837,  -837,  -837,  -136,  -837,  -837,  -155,  -837,  -837,
     -837,  -837,  -837,  -837,  -837
+=======
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,   -46,  -840,  -481,  -840,
+     298,  -840,  -840,  -840,  -840,  -840,  -840,  -534,  -840,  -840,
+    -840,   -70,  -840,  -840,  -840,   465,  -840,  -840,  -840,  -840,
+     256,   463,   -55,   -54,   -27,   -24,    -9,     6,     9,    11,
+    -840,  -840,  -840,  -840,    12,    19,  -840,  -840,   228,   418,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,    16,  -840,  -840,  -840,
+    -840,  -840,  -840,   189,  -840,    27,  -840,  -607,    35,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,   -35,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,    20,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,     8,  -840,  -840,  -840,    13,   422,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,     5,  -840,  -840,  -840,  -840,
+    -840,  -840,  -839,  -840,  -840,  -840,    36,  -840,  -840,  -840,
+      39,   458,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -831,  -840,   -17,  -840,    -5,  -840,    22,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,    30,  -840,  -840,  -131,   -65,  -840,
+    -840,  -840,  -840,  -840,    38,  -840,  -840,  -840,    41,  -840,
+     439,  -840,   -72,  -840,  -840,  -840,  -840,  -840,   -66,  -840,
+    -840,  -840,  -840,  -840,    -7,  -840,  -840,  -840,    40,  -840,
+    -840,  -840,    43,  -840,   435,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,     3,  -840,  -840,  -840,
+      10,   480,  -840,  -840,   -39,  -840,   -19,  -840,   -59,  -840,
+    -840,  -840,    32,  -840,  -840,  -840,    33,  -840,   461,   -58,
+    -840,   -52,  -840,    -1,  -840,   251,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -828,  -840,  -840,  -840,  -840,  -840,    44,
+    -840,  -840,  -840,  -125,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,    23,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,   277,   426,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,   -64,  -840,   -60,
+    -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+    -840,   310,   423,  -840,  -840,  -840,  -840,  -840,  -840,  -840,
+     311,   432,   -57,  -840,  -840,    25,  -840,  -840,  -120,  -840,
+    -840,  -840,  -840,  -840,  -840,  -139,  -840,  -840,  -155,  -840,
+    -840,  -840,  -840,  -840
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const short
@@ -4332,11 +6193,12 @@ namespace isc { namespace dhcp {
   {
       -1,    15,    16,    17,    18,    19,    20,    21,    22,    23,
       24,    25,    26,    27,    28,    29,    38,    39,    40,    69,
-     628,    87,    88,    41,    68,    84,    85,   647,   815,   896,
-     897,   722,    43,    70,    96,    97,    98,   374,    45,    71,
+     628,    87,    88,    41,    68,    84,    85,   647,   817,   899,
+     900,   723,    43,    70,    96,    97,    98,   374,    45,    71,
      145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
      155,   156,   403,   157,   158,   159,   160,   383,   193,   194,
       47,    72,   195,   425,   196,   426,   650,   197,   427,   653,
+<<<<<<< HEAD
      198,   161,   391,   162,   384,   701,   702,   703,   829,   163,
      392,   164,   393,   746,   747,   748,   853,   723,   724,   725,
      832,  1016,   726,   833,   727,   834,   728,   835,   729,   730,
@@ -4369,12 +6231,47 @@ namespace isc { namespace dhcp {
      361,   187,   422,   813,   814,   892,  1000,  1001,  1002,  1003,
     1040,  1004,  1038,  1058,  1059,  1060,  1068,  1069,  1070,  1076,
     1071,  1072,  1073,  1074,  1080
+=======
+     198,   161,   391,   162,   384,   701,   702,   703,   831,   163,
+     392,   164,   393,   748,   749,   750,   856,   724,   725,   726,
+     834,  1020,   727,   835,   728,   836,   729,   837,   730,   731,
+     458,   732,   733,   734,   735,   736,   737,   738,   739,   843,
+     740,   844,   741,   845,   742,   846,   743,   744,   745,   165,
+     411,   772,   773,   774,   775,   776,   777,   778,   166,   414,
+     787,   788,   789,   879,    61,    79,   323,   324,   325,   471,
+     326,   472,   167,   415,   796,   797,   798,   799,   800,   801,
+     802,   803,   168,   404,   752,   753,   754,   859,    49,    73,
+     222,   223,   224,   435,   225,   431,   226,   432,   227,   433,
+     228,   436,   229,   439,   230,   438,   169,   410,   634,   232,
+     170,   407,   764,   765,   766,   868,   954,   955,   171,   405,
+      55,    76,   756,   757,   758,   862,    57,    77,   288,   289,
+     290,   291,   292,   293,   294,   457,   295,   461,   296,   460,
+     297,   298,   462,   299,   172,   406,   760,   761,   762,   865,
+      59,    78,   309,   310,   311,   312,   313,   466,   314,   315,
+     316,   317,   234,   434,   819,   820,   821,   901,    51,    74,
+     247,   248,   249,   443,   173,   408,   174,   409,   175,   413,
+     783,   784,   785,   876,    53,    75,   264,   265,   266,   176,
+     388,   177,   389,   178,   390,   270,   453,   824,   904,   271,
+     447,   272,   448,   273,   450,   274,   449,   275,   452,   276,
+     451,   277,   446,   241,   440,   825,   179,   412,   780,   781,
+     873,   976,   977,   978,   979,   980,  1034,   981,   180,   181,
+     417,   809,   810,   811,   890,   812,   891,   182,   418,   183,
+     419,    63,    80,   343,   344,   345,   346,   476,   347,   477,
+     348,   349,   479,   350,   351,   352,   482,   685,   353,   483,
+     354,   355,   356,   486,   692,   357,   487,   184,   420,   185,
+     421,    99,   376,   100,   377,   101,   378,   186,   382,    67,
+      82,   365,   366,   367,   492,   368,   102,   375,    65,    81,
+     360,   361,   187,   422,   815,   816,   895,  1004,  1005,  1006,
+    1007,  1044,  1008,  1042,  1062,  1063,  1064,  1071,  1072,  1073,
+    1078,  1074,  1075,  1076
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const unsigned short
   Dhcp4Parser::yytable_[] =
   {
       95,   144,   192,   211,   243,   260,   307,   286,   305,   322,
+<<<<<<< HEAD
      340,   278,   308,   744,   237,   238,   358,   267,   212,   213,
      359,   239,    83,   268,   362,   660,    31,    89,    32,   945,
       33,   664,    30,   199,   235,   250,   262,   946,   300,   318,
@@ -4467,19 +6364,113 @@ namespace isc { namespace dhcp {
      562,   959,   585,  1009,   930,  1008,   581,   929,   980,   932,
      564,   931,   573,   821,  1049,   811,   602,   698,   992,   697,
      606,   603,   978,   979,  1053,  1075,  1088,     0,  1005,     0,
+=======
+     340,   278,   308,   746,   237,   238,   358,   267,   212,   213,
+     359,   239,    83,   268,   362,   660,    31,    89,    32,   949,
+      33,   664,   683,   199,   235,   250,   262,   950,   300,   318,
+     962,   341,   287,   306,   188,   189,   214,    30,   190,   215,
+     627,   191,   279,   200,   236,   251,   263,   244,   301,   319,
+     627,   342,   871,    42,   216,   872,   233,   246,   261,   245,
+     129,   130,   240,   380,   269,   320,   321,   874,   381,   217,
+     875,    86,   218,    44,   219,   220,   107,   108,   109,   110,
+     111,   280,   221,   281,   282,   231,   423,   283,   284,   285,
+     369,   424,  1067,   129,   130,  1068,  1069,  1070,   804,   805,
+     896,   429,    46,   897,   129,   130,   430,   115,   116,   117,
+     118,   119,   120,   121,   122,    48,   441,   127,   201,   202,
+     203,   442,   127,   767,   768,   769,   770,    94,   771,   242,
+     129,   130,    50,   204,    52,   129,   130,   205,   206,   207,
+     131,   280,   208,   444,   684,   209,    54,   208,   445,    94,
+     209,   134,   473,   129,   130,    90,   103,   474,   210,   104,
+     687,   688,   689,   690,    91,    92,    93,    56,   105,    58,
+     106,   107,   108,   109,   110,   111,   112,   113,   114,   488,
+      60,    94,    94,   949,   489,    34,    35,    36,    37,  1065,
+      62,   950,  1066,    94,   962,   691,   790,   791,   792,   793,
+     794,   795,   115,   116,   117,   118,   119,   120,   121,   122,
+     123,   124,   125,   363,   364,   126,   126,   127,   997,    94,
+     998,   999,    64,   490,    94,   648,   649,   128,   491,   494,
+     129,   130,   423,   490,   495,   131,   143,   827,   828,   929,
+     132,   133,    94,   494,   320,   321,   134,   370,   829,   107,
+     108,   109,   110,   111,    66,   429,   135,   832,   853,   136,
+     830,   371,   833,   854,   853,   373,   137,   138,   888,   855,
+     139,   140,   892,   889,   488,   259,   822,   893,   372,   894,
+     115,   116,   117,   118,   119,   120,   121,   122,   853,   454,
+     125,   141,   142,  1028,   143,   127,   280,   441,  1032,   473,
+      95,  1045,  1029,  1033,  1039,   444,  1046,  1082,   129,   130,
+    1048,   206,  1083,   131,   496,   497,   379,   651,   652,    94,
+     208,   385,   386,   209,   630,   631,   632,   633,   387,   394,
+     395,   210,   396,   280,   302,   281,   282,   303,   304,   397,
+     398,   399,   400,   144,   401,   129,   130,   402,   416,   192,
+    1016,  1017,  1018,  1019,   428,   437,   455,   456,   459,   463,
+     464,   211,   465,   498,   243,   467,   468,   470,   469,   475,
+     478,   480,   237,   238,   481,   260,   212,   213,   484,   239,
+     199,   485,   493,   499,   500,   286,   501,   267,   307,   502,
+     305,   503,   235,   268,   308,   250,   505,    94,   506,   507,
+     200,   508,   509,   511,   214,   510,   262,   215,   340,   512,
+     513,   514,   236,   515,   358,   251,   300,   244,   359,   516,
+     287,   318,   216,   362,   233,   306,   263,   246,   517,   245,
+     240,   109,   110,   111,    94,   522,   301,   217,   261,   341,
+     218,   319,   219,   220,   269,   610,   611,   612,   518,   519,
+     221,   520,   521,   231,   523,   524,   526,   525,   527,   342,
+     528,   529,   530,   531,   532,   533,   534,   535,   536,   537,
+    1049,   538,   540,   608,   539,   127,   541,   542,   109,   110,
+     111,   543,   544,   545,   547,   548,   549,   550,   129,   130,
+     552,   553,   554,   555,   556,   557,   558,   559,   560,   252,
+     561,   563,   565,   566,   567,   253,   254,   255,   256,   257,
+     258,   568,   259,   569,   570,   571,   572,   574,   575,   577,
+     576,   126,   127,   280,   578,   579,   582,   586,   144,   587,
+     590,   679,   591,   580,   192,   129,   130,   593,   596,   597,
+     583,   600,   362,   601,   604,   584,   589,   592,   965,   966,
+     594,   695,   607,   598,   129,   130,   595,   609,   605,   613,
+     806,   599,   340,   614,   615,   199,   619,   616,   358,   620,
+     617,   618,   359,   621,   622,   623,   624,    94,   625,   626,
+     686,   635,    32,   636,   629,   200,   637,   638,   643,   645,
+     639,   807,   640,   341,   642,   644,   327,   328,   329,   330,
+     331,   332,   333,   334,   335,   336,   337,   338,   339,   646,
+     654,   808,   655,   342,   656,   141,   142,   657,   658,   659,
+     704,   661,   662,   663,    94,   705,   706,   707,   708,   709,
+     710,   711,   712,   713,   714,   715,   716,   717,   718,   719,
+     720,   721,   722,    94,     1,     2,     3,     4,     5,     6,
+       7,     8,     9,    10,    11,    12,    13,    14,   694,   280,
+     700,   747,   751,   755,   759,   763,   665,   779,   782,   666,
+     786,   814,   818,   838,   839,   667,   668,   669,   670,   671,
+     672,   840,   673,   841,   842,   847,   848,   849,   850,   851,
+     674,   675,   676,   677,   852,   857,   858,   860,   678,   861,
+     863,   680,   864,   681,   682,   693,   866,   867,   869,   870,
+     878,   877,   881,   903,   880,   882,   883,   884,   885,   886,
+     887,   898,   914,   902,   907,   906,   905,   909,   910,   911,
+     912,   916,   918,   913,   919,   915,   917,   920,   921,   922,
+     923,   924,   925,   994,   995,  1014,   926,   927,  1010,  1011,
+    1037,  1030,   987,  1031,   988,   989,  1035,  1036,  1038,  1043,
+      94,  1051,  1054,   990,   991,   992,  1015,  1021,  1022,  1023,
+    1024,  1025,  1026,  1027,  1040,  1041,  1047,  1056,  1061,   211,
+    1052,  1055,   286,   307,  1058,   305,  1059,  1060,   937,   308,
+     237,   238,  1079,   967,   212,   213,   260,   239,   969,   322,
+     959,  1080,  1081,   938,   939,   973,   960,  1084,   267,  1085,
+     235,   974,   806,   300,   268,  1000,   318,   287,  1086,   957,
+     306,   243,   214,   948,   971,   215,  1087,   262,   968,   641,
+     236,   940,   699,   301,   941,   504,   319,   551,   908,   958,
+     216,   951,   233,   807,   972,  1089,  1002,   263,   240,   942,
+    1001,   956,   250,   952,   696,   217,   970,   961,   218,   261,
+     219,   220,   975,   808,   943,   269,  1003,   944,   221,   945,
+     946,   231,   251,   826,   244,   930,   546,   947,   928,   986,
+     953,   964,   985,   993,   246,   588,   245,   932,   931,   562,
+     963,  1050,   934,   933,   581,   585,  1013,   936,   935,   983,
+     984,  1012,  1053,   823,   602,   996,   573,   606,   982,   813,
+     697,  1009,   603,   698,   564,  1057,  1077,  1088,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,   933,     0,
-       0,     0,     0,   963,     0,     0,     0,     0,   965,     0,
-     955,   996,     0,   934,   935,   969,   956,     0,     0,     0,
-       0,   970,     0,     0,     0,     0,     0,     0,     0,   953,
-       0,     0,     0,   944,   967,     0,     0,     0,   964,     0,
-       0,   936,   998,     0,   937,     0,   997,     0,     0,   954,
-       0,   947,     0,     0,   968,     0,     0,     0,     0,   938,
-       0,   952,   999,   948,     0,     0,   966,   957,     0,     0,
-       0,     0,   971,     0,   939,     0,     0,   940,     0,   941,
-     942,     0,     0,     0,     0,     0,     0,   943,     0,     0,
-     949
+       0,     0,   937,     0,     0,     0,     0,   967,     0,     0,
+       0,     0,   969,     0,   959,  1000,     0,   938,   939,   973,
+     960,     0,     0,     0,     0,   974,     0,     0,     0,     0,
+       0,     0,     0,   957,     0,     0,     0,   948,   971,     0,
+       0,     0,   968,     0,     0,   940,  1002,     0,   941,     0,
+    1001,     0,     0,   958,     0,   951,     0,     0,   972,     0,
+       0,     0,     0,   942,     0,   956,  1003,   952,     0,     0,
+     970,   961,     0,     0,     0,     0,   975,     0,   943,     0,
+       0,   944,     0,   945,   946,     0,     0,     0,     0,     0,
+       0,   947,     0,     0,   953
   };
 
   const short
@@ -4487,6 +6478,7 @@ namespace isc { namespace dhcp {
   {
       70,    71,    72,    73,    74,    75,    78,    77,    78,    79,
       80,    76,    78,   620,    73,    73,    80,    75,    73,    73,
+<<<<<<< HEAD
       80,    73,    68,    75,    81,   559,     5,    10,     7,   865,
        9,   565,     0,    72,    73,    74,    75,   865,    77,    78,
      865,    80,    77,    78,    18,     3,    73,     3,     6,    73,
@@ -4578,19 +6570,112 @@ namespace isc { namespace dhcp {
      441,   867,   470,   900,   861,   898,   465,   859,   875,   864,
      444,   862,   455,   662,  1033,   642,   488,   613,   889,   609,
      494,   490,   871,   873,  1041,  1061,  1081,    -1,   893,    -1,
+=======
+      80,    73,    68,    75,    81,   559,     5,    10,     7,   868,
+       9,   565,    18,    72,    73,    74,    75,   868,    77,    78,
+     868,    80,    77,    78,    15,    16,    73,     0,    19,    73,
+     531,    22,    34,    72,    73,    74,    75,    74,    77,    78,
+     541,    80,     3,     7,    73,     6,    73,    74,    75,    74,
+      85,    86,    73,     3,    75,   112,   113,     3,     8,    73,
+       6,   174,    73,     7,    73,    73,    26,    27,    28,    29,
+      30,    73,    73,    75,    76,    73,     3,    79,    80,    81,
+       6,     8,   151,    85,    86,   154,   155,   156,   123,   124,
+       3,     3,     7,     6,    85,    86,     8,    57,    58,    59,
+      60,    61,    62,    63,    64,     7,     3,    72,    68,    69,
+      70,     8,    72,   102,   103,   104,   105,   174,   107,    84,
+      85,    86,     7,    83,     7,    85,    86,    87,    88,    89,
+      90,    73,    97,     3,   140,   100,     7,    97,     8,   174,
+     100,   101,     3,    85,    86,   148,    11,     8,   108,    14,
+     142,   143,   144,   145,   157,   158,   159,     7,    23,     7,
+      25,    26,    27,    28,    29,    30,    31,    32,    33,     3,
+       7,   174,   174,  1032,     8,   174,   175,   176,   177,     3,
+       7,  1032,     6,   174,  1032,   177,   115,   116,   117,   118,
+     119,   120,    57,    58,    59,    60,    61,    62,    63,    64,
+      65,    66,    67,    12,    13,    71,    71,    72,   150,   174,
+     152,   153,     7,     3,   174,    17,    18,    82,     8,     3,
+      85,    86,     3,     3,     8,    90,   149,     8,     8,   856,
+      95,    96,   174,     3,   112,   113,   101,     3,     8,    26,
+      27,    28,    29,    30,     7,     3,   111,     3,     3,   114,
+       8,     4,     8,     8,     3,     3,   121,   122,     3,     8,
+     125,   126,     3,     8,     3,   109,   110,     8,     8,     8,
+      57,    58,    59,    60,    61,    62,    63,    64,     3,     8,
+      67,   146,   147,     8,   149,    72,    73,     3,     3,     3,
+     380,     3,     8,     8,     8,     3,     8,     3,    85,    86,
+       8,    88,     8,    90,   370,   371,     4,    20,    21,   174,
+      97,     4,     4,   100,    91,    92,    93,    94,     4,     4,
+       4,   108,     4,    73,    74,    75,    76,    77,    78,     4,
+       4,     4,     4,   423,     4,    85,    86,     4,     4,   429,
+      35,    36,    37,    38,     4,     4,     3,     8,     4,     4,
+       8,   441,     3,   174,   444,     4,     4,     3,     8,     4,
+       4,     4,   441,   441,     4,   455,   441,   441,     4,   441,
+     429,     4,     4,     4,     4,   465,     4,   455,   470,     4,
+     470,     4,   441,   455,   470,   444,     4,   174,     4,     4,
+     429,   177,   177,     4,   441,   177,   455,   441,   488,     4,
+       4,     4,   441,     4,   488,   444,   465,   444,   488,     4,
+     465,   470,   441,   490,   441,   470,   455,   444,   175,   444,
+     441,    28,    29,    30,   174,   177,   465,   441,   455,   488,
+     441,   470,   441,   441,   455,   501,   502,   503,   175,   175,
+     441,   175,   175,   441,   176,   176,     4,   175,     4,   488,
+       4,     4,     4,     4,     4,     4,     4,     4,     4,     4,
+    1014,     4,     4,     7,   175,    72,     4,     4,    28,    29,
+      30,     4,     4,     4,     4,     4,     4,   177,    85,    86,
+       4,     4,     4,     4,     4,     4,   175,     4,     4,    96,
+       4,     4,     4,     4,     4,   102,   103,   104,   105,   106,
+     107,     4,   109,     4,     4,     4,     4,     4,     4,     4,
+     175,    71,    72,    73,     4,     4,     4,     4,   608,     4,
+       4,   587,     4,   177,   614,    85,    86,     4,     4,     4,
+     177,     4,   609,     4,     4,   177,   177,   175,    98,    99,
+     175,   607,     4,   177,    85,    86,   175,     7,   175,     7,
+     640,   177,   642,     7,     7,   614,     7,   174,   642,     7,
+     174,   174,   642,     5,   174,     5,     5,   174,     5,     5,
+     141,     5,     7,     5,   174,   614,     5,     5,   174,     5,
+       7,   640,     7,   642,     7,   174,   127,   128,   129,   130,
+     131,   132,   133,   134,   135,   136,   137,   138,   139,     5,
+     174,   640,   174,   642,   174,   146,   147,     5,   174,   174,
+      34,   174,     7,   174,   174,    39,    40,    41,    42,    43,
+      44,    45,    46,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,    56,   174,   160,   161,   162,   163,   164,   165,
+     166,   167,   168,   169,   170,   171,   172,   173,     5,    73,
+      24,     7,     7,     7,     7,     7,   174,     7,     7,   174,
+       7,     7,     7,     4,     4,   174,   174,   174,   174,   174,
+     174,     4,   174,     4,     4,     4,     4,     4,     4,     4,
+     174,   174,   174,   174,     4,     6,     3,     6,   174,     3,
+       6,   174,     3,   174,   174,   174,     6,     3,     6,     3,
+       3,     6,     3,     3,     6,     4,     4,     4,     4,     4,
+       4,   174,   177,     6,     4,     6,     8,     4,     4,     4,
+       4,   177,     4,   175,     4,   175,   175,     4,     4,   175,
+     175,   175,   175,     4,     4,     4,   177,   175,     6,     3,
+       3,     8,   175,     8,   175,   175,     4,     8,     8,     4,
+     174,     4,     4,   175,   175,   175,   174,   174,   174,   174,
+     174,   174,   174,   174,   174,   174,   174,     4,     7,   859,
+     177,   175,   862,   865,   174,   865,     5,   174,   868,   865,
+     859,   859,     4,   873,   859,   859,   876,   859,   873,   879,
+     868,     4,     4,   868,   868,   873,   868,     4,   876,   177,
+     859,   873,   892,   862,   876,   895,   865,   862,   175,   868,
+     865,   901,   859,   868,   873,   859,   175,   876,   873,   541,
+     859,   868,   614,   862,   868,   380,   865,   429,   832,   868,
+     859,   868,   859,   892,   873,   174,   895,   876,   859,   868,
+     895,   868,   901,   868,   608,   859,   873,   868,   859,   876,
+     859,   859,   873,   892,   868,   876,   895,   868,   859,   868,
+     868,   859,   901,   694,   901,   858,   423,   868,   853,   881,
+     868,   871,   879,   888,   901,   473,   901,   861,   859,   441,
+     870,  1032,   864,   862,   465,   470,   903,   867,   865,   876,
+     878,   901,  1037,   662,   488,   892,   455,   494,   874,   642,
+     609,   896,   490,   613,   444,  1045,  1065,  1082,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,  1028,    -1,
-      -1,    -1,    -1,  1033,    -1,    -1,    -1,    -1,  1033,    -1,
-    1028,  1041,    -1,  1028,  1028,  1033,  1028,    -1,    -1,    -1,
-      -1,  1033,    -1,    -1,    -1,    -1,    -1,    -1,    -1,  1028,
-      -1,    -1,    -1,  1028,  1033,    -1,    -1,    -1,  1033,    -1,
-      -1,  1028,  1041,    -1,  1028,    -1,  1041,    -1,    -1,  1028,
-      -1,  1028,    -1,    -1,  1033,    -1,    -1,    -1,    -1,  1028,
-      -1,  1028,  1041,  1028,    -1,    -1,  1033,  1028,    -1,    -1,
-      -1,    -1,  1033,    -1,  1028,    -1,    -1,  1028,    -1,  1028,
-    1028,    -1,    -1,    -1,    -1,    -1,    -1,  1028,    -1,    -1,
-    1028
+      -1,    -1,  1032,    -1,    -1,    -1,    -1,  1037,    -1,    -1,
+      -1,    -1,  1037,    -1,  1032,  1045,    -1,  1032,  1032,  1037,
+    1032,    -1,    -1,    -1,    -1,  1037,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,  1032,    -1,    -1,    -1,  1032,  1037,    -1,
+      -1,    -1,  1037,    -1,    -1,  1032,  1045,    -1,  1032,    -1,
+    1045,    -1,    -1,  1032,    -1,  1032,    -1,    -1,  1037,    -1,
+      -1,    -1,    -1,  1032,    -1,  1032,  1045,  1032,    -1,    -1,
+    1037,  1032,    -1,    -1,    -1,    -1,  1037,    -1,  1032,    -1,
+      -1,  1032,    -1,  1032,  1032,    -1,    -1,    -1,    -1,    -1,
+      -1,  1032,    -1,    -1,  1032
   };
 
   const unsigned short
@@ -4600,6 +6685,7 @@ namespace isc { namespace dhcp {
      169,   170,   171,   172,   173,   179,   180,   181,   182,   183,
      184,   185,   186,   187,   188,   189,   190,   191,   192,   193,
        0,     5,     7,     9,   174,   175,   176,   177,   194,   195,
+<<<<<<< HEAD
      196,   201,     7,   210,     7,   216,     7,   238,     7,   335,
        7,   415,     7,   431,     7,   367,     7,   373,     7,   397,
        7,   311,     7,   488,     7,   535,     7,   526,   202,   197,
@@ -4646,12 +6732,61 @@ namespace isc { namespace dhcp {
        3,   316,   318,     3,     8,     4,   494,   496,     4,   499,
        4,     4,   503,   506,     4,     4,   510,   513,     3,     8,
        3,     8,   531,     4,     3,     8,   194,   194,   174,     4,
+=======
+     196,   201,     7,   210,     7,   216,     7,   238,     7,   336,
+       7,   416,     7,   432,     7,   368,     7,   374,     7,   398,
+       7,   312,     7,   489,     7,   536,     7,   527,   202,   197,
+     211,   217,   239,   337,   417,   433,   369,   375,   399,   313,
+     490,   537,   528,   194,   203,   204,   174,   199,   200,    10,
+     148,   157,   158,   159,   174,   209,   212,   213,   214,   519,
+     521,   523,   534,    11,    14,    23,    25,    26,    27,    28,
+      29,    30,    31,    32,    33,    57,    58,    59,    60,    61,
+      62,    63,    64,    65,    66,    67,    71,    72,    82,    85,
+      86,    90,    95,    96,   101,   111,   114,   121,   122,   125,
+     126,   146,   147,   149,   209,   218,   219,   220,   221,   222,
+     223,   224,   225,   226,   227,   228,   229,   231,   232,   233,
+     234,   249,   251,   257,   259,   297,   306,   320,   330,   354,
+     358,   366,   392,   422,   424,   426,   437,   439,   441,   464,
+     476,   477,   485,   487,   515,   517,   525,   540,    15,    16,
+      19,    22,   209,   236,   237,   240,   242,   245,   248,   422,
+     424,    68,    69,    70,    83,    87,    88,    89,    97,   100,
+     108,   209,   220,   221,   222,   223,   224,   225,   226,   227,
+     232,   233,   338,   339,   340,   342,   344,   346,   348,   350,
+     352,   354,   357,   392,   410,   422,   424,   426,   437,   439,
+     441,   461,    84,   209,   350,   352,   392,   418,   419,   420,
+     422,   424,    96,   102,   103,   104,   105,   106,   107,   109,
+     209,   392,   422,   424,   434,   435,   436,   437,   439,   441,
+     443,   447,   449,   451,   453,   455,   457,   459,   366,    34,
+      73,    75,    76,    79,    80,    81,   209,   277,   376,   377,
+     378,   379,   380,   381,   382,   384,   386,   388,   389,   391,
+     422,   424,    74,    77,    78,   209,   277,   380,   386,   400,
+     401,   402,   403,   404,   406,   407,   408,   409,   422,   424,
+     112,   113,   209,   314,   315,   316,   318,   127,   128,   129,
+     130,   131,   132,   133,   134,   135,   136,   137,   138,   139,
+     209,   422,   424,   491,   492,   493,   494,   496,   498,   499,
+     501,   502,   503,   506,   508,   509,   510,   513,   515,   517,
+     538,   539,   540,    12,    13,   529,   530,   531,   533,     6,
+       3,     4,     8,     3,   215,   535,   520,   522,   524,     4,
+       3,     8,   526,   235,   252,     4,     4,     4,   438,   440,
+     442,   250,   258,   260,     4,     4,     4,     4,     4,     4,
+       4,     4,     4,   230,   331,   367,   393,   359,   423,   425,
+     355,   298,   465,   427,   307,   321,     4,   478,   486,   488,
+     516,   518,   541,     3,     8,   241,   243,   246,     4,     3,
+       8,   343,   345,   347,   411,   341,   349,     4,   353,   351,
+     462,     3,     8,   421,     3,     8,   460,   448,   450,   454,
+     452,   458,   456,   444,     8,     3,     8,   383,   278,     4,
+     387,   385,   390,     4,     8,     3,   405,     4,     4,     8,
+       3,   317,   319,     3,     8,     4,   495,   497,     4,   500,
+       4,     4,   504,   507,     4,     4,   511,   514,     3,     8,
+       3,     8,   532,     4,     3,     8,   194,   194,   174,     4,
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        4,     4,     4,     4,   213,     4,     4,     4,   177,   177,
      177,     4,     4,     4,     4,     4,     4,   175,   175,   175,
      175,   175,   177,   176,   176,   175,     4,     4,     4,     4,
        4,     4,     4,     4,     4,     4,     4,     4,     4,   175,
        4,     4,     4,     4,     4,     4,   219,     4,     4,     4,
      177,   237,     4,     4,     4,     4,     4,     4,   175,     4,
+<<<<<<< HEAD
        4,     4,   338,     4,   418,     4,     4,     4,     4,     4,
        4,     4,     4,   435,     4,     4,   175,     4,     4,     4,
      177,   377,     4,   177,   177,   401,     4,     4,   314,   177,
@@ -4660,10 +6795,21 @@ namespace isc { namespace dhcp {
      194,   194,   194,     7,     7,     7,   174,   174,   174,     7,
        7,     5,   174,     5,     5,     5,     5,   196,   198,   174,
       90,    91,    92,    93,   355,     5,     5,     5,     5,     7,
+=======
+       4,     4,   339,     4,   419,     4,     4,     4,     4,     4,
+       4,     4,     4,   436,     4,     4,   175,     4,     4,     4,
+     177,   378,     4,   177,   177,   402,     4,     4,   315,   177,
+       4,     4,   175,     4,   175,   175,     4,     4,   177,   177,
+       4,     4,   492,   539,     4,   175,   530,     4,     7,     7,
+     194,   194,   194,     7,     7,     7,   174,   174,   174,     7,
+       7,     5,   174,     5,     5,     5,     5,   196,   198,   174,
+      91,    92,    93,    94,   356,     5,     5,     5,     5,     7,
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
        7,   198,     7,   174,   174,     5,     5,   205,    17,    18,
      244,    20,    21,   247,   174,   174,   174,     5,   174,   174,
      205,   174,     7,   174,   205,   174,   174,   174,   174,   174,
      174,   174,   174,   174,   174,   174,   174,   174,   174,   194,
+<<<<<<< HEAD
      174,   174,   174,    18,   139,   504,   140,   141,   142,   143,
      144,   177,   511,   174,     5,   194,   218,   537,   528,   236,
       24,   253,   254,   255,    34,    39,    40,    41,    42,    43,
@@ -4706,6 +6852,49 @@ namespace isc { namespace dhcp {
      556,   558,   559,   560,   561,   552,   557,     4,     4,     4,
      562,     3,     8,     4,   177,   175,   175,     4,   555,   174,
      174
+=======
+     174,   174,   174,    18,   140,   505,   141,   142,   143,   144,
+     145,   177,   512,   174,     5,   194,   218,   538,   529,   236,
+      24,   253,   254,   255,    34,    39,    40,    41,    42,    43,
+      44,    45,    46,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,    56,   209,   265,   266,   267,   270,   272,   274,
+     276,   277,   279,   280,   281,   282,   283,   284,   285,   286,
+     288,   290,   292,   294,   295,   296,   265,     7,   261,   262,
+     263,     7,   332,   333,   334,     7,   370,   371,   372,     7,
+     394,   395,   396,     7,   360,   361,   362,   102,   103,   104,
+     105,   107,   299,   300,   301,   302,   303,   304,   305,     7,
+     466,   467,     7,   428,   429,   430,     7,   308,   309,   310,
+     115,   116,   117,   118,   119,   120,   322,   323,   324,   325,
+     326,   327,   328,   329,   123,   124,   209,   422,   424,   479,
+     480,   481,   483,   491,     7,   542,   543,   206,     7,   412,
+     413,   414,   110,   443,   445,   463,   261,     8,     8,     8,
+       8,   256,     3,     8,   268,   271,   273,   275,     4,     4,
+       4,     4,     4,   287,   289,   291,   293,     4,     4,     4,
+       4,     4,     4,     3,     8,     8,   264,     6,     3,   335,
+       6,     3,   373,     6,     3,   397,     6,     3,   363,     6,
+       3,     3,     6,   468,     3,     6,   431,     6,     3,   311,
+       6,     3,     4,     4,     4,     4,     4,     4,     3,     8,
+     482,   484,     3,     8,     8,   544,     3,     6,   174,   207,
+     208,   415,     6,     3,   446,     8,     6,     4,   254,     4,
+       4,     4,     4,   175,   177,   175,   177,   175,     4,     4,
+       4,     4,   175,   175,   175,   175,   177,   175,   266,   265,
+     263,   338,   334,   376,   372,   400,   396,   209,   220,   221,
+     222,   223,   224,   225,   226,   227,   232,   233,   277,   330,
+     348,   350,   352,   354,   364,   365,   392,   422,   424,   437,
+     439,   441,   461,   362,   300,    98,    99,   209,   277,   366,
+     392,   422,   424,   437,   439,   441,   469,   470,   471,   472,
+     473,   475,   467,   434,   430,   314,   310,   175,   175,   175,
+     175,   175,   175,   323,     4,     4,   480,   150,   152,   153,
+     209,   277,   422,   424,   545,   546,   547,   548,   550,   543,
+       6,     3,   418,   414,     4,   174,    35,    36,    37,    38,
+     269,   174,   174,   174,   174,   174,   174,   174,     8,     8,
+       8,     8,     3,     8,   474,     4,     8,     3,     8,     8,
+     174,   174,   551,     4,   549,     3,     8,   174,     8,   205,
+     365,     4,   177,   471,     4,   175,     4,   546,   174,     5,
+     174,     7,   552,   553,   554,     3,     6,   151,   154,   155,
+     156,   555,   556,   557,   559,   560,   561,   553,   558,     4,
+       4,     4,     3,     8,     4,   177,   175,   175,   556,   174
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const unsigned short
@@ -4730,6 +6919,7 @@ namespace isc { namespace dhcp {
      254,   256,   255,   258,   257,   260,   259,   261,   261,   262,
      262,   264,   263,   265,   265,   266,   266,   266,   266,   266,
      266,   266,   266,   266,   266,   266,   266,   266,   266,   266,
+<<<<<<< HEAD
      266,   266,   266,   266,   266,   268,   267,   269,   269,   269,
      269,   271,   270,   273,   272,   275,   274,   276,   278,   277,
      279,   280,   281,   282,   283,   284,   285,   287,   286,   289,
@@ -4780,6 +6970,57 @@ namespace isc { namespace dhcp {
      547,   550,   549,   551,   551,   553,   552,   554,   554,   555,
      555,   555,   555,   555,   557,   556,   558,   559,   560,   562,
      561
+=======
+     266,   266,   266,   266,   266,   266,   268,   267,   269,   269,
+     269,   269,   271,   270,   273,   272,   275,   274,   276,   278,
+     277,   279,   280,   281,   282,   283,   284,   285,   287,   286,
+     289,   288,   291,   290,   293,   292,   294,   295,   296,   298,
+     297,   299,   299,   300,   300,   300,   300,   300,   301,   302,
+     303,   304,   305,   307,   306,   308,   308,   309,   309,   311,
+     310,   313,   312,   314,   314,   314,   315,   315,   317,   316,
+     319,   318,   321,   320,   322,   322,   323,   323,   323,   323,
+     323,   323,   324,   325,   326,   327,   328,   329,   331,   330,
+     332,   332,   333,   333,   335,   334,   337,   336,   338,   338,
+     339,   339,   339,   339,   339,   339,   339,   339,   339,   339,
+     339,   339,   339,   339,   339,   339,   339,   339,   339,   339,
+     339,   339,   339,   339,   339,   339,   339,   339,   339,   341,
+     340,   343,   342,   345,   344,   347,   346,   349,   348,   351,
+     350,   353,   352,   355,   354,   356,   356,   356,   356,   357,
+     359,   358,   360,   360,   361,   361,   363,   362,   364,   364,
+     365,   365,   365,   365,   365,   365,   365,   365,   365,   365,
+     365,   365,   365,   365,   365,   365,   365,   365,   365,   365,
+     365,   365,   365,   365,   367,   366,   369,   368,   370,   370,
+     371,   371,   373,   372,   375,   374,   376,   376,   377,   377,
+     378,   378,   378,   378,   378,   378,   378,   378,   378,   378,
+     379,   380,   381,   383,   382,   385,   384,   387,   386,   388,
+     390,   389,   391,   393,   392,   394,   394,   395,   395,   397,
+     396,   399,   398,   400,   400,   401,   401,   402,   402,   402,
+     402,   402,   402,   402,   402,   402,   403,   405,   404,   406,
+     407,   408,   409,   411,   410,   412,   412,   413,   413,   415,
+     414,   417,   416,   418,   418,   419,   419,   419,   419,   419,
+     419,   419,   421,   420,   423,   422,   425,   424,   427,   426,
+     428,   428,   429,   429,   431,   430,   433,   432,   434,   434,
+     435,   435,   436,   436,   436,   436,   436,   436,   436,   436,
+     436,   436,   436,   436,   436,   436,   436,   438,   437,   440,
+     439,   442,   441,   444,   443,   446,   445,   448,   447,   450,
+     449,   452,   451,   454,   453,   456,   455,   458,   457,   460,
+     459,   462,   461,   463,   463,   465,   464,   466,   466,   468,
+     467,   469,   469,   470,   470,   471,   471,   471,   471,   471,
+     471,   471,   471,   471,   471,   471,   472,   474,   473,   475,
+     476,   478,   477,   479,   479,   480,   480,   480,   480,   480,
+     482,   481,   484,   483,   486,   485,   488,   487,   490,   489,
+     491,   491,   492,   492,   492,   492,   492,   492,   492,   492,
+     492,   492,   492,   492,   492,   492,   492,   492,   492,   492,
+     493,   495,   494,   497,   496,   498,   500,   499,   501,   502,
+     504,   503,   505,   505,   507,   506,   508,   509,   511,   510,
+     512,   512,   512,   512,   512,   514,   513,   516,   515,   518,
+     517,   520,   519,   522,   521,   524,   523,   526,   525,   528,
+     527,   529,   529,   530,   530,   532,   531,   533,   535,   534,
+     537,   536,   538,   538,   539,   541,   540,   542,   542,   544,
+     543,   545,   545,   546,   546,   546,   546,   546,   546,   546,
+     547,   549,   548,   551,   550,   552,   552,   554,   553,   555,
+     555,   556,   556,   556,   556,   558,   557,   559,   560,   561
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   const unsigned char
@@ -4804,45 +7045,47 @@ namespace isc { namespace dhcp {
        1,     0,     4,     0,     6,     0,     6,     0,     1,     1,
        3,     0,     4,     1,     3,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     1,     1,     1,
-       1,     0,     4,     0,     4,     0,     4,     3,     0,     4,
-       3,     3,     3,     3,     3,     3,     3,     0,     4,     0,
-       4,     0,     4,     0,     4,     3,     3,     0,     6,     1,
-       3,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     0,     6,     0,     1,     1,     3,     0,     4,     0,
-       4,     1,     3,     1,     1,     1,     0,     4,     0,     4,
-       0,     6,     1,     3,     1,     1,     1,     1,     1,     1,
-       3,     3,     3,     3,     3,     3,     0,     6,     0,     1,
-       1,     3,     0,     4,     0,     4,     1,     3,     1,     1,
+       1,     1,     1,     1,     1,     1,     0,     4,     1,     1,
+       1,     1,     0,     4,     0,     4,     0,     4,     3,     0,
+       4,     3,     3,     3,     3,     3,     3,     3,     0,     4,
+       0,     4,     0,     4,     0,     4,     3,     3,     3,     0,
+       6,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     0,     6,     0,     1,     1,     3,     0,
+       4,     0,     4,     1,     3,     1,     1,     1,     0,     4,
+       0,     4,     0,     6,     1,     3,     1,     1,     1,     1,
+       1,     1,     3,     3,     3,     3,     3,     3,     0,     6,
+       0,     1,     1,     3,     0,     4,     0,     4,     1,     3,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
-       4,     0,     4,     1,     1,     1,     1,     3,     0,     6,
-       0,     1,     1,     3,     0,     4,     1,     3,     1,     1,
+       4,     0,     4,     0,     4,     1,     1,     1,     1,     3,
+       0,     6,     0,     1,     1,     3,     0,     4,     1,     3,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     0,     6,     0,     4,     0,     1,     1,     3,
-       0,     4,     0,     4,     0,     1,     1,     3,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     3,
-       1,     0,     4,     0,     4,     0,     4,     1,     0,     4,
-       3,     0,     6,     0,     1,     1,     3,     0,     4,     0,
-       4,     0,     1,     1,     3,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     1,     1,     3,
-       3,     0,     6,     0,     1,     1,     3,     0,     4,     0,
-       4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
-       0,     4,     0,     4,     0,     4,     0,     6,     0,     1,
+       1,     1,     1,     1,     0,     6,     0,     4,     0,     1,
        1,     3,     0,     4,     0,     4,     0,     1,     1,     3,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
+       1,     3,     1,     0,     4,     0,     4,     0,     4,     1,
+       0,     4,     3,     0,     6,     0,     1,     1,     3,     0,
+       4,     0,     4,     0,     1,     1,     3,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     1,
+       1,     3,     3,     0,     6,     0,     1,     1,     3,     0,
+       4,     0,     4,     1,     3,     1,     1,     1,     1,     1,
+       1,     1,     0,     4,     0,     4,     0,     4,     0,     6,
+       0,     1,     1,     3,     0,     4,     0,     4,     0,     1,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     0,
-       6,     1,     1,     0,     6,     1,     3,     0,     4,     0,
-       1,     1,     3,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     0,     4,     3,     3,     0,
-       6,     1,     3,     1,     1,     1,     1,     1,     0,     4,
-       0,     4,     0,     4,     0,     6,     0,     4,     1,     3,
+       4,     0,     6,     1,     1,     0,     6,     1,     3,     0,
+       4,     0,     1,     1,     3,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     0,     4,     3,
+       3,     0,     6,     1,     3,     1,     1,     1,     1,     1,
+       0,     4,     0,     4,     0,     4,     0,     6,     0,     4,
+       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+<<<<<<< HEAD
        1,     1,     1,     1,     1,     1,     1,     1,     3,     0,
        4,     0,     4,     3,     0,     4,     3,     3,     0,     4,
        1,     1,     0,     4,     3,     3,     0,     4,     1,     1,
@@ -4854,6 +7097,17 @@ namespace isc { namespace dhcp {
        4,     0,     6,     1,     3,     0,     4,     1,     3,     1,
        1,     1,     1,     1,     0,     4,     3,     3,     3,     0,
        4
+=======
+       3,     0,     4,     0,     4,     3,     0,     4,     3,     3,
+       0,     4,     1,     1,     0,     4,     3,     3,     0,     4,
+       1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
+       4,     0,     4,     0,     4,     0,     4,     0,     6,     0,
+       4,     1,     3,     1,     1,     0,     6,     3,     0,     6,
+       0,     4,     1,     3,     1,     0,     6,     1,     3,     0,
+       4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       3,     0,     4,     0,     6,     1,     3,     0,     4,     1,
+       3,     1,     1,     1,     1,     0,     4,     3,     3,     3
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
 
@@ -4878,18 +7132,18 @@ namespace isc { namespace dhcp {
   "\"connect-timeout\"", "\"contact-points\"", "\"keyspace\"",
   "\"consistency\"", "\"serial-consistency\"", "\"max-reconnect-tries\"",
   "\"reconnect-wait-time\"", "\"request-timeout\"", "\"tcp-keepalive\"",
-  "\"tcp-nodelay\"", "\"valid-lifetime\"", "\"min-valid-lifetime\"",
-  "\"max-valid-lifetime\"", "\"renew-timer\"", "\"rebind-timer\"",
-  "\"calculate-tee-times\"", "\"t1-percent\"", "\"t2-percent\"",
-  "\"decline-probation-period\"", "\"server-tag\"", "\"subnet4\"",
-  "\"4o6-interface\"", "\"4o6-interface-id\"", "\"4o6-subnet\"",
-  "\"option-def\"", "\"option-data\"", "\"name\"", "\"data\"", "\"code\"",
-  "\"space\"", "\"csv-format\"", "\"always-send\"", "\"record-types\"",
-  "\"encapsulate\"", "\"array\"", "\"shared-networks\"", "\"pools\"",
-  "\"pool\"", "\"user-context\"", "\"comment\"", "\"subnet\"",
-  "\"interface\"", "\"id\"", "\"reservation-mode\"", "\"disabled\"",
-  "\"out-of-pool\"", "\"global\"", "\"all\"",
-  "\"host-reservation-identifiers\"", "\"client-classes\"",
+  "\"tcp-nodelay\"", "\"max-row-errors\"", "\"valid-lifetime\"",
+  "\"min-valid-lifetime\"", "\"max-valid-lifetime\"", "\"renew-timer\"",
+  "\"rebind-timer\"", "\"calculate-tee-times\"", "\"t1-percent\"",
+  "\"t2-percent\"", "\"decline-probation-period\"", "\"server-tag\"",
+  "\"subnet4\"", "\"4o6-interface\"", "\"4o6-interface-id\"",
+  "\"4o6-subnet\"", "\"option-def\"", "\"option-data\"", "\"name\"",
+  "\"data\"", "\"code\"", "\"space\"", "\"csv-format\"", "\"always-send\"",
+  "\"record-types\"", "\"encapsulate\"", "\"array\"",
+  "\"shared-networks\"", "\"pools\"", "\"pool\"", "\"user-context\"",
+  "\"comment\"", "\"subnet\"", "\"interface\"", "\"id\"",
+  "\"reservation-mode\"", "\"disabled\"", "\"out-of-pool\"", "\"global\"",
+  "\"all\"", "\"host-reservation-identifiers\"", "\"client-classes\"",
   "\"require-client-classes\"", "\"test\"", "\"only-if-required\"",
   "\"client-class\"", "\"reservations\"", "\"duid\"", "\"hw-address\"",
   "\"circuit-id\"", "\"client-id\"", "\"hostname\"", "\"flex-id\"",
@@ -4938,7 +7192,7 @@ namespace isc { namespace dhcp {
   "lfc_interval", "readonly", "connect_timeout", "request_timeout",
   "tcp_keepalive", "tcp_nodelay", "contact_points", "$@38", "keyspace",
   "$@39", "consistency", "$@40", "serial_consistency", "$@41",
-  "max_reconnect_tries", "reconnect_wait_time",
+  "max_reconnect_tries", "reconnect_wait_time", "max_row_errors",
   "host_reservation_identifiers", "$@42",
   "host_reservation_identifiers_list", "host_reservation_identifier",
   "duid_id", "hw_address_id", "circuit_id", "client_id", "flex_id",
@@ -5030,6 +7284,7 @@ namespace isc { namespace dhcp {
      657,   659,   659,   677,   677,   689,   689,   699,   700,   703,
      704,   707,   707,   717,   718,   721,   722,   723,   724,   725,
      726,   727,   728,   729,   730,   731,   732,   733,   734,   735,
+<<<<<<< HEAD
      736,   737,   738,   739,   740,   743,   743,   750,   751,   752,
      753,   756,   756,   764,   764,   772,   772,   780,   785,   785,
      793,   798,   803,   808,   813,   818,   823,   828,   828,   836,
@@ -5080,6 +7335,57 @@ namespace isc { namespace dhcp {
     2268,  2276,  2276,  2286,  2287,  2290,  2290,  2298,  2299,  2302,
     2303,  2304,  2305,  2306,  2309,  2309,  2317,  2322,  2327,  2332,
     2332
+=======
+     736,   737,   738,   739,   740,   741,   744,   744,   751,   752,
+     753,   754,   757,   757,   765,   765,   773,   773,   781,   786,
+     786,   794,   799,   804,   809,   814,   819,   824,   829,   829,
+     837,   837,   845,   845,   853,   853,   861,   866,   871,   877,
+     877,   887,   888,   891,   892,   893,   894,   895,   898,   903,
+     908,   913,   918,   923,   923,   933,   934,   937,   938,   941,
+     941,   951,   951,   961,   962,   963,   966,   967,   970,   970,
+     978,   978,   986,   986,   997,   998,  1001,  1002,  1003,  1004,
+    1005,  1006,  1009,  1014,  1019,  1024,  1029,  1034,  1042,  1042,
+    1055,  1056,  1059,  1060,  1067,  1067,  1093,  1093,  1104,  1105,
+    1109,  1110,  1111,  1112,  1113,  1114,  1115,  1116,  1117,  1118,
+    1119,  1120,  1121,  1122,  1123,  1124,  1125,  1126,  1127,  1128,
+    1129,  1130,  1131,  1132,  1133,  1134,  1135,  1136,  1137,  1140,
+    1140,  1148,  1148,  1156,  1156,  1164,  1164,  1172,  1172,  1180,
+    1180,  1188,  1188,  1198,  1198,  1205,  1206,  1207,  1208,  1211,
+    1218,  1218,  1229,  1230,  1234,  1235,  1238,  1238,  1246,  1247,
+    1250,  1251,  1252,  1253,  1254,  1255,  1256,  1257,  1258,  1259,
+    1260,  1261,  1262,  1263,  1264,  1265,  1266,  1267,  1268,  1269,
+    1270,  1271,  1272,  1273,  1280,  1280,  1293,  1293,  1302,  1303,
+    1306,  1307,  1312,  1312,  1327,  1327,  1341,  1342,  1345,  1346,
+    1349,  1350,  1351,  1352,  1353,  1354,  1355,  1356,  1357,  1358,
+    1361,  1363,  1368,  1370,  1370,  1378,  1378,  1386,  1386,  1394,
+    1396,  1396,  1404,  1413,  1413,  1425,  1426,  1431,  1432,  1437,
+    1437,  1449,  1449,  1461,  1462,  1467,  1468,  1473,  1474,  1475,
+    1476,  1477,  1478,  1479,  1480,  1481,  1484,  1486,  1486,  1494,
+    1496,  1498,  1503,  1511,  1511,  1523,  1524,  1527,  1528,  1531,
+    1531,  1541,  1541,  1551,  1552,  1555,  1556,  1557,  1558,  1559,
+    1560,  1561,  1564,  1564,  1572,  1572,  1597,  1597,  1627,  1627,
+    1637,  1638,  1641,  1642,  1645,  1645,  1654,  1654,  1663,  1664,
+    1667,  1668,  1672,  1673,  1674,  1675,  1676,  1677,  1678,  1679,
+    1680,  1681,  1682,  1683,  1684,  1685,  1686,  1689,  1689,  1697,
+    1697,  1705,  1705,  1713,  1713,  1721,  1721,  1731,  1731,  1739,
+    1739,  1747,  1747,  1755,  1755,  1763,  1763,  1771,  1771,  1779,
+    1779,  1792,  1792,  1802,  1803,  1809,  1809,  1819,  1820,  1823,
+    1823,  1833,  1834,  1837,  1838,  1841,  1842,  1843,  1844,  1845,
+    1846,  1847,  1848,  1849,  1850,  1851,  1854,  1856,  1856,  1864,
+    1873,  1880,  1880,  1890,  1891,  1894,  1895,  1896,  1897,  1898,
+    1901,  1901,  1909,  1909,  1920,  1920,  1958,  1958,  1970,  1970,
+    1980,  1981,  1984,  1985,  1986,  1987,  1988,  1989,  1990,  1991,
+    1992,  1993,  1994,  1995,  1996,  1997,  1998,  1999,  2000,  2001,
+    2004,  2009,  2009,  2017,  2017,  2025,  2030,  2030,  2038,  2043,
+    2048,  2048,  2056,  2057,  2060,  2060,  2068,  2073,  2078,  2078,
+    2086,  2089,  2092,  2095,  2098,  2104,  2104,  2112,  2112,  2120,
+    2120,  2131,  2131,  2138,  2138,  2145,  2145,  2152,  2152,  2163,
+    2163,  2173,  2174,  2178,  2179,  2182,  2182,  2192,  2202,  2202,
+    2212,  2212,  2223,  2224,  2228,  2232,  2232,  2244,  2245,  2249,
+    2249,  2257,  2258,  2261,  2262,  2263,  2264,  2265,  2266,  2267,
+    2270,  2275,  2275,  2283,  2283,  2293,  2294,  2297,  2297,  2305,
+    2306,  2309,  2310,  2311,  2312,  2315,  2315,  2323,  2328,  2333
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
   };
 
   // Print the state stack on the debug stream.
@@ -5112,11 +7418,16 @@ namespace isc { namespace dhcp {
 #endif // PARSER4_DEBUG
 
 
-#line 14 "dhcp4_parser.yy"
+#line 14 "dhcp4_parser.yy" // lalr1.cc:1218
 } } // isc::dhcp
+<<<<<<< HEAD
 #line 5118 "dhcp4_parser.cc"
 
 #line 2341 "dhcp4_parser.yy"
+=======
+#line 5087 "dhcp4_parser.cc" // lalr1.cc:1218
+#line 2338 "dhcp4_parser.yy" // lalr1.cc:1219
+>>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 
 
 void
