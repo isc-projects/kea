@@ -8,15 +8,11 @@ module kea-dhcp4-server {
   }
   import kea-types {
     prefix kea;
-    revision-date 2018-11-20;
+    revision-date 2019-08-09;
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-11-20;
-  }
-  import kea-logging {
-    prefix logging;
-    revision-date 2018-11-20;
+    revision-date 2019-08-09;
   }
 
   organization "Internet Systems Consortium";
@@ -24,7 +20,7 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2018-11-20 {
+  revision 2019-08-09 {
     description "Initial revision";
     reference "";
   }
@@ -144,8 +140,13 @@ module kea-dhcp4-server {
       ordered-by user;
       description "List of IPv4 subnets.";
       uses dhcp:valid-lifetime;
+      uses dhcp:min-valid-lifetime;
+      uses dhcp:max-valid-lifetime;
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
+      uses dhcp:calculate-tee-times;
+      uses dhcp:t1-percent;
+      uses dhcp:t2-percent;
       uses option-data-list;
       list pool {
         key "start-address end-address";
@@ -285,9 +286,14 @@ module kea-dhcp4-server {
     description "Contains DHCPv4 server configuration.";
 
     uses dhcp:valid-lifetime;
+    uses dhcp:min-valid-lifetime;
+    uses dhcp:max-valid-lifetime;
     uses dhcp:renew-timer;
     uses dhcp:rebind-timer;
     uses dhcp:decline-probation-period;
+    uses dhcp:calculate-tee-times;
+    uses dhcp:t1-percent;
+    uses dhcp:t2-percent;
     uses subnet4-list;
 
     list shared-network {
@@ -312,6 +318,11 @@ module kea-dhcp4-server {
       uses dhcp:network-client-class;
       uses dhcp:network-require-client-classes;
       uses dhcp:valid-lifetime;
+      uses dhcp:min-valid-lifetime;
+      uses dhcp:max-valid-lifetime;
+      uses dhcp:calculate-tee-times;
+      uses dhcp:t1-percent;
+      uses dhcp:t2-percent;
       uses dhcp:network-user-context;
     }
 
@@ -362,7 +373,9 @@ module kea-dhcp4-server {
     uses kea:hooks-libraries;
     uses dhcp:expired-leases-processing;
     uses dhcp:dhcp4o6-port;
-    uses dhcp:control-socket;
+    uses kea:control-socket;
+    uses dhcp:hostname-char-set;
+    uses dhcp:hostname-char-replacement;
     uses dhcp:dhcp-ddns;
 
     leaf echo-client-id {
@@ -393,8 +406,7 @@ module kea-dhcp4-server {
     uses dhcp:config-control;
     uses dhcp:server-tag;
     uses dhcp:dhcp-queue-control;
-    // Moved from logging
-    uses logging:loggers;
+    uses kea:loggers;
   }
 
   /*

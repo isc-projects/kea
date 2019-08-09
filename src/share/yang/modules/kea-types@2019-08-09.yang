@@ -1,26 +1,83 @@
-module kea-logging {
+module kea-types {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:kea-logging";
-  prefix "kea-logging";
-
-  import kea-types {
-    prefix kea;
-    revision-date 2018-11-20;
-  }
+  namespace "urn:ietf:params:xml:ns:yang:kea-types";
+  prefix "kea-types";
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
-  description "This model defines a YANG data model that can be
-    used to configure and manage logging of a Kea server.";
+  description "This file defines some commonly used Kea types and groupings.";
 
-  revision 2018-11-20 {
+  revision 2019-08-09 {
     description "Initial revision";
     reference "";
   }
 
   /*
-  * Groupings
+  * Typedef
   */
+  typedef user-context {
+    type string;
+    description "User context (JSON map).";
+  }
+
+  /*
+  * Grouping
+  */
+  grouping user-context {
+    description "User context grouping.";
+    leaf user-context {
+      type user-context;
+      description "User context entry.";
+    }
+  }
+
+  grouping control-socket-info {
+    description "Control socket parameters.";
+    leaf socket-name {
+      type string;
+      mandatory true;
+      description "Path to the UNIX socket.";
+    }
+    leaf socket-type {
+      type enumeration {
+        enum "unix" {
+          description "Unix socket type.";
+        }
+      }
+      mandatory true;
+      description "Socket type.";
+    }
+    leaf user-context {
+      type user-context;
+      description "Control socket user context.";
+    }
+  }
+
+  grouping control-socket {
+    description "Control socket grouping.";
+    container control-socket {
+      presence "Have control socket.";
+      description "Control socket container.";
+      uses control-socket-info;
+    }
+  }
+
+  grouping hooks-libraries {
+    description "Hooks libraries grouping.";
+    list hook-library {
+      key library;
+      description "List of hook library.";
+      leaf library {
+        type string;
+        mandatory true;
+        description "Path to the DSO.";
+      }
+      leaf parameters {
+        type string;
+        description "Parameters (JSON value).";
+      }
+    }
+  }
 
   grouping loggers {
     description "Loggers.";
@@ -91,14 +148,9 @@ module kea-logging {
         description "Category of messages logged.";
       }
       leaf user-context {
-        type kea:user-context;
+        type user-context;
         description "Logger user context.";
       }
     }
-  }
-
-  grouping configuration {
-    description "Contains parameters for logging configuration.";
-    uses loggers;
   }
 }

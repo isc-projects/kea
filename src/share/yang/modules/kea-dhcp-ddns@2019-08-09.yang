@@ -8,11 +8,7 @@ module kea-dhcp-ddns {
   }
   import kea-types {
     prefix kea;
-    revision-date 2018-11-20;
-  }
-  import kea-logging {
-    prefix logging;
-    revision-date 2018-11-20;
+    revision-date 2019-08-09;
   }
 
   organization "Internet Systems Consortium";
@@ -20,7 +16,7 @@ module kea-dhcp-ddns {
   description "This model defines a YANG data model that can be
     used to configure and manage a Kea DHCP-DDNS server.";
 
-  revision 2018-11-20 {
+  revision 2019-08-09 {
     description "Initial revision";
     reference "";
   }
@@ -125,6 +121,8 @@ module kea-dhcp-ddns {
       description "Packet format to use when sending requests to the server.";
     }
 
+    uses kea:control-socket;
+
     container forward-ddns {
       description "Forward DNS zones.";
       uses managed-domains;
@@ -171,7 +169,6 @@ module kea-dhcp-ddns {
       description "DHCP-DDNS server user context.";
     }
 
-    // Moved from logging
-    uses logging:loggers;
+    uses kea:loggers;
   }
 }

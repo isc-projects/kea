@@ -8,14 +8,14 @@ module kea-dhcp-types {
   }
   import kea-types {
     prefix kea;
-    revision-date 2018-11-20;
+    revision-date 2019-08-09;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2018-11-20 {
+  revision 2019-08-09 {
     description "Initial revision";
     reference "";
   }
@@ -68,6 +68,24 @@ module kea-dhcp-types {
     }
   }
 
+  grouping min-valid-lifetime {
+    description "Minimum valid lifetime grouping.";
+    leaf min-valid-lifetime {
+      type uint32;
+      units "seconds";
+      description "Minimum valid lifetime entry.";
+    }
+  }
+
+  grouping max-valid-lifetime {
+    description "Maximum valid lifetime grouping.";
+    leaf max-valid-lifetime {
+      type uint32;
+      units "seconds";
+      description "Maximum valid lifetime entry.";
+    }
+  }
+
   grouping renew-timer {
     description "Renew timer grouping.";
     leaf renew-timer {
@@ -83,6 +101,36 @@ module kea-dhcp-types {
       type uint32;
       units "seconds";
       description "Rebind timer entry.";
+    }
+  }
+
+  grouping calculate-tee-times {
+    description "Calculate T1/T2 grouping.";
+    leaf calculate-tee-times {
+      type boolean;
+      description "Calculate T1/T2 entry.";
+    }
+  }
+
+  grouping t1-percent {
+    description "T1 timer grouping.";
+    leaf t1-percent {
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
+      description "T1 timer entry.";
+    }
+  }
+
+  grouping t2-percent {
+    description "T2 timer grouping.";
+    leaf t2-percent {
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
+      description "T2 timer entry.";
     }
   }
 
@@ -168,6 +216,14 @@ module kea-dhcp-types {
       type boolean;
       description "TCP nodelay for the database connection.";
     }
+    leaf consistency {
+      type string;
+      description "Consistency level.";
+    }
+    leaf serial-consistency {
+      type string;
+      description "Serial consistency level.";
+    }
     uses kea:user-context {
       refine user-context {
         description "Database user context. Arbitrary JSON data can be
@@ -225,12 +281,21 @@ module kea-dhcp-types {
     }
   }
 
-  grouping control-socket {
-    description "Control socket grouping.";
-    container control-socket {
-      presence "Have control socket.";
-      description "Control socket container.";
-      uses kea:control-socket;
+  grouping hostname-char-set {
+    description "Hostname character set grouping.";
+    leaf hostname-char-set {
+      type string;
+      description "A regex defining invalid characters. If detected, those
+                   will be replaced by hostname-char-replacement.";
+    }
+  }
+
+  grouping hostname-char-replacement {
+    description "Hostname character replacement grouping.";
+    leaf hostname-char-replacement {
+      type string;
+      description "Replacement for invalid charaters. See
+                   hostname-char-set.";
     }
   }
 
@@ -315,16 +380,8 @@ module kea-dhcp-types {
         type string;
         description "DHCP-DDNS generated prefix.";
       }
-      leaf hostname-char-set {
-        type string;
-        description "A regex defining invalid characters. If detected, those
-                     will be replaced by hostname-char-replacement.";
-      }
-      leaf hostname-char-replacement {
-        type string;
-        description "Replacement for invalid charaters. See
-                     hostname-char-set.";
-      }
+      uses hostname-char-set;
+      uses hostname-char-replacement;
       uses kea:user-context {
         refine user-context {
           description "DHCP-DDNS user context. Arbitrary JSON data can
@@ -744,6 +801,11 @@ module kea-dhcp-types {
     description "Config control grouping.";
     container config-control {
       description "Config control.";
+      leaf config-fetch-wait-time {
+        type uint32;
+        units "seconds";
+        description "Configuration fetch wait time entry.";
+      }
       list config-database {
         key database-type;
         description "List of databases.";
