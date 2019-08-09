@@ -36,13 +36,22 @@ CSVLeaseFile4::append(const Lease4& lease) {
 
     CSVRow row(getColumnCount());
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
+    std::string hwaddr_text;
     if (!lease.hwaddr_) {
         // Bump the error counter
         ++write_errs_;
 
         isc_throw(BadValue, "Lease4 must have hardware address specified.");
+    } else {
+        hwaddr_text = lease.hwaddr_->toText(false);
+        if (hwaddr_text.empty() && lease.state_ != Lease::STATE_DECLINED) {
+            // Bump the error counter
+            ++write_errs_;
+
+            isc_throw(BadValue, "Lease4 must have non empty hardware address.");
+        }
     }
-    row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
+    row.writeAt(getColumnIndex("hwaddr"), hwaddr_text);
     // Client id may be unset (NULL).
     if (lease.client_id_) {
         row.writeAt(getColumnIndex("client_id"), lease.client_id_->toText());
