@@ -239,6 +239,16 @@ else
 all: html mans
 endif
 
+# this rule is only used for development purposes and is not used in official
+# build process as kea-messages.rst is always generated via sphinx's conf.py
+$(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
+	$(PYTHON) $(srcdir)/mes2doc.py -o $@ $(mes_files)
+
+# this rule is only used for development purposes and is not used in official
+# build process as api.rst is always generated via sphinx's conf.py
+$(srcdir)/api.rst: $(api_files) api2doc.py
+	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
+
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 
