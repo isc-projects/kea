@@ -30,7 +30,7 @@
     "resp-comment": [
         "The command will return the result of 3 (empty) if the client",
         "class doesn't exist. If the client class exists, the returned",
-        "result is 0 if the update was successful; the result is 1",
+        "result is 0 if the update was successful and the result is 1",
         "if the update is unsuccessful."
     ],
     "resp-syntax": [

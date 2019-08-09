@@ -4,7 +4,7 @@
         "This command is used to fetch a list of all IPv6 shared networks from the configuration database."
     ],
     "cmd-comment": [
-        "The ``server-tags`` list is required for this command. This list must not be empty. It may either contain one or multiple server tags as strings or a single ``null`` value."
+        "The ``server-tags`` list is required for this command and must not be empty. It may either contain one or multiple server tags as strings or a single ``null`` value."
     ],
     "cmd-syntax": [
         "{",
