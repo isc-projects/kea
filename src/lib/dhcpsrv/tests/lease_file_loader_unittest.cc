@@ -312,7 +312,7 @@ protected:
 };
 
 LeaseFileLoaderTest::LeaseFileLoaderTest()
-    : filename_(absolutePath("leases4.csv")), io_(filename_) {
+    : filename_(absolutePath("leases.csv")), io_(filename_) {
     CfgMgr::instance().clear();
 }
 
@@ -649,72 +649,58 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     }
 }
 
-// This test verifies that the exception is thrown when the specific
-// number of errors in the test data occur during reading of the lease
-// file.
-TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
-    std::string test_str;
-    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com,1,\n";
-    std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,500,8,1,1,host.example.com,1,\n";
+// This test verifies that max-row-errors works correctly for
+// DHCPv6 lease files
+TEST_F(LeaseFileLoaderTest, maxRowErrors6) {
+    // We have 9 rows: 2 that are good, 7 that are flawed (too few fields).
+    std::vector<std::string> rows = {
+        "3002::01,00:03:00:01:08:00:27:25:d3:01,30,1565361388,2,20,0,"
+        "11189196,128,0,0,,08:00:27:25:d3:f4,0,\n",
+        "3002::02,00:03:00:01:08:00:27:25:d3:02,30,1565361388,2,20,0\n",
+        "3002::03,00:03:00:01:08:00:27:25:d3:03,30,1565361388,2,20,0\n",
+        "3002::04,00:03:00:01:08:00:27:25:d3:04,30,1565361388,2,20,0\n",
+        "3002::05,00:03:00:01:08:00:27:25:d3:05,30,1565361388,2,20,0\n",
+        "3002::06,00:03:00:01:08:00:27:25:d3:06,30,1565361388,2,20,0\n",
+        "3002::07,00:03:00:01:08:00:27:25:d3:07,30,1565361388,2,20,0\n",
+        "3002::08,00:03:00:01:08:00:27:25:d3:08,30,1565361388,2,20,0\n",
+        "3002::09,00:03:00:01:08:00:27:25:d3:09,30,1565361388,2,20,0,"
+        "11189196,128,0,0,,08:00:27:25:d3:f4,0,\n"
+    };
 
-    std::string b_1 = "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com,"
-                      "0,\n";
-
-    std::string c_1 = "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,,1,\n";
-
-    // Create a lease file for which there is a number of invalid
-    // entries.  b_1 is invalid and gets used multiple times.
-    test_str = v4_hdr_ + a_1 + b_1 + b_1 + c_1 + b_1 + b_1 + a_2;
-    io_.writeFile(test_str);
-
-    boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
-    ASSERT_NO_THROW(lf->open());
-
-    // Load leases and set the maximum number of errors to 3. This
-    // should result in an exception because there are 4 invalid entries.
-    Lease4Storage storage;
-    ASSERT_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 3),
-                 util::CSVFileError);
-
-    // We should have made 6 attempts to read, with 2 leases read and 4 error
-    {
-    SCOPED_TRACE("Read leases 1");
-    checkStats(*lf, 6, 2, 4, 0, 0, 0);
+    std::ostringstream os;
+    os << v6_hdr_;
+    for (auto row : rows) {
+        os << row;
     }
 
-    lf->close();
+    io_.writeFile(os.str());
+
+    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->open());
 
-    // Repeat the test, but this time allow for 4 invalid entries. It
-    // should load just fine.
-    storage.clear();
-    ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage, 4));
+    // Let's limit the number of errors to 5 (we have 7 in the data) and
+    // try to load the leases.
+    uint32_t max_errors = 5;
+    Lease6Storage storage;
+    ASSERT_THROW(LeaseFileLoader::load<Lease6>(*lf, storage, max_errors), util::CSVFileError);
 
-    // We should have made 8 attempts to read, with 3 leases read and 4 error
+    // We should have made 7 reads, with 1 lease read, and 6 errors.
     {
-    SCOPED_TRACE("Read leases 2");
-    checkStats(*lf, 8, 3, 4, 0, 0, 0);
+        SCOPED_TRACE("Failed load stats");
+        checkStats(*lf, 7, 1, 6, 0, 0, 0);
     }
 
-    ASSERT_EQ(2, storage.size());
+    // Now let's disable the error limit and try again.
+    max_errors = 0;
 
-    Lease4Ptr lease = getLease<Lease4Ptr>("192.0.2.1", storage);
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(300, lease->cltt_);
+    // Load leases from the file. Note, we have to reopen the file.
+    ASSERT_NO_THROW(lf->open());
+    ASSERT_NO_THROW(LeaseFileLoader::load<Lease6>(*lf, storage, max_errors));
 
-    lease = getLease<Lease4Ptr>("192.0.2.10", storage);
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(100, lease->cltt_);
-
-    test_str = v4_hdr_ + a_2 + c_1;
-    writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
-
-    // We should have made 1 attempts to write, with 1 leases written and 0 errors
+    // We should have made 10 reads, with 2 leases read, and 7 errors.
     {
-    SCOPED_TRACE("Write leases");
-    checkStats(*lf, 0, 0, 0, 2, 2, 0);
+        SCOPED_TRACE("Good load stats");
+        checkStats(*lf, 10, 2, 7, 0, 0, 0);
     }
 }
 

@@ -84,6 +84,7 @@ using namespace std;
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
+  MAX_ROW_ERRORS "max-row-errors"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   MIN_PREFERRED_LIFETIME "min-preferred-lifetime"
@@ -691,6 +692,7 @@ database_map_param: database_type
                   | keyspace
                   | consistency
                   | serial_consistency
+                  | max_row_errors
                   | unknown_map_entry
                   ;
 
@@ -767,6 +769,11 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
+max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-row-errors", n);
 };
 
 request_timeout: REQUEST_TIMEOUT COLON INTEGER {
