@@ -182,6 +182,25 @@ man_pages = [
 todo_include_todos = True
 
 
+
+# Do generation of api.rst and kea-messages.rst here in conf.py instead of Makefile.am
+# so they are available on ReadTheDocs as there makefiles are not used for building docs.
+def run_generate_docs(_):
+    import os
+    import sys
+    src_dir = os.path.abspath(os.path.dirname(__file__))
+    print(src_dir)
+    sys.path.append(src_dir)
+
+    import api2doc
+    api2doc.generate(os.getenv('KEA_API_FILES').split(), os.path.join(src_dir, 'api.rst'))
+
+    import mes2doc
+    mes2doc.generate(os.getenv('KEA_MES_FILES').split(), os.path.join(src_dir, 'kea-messages.rst'))
+
+
 # custom setup hook
 def setup(app):
     app.add_stylesheet('kea.css')
+
+    app.connect('builder-inited', run_generate_docs)

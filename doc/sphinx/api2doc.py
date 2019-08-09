@@ -30,7 +30,7 @@ def read_input_files(files):
     for f in files:
         name = os.path.basename(f)[:-5]
         # Skip special names starting with _ (such as _template.json)
-        if name[0] == '_':
+        if name.startswith('_'):
             print("Skipping %s (starts with underscore)" % f)
             continue
         with open(f) as fp:
@@ -170,18 +170,23 @@ API Reference
     return rst
 
 
-def main():
-    args = parse_args()
-
-    apis = read_input_files(args.files)
+def generate(in_files, out_file):
+    apis = read_input_files(in_files)
 
     rst = generate_rst(apis)
 
-    if args.output:
-        with open(args.output, 'w') as f:
+    if out_file:
+        with open(out_file, 'w') as f:
             f.write(rst)
+        print('Wrote generated RST content to: %s' % out_file)
     else:
         print(rst)
+
+
+def main():
+    args = parse_args()
+    generate(args.files, args.output)
+
 
 if __name__ == '__main__':
     main()
