@@ -6,8 +6,8 @@
 // list of parameters supported by Kea DHCPv4 server along with the brief
 // description of each parameter.
 //
-// This stable version is used for YANG as we do not want to update code
-// and models each time a keyword is added to the syntax.
+// This current version should be up to date, i.e. new keywords should be
+// added in this file at the same time than in the syntax.
 {
     // Kea DHCPv4 server configuration begins here.
     "Dhcp4": {
@@ -262,6 +262,69 @@
 
                 // User name to be used to access the database.
                 "user": "kea"
+            },
+            {
+                // Name of the database to connect to.
+                "name": "kea",
+
+                // Host on which the database resides.
+                "host": "localhost",
+
+                // Database password.
+                "password": "kea",
+
+                // Port on which the database is available.
+                "port": 5432,
+
+                // Type of the database, e.g. "mysql", "postgresql", "cql".
+                "type": "postgresql",
+
+                // User name to be used to access the database.
+                "user": "kea"
+            },
+            {
+                // Name of the database to connect to.
+                "keyspace": "kea",
+
+                // Host on which the database resides.
+                "contact-points": "127.0.0.1",
+
+                // Database password.
+                "password": "kea",
+
+                // Port on which the database is available.
+                "port": 9042,
+
+                // Type of the database, e.g. "mysql", "postgresql", "cql".
+                "type": "cql",
+
+                // User name to be used to access the database.
+                "user": "kea",
+
+                // Consistency level for all queries.
+                // Supported values: any, one, two, three, quorum, all,
+                // local-quorum, each-quorum, serial, local-serial, local-one.
+                "consistency": "quorum",
+
+                // Serial consistency level for all queries.
+                // Supported values: any, one, two, three, quorum, all,
+                // local-quorum, each-quorum, serial, local-serial, local-one.
+                "serial-consistency": "serial",
+
+                // Connection reconnect wait time.
+                "reconnect-wait-time": 100,
+
+                // Connection connect timeout.
+                "connect-timeout": 100,
+
+                // Connection request timeout.
+                "request-timeout": 100,
+
+                // Connection tcp keepalive.
+                "tcp-keepalive": 100,
+
+                // Connection tcp nodelay.
+                "tcp-nodelay": true
             }
         ],
 
@@ -485,6 +548,15 @@
                 // Shared network level renew timer.
                 "renew-timer": 31,
 
+                // Shared network level compute T1 and T2 timers.
+                "calculate-tee-times": true,
+
+                // T1 = valid lifetime * .5.
+                "t1-percent": .5,
+
+                // T2 = valid lifetime * .75.
+                "t2-percent": .75,
+
                 // Enumeration specifying server's mode of operation when it
                 // fetches host reservations.
                 "reservation-mode": "all",
@@ -611,6 +683,15 @@
                         // fetches host reservations.
                         "reservation-mode": "all",
 
+                        // Subnet-level compute T1 and T2 timers.
+                        "calculate-tee-times": true,
+
+                        // T1 = valid lifetime * .5.
+                        "t1-percent": .5,
+
+                        // T2 = valid lifetime * .75.
+                        "t2-percent": .75,
+
                         // List of static IPv4 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
                         "reservations": [
@@ -645,13 +726,25 @@
                         // Subnet prefix.
                         "subnet": "192.0.0.0/8",
 
-                        // Subnet level valid lifetime.
-                        "valid-lifetime": 6000
+                        // Subnet level (default) valid lifetime.
+                        "valid-lifetime": 6000,
+
+                        // Subnet level min valid lifetime.
+                        "min-valid-lifetime": 4000,
+
+                        // Subnet level max valid lifetime.
+                        "max-valid-lifetime": 8000
                     }
                 ],
 
-                // Shared network level valid lifetime.
-                "valid-lifetime": 6001
+                // Shared network level (default) valid lifetime.
+                "valid-lifetime": 6001,
+
+                // Subnet level min valid lifetime.
+                "min-valid-lifetime": 4001,
+
+                // Subnet level max valid lifetime.
+                "max-valid-lifetime": 8001
             }
         ],
 
@@ -661,8 +754,17 @@
         // List of IPv4 subnets which don't belong to any shared network.
         "subnet4": [],
 
-        // Global valid lifetime value.
+        // Global valid (default) lifetime value.
         "valid-lifetime": 6000,
+
+        // Global min valid lifetime value.
+        "min-valid-lifetime": 4000,
+
+        // Global max valid lifetime value.
+        "max-valid-lifetime": 8000,
+
+        // Reservations (examples are in other files).
+        "reservations": [],
 
         // Configuration control (currently not used, i.e. this syntax
         // is already defined but corresponding feature is not implemented).
@@ -677,7 +779,10 @@
                     // Type of the database, e.g. "mysql", "postgresql", "cql".
                     "type": "mysql"
                 }
-            ]
+            ],
+            // Intervals between attempts to fetch configuration updates
+            // via the configuration backends used.
+            "config-fetch-wait-time": 30
         },
 
         // Server tag.
@@ -692,7 +797,28 @@
             // Queue type was mandatory.
             "queue-type": "kea-ring4"
         },
-        // Missing: calculate-tee-times, t1-percent, t2-percent
+
+        // Fetches host reservations.
+        "reservation-mode": "all",
+
+        // Global compute T1 and T2 timers.
+        "calculate-tee-times": true,
+
+        // T1 = valid lifetime * .5.
+        "t1-percent": .5,
+
+        // T2 = valid lifetime * .75.
+        "t2-percent": .75,
+
+        // String of zero or more characters with which to replace each
+        // invalid character in the hostname or Client FQDN. The default
+        // value is an empty string which will cause invalid characters
+        // to be omitted rather than replaced.
+	"hostname-char-replacement": "x",
+
+        // Regular expression describing the invalid character set in
+        // the hostname or Client FQDN.
+        "hostname-char-set": "[^A-Za-z0-9.-]",
 
         // List of loggers used by the servers using this configuration file.
         "loggers": [

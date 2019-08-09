@@ -27,8 +27,13 @@ namespace yang {
 /// @code
 /// "Dhcp4": {
 ///     "valid-lifetime": <valid lifetime>,
+///     "min-valid-lifetime": <minimum valid lifetime>,
+///     "max-valid-lifetime": <maximum valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
+///     "calculate-tee-times": <calculate T1/T2 times>,
+///     "t1-percent": <T1 percent>,
+///     "t2-percent": <T2 percent>,
 ///     "decline-probation-period": <decline probation period>,
 ///     "subnet4": [ <list of subnet4> ],
 ///     <shared-networks>,
@@ -45,6 +50,8 @@ namespace yang {
 ///     <expired-leases-processing>,
 ///     <dhcp4o6-port>,
 ///     <control-socket>,
+///     <hostname-char-set": <hostname character set>,
+///     <hostname-char-replacement": <hostname character replacement>,
 ///     <dhcp-ddns>,
 ///     "echo-client-id": <echo client id flag>,
 ///     "match-client-id": <match client id flag>,
@@ -67,8 +74,13 @@ namespace yang {
 /// YANG syntax for kea-dhcp4-server:config is:
 /// @code
 /// +--rw valid-lifetime?                uint32
+/// +--rw min-valid-lifetime?            uint32
+/// +--rw max-valid-lifetime?            uint32
 /// +--rw renew-timer?                   uint32
 /// +--rw rebind-timer?                  uint32
+/// +--rw calculate-tee-times?           boolean
+/// +--rw t1-percent?                    decimal64
+/// +--rw t2-percent?                    decimal64
 /// +--rw decline-probation-period?      uint32
 /// +--rw subnet4*
 /// +--rw shared-network*
@@ -90,6 +102,8 @@ namespace yang {
 /// +--rw expired-leases-processing      <expired-leases-processing>
 /// +--rw dhcp4o6-port?                  uint16
 /// +--rw control-socket!                <control-socket>
+/// +--rw hostname-char-set?             string
+/// +--rw hostname-char-replacement?     string
 /// +--rw dhcp-ddns                      <dhcp-ddns>
 /// +--rw echo-client-id?                boolean
 /// +--rw match-client-id?               boolean
@@ -103,6 +117,7 @@ namespace yang {
 /// +--rw reservation-mode?              enumeration
 /// +--rw host*
 /// +--rw config-control
+///    +--rw config-fetch-wait-time?     uint32
 ///    +--rw config-database*
 /// +--rw server-tag                     string
 /// +--rw dhcp-queue-control             string
@@ -164,10 +179,18 @@ namespace yang {
 /// JSON syntax for kea-dhcp6 is:
 /// @code
 /// "Dhcp6": {
+///     "data-directory": <data directory>,
 ///     "preferred-lifetime": <preferred lifetime>,
+///     "min-preferred-lifetime": <minimum preferred lifetime>,
+///     "max-preferred-lifetime": <maximum preferred lifetime>,
 ///     "valid-lifetime": <valid lifetime>,
+///     "min-valid-lifetime": <minimum valid lifetime>,
+///     "max-valid-lifetime": <maximum valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
+///     "calculate-tee-times": <calculate T1/T2 times>,
+///     "t1-percent": <T1 percent>,
+///     "t2-percent": <T2 percent>,
 ///     "decline-probation-period": <decline probation period>,
 ///     "subnet6": [ <list of subnet6> ],
 ///     <shared-networks>,
@@ -187,6 +210,8 @@ namespace yang {
 ///     <server-id>,
 ///     <dhcp4o6-port>,
 ///     <control-socket>,
+///     <hostname-char-set": <hostname character set>,
+///     <hostname-char-replacement": <hostname character replacement>,
 ///     <dhcp-ddns>,
 ///     <user-context>,
 ///     <comment>
@@ -202,10 +227,18 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp6-server:config is:
 /// @code
+/// +--rw data-directory?                string
 /// +--rw preferred-lifetime?            uint32
+/// +--rw min-preferred-lifetime?        uint32
+/// +--rw max-preferred-lifetime?        uint32
 /// +--rw valid-lifetime?                uint32
+/// +--rw min-valid-lifetime?            uint32
+/// +--rw max-valid-lifetime?            uint32
 /// +--rw renew-timer?                   uint32
 /// +--rw rebind-timer?                  uint32
+/// +--rw calculate-tee-times?           boolean
+/// +--rw t1-percent?                    decimal64
+/// +--rw t2-percent?                    decimal64
 /// +--rw decline-probation-period?      uint32
 /// +--rw subnet6*
 /// +--rw shared-network*
@@ -228,6 +261,8 @@ namespace yang {
 /// +--rw server-id                      <server-id>
 /// +--rw dhcp4o6-port?                  uint16
 /// +--rw control-socket!                <control-socket>
+/// +--rw hostname-char-set?             string
+/// +--rw hostname-char-replacement?     string
 /// +--rw dhcp-ddns                      <dhcp-ddns>
 /// +--rw echo-client-id?                boolean
 /// +--rw user-context?                  string
@@ -236,6 +271,7 @@ namespace yang {
 /// +--rw reservation-mode?              enumeration
 /// +--rw host*
 /// +--rw config-control
+///    +--rw config-fetch-wait-time?     uint32
 ///    +--rw config-database*
 /// +--rw server-tag                     string
 /// +--rw dhcp-queue-control             string

@@ -290,10 +290,10 @@ module kea-dhcp4-server {
     uses dhcp:max-valid-lifetime;
     uses dhcp:renew-timer;
     uses dhcp:rebind-timer;
-    uses dhcp:decline-probation-period;
     uses dhcp:calculate-tee-times;
     uses dhcp:t1-percent;
     uses dhcp:t2-percent;
+    uses dhcp:decline-probation-period;
     uses subnet4-list;
 
     list shared-network {
