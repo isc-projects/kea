@@ -2987,6 +2987,7 @@ static const flex_int16_t yy_rule_linenum[184] =
       465,  475,  486,  497,  508,  519,  530,  541,  552,  563,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
       574,  585,  595,  606,  617,  628,  639,  650,  659,  668,
@@ -3007,6 +3008,8 @@ static const flex_int16_t yy_rule_linenum[184] =
 <<<<<<< HEAD
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
 =======
+=======
+>>>>>>> [#805,!5-p] Updated example confs
       574,  585,  594,  605,  616,  627,  638,  649,  658,  667,
       677,  686,  696,  710,  726,  735,  744,  753,  762,  783,
       804,  813,  823,  832,  843,  852,  861,  870,  879,  888,
@@ -3022,9 +3025,12 @@ static const flex_int16_t yy_rule_linenum[184] =
      1653, 1664, 1675, 1688, 1701, 1716, 1815, 1820, 1825, 1830,
      1831, 1832, 1833, 1834, 1835, 1837, 1855, 1868, 1873, 1877,
      1879, 1881, 1883
+<<<<<<< HEAD
 >>>>>>> [#805,!5-p] Updated example confs
 =======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+>>>>>>> [#805,!5-p] Updated example confs
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -4183,7 +4189,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 595 "dhcp4_lexer.ll"
+#line 594 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4200,6 +4206,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 595 "dhcp4_lexer.ll"
 =======
 #line 606 "dhcp4_lexer.ll"
@@ -4210,6 +4217,9 @@ YY_RULE_SETUP
 =======
 #line 606 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 605 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4226,6 +4236,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 606 "dhcp4_lexer.ll"
 =======
 #line 617 "dhcp4_lexer.ll"
@@ -4236,6 +4247,9 @@ YY_RULE_SETUP
 =======
 #line 617 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 616 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4252,6 +4266,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 617 "dhcp4_lexer.ll"
 =======
 #line 628 "dhcp4_lexer.ll"
@@ -4262,6 +4277,9 @@ YY_RULE_SETUP
 =======
 #line 628 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 627 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4278,6 +4296,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 628 "dhcp4_lexer.ll"
 =======
 #line 639 "dhcp4_lexer.ll"
@@ -4288,6 +4307,9 @@ YY_RULE_SETUP
 =======
 #line 639 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 638 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4304,6 +4326,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 639 "dhcp4_lexer.ll"
 =======
 #line 650 "dhcp4_lexer.ll"
@@ -4314,6 +4337,9 @@ YY_RULE_SETUP
 =======
 #line 650 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 649 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4328,6 +4354,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 648 "dhcp4_lexer.ll"
 =======
 #line 659 "dhcp4_lexer.ll"
@@ -4338,6 +4365,9 @@ YY_RULE_SETUP
 =======
 #line 659 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 658 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4352,6 +4382,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 657 "dhcp4_lexer.ll"
 =======
 #line 668 "dhcp4_lexer.ll"
@@ -4362,6 +4393,9 @@ YY_RULE_SETUP
 =======
 #line 668 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 667 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4377,6 +4411,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 667 "dhcp4_lexer.ll"
 =======
 #line 678 "dhcp4_lexer.ll"
@@ -4387,6 +4422,9 @@ YY_RULE_SETUP
 =======
 #line 678 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 677 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch (driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4401,6 +4439,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 676 "dhcp4_lexer.ll"
 =======
 #line 687 "dhcp4_lexer.ll"
@@ -4411,6 +4450,9 @@ YY_RULE_SETUP
 =======
 #line 687 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 686 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4426,6 +4468,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 686 "dhcp4_lexer.ll"
 =======
 #line 697 "dhcp4_lexer.ll"
@@ -4436,6 +4479,9 @@ YY_RULE_SETUP
 =======
 #line 697 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 696 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4455,6 +4501,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 700 "dhcp4_lexer.ll"
 =======
 #line 711 "dhcp4_lexer.ll"
@@ -4465,6 +4512,9 @@ YY_RULE_SETUP
 =======
 #line 711 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 710 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -4486,6 +4536,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 716 "dhcp4_lexer.ll"
 =======
 #line 727 "dhcp4_lexer.ll"
@@ -4496,6 +4547,9 @@ YY_RULE_SETUP
 =======
 #line 727 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 726 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DATA:
@@ -4510,6 +4564,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 725 "dhcp4_lexer.ll"
 =======
 #line 736 "dhcp4_lexer.ll"
@@ -4520,6 +4575,9 @@ YY_RULE_SETUP
 =======
 #line 736 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 735 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DATA:
@@ -4534,6 +4592,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 734 "dhcp4_lexer.ll"
 =======
 #line 745 "dhcp4_lexer.ll"
@@ -4544,6 +4603,9 @@ YY_RULE_SETUP
 =======
 #line 745 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 744 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -4558,6 +4620,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 743 "dhcp4_lexer.ll"
 =======
 #line 754 "dhcp4_lexer.ll"
@@ -4568,6 +4631,9 @@ YY_RULE_SETUP
 =======
 #line 754 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 753 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::POOLS:
@@ -4582,6 +4648,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 752 "dhcp4_lexer.ll"
 =======
 #line 763 "dhcp4_lexer.ll"
@@ -4592,6 +4659,9 @@ YY_RULE_SETUP
 =======
 #line 763 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 762 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4618,6 +4688,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 773 "dhcp4_lexer.ll"
 =======
 #line 784 "dhcp4_lexer.ll"
@@ -4628,6 +4699,9 @@ YY_RULE_SETUP
 =======
 #line 784 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 783 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4654,6 +4728,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 794 "dhcp4_lexer.ll"
 =======
 #line 805 "dhcp4_lexer.ll"
@@ -4664,6 +4739,9 @@ YY_RULE_SETUP
 =======
 #line 805 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 804 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -4678,6 +4756,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 803 "dhcp4_lexer.ll"
 =======
 #line 814 "dhcp4_lexer.ll"
@@ -4688,6 +4767,9 @@ YY_RULE_SETUP
 =======
 #line 814 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 813 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -4703,6 +4785,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 813 "dhcp4_lexer.ll"
 =======
 #line 824 "dhcp4_lexer.ll"
@@ -4713,6 +4796,9 @@ YY_RULE_SETUP
 =======
 #line 824 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 823 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -4727,6 +4813,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 822 "dhcp4_lexer.ll"
 =======
 #line 833 "dhcp4_lexer.ll"
@@ -4737,6 +4824,9 @@ YY_RULE_SETUP
 =======
 #line 833 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 832 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4753,6 +4843,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 833 "dhcp4_lexer.ll"
 =======
 #line 844 "dhcp4_lexer.ll"
@@ -4763,6 +4854,9 @@ YY_RULE_SETUP
 =======
 #line 844 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 843 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:
@@ -4777,6 +4871,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 842 "dhcp4_lexer.ll"
 =======
 #line 853 "dhcp4_lexer.ll"
@@ -4787,6 +4882,9 @@ YY_RULE_SETUP
 =======
 #line 853 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 852 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:
@@ -4801,6 +4899,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 851 "dhcp4_lexer.ll"
 =======
 #line 862 "dhcp4_lexer.ll"
@@ -4811,6 +4910,9 @@ YY_RULE_SETUP
 =======
 #line 862 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 861 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:
@@ -4825,6 +4927,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 860 "dhcp4_lexer.ll"
 =======
 #line 871 "dhcp4_lexer.ll"
@@ -4835,6 +4938,9 @@ YY_RULE_SETUP
 =======
 #line 871 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 870 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:
@@ -4849,6 +4955,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 869 "dhcp4_lexer.ll"
 =======
 #line 880 "dhcp4_lexer.ll"
@@ -4859,6 +4966,9 @@ YY_RULE_SETUP
 =======
 #line 880 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 879 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:
@@ -4873,6 +4983,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 878 "dhcp4_lexer.ll"
 =======
 #line 889 "dhcp4_lexer.ll"
@@ -4883,6 +4994,9 @@ YY_RULE_SETUP
 =======
 #line 889 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 888 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -4898,6 +5012,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 888 "dhcp4_lexer.ll"
 =======
 #line 899 "dhcp4_lexer.ll"
@@ -4908,6 +5023,9 @@ YY_RULE_SETUP
 =======
 #line 899 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 898 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4922,6 +5040,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 897 "dhcp4_lexer.ll"
 =======
 #line 908 "dhcp4_lexer.ll"
@@ -4932,6 +5051,9 @@ YY_RULE_SETUP
 =======
 #line 908 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 907 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4948,6 +5070,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 908 "dhcp4_lexer.ll"
 =======
 #line 919 "dhcp4_lexer.ll"
@@ -4958,6 +5081,9 @@ YY_RULE_SETUP
 =======
 #line 919 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 918 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -4974,6 +5100,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 919 "dhcp4_lexer.ll"
 =======
 #line 930 "dhcp4_lexer.ll"
@@ -4984,6 +5111,9 @@ YY_RULE_SETUP
 =======
 #line 930 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 929 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5000,6 +5130,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 931 "dhcp4_lexer.ll"
 =======
 #line 942 "dhcp4_lexer.ll"
@@ -5010,6 +5141,9 @@ YY_RULE_SETUP
 =======
 #line 942 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 941 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -5024,6 +5158,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 940 "dhcp4_lexer.ll"
 =======
 #line 951 "dhcp4_lexer.ll"
@@ -5034,6 +5169,9 @@ YY_RULE_SETUP
 =======
 #line 951 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 950 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5049,6 +5187,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 950 "dhcp4_lexer.ll"
 =======
 #line 961 "dhcp4_lexer.ll"
@@ -5059,6 +5198,9 @@ YY_RULE_SETUP
 =======
 #line 961 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 960 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -5073,6 +5215,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 959 "dhcp4_lexer.ll"
 =======
 #line 970 "dhcp4_lexer.ll"
@@ -5083,6 +5226,9 @@ YY_RULE_SETUP
 =======
 #line 970 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 969 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
@@ -5097,6 +5243,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 968 "dhcp4_lexer.ll"
 =======
 #line 979 "dhcp4_lexer.ll"
@@ -5107,6 +5254,9 @@ YY_RULE_SETUP
 =======
 #line 979 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 978 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -5121,6 +5271,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 977 "dhcp4_lexer.ll"
 =======
 #line 988 "dhcp4_lexer.ll"
@@ -5131,6 +5282,9 @@ YY_RULE_SETUP
 =======
 #line 988 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 987 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
@@ -5145,6 +5299,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 986 "dhcp4_lexer.ll"
 =======
 #line 997 "dhcp4_lexer.ll"
@@ -5155,6 +5310,9 @@ YY_RULE_SETUP
 =======
 #line 997 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 996 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
@@ -5169,6 +5327,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 995 "dhcp4_lexer.ll"
 =======
 #line 1006 "dhcp4_lexer.ll"
@@ -5179,6 +5338,9 @@ YY_RULE_SETUP
 =======
 #line 1006 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1005 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
@@ -5190,6 +5352,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -5215,6 +5378,9 @@ YY_RULE_SETUP
 =======
 #line 1015 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1014 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -5229,6 +5395,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1022 "dhcp4_lexer.ll"
 =======
 #line 1024 "dhcp4_lexer.ll"
@@ -5239,6 +5406,9 @@ YY_RULE_SETUP
 =======
 #line 1024 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1023 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5254,6 +5424,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1032 "dhcp4_lexer.ll"
 =======
 #line 1034 "dhcp4_lexer.ll"
@@ -5264,6 +5435,9 @@ YY_RULE_SETUP
 =======
 #line 1034 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1033 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -5280,6 +5454,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1043 "dhcp4_lexer.ll"
 =======
 #line 1045 "dhcp4_lexer.ll"
@@ -5290,6 +5465,9 @@ YY_RULE_SETUP
 =======
 #line 1045 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1044 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -5307,6 +5485,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1055 "dhcp4_lexer.ll"
 =======
 #line 1057 "dhcp4_lexer.ll"
@@ -5317,6 +5496,9 @@ YY_RULE_SETUP
 =======
 #line 1057 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1056 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
@@ -5331,6 +5513,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1064 "dhcp4_lexer.ll"
 =======
 #line 1066 "dhcp4_lexer.ll"
@@ -5341,6 +5524,9 @@ YY_RULE_SETUP
 =======
 #line 1066 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1065 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
@@ -5355,6 +5541,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1073 "dhcp4_lexer.ll"
 =======
 #line 1075 "dhcp4_lexer.ll"
@@ -5365,6 +5552,9 @@ YY_RULE_SETUP
 =======
 #line 1075 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1074 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5380,6 +5570,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1083 "dhcp4_lexer.ll"
 =======
 #line 1085 "dhcp4_lexer.ll"
@@ -5390,6 +5581,9 @@ YY_RULE_SETUP
 =======
 #line 1085 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1084 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -5405,6 +5599,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1093 "dhcp4_lexer.ll"
 =======
 #line 1095 "dhcp4_lexer.ll"
@@ -5415,6 +5610,9 @@ YY_RULE_SETUP
 =======
 #line 1095 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1094 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -5430,6 +5628,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1103 "dhcp4_lexer.ll"
 =======
 #line 1105 "dhcp4_lexer.ll"
@@ -5440,6 +5639,9 @@ YY_RULE_SETUP
 =======
 #line 1105 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1104 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -5455,6 +5657,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1113 "dhcp4_lexer.ll"
 =======
 #line 1115 "dhcp4_lexer.ll"
@@ -5465,6 +5668,9 @@ YY_RULE_SETUP
 =======
 #line 1115 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1114 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -5480,6 +5686,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1123 "dhcp4_lexer.ll"
 =======
 #line 1125 "dhcp4_lexer.ll"
@@ -5490,6 +5697,9 @@ YY_RULE_SETUP
 =======
 #line 1125 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1124 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOST_RESERVATION_IDENTIFIERS:
@@ -5505,6 +5715,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1133 "dhcp4_lexer.ll"
 =======
 #line 1135 "dhcp4_lexer.ll"
@@ -5515,6 +5726,9 @@ YY_RULE_SETUP
 =======
 #line 1135 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1134 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATIONS:
@@ -5529,6 +5743,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1142 "dhcp4_lexer.ll"
 =======
 #line 1144 "dhcp4_lexer.ll"
@@ -5539,6 +5754,9 @@ YY_RULE_SETUP
 =======
 #line 1144 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1143 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -5554,6 +5772,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1152 "dhcp4_lexer.ll"
 =======
 #line 1154 "dhcp4_lexer.ll"
@@ -5564,6 +5783,9 @@ YY_RULE_SETUP
 =======
 #line 1154 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1153 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DATA:
@@ -5578,6 +5800,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1161 "dhcp4_lexer.ll"
 =======
 #line 1163 "dhcp4_lexer.ll"
@@ -5588,6 +5811,9 @@ YY_RULE_SETUP
 =======
 #line 1163 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1162 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -5602,6 +5828,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1170 "dhcp4_lexer.ll"
 =======
 #line 1172 "dhcp4_lexer.ll"
@@ -5612,6 +5839,9 @@ YY_RULE_SETUP
 =======
 #line 1172 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1171 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -5626,6 +5856,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1179 "dhcp4_lexer.ll"
 =======
 #line 1181 "dhcp4_lexer.ll"
@@ -5636,6 +5867,9 @@ YY_RULE_SETUP
 =======
 #line 1181 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1180 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OPTION_DEF:
@@ -5650,6 +5884,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1188 "dhcp4_lexer.ll"
 =======
 #line 1190 "dhcp4_lexer.ll"
@@ -5660,6 +5895,9 @@ YY_RULE_SETUP
 =======
 #line 1190 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1189 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -5675,6 +5913,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1198 "dhcp4_lexer.ll"
 =======
 #line 1200 "dhcp4_lexer.ll"
@@ -5685,6 +5924,9 @@ YY_RULE_SETUP
 =======
 #line 1200 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1199 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RELAY:
@@ -5700,6 +5942,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1208 "dhcp4_lexer.ll"
 =======
 #line 1210 "dhcp4_lexer.ll"
@@ -5710,6 +5953,9 @@ YY_RULE_SETUP
 =======
 #line 1210 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1209 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RELAY:
@@ -5724,6 +5970,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1217 "dhcp4_lexer.ll"
 =======
 #line 1219 "dhcp4_lexer.ll"
@@ -5734,6 +5981,9 @@ YY_RULE_SETUP
 =======
 #line 1219 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1218 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5748,6 +5998,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1227 "dhcp4_lexer.ll"
 =======
 #line 1229 "dhcp4_lexer.ll"
@@ -5758,6 +6009,9 @@ YY_RULE_SETUP
 =======
 #line 1229 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1228 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
@@ -5772,6 +6026,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1236 "dhcp4_lexer.ll"
 =======
 #line 1238 "dhcp4_lexer.ll"
@@ -5782,6 +6037,9 @@ YY_RULE_SETUP
 =======
 #line 1238 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1237 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
@@ -5796,6 +6054,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1245 "dhcp4_lexer.ll"
 =======
 #line 1247 "dhcp4_lexer.ll"
@@ -5806,6 +6065,9 @@ YY_RULE_SETUP
 =======
 #line 1247 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1246 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5820,6 +6082,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1254 "dhcp4_lexer.ll"
 =======
 #line 1256 "dhcp4_lexer.ll"
@@ -5830,6 +6093,9 @@ YY_RULE_SETUP
 =======
 #line 1256 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1255 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
@@ -5844,6 +6110,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1263 "dhcp4_lexer.ll"
 =======
 #line 1265 "dhcp4_lexer.ll"
@@ -5854,6 +6121,9 @@ YY_RULE_SETUP
 =======
 #line 1265 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1264 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
@@ -5868,6 +6138,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1272 "dhcp4_lexer.ll"
 =======
 #line 1274 "dhcp4_lexer.ll"
@@ -5878,6 +6149,9 @@ YY_RULE_SETUP
 =======
 #line 1274 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1273 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
@@ -5892,6 +6166,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1281 "dhcp4_lexer.ll"
 =======
 #line 1283 "dhcp4_lexer.ll"
@@ -5902,6 +6177,9 @@ YY_RULE_SETUP
 =======
 #line 1283 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1282 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
@@ -5916,6 +6194,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1290 "dhcp4_lexer.ll"
 =======
 #line 1292 "dhcp4_lexer.ll"
@@ -5926,6 +6205,9 @@ YY_RULE_SETUP
 =======
 #line 1292 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1291 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
@@ -5940,6 +6222,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1299 "dhcp4_lexer.ll"
 =======
 #line 1301 "dhcp4_lexer.ll"
@@ -5950,6 +6233,9 @@ YY_RULE_SETUP
 =======
 #line 1301 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1300 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::EXPIRED_LEASES_PROCESSING:
@@ -5964,6 +6250,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1308 "dhcp4_lexer.ll"
 =======
 #line 1310 "dhcp4_lexer.ll"
@@ -5974,6 +6261,9 @@ YY_RULE_SETUP
 =======
 #line 1310 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1309 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -5988,6 +6278,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1317 "dhcp4_lexer.ll"
 =======
 #line 1319 "dhcp4_lexer.ll"
@@ -5998,6 +6289,9 @@ YY_RULE_SETUP
 =======
 #line 1319 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1318 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6012,6 +6306,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1326 "dhcp4_lexer.ll"
 =======
 #line 1328 "dhcp4_lexer.ll"
@@ -6022,6 +6317,9 @@ YY_RULE_SETUP
 =======
 #line 1328 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1327 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
@@ -6036,6 +6334,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1335 "dhcp4_lexer.ll"
 =======
 #line 1337 "dhcp4_lexer.ll"
@@ -6046,6 +6345,9 @@ YY_RULE_SETUP
 =======
 #line 1337 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1336 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
@@ -6060,6 +6362,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1344 "dhcp4_lexer.ll"
 =======
 #line 1346 "dhcp4_lexer.ll"
@@ -6070,6 +6373,9 @@ YY_RULE_SETUP
 =======
 #line 1346 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1345 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6084,6 +6390,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1353 "dhcp4_lexer.ll"
 =======
 #line 1355 "dhcp4_lexer.ll"
@@ -6094,6 +6401,9 @@ YY_RULE_SETUP
 =======
 #line 1355 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1354 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6108,6 +6418,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1362 "dhcp4_lexer.ll"
 =======
 #line 1364 "dhcp4_lexer.ll"
@@ -6118,6 +6429,9 @@ YY_RULE_SETUP
 =======
 #line 1364 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1363 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6132,6 +6446,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1371 "dhcp4_lexer.ll"
 =======
 #line 1373 "dhcp4_lexer.ll"
@@ -6142,6 +6457,9 @@ YY_RULE_SETUP
 =======
 #line 1373 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1372 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6156,6 +6474,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1380 "dhcp4_lexer.ll"
 =======
 #line 1382 "dhcp4_lexer.ll"
@@ -6166,6 +6485,9 @@ YY_RULE_SETUP
 =======
 #line 1382 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1381 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6180,6 +6502,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1389 "dhcp4_lexer.ll"
 =======
 #line 1391 "dhcp4_lexer.ll"
@@ -6190,6 +6513,9 @@ YY_RULE_SETUP
 =======
 #line 1391 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1390 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6204,6 +6530,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1398 "dhcp4_lexer.ll"
 =======
 #line 1400 "dhcp4_lexer.ll"
@@ -6214,6 +6541,9 @@ YY_RULE_SETUP
 =======
 #line 1400 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1399 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6228,6 +6558,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1407 "dhcp4_lexer.ll"
 =======
 #line 1409 "dhcp4_lexer.ll"
@@ -6238,6 +6569,9 @@ YY_RULE_SETUP
 =======
 #line 1409 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1408 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6252,6 +6586,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1416 "dhcp4_lexer.ll"
 =======
 #line 1418 "dhcp4_lexer.ll"
@@ -6262,6 +6597,9 @@ YY_RULE_SETUP
 =======
 #line 1418 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1417 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6276,6 +6614,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1425 "dhcp4_lexer.ll"
 =======
 #line 1427 "dhcp4_lexer.ll"
@@ -6286,6 +6625,9 @@ YY_RULE_SETUP
 =======
 #line 1427 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1426 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6300,6 +6642,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1434 "dhcp4_lexer.ll"
 =======
 #line 1436 "dhcp4_lexer.ll"
@@ -6310,6 +6653,9 @@ YY_RULE_SETUP
 =======
 #line 1436 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1435 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6324,6 +6670,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1443 "dhcp4_lexer.ll"
 =======
 #line 1445 "dhcp4_lexer.ll"
@@ -6334,6 +6681,9 @@ YY_RULE_SETUP
 =======
 #line 1445 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1444 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6348,6 +6698,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1452 "dhcp4_lexer.ll"
 =======
 #line 1454 "dhcp4_lexer.ll"
@@ -6358,6 +6709,9 @@ YY_RULE_SETUP
 =======
 #line 1454 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1453 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6372,6 +6726,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1461 "dhcp4_lexer.ll"
 =======
 #line 1463 "dhcp4_lexer.ll"
@@ -6382,6 +6737,9 @@ YY_RULE_SETUP
 =======
 #line 1463 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1462 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6396,6 +6754,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1470 "dhcp4_lexer.ll"
 =======
 #line 1472 "dhcp4_lexer.ll"
@@ -6406,6 +6765,9 @@ YY_RULE_SETUP
 =======
 #line 1472 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1471 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -6420,6 +6782,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1479 "dhcp4_lexer.ll"
 =======
 #line 1481 "dhcp4_lexer.ll"
@@ -6430,6 +6793,9 @@ YY_RULE_SETUP
 =======
 #line 1481 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1480 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6445,6 +6811,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1489 "dhcp4_lexer.ll"
 =======
 #line 1491 "dhcp4_lexer.ll"
@@ -6455,6 +6822,9 @@ YY_RULE_SETUP
 =======
 #line 1491 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1490 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6479,7 +6849,7 @@ YY_RULE_SETUP
 >>>>>>> [#805,!5-p] Updated example confs
 =======
 YY_RULE_SETUP
-#line 1501 "dhcp4_lexer.ll"
+#line 1500 "dhcp4_lexer.ll"
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) {
@@ -6492,8 +6862,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
+<<<<<<< HEAD
 #line 1511 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1510 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) {
@@ -6509,6 +6883,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1509 "dhcp4_lexer.ll"
 =======
 #line 1511 "dhcp4_lexer.ll"
@@ -6519,6 +6894,9 @@ YY_RULE_SETUP
 =======
 #line 1521 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1520 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::NCR_PROTOCOL) {
@@ -6534,6 +6912,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1519 "dhcp4_lexer.ll"
 =======
 #line 1521 "dhcp4_lexer.ll"
@@ -6544,6 +6923,9 @@ YY_RULE_SETUP
 =======
 #line 1531 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1530 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::NCR_FORMAT) {
@@ -6559,6 +6941,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1529 "dhcp4_lexer.ll"
 =======
 #line 1531 "dhcp4_lexer.ll"
@@ -6569,6 +6952,9 @@ YY_RULE_SETUP
 =======
 #line 1541 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1540 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::REPLACE_CLIENT_NAME) {
@@ -6584,6 +6970,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1539 "dhcp4_lexer.ll"
 =======
 #line 1541 "dhcp4_lexer.ll"
@@ -6594,6 +6981,9 @@ YY_RULE_SETUP
 =======
 #line 1551 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1550 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::REPLACE_CLIENT_NAME) {
@@ -6609,6 +6999,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1549 "dhcp4_lexer.ll"
 =======
 #line 1551 "dhcp4_lexer.ll"
@@ -6619,6 +7010,9 @@ YY_RULE_SETUP
 =======
 #line 1561 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1560 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::REPLACE_CLIENT_NAME) {
@@ -6634,6 +7028,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1559 "dhcp4_lexer.ll"
 =======
 #line 1561 "dhcp4_lexer.ll"
@@ -6644,6 +7039,9 @@ YY_RULE_SETUP
 =======
 #line 1571 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1570 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::REPLACE_CLIENT_NAME) {
@@ -6656,6 +7054,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -6691,6 +7090,9 @@ YY_RULE_SETUP
 =======
 #line 1580 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Updated example confs
+=======
+#line 1580 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser4Context::REPLACE_CLIENT_NAME) {
@@ -6705,6 +7107,7 @@ case 154:
 YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1589 "dhcp4_lexer.ll"
 =======
 #line 1591 "dhcp4_lexer.ll"
@@ -6715,6 +7118,9 @@ YY_RULE_SETUP
 =======
 #line 1591 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1590 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -6729,6 +7135,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1598 "dhcp4_lexer.ll"
 =======
 #line 1600 "dhcp4_lexer.ll"
@@ -6739,6 +7146,9 @@ YY_RULE_SETUP
 =======
 #line 1600 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1599 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -6753,6 +7163,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1607 "dhcp4_lexer.ll"
 =======
 #line 1609 "dhcp4_lexer.ll"
@@ -6763,6 +7174,9 @@ YY_RULE_SETUP
 =======
 #line 1609 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1608 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONFIG:
@@ -6777,6 +7191,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1616 "dhcp4_lexer.ll"
 =======
 #line 1618 "dhcp4_lexer.ll"
@@ -6787,6 +7202,9 @@ YY_RULE_SETUP
 =======
 #line 1618 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1617 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -6801,6 +7219,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1625 "dhcp4_lexer.ll"
 =======
 #line 1627 "dhcp4_lexer.ll"
@@ -6811,6 +7230,9 @@ YY_RULE_SETUP
 =======
 #line 1627 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1626 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -6825,6 +7247,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1634 "dhcp4_lexer.ll"
 =======
 #line 1636 "dhcp4_lexer.ll"
@@ -6835,6 +7258,9 @@ YY_RULE_SETUP
 =======
 #line 1636 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1635 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -6849,6 +7275,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1643 "dhcp4_lexer.ll"
 =======
 #line 1645 "dhcp4_lexer.ll"
@@ -6859,6 +7286,9 @@ YY_RULE_SETUP
 =======
 #line 1645 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1644 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6873,6 +7303,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1652 "dhcp4_lexer.ll"
 =======
 #line 1654 "dhcp4_lexer.ll"
@@ -6883,6 +7314,9 @@ YY_RULE_SETUP
 =======
 #line 1654 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1653 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6899,6 +7333,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1663 "dhcp4_lexer.ll"
 =======
 #line 1665 "dhcp4_lexer.ll"
@@ -6909,6 +7344,9 @@ YY_RULE_SETUP
 =======
 #line 1665 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1664 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6925,6 +7363,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1674 "dhcp4_lexer.ll"
 =======
 #line 1676 "dhcp4_lexer.ll"
@@ -6935,6 +7374,9 @@ YY_RULE_SETUP
 =======
 #line 1676 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1675 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6953,6 +7395,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1687 "dhcp4_lexer.ll"
 =======
 #line 1689 "dhcp4_lexer.ll"
@@ -6963,6 +7406,9 @@ YY_RULE_SETUP
 =======
 #line 1689 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1688 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -6981,6 +7427,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1700 "dhcp4_lexer.ll"
 =======
 #line 1702 "dhcp4_lexer.ll"
@@ -6991,6 +7438,9 @@ YY_RULE_SETUP
 =======
 #line 1702 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1701 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -7009,6 +7459,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1715 "dhcp4_lexer.ll"
 =======
 #line 1717 "dhcp4_lexer.ll"
@@ -7019,6 +7470,9 @@ YY_RULE_SETUP
 =======
 #line 1717 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1716 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -7124,6 +7578,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1814 "dhcp4_lexer.ll"
 =======
 #line 1816 "dhcp4_lexer.ll"
@@ -7134,6 +7589,9 @@ YY_RULE_SETUP
 =======
 #line 1816 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1815 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* Bad string with a forbidden control character inside */
     driver.error(driver.loc_, "Invalid control in " + std::string(parser4_text));
@@ -7142,6 +7600,7 @@ YY_RULE_SETUP
 case 168:
 /* rule 168 can match eol */
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7155,6 +7614,9 @@ YY_RULE_SETUP
 =======
 #line 1821 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1820 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* Bad string with a bad escape inside */
     driver.error(driver.loc_, "Bad escape in " + std::string(parser4_text));
@@ -7162,6 +7624,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7175,6 +7638,9 @@ YY_RULE_SETUP
 =======
 #line 1826 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1825 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* Bad string with an open escape at the end */
     driver.error(driver.loc_, "Overflow escape in " + std::string(parser4_text));
@@ -7182,6 +7648,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7195,10 +7662,14 @@ YY_RULE_SETUP
 =======
 #line 1831 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1830 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 { return isc::dhcp::Dhcp4Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7212,10 +7683,14 @@ YY_RULE_SETUP
 =======
 #line 1832 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1831 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 { return isc::dhcp::Dhcp4Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7229,10 +7704,14 @@ YY_RULE_SETUP
 =======
 #line 1833 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1832 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 { return isc::dhcp::Dhcp4Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7246,10 +7725,14 @@ YY_RULE_SETUP
 =======
 #line 1834 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1833 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 { return isc::dhcp::Dhcp4Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7263,10 +7746,14 @@ YY_RULE_SETUP
 =======
 #line 1835 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1834 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 { return isc::dhcp::Dhcp4Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7280,10 +7767,14 @@ YY_RULE_SETUP
 =======
 #line 1836 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1835 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 { return isc::dhcp::Dhcp4Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7297,6 +7788,9 @@ YY_RULE_SETUP
 =======
 #line 1838 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1837 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* An integer was found. */
     std::string tmp(parser4_text);
@@ -7320,6 +7814,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1854 "dhcp4_lexer.ll"
 =======
 #line 1856 "dhcp4_lexer.ll"
@@ -7330,6 +7825,9 @@ YY_RULE_SETUP
 =======
 #line 1856 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1855 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     /* A floating point was found. */
     std::string tmp(parser4_text);
@@ -7348,6 +7846,7 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1867 "dhcp4_lexer.ll"
 =======
 #line 1869 "dhcp4_lexer.ll"
@@ -7358,6 +7857,9 @@ YY_RULE_SETUP
 =======
 #line 1869 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1868 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     string tmp(parser4_text);
     return isc::dhcp::Dhcp4Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -7365,6 +7867,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7378,12 +7881,16 @@ YY_RULE_SETUP
 =======
 #line 1874 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1873 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
    return isc::dhcp::Dhcp4Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7397,10 +7904,14 @@ YY_RULE_SETUP
 =======
 #line 1878 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1877 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7414,10 +7925,14 @@ YY_RULE_SETUP
 =======
 #line 1880 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1879 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7431,10 +7946,14 @@ YY_RULE_SETUP
 =======
 #line 1882 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1881 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7462,6 +7981,13 @@ case YY_STATE_EOF(INITIAL):
 >>>>>>> [#805,!5-p] Updated example confs
 =======
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1883 "dhcp4_lexer.ll"
+driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
+#line 1885 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp4Parser::make_END(driver.loc_);
@@ -7490,12 +8016,16 @@ YY_RULE_SETUP
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1907 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
 #line 4360 "dhcp4_lexer.cc"
 =======
 #line 1909 "dhcp4_lexer.ll"
+=======
+#line 1908 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 =======
 #line 1908 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Updated example confs
@@ -8623,6 +9153,7 @@ void parser4_free (void * ptr )
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1907 "dhcp4_lexer.ll"
 
 =======
@@ -8634,6 +9165,9 @@ void parser4_free (void * ptr )
 =======
 #line 1909 "dhcp4_lexer.ll"
 >>>>>>> [#805,!5-p] Memfile and kea-dhcp4 now suppor max-row-errors parameter
+=======
+#line 1908 "dhcp4_lexer.ll"
+>>>>>>> [#805,!5-p] Updated example confs
 
 
 using namespace isc::dhcp;
