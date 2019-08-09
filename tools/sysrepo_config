@@ -78,8 +78,10 @@ if [ "$1" = "--libs" ]; then
 fi
 
 if [ "$1" = "--modversion" ]; then
-    VERSION=$(sysrepoctl -v | tr -s " " | cut -d " " -f 7)
-    echo "${VERSION}"
+    MAJOR="1"
+    MINOR="0"
+    PATCH="0"
+    echo "${MAJOR}.${MINOR}.${PATCH}"
     exit 0
 fi
 
