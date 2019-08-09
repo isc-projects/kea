@@ -249,15 +249,21 @@ namespace isc { namespace dhcp {
       case 207: // map_value
       case 268: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 361: // hr_mode
       case 497: // duid_type
       case 532: // ncr_protocol_value
       case 539: // replace_client_name_value
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       case 362: // hr_mode
       case 498: // duid_type
       case 533: // ncr_protocol_value
       case 540: // replace_client_name_value
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
         value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (that.value));
         break;
@@ -297,15 +303,21 @@ namespace isc { namespace dhcp {
       case 207: // map_value
       case 268: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 361: // hr_mode
       case 497: // duid_type
       case 532: // ncr_protocol_value
       case 539: // replace_client_name_value
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       case 362: // hr_mode
       case 498: // duid_type
       case 533: // ncr_protocol_value
       case 540: // replace_client_name_value
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
         value.move< ElementPtr > (YY_MOVE (that.value));
         break;
@@ -345,15 +357,21 @@ namespace isc { namespace dhcp {
       case 207: // map_value
       case 268: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 361: // hr_mode
       case 497: // duid_type
       case 532: // ncr_protocol_value
       case 539: // replace_client_name_value
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       case 362: // hr_mode
       case 498: // duid_type
       case 533: // ncr_protocol_value
       case 540: // replace_client_name_value
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
         value.move< ElementPtr > (that.value);
         break;
@@ -411,6 +429,7 @@ namespace isc { namespace dhcp {
         << yysym.location << ": ";
     switch (yytype)
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
       case 182: // "constant string"
 #line 261 "dhcp6_parser.yy"
@@ -555,6 +574,85 @@ namespace isc { namespace dhcp {
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
         break;
 
+=======
+            case 182: // "constant string"
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< std::string > (); }
+#line 398 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 183: // "integer"
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< int64_t > (); }
+#line 405 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 184: // "floating point"
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< double > (); }
+#line 412 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 185: // "boolean"
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< bool > (); }
+#line 419 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 203: // value
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 426 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 207: // map_value
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 433 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 268: // db_type
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 440 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 362: // hr_mode
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 447 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 498: // duid_type
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 454 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 533: // ncr_protocol_value
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 461 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+      case 540: // replace_client_name_value
+
+#line 261 "dhcp6_parser.yy" // lalr1.cc:672
+        { yyoutput << yysym.value.template as< ElementPtr > (); }
+#line 468 "dhcp6_parser.cc" // lalr1.cc:672
+        break;
+
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 
       default:
         break;
@@ -766,15 +864,21 @@ namespace isc { namespace dhcp {
       case 207: // map_value
       case 268: // db_type
 <<<<<<< HEAD
+<<<<<<< HEAD
       case 361: // hr_mode
       case 497: // duid_type
       case 532: // ncr_protocol_value
       case 539: // replace_client_name_value
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       case 362: // hr_mode
       case 498: // duid_type
       case 533: // ncr_protocol_value
       case 540: // replace_client_name_value
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
         yylhs.value.emplace< ElementPtr > ();
         break;
@@ -817,7 +921,11 @@ namespace isc { namespace dhcp {
             {
   case 2:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 270 "dhcp6_parser.yy"
+=======
+#line 270 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 270 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -827,7 +935,11 @@ namespace isc { namespace dhcp {
 
   case 4:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 271 "dhcp6_parser.yy"
+=======
+#line 271 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 271 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -837,7 +949,11 @@ namespace isc { namespace dhcp {
 
   case 6:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 272 "dhcp6_parser.yy"
+=======
+#line 272 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 272 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -847,7 +963,11 @@ namespace isc { namespace dhcp {
 
   case 8:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 273 "dhcp6_parser.yy"
+=======
+#line 273 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 273 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -857,7 +977,11 @@ namespace isc { namespace dhcp {
 
   case 10:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 274 "dhcp6_parser.yy"
+=======
+#line 274 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 274 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -867,7 +991,11 @@ namespace isc { namespace dhcp {
 
   case 12:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 275 "dhcp6_parser.yy"
+=======
+#line 275 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 275 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -877,7 +1005,11 @@ namespace isc { namespace dhcp {
 
   case 14:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 276 "dhcp6_parser.yy"
+=======
+#line 276 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 276 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -887,7 +1019,11 @@ namespace isc { namespace dhcp {
 
   case 16:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 277 "dhcp6_parser.yy"
+=======
+#line 277 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 277 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -897,7 +1033,11 @@ namespace isc { namespace dhcp {
 
   case 18:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 278 "dhcp6_parser.yy"
+=======
+#line 278 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 278 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -907,7 +1047,11 @@ namespace isc { namespace dhcp {
 
   case 20:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 279 "dhcp6_parser.yy"
+=======
+#line 279 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 279 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -917,7 +1061,11 @@ namespace isc { namespace dhcp {
 
   case 22:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 280 "dhcp6_parser.yy"
+=======
+#line 280 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 280 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -927,7 +1075,11 @@ namespace isc { namespace dhcp {
 
   case 24:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 281 "dhcp6_parser.yy"
+=======
+#line 281 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 281 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -937,7 +1089,11 @@ namespace isc { namespace dhcp {
 
   case 26:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 282 "dhcp6_parser.yy"
+=======
+#line 282 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 282 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -947,7 +1103,11 @@ namespace isc { namespace dhcp {
 
   case 28:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 283 "dhcp6_parser.yy"
+=======
+#line 283 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 283 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -957,7 +1117,11 @@ namespace isc { namespace dhcp {
 
   case 30:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 284 "dhcp6_parser.yy"
+=======
+#line 284 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 284 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -966,6 +1130,7 @@ namespace isc { namespace dhcp {
     break;
 
   case 32:
+<<<<<<< HEAD
 <<<<<<< HEAD
 #line 292 "dhcp6_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
@@ -1055,6 +1220,51 @@ namespace isc { namespace dhcp {
   case 39:
 #line 301 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
+#line 292 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location))); }
+#line 817 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 33:
+#line 293 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location))); }
+#line 823 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 34:
+#line 294 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location))); }
+#line 829 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 35:
+#line 295 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location))); }
+#line 835 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 36:
+#line 296 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
+#line 841 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 37:
+#line 297 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 847 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 38:
+#line 298 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 853 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 39:
+#line 301 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as< ElementPtr > ());
@@ -1064,7 +1274,11 @@ namespace isc { namespace dhcp {
 
   case 40:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 306 "dhcp6_parser.yy"
+=======
+#line 306 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 306 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1079,7 +1293,11 @@ namespace isc { namespace dhcp {
 
   case 41:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 311 "dhcp6_parser.yy"
+=======
+#line 311 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 311 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1093,6 +1311,7 @@ namespace isc { namespace dhcp {
 
   case 42:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 317 "dhcp6_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 893 "dhcp6_parser.cc"
@@ -1100,6 +1319,15 @@ namespace isc { namespace dhcp {
 
   case 45:
 #line 324 "dhcp6_parser.yy"
+=======
+#line 317 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 889 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 45:
+#line 324 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 317 "dhcp6_parser.yy" // lalr1.cc:907
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
@@ -1118,7 +1346,11 @@ namespace isc { namespace dhcp {
 
   case 46:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 328 "dhcp6_parser.yy"
+=======
+#line 328 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 328 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1132,7 +1364,11 @@ namespace isc { namespace dhcp {
 
   case 47:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 335 "dhcp6_parser.yy"
+=======
+#line 335 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 335 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1145,7 +1381,11 @@ namespace isc { namespace dhcp {
 
   case 48:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 338 "dhcp6_parser.yy"
+=======
+#line 338 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 338 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1157,7 +1397,11 @@ namespace isc { namespace dhcp {
 
   case 51:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 346 "dhcp6_parser.yy"
+=======
+#line 346 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 346 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1170,7 +1414,11 @@ namespace isc { namespace dhcp {
 
   case 52:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 350 "dhcp6_parser.yy"
+=======
+#line 350 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 350 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1183,7 +1431,11 @@ namespace isc { namespace dhcp {
 
   case 53:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 357 "dhcp6_parser.yy"
+=======
+#line 357 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 357 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1195,7 +1447,11 @@ namespace isc { namespace dhcp {
 
   case 54:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 359 "dhcp6_parser.yy"
+=======
+#line 359 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 359 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1208,7 +1464,11 @@ namespace isc { namespace dhcp {
 
   case 57:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 368 "dhcp6_parser.yy"
+=======
+#line 368 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 368 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1221,7 +1481,11 @@ namespace isc { namespace dhcp {
 
   case 58:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 372 "dhcp6_parser.yy"
+=======
+#line 372 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 372 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1234,7 +1498,11 @@ namespace isc { namespace dhcp {
 
   case 59:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 383 "dhcp6_parser.yy"
+=======
+#line 383 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 383 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1249,7 +1517,11 @@ namespace isc { namespace dhcp {
 
   case 60:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 393 "dhcp6_parser.yy"
+=======
+#line 393 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 393 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1264,7 +1536,11 @@ namespace isc { namespace dhcp {
 
   case 61:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 398 "dhcp6_parser.yy"
+=======
+#line 398 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 398 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1281,7 +1557,11 @@ namespace isc { namespace dhcp {
 
   case 70:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 421 "dhcp6_parser.yy"
+=======
+#line 421 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 421 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1298,7 +1578,11 @@ namespace isc { namespace dhcp {
 
   case 71:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 428 "dhcp6_parser.yy"
+=======
+#line 428 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 428 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1312,7 +1596,11 @@ namespace isc { namespace dhcp {
 
   case 72:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 436 "dhcp6_parser.yy"
+=======
+#line 436 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 436 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1326,7 +1614,11 @@ namespace isc { namespace dhcp {
 
   case 73:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 440 "dhcp6_parser.yy"
+=======
+#line 440 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 440 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1339,7 +1631,11 @@ namespace isc { namespace dhcp {
 
   case 119:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 496 "dhcp6_parser.yy"
+=======
+#line 496 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 496 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1351,7 +1647,11 @@ namespace isc { namespace dhcp {
 
   case 120:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 498 "dhcp6_parser.yy"
+=======
+#line 498 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 498 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1365,7 +1665,11 @@ namespace isc { namespace dhcp {
 
   case 121:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 504 "dhcp6_parser.yy"
+=======
+#line 504 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 504 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1378,7 +1682,11 @@ namespace isc { namespace dhcp {
 
   case 122:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 509 "dhcp6_parser.yy"
+=======
+#line 509 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 509 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1391,7 +1699,11 @@ namespace isc { namespace dhcp {
 
   case 123:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 514 "dhcp6_parser.yy"
+=======
+#line 514 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 514 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1404,7 +1716,11 @@ namespace isc { namespace dhcp {
 
   case 124:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 519 "dhcp6_parser.yy"
+=======
+#line 519 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 519 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1417,7 +1733,11 @@ namespace isc { namespace dhcp {
 
   case 125:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 524 "dhcp6_parser.yy"
+=======
+#line 524 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 524 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1430,7 +1750,11 @@ namespace isc { namespace dhcp {
 
   case 126:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 529 "dhcp6_parser.yy"
+=======
+#line 529 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 529 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1443,7 +1767,11 @@ namespace isc { namespace dhcp {
 
   case 127:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 534 "dhcp6_parser.yy"
+=======
+#line 534 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 534 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1456,7 +1784,11 @@ namespace isc { namespace dhcp {
 
   case 128:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 539 "dhcp6_parser.yy"
+=======
+#line 539 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 539 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1469,7 +1801,11 @@ namespace isc { namespace dhcp {
 
   case 129:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 544 "dhcp6_parser.yy"
+=======
+#line 544 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 544 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1482,7 +1818,11 @@ namespace isc { namespace dhcp {
 
   case 130:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 549 "dhcp6_parser.yy"
+=======
+#line 549 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 549 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1495,7 +1835,11 @@ namespace isc { namespace dhcp {
 
   case 131:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 554 "dhcp6_parser.yy"
+=======
+#line 554 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 554 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1508,7 +1852,11 @@ namespace isc { namespace dhcp {
 
   case 132:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 559 "dhcp6_parser.yy"
+=======
+#line 559 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 559 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1521,7 +1869,11 @@ namespace isc { namespace dhcp {
 
   case 133:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 564 "dhcp6_parser.yy"
+=======
+#line 564 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 564 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1533,7 +1885,11 @@ namespace isc { namespace dhcp {
 
   case 134:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 566 "dhcp6_parser.yy"
+=======
+#line 566 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 566 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1547,7 +1903,11 @@ namespace isc { namespace dhcp {
 
   case 135:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 572 "dhcp6_parser.yy"
+=======
+#line 572 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 572 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1562,7 +1922,11 @@ namespace isc { namespace dhcp {
 
   case 136:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 577 "dhcp6_parser.yy"
+=======
+#line 577 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 577 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1576,7 +1940,11 @@ namespace isc { namespace dhcp {
 
   case 137:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 583 "dhcp6_parser.yy"
+=======
+#line 583 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 583 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1590,7 +1958,11 @@ namespace isc { namespace dhcp {
 
   case 138:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 587 "dhcp6_parser.yy"
+=======
+#line 587 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 587 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1603,7 +1975,11 @@ namespace isc { namespace dhcp {
 
   case 146:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 603 "dhcp6_parser.yy"
+=======
+#line 603 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 603 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1618,7 +1994,11 @@ namespace isc { namespace dhcp {
 
   case 147:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 608 "dhcp6_parser.yy"
+=======
+#line 608 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 608 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1631,7 +2011,11 @@ namespace isc { namespace dhcp {
 
   case 148:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 613 "dhcp6_parser.yy"
+=======
+#line 613 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 613 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1644,7 +2028,11 @@ namespace isc { namespace dhcp {
 
   case 149:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 619 "dhcp6_parser.yy"
+=======
+#line 619 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 619 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1659,7 +2047,11 @@ namespace isc { namespace dhcp {
 
   case 150:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 624 "dhcp6_parser.yy"
+=======
+#line 624 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 624 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1674,7 +2066,11 @@ namespace isc { namespace dhcp {
 
   case 151:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 631 "dhcp6_parser.yy"
+=======
+#line 631 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 631 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1689,7 +2085,11 @@ namespace isc { namespace dhcp {
 
   case 152:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 636 "dhcp6_parser.yy"
+=======
+#line 636 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 636 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1704,7 +2104,11 @@ namespace isc { namespace dhcp {
 
   case 153:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 643 "dhcp6_parser.yy"
+=======
+#line 643 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 643 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1719,7 +2123,11 @@ namespace isc { namespace dhcp {
 
   case 154:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 648 "dhcp6_parser.yy"
+=======
+#line 648 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 648 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1732,7 +2140,11 @@ namespace isc { namespace dhcp {
 
   case 159:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 661 "dhcp6_parser.yy"
+=======
+#line 661 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 661 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1746,7 +2158,11 @@ namespace isc { namespace dhcp {
 
   case 160:
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 665 "dhcp6_parser.yy"
+=======
+#line 665 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 665 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
@@ -1759,8 +2175,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 183:
 #line 697 "dhcp6_parser.yy"
+=======
+  case 184:
+#line 698 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 184:
 #line 698 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1772,8 +2193,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 184:
 #line 699 "dhcp6_parser.yy"
+=======
+  case 185:
+#line 700 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 185:
 #line 700 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1782,6 +2208,7 @@ namespace isc { namespace dhcp {
     ctx.stack_.back()->set("type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
+<<<<<<< HEAD
 <<<<<<< HEAD
 #line 1373 "dhcp6_parser.cc"
     break;
@@ -1835,6 +2262,30 @@ namespace isc { namespace dhcp {
     break;
 
   case 189:
+=======
+#line 1369 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 186:
+#line 705 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
+#line 1375 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 187:
+#line 706 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
+#line 1381 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 188:
+#line 707 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
+#line 1387 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 189:
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 #line 708 "dhcp6_parser.yy" // lalr1.cc:907
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("cql", ctx.loc2pos(yystack_[0].location))); }
 #line 1393 "dhcp6_parser.cc" // lalr1.cc:907
@@ -1842,6 +2293,9 @@ namespace isc { namespace dhcp {
 
   case 190:
 #line 711 "dhcp6_parser.yy" // lalr1.cc:907
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     {
     ctx.enter(ctx.NO_KEYWORD);
@@ -1850,8 +2304,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 190:
 #line 712 "dhcp6_parser.yy"
+=======
+  case 191:
+#line 713 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 191:
 #line 713 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1865,8 +2324,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 191:
 #line 718 "dhcp6_parser.yy"
+=======
+  case 192:
+#line 719 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 192:
 #line 719 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1878,8 +2342,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 192:
 #line 720 "dhcp6_parser.yy"
+=======
+  case 193:
+#line 721 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 193:
 #line 721 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1893,8 +2362,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 193:
 #line 726 "dhcp6_parser.yy"
+=======
+  case 194:
+#line 727 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 194:
 #line 727 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1906,8 +2380,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 194:
 #line 728 "dhcp6_parser.yy"
+=======
+  case 195:
+#line 729 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 195:
 #line 729 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1921,8 +2400,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 195:
 #line 734 "dhcp6_parser.yy"
+=======
+  case 196:
+#line 735 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 196:
 #line 735 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1935,8 +2419,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 196:
 #line 739 "dhcp6_parser.yy"
+=======
+  case 197:
+#line 740 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 197:
 #line 740 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1948,8 +2437,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 197:
 #line 741 "dhcp6_parser.yy"
+=======
+  case 198:
+#line 742 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 198:
 #line 742 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1963,8 +2457,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 198:
 #line 747 "dhcp6_parser.yy"
+=======
+  case 199:
+#line 748 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 199:
 #line 748 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1977,8 +2476,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 199:
 #line 752 "dhcp6_parser.yy"
+=======
+  case 200:
+#line 753 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 200:
 #line 753 "dhcp6_parser.yy" // lalr1.cc:907
@@ -1991,8 +2495,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 200:
 #line 757 "dhcp6_parser.yy"
+=======
+  case 201:
+#line 758 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 201:
 #line 758 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2005,8 +2514,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 201:
 #line 762 "dhcp6_parser.yy"
+=======
+  case 202:
+#line 763 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 202:
 #line 763 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2019,8 +2533,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 202:
 #line 767 "dhcp6_parser.yy"
+=======
+  case 203:
+#line 768 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 203:
 #line 768 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2032,6 +2551,7 @@ namespace isc { namespace dhcp {
 #line 1519 "dhcp6_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   case 203:
 #line 772 "dhcp6_parser.yy"
@@ -2050,14 +2570,34 @@ namespace isc { namespace dhcp {
 #line 778 "dhcp6_parser.yy" // lalr1.cc:907
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+=======
+  case 204:
+#line 773 "dhcp6_parser.yy" // lalr1.cc:907
+    {
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("max-row-errors", n);
+}
+#line 1528 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 205:
+#line 778 "dhcp6_parser.yy" // lalr1.cc:907
+    {
+    ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     ctx.stack_.back()->set("request-timeout", n);
 }
 #line 1537 "dhcp6_parser.cc" // lalr1.cc:907
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 204:
 #line 777 "dhcp6_parser.yy"
+=======
+  case 206:
+#line 783 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 206:
 #line 783 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2070,8 +2610,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 205:
 #line 782 "dhcp6_parser.yy"
+=======
+  case 207:
+#line 788 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 207:
 #line 788 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2084,8 +2629,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 206:
 #line 787 "dhcp6_parser.yy"
+=======
+  case 208:
+#line 793 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 208:
 #line 793 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2097,8 +2647,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 207:
 #line 789 "dhcp6_parser.yy"
+=======
+  case 209:
+#line 795 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 209:
 #line 795 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2112,8 +2667,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 208:
 #line 795 "dhcp6_parser.yy"
+=======
+  case 210:
+#line 801 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 210:
 #line 801 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2126,8 +2686,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 209:
 #line 800 "dhcp6_parser.yy"
+=======
+  case 211:
+#line 806 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 211:
 #line 806 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2139,8 +2704,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 210:
 #line 802 "dhcp6_parser.yy"
+=======
+  case 212:
+#line 808 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 212:
 #line 808 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2154,8 +2724,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 211:
 #line 808 "dhcp6_parser.yy"
+=======
+  case 213:
+#line 814 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 213:
 #line 814 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2167,8 +2742,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 212:
 #line 810 "dhcp6_parser.yy"
+=======
+  case 214:
+#line 816 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 214:
 #line 816 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2182,8 +2762,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 213:
 #line 816 "dhcp6_parser.yy"
+=======
+  case 215:
+#line 822 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 215:
 #line 822 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2195,8 +2780,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 214:
 #line 818 "dhcp6_parser.yy"
+=======
+  case 216:
+#line 824 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 216:
 #line 824 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2210,8 +2800,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 215:
 #line 824 "dhcp6_parser.yy"
+=======
+  case 217:
+#line 830 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 217:
 #line 830 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2226,8 +2821,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 216:
 #line 829 "dhcp6_parser.yy"
+=======
+  case 218:
+#line 835 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 218:
 #line 835 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2240,8 +2840,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 220:
 #line 839 "dhcp6_parser.yy"
+=======
+  case 222:
+#line 845 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 222:
 #line 845 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2253,8 +2858,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 221:
 #line 841 "dhcp6_parser.yy"
+=======
+  case 223:
+#line 847 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 223:
 #line 847 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2278,8 +2888,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 222:
 #line 857 "dhcp6_parser.yy"
+=======
+  case 224:
+#line 863 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 224:
 #line 863 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2294,8 +2909,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 223:
 #line 862 "dhcp6_parser.yy"
+=======
+  case 225:
+#line 868 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 225:
 #line 868 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2308,8 +2928,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 228:
 #line 875 "dhcp6_parser.yy"
+=======
+  case 230:
+#line 881 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 230:
 #line 881 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2322,8 +2947,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 229:
 #line 880 "dhcp6_parser.yy"
+=======
+  case 231:
+#line 886 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 231:
 #line 886 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2336,8 +2966,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 230:
 #line 885 "dhcp6_parser.yy"
+=======
+  case 232:
+#line 891 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 232:
 #line 891 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2352,8 +2987,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 231:
 #line 890 "dhcp6_parser.yy"
+=======
+  case 233:
+#line 896 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 233:
 #line 896 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2366,8 +3006,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 237:
 #line 904 "dhcp6_parser.yy"
+=======
+  case 239:
+#line 910 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 239:
 #line 910 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2380,8 +3025,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 238:
 #line 909 "dhcp6_parser.yy"
+=======
+  case 240:
+#line 915 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 240:
 #line 915 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2394,8 +3044,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 239:
 #line 916 "dhcp6_parser.yy"
+=======
+  case 241:
+#line 922 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 241:
 #line 922 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2410,8 +3065,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 240:
 #line 921 "dhcp6_parser.yy"
+=======
+  case 242:
+#line 927 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 242:
 #line 927 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2424,8 +3084,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 241:
 #line 926 "dhcp6_parser.yy"
+=======
+  case 243:
+#line 932 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 243:
 #line 932 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2440,8 +3105,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 242:
 #line 931 "dhcp6_parser.yy"
+=======
+  case 244:
+#line 937 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 244:
 #line 937 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2454,8 +3124,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 247:
 #line 944 "dhcp6_parser.yy"
+=======
+  case 249:
+#line 950 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 249:
 #line 950 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2469,8 +3144,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 248:
 #line 948 "dhcp6_parser.yy"
+=======
+  case 250:
+#line 954 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 250:
 #line 954 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2484,8 +3164,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 249:
 #line 954 "dhcp6_parser.yy"
+=======
+  case 251:
+#line 960 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 251:
 #line 960 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2499,8 +3184,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 250:
 #line 958 "dhcp6_parser.yy"
+=======
+  case 252:
+#line 964 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 252:
 #line 964 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2514,8 +3204,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 256:
 #line 973 "dhcp6_parser.yy"
+=======
+  case 258:
+#line 979 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 258:
 #line 979 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2527,8 +3222,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 257:
 #line 975 "dhcp6_parser.yy"
+=======
+  case 259:
+#line 981 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 259:
 #line 981 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2542,8 +3242,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 258:
 #line 981 "dhcp6_parser.yy"
+=======
+  case 260:
+#line 987 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 260:
 #line 987 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2555,8 +3260,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 259:
 #line 983 "dhcp6_parser.yy"
+=======
+  case 261:
+#line 989 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 261:
 #line 989 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2569,8 +3279,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 260:
 #line 989 "dhcp6_parser.yy"
+=======
+  case 262:
+#line 995 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 262:
 #line 995 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2585,8 +3300,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 261:
 #line 994 "dhcp6_parser.yy"
+=======
+  case 263:
+#line 1000 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 263:
 #line 1000 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2600,8 +3320,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 270:
 #line 1012 "dhcp6_parser.yy"
+=======
+  case 272:
+#line 1018 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 272:
 #line 1018 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2614,8 +3339,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 271:
 #line 1017 "dhcp6_parser.yy"
+=======
+  case 273:
+#line 1023 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 273:
 #line 1023 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2628,8 +3358,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 272:
 #line 1022 "dhcp6_parser.yy"
+=======
+  case 274:
+#line 1028 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 274:
 #line 1028 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2642,8 +3377,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 273:
 #line 1027 "dhcp6_parser.yy"
+=======
+  case 275:
+#line 1033 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 275:
 #line 1033 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2656,8 +3396,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 274:
 #line 1032 "dhcp6_parser.yy"
+=======
+  case 276:
+#line 1038 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 276:
 #line 1038 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2670,8 +3415,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 275:
 #line 1037 "dhcp6_parser.yy"
+=======
+  case 277:
+#line 1043 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 277:
 #line 1043 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2684,8 +3434,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 276:
 #line 1045 "dhcp6_parser.yy"
+=======
+  case 278:
+#line 1051 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 278:
 #line 1051 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2700,8 +3455,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 277:
 #line 1050 "dhcp6_parser.yy"
+=======
+  case 279:
+#line 1056 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 279:
 #line 1056 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2714,8 +3474,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 282:
 #line 1070 "dhcp6_parser.yy"
+=======
+  case 284:
+#line 1076 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 284:
 #line 1076 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2729,8 +3494,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 283:
 #line 1074 "dhcp6_parser.yy"
+=======
+  case 285:
+#line 1080 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 285:
 #line 1080 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2760,8 +3530,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 284:
 #line 1096 "dhcp6_parser.yy"
+=======
+  case 286:
+#line 1102 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 286:
 #line 1102 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2775,8 +3550,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 285:
 #line 1100 "dhcp6_parser.yy"
+=======
+  case 287:
+#line 1106 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 287:
 #line 1106 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2790,8 +3570,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 315:
 #line 1141 "dhcp6_parser.yy"
+=======
+  case 317:
+#line 1147 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 317:
 #line 1147 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2803,8 +3588,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 316:
 #line 1143 "dhcp6_parser.yy"
+=======
+  case 318:
+#line 1149 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 318:
 #line 1149 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2818,8 +3608,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 317:
 #line 1149 "dhcp6_parser.yy"
+=======
+  case 319:
+#line 1155 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 319:
 #line 1155 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2831,8 +3626,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 318:
 #line 1151 "dhcp6_parser.yy"
+=======
+  case 320:
+#line 1157 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 320:
 #line 1157 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2846,8 +3646,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 319:
 #line 1157 "dhcp6_parser.yy"
+=======
+  case 321:
+#line 1163 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 321:
 #line 1163 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2859,8 +3664,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 320:
 #line 1159 "dhcp6_parser.yy"
+=======
+  case 322:
+#line 1165 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 322:
 #line 1165 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2874,8 +3684,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 321:
 #line 1165 "dhcp6_parser.yy"
+=======
+  case 323:
+#line 1171 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 323:
 #line 1171 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2887,8 +3702,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 322:
 #line 1167 "dhcp6_parser.yy"
+=======
+  case 324:
+#line 1173 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 324:
 #line 1173 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2902,8 +3722,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 323:
 #line 1173 "dhcp6_parser.yy"
+=======
+  case 325:
+#line 1179 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 325:
 #line 1179 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2918,8 +3743,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 324:
 #line 1178 "dhcp6_parser.yy"
+=======
+  case 326:
+#line 1184 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 326:
 #line 1184 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2932,8 +3762,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 325:
 #line 1183 "dhcp6_parser.yy"
+=======
+  case 327:
+#line 1189 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 327:
 #line 1189 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2945,8 +3780,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 326:
 #line 1185 "dhcp6_parser.yy"
+=======
+  case 328:
+#line 1191 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 328:
 #line 1191 "dhcp6_parser.yy" // lalr1.cc:907
@@ -2958,6 +3798,7 @@ namespace isc { namespace dhcp {
 #line 2135 "dhcp6_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   case 327:
 #line 1190 "dhcp6_parser.yy"
@@ -3013,6 +3854,34 @@ namespace isc { namespace dhcp {
   case 333:
 #line 1202 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
+  case 329:
+#line 1196 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
+#line 2141 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 330:
+#line 1197 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(yystack_[0].location))); }
+#line 2147 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 331:
+#line 1198 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("global", ctx.loc2pos(yystack_[0].location))); }
+#line 2153 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 332:
+#line 1199 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("all", ctx.loc2pos(yystack_[0].location))); }
+#line 2159 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 333:
+#line 1202 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     {
     ElementPtr id(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("id", id);
@@ -3021,8 +3890,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 332:
 #line 1201 "dhcp6_parser.yy"
+=======
+  case 334:
+#line 1207 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 334:
 #line 1207 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3035,8 +3909,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 333:
 #line 1209 "dhcp6_parser.yy"
+=======
+  case 335:
+#line 1215 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 335:
 #line 1215 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3051,8 +3930,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 334:
 #line 1214 "dhcp6_parser.yy"
+=======
+  case 336:
+#line 1220 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 336:
 #line 1220 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3065,8 +3949,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 339:
 #line 1229 "dhcp6_parser.yy"
+=======
+  case 341:
+#line 1235 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 341:
 #line 1235 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3080,8 +3969,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 340:
 #line 1233 "dhcp6_parser.yy"
+=======
+  case 342:
+#line 1239 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 342:
 #line 1239 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3093,8 +3987,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 367:
 #line 1271 "dhcp6_parser.yy"
+=======
+  case 369:
+#line 1277 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 369:
 #line 1277 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3109,8 +4008,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 368:
 #line 1276 "dhcp6_parser.yy"
+=======
+  case 370:
+#line 1282 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 370:
 #line 1282 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3123,8 +4027,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 369:
 #line 1284 "dhcp6_parser.yy"
+=======
+  case 371:
+#line 1290 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 371:
 #line 1290 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3137,8 +4046,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 370:
 #line 1287 "dhcp6_parser.yy"
+=======
+  case 372:
+#line 1293 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 372:
 #line 1293 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3150,8 +4064,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 375:
 #line 1303 "dhcp6_parser.yy"
+=======
+  case 377:
+#line 1309 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 377:
 #line 1309 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3165,8 +4084,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 376:
 #line 1307 "dhcp6_parser.yy"
+=======
+  case 378:
+#line 1313 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 378:
 #line 1313 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3182,8 +4106,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 377:
 #line 1318 "dhcp6_parser.yy"
+=======
+  case 379:
+#line 1324 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 379:
 #line 1324 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3197,8 +4126,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 378:
 #line 1322 "dhcp6_parser.yy"
+=======
+  case 380:
+#line 1328 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 380:
 #line 1328 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3214,8 +4148,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 394:
 #line 1354 "dhcp6_parser.yy"
+=======
+  case 396:
+#line 1360 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 396:
 #line 1360 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3228,8 +4167,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 396:
 #line 1361 "dhcp6_parser.yy"
+=======
+  case 398:
+#line 1367 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 398:
 #line 1367 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3241,8 +4185,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 397:
 #line 1363 "dhcp6_parser.yy"
+=======
+  case 399:
+#line 1369 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 399:
 #line 1369 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3256,8 +4205,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 398:
 #line 1369 "dhcp6_parser.yy"
+=======
+  case 400:
+#line 1375 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 400:
 #line 1375 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3269,8 +4223,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 399:
 #line 1371 "dhcp6_parser.yy"
+=======
+  case 401:
+#line 1377 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 401:
 #line 1377 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3284,8 +4243,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 400:
 #line 1377 "dhcp6_parser.yy"
+=======
+  case 402:
+#line 1383 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 402:
 #line 1383 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3297,8 +4261,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 401:
 #line 1379 "dhcp6_parser.yy"
+=======
+  case 403:
+#line 1385 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 403:
 #line 1385 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3312,8 +4281,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 403:
 #line 1387 "dhcp6_parser.yy"
+=======
+  case 405:
+#line 1393 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 405:
 #line 1393 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3325,8 +4299,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 404:
 #line 1389 "dhcp6_parser.yy"
+=======
+  case 406:
+#line 1395 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 406:
 #line 1395 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3340,8 +4319,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 405:
 #line 1395 "dhcp6_parser.yy"
+=======
+  case 407:
+#line 1401 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 407:
 #line 1401 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3354,8 +4338,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 406:
 #line 1404 "dhcp6_parser.yy"
+=======
+  case 408:
+#line 1410 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 408:
 #line 1410 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3370,8 +4359,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 407:
 #line 1409 "dhcp6_parser.yy"
+=======
+  case 409:
+#line 1415 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 409:
 #line 1415 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3384,8 +4378,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 412:
 #line 1428 "dhcp6_parser.yy"
+=======
+  case 414:
+#line 1434 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 414:
 #line 1434 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3399,8 +4398,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 413:
 #line 1432 "dhcp6_parser.yy"
+=======
+  case 415:
+#line 1438 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 415:
 #line 1438 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3413,8 +4417,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 414:
 #line 1440 "dhcp6_parser.yy"
+=======
+  case 416:
+#line 1446 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 416:
 #line 1446 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3428,8 +4437,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 415:
 #line 1444 "dhcp6_parser.yy"
+=======
+  case 417:
+#line 1450 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 417:
 #line 1450 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3442,8 +4456,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 430:
 #line 1477 "dhcp6_parser.yy"
+=======
+  case 432:
+#line 1483 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 432:
 #line 1483 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3455,8 +4474,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 431:
 #line 1479 "dhcp6_parser.yy"
+=======
+  case 433:
+#line 1485 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 433:
 #line 1485 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3470,8 +4494,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 434:
 #line 1489 "dhcp6_parser.yy"
+=======
+  case 436:
+#line 1495 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 436:
 #line 1495 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3484,8 +4513,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 435:
 #line 1494 "dhcp6_parser.yy"
+=======
+  case 437:
+#line 1500 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 437:
 #line 1500 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3498,8 +4532,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 436:
 #line 1502 "dhcp6_parser.yy"
+=======
+  case 438:
+#line 1508 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 438:
 #line 1508 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3514,8 +4553,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 437:
 #line 1507 "dhcp6_parser.yy"
+=======
+  case 439:
+#line 1513 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 439:
 #line 1513 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3528,8 +4572,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 442:
 #line 1522 "dhcp6_parser.yy"
+=======
+  case 444:
+#line 1528 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 444:
 #line 1528 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3543,8 +4592,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 443:
 #line 1526 "dhcp6_parser.yy"
+=======
+  case 445:
+#line 1532 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 445:
 #line 1532 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3558,8 +4612,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 444:
 #line 1532 "dhcp6_parser.yy"
+=======
+  case 446:
+#line 1538 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 446:
 #line 1538 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3573,8 +4632,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 445:
 #line 1536 "dhcp6_parser.yy"
+=======
+  case 447:
+#line 1542 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 447:
 #line 1542 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3587,8 +4651,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 455:
 #line 1554 "dhcp6_parser.yy"
+=======
+  case 457:
+#line 1560 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 457:
 #line 1560 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3600,8 +4669,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 456:
 #line 1556 "dhcp6_parser.yy"
+=======
+  case 458:
+#line 1562 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 458:
 #line 1562 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3615,8 +4689,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 457:
 #line 1562 "dhcp6_parser.yy"
+=======
+  case 459:
+#line 1568 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 459:
 #line 1568 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3628,8 +4707,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 458:
 #line 1564 "dhcp6_parser.yy"
+=======
+  case 460:
+#line 1570 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 460:
 #line 1570 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3660,8 +4744,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 459:
 #line 1587 "dhcp6_parser.yy"
+=======
+  case 461:
+#line 1593 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 461:
 #line 1593 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3673,8 +4762,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 460:
 #line 1589 "dhcp6_parser.yy"
+=======
+  case 462:
+#line 1595 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 462:
 #line 1595 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3707,8 +4801,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 461:
 #line 1617 "dhcp6_parser.yy"
+=======
+  case 463:
+#line 1623 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 463:
 #line 1623 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3723,8 +4822,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 462:
 #line 1622 "dhcp6_parser.yy"
+=======
+  case 464:
+#line 1628 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 464:
 #line 1628 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3737,8 +4841,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 467:
 #line 1637 "dhcp6_parser.yy"
+=======
+  case 469:
+#line 1643 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 469:
 #line 1643 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3752,8 +4861,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 468:
 #line 1641 "dhcp6_parser.yy"
+=======
+  case 470:
+#line 1647 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 470:
 #line 1647 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3769,8 +4883,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 469:
 #line 1649 "dhcp6_parser.yy"
+=======
+  case 471:
+#line 1655 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 471:
 #line 1655 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3784,8 +4903,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 470:
 #line 1653 "dhcp6_parser.yy"
+=======
+  case 472:
+#line 1659 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 472:
 #line 1659 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3801,8 +4925,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 484:
 #line 1678 "dhcp6_parser.yy"
+=======
+  case 486:
+#line 1684 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 486:
 #line 1684 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3814,8 +4943,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 485:
 #line 1680 "dhcp6_parser.yy"
+=======
+  case 487:
+#line 1686 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 487:
 #line 1686 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3829,8 +4963,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 486:
 #line 1686 "dhcp6_parser.yy"
+=======
+  case 488:
+#line 1692 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 488:
 #line 1692 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3843,8 +4982,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 487:
 #line 1691 "dhcp6_parser.yy"
+=======
+  case 489:
+#line 1697 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 489:
 #line 1697 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3856,8 +5000,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 488:
 #line 1693 "dhcp6_parser.yy"
+=======
+  case 490:
+#line 1699 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 490:
 #line 1699 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3871,8 +5020,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 489:
 #line 1699 "dhcp6_parser.yy"
+=======
+  case 491:
+#line 1705 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 491:
 #line 1705 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3885,8 +5039,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 490:
 #line 1704 "dhcp6_parser.yy"
+=======
+  case 492:
+#line 1710 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 492:
 #line 1710 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3899,8 +5058,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 491:
 #line 1712 "dhcp6_parser.yy"
+=======
+  case 493:
+#line 1718 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 493:
 #line 1718 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3915,8 +5079,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 492:
 #line 1717 "dhcp6_parser.yy"
+=======
+  case 494:
+#line 1723 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 494:
 #line 1723 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3929,8 +5098,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 497:
 #line 1730 "dhcp6_parser.yy"
+=======
+  case 499:
+#line 1736 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 499:
 #line 1736 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3944,8 +5118,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 498:
 #line 1734 "dhcp6_parser.yy"
+=======
+  case 500:
+#line 1740 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 500:
 #line 1740 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3958,8 +5137,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 499:
 #line 1739 "dhcp6_parser.yy"
+=======
+  case 501:
+#line 1745 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 501:
 #line 1745 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3973,8 +5157,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 500:
 #line 1743 "dhcp6_parser.yy"
+=======
+  case 502:
+#line 1749 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 502:
 #line 1749 "dhcp6_parser.yy" // lalr1.cc:907
@@ -3987,8 +5176,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 516:
 #line 1770 "dhcp6_parser.yy"
+=======
+  case 518:
+#line 1776 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 518:
 #line 1776 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4003,8 +5197,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 517:
 #line 1775 "dhcp6_parser.yy"
+=======
+  case 519:
+#line 1781 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 519:
 #line 1781 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4017,8 +5216,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 518:
 #line 1780 "dhcp6_parser.yy"
+=======
+  case 520:
+#line 1786 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 520:
 #line 1786 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4033,8 +5237,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 519:
 #line 1785 "dhcp6_parser.yy"
+=======
+  case 521:
+#line 1791 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 521:
 #line 1791 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4047,8 +5256,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 520:
 #line 1790 "dhcp6_parser.yy"
+=======
+  case 522:
+#line 1796 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 522:
 #line 1796 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4060,8 +5274,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 521:
 #line 1792 "dhcp6_parser.yy"
+=======
+  case 523:
+#line 1798 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 523:
 #line 1798 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4075,8 +5294,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 522:
 #line 1798 "dhcp6_parser.yy"
+=======
+  case 524:
+#line 1804 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 524:
 #line 1804 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4088,8 +5312,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 523:
 #line 1800 "dhcp6_parser.yy"
+=======
+  case 525:
+#line 1806 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 525:
 #line 1806 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4103,8 +5332,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 524:
 #line 1806 "dhcp6_parser.yy"
+=======
+  case 526:
+#line 1812 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 526:
 #line 1812 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4116,8 +5350,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 525:
 #line 1808 "dhcp6_parser.yy"
+=======
+  case 527:
+#line 1814 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 527:
 #line 1814 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4131,8 +5370,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 526:
 #line 1814 "dhcp6_parser.yy"
+=======
+  case 528:
+#line 1820 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 528:
 #line 1820 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4144,8 +5388,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 527:
 #line 1816 "dhcp6_parser.yy"
+=======
+  case 529:
+#line 1822 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 529:
 #line 1822 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4159,8 +5408,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 528:
 #line 1822 "dhcp6_parser.yy"
+=======
+  case 530:
+#line 1828 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 530:
 #line 1828 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4175,8 +5429,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 529:
 #line 1827 "dhcp6_parser.yy"
+=======
+  case 531:
+#line 1833 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 531:
 #line 1833 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4189,8 +5448,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 530:
 #line 1835 "dhcp6_parser.yy"
+=======
+  case 532:
+#line 1841 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 532:
 #line 1841 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4205,8 +5469,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 531:
 #line 1840 "dhcp6_parser.yy"
+=======
+  case 533:
+#line 1846 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 533:
 #line 1846 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4219,8 +5488,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 534:
 #line 1849 "dhcp6_parser.yy"
+=======
+  case 536:
+#line 1855 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 536:
 #line 1855 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4232,8 +5506,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 535:
 #line 1851 "dhcp6_parser.yy"
+=======
+  case 537:
+#line 1857 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 537:
 #line 1857 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4247,8 +5526,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 536:
 #line 1860 "dhcp6_parser.yy"
+=======
+  case 538:
+#line 1866 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 538:
 #line 1866 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4263,8 +5547,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 537:
 #line 1865 "dhcp6_parser.yy"
+=======
+  case 539:
+#line 1871 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 539:
 #line 1871 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4277,8 +5566,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 540:
 #line 1874 "dhcp6_parser.yy"
+=======
+  case 542:
+#line 1880 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 542:
 #line 1880 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4292,8 +5586,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 541:
 #line 1878 "dhcp6_parser.yy"
+=======
+  case 543:
+#line 1884 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 543:
 #line 1884 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4307,8 +5606,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 554:
 #line 1903 "dhcp6_parser.yy"
+=======
+  case 556:
+#line 1909 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 556:
 #line 1909 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4320,8 +5624,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 555:
 #line 1905 "dhcp6_parser.yy"
+=======
+  case 557:
+#line 1911 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 557:
 #line 1911 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4335,8 +5644,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 556:
 #line 1911 "dhcp6_parser.yy"
+=======
+  case 558:
+#line 1917 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 558:
 #line 1917 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4349,8 +5663,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 557:
 #line 1919 "dhcp6_parser.yy"
+=======
+  case 559:
+#line 1925 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 559:
 #line 1925 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4365,8 +5684,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 558:
 #line 1924 "dhcp6_parser.yy"
+=======
+  case 560:
+#line 1930 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 560:
 #line 1930 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4381,8 +5705,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 570:
 #line 1946 "dhcp6_parser.yy"
+=======
+  case 572:
+#line 1952 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 572:
 #line 1952 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4394,8 +5723,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 571:
 #line 1948 "dhcp6_parser.yy"
+=======
+  case 573:
+#line 1954 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 573:
 #line 1954 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4407,6 +5741,7 @@ namespace isc { namespace dhcp {
 #line 3090 "dhcp6_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   case 572:
 #line 1953 "dhcp6_parser.yy"
@@ -4450,6 +5785,28 @@ namespace isc { namespace dhcp {
   case 577:
 #line 1964 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
+  case 574:
+#line 1959 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("LLT", ctx.loc2pos(yystack_[0].location))); }
+#line 3096 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 575:
+#line 1960 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("EN", ctx.loc2pos(yystack_[0].location))); }
+#line 3102 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 576:
+#line 1961 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("LL", ctx.loc2pos(yystack_[0].location))); }
+#line 3108 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 577:
+#line 1964 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     {
     ElementPtr htype(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("htype", htype);
@@ -4458,8 +5815,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 576:
 #line 1963 "dhcp6_parser.yy"
+=======
+  case 578:
+#line 1969 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 578:
 #line 1969 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4471,8 +5833,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 577:
 #line 1965 "dhcp6_parser.yy"
+=======
+  case 579:
+#line 1971 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 579:
 #line 1971 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4486,8 +5853,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 578:
 #line 1971 "dhcp6_parser.yy"
+=======
+  case 580:
+#line 1977 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 580:
 #line 1977 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4500,8 +5872,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 579:
 #line 1976 "dhcp6_parser.yy"
+=======
+  case 581:
+#line 1982 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 581:
 #line 1982 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4514,8 +5891,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 580:
 #line 1983 "dhcp6_parser.yy"
+=======
+  case 582:
+#line 1989 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 582:
 #line 1989 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4528,8 +5910,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 581:
 #line 1990 "dhcp6_parser.yy"
+=======
+  case 583:
+#line 1996 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 583:
 #line 1996 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4544,8 +5931,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 582:
 #line 1995 "dhcp6_parser.yy"
+=======
+  case 584:
+#line 2001 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 584:
 #line 2001 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4558,8 +5950,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 590:
 #line 2011 "dhcp6_parser.yy"
+=======
+  case 592:
+#line 2017 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 592:
 #line 2017 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4571,8 +5968,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 591:
 #line 2013 "dhcp6_parser.yy"
+=======
+  case 593:
+#line 2019 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 593:
 #line 2019 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4586,8 +5988,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 592:
 #line 2019 "dhcp6_parser.yy"
+=======
+  case 594:
+#line 2025 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 594:
 #line 2025 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4599,8 +6006,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 593:
 #line 2021 "dhcp6_parser.yy"
+=======
+  case 595:
+#line 2027 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 595:
 #line 2027 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4614,8 +6026,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 594:
 #line 2029 "dhcp6_parser.yy"
+=======
+  case 596:
+#line 2035 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 596:
 #line 2035 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4627,8 +6044,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 595:
 #line 2031 "dhcp6_parser.yy"
+=======
+  case 597:
+#line 2037 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 597:
 #line 2037 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4672,8 +6094,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 596:
 #line 2069 "dhcp6_parser.yy"
+=======
+  case 598:
+#line 2075 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 598:
 #line 2075 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4688,8 +6115,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 597:
 #line 2074 "dhcp6_parser.yy"
+=======
+  case 599:
+#line 2080 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 599:
 #line 2080 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4704,8 +6136,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 598:
 #line 2081 "dhcp6_parser.yy"
+=======
+  case 600:
+#line 2087 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 600:
 #line 2087 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4719,8 +6156,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 599:
 #line 2085 "dhcp6_parser.yy"
+=======
+  case 601:
+#line 2091 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 601:
 #line 2091 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4734,8 +6176,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 620:
 #line 2115 "dhcp6_parser.yy"
+=======
+  case 622:
+#line 2121 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 622:
 #line 2121 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4748,8 +6195,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 621:
 #line 2120 "dhcp6_parser.yy"
+=======
+  case 623:
+#line 2126 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 623:
 #line 2126 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4761,8 +6213,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 622:
 #line 2122 "dhcp6_parser.yy"
+=======
+  case 624:
+#line 2128 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 624:
 #line 2128 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4776,8 +6233,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 623:
 #line 2128 "dhcp6_parser.yy"
+=======
+  case 625:
+#line 2134 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 625:
 #line 2134 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4789,8 +6251,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 624:
 #line 2130 "dhcp6_parser.yy"
+=======
+  case 626:
+#line 2136 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 626:
 #line 2136 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4804,8 +6271,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 625:
 #line 2136 "dhcp6_parser.yy"
+=======
+  case 627:
+#line 2142 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 627:
 #line 2142 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4818,8 +6290,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 626:
 #line 2141 "dhcp6_parser.yy"
+=======
+  case 628:
+#line 2147 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 628:
 #line 2147 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4831,8 +6308,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 627:
 #line 2143 "dhcp6_parser.yy"
+=======
+  case 629:
+#line 2149 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 629:
 #line 2149 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4846,8 +6328,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 628:
 #line 2149 "dhcp6_parser.yy"
+=======
+  case 630:
+#line 2155 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 630:
 #line 2155 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4860,8 +6347,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 629:
 #line 2154 "dhcp6_parser.yy"
+=======
+  case 631:
+#line 2160 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 631:
 #line 2160 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4874,8 +6366,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 630:
 #line 2159 "dhcp6_parser.yy"
+=======
+  case 632:
+#line 2165 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 632:
 #line 2165 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4887,8 +6384,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 631:
 #line 2161 "dhcp6_parser.yy"
+=======
+  case 633:
+#line 2167 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 633:
 #line 2167 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4900,6 +6402,7 @@ namespace isc { namespace dhcp {
 #line 3415 "dhcp6_parser.cc" // lalr1.cc:907
     break;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   case 632:
 #line 2167 "dhcp6_parser.yy"
@@ -4931,6 +6434,22 @@ namespace isc { namespace dhcp {
   case 636:
 #line 2177 "dhcp6_parser.yy" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
+  case 634:
+#line 2173 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
+#line 3421 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 635:
+#line 2174 "dhcp6_parser.yy" // lalr1.cc:907
+    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
+#line 3427 "dhcp6_parser.cc" // lalr1.cc:907
+    break;
+
+  case 636:
+#line 2177 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     {
     ctx.enter(ctx.NCR_FORMAT);
 }
@@ -4938,8 +6457,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 635:
 #line 2173 "dhcp6_parser.yy"
+=======
+  case 637:
+#line 2179 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 637:
 #line 2179 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4953,8 +6477,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 636:
 #line 2179 "dhcp6_parser.yy"
+=======
+  case 638:
+#line 2185 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 638:
 #line 2185 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4967,8 +6496,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 637:
 #line 2184 "dhcp6_parser.yy"
+=======
+  case 639:
+#line 2190 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 639:
 #line 2190 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4981,8 +6515,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 638:
 #line 2189 "dhcp6_parser.yy"
+=======
+  case 640:
+#line 2195 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 640:
 #line 2195 "dhcp6_parser.yy" // lalr1.cc:907
@@ -4994,8 +6533,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 639:
 #line 2191 "dhcp6_parser.yy"
+=======
+  case 641:
+#line 2197 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 641:
 #line 2197 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5008,8 +6552,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 640:
 #line 2197 "dhcp6_parser.yy"
+=======
+  case 642:
+#line 2203 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 642:
 #line 2203 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5021,8 +6570,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 641:
 #line 2200 "dhcp6_parser.yy"
+=======
+  case 643:
+#line 2206 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 643:
 #line 2206 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5034,8 +6588,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 642:
 #line 2203 "dhcp6_parser.yy"
+=======
+  case 644:
+#line 2209 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 644:
 #line 2209 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5047,8 +6606,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 643:
 #line 2206 "dhcp6_parser.yy"
+=======
+  case 645:
+#line 2212 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 645:
 #line 2212 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5060,8 +6624,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 644:
 #line 2209 "dhcp6_parser.yy"
+=======
+  case 646:
+#line 2215 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 646:
 #line 2215 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5074,8 +6643,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 645:
 #line 2215 "dhcp6_parser.yy"
+=======
+  case 647:
+#line 2221 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 647:
 #line 2221 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5087,8 +6661,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 646:
 #line 2217 "dhcp6_parser.yy"
+=======
+  case 648:
+#line 2223 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 648:
 #line 2223 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5102,8 +6681,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 647:
 #line 2223 "dhcp6_parser.yy"
+=======
+  case 649:
+#line 2229 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 649:
 #line 2229 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5115,8 +6699,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 648:
 #line 2225 "dhcp6_parser.yy"
+=======
+  case 650:
+#line 2231 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 650:
 #line 2231 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5130,8 +6719,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 649:
 #line 2231 "dhcp6_parser.yy"
+=======
+  case 651:
+#line 2237 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 651:
 #line 2237 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5143,8 +6737,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 650:
 #line 2233 "dhcp6_parser.yy"
+=======
+  case 652:
+#line 2239 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 652:
 #line 2239 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5158,8 +6757,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 651:
 #line 2241 "dhcp6_parser.yy"
+=======
+  case 653:
+#line 2247 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 653:
 #line 2247 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5171,8 +6775,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 652:
 #line 2243 "dhcp6_parser.yy"
+=======
+  case 654:
+#line 2249 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 654:
 #line 2249 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5185,8 +6794,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 653:
 #line 2248 "dhcp6_parser.yy"
+=======
+  case 655:
+#line 2254 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 655:
 #line 2254 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5198,8 +6812,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 654:
 #line 2250 "dhcp6_parser.yy"
+=======
+  case 656:
+#line 2256 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 656:
 #line 2256 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5212,8 +6831,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 655:
 #line 2255 "dhcp6_parser.yy"
+=======
+  case 657:
+#line 2261 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 657:
 #line 2261 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5225,8 +6849,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 656:
 #line 2257 "dhcp6_parser.yy"
+=======
+  case 658:
+#line 2263 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 658:
 #line 2263 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5239,8 +6868,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 657:
 #line 2264 "dhcp6_parser.yy"
+=======
+  case 659:
+#line 2270 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 659:
 #line 2270 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5255,8 +6889,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 658:
 #line 2269 "dhcp6_parser.yy"
+=======
+  case 660:
+#line 2275 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 660:
 #line 2275 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5270,8 +6909,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 659:
 #line 2275 "dhcp6_parser.yy"
+=======
+  case 661:
+#line 2281 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 661:
 #line 2281 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5285,8 +6929,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 660:
 #line 2279 "dhcp6_parser.yy"
+=======
+  case 662:
+#line 2285 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 662:
 #line 2285 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5299,8 +6948,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 665:
 #line 2294 "dhcp6_parser.yy"
+=======
+  case 667:
+#line 2300 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 667:
 #line 2300 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5315,8 +6969,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 666:
 #line 2299 "dhcp6_parser.yy"
+=======
+  case 668:
+#line 2305 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 668:
 #line 2305 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5329,8 +6988,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 667:
 #line 2304 "dhcp6_parser.yy"
+=======
+  case 669:
+#line 2310 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 669:
 #line 2310 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5343,8 +7007,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 668:
 #line 2314 "dhcp6_parser.yy"
+=======
+  case 670:
+#line 2320 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 670:
 #line 2320 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5359,8 +7028,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 669:
 #line 2319 "dhcp6_parser.yy"
+=======
+  case 671:
+#line 2325 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 671:
 #line 2325 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5373,8 +7047,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 670:
 #line 2324 "dhcp6_parser.yy"
+=======
+  case 672:
+#line 2330 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 672:
 #line 2330 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5388,8 +7067,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 671:
 #line 2328 "dhcp6_parser.yy"
+=======
+  case 673:
+#line 2334 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 673:
 #line 2334 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5401,8 +7085,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 675:
 #line 2344 "dhcp6_parser.yy"
+=======
+  case 677:
+#line 2350 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 677:
 #line 2350 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5417,8 +7106,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 676:
 #line 2349 "dhcp6_parser.yy"
+=======
+  case 678:
+#line 2355 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 678:
 #line 2355 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5431,8 +7125,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 679:
 #line 2361 "dhcp6_parser.yy"
+=======
+  case 681:
+#line 2367 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 681:
 #line 2367 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5446,8 +7145,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 680:
 #line 2365 "dhcp6_parser.yy"
+=======
+  case 682:
+#line 2371 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 682:
 #line 2371 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5459,8 +7163,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 690:
 #line 2382 "dhcp6_parser.yy"
+=======
+  case 692:
+#line 2388 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 692:
 #line 2388 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5473,8 +7182,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 691:
 #line 2387 "dhcp6_parser.yy"
+=======
+  case 693:
+#line 2393 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 693:
 #line 2393 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5486,8 +7200,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 692:
 #line 2389 "dhcp6_parser.yy"
+=======
+  case 694:
+#line 2395 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 694:
 #line 2395 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5501,8 +7220,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 693:
 #line 2395 "dhcp6_parser.yy"
+=======
+  case 695:
+#line 2401 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 695:
 #line 2401 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5517,8 +7241,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 694:
 #line 2400 "dhcp6_parser.yy"
+=======
+  case 696:
+#line 2406 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 696:
 #line 2406 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5531,8 +7260,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 697:
 #line 2409 "dhcp6_parser.yy"
+=======
+  case 699:
+#line 2415 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 699:
 #line 2415 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5546,8 +7280,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 698:
 #line 2413 "dhcp6_parser.yy"
+=======
+  case 700:
+#line 2419 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 700:
 #line 2419 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5559,8 +7298,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 706:
 #line 2428 "dhcp6_parser.yy"
+=======
+  case 707:
+#line 2433 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 707:
 #line 2433 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5572,8 +7316,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 707:
 #line 2430 "dhcp6_parser.yy"
+=======
+  case 708:
+#line 2435 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 708:
 #line 2435 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5587,8 +7336,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 708:
 #line 2436 "dhcp6_parser.yy"
+=======
+  case 709:
+#line 2441 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 709:
 #line 2441 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5601,8 +7355,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 709:
 #line 2441 "dhcp6_parser.yy"
+=======
+  case 710:
+#line 2446 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 710:
 #line 2446 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5615,8 +7374,13 @@ namespace isc { namespace dhcp {
     break;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   case 710:
 #line 2446 "dhcp6_parser.yy"
+=======
+  case 711:
+#line 2451 "dhcp6_parser.yy" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
   case 711:
 #line 2451 "dhcp6_parser.yy" // lalr1.cc:907
@@ -5626,6 +7390,7 @@ namespace isc { namespace dhcp {
     ctx.stack_.back()->set("maxver", maxver);
 }
 #line 3881 "dhcp6_parser.cc" // lalr1.cc:907
+<<<<<<< HEAD
     break;
 
   case 711:
@@ -5651,6 +7416,12 @@ namespace isc { namespace dhcp {
 #line 3898 "dhcp6_parser.cc"
 
 =======
+#line 3885 "dhcp6_parser.cc" // lalr1.cc:907
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
+    break;
+
+
 #line 3885 "dhcp6_parser.cc" // lalr1.cc:907
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
             default:
@@ -5918,6 +7689,7 @@ namespace isc { namespace dhcp {
   Dhcp6Parser::yypact_[] =
   {
 <<<<<<< HEAD
+<<<<<<< HEAD
      480,  -875,  -875,  -875,  -875,  -875,  -875,  -875,  -875,  -875,
     -875,  -875,  -875,  -875,  -875,  -875,    45,    70,    59,    69,
       78,   131,   133,   135,   144,   146,   173,   184,   197,   206,
@@ -6035,6 +7807,8 @@ namespace isc { namespace dhcp {
      910,   731,   747,   748,   911,   154,  -875,   751,  -875,  -875,
     -875,   760,  -875,  -875,  -875
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
      427,  -878,  -878,  -878,  -878,  -878,  -878,  -878,  -878,  -878,
     -878,  -878,  -878,  -878,  -878,  -878,    40,    70,    59,    63,
       65,    69,    79,    87,   101,   133,   144,   182,   185,   189,
@@ -6151,6 +7925,9 @@ namespace isc { namespace dhcp {
     -878,  -878,   851,   853,   858,   374,  -878,  -878,  -878,  -878,
     -878,  -878,   868,   778,   727,   779,    -9,  -878,   783,  -878,
     -878,  -878,  -878,  -878
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -6247,6 +8024,7 @@ namespace isc { namespace dhcp {
      136,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
 <<<<<<< HEAD
+<<<<<<< HEAD
        0,     0,     0,     0,     0,     0,     0,     0,   150,   152,
        0,   154,     0,     0,   277,     0,   379,   368,     0,   416,
      407,     0,     0,   334,     0,     0,   223,   240,     0,   231,
@@ -6276,6 +8054,8 @@ namespace isc { namespace dhcp {
        0,     0,     0,     0,     0,     0,   698,     0,   708,   709,
      710,     0,   700,   707,   712
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        0,   150,   152,     0,   154,     0,     0,   279,     0,   381,
      370,     0,   418,   409,     0,     0,   336,     0,     0,   225,
      242,     0,   233,     0,     0,   218,   544,     0,   539,   503,
@@ -6303,12 +8083,16 @@ namespace isc { namespace dhcp {
      696,   707,     0,     0,     0,     0,   701,   703,   704,   705,
      706,   698,     0,     0,     0,     0,     0,   700,     0,   709,
      710,   711,   702,   708
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
   const short
   Dhcp6Parser::yypgoto_[] =
   {
+<<<<<<< HEAD
 <<<<<<< HEAD
     -875,  -875,  -875,  -875,  -875,  -875,  -875,  -875,  -875,  -875,
     -875,  -875,  -875,  -875,  -875,  -875,  -875,    54,  -875,  -502,
@@ -6352,6 +8136,8 @@ namespace isc { namespace dhcp {
     -875,  -875,  -875,  -875,  -147,  -875,  -875,  -166,  -875,  -875,
     -875,  -875,  -875,  -875,  -875
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
     -878,  -878,  -878,  -878,  -878,  -878,  -878,  -878,  -878,  -878,
     -878,  -878,  -878,  -878,  -878,  -878,  -878,    54,  -878,  -502,
     -878,   336,  -878,  -878,  -878,  -878,   246,  -878,  -508,  -878,
@@ -6393,6 +8179,9 @@ namespace isc { namespace dhcp {
      351,   483,   -44,  -878,  -878,    31,  -878,  -878,  -132,  -878,
     -878,  -878,  -878,  -878,  -878,  -151,  -878,  -878,  -167,  -878,
     -878,  -878,  -878,  -878
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -6406,6 +8195,7 @@ namespace isc { namespace dhcp {
       75,   151,   152,   153,   396,   154,   155,   156,   157,   158,
      159,   160,   161,   162,   163,   164,   165,   166,   414,   167,
      398,    49,    76,   198,   199,   200,   440,   201,   168,   399,
+<<<<<<< HEAD
 <<<<<<< HEAD
      169,   400,   170,   401,   760,   761,   762,   890,   737,   738,
      739,   869,  1073,   740,   870,   741,   871,   742,   872,   743,
@@ -6442,6 +8232,8 @@ namespace isc { namespace dhcp {
     1103,  1060,  1101,  1122,  1123,  1124,  1132,  1133,  1134,  1140,
     1135,  1136,  1137,  1138,  1144
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
      169,   400,   170,   401,   762,   763,   764,   893,   738,   739,
      740,   871,  1077,   741,   872,   742,   873,   743,   874,   744,
      745,   477,   746,   747,   748,   749,   750,   751,   752,   753,
@@ -6476,6 +8268,9 @@ namespace isc { namespace dhcp {
      374,   375,   194,   437,   851,   852,   945,  1060,  1061,  1062,
     1063,  1107,  1064,  1105,  1126,  1127,  1128,  1135,  1136,  1137,
     1142,  1138,  1139,  1140
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -6483,6 +8278,7 @@ namespace isc { namespace dhcp {
   Dhcp6Parser::yytable_[] =
   {
      100,   150,   197,   214,   244,   258,   278,   215,   300,   319,
+<<<<<<< HEAD
 <<<<<<< HEAD
      336,   354,   372,   828,   321,   241,   788,   322,   758,   236,
      247,   261,   279,   202,   238,   251,   262,   280,   997,   314,
@@ -6583,6 +8379,8 @@ namespace isc { namespace dhcp {
      847,  1048,   625,   523,  1028,   716,  1117,   596,  1139,  1152,
      626,  1061,     0,   629,     0,     0,     0,     0,   715,     0,
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
      336,   354,   372,   830,   321,   241,   790,   322,   760,   236,
      247,   261,   279,   202,   238,   251,   262,   280,  1001,   314,
      332,   216,   355,  1002,   373,  1003,  1007,   217,  1013,    94,
@@ -6682,6 +8480,9 @@ namespace isc { namespace dhcp {
      849,   588,   716,  1032,  1033,   596,  1121,  1065,  1141,  1152,
        0,     0,     0,   715,     0,     0,     0,   625,     0,     0,
        0,     0,   626,     0,   629,     0,     0,     0,     0,     0,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,   988,     0,     0,     0,   989,
@@ -6701,6 +8502,7 @@ namespace isc { namespace dhcp {
   {
       74,    75,    76,    77,    78,    79,    80,    77,    82,    83,
       84,    85,    85,   663,    83,    77,   657,    83,   640,    77,
+<<<<<<< HEAD
 <<<<<<< HEAD
       78,    79,    80,    76,    77,    78,    79,    80,   902,    82,
       83,    77,    85,   902,    85,   902,   902,    77,   902,   100,
@@ -6801,6 +8603,8 @@ namespace isc { namespace dhcp {
      509,   943,    -1,   513,    -1,    -1,    -1,    -1,   632,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       78,    79,    80,    76,    77,    78,    79,    80,   905,    82,
       83,    77,    85,   905,    85,   905,   905,    77,   905,    10,
        0,    77,    86,    21,   546,   110,   111,    76,    77,    78,
@@ -6899,6 +8703,9 @@ namespace isc { namespace dhcp {
      666,   464,   637,   917,   919,   474,  1108,   946,  1129,  1146,
       -1,    -1,    -1,   632,    -1,    -1,    -1,   507,    -1,    -1,
       -1,    -1,   509,    -1,   513,    -1,    -1,    -1,    -1,    -1,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    -1,  1089,    -1,    -1,    -1,  1089,
@@ -6921,6 +8728,7 @@ namespace isc { namespace dhcp {
      191,   192,   193,   194,   195,   196,   197,   198,   199,   200,
      201,   202,     0,     5,     7,     9,   182,   183,   184,   185,
      203,   204,   205,   210,     7,   219,     7,   225,     7,   247,
+<<<<<<< HEAD
 <<<<<<< HEAD
        7,   345,     7,   422,     7,   438,     7,   455,     7,   374,
        7,   380,     7,   404,     7,   321,     7,   516,     7,   563,
@@ -6970,6 +8778,8 @@ namespace isc { namespace dhcp {
        4,   531,   534,     4,     4,   538,   541,     3,     8,     3,
        8,   559,     4,     3,     8,   203,   203,   182,     4,     4,
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        7,   346,     7,   423,     7,   439,     7,   456,     7,   375,
        7,   381,     7,   405,     7,   322,     7,   517,     7,   564,
        7,   555,   211,   206,   220,   226,   248,   347,   424,   440,
@@ -7017,6 +8827,9 @@ namespace isc { namespace dhcp {
      327,   329,     3,     8,     4,   523,   525,     4,   528,     4,
        4,   532,   535,     4,     4,   539,   542,     3,     8,     3,
        8,   560,     4,     3,     8,   203,   203,   182,     4,     4,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        4,     4,     4,   222,     4,     4,     4,     4,     4,     4,
      183,   183,   183,   183,   183,   183,   183,   183,   185,   184,
@@ -7024,6 +8837,7 @@ namespace isc { namespace dhcp {
        4,     4,     4,     4,     4,     4,     4,     4,     4,   183,
        4,     4,     4,     4,     4,     4,   228,     4,   185,   250,
        4,     4,     4,     4,     4,   183,   185,     4,     4,     4,
+<<<<<<< HEAD
 <<<<<<< HEAD
      348,     4,   425,     4,   183,     4,   183,   183,   441,     4,
        4,     4,     4,     4,     4,     4,   459,     4,     4,   183,
@@ -7034,6 +8848,8 @@ namespace isc { namespace dhcp {
        7,     5,   182,     5,     5,     5,   205,   207,   182,    84,
       85,    86,    87,   361,     5,     5,     5,     5,     7,     5,
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
      349,     4,   426,     4,   183,     4,   183,   183,   442,     4,
        4,     4,     4,     4,     4,     4,   460,     4,     4,   183,
        4,     4,     4,   185,   385,     4,   185,   185,   409,     4,
@@ -7042,11 +8858,15 @@ namespace isc { namespace dhcp {
        4,     7,     7,   203,   203,   203,   182,     7,     7,     7,
        7,     5,   182,     5,     5,     5,   205,   207,   182,    85,
       86,    87,    88,   362,     5,     5,     5,     5,     7,     5,
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        5,     5,     7,     7,     7,   207,     7,   182,   182,     5,
        5,   214,     5,     5,   182,   182,   182,   214,   182,     7,
      182,   182,   182,   214,   214,   214,   182,   182,   182,   182,
      182,   182,   182,   182,   182,   182,   182,   203,   182,   182,
+<<<<<<< HEAD
 <<<<<<< HEAD
      182,   145,   146,   532,   147,   148,   149,   150,   151,   185,
      539,   182,     5,   203,   227,   565,   556,   249,    21,    26,
@@ -7098,6 +8918,11 @@ namespace isc { namespace dhcp {
      182,   146,   147,   533,   148,   149,   150,   151,   152,   185,
      540,   182,     5,   203,   227,   566,   557,   249,    21,    26,
       27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
+=======
+     182,   146,   147,   533,   148,   149,   150,   151,   152,   185,
+     540,   182,     5,   203,   227,   566,   557,   249,    21,    26,
+      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
       37,    38,    39,    40,    41,    42,    43,   218,   264,   265,
      266,   269,   271,   273,   275,   276,   278,   279,   280,   281,
      282,   283,   284,   285,   286,   287,   289,   290,   292,   294,
@@ -7141,6 +8966,9 @@ namespace isc { namespace dhcp {
        6,   158,   161,   162,   163,   583,   584,   585,   587,   588,
      589,   581,   586,     4,     4,     4,     3,     8,     4,   185,
      183,   183,   584,   182
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -7165,6 +8993,7 @@ namespace isc { namespace dhcp {
      254,   257,   256,   259,   258,   260,   260,   261,   261,   263,
      262,   264,   264,   265,   265,   265,   265,   265,   265,   265,
      265,   265,   265,   265,   265,   265,   265,   265,   265,   265,
+<<<<<<< HEAD
 <<<<<<< HEAD
      265,   265,   265,   267,   266,   268,   268,   268,   268,   270,
      269,   272,   271,   274,   273,   275,   277,   276,   278,   279,
@@ -7221,6 +9050,8 @@ namespace isc { namespace dhcp {
      582,   583,   583,   583,   583,   583,   585,   584,   586,   587,
      588,   590,   589
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
      265,   265,   265,   265,   267,   266,   268,   268,   268,   268,
      270,   269,   272,   271,   274,   273,   275,   277,   276,   278,
      279,   280,   281,   282,   283,   284,   285,   286,   288,   287,
@@ -7275,6 +9106,9 @@ namespace isc { namespace dhcp {
      574,   574,   575,   577,   576,   579,   578,   580,   580,   582,
      581,   583,   583,   584,   584,   584,   584,   586,   585,   587,
      588,   589
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -7310,8 +9144,13 @@ namespace isc { namespace dhcp {
        0,     4,     0,     6,     1,     3,     1,     1,     1,     1,
        1,     1,     3,     3,     3,     3,     3,     3,     0,     6,
        0,     1,     1,     3,     0,     4,     0,     4,     1,     3,
+<<<<<<< HEAD
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+=======
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        1,     1,     1,     1,     1,     1,     1,     0,     4,     0,
        4,     0,     4,     0,     4,     0,     4,     0,     4,     1,
        1,     1,     1,     3,     3,     0,     6,     0,     1,     1,
@@ -7344,6 +9183,7 @@ namespace isc { namespace dhcp {
        0,     4,     1,     3,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
 <<<<<<< HEAD
+<<<<<<< HEAD
        3,     0,     4,     0,     4,     3,     0,     4,     3,     3,
        0,     4,     1,     1,     0,     4,     3,     3,     0,     4,
        1,     1,     1,     1,     1,     0,     4,     0,     4,     0,
@@ -7355,6 +9195,8 @@ namespace isc { namespace dhcp {
        3,     1,     1,     1,     1,     1,     0,     4,     3,     3,
        3,     0,     4
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
        1,     1,     3,     0,     4,     0,     4,     3,     0,     4,
        3,     3,     0,     4,     1,     1,     0,     4,     3,     3,
        0,     4,     1,     1,     1,     1,     1,     0,     4,     0,
@@ -7365,6 +9207,9 @@ namespace isc { namespace dhcp {
        1,     1,     3,     0,     4,     0,     6,     1,     3,     0,
        4,     1,     3,     1,     1,     1,     1,     0,     4,     3,
        3,     3
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -7549,6 +9394,7 @@ namespace isc { namespace dhcp {
      661,   671,   672,   675,   676,   677,   678,   679,   680,   681,
      682,   683,   684,   685,   686,   687,   688,   689,   690,   691,
 <<<<<<< HEAD
+<<<<<<< HEAD
      692,   693,   694,   697,   697,   704,   705,   706,   707,   710,
      710,   718,   718,   726,   726,   734,   739,   739,   747,   752,
      757,   762,   767,   772,   777,   782,   787,   787,   795,   800,
@@ -7604,6 +9450,8 @@ namespace isc { namespace dhcp {
     2418,  2421,  2422,  2423,  2424,  2425,  2428,  2428,  2436,  2441,
     2446,  2451,  2451
 =======
+=======
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
      692,   693,   694,   695,   698,   698,   705,   706,   707,   708,
      711,   711,   719,   719,   727,   727,   735,   740,   740,   748,
      753,   758,   763,   768,   773,   778,   783,   788,   793,   793,
@@ -7658,6 +9506,9 @@ namespace isc { namespace dhcp {
     2384,  2385,  2388,  2393,  2393,  2401,  2401,  2411,  2412,  2415,
     2415,  2423,  2424,  2427,  2428,  2429,  2430,  2433,  2433,  2441,
     2446,  2451
+<<<<<<< HEAD
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
+=======
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
   };
 
@@ -7694,9 +9545,14 @@ namespace isc { namespace dhcp {
 #line 14 "dhcp6_parser.yy" // lalr1.cc:1218
 } } // isc::dhcp
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 5282 "dhcp6_parser.cc"
 
 #line 2459 "dhcp6_parser.yy"
+=======
+#line 5256 "dhcp6_parser.cc" // lalr1.cc:1218
+#line 2456 "dhcp6_parser.yy" // lalr1.cc:1219
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 #line 5256 "dhcp6_parser.cc" // lalr1.cc:1218
 #line 2456 "dhcp6_parser.yy" // lalr1.cc:1219

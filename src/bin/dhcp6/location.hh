@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 // A Bison parser, made by GNU Bison 3.4.1.
+=======
+// A Bison parser, made by GNU Bison 3.2.1.
+>>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
 =======
 // A Bison parser, made by GNU Bison 3.2.1.
 >>>>>>> [#805,!5-p] kea-dhcp6 now supports max-row-errors parameter
