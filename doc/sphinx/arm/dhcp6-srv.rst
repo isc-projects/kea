@@ -296,6 +296,15 @@ can be used to configure the memfile backend.
    default value of the ``lfc-interval`` is ``3600``. A value of 0
    disables the LFC.
 
+-  ``max-row-errors``: when the server loads a lease file, it is processed
+   row by row, each row contaning a single lease. If a row is flawed and
+   cannot be processed correctly the server will log it, discard the row,
+   and go on to the next row. This parameter can be used to set a limit on
+   the number of such discards that may occur after which the server will
+   abandon the effort and exit.  The default value of 0 disables the limit
+   and allows the server to process the entire file, regardless of how many
+   rows are discarded.
+
 An example configuration of the memfile backend is presented below:
 
 ::
@@ -305,14 +314,17 @@ An example configuration of the memfile backend is presented below:
            "type": "memfile",
            "persist": true,
            "name": "/tmp/kea-leases6.csv",
-           "lfc-interval": 1800
+           "lfc-interval": 1800,
+           "max-row-errors": 100
        }
    }
 
 This configuration selects the ``/tmp/kea-leases6.csv`` as the storage
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
-of the lease file every 30 minutes.
+of the lease file every 30 minutes and sets th maximum number of row
+errors to 100.
+
 
 It is important to know how the lease file contents are organized to
 understand why the periodic lease file cleanup is needed. Every time the

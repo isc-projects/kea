@@ -1,3 +1,11 @@
+1653.	[security]		tmark
+	Added a new parameter, "max-row-errors", to Memfile lease database
+	configuration for kea-dhcp4 and kea-dhcp6.  This parameter can be
+	used to limit the number of rows discarded due to error during
+	lease file loading after which the server will abandon the effort
+	and exit. The default value of 0 disables the limit.
+	(Gitlab #805,!5-p git TBD)
+
 1652.	[security]		tmark
 	Prevent the DHCP servers from asserting when malformed
 	hostname or FQDN options are received.  Now the servers will
