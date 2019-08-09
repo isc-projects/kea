@@ -1536,7 +1536,9 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
 
         # do rpm build
-        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
+        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
+        cmd += " -D'_topdir /home/vagrant/rpm-root'"
+        cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
         cmd = cmd % (pkg_version, pkg_isc_version)
         execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
