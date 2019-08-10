@@ -5,7 +5,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"build-report\",",
+        "    \"command\": \"build-report\"",
         "}"
     ],
     "name": "build-report",

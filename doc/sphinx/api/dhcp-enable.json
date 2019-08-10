@@ -5,7 +5,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"dhcp-enable\",",
+        "    \"command\": \"dhcp-enable\"",
         "}"
     ],
     "description": "See <xref linkend=\"command-dhcp-enable\"/>",
