@@ -877,6 +877,7 @@ def _configure_mysql(system, revision, features):
 
 
 def _configure_pgsql(system, features):
+    """ Configure PostgreSQL DB """
     if system in ['fedora', 'centos']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
@@ -885,8 +886,18 @@ def _configure_pgsql(system, features):
                 execute('sudo postgresql-setup initdb')
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
-    execute('sudo systemctl start postgresql.service')
-    execute('sudo systemctl enable postgresql.service')
+    elif system == 'freebsd':
+        # pgsql must be enabled before runnig initdb
+        execute('sudo sysrc postgresql_enable="yes"')
+        execute('sudo /usr/local/etc/rc.d/postgresql initdb')
+
+    if system == 'freebsd':
+        # echo or redirection to stdout is needed otherwise the script will hang at "line = p.stdout.readline()"
+        execute('sudo service postgresql start && echo "PostgreSQL started"')
+    else:
+        execute('sudo systemctl enable postgresql.service')
+        execute('sudo systemctl start postgresql.service')
+
     cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
     cmd += "DROP DATABASE IF EXISTS keatest;\n"
     cmd += "DROP USER IF EXISTS keatest;\n"
@@ -1262,6 +1273,9 @@ def prepare_system_local(features, check_times):
 
         if 'mysql' in features:
             packages.extend(['mysql57-server', 'mysql57-client'])
+
+        if 'pgsql' in features:
+            packages.extend(['postgresql11-server', 'postgresql11-client'])
 
         if 'radius' in features:
             packages.extend(['git'])
