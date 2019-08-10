@@ -33,7 +33,7 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
         }
         val_xpath = string(s_val->xpath());
         type = s_val->type();
-        ostringstream int_value;
+        ostringstream num_value;
         switch (type) {
         case SR_CONTAINER_T:
         case SR_CONTAINER_PRESENCE_T:
@@ -52,33 +52,38 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
             break;
 
         case SR_UINT8_T:
-            int_value << static_cast<unsigned>(s_val->data()->get_uint8());
-            value = int_value.str();
+            num_value << static_cast<unsigned>(s_val->data()->get_uint8());
+            value = num_value.str();
             break;
 
         case SR_UINT16_T:
-            int_value << s_val->data()->get_uint16();
-            value = int_value.str();
+            num_value << s_val->data()->get_uint16();
+            value = num_value.str();
             break;
 
         case SR_UINT32_T:
-            int_value << s_val->data()->get_uint32();
-            value = int_value.str();
+            num_value << s_val->data()->get_uint32();
+            value = num_value.str();
             break;
 
         case SR_INT8_T:
-            int_value << static_cast<unsigned>(s_val->data()->get_int8());
-            value = int_value.str();
+            num_value << static_cast<unsigned>(s_val->data()->get_int8());
+            value = num_value.str();
             break;
 
         case SR_INT16_T:
-            int_value << s_val->data()->get_int16();
-            value = int_value.str();
+            num_value << s_val->data()->get_int16();
+            value = num_value.str();
             break;
 
         case SR_INT32_T:
-            int_value << s_val->data()->get_int32();
-            value = int_value.str();
+            num_value << s_val->data()->get_int32();
+            value = num_value.str();
+            break;
+
+        case SR_DECIMAL64_T:
+            num_value << s_val->data()->get_decimal64();
+            value = num_value.str();
             break;
 
         case SR_IDENTITYREF_T:
@@ -95,7 +100,7 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
 
         default:
             isc_throw(NotImplemented,
-                      "YangReprItem called with unupported type: " << type);
+                      "YangReprItem called with unsupported type: " << type);
         }
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
@@ -265,6 +270,16 @@ YangRepr::set(const Tree& tree, S_Session session) const {
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int32");
+                }
+                break;
+
+            case SR_DECIMAL64_T:
+                try {
+                    double d64 = boost::lexical_cast<double>(item.value_);
+                    s_val.reset(new Val(d64));
+                } catch (const boost::bad_lexical_cast&) {
+                    isc_throw(BadValue,
+                              "'" << item.value_ << "' not a real");
                 }
                 break;
 

@@ -978,7 +978,7 @@ IntElement::equals(const Element& other) const {
 bool
 DoubleElement::equals(const Element& other) const {
     return (other.getType() == Element::real) &&
-           (d == other.doubleValue());
+           (str() == other.str());
 }
 
 bool
