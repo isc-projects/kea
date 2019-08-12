@@ -814,7 +814,7 @@
         // invalid character in the hostname or Client FQDN. The default
         // value is an empty string which will cause invalid characters
         // to be omitted rather than replaced.
-	"hostname-char-replacement": "x",
+        "hostname-char-replacement": "x",
 
         // Regular expression describing the invalid character set in
         // the hostname or Client FQDN.

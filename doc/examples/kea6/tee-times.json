@@ -29,12 +29,12 @@
 // The following list defines subnets. Each subnet consists of at
 // least subnet and pool entries.
   "subnet6": [
-  {    
+  {
         //  This subnet use default calculation
         "subnet": "2001:db8:1::/64",
         "pools": [ { "pool": "2001:db8:1::/80" } ]
   },
-  {    
+  {
         // This subnet will use explicit values. Explict
         // values override calculation.
        "subnet": "2001:db8:2::/64",
@@ -42,7 +42,7 @@
        "renew-timer":  1000,
        "rebind-timer": 2000
   },
-  {    
+  {
         // This subnet will use custom percents
        "subnet": "2001:db8:3::/64",
        "pools": [ { "pool": "2001:db8:3::/80" } ],

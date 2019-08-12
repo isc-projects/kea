@@ -6,7 +6,7 @@
 { "Dhcp6":
 
 {
-    // Set the server tag for the configuration	backend. This instance will
+    // Set the server tag for the configuration backend. This instance will
     // be named server2. Every configuration element that is applicable to
     // either "all" or "server2" will be used by this instance.
     "server-tag": "server2",
