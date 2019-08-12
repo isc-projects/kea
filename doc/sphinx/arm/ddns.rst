@@ -831,6 +831,11 @@ The following RFCs are supported by the DHCP-DDNS server:
   <https://tools.ietf.org/html/rfc2136>`__: The whole DNS Update mechanism is
   supported.
 
+- *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
+  Configuration Protocol (DHCP) Clients*, `RFC 4703
+  <https://tools.ietf.org/html/rfc4703>`__: The DHCP-DDNS takes care of the
+  conflict resolution. This capability is used by DHCPv4 and DHCPv6 servers.
+
 - *A DNS Resource Record (RR) for Encoding Dynamic Host Configuration Protocol
   (DHCP) Information (DHCID RR)*, `RFC 4701
   <https://tools.ietf.org/html/rfc4701>`__: The DHCP-DDNS server uses the DHCID
