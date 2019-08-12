@@ -105,9 +105,11 @@ CSVLeaseFile4Test::writeSampleFile() const {
                   "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
                   "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
                   "host.example.com,0,\n"
-                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,0,\n"
-                  "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-                  "0,0,,1,{ \"foobar\": true }\n");
+                  "192.0.2.2,,,200,200,8,1,1,host.example.com,0,\n"
+                  "192.0.2.3,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
+                  "0,0,,1,{ \"foobar\": true }\n"
+                  "192.0.2.4,,11:22:33:44:55:66,200,200,8,1,1,host.example.com,0,\n"
+                  "192.0.2.5,,,200,200,8,1,1,,1,\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -148,11 +150,12 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_FALSE(lease->getContext());
     }
 
-    // Second lease is malformed - HW address is empty when state 
+    // Second lease is malformed - has no HW address or client id and state 
     // is not declined.
     {
     SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf.next(lease));
+    EXPECT_FALSE(lease);
     checkStats(lf, 2, 1, 1, 0, 0, 0);
     }
 
@@ -165,7 +168,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     checkStats(lf, 3, 2, 1, 0, 0, 0);
 
     // Verify that the third lease is correct.
-    EXPECT_EQ("192.0.3.15", lease->addr_.toText());
+    EXPECT_EQ("192.0.2.3", lease->addr_.toText());
     HWAddr hwaddr3(*lease->hwaddr_);
     EXPECT_EQ("dd:de:ba:0d:1b:2e:3e:4f", hwaddr3.toText(false));
     ASSERT_TRUE(lease->client_id_);
@@ -181,21 +184,49 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 
-    // There are no more leases. Reading should cause no error, but the returned
-    // lease pointer should be NULL.
+    // Fourth lease has no hardware address but has client id
     {
-    SCOPED_TRACE("Fifth read empty");
+    SCOPED_TRACE("Fourth lease valid");
     EXPECT_TRUE(lf.next(lease));
-    EXPECT_FALSE(lease);
-    checkStats(lf, 4, 2, 1, 0, 0, 0);
+    ASSERT_TRUE(lease);
+    checkStats(lf, 4, 3, 1, 0, 0, 0);
+
+    EXPECT_EQ("192.0.2.4", lease->addr_.toText());
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(lease->hwaddr_->hwaddr_.empty());
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_EQ("11:22:33:44:55:66", lease->client_id_->toText());
     }
 
-    // We should be able to do it again.
+    // Fifth lease has no hardware address or client id but is declined
+    {
+    SCOPED_TRACE("Fifth lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+    checkStats(lf, 5, 4, 1, 0, 0, 0);
+
+    EXPECT_EQ("192.0.2.5", lease->addr_.toText());
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_TRUE(lease->hwaddr_->hwaddr_.empty());
+    ASSERT_FALSE(lease->client_id_);
+    EXPECT_EQ(lease->state_, Lease::STATE_DECLINED); 
+    }
+
+    // There are no more leases. Reading should cause no error, but the returned
+    // lease pointer should be NULL.
     {
     SCOPED_TRACE("Sixth read empty");
     EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(lf, 5, 2, 1, 0, 0, 0);
+    checkStats(lf, 6, 4, 1, 0, 0, 0);
+    }
+
+    // We should be able to do it again.
+    {
+    SCOPED_TRACE("Seventh read empty");
+    EXPECT_TRUE(lf.next(lease));
+    EXPECT_FALSE(lease);
+    checkStats(lf, 7, 4, 1, 0, 0, 0);
     }
 }
 

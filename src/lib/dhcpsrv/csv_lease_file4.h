@@ -58,6 +58,8 @@ public:
     /// error.
     ///
     /// @param lease Structure representing a DHCPv4 lease.
+    /// @throw BadValue if the lease has no hardware address, no client id and
+    /// is not in STATE_DECLINED.
     void append(const Lease4& lease);
 
     /// @brief Reads next lease from the CSV file.
@@ -65,6 +67,9 @@ public:
     /// If this function hits an error during lease read, it sets the error
     /// message using @c CSVFile::setReadMsg and returns false. The error
     /// string may be read using @c CSVFile::getReadMsg.
+    ///
+    /// Treats rows that no hardware address, no client id and state is not
+    /// STATE_DECLINED as an error.
     ///
     /// This function is exception safe.
     ///

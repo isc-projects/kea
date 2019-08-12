@@ -347,12 +347,12 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
                       "100,135,7,0,0,,1,\n";
 
-    std::string c_1 = "192.0.2.3,,a:11:01:04,"
+    std::string c_1 = "192.0.2.3,,,"
                       "200,200,8,1,1,host.example.com,0,\n";
 
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
-    // entry for the 192.0.2.3 is invalid (lacks HW address) and should
-    // be discarded.
+    // entry for the 192.0.2.3 is invalid (lacks HW address and client id)
+    // and should be discarded.
     test_str = v4_hdr_ + a_1 + b_1 + c_1 + b_2 + a_2;
     io_.writeFile(test_str);
 
