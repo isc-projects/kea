@@ -92,8 +92,8 @@ EXTRA_DIST += rdata/in_1/dhcid_49.cc
 EXTRA_DIST += rdata/in_1/dhcid_49.h
 EXTRA_DIST += rdata/in_1/srv_33.cc
 EXTRA_DIST += rdata/in_1/srv_33.h
-#EXTRA_DIST += rdata/template.cc
-#EXTRA_DIST += rdata/template.h
+EXTRA_DIST += rdata/template.cc
+EXTRA_DIST += rdata/template.h
 
 noinst_SCRIPTS = gen-rdatacode.py
 
