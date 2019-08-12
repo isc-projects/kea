@@ -162,7 +162,7 @@ def get_system_revision():
     """Return tuple containing system name and its revision."""
     system = platform.system()
     if system == 'Linux':
-        system, revision, _ = platform.dist()  # pylit: disable=deprecated-method
+        system, revision, _ = platform.dist()  # pylint: disable=deprecated-method
         if system == 'debian':
             revision = revision.split('.')[0]
         elif system == 'redhat':

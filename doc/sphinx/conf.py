@@ -193,10 +193,16 @@ def run_generate_docs(_):
     sys.path.append(src_dir)
 
     import api2doc
-    api2doc.generate(os.getenv('KEA_API_FILES').split(), os.path.join(src_dir, 'api.rst'))
+    with open(os.path.join(src_dir, 'api-files.txt')) as af:
+        api_files = af.read().split()
+    api_files = [os.path.abspath(os.path.join(src_dir, af)) for af in api_files]
+    api2doc.generate(api_files, os.path.join(src_dir, 'api.rst'))
 
     import mes2doc
-    mes2doc.generate(os.getenv('KEA_MES_FILES').split(), os.path.join(src_dir, 'kea-messages.rst'))
+    with open(os.path.join(src_dir, 'mes-files.txt')) as mf:
+        mes_files = mf.read().split()
+    mes_files = [os.path.abspath(os.path.join(src_dir, '../..', mf)) for mf in mes_files]
+    mes2doc.generate(mes_files, os.path.join(src_dir, 'kea-messages.rst'))
 
 
 # custom setup hook
