@@ -305,7 +305,7 @@ ConfigBackendPoolDHCPv6::createUpdateOption6(const BackendSelector& backend_sele
                                              const asiolink::IOAddress& pd_pool_prefix,
                                              const uint8_t pd_pool_prefix_length,
                                              const OptionDescriptorPtr& option) {
-    createUpdateDeleteProperty<void, const IOAddress&, const uint8_t,
+    createUpdateDeleteProperty<void, const IOAddress&, uint8_t,
                                const OptionDescriptorPtr&>
         (&ConfigBackendDHCPv6::createUpdateOption6, backend_selector,
          server_selector, pd_pool_prefix, pd_pool_prefix_length, option);
@@ -448,7 +448,7 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const uint8_t pd_pool_prefix_length,
                                        const uint16_t code,
                                        const std::string& space) {
-    return (createUpdateDeleteProperty<uint64_t, const IOAddress&, const uint8_t,
+    return (createUpdateDeleteProperty<uint64_t, const IOAddress&, uint8_t,
                                        uint16_t, const std::string&>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
              pd_pool_prefix, pd_pool_prefix_length, code, space));
