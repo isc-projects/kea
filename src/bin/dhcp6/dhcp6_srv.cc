@@ -1353,17 +1353,9 @@ void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_nam
     // The client-id or server-id has to have at least 3 bytes of useful data:
     // two for duid type and one more for actual duid value.
     uint16_t len = opt->len() - opt->getHeaderLen();
-    if (len < 3) {
-        isc_throw(RFCViolation, "Received empty or truncated " << opt_name << " option: "
-                  << len << " byte(s) only");
-    }
-
-    // We need to make sure we can construct one, if not we're toast later on.
-    try {
-        DuidPtr tmp(new DUID(opt->getData()));
-    } catch (const std::exception& ex) {
-        isc_throw(RFCViolation, "Received invalid content for "
-                  << opt_name << ", " << ex.what());
+    if ( (len < 3) || (len > DUID::MAX_DUID_LEN) ) {
+        isc_throw(RFCViolation, "Received " << opt_name << " option with invalid length: "
+                  << len << ", expected 3..128.");
     }
 }
 
