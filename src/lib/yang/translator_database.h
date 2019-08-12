@@ -37,6 +37,7 @@ namespace yang {
 ///     "tcp-nodelay": <TCP nodelay flag>,
 ///     "consistency": <consistency level>,
 ///     "serial-consistency": <serial consistency level>,
+///     "max-row-errors": <maximum row errors>,
 ///     "user-context": { <json map> },
 ///     "comment": <comment>
 /// }
@@ -65,6 +66,7 @@ namespace yang {
 ///    +--rw tcp-nodelay?          boolean
 ///    +--rw consistency?          string
 ///    +--rw serial-consistency?   string
+///    +--rw max-row-errors?       uint32
 ///    +--rw user-context?         string
 /// @endcode
 ///

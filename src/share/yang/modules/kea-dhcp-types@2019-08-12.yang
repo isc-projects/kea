@@ -8,14 +8,14 @@ module kea-dhcp-types {
   }
   import kea-types {
     prefix kea;
-    revision-date 2019-08-09;
+    revision-date 2019-08-12;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2019-08-09 {
+  revision 2019-08-12 {
     description "Initial revision";
     reference "";
   }
@@ -224,6 +224,10 @@ module kea-dhcp-types {
       type string;
       description "Serial consistency level.";
     }
+    leaf max-row-errors {
+      type uint32;
+      description "Maximum row errors (0 means unlimited).";
+   }
     uses kea:user-context {
       refine user-context {
         description "Database user context. Arbitrary JSON data can be

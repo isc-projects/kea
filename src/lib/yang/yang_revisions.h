@@ -21,12 +21,12 @@ static const std::map<std::string, std::string> YANG_REVISIONS = {
     { "ietf-dhcpv6-types", "2018-09-04" },
     { "ietf-dhcpv6-options", "2018-09-04" },
     { "ietf-dhcpv6-server", "2018-09-04" },
-    { "kea-types", "2019-08-09" },
-    { "kea-dhcp-types", "2019-08-09" },
-    { "kea-dhcp4-server", "2019-08-09" },
-    { "kea-dhcp6-server", "2019-08-09" },
-    { "kea-ctrl-agent", "2019-08-09" },
-    { "kea-dhcp-ddns", "2019-08-09" }
+    { "kea-types", "2019-08-12" },
+    { "kea-dhcp-types", "2019-08-12" },
+    { "kea-dhcp4-server", "2019-08-12" },
+    { "kea-dhcp6-server", "2019-08-12" },
+    { "kea-ctrl-agent", "2019-08-12" },
+    { "kea-dhcp-ddns", "2019-08-12" }
 };
 
 }; // end of namespace isc::yang

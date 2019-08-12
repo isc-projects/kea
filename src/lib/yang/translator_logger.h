@@ -33,7 +33,8 @@ namespace yang {
 ///    "output": <output, e.g. log file name>,
 ///    "maxver": <maximum file version>,
 ///    "maxsize": <maxium file size>,
-///    "flush": <flush flag>
+///    "flush": <flush flag>,
+///    "pattern": <custom layout>
 /// }
 /// @endcode
 ///
@@ -47,6 +48,7 @@ namespace yang {
 ///     |     +--rw maxver?     uint32
 ///     |     +--rw maxsize?    uint32
 ///     |     +--rw flush?      boolean
+///     |     +--rw pattern?    string
 ///     +--rw debuglevel?       uint8
 ///     +--rw severity?         enumeration
 ///     +--rw user-context?     string

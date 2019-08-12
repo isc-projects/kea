@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,6 +94,10 @@ TranslatorLogger::getOutputOption(const string& xpath) {
     if (flush) {
         result->set("flush", flush);
     }
+    ConstElementPtr pattern = getItem(xpath + "/pattern");
+    if (pattern) {
+        result->set("pattern", pattern);
+    }
     return (result);
 }
 
@@ -174,6 +178,11 @@ TranslatorLogger::setOutputOption(const string& xpath, ConstElementPtr elem) {
     ConstElementPtr flush = elem->get("flush");
     if (flush) {
         setItem(xpath + "/flush", flush, SR_BOOL_T);
+        created = true;
+    }
+    ConstElementPtr pattern = elem->get("pattern");
+    if (pattern) {
+        setItem(xpath + "/pattern", pattern, SR_STRING_T);
         created = true;
     }
     // There is no mandatory fields outside the key so force creation.
