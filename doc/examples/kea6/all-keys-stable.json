@@ -6,8 +6,8 @@
 // list of parameters supported by Kea DHCPv6 server along with the brief
 // description of each parameter.
 //
-// This current version should be up to date, i.e. new keywords should be
-// added in this file at the same time than in the syntax.
+// This stable version is used for YANG as we do not want to update code
+// and models each time a keyword is added to the syntax.{
 {
     // Kea DHCPv6 server configuration begins here.
     "Dhcp6": {
