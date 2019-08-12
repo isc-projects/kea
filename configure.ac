@@ -859,6 +859,9 @@ AC_ARG_WITH([sysrepo],
     [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
+    if test "$PKG_CONFIG" = ""; then
+        AC_MSG_ERROR([--with-sysrepo specified without any parameter and pkg-config was not found. Either use --with-sysrepo=path or install pkg-config])
+    fi
     SYSREPO_CONFIG="$PKG_CONFIG"
     DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 elif test "${sysrepo_config}" != "no" ; then
