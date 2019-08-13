@@ -1,3 +1,9 @@
+1508.	[security]		tmark
+	Prevent DHCP servers from asserting when malformed hostname
+	or FQDN options are received.
+	CVE:2019-6473
+	(Gitlab #730,!7-p git TBD)
+
 1507.	[bug]		tmark
 	Added logic to kea-dhcp6 to catch values for client or
 	server DUIDs that exceed 128 bytes to inbound packet

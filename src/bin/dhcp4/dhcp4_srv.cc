@@ -1774,7 +1774,19 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         .arg(opt_hostname->getValue());
 
     std::string hostname = isc::util::str::trim(opt_hostname->getValue());
-    unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    unsigned int label_count;
+
+    try  {
+        // Parsing into labels can throw on malformed content so we're
+        // going to explicitly catch that here.
+        label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    } catch (const std::exception& exc) {
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_MALFORMED)
+            .arg(ex.getQuery()->getLabel())
+            .arg(exc.what());
+        return;
+    }
+
     // The hostname option sent by the client should be at least 1 octet long.
     // If it isn't we ignore this option. (Per RFC 2131, section 3.14)
     /// @todo It would be more liberal to accept this and let it fall into
