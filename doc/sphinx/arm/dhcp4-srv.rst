@@ -4460,16 +4460,41 @@ log-servers value of 1.2.3.4, and routers set to 192.0.2.1.
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
-It is possible to specify an interface name in the shared network scope
+It is possible to specify an interface name at the shared network level
 to tell the server that this specific shared network is reachable
-directly (not via relays) using a local network interface. It is
-sufficient to specify it once at the shared network level. As all
+directly (not via relays) using the local network interface. As all
 subnets in a shared network are expected to be used on the same physical
 link, it is a configuration error to attempt to define a shared network
-using subnets that are reachable over different interfaces. It is
-possible to specify the interface parameter on each subnet, although its
-value must be the same for each subnet. Thus it is usually more
-convenient to specify it once at the shared network level.
+using subnets that are reachable over different interfaces. In other
+words, all subnets within the shared network must have the same value
+of the "interface" parameter. The following configuration is wrong.
+
+::
+
+   "shared-networks": [
+       {
+           "name": "office-floor-2",
+           "subnet4": [
+               {
+                   "subnet": "10.0.0.0/8",
+                   "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
+                   "interface": "eth0"
+               },
+               {
+                    "subnet": "192.0.2.0/24",
+                    "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ],
+
+                    # Specifying the different interface name is a configuration
+                    # error. This value should rather be "eth0" or the interface
+                    # name in the other subnet should be "eth1".
+                    "interface": "eth1"
+               }
+           ]
+       } ]
+
+To minimize the chance of the configuration errors, it is often more convenient
+to simply specify the interface name once, at the shared network level, like
+shown in the example below.
 
 ::
 
@@ -4485,33 +4510,29 @@ convenient to specify it once at the shared network level.
                {
                    "subnet": "10.0.0.0/8",
                    "pools": [ { "pool":  "10.0.0.1 - 10.0.0.99" } ],
-                   "interface": "eth0"
                },
                {
                     "subnet": "192.0.2.0/24",
                     "pools": [ { "pool":  "192.0.2.100 - 192.0.2.199" } ]
-
-                    # Specifying a different interface name is a configuration
-                    # error:
-                    # "interface": "eth1"
                }
            ]
        } ]
 
-Somewhat similar to interface names, relay IP addresses can also be
-specified for the whole shared network. However, depending on the relay
-configuration, it may use different IP addresses depending on which
-subnet is being used. Thus there is no requirement to use the same IP
-relay address for each subnet. Here's an example:
+
+In case of the relayed traffic, the subnets are typically selected using
+the relay agents' addresses. If the subnets are used independently (not
+grouped within a shared network) it is allowed to specify different relay
+address for each of these subnets. When multiple subnets belong to a
+shared network they must be selected via the same relay address and,
+similarly to the case of the local traffic described above, it is a
+configuration error to specify different relay addresses for the respective
+subnets in the shared network. The following configuration is wrong.
 
 ::
 
    "shared-networks": [
        {
            "name": "kakapo",
-           "relay": {
-               "ip-addresses": [ "192.3.5.6" ]
-           },
            "subnet4": [
                {
                    "subnet": "192.0.2.0/26",
@@ -4523,6 +4544,10 @@ relay address for each subnet. Here's an example:
                {
                    "subnet": "10.0.0.0/24",
                    "relay": {
+                       # Specifying a different relay address for this
+                       # subnet is a configuration error. In this case
+                       # it should be 192.1.1.1 or the relay address
+                       # in the previous subnet should be 192.2.2.2.
                        "ip-addresses": [ "192.2.2.2" ]
                    },
                    "pools": [ { "pool": "10.0.0.16 - 10.0.0.16" } ]
@@ -4531,12 +4556,45 @@ relay address for each subnet. Here's an example:
        }
    ]
 
-In this particular case the relay IP address specified at the network
-level doesn't make much sense, as it is overridden in both subnets, but
-it was left there as an example of how one could be defined at the
-network level. Note that the relay agent IP address typically belongs to
-the subnet it relays packets from, but this is not a strict requirement.
-Kea accepts any value here as long as it is a valid IPv4 address.
+Again, it is better to specify the relay address at the shared network
+level and this value will be inherited by all subnets belonging to the
+shared network.
+
+::
+
+   "shared-networks": [
+       {
+           "name": "kakapo",
+           "relay": {
+                # This relay address is inherited by both subnets.
+               "ip-addresses": [ "192.1.1.1" ]
+           },
+           "subnet4": [
+               {
+                   "subnet": "192.0.2.0/26",
+                   "pools": [ { "pool": "192.0.2.63 - 192.0.2.63" } ]
+               },
+               {
+                   "subnet": "10.0.0.0/24",
+                   "pools": [ { "pool": "10.0.0.16 - 10.0.0.16" } ]
+               }
+           ]
+       }
+   ]
+
+Even though it is technically possible to configure two (or more) subnets
+within the shared network to use different relay addresses, this will almost
+always lead to a different behavior than what the user would expect. In this
+case, the Kea server will initially select one of the subnets by matching
+the relay address in the client's packet with the subnet's conifguration.
+However, it MAY end up using the other subnet (even though it does not match
+the relay address) if the client already has a lease in this subnet, has a
+host reservation in this subnet or simply the initially selected subnet has no
+more addresses available. Therefore, it is strongly recommended to always
+specify subnet selectors (interface or a relay address) at shared network
+level if the subnets belong to a shared network, as it is rarely useful to
+specify them at the subnet level and it may lead to the configurtion errors
+described above.
 
 Client Classification in Shared Networks
 ----------------------------------------
