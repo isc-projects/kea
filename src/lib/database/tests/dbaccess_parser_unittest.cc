@@ -507,7 +507,7 @@ TEST_F(DbAccessParserTest, negativeMaxRowErrors) {
 }
 
 // This test checks that the parser rejects a too large (greater than
-// the max uint32_t) value of the timeout parameter.
+// the max uint32_t) value of the max-row-errors parameter.
 TEST_F(DbAccessParserTest, largeMaxRowErrors) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",

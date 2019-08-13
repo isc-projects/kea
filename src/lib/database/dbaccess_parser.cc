@@ -182,7 +182,7 @@ DbAccessParser::parse(std::string& access_string,
 
     // f. Check that the max-row-errors is within a reasonable range.
     if ((max_row_errors < 0) ||
-        (max_row_errors > std::numeric_limits<uint16_t>::max())) {
+        (max_row_errors > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("max-row-errors");
         isc_throw(DbConfigError, "max-row-errors value: " << max_row_errors
                   << " is out of range, expected value: 0.."

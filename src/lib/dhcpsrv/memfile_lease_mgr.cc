@@ -1422,7 +1422,7 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     try {
         max_row_errors_str = conn_.getParameter("max-row-errors");
     } catch (const std::exception&) {
-        // Ignore and default to 3600.
+        // Ignore and default to 0.
     }
 
     uint32_t max_row_errors = 0;
