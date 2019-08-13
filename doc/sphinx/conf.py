@@ -151,8 +151,10 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'kea-arm.tex', 'Kea Administrator Reference Manual Documentation', author, 'manual'),
-    (messages_doc, 'kea-messages.tex', 'Kea Messages Manual', author, 'manual'),
 ]
+
+if getenv("READTHEDOCS", "False") == "False":
+    latex_documents.append((messages_doc, 'kea-messages.tex', 'Kea Messages Manual', author, 'manual'))
 
 
 # -- Options for manual page output ------------------------------------------
