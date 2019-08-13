@@ -448,7 +448,7 @@ The libraries developed by ISC are described in detail in the following
 sections.
 
 user_chk: Checking User Access
-------------------------------
+==============================
 
 The user_chk library is the first hooks library published by ISC. It
 serves several purposes:
@@ -525,7 +525,7 @@ some pointers on how to extend this library and perhaps even write one
 from scratch.
 
 legal_log: Forensic Logging Hooks
----------------------------------
+=================================
 
 This section describes the forensic log hooks library. This library
 provides hooks that record a detailed log of lease assignments and
@@ -934,7 +934,7 @@ from a CQL database:
 .. _flex-id:
 
 flex_id: Flexible Identifiers for Host Reservations
----------------------------------------------------
+===================================================
 
 This section describes a hook application dedicated to generate flexible
 identifiers for host reservations. The Kea software provides a way to handle
@@ -1161,7 +1161,7 @@ In the DHCPv6 case, the corresponding query will look similar to this:
 .. _host-cmds:
 
 host_cmds: Host Commands
-------------------------
+========================
 
 This section describes a hook application that offers a number of new
 commands used to query and manipulate host reservations. Kea provides a
@@ -1709,7 +1709,7 @@ an error. Example results look as follows:
 .. _subnet-cmds:
 
 subnet_cmds: Subnet Commands
-----------------------------
+============================
 
 This section describes a hook application that offers some new
 commands used to query and manipulate subnet and shared network
