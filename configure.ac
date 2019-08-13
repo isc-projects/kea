@@ -1414,6 +1414,7 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
 
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
+shell_report=no
 m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
  [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
   python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
@@ -1421,6 +1422,13 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
 # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
 # We try to find 3.x first. If not found, we can do with 2.7.
   AM_PATH_PYTHON([2.7])
+
+  AC_ARG_WITH(site-packages,
+           AC_HELP_STRING([--with-site-packages],
+                          [place to install Kea Python module]),
+           [pythondir=$withval;
+            pkgpythondir=${pythondir}/$PACKAGE_NAME])
+
   # pkgpythondir needs to be expanded
   saved_prefix="$prefix"
   if test "$prefix" = "NONE"; then
@@ -1434,6 +1442,7 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
   done
   prefix="$saved_prefix"
   DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
+  shell_report="yes, install to $pythondir"
 else
   PYTHON=no
 fi
@@ -2064,7 +2073,7 @@ Developer:
   Generate Parser:           $enable_generate_parser
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
-  Kea-shell:                 $enable_shell
+  Kea-shell:                 $shell_report
 
 END
 
