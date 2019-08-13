@@ -2476,7 +2476,7 @@ END
 $$
 DELIMITER ;
 
-# add missing fields in pools.
+# Add missing fields in pools.
 ALTER TABLE dhcp4_pool
     ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
     ADD COLUMN require_client_classes LONGTEXT,

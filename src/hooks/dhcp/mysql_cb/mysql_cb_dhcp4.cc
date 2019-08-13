@@ -485,7 +485,7 @@ public:
 
                 // {min,max}_valid_lifetime
 
-                // 3 pool fields
+                // pool client_class, require_client_classes and user_context
 
                 // server_tag at 58
 
@@ -827,6 +827,7 @@ public:
             };
 
             getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
+            // Break if something is found?
         }
 
         if (!pools.empty()) {

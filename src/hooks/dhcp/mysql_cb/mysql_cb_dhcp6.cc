@@ -514,7 +514,14 @@ public:
 
                 // 71 and 72 are {min,max}_valid_lifetime
 
-                // 8 pool and pd pool fields
+                // 73 is pool client_class
+                // 74 is pool require_client_classes
+                // 75 is pool user_context
+                // 76 is pd pool excluded_prefix
+                // 77 is pd pool excluded_prefix_length
+                // 78 is pd pool client_class
+                // 79 is pd pool require_client_classes
+                // 80 is pd pool user_context
 
                 // server_tag (81 / last)
 
@@ -1040,6 +1047,7 @@ public:
             };
 
             getPools(GET_POOL6_RANGE, in_bindings, pools, pool_ids);
+            // Break if something is found?
         }
 
         if (!pools.empty()) {
@@ -1075,6 +1083,7 @@ public:
             };
 
             getPdPools(GET_PD_POOL, in_bindings, pd_pools, pd_pool_ids);
+            // Break if something is found?
         }
 
         if (!pd_pools.empty()) {
