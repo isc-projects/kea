@@ -98,6 +98,13 @@ client and transaction identification information. The second argument
 specifies the hostname carried in the Hostname option sent by the
 client.
 
+% DHCP4_CLIENT_HOSTNAME_MALFORMED %1: client hostname option malformed: %2
+This debug message is issued when the DHCP server was unable to process the
+the hostname option sent by the client because the content is malformed.
+The first argument includes the client and transaction identification
+information. The second argument should contain a description of the data
+error.
+
 % DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
 This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
