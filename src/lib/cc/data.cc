@@ -978,7 +978,7 @@ IntElement::equals(const Element& other) const {
 bool
 DoubleElement::equals(const Element& other) const {
     return (other.getType() == Element::real) &&
-           (str() == other.str());
+           (fabs(d - other.doubleValue()) < 1e-14);
 }
 
 bool
