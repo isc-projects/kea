@@ -318,6 +318,12 @@ TEST_F(ConfigTest, validateIetf6) {
     ASSERT_NO_THROW(load(validTreeIetf6));
     EXPECT_TRUE(verify(validTreeIetf6));
 
+    // If this validation fails, make sure you have the model *and its
+    // dependencies* are installed. Note when you install ietf-dhcpv6-server
+    // module, its dependencies are semi-installed, which is not sufficient.
+    // This can be detected in output of sysrepoctl -l.
+    // Note the ietf-interfaces module. The conformance status must be
+    // "installed". "implemented" (installed as dependency) is not enough.
     EXPECT_TRUE(validate());
 }
 
