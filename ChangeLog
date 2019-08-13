@@ -1,8 +1,9 @@
 1652.	[security]		tmark
-	Replaced asserts with exception throws to catch parser errors
-	that can occur handling malformed hostname name and FQDN options.
+	Prevent the DHCP servers from asserting when malformed
+	hostname or FQDN options are received.  Now the servers will
+	drop the DHCP packets containing the malformed options.
 	CVE:2019-6473
-	(Gitlab #730,!2-p git TBD)
+	(Gitlab #730,private!2 git a2a98c421bb400a81218bd28d6a6f62accd31b1f)
 
 1651.	[security]		tmark
 	Added logic to kea-dhcp6 to catch values for client or
