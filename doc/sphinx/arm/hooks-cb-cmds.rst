@@ -1544,3 +1544,26 @@ to the database when the keyword "all" is used as the server tag.</para>
    specified for the updated subnet instance. Any unspecified parameter
    will be marked as unspecified in the database, even if its value was
    present prior to sending the command.
+
+The Embedded Option Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to create, replace or delete an option embedded
+in an IPv4 or IPv6 shared network, subnet, address pool, or IPv6 prefix
+delegation pool.
+
+.. _command-remote-option4-network-del:
+.. _command-remote-option4-network-set:
+.. _command-remote-option4-pool-del:
+.. _command-remote-option4-pool-set:
+.. _command-remote-option4-subnet-del:
+.. _command-remote-option4-subnet-set:
+.. _command-remote-option6-network-del:
+.. _command-remote-option6-network-set:
+.. _command-remote-option6-pd-pool-del:
+.. _command-remote-option6-pd-pool-set:
+.. _command-remote-option6-pool-del:
+.. _command-remote-option6-pool-set:
+.. _command-remote-option6-subnet-del:
+.. _command-remote-option6-subnet-set:
+
