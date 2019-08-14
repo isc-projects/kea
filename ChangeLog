@@ -1,3 +1,7 @@
+1642.	[doc]		fdupont, marcin
+	User documentation for remote-option{4,6}-* commands.
+	(Gitlab #826,!479, git 9b469ab63a9627e377a219cf8f83033e4e613b11)
+
 1641.	[func]		tmark
 	Added a new Logger output option, 'pattern', which can be
 	used to customize log message content and layout.
