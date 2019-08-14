@@ -988,6 +988,9 @@ TokenInteger::TokenInteger(const uint32_t value)
 
 OptionPtr
 TokenSubOption::getSubOption(const OptionPtr& parent) {
+    if (!parent) {
+        return (OptionPtr());
+    }
     return (parent->getOption(sub_option_code_));
 }
 

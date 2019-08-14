@@ -2984,7 +2984,7 @@ TEST_F(TokenTest, subOptionNoOption) {
     // we should have one value on the stack
     ASSERT_EQ(1, values_.size());
 
-    // The option should NOT be found (there is option 82),
+    // The option should NOT be found (there is no option 82),
     // so the expression should evaluate to ""
     EXPECT_EQ("", values_.top());
 

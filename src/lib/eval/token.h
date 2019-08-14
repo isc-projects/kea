@@ -1060,7 +1060,7 @@ protected:
 /// @brief Token that represents sub-options in DHCPv4 and DHCPv6.
 ///
 /// It covers any options which encapsulate sub-options, for instance
-/// dhcp-agent-options (72, DHCPv4) or rsoo (66, DHCPv6).
+/// dhcp-agent-options (82, DHCPv4) or rsoo (66, DHCPv6).
 /// This class is derived from TokenOption and leverages its ability
 /// to operate on sub-options. It also adds additional capabilities.
 ///
