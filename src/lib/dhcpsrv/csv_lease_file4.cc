@@ -124,7 +124,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
             (state != Lease::STATE_DECLINED)) {
             isc_throw(BadValue, "Lease4: " << addr.toText() << ", state: "
                       << Lease::basicStatesToText(state)
-                      << "has neither hardware address or client id");
+                      << " has neither hardware address or client id");
         }
 
         // Get the user context (can be NULL).
