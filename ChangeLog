@@ -218,6 +218,9 @@ Kea 1.6.0-beta2 released on July 24, 2019
 1610.	[build]		fdupont
 	Removed the obsolete compatcheck top directory.
 	(Gitlab #667,!391, git 8cb113a52f0cf56fbdb5cb0e87464135234c2ac1)
+=======
+	(Gitlab #722,!1-p git TBD)
+>>>>>>> [#722,!1] Addressed review comments
 
 1609.	[bug]		fdupont
 	Fixed the implementation of authentication keys in DHCPv6
