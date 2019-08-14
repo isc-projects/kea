@@ -80,20 +80,6 @@ mes_files=$(foreach mf,$(mes_files1), $(top_srcdir)/$(mf))
 # list of api files that are used to generate api.rst
 api_files1=$(shell cat api-files.txt)
 api_files=$(foreach af,$(api_files1), $(srcdir)/$(af))
-api_files+=$(srcdir)/api/remote-option4-network-del.json
-api_files+=$(srcdir)/api/remote-option4-network-set.json
-api_files+=$(srcdir)/api/remote-option4-pool-del.json
-api_files+=$(srcdir)/api/remote-option4-pool-set.json
-api_files+=$(srcdir)/api/remote-option4-subnet-del.json
-api_files+=$(srcdir)/api/remote-option4-subnet-set.json
-api_files+=$(srcdir)/api/remote-option6-network-del.json
-api_files+=$(srcdir)/api/remote-option6-network-set.json
-api_files+=$(srcdir)/api/remote-option6-pd-pool-del.json
-api_files+=$(srcdir)/api/remote-option6-pd-pool-set.json
-api_files+=$(srcdir)/api/remote-option6-pool-del.json
-api_files+=$(srcdir)/api/remote-option6-pool-set.json
-api_files+=$(srcdir)/api/remote-option6-subnet-del.json
-api_files+=$(srcdir)/api/remote-option6-subnet-set.json
 
 EXTRA_DIST += mes-files.txt
 EXTRA_DIST += api-files.txt
