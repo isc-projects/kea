@@ -1354,7 +1354,7 @@ void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_nam
     uint16_t len = opt->len() - opt->getHeaderLen();
     if (len < 3 || len > DUID::MAX_DUID_LEN || opt->getData().empty()) {
         isc_throw(RFCViolation, "Received invalid DUID for " << opt_name << ", received "
-                  << len << " byte(s). It must be at least 3 and no more than"
+                  << len << " byte(s). It must be at least 3 and no more than "
                   << DUID::MAX_DUID_LEN);
 
     }
