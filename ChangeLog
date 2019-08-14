@@ -1,3 +1,9 @@
+1640.	[func]		fdupont
+	Added sub-option expression for client classification and flex-id.
+	Users can access sub-option with option[12].option[34].hex or
+	option[12].option[34].exist
+	(Gitlab #150,!385, git 70bb412f20b706484538680906d6fcfd7ee6da68)
+
 1639.	[func]		fdupont
 	Updated YANG models with the latest changes in kea-dhcp4 and
 	kea-dhcp6.
