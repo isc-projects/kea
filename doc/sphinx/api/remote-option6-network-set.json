@@ -10,7 +10,6 @@
         "{",
         "    \"command\": \"remote-option6-network-set\",",
         "    \"arguments\": {",
-        "    \"arguments\": {",
         "        \"shared-networks\": [",
         "            {",
         "                \"name\": <shared network name>",
