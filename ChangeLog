@@ -1,7 +1,7 @@
-16xx.	[func]		tmark
+1641.	[func]		tmark
 	Added a new Logger output option, 'pattern', which can be
 	used to customize log message content and layout.
-	(Gitlab #665,!460,	git TBD)
+	(Gitlab #665,!460, git 2add51ecf0d91d2a9ac797594c38472190c18460)
 
 1640.	[func]		fdupont
 	Added sub-option expression for client classification and flex-id.
