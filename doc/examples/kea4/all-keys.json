@@ -317,6 +317,10 @@
             // infinitely).
             "lfc-interval": 3600,
 
+            // Maximum number of lease file read errors allowed before
+            // loading the file is abandoned.  Defaults to 0 (no limit).
+            "max-row-errors": 100,
+
             // Name of the lease file. In case of database it specifies the
             // database name.
             "name": "/tmp/kea-dhcp4.csv",

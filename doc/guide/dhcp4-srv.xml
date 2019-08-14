@@ -369,6 +369,19 @@ by a comma and another object definition.</para>
       disables the LFC.</simpara>
     </listitem>
 
+    <listitem>
+      <simpara><command>max-row-errors</command>: when the server loads a
+      lease file, it is processed row by row, each row contaning a single
+      lease. If a row is flawed and cannot be processed correctly the server
+      will log it, discard the row, and go on to the next row. This parameter
+      can be used to set a limit on the number of such discards that may occur
+      after which the server will abandon the effort and exit.  The default
+      value of <userinput>0</userinput> disables the limit and allows the
+      server to process the entire file, regardless of how many rows are
+      discarded.
+      </simpara>
+    </listitem>
+
   </itemizedlist>
   </para>
 
@@ -380,7 +393,8 @@ by a comma and another object definition.</para>
         <userinput>"type": "memfile"</userinput>,
         <userinput>"persist": true</userinput>,
         <userinput>"name": "/tmp/kea-leases4.csv",</userinput>
-        <userinput>"lfc-interval": 1800</userinput>
+        <userinput>"lfc-interval": 1800</userinput>,
+        <userinput>"max-row-errors": 100</userinput>
     }
 }
 </screen>
@@ -388,7 +402,8 @@ by a comma and another object definition.</para>
     This configuration selects the <filename>/tmp/kea-leases4.csv</filename> as
     the storage for lease information and enables persistence (writing lease updates
     to this file). It also configures the backend perform the periodic cleanup
-    of the lease files, executed every 30 minutes.
+    of the lease files, executed every 30 minutes.  sets the maximum number of row
+    errors to 100.
   </para>
 
   <para>It is important to know how the lease file contents are organized

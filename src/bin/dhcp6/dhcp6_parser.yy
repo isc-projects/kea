@@ -79,6 +79,7 @@ using namespace std;
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
+  MAX_ROW_ERRORS "max-row-errors"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -622,6 +623,7 @@ database_map_param: database_type
                   | tcp_keepalive
                   | tcp_nodelay
                   | keyspace
+                  | max_row_errors
                   | unknown_map_entry
                   ;
 
@@ -734,6 +736,11 @@ keyspace: KEYSPACE {
     ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
+};
+
+max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-row-errors", n);
 };
 
 sanity_checks: SANITY_CHECKS {

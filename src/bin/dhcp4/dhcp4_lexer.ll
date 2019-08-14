@@ -550,6 +550,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"max-row-errors\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_MAX_ROW_ERRORS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("max_row_errors", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

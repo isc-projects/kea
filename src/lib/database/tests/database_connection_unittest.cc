@@ -275,7 +275,8 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"tcp-keepalive\": 101, \n"
         "\"tcp-nodelay\": false, \n"
         "\"type\": \"memfile\", \n"
-        "\"user\": \"user_str\" \n"
+        "\"user\": \"user_str\", \n"
+        "\"max-row-errors\": 50 \n"
         "}\n"
     };
 

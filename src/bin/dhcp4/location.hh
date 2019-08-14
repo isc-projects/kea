@@ -1,4 +1,3 @@
-// Generated 201811271343
 // A Bison parser, made by GNU Bison 3.2.1.
 
 // Locations for Bison parsers in C++
