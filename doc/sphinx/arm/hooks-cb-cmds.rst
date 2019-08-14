@@ -72,7 +72,7 @@ the configuration of the server receiving the command.
    to use only one configuration backend. Strictly speaking, it is
    possible to point the Kea server to at most one MySQL database using the
    ``config-control`` parameter. That's why, in this release, the
-   ``remote`` parameter may be omitted in the commands, because the
+   ``remote`` parameter may be omitted in the commands and the
    cb_cmds hooks library will use the sole backend by default.
 
 .. _cb-cmds-dhcp:
@@ -148,7 +148,7 @@ message created during the last modification, etc.
 .. _command-remote-server6-del:
 
 remote-server4-del, remote-server6-del commands
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to delete the information about a selected DHCP server from
 the configuration database. The server is identified by a unique case
@@ -214,7 +214,7 @@ The following is the successful response to the `remote-server4-del` command:
 .. _command-remote-server6-get:
 
 remote-server4-get, remote-server6-get commands
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to fetch the information about the selected DHCP server
 from the configuration database.  For example:
@@ -261,7 +261,7 @@ description of the server:
 .. _command-remote-server6-get-all:
 
 remote-server4-get-all, remote-server6-get-all commands
--------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to fetch all user defined DHCPv4 or DHCPv6 servers from the
 database. The command structure is very simple:
@@ -304,7 +304,7 @@ tag and description:
 .. _command-remote-server6-set:
 
 remote-server4-set, remote-server6-set commands
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command is used to create or replace an information about a DHCP server in
 the database. The information about the server must be created when there is a
@@ -1179,7 +1179,7 @@ The remote-option4-global-set, remote-option6-global-set Commands
 These commands create a new global DHCP option or replace an existing
 option in the database. The structure of the option information is the
 same as in the Kea configuration file (see :ref:`dhcp4-std-options`
-and :ref:`dhcp4-std-options`). For example:
+and :ref:`dhcp6-std-options`). For example:
 
 ::
 
@@ -1225,6 +1225,368 @@ instead of the name. For example:
        }
    }
 
+.. _command-remote-option4-network-del:
+
+.. _command-remote-option6-network-del:
+
+The remote-option4-network-del, remote-option6-network-del Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to delete a shared network specific DHCP
+option from the database. The option is identified by an option code
+and option space and these two parameters are passed within the
+`options` list. Another list, `shared-networks`, contains a map
+with the name of the shared network from which the option is to
+be deleted. If the option is not explicitly specified for this
+shared network, no option is deleted. In particular, the given
+option may be present for a subnet belonging to the shared network.
+Such option instance is not affected by this command as this
+command merely deletes shared network level option. In order to
+delete subnet level option the `remote-option[46]-subnet-del`
+command must be used instead.
+
+The following command attempts to delete an option having the
+option code 5 in the top-level option space from the shared
+network "fancy".
+
+::
+
+   {
+       "command": "remote-option4-network-del",
+       "arguments": {
+           "shared-networks": [
+               {
+                   "name": "fancy"
+               }
+           ],
+           "options": [
+               {
+                   "code": 5,
+                   "space": "dhcp4"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The `server-tags` parameter must not be specified for this command.
+
+.. _command-remote-option4-network-set:
+
+.. _command-remote-option6-network-set:
+
+The remote-option4-network-set, remote-option6-network-set Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands create a new shared network specific DHCP option or replace
+an existing option in the database. The structure of the option information
+is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
+and :ref:`dhcp6-std-options`). The option information is carried in the
+`options` list. Another list, `shared-networks`, contains a map with the
+name of the shared network for which the option is to be set. If such option
+already exists for the shared network, it is replaced with the new instance.
+
+::
+
+   {
+       "command": "remote-option6-network-set",
+       "arguments": {
+           "shared-networks": [
+               {
+                   "name": "fancy"
+               }
+           ],
+           "options": [
+               {
+                   "name": "dns-servers",
+                   "data": "2001:db8:1::1"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The `sever-tags` parameter must not be specified for this command.
+
+Specifying an option name instead of the option code only works reliably
+for the standard DHCP options. When specifying a value for the user-defined
+DHCP option, the option code should be specified instead of the name.
+
+.. _command-remote-option6-pd-pool-del:
+
+The remote-option6-pd-pool-del Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command is used to delete a prefix delegation pool specific DHCPv6
+option from the database. The option is identified by an option code
+and option space and these two parameters are passed within the
+`options` list. Another list, `pd-pools`, contains a map with the
+prefix delegation pool prefix and length identifying the pool. If the
+option is not explicitly specified for this pool, no option is deleted.
+In particular, the given option may exist for a subnet containing
+the specified pool. Such option instance is not affected by this
+command as this command merely deletes a prefix delegation pool level
+option. In order to delete subnet level option the
+`remote-option6-subnet-del` command must be used instead.
+
+::
+
+   {
+       "command": "remote-option6-pd-pool-del",
+       "arguments": {
+           "pd-pools": [
+               {
+                   "prefix": "3000::",
+                   "prefix-len": 64
+               }
+           ],
+           "options": [
+               {
+                   "code": 23,
+                   "space": "dhcp6"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The "dhcp6" is the top-level option space where the standard DHCPv6 options
+belong. The `server-tags` parameter must not be specified for this command.
+
+
+.. _command-remote-option6-pd-pool-set:
+
+The remote-option6-pd-pool-set Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This command creates a new prefix delefation pool specific DHCPv6 option or
+replaces an existing option in the database. The structure of the option
+information is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
+and :ref:`dhcp6-std-options`). The option information is carried in the
+`options` list. Another list, `pd-pools`, contains a map with the prefix
+delegation pool prefix and the prefix length identifying the pool. If such
+option already exists for the prefix delegation pool, it is replaced with
+the new instance.
+
+For example:
+
+::
+
+   {
+       "command": "remote-option6-pd-pool-set",
+       "arguments": {
+           "pools": [
+               {
+                   "prefix": "3001:1::",
+                   "length": 64
+               }
+           ],
+           "options": [
+               {
+                   "name": "dns-servers",
+                   "data": "2001:db8:1::1"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The `sever-tags` parameter must not be specified for this command.
+
+Specifying an option name instead of the option code only works reliably
+for the standard DHCP options. When specifying a value for the user-defined
+DHCP option, the option code should be specified instead of the name.
+
+
+.. _command-remote-option4-pool-del:
+
+.. _command-remote-option6-pool-del:
+
+The remote-option4-pool-del, remote-option6-pool-del Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to delete an address pool specific DHCP
+option from the database. The option is identified by an option code
+and option space and these two parameters are passed within the
+`options` list. Another list, `pools`, contains a map with the
+IP address range or prefix identifying the pool. If the option
+is not explicitly specified for this pool, no option is deleted.
+In particular, the given option may exist for a subnet containing
+the specified pool. Such option instance is not affected by this
+command as this command merely deletes a pool level option. In
+order to delete subnet level option the `remote-option[46]-subnet-del`
+command must be used instead.
+
+The following command attempts to delete an option having the
+option code 5 in the top-level option space from an IPv4 address
+pool:
+
+::
+
+   {
+       "command": "remote-option4-pool-del",
+       "arguments": {
+           "pools": [
+               {
+                   "pool": "192.0.2.10 - 192.0.2.100"
+               }
+           ],
+           "options": [
+               {
+                   "code": 5,
+                   "space": "dhcp4"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The `server-tags` parameter must not be specified for this command.
+
+
+.. _command-remote-option4-pool-set:
+
+.. _command-remote-option6-pool-set:
+
+The remote-option4-pool-set, remote-option6-pool-set Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands create a new address pool specific DHCP option or replace
+an existing option in the database. The structure of the option information
+is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
+and :ref:`dhcp6-std-options`). The option information is carried in the
+`options` list. Another list, `pools`, contains a map with the IP address
+range or prefix identifying the pool. If such option already exists for the
+pool, it is replaced with the new instance.
+
+For example:
+
+::
+
+   {
+       "command": "remote-option4-pool-set",
+       "arguments": {
+           "pools": [
+               {
+                   "pool": "192.0.2.10 - 192.0.2.100"
+               }
+           ],
+           "options": [
+               {
+                   "name": "domain-name-servers",
+                   "data": "10.0.0.1"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The `sever-tags` parameter must not be specified for this command.
+
+Specifying an option name instead of the option code only works reliably
+for the standard DHCP options. When specifying a value for the user-defined
+DHCP option, the option code should be specified instead of the name.
+
+.. _command-remote-option4-subnet-del:
+
+.. _command-remote-option6-subnet-del:
+
+The remote-option4-subnet-del, remote-option6-subnet-del Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are used to delete a subnet specific DHCP option
+from the database. The option is identified by an option code
+and option space and these two parameters are passed within the
+`options` list. Another list, `subnets`, contains a map with the
+identifier of the subnet from which the option is to be deleted.
+If the option is not explicitly specified for this subnet, no
+option is deleted.
+
+The following command attempts to delete an option having the
+option code 5 in the top-level option space from the subnet
+having an identifer of 123.
+
+::
+
+   {
+       "command": "remote-option4-subnet-del",
+       "arguments": {
+           "subnets": [
+               {
+                   "id": 123
+               }
+           ],
+           "options": [
+               {
+                   "code": 5,
+                   "space": "dhcp4"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The "dhcp4" is the top-level option space where the standard DHCPv4 options
+belong. The `server-tags` parameter must not be specified for this command.
+
+.. _command-remote-option4-subnet-set:
+
+.. _command-remote-option6-subnet-set:
+
+The remote-option4-subnet-set, remote-option6-subnet-set Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands create a new subnet specific DHCP option or replace an existing
+option in the database. The structure of the option information is the same as
+in the Kea configuration file (see :ref:`dhcp4-std-options`
+and :ref:`dhcp6-std-options`). The option information is carried in the
+`options` list. Another list, `subnets`, contains a map with the identifier of
+the subnet for which the option is to be set. If such option already exists
+for the subnet, it is replaced with the new instance.
+
+::
+
+   {
+       "command": "remote-option6-subnet-set",
+       "arguments": {
+           "subnets": [
+               {
+                   "id": 123
+               }
+           ],
+           "options": [
+               {
+                   "name": "dns-servers",
+                   "data": "2001:db8:1::1"
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           }
+       }
+   }
+
+The `sever-tags` parameter must not be specified for this command.
+
+Specifying an option name instead of the option code only works reliably
+for the standard DHCP options. When specifying a value for the user-defined
+DHCP option, the option code should be specified instead of the name.
 
 .. _command-remote-subnet4-del-by-id:
 
@@ -1551,19 +1913,4 @@ The Embedded Option Commands
 These commands are used to create, replace or delete an option embedded
 in an IPv4 or IPv6 shared network, subnet, address pool, or IPv6 prefix
 delegation pool.
-
-.. _command-remote-option4-network-del:
-.. _command-remote-option4-network-set:
-.. _command-remote-option4-pool-del:
-.. _command-remote-option4-pool-set:
-.. _command-remote-option4-subnet-del:
-.. _command-remote-option4-subnet-set:
-.. _command-remote-option6-network-del:
-.. _command-remote-option6-network-set:
-.. _command-remote-option6-pd-pool-del:
-.. _command-remote-option6-pd-pool-set:
-.. _command-remote-option6-pool-del:
-.. _command-remote-option6-pool-set:
-.. _command-remote-option6-subnet-del:
-.. _command-remote-option6-subnet-set:
 
