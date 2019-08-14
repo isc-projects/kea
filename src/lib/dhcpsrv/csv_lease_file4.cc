@@ -44,15 +44,21 @@ CSVLeaseFile4::append(const Lease4& lease) {
         ++write_errs_;
 
         isc_throw(BadValue, "Lease4: " << lease.addr_.toText() << ", state: "
-                  << lease.state_ << " has neither hardware address or client id");
+                  << Lease::basicStatesToText(lease.state_)
+                  << " has neither hardware address or client id");
+
     }
 
-    row.writeAt(getColumnIndex("hwaddr"),
-                (!lease.hwaddr_  ? "" : lease.hwaddr_->toText(false)));
+    // Hardware addr may be unset (NULL).
+    if (lease.hwaddr_) {
+        row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
+    }
+
     // Client id may be unset (NULL).
     if (lease.client_id_) {
         row.writeAt(getColumnIndex("client_id"), lease.client_id_->toText());
     }
+
     row.writeAt(getColumnIndex("valid_lifetime"), lease.valid_lft_);
     row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_ + lease.valid_lft_));
     row.writeAt(getColumnIndex("subnet_id"), lease.subnet_id_);
@@ -117,7 +123,8 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         if ((hwaddr.hwaddr_.empty()) && (client_id_vec.empty()) &&
             (state != Lease::STATE_DECLINED)) {
             isc_throw(BadValue, "Lease4: " << addr.toText() << ", state: "
-                      << state << "has neither hardware address or client id");
+                      << Lease::basicStatesToText(state)
+                      << "has neither hardware address or client id");
         }
 
         // Get the user context (can be NULL).

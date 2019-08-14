@@ -514,7 +514,7 @@ TEST_F(CSVLeaseFile4Test, emptyHWAddrDefaultStateOnly) {
 
     hwaddr.reset(new HWAddr());
 
-    //Create lease with empty hdaddr and default state
+    // Create lease with empty hwaddr and default state
     Lease4Ptr lease_empty_hwaddr(new Lease4(IOAddress("192.0.3.2"),
                                  hwaddr,
                                  NULL, 0,

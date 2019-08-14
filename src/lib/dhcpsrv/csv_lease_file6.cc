@@ -35,6 +35,12 @@ CSVLeaseFile6::append(const Lease6& lease) {
     // Bump the number of write attempts
     ++writes_;
 
+    if ((*(lease.duid_) == DUID::EMPTY()) && (lease.state_ != Lease::STATE_DECLINED)) {
+        ++write_errs_;
+        isc_throw(BadValue, "Lease6: " << lease.addr_.toText() << ", state: "
+                  << Lease::basicStatesToText(lease.state_) << ", has no DUID");
+    }
+
     CSVRow row(getColumnCount());
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
     row.writeAt(getColumnIndex("duid"), lease.duid_->toText());

@@ -68,8 +68,8 @@ public:
     /// message using @c CSVFile::setReadMsg and returns false. The error
     /// string may be read using @c CSVFile::getReadMsg.
     ///
-    /// Treats rows that no hardware address, no client id and state is not
-    /// STATE_DECLINED as an error.
+    /// Treats rows without a hardware address or a client id when their
+    /// state is not STATE_DECLINED as an error.
     ///
     /// This function is exception safe.
     ///

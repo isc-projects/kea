@@ -109,7 +109,9 @@ CSVLeaseFile6Test::writeSampleFile() const {
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
                   "0,8,0,0,0,,,1,\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
-                  "16,64,0,0,,,1,{ \"foobar\": true }\n");
+                  "16,64,0,0,,,1,{ \"foobar\": true }\n"
+                  "2001:db8:1::2,00,200,200,8,100,0,7,0,1,1,host.example.com,,0,\n"
+                  "2001:db8:1::3,00,200,200,8,100,0,7,0,1,1,host.example.com,,1,\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -153,7 +155,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->getContext());
     }
 
-    // Second lease is malformed - DUID is empty.
+    // Second lease is malformed - DUID is blank (i.e. ",,")
     {
     SCOPED_TRACE("Second lease malformed");
     EXPECT_FALSE(lf.next(lease));
@@ -212,21 +214,43 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 
-    // There are no more leases. Reading should cause no error, but the returned
-    // lease pointer should be NULL.
+
+    // Fifth lease is invalid - DUID is empty, state is not DECLINED
     {
-    SCOPED_TRACE("Fifth read empty");
-    EXPECT_TRUE(lf.next(lease));
-    EXPECT_FALSE(lease);
-    checkStats(lf, 5, 3, 1, 0, 0, 0);
+    SCOPED_TRACE("Fifth lease invalid");
+    EXPECT_FALSE(lf.next(lease));
+    checkStats(lf, 5, 3, 2, 0, 0, 0);
     }
 
-    // We should be able to do it again.
+    // Reading the sixth lease should be successful.
+    {
+    SCOPED_TRACE("sixth lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+    checkStats(lf, 6, 4, 2, 0, 0, 0);
+
+    // Verify that the lease is correct.
+    EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00", lease->duid_->toText());
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+    // There are no more leases. Reading should cause no error, but the returned
+    // lease pointer should be NULL.
     {
     SCOPED_TRACE("Sixth read empty");
     EXPECT_TRUE(lf.next(lease));
     EXPECT_FALSE(lease);
-    checkStats(lf, 6, 3, 1, 0, 0, 0);
+    checkStats(lf, 7, 4, 2, 0, 0, 0);
+    }
+
+    // We should be able to do it again.
+    {
+    SCOPED_TRACE("Seventh read empty");
+    EXPECT_TRUE(lf.next(lease));
+    EXPECT_FALSE(lease);
+    checkStats(lf, 8, 4, 2, 0, 0, 0);
     }
 }
 
@@ -276,6 +300,25 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     checkStats(lf, 0, 0, 0, 3, 3, 0);
     }
 
+    DuidPtr empty(new DUID(DUID::EMPTY()));
+    lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:2::10"),
+                           empty, 8, 150, 300, 6, false, false,
+                           "", HWAddrPtr(), 128));
+    lease->cltt_ = 0;
+    {
+    SCOPED_TRACE("Fourth write - invalid, no DUID, not declined");
+    ASSERT_THROW(lf.append(*lease), BadValue);
+    checkStats(lf, 0, 0, 0, 4, 3, 1);
+    }
+
+    {
+    SCOPED_TRACE("Fifth write - valid, no DUID, declined");
+    lease->state_ = Lease::STATE_DECLINED;
+    ASSERT_NO_THROW(lf.append(*lease));
+    checkStats(lf, 0, 0, 0, 5, 4, 1);
+    }
+
+
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
               "state,user_context\n"
@@ -284,7 +327,8 @@ TEST_F(CSVLeaseFile6Test, recreate) {
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
               ",300,300,6,150,0,8,128,0,0,,,0,\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true }\n",
+              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true }\n"
+              "2001:db8:2::10,00,300,300,6,150,0,8,128,0,0,,,1,\n",
               io_.readFile());
 }
 
