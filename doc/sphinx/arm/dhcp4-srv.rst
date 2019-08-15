@@ -4009,9 +4009,18 @@ indirectly) and not only-if-required is evaluated.
    "reserved-class1" from the previous example, add a
    "member('KNOWN')" statement in the expression.
 
-   Beware that classes from reservations are added after: a
-   "member('reserved-class1')" works only for only-if-required
-   classes.
+.. note::
+   Beware that the reserved classes are assigned to the processed
+   packet after all classes with the ``only-if-required`` parameter
+   set to ``false`` have been evaluated. This has an implication that
+   these classes must not depend on the statically assigned classes
+   from the host reservations. If there is a need to create such
+   dependency, the ``only-if-required`` must be set to ``true`` for
+   the dependent classes. Such classes are evaluated after the static
+   classes have been assigned to the packet. This, however, imposes
+   additional configuration overhead, because all classes marked as
+   ``only-if-required`` must be listed in the ``require-client-classes``
+   list for every subnet where they are used.
 
 .. _reservations4-mysql-pgsql-cql:
 
