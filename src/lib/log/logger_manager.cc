@@ -24,9 +24,13 @@
 #include <log/message_types.h>
 #include <log/interprocess/interprocess_sync_null.h>
 
+#include <log4cplus/initializer.h>
+
 using namespace std;
 
 namespace {
+
+log4cplus::Initializer initializer;
 
 // Logger used for logging messages within the logging code itself.
 isc::log::Logger logger("log");
