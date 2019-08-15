@@ -1030,6 +1030,15 @@ AC_MSG_RESULT([$LOG4CPLUS_VERSION])
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
 
+AC_MSG_CHECKING([log4cplus explicit initialization (log4cplus/initializer.h)])
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <log4cplus/initializer.h>],
+                         [log4cplus::Initializer initializer;]
+                         )],
+        [AC_MSG_RESULT([yes])
+         AC_DEFINE(LOG4CPLUS_INITIALIZER_H, [1], [Explicit initialization of log4cplus possible])],
+        [AC_MSG_RESULT(no)])
+
 #
 # Configure Boost header path
 #
