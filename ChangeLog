@@ -1,3 +1,10 @@
+1647.	[doc]		marcin
+	Updated "Local and Relayed Traffic in Shared Networks" sections
+	of the Kea ARM. Explained that all subnets within a shared
+	network should have the same subnet selector, i.e. interface
+	name or relay IP address.
+	(Gitlab #496,!483, git 1335e5643cc142c65bfc49c13280e9aaf3eeec21)
+
 1646.	[func]		fdupont
 	YANG models updated to cover the latest parameters:
 	pattern and max-row-errors.
