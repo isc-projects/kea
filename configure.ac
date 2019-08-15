@@ -1428,6 +1428,9 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
                           [place to install Kea Python module]),
            [pythondir=$withval;
             pkgpythondir=${pythondir}/$PACKAGE_NAME])
+  if test "$pythondir" = "yes"; then
+     AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --site-packages=/usr/lib/python3/dist-packages])
+  fi
 
   # pkgpythondir needs to be expanded
   saved_prefix="$prefix"
