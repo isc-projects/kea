@@ -542,7 +542,7 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
 }
 
 // Verifies that leases with no DUID are invalid, and that leases
-// with the "Empty" DUID (1 byte duid = 0x0) are valid only when 
+// with the "Empty" DUID (1 byte duid = 0x0) are valid only when
 // in the declined state.
 TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"

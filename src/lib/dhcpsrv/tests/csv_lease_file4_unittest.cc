@@ -150,7 +150,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_FALSE(lease->getContext());
     }
 
-    // Second lease is malformed - has no HW address or client id and state 
+    // Second lease is malformed - has no HW address or client id and state
     // is not declined.
     {
     SCOPED_TRACE("Second lease malformed");
@@ -209,7 +209,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_TRUE(lease->hwaddr_->hwaddr_.empty());
     ASSERT_FALSE(lease->client_id_);
-    EXPECT_EQ(lease->state_, Lease::STATE_DECLINED); 
+    EXPECT_EQ(lease->state_, Lease::STATE_DECLINED);
     }
 
     // There are no more leases. Reading should cause no error, but the returned
