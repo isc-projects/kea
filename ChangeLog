@@ -1,3 +1,8 @@
+1646.	[func]		fdupont
+	YANG models updated to cover the latest parameters:
+	pattern and max-row-errors.
+	(Gitlab #823,!477, git 79d0d45ec0c791560e297ca77fc88842b0a33868)
+
 1645.	[func]		tmark
 	Binary option data may now be specified as a single-quoted
 	text string, within double quotes: "'some text'".  This is
