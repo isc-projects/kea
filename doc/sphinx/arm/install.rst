@@ -229,6 +229,15 @@ options. Some commonly used options are:
    Build the optional ``kea-shell`` tool (more in :ref:`kea-shell`).
    The default is to not build it.
 
+--with-site-packages
+   Only useful when ``kea-shell`` is enabled. It causes the kea-shell
+   python packages to be installed in specified directory. This is
+   mostly useful for Debian related distros. While most systems store
+   python packages in ${prefix}/usr/lib/pythonX/site-packages, Debian
+   introduced separate directory for packages installed from DEB. Such
+   python packages are expected to be installed in
+   /usr/lib/python3/dist-packages.
+
 --enable-perfdhcp
    Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
    is to not build it.
