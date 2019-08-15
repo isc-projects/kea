@@ -2,6 +2,7 @@
 	Added logic to kea-dhcp6 to catch values for client or
 	server DUIDs that exceed 128 bytes to inbound packet
 	sanity checking.
+	CVE:2019-6472
 	(Gitlab #722,!3-p git deda53e55c8afdd230ee05597c0377d6dacfefe7)
 
 Kea 1.5.0 released on Dec 14, 2018
