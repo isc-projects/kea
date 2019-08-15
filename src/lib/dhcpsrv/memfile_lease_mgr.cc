@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,9 +23,6 @@
 #include <sstream>
 
 namespace {
-
-/// @brief Maximum number of errors to read the leases from the lease file.
-const uint32_t MAX_LEASE_ERRORS = 100;
 
 /// @brief A name of the environmental variable specifying the kea-lfc
 /// program location.
@@ -1334,12 +1331,27 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
 
     storage.clear();
 
+    std::string max_row_errors_str = "0";
+    try {
+        max_row_errors_str = conn_.getParameter("max-row-errors");
+    } catch (const std::exception&) {
+        // Ignore and default to 0.
+    }
+
+    uint32_t max_row_errors = 0;
+    try {
+        max_row_errors = boost::lexical_cast<uint32_t>(max_row_errors_str);
+    } catch (boost::bad_lexical_cast&) {
+        isc_throw(isc::BadValue, "invalid value of the max-row-errors"
+                  << max_row_errors_str << " specified");
+    }
+
     // Load the leasefile.completed, if exists.
     bool conversion_needed = false;
     lease_file.reset(new LeaseFileType(std::string(filename + ".completed")));
     if (lease_file->exists()) {
         LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                               MAX_LEASE_ERRORS);
+                                               max_row_errors);
         conversion_needed = conversion_needed || lease_file->needsConversion();
     } else {
         // If the leasefile.completed doesn't exist, let's load the leases
@@ -1347,14 +1359,14 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_PREVIOUS)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                                   MAX_LEASE_ERRORS);
+                                                   max_row_errors);
             conversion_needed =  conversion_needed || lease_file->needsConversion();
         }
 
         lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_INPUT)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                                   MAX_LEASE_ERRORS);
+                                                   max_row_errors);
             conversion_needed =  conversion_needed || lease_file->needsConversion();
         }
     }
@@ -1367,7 +1379,7 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     // future lease updates.
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
-                                           MAX_LEASE_ERRORS, false);
+                                           max_row_errors, false);
     conversion_needed =  conversion_needed || lease_file->needsConversion();
 
     return (conversion_needed);

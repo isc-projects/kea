@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,7 @@ using namespace std;
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
+  MAX_ROW_ERRORS "max-row-errors"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -596,6 +597,7 @@ database_map_param: database_type
                   | tcp_keepalive
                   | tcp_nodelay
                   | keyspace
+                  | max_row_errors
                   | unknown_map_entry
                   ;
 
@@ -710,6 +712,10 @@ keyspace: KEYSPACE {
     ctx.leave();
 };
 
+max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-row-errors", n);
+};
 
 mac_sources: MAC_SOURCES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));

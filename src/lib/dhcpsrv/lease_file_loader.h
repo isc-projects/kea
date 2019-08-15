@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,7 +59,7 @@ public:
     /// @param max_errors Maximum number of corrupted leases in the
     /// lease file. The method will skip corrupted leases but after
     /// exceeding the specified number of errors it will throw an
-    /// exception.
+    /// exception. A value of 0 (default) disables the limit check.
     /// @param close_file_on_exit A boolean flag which indicates if
     /// the file should be closed after it has been successfully parsed.
     /// One case when the file is not opened is when the server starts
@@ -74,7 +74,7 @@ public:
     template<typename LeaseObjectType, typename LeaseFileType,
              typename StorageType>
     static void load(LeaseFileType& lease_file, StorageType& storage,
-                     const uint32_t max_errors = 0xFFFFFFFF,
+                     const uint32_t max_errors = 0,
                      const bool close_file_on_exit = true) {
 
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LEASE_FILE_LOAD)
@@ -95,11 +95,11 @@ public:
                             .arg(lease_file.getReads())
                             .arg(lease_file.getReadMsg());
 
-                // A value of 0xFFFFFFFF indicates that we don't return
+                // A value of 0 indicates that we don't return
                 // until the whole file is parsed, even if errors occur.
                 // Otherwise, check if we have exceeded the maximum number
                 // of errors and throw an exception if we have.
-                if (++errcnt > max_errors) {
+                if (max_errors && (++errcnt > max_errors)) {
                     // If we break parsing the CSV file because of too many
                     // errors, it doesn't make sense to keep the file open.
                     // This is because the caller wouldn't know where we

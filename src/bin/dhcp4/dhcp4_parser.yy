@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,6 +89,7 @@ using namespace std;
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
+  MAX_ROW_ERRORS "max-row-errors"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -627,6 +628,7 @@ database_map_param: database_type
                   | tcp_keepalive
                   | tcp_nodelay
                   | keyspace
+                  | max_row_errors
                   | unknown_map_entry
                   ;
 
@@ -739,6 +741,11 @@ max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
+max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-row-errors", n);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {

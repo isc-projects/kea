@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -670,6 +670,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_MAX_RECONNECT_TRIES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("max-reconnect-tries", driver.loc_);
+    }
+}
+
+\"max-row-errors\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_MAX_ROW_ERRORS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max_row_errors", driver.loc_);
     }
 }
 

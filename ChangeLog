@@ -1,3 +1,12 @@
+1432.	[security]		tmark
+	Added a new parameter, "max-row-errors", to Memfile lease database
+	configuration for kea-dhcp4 and kea-dhcp6.  This parameter can be
+	used to limit the number of rows discarded due to error during
+	lease file loading after which the server will abandon the effort
+	and exit. The default value of 0 disables the limit.
+	CVE:2019-6474
+	(Gitlab #805,!10-p, git TBD)
+
 1431.   [security]     tmark
 	Prevent the DHCP servers from asserting when malformed
 	hostname or FQDN options are received.  Now the servers will
@@ -239,7 +248,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	tracked by the database, they do not have to be recalculated at startup
 	or following reconfiguration. This may result in less processing overhead
 	during these events. The new statistics will be accessible via a new Hooks
-	library, being developed for Kea 1.4 under #5589. 
+	library, being developed for Kea 1.4 under #5589.
 	(Trac #5586, git a070c327668c10de3b28f5e249f91d6d16a97ff5)
 
 1394.	[doc]		marcin

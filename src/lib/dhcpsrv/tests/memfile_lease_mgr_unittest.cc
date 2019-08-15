@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -369,6 +369,7 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     pmap["lfc-interval"] = "10";
     pmap["persist"] = "true";
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["max-row-errors"] = "5";
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
     // Expecting that persist parameter is yes or no. Everything other than
@@ -380,6 +381,16 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     // The lfc-interval must be an integer.
     pmap["persist"] = "true";
     pmap["lfc-interval"] = "bogus";
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // The max-row-errors must be an integer.
+    pmap["persist"] = "true";
+    pmap["max-row-errors"] = "bogus";
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // The max-row-errors must be >= 0.
+    pmap["persist"] = "true";
+    pmap["max-row-errors"] = "-1";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
