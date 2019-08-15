@@ -1034,6 +1034,8 @@ LIBS=$LIBS_SAVED
 # would allow explicit initialization. Newer versions (2.0.4 for sure, possibly
 # older as well) have it and it's recommended to use it. We detect whether
 # it's present or not and do explicit initalization if possible.
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LOG4CPLUS_LIBS $LIBS"
 AC_MSG_CHECKING([log4cplus explicit initialization (log4cplus/initializer.h)])
@@ -1045,6 +1047,7 @@ AC_LINK_IFELSE(
          AC_DEFINE(LOG4CPLUS_INITIALIZER_H, [1], [Explicit initialization of log4cplus possible])],
         [AC_MSG_RESULT(no)])
 LIBS="$LIBS_SAVED"
+CPPFLAGS=$CPPFLAGS_SAVED
 
 #
 # Configure Boost header path
