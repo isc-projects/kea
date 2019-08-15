@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,13 @@ void
 CSVLeaseFile6::append(const Lease6& lease) {
     // Bump the number of write attempts
     ++writes_;
+
+    if (((!(lease.duid_)) || (*(lease.duid_) == DUID::EMPTY())) &&
+        (lease.state_ != Lease::STATE_DECLINED)) {
+        ++write_errs_;
+        isc_throw(BadValue, "Lease6: " << lease.addr_.toText() << ", state: "
+                  << Lease::basicStatesToText(lease.state_) << ", has no DUID");
+    }
 
     CSVRow row(getColumnCount());
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
