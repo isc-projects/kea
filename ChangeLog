@@ -1,3 +1,10 @@
+1645.	[func]		tmark
+	Binary option data may now be specified as a single-quoted
+	text string, within double quotes: "'some text'".  This is
+	handy for binary options that convey text such as urls or
+	file names.
+	(Gitlab #761,!447, git TBD)
+
 1644.	[doc]		marcin, fdupont
 	Added a warning about class dependence on built-in classes.
 	(Gitlab #727,!466, git 9977d2927cf9b9cf1cd13de30aa5551ca900165b)

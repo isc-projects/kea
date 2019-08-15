@@ -1162,6 +1162,26 @@ Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
 limited.
 
+As of Kea 1.6.0, it is also possible to specify data for binary options as
+a single-quoted text string within double quotes as shown (note that
+``csv-format`` must be set to false):
+
+::
+
+   "Dhcp6": {
+       "option-data": [
+           {
+               "name": "subscriber-id",
+               "code": 38,
+               "space": "dhcp6",
+               "csv-format": false,
+               "data": "'convert this text to binary'"
+           },
+           ...
+       ],
+       ...
+   }
+
 Most of the parameters in the "option-data" structure are optional and
 can be omitted in some circumstances, as discussed in :ref:`dhcp6-option-data-defaults`.
 Only one of name or code
