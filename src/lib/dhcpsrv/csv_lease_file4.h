@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,6 +58,8 @@ public:
     /// error.
     ///
     /// @param lease Structure representing a DHCPv4 lease.
+    /// @throw BadValue if the lease has no hardware address, no client id and
+    /// is not in STATE_DECLINED.
     void append(const Lease4& lease);
 
     /// @brief Reads next lease from the CSV file.
@@ -65,6 +67,9 @@ public:
     /// If this function hits an error during lease read, it sets the error
     /// message using @c CSVFile::setReadMsg and returns false. The error
     /// string may be read using @c CSVFile::getReadMsg.
+    ///
+    /// Treats rows without a hardware address or a client id when their
+    /// state is not STATE_DECLINED as an error.
     ///
     /// This function is exception safe.
     ///

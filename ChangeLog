@@ -1,4 +1,12 @@
 1510.	[security]		tmark
+	kea-dhcp4 Memfile logic now ensures during reading and writing
+	that leases which are not in the declined state, have either
+	a hardware address, client id, or both. kea-dhcp6 Memfile logic
+	now ensures leases which are not declined have a non-empty DUID.
+	CVE:2019-6474
+	(Gitlab #805,!12-p, git #TBD)
+
+1509.	[security]		tmark
 	Added a new parameter, "max-row-errors", to Memfile lease database
 	configuration for kea-dhcp4 and kea-dhcp6.  This parameter can be
 	used to limit the number of rows discarded due to error during
@@ -14,7 +22,7 @@
 	CVE:2019-6473
 	(Gitlab #730,!7-p git 2361b6f769a322dfa3d61e956b6bc0d6882d9760)
 
-1507.	[bug]		tmark
+1507.	[security]		tmark
 	Added logic to kea-dhcp6 to catch values for client or
 	server DUIDs that exceed 128 bytes to inbound packet
 	sanity checking.

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,17 +36,29 @@ CSVLeaseFile4::append(const Lease4& lease) {
 
     CSVRow row(getColumnCount());
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
-    if (!lease.hwaddr_) {
+
+    if (((!lease.hwaddr_) || lease.hwaddr_->hwaddr_.empty()) &&
+        ((!lease.client_id_) || (lease.client_id_->getClientId().empty())) &&
+        (lease.state_ != Lease::STATE_DECLINED)) {
         // Bump the error counter
         ++write_errs_;
 
-        isc_throw(BadValue, "Lease4 must have hardware address specified.");
+        isc_throw(BadValue, "Lease4: " << lease.addr_.toText() << ", state: "
+                  << Lease::basicStatesToText(lease.state_)
+                  << " has neither hardware address or client id");
+
     }
-    row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
+
+    // Hardware addr may be unset (NULL).
+    if (lease.hwaddr_) {
+        row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
+    }
+
     // Client id may be unset (NULL).
     if (lease.client_id_) {
         row.writeAt(getColumnIndex("client_id"), lease.client_id_->toText());
     }
+
     row.writeAt(getColumnIndex("valid_lifetime"), lease.valid_lft_);
     row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_ + lease.valid_lft_));
     row.writeAt(getColumnIndex("subnet_id"), lease.subnet_id_);
@@ -90,6 +102,9 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
             return (true);
         }
 
+        // Get the lease address.
+        IOAddress addr(readAddress(row));
+
         // Get client id. It is possible that the client id is empty and the
         // returned pointer is NULL. This is ok, but if the client id is NULL,
         // we need to be careful to not use the NULL pointer.
@@ -104,15 +119,18 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         // that.
         HWAddr hwaddr = readHWAddr(row);
         uint32_t state = readState(row);
-        if (hwaddr.hwaddr_.empty() && state != Lease::STATE_DECLINED) {
-            isc_throw(isc::BadValue, "A blank hardware address is only"
-                      " valid for declined leases");
+
+        if ((hwaddr.hwaddr_.empty()) && (client_id_vec.empty()) &&
+            (state != Lease::STATE_DECLINED)) {
+            isc_throw(BadValue, "Lease4: " << addr.toText() << ", state: "
+                      << Lease::basicStatesToText(state)
+                      << " has neither hardware address or client id");
         }
 
         // Get the user context (can be NULL).
         ConstElementPtr ctx = readContext(row);
 
-        lease.reset(new Lease4(readAddress(row),
+        lease.reset(new Lease4(addr,
                                HWAddrPtr(new HWAddr(hwaddr)),
                                client_id_vec.empty() ? NULL : &client_id_vec[0],
                                client_id_len,
