@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,8 +102,7 @@ client.
 This debug message is issued when the DHCP server was unable to process the
 the hostname option sent by the client because the content is malformed.
 The first argument includes the client and transaction identification
-information. The second argument should contain a description of the data
-error.
+information. The second argument contains a description of the data error.
 
 % DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
 This debug message is issued when the server starts processing the Hostname
