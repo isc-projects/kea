@@ -43,7 +43,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
 
         isc_throw(BadValue, "Lease4: " << lease.addr_.toText() << ", state: "
                   << Lease::basicStatesToText(lease.state_)
-                  << " has neither hardware address or client id");
+                  << ", has neither hardware address or client id");
 
     }
 
