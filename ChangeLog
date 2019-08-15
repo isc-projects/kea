@@ -1,6 +1,7 @@
 1431.   [security]     tmark
-	Prevent DHCP servers from asserting when malformed hostname
-	or FQDN options are received.
+	Prevent the DHCP servers from asserting when malformed
+	hostname or FQDN options are received.  Now the servers will
+	drop the DHCP packets containing the malformed options.
 	CVE:2019-6473
 	(Gitlab #730,!8-p git TBD)
 
