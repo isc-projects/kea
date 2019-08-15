@@ -1,3 +1,10 @@
+1643.	[build]		godfryd
+	Added an optional --with-site-packages switch to configure
+	script. It allows python package installation in a separate
+	directory (mostly useful on Debian systems when building native
+	packages).
+	(Gitlab #721,#480, git 66332000ff618fbb41656981c7bbf3bb940066fe)
+
 1642.	[doc]		fdupont, marcin
 	User documentation for remote-option{4,6}-* commands.
 	(Gitlab #826,!479, git 9b469ab63a9627e377a219cf8f83033e4e613b11)
