@@ -3,7 +3,7 @@
 	text string, within double quotes: "'some text'".  This is
 	handy for binary options that convey text such as urls or
 	file names.
-	(Gitlab #761,!447, git TBD)
+	(Gitlab #761,!447, git 215d84f00208ac8a2710c28abc3386d6b765ede6)
 
 1644.	[doc]		marcin, fdupont
 	Added a warning about class dependence on built-in classes.
