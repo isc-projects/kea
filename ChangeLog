@@ -1,3 +1,7 @@
+1644.	[doc]		marcin, fdupont
+	Added a warning about class dependence on built-in classes.
+	(Gitlab #727,!466, git 9977d2927cf9b9cf1cd13de30aa5551ca900165b)
+
 1643.	[build]		godfryd
 	Added an optional --with-site-packages switch to configure
 	script. It allows python package installation in a separate
