@@ -1824,7 +1824,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // going to explicitly catch that here.
         label_count = OptionDataTypeUtil::getLabelCount(hostname);
     } catch (const std::exception& exc) {
-        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_MALFORMED)
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_MALFORMED)
             .arg(ex.getQuery()->getLabel())
             .arg(exc.what());
         return;
@@ -1835,7 +1835,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     /// @todo It would be more liberal to accept this and let it fall into
     /// the case  of replace or less than two below.
     if (label_count == 0) {
-        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_EMPTY_HOSTNAME)
             .arg(ex.getQuery()->getLabel());
         return;
     }

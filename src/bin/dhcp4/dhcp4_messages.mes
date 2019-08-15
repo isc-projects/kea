@@ -116,8 +116,7 @@ client.
 This debug message is issued when the DHCP server was unable to process the
 the hostname option sent by the client because the content is malformed.
 The first argument includes the client and transaction identification
-information. The second argument should contain a description of the data
-error.
+information. The second argument contains a description of the data error.
 
 % DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
 This debug message is issued when the server starts processing the Hostname

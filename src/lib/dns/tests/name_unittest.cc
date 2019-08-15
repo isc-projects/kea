@@ -290,7 +290,7 @@ TEST_F(NameTest, fromText) {
 }
 
 // The following test uses a name data that was produced by
-// fuz testing and causes an unexpected condition in stringParser.
+// fuzz testing and causes an unexpected condition in stringParser.
 // Formerly this condition was trapped by an assert, but for
 // robustness it has been replaced by a throw.
 TEST_F(NameTest, unexpectedParseError) {
