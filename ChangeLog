@@ -4,7 +4,7 @@
 	a hardware address, client id, or both. kea-dhcp6 Memfile logic
 	now ensures leases which are not declined have a non-empty DUID.
 	CVE:2019-6474
-	(Gitlab #805,!12-p, git #TBD)
+	(Gitlab #805,!12-p, git 53cad4ad68248d329d30aaed9564f40ee4b7674c)
 
 1509.	[security]		tmark
 	Added a new parameter, "max-row-errors", to Memfile lease database
