@@ -394,7 +394,7 @@ be followed by a comma and another object definition.</para>
     This configuration selects the <filename>/tmp/kea-leases4.csv</filename> as
     the storage for lease information and enables persistence (writing lease updates
     to this file). It also configures the backend perform the periodic cleanup
-    of the lease files, executed every 30 minutes.  sets the maximum number of row
+    of the lease files, executed every 30 minutes and sets the maximum number of row
     errors to 100.
   </para>
 
