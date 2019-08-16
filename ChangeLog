@@ -3,7 +3,7 @@
 	server DUIDs that exceed 128 bytes to inbound packet
 	sanity checking.
 	CVE:2019-6472
-	(Gitlab #722,!1-p git TBD)
+	(Gitlab #722,!1-p git bb1a64b8945950f4439121ce4fef566d37c8630c)
 
 1650.	[build]		marcin
 	Bumped up library version numbers for Kea 1.6.0 final release.
