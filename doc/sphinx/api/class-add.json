@@ -1,7 +1,7 @@
 {
     "avail": "1.5.0",
     "brief": [
-        "This command creates and adds a new class to the existing server configuration."
+        "This command adds a new class to the existing server configuration."
     ],
     "cmd-comment": [
         "The ``next-server``, ``server-hostname``, and ``boot-file-name`` are DHCPv4-specific. Only one client class can be added with a single command. "

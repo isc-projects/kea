@@ -8,7 +8,7 @@
         "    \"command\": \"cache-get-by-id\",",
         "    \"arguments\": {",
         "        \"hw-address\": \"01:02:03:04:05:06\"",
-        "    }"
+        "    }",
         "}"
     ],
     "hook": "host_cache",

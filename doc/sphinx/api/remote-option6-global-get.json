@@ -20,7 +20,7 @@
         "            <specification of the database to connect to>",
         "        },",
         "        \"server-tags\": [ <single server tag as string> ]",
-        "    }"
+        "    }",
         "}"
     ],
     "hook": "cb_cmds",

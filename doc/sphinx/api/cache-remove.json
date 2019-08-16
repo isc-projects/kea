@@ -1,7 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "This command works similarly to the ``reservation-get`` command."
+        "This command removes entries from the host cache. It takes parameters similar to the ``reservation-get`` command."
     ],
     "cmd-syntax": [
         "{",

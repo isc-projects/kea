@@ -1,7 +1,7 @@
 {
     "avail": "1.4.0",
     "brief": [
-        "This command manually inserts a host into the cache."
+        "This command inserts a host into the cache."
     ],
     "cmd-syntax": [
         "{",
