@@ -4,6 +4,7 @@
 	used to limit the number of rows discarded due to error during
 	lease file loading after which the server will abandon the effort
 	and exit. The default value of 0 disables the limit.
+	CVE:2019-6474
 	(Gitlab #805,!5-p git TBD)
 
 1652.	[security]		tmark
