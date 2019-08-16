@@ -5,7 +5,7 @@
 	lease file loading after which the server will abandon the effort
 	and exit. The default value of 0 disables the limit.
 	CVE:2019-6474
-	(Gitlab #805,!5-p git TBD)
+	(Gitlab #805,!5-p git af7393c517cea37a7091075e5d0d24793bccf013)
 
 1652.	[security]		tmark
 	Prevent the DHCP servers from asserting when malformed
