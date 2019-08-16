@@ -1,3 +1,10 @@
+1648.	[func]		fdupont,marcin
+	Client classification information (client-class,
+	require-client-classes) and excluded prefix (excluded-prefix,
+	excluded-prefix-len) may now be specified in the MySQL
+	Configuration Backend.
+	(Gitlab #659,!387, git 1f2cae397b48e2a28a7a7e61f6392691b9d32c13)
+
 1647.	[doc]		marcin
 	Updated "Local and Relayed Traffic in Shared Networks" sections
 	of the Kea ARM. Explained that all subnets within a shared
