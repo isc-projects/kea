@@ -41,7 +41,7 @@ libkea_util_la_SOURCES += random/random_number_generator.h
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libkea_util_la_LDFLAGS  = -no-undefined -version-info 6:0:0
+libkea_util_la_LDFLAGS  = -no-undefined -version-info 7:0:0
 
 CLEANFILES = *.gcno *.gcda
 

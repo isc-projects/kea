@@ -50,7 +50,7 @@ libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
-libkea_log_la_LDFLAGS = -no-undefined -version-info 3:1:0
+libkea_log_la_LDFLAGS = -no-undefined -version-info 4:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_log_includedir = $(pkgincludedir)/log
