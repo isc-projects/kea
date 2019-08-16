@@ -3,7 +3,7 @@
 	hostname or FQDN options are received.  Now the servers will
 	drop the DHCP packets containing the malformed options.
 	CVE:2019-6473
-	(Gitlab #730,!8-p git TBD)
+	(Gitlab #730,!8-p git 9e62dc414d672107030b84d2f848cdbbb6218333)
 
 1430.    [security]       tmark
 	Added logic to kea-dhcp6 to catch values for client or
