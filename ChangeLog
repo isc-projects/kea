@@ -1,3 +1,7 @@
+1434.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.4.0-P1 release.
+	(Gitlab #841,!17-p, git 2d259c5b6f0cd0f62adc4dbb2bbf1a4d0bd89ccc)
+
 1433.	[security]		tmark
 	kea-dhcp4 Memfile logic now ensures during reading and writing
 	that leases which are not in the declined state, have either
