@@ -16,6 +16,9 @@ import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+# to avoid "sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object"
+import sys
+sys.setrecursionlimit(5000)
 
 # -- Project information -----------------------------------------------------
 
