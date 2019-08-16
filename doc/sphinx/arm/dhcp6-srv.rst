@@ -322,7 +322,7 @@ An example configuration of the memfile backend is presented below:
 This configuration selects the ``/tmp/kea-leases6.csv`` as the storage
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
-of the lease file every 30 minutes and sets th maximum number of row
+of the lease file every 30 minutes and sets the maximum number of row
 errors to 100.
 
 

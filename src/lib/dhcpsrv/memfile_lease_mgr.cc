@@ -1429,7 +1429,7 @@ bool Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     try {
         max_row_errors = boost::lexical_cast<uint32_t>(max_row_errors_str);
     } catch (boost::bad_lexical_cast&) {
-        isc_throw(isc::BadValue, "invalid value of the max-row-errors"
+        isc_throw(isc::BadValue, "invalid value of the max-row-errors "
                   << max_row_errors_str << " specified");
     }
 
