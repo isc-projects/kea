@@ -1,3 +1,7 @@
+1650.	[build]		marcin
+	Bumped up library version numbers for Kea 1.6.0 final release.
+	(Gitlab #841,!490, git 2e88e2554905dd66b9974c9fc513ee7e7b825a46)
+
 1649.	[doc]		sgoldlust
 	API documentation updated and cleaned up.
 	(Gitlab #810,!471, git f1ae84186beb54d45f8455236827108289b0b0d6)
