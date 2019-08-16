@@ -241,8 +241,10 @@ public:
                                      test_options_[4]->persistent_,
                                      test_options_[4]->space_name_);
 
-        pdpool2.reset(new Pool6(Lease::TYPE_PD,
-                                IOAddress("2001:db8:d::"), 48, 64));
+        // Create the prefix delegation pool with an excluded prefix.
+        pdpool2.reset(new Pool6(IOAddress("2001:db8:d::"), 48, 64,
+                                IOAddress("2001:db8:d::2000"), 120));
+
         subnet->addPool(pdpool2);
 
         pdpool2->allowClientClass("work");

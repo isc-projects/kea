@@ -1047,16 +1047,15 @@ public:
             };
 
             getPools(GET_POOL6_RANGE, in_bindings, pools, pool_ids);
-            // Break if something is found?
-        }
 
-        if (!pools.empty()) {
-            pool_id = pool_ids[0];
-            return (boost::dynamic_pointer_cast<Pool6>(*pools.begin()));
+            // Return upon the first pool found.
+            if (!pools.empty()) {
+                pool_id = pool_ids[0];
+                return (boost::dynamic_pointer_cast<Pool6>(*pools.begin()));
+            }
         }
 
         pool_id = 0;
-
         return (Pool6Ptr());
     }
 
@@ -1313,7 +1312,7 @@ public:
         const Option6PDExcludePtr& xopt = pd_pool->getPrefixExcludeOption();
         if (xopt) {
             const IOAddress& prefix = pd_pool->getFirstAddress();
-            const IOAddress& xprefix = xopt->getExcludedPrefix(prefix, plen);
+            const IOAddress& xprefix = xopt->getExcludedPrefix(prefix, pd_pool->getLength());
             xprefix_txt = xprefix.toText();
             xlen = xopt->getExcludedPrefixLength();
         }
