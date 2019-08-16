@@ -22,7 +22,7 @@ support contract.
    ``kea-dhcp6`` process.
 
 Commands Structure
-------------------
+~~~~~~~~~~~~~~~~~~
 
 There are 5 types of commands supported by this library:
 
@@ -78,7 +78,7 @@ the configuration of the server receiving the command.
 .. _cb-cmds-dhcp:
 
 Control Commands for DHCP Servers
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This section describes and gives some examples of the control commands
 implemented by the ``cb_cmds`` hooks library, to manage the

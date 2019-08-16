@@ -20,7 +20,7 @@ customers with a paid support contract.
 .. _command-class-add:
 
 The class-add Command
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 The ``class-add`` command adds a new client class to the DHCP server
 configuration. This class is appended at the end of the list of classes
@@ -62,7 +62,7 @@ Here is the response to the ``class-add`` command in our example:
 .. _command-class-update:
 
 The class-update Command
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``class-update`` command updates an existing client class in the
 DHCP server configuration. If the client class with the given name
@@ -111,7 +111,8 @@ the new name will be added at the end of the list of configured classes.
 .. _command-class-del:
 
 The class-del Command
----------------------
+~~~~~~~~~~~~~~~~~~~~~
+
 
 The ``class-del`` command is used to remove a particular class from the server
 configuration. The class to be removed is identified by name. The class
@@ -146,7 +147,8 @@ If the class does not exist, the result of 3 is returned.
 .. _command-class-list:
 
 The class-list Command
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
+
 
 ``class-list`` is used to retrieve a list of all client classes. This
 command includes no arguments:
@@ -184,7 +186,8 @@ merely class names. To retrieve full class information, the
 .. _command-class-get:
 
 The class-get Command
----------------------
+~~~~~~~~~~~~~~~~~~~~~
+
 
 ``class-get`` is used to retrieve detailed information about a specified
 class. The command structure is very simple:
