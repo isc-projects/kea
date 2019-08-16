@@ -1,3 +1,7 @@
+1649.	[doc]		sgoldlust
+	API documentation updated and cleaned up.
+	(Gitlab #810,!471, git f1ae84186beb54d45f8455236827108289b0b0d6)
+
 1648.	[func]		fdupont,marcin
 	Client classification information (client-class,
 	require-client-classes) and excluded prefix (excluded-prefix,
