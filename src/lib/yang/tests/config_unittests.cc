@@ -334,7 +334,7 @@ TEST_F(ConfigTest, examples4) {
 
     vector<string> examples = {
         "advanced.json",
-        "all-keys-stable.json",
+        "all-keys-netconf.json",
         "backends.json",
         "cassandra.json",
         "classify.json",
@@ -375,7 +375,7 @@ TEST_F(ConfigTest, examples6) {
 
     vector<string> examples = {
         "advanced.json",
-        "all-keys-stable.json",
+        "all-keys-netconf.json",
         "backends.json",
         "cassandra.json",
         "classify.json",
