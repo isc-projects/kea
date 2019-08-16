@@ -503,7 +503,12 @@ public:
                  << endl
                  << "collected packets: " << getCollectedNum() << endl;
         } catch (const Exception&) {
-            cout << "Delay summary unavailable! No packets received." << endl;
+            // repeated output for easier automated parsing
+            cout << "min delay: n/a" << endl
+                 << "avg delay: n/a" << endl
+                 << "max delay: n/a" << endl
+                 << "std deviation: n/a" << endl
+                 << "collected packets: 0" << endl;
         }
     }
 
