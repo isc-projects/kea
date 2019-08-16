@@ -505,7 +505,7 @@ TEST_F(CSVLeaseFile4Test, emptyHWAddrDefaultStateOnly) {
     // Create lease with null hwaddr and default state
     Lease4Ptr lease_null_hwaddr(new Lease4(IOAddress("192.0.3.2"),
                                 hwaddr,
-                                NULL, 0,
+                                NULL, 0, 50, 60,
                                 0xFFFFFFFF, time(0),
                                 8, true, true,
                                 "host.example.com"));
@@ -517,7 +517,7 @@ TEST_F(CSVLeaseFile4Test, emptyHWAddrDefaultStateOnly) {
     // Create lease with empty hwaddr and default state
     Lease4Ptr lease_empty_hwaddr(new Lease4(IOAddress("192.0.3.2"),
                                  hwaddr,
-                                 NULL, 0,
+                                 NULL, 0, 50, 60,
                                  0xFFFFFFFF, time(0),
                                  8, true, true,
                                  "host.example.com"));
@@ -527,7 +527,7 @@ TEST_F(CSVLeaseFile4Test, emptyHWAddrDefaultStateOnly) {
     // Create lease with hwaddr and current time.
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
                                hwaddr0_,
-                               NULL, 0,
+                               NULL, 0, 50, 60,
                                0xFFFFFFFF, time(0),
                                8, true, true,
                                "host.example.com"));
