@@ -1,3 +1,5 @@
+Kea 1.5.0-P1 released on Aug 28, 2019
+
 1511.	[build]		marcin
 	Bumped up libraries version numbers for Kea 1.5.0-P1 release.
 	(Gitlab #841,!15-p, git e0ed69041ad06f58f129aad73d087411176c51f2)

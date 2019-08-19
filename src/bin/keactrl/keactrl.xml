@@ -9,8 +9,8 @@
 <refentry>
   <info>
     <productname>ISC Kea</productname>
-    <date>Dec 14, 2018</date>
-    <edition>1.5.0</edition>
+    <date>Aug 28, 2019</date>
+    <edition>1.5.0-P1</edition>
     <author>
       <personname/>
       <contrib>The Kea software has been written by a number of
@@ -35,7 +35,7 @@
 
   <docinfo>
     <copyright>
-      <year>2014-2018</year>
+      <year>2014-2019</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
