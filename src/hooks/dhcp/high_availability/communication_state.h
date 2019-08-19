@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -276,7 +276,9 @@ public:
     /// calculated.
     ///
     /// @param time_text Partner's time received in response to a heartbeat. The
-    /// time must be provided in the RFC 1123 format.
+    /// time must be provided in the RFC 1123 format.  It stores the current
+    /// time, partner's time, and the difference (skew) between them.
+    ///
     /// @throw isc::http::HttpTimeConversionError if the time format is invalid.
     ///
     /// @todo Consider some other time formats which include millisecond
@@ -317,6 +319,12 @@ protected:
     /// @brief Holds a time when last warning about too high clock skew
     /// was issued.
     boost::posix_time::ptime last_clock_skew_warn_;
+
+    /// @brief My time when skew was calculated.
+    boost::posix_time::ptime my_time_at_skew_;
+
+    /// @brief Partner reported time when skew was calculated.
+    boost::posix_time::ptime partner_time_at_skew_;
 };
 
 /// @brief Type of the pointer to the @c CommunicationState object.

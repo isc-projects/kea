@@ -257,9 +257,9 @@ set_logger() {
     export KEA_LOGGER_DESTINATION=${LOG_FILE}
 }
 
-# PID file path is by default <kea-install-dir>/var/kea, but can be
+# PID file path is by default <kea-install-dir>/var/run/kea, but can be
 # overridden by the environmental variable.
-PID_FILE_PATH=@localstatedir@/@PACKAGE@/
+PID_FILE_PATH=@runstatedir@/@PACKAGE@/
 if [ ! -z ${KEA_PIDFILE_DIR} ]; then
     PID_FILE_PATH="${KEA_PIDFILE_DIR}"
 fi

@@ -112,7 +112,13 @@ TEST(SharedNetwork4Test, addSubnet4) {
     // same ID should cause an error.
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
                                    SubnetID(15)));
-    ASSERT_THROW(network->add(subnet), DuplicateSubnetID);
+    ASSERT_THROW(network->add(subnet2), DuplicateSubnetID);
+
+    // Create another subnet with the same prefix. Adding a network with the
+    // same prefix should cause an error.
+    subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                              SubnetID(1234)));
+    ASSERT_THROW(network->add(subnet2), DuplicateSubnetID);
 
     // Create another network and try to add a subnet to it. It should fail
     // because the subnet is already associated with the first network.
@@ -719,7 +725,13 @@ TEST(SharedNetwork6Test, addSubnet6) {
     // same ID should cause an error.
     Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 16, 10, 20, 30, 40,
                                    SubnetID(15)));
-    ASSERT_THROW(network->add(subnet), DuplicateSubnetID);
+    ASSERT_THROW(network->add(subnet2), DuplicateSubnetID);
+
+    // Create another subnet with the same prefix. Adding a network with the
+    // same prefix should cause an error.
+    subnet2.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30, 40,
+                              SubnetID(1234)));
+    ASSERT_THROW(network->add(subnet2), DuplicateSubnetID);
 
     // Create another network and try to add a subnet to it. It should fail
     // because the subnet is already associated with the first network.
@@ -1211,6 +1223,54 @@ TEST(SharedNetwork6Test, delAll) {
 
     // Now check that there are no subnets.
     ASSERT_EQ(0, network->getAllSubnets()->size());
+}
+
+// This test verifies that the IPv4 shared network can be fetched by name.
+TEST(SharedNetworkFetcherTest, getSharedNetwork4ByName) {
+    SharedNetwork4Collection collection;
+
+    // Shared network hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto network = SharedNetworkFetcher4::get(collection, "network1");
+    EXPECT_FALSE(network);
+
+    network.reset(new SharedNetwork4("network1"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network.reset(new SharedNetwork4("network2"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network = SharedNetworkFetcher4::get(collection, "network1");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network1", network->getName());
+
+    network = SharedNetworkFetcher4::get(collection, "network2");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network2", network->getName());
+}
+
+// This test verifies that the IPv6 shared network can be fetched by name.
+TEST(SharedNetworkFetcherTest, getSharedNetwork6ByName) {
+    SharedNetwork6Collection collection;
+
+    // Shared network hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto network = SharedNetworkFetcher6::get(collection, "network1");
+    EXPECT_FALSE(network);
+
+    network.reset(new SharedNetwork6("network1"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network.reset(new SharedNetwork6("network2"));
+    EXPECT_NO_THROW(collection.push_back(network));
+
+    network = SharedNetworkFetcher6::get(collection, "network1");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network1", network->getName());
+
+    network = SharedNetworkFetcher6::get(collection, "network2");
+    ASSERT_TRUE(network);
+    EXPECT_EQ("network2", network->getName());
 }
 
 

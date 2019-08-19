@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -150,7 +150,6 @@ Those models depend on the following modules:
  - ietf-yang-types
  - ietf-interfaces
  - kea-types
- - kea-logging
  - kea-dhcp-types
 
 Those modules are extracted from the IETF DHCPv6 YANG draft too:

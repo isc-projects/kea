@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,7 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
         }
         val_xpath = string(s_val->xpath());
         type = s_val->type();
-        ostringstream int_value;
+        ostringstream num_value;
         switch (type) {
         case SR_CONTAINER_T:
         case SR_CONTAINER_PRESENCE_T:
@@ -52,33 +52,38 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
             break;
 
         case SR_UINT8_T:
-            int_value << static_cast<unsigned>(s_val->data()->get_uint8());
-            value = int_value.str();
+            num_value << static_cast<unsigned>(s_val->data()->get_uint8());
+            value = num_value.str();
             break;
 
         case SR_UINT16_T:
-            int_value << s_val->data()->get_uint16();
-            value = int_value.str();
+            num_value << s_val->data()->get_uint16();
+            value = num_value.str();
             break;
 
         case SR_UINT32_T:
-            int_value << s_val->data()->get_uint32();
-            value = int_value.str();
+            num_value << s_val->data()->get_uint32();
+            value = num_value.str();
             break;
 
         case SR_INT8_T:
-            int_value << static_cast<unsigned>(s_val->data()->get_int8());
-            value = int_value.str();
+            num_value << static_cast<unsigned>(s_val->data()->get_int8());
+            value = num_value.str();
             break;
 
         case SR_INT16_T:
-            int_value << s_val->data()->get_int16();
-            value = int_value.str();
+            num_value << s_val->data()->get_int16();
+            value = num_value.str();
             break;
 
         case SR_INT32_T:
-            int_value << s_val->data()->get_int32();
-            value = int_value.str();
+            num_value << s_val->data()->get_int32();
+            value = num_value.str();
+            break;
+
+        case SR_DECIMAL64_T:
+            num_value << s_val->data()->get_decimal64();
+            value = num_value.str();
             break;
 
         case SR_IDENTITYREF_T:
@@ -95,7 +100,7 @@ YangRepr::YangReprItem::get(const string& xpath, S_Session session) {
 
         default:
             isc_throw(NotImplemented,
-                      "YangReprItem called with unupported type: " << type);
+                      "YangReprItem called with unsupported type: " << type);
         }
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
@@ -187,7 +192,11 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_UINT8_T:
                 try {
                     uint8_t u8 = boost::lexical_cast<unsigned>(item.value_);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+                    s_val.reset(new Val(u8));
+#else
                     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an uint8");
@@ -197,7 +206,11 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_UINT16_T:
                 try {
                     uint16_t u16 = boost::lexical_cast<uint16_t>(item.value_);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+                    s_val.reset(new Val(u16));
+#else
                     s_val.reset(new Val(u16, SR_UINT16_T));
+#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an uint16");
@@ -207,7 +220,11 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_UINT32_T:
                 try {
                     uint32_t u32 = boost::lexical_cast<uint32_t>(item.value_);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+                    s_val.reset(new Val(u32));
+#else
                     s_val.reset(new Val(u32, SR_UINT32_T));
+#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an uint32");
@@ -217,7 +234,11 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_INT8_T:
                 try {
                     int8_t i8 = boost::lexical_cast<int>(item.value_);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+                    s_val.reset(new Val(i8));
+#else
                     s_val.reset(new Val(i8, SR_INT8_T));
+#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int8");
@@ -227,7 +248,11 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_INT16_T:
                 try {
                     int16_t i16 = boost::lexical_cast<int16_t>(item.value_);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+                    s_val.reset(new Val(i16));
+#else
                     s_val.reset(new Val(i16, SR_INT16_T));
+#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int16");
@@ -237,10 +262,24 @@ YangRepr::set(const Tree& tree, S_Session session) const {
             case SR_INT32_T:
                 try {
                     int32_t i32 = boost::lexical_cast<int32_t>(item.value_);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+                    s_val.reset(new Val(i32));
+#else
                     s_val.reset(new Val(i32, SR_INT32_T));
+#endif
                 } catch (const boost::bad_lexical_cast&) {
                     isc_throw(BadValue,
                               "'" << item.value_ << "' not an int32");
+                }
+                break;
+
+            case SR_DECIMAL64_T:
+                try {
+                    double d64 = boost::lexical_cast<double>(item.value_);
+                    s_val.reset(new Val(d64));
+                } catch (const boost::bad_lexical_cast&) {
+                    isc_throw(BadValue,
+                              "'" << item.value_ << "' not a real");
                 }
                 break;
 

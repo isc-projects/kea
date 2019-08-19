@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,6 +57,8 @@ public:
     /// error.
     ///
     /// @param lease Structure representing a DHCPv6 lease.
+    /// @throw BadValue if the lease to be written has an empty DUID and is
+    /// whose state is not STATE_DECLINED.
     void append(const Lease6& lease);
 
     /// @brief Reads next lease from the CSV file.

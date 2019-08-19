@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -404,7 +404,7 @@ public:
         EXPECT_EQ(expected_client_class, member->getClientClass());
     }
 
-    /// @rief This tests attempts to parse the expression then checks          
+    /// @rief This tests attempts to parse the expression then checks
     /// if the number of tokens is correct and the TokenMember is as
     /// expected.
     ///
@@ -677,6 +677,26 @@ public:
         EXPECT_EQ(index, vendor->getDataIndex());
         EXPECT_EQ(repr, vendor->getRepresentation());
         EXPECT_EQ(field, vendor->getField());
+    }
+
+    /// @brief checks if the given token is a sub-option with the expected
+    /// parent option and sub-option codes and representation type
+    /// @param token token to be checked
+    /// @param expected_code expected option code
+    /// @param expected_sub_code expected sub-option code
+    /// @param expected_repr expected representation (text, hex, exists)
+    void checkTokenSubOption(const TokenPtr& token,
+                             uint16_t expected_code,
+                             uint16_t expected_sub_code,
+                             TokenOption::RepresentationType expected_repr) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenSubOption> sub =
+            boost::dynamic_pointer_cast<TokenSubOption>(token);
+        ASSERT_TRUE(sub);
+
+        EXPECT_EQ(expected_code, sub->getCode());
+        EXPECT_EQ(expected_sub_code, sub->getSubCode());
+        EXPECT_EQ(expected_repr, sub->getRepresentation());
     }
 
     Option::Universe universe_; ///< Universe (V4 or V6)
@@ -1488,6 +1508,13 @@ TEST_F(EvalContextTest, parseErrors) {
                "expecting integer");
     checkError("substring('foobar',1,a) == 'foo'",
                "<string>:1.22: Invalid character: a");
+    string long_text = "substring('foobar',1,65535) == ";
+    for (int i = 0; i < (1 << 16); ++i) {
+        long_text += "0";
+    }
+    long_text += "'";
+    checkError(long_text,
+               "<string>:1.65568: Invalid character: '");
     checkError("concat('foobar') == 'f'",
                "<string>:1.16: syntax error, unexpected ), expecting \",\"");
     checkError("concat('foo','bar','') == 'foobar'",
@@ -1537,6 +1564,11 @@ TEST_F(EvalContextTest, typeErrors) {
 
     // Member uses quotes around the client class name.
     checkError("member(foo)", "<string>:1.8: Invalid character: f");
+
+    // sub-option by name is not supported.
+    checkError("option[123].option[host-name].exists",
+               "<string>:1.20-28: syntax error, unexpected option name, "
+               "expecting integer");
 }
 
 
@@ -1628,6 +1660,46 @@ TEST_F(EvalContextTest, vendorClass4DataIndex) {
 
 TEST_F(EvalContextTest, vendorClass6DataIndex) {
     testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V6, 4491, 3);
+}
+
+// Test the parsing of a sub-option with perent by code.
+TEST_F(EvalContextTest, subOptionWithCode) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].option[234].text == 'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenSubOption(eval.expression.at(0), 123, 234, TokenOption::TEXTUAL);
+}
+
+// Test the parsing of a sub-option with perent by name.
+TEST_F(EvalContextTest, subOptionWithName) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].option[123].text == 'foo'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenSubOption(eval.expression.at(0), 12, 123, TokenOption::TEXTUAL);
+}
+
+// Test the parsing of a sub-option existence
+TEST_F(EvalContextTest, subOptionExists) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].option[200].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1, eval.expression.size());
+    checkTokenSubOption(eval.expression.at(0), 100, 200, TokenOption::EXISTS);
+}
+
+// Test parsing of a sub-option represented as hexadecimal string.
+TEST_F(EvalContextTest, subOptionHex) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].option[234].hex == 0x666F6F"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, eval.expression.size());
+    checkTokenSubOption(eval.expression.at(0), 123, 234, TokenOption::HEXADECIMAL);
 }
 
 // Checks if integer expressions can be parsed and checked for equality.

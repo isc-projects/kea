@@ -28,15 +28,15 @@ cql_wipe() {
     assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
 }
 
-cql_lease_init_test() {
+cql_db_init_test() {
     test_start "cql.init"
 
     # Wipe the database.
     cql_wipe
 
     # Create the database
-    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
+    $keaadmin db-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "kea-admin db-init cql failed, expected exit code: %d, actual: %d"
 
     # Verify that all the expected tables exist
 
@@ -64,8 +64,8 @@ cql_lease_init_test() {
     # check
     echo ""
     echo "Making sure keyspace creation fails the second time..."
-    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 2 $? "kea-admin failed to deny lease-init, expected exit code: %d, actual: %d"
+    $keaadmin db-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 2 $? "kea-admin failed to deny db-init, expected exit code: %d, actual: %d"
 
     # Wipe the database.
     cql_wipe
@@ -73,18 +73,18 @@ cql_lease_init_test() {
     test_finish 0
 }
 
-cql_lease_version_test() {
+cql_db_version_test() {
     test_start "cql.version"
 
     # Wipe the database.
     cql_wipe
 
     # Create the database.
-    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
+    $keaadmin db-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "kea-admin db-init cql failed, expected exit code: %d, actual: %d"
 
-    # Verify that kea-admin lease-version returns the correct version.
-    version=$($keaadmin lease-version cql -u $db_user -p $db_password -n $db_name)
+    # Verify that kea-admin db-version returns the correct version.
+    version=$($keaadmin db-version cql -u $db_user -p $db_password -n $db_name)
     assert_str_eq "4.0" $version "Expected kea-admin to return %s, returned value was %s"
 
     # Wipe the database.
@@ -103,8 +103,8 @@ cql_upgrade_test() {
     cql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.cql
     assert_eq 0 $? "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    $keaadmin lease-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 0 $? "lease-upgrade failed, expected exit code: %d, actual: %d"
+    $keaadmin db-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "db-upgrade failed, expected exit code: %d, actual: %d"
 
     # Wipe the database.
     cql_wipe
@@ -138,8 +138,8 @@ cql_lease4_dump_test() {
     cql_wipe
 
     # Create the database
-    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
-    assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
+    $keaadmin db-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    assert_eq 0 $? "kea-admin db-init cql failed, expected exit code: %d, actual: %d"
 
     # Insert the reference record.
     # -1073741302 corresponds to 192.0.2.10
@@ -211,7 +211,7 @@ cql_lease6_dump_test() {
     cql_wipe
 
     # Create the database.
-    $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    $keaadmin db-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     assert_eq 0 $? "could not create database, expected exit code %d, actual %d"
 
     # Insert the reference record.
@@ -330,7 +330,7 @@ cql_unused_subnet_id_test() {
     assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
 
     # Ok, we have a 2.0 database with hosts and options. Let's upgrade it.
-    ${keaadmin} lease-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     # Upgrade should succeed
@@ -422,7 +422,7 @@ cql_upgrade_hosts_test() {
     assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
 
     # Ok, we have a 3.0 database with hosts and options. Let's upgrade it.
-    ${keaadmin} lease-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     # Upgrade should succeed
@@ -467,8 +467,8 @@ cql_upgrade_hosts_test() {
 
 
 # Run tests.
-cql_lease_init_test
-cql_lease_version_test
+cql_db_init_test
+cql_db_version_test
 cql_upgrade_test
 cql_lease4_dump_test
 cql_lease6_dump_test

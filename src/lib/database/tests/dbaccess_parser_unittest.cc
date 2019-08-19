@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -168,6 +168,7 @@ private:
          return ((parameter != "persist") && (parameter != "lfc-interval") &&
                  (parameter != "connect-timeout") &&
                  (parameter != "port") &&
+                 (parameter != "max-row-errors") &&
                  (parameter != "readonly"));
     }
 
@@ -269,7 +270,7 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
 TEST_F(DbAccessParserTest, persistV4Memfile) {
     const char* config[] = {"type", "memfile",
                             "persist", "true",
-                            "name", "/opt/kea/var/kea-leases4.csv",
+                            "name", "/opt/var/lib/kea/kea-leases4.csv",
                             NULL};
 
     string json_config = toJson(config);
@@ -288,7 +289,7 @@ TEST_F(DbAccessParserTest, persistV4Memfile) {
 TEST_F(DbAccessParserTest, persistV6Memfile) {
     const char* config[] = {"type", "memfile",
                             "persist", "true",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             NULL};
 
     string json_config = toJson(config);
@@ -306,7 +307,7 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
 // lfc-interval parameter.
 TEST_F(DbAccessParserTest, validLFCInterval) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "lfc-interval", "3600",
                             NULL};
 
@@ -324,7 +325,7 @@ TEST_F(DbAccessParserTest, validLFCInterval) {
 // lfc-interval parameter.
 TEST_F(DbAccessParserTest, negativeLFCInterval) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "lfc-interval", "-1",
                             NULL};
 
@@ -340,7 +341,7 @@ TEST_F(DbAccessParserTest, negativeLFCInterval) {
 // the max uint32_t) value of the lfc-interval parameter.
 TEST_F(DbAccessParserTest, largeLFCInterval) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "lfc-interval", "4294967296",
                             NULL};
 
@@ -356,7 +357,7 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
 // timeout parameter.
 TEST_F(DbAccessParserTest, validTimeout) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "connect-timeout", "3600",
                             NULL};
 
@@ -374,7 +375,7 @@ TEST_F(DbAccessParserTest, validTimeout) {
 // timeout parameter.
 TEST_F(DbAccessParserTest, negativeTimeout) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "connect-timeout", "-1",
                             NULL};
 
@@ -390,7 +391,7 @@ TEST_F(DbAccessParserTest, negativeTimeout) {
 // the max uint32_t) value of the timeout parameter.
 TEST_F(DbAccessParserTest, largeTimeout) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "connect-timeout", "4294967296",
                             NULL};
 
@@ -406,7 +407,7 @@ TEST_F(DbAccessParserTest, largeTimeout) {
 // port parameter.
 TEST_F(DbAccessParserTest, validPort) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "port", "3306",
                             NULL};
 
@@ -424,7 +425,7 @@ TEST_F(DbAccessParserTest, validPort) {
 // port parameter.
 TEST_F(DbAccessParserTest, negativePort) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "port", "-1",
                             NULL};
 
@@ -440,8 +441,77 @@ TEST_F(DbAccessParserTest, negativePort) {
 // the max uint16_t) value of the timeout parameter.
 TEST_F(DbAccessParserTest, largePort) {
     const char* config[] = {"type", "memfile",
-                            "name", "/opt/kea/var/kea-leases6.csv",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "port", "65536",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser accepts a value of zero for the
+// max-row-errors parameter.
+TEST_F(DbAccessParserTest, zeroMaxRowErrors) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "max-row-errors", "0",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Zero max-row-errors", parser.getDbAccessParameters(),
+                      config);
+}
+
+// This test checks that the parser accepts the valid value of the
+// max-row-errors parameter.
+TEST_F(DbAccessParserTest, validZeroMaxRowErrors) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "max-row-errors", "50",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid max-row-errors", parser.getDbAccessParameters(),
+                      config);
+}
+
+
+// This test checks that the parser rejects the negative value of the
+// max-row-errors parameter.
+TEST_F(DbAccessParserTest, negativeMaxRowErrors) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "max-row-errors", "-1",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+// This test checks that the parser rejects a too large (greater than
+// the max uint32_t) value of the max-row-errors parameter.
+TEST_F(DbAccessParserTest, largeMaxRowErrors) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "max-row-errors", "4294967296",
                             NULL};
 
     string json_config = toJson(config);

@@ -31,7 +31,7 @@
                 }
             ]
         },
-        "ip-address": "172.16.1.10",
+        "ip-address": "127.0.0.1",
         "loggers": [
             {
                 "debuglevel": 0,
@@ -41,7 +41,8 @@
                         "flush": true,
                         "maxsize": 204800,
                         "maxver": 4,
-                        "output": "stdout"
+                        "output": "stdout",
+                        "pattern": "%d [%c/%i] %m\n"
                     }
                 ],
                 "severity": "INFO"

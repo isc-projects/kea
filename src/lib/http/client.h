@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,12 @@ class HttpClientImpl;
 /// a request by trying to read from the socket (with message peeking). If
 /// the socket is usable the client uses it to transmit the request.
 ///
+/// This classes exposes the underlying TCP socket's descriptor for each
+/// connection via connect and close callbacks.  This is done to permit the
+/// sockets to be monitored for IO readiness by external code that's something
+/// other than boost::asio (e.g.select() or epoll()), and would thus otherwise
+/// starve the client's IOService and cause a backlog of ready event handlers.
+///
 /// All errors are reported to the caller via the callback function supplied
 /// to the @ref HttpClient::asyncSendRequest. The IO errors are communicated
 /// via the @c boost::system::error code value. The response parsing errors
@@ -86,9 +92,18 @@ public:
     ///
     /// Returned boolean value indicates whether the client should continue
     /// connecting to the server (if true) or not (false).
+    /// It is passed the IO error code along with the native socket handle of
+    /// the connection's TCP socket.  The passed socket descriptor may be used
+    /// to monitor the readiness of the events via select() or epoll().
+    ///
     /// @note Beware that the IO error code can be set to "in progress"
     /// so a not null error code does not always mean the connect failed.
-    typedef std::function<bool(const boost::system::error_code&)> ConnectHandler;
+    typedef std::function<bool(const boost::system::error_code&, const int)> ConnectHandler;
+
+    /// @brief Optional handler invoked when client closes the connection to the server.
+    ///
+    /// It is passed the native socket handler of the connection's TCP socket.
+    typedef std::function<void(const int)> CloseHandler;
 
     /// @brief Constructor.
     ///
@@ -158,6 +173,8 @@ public:
     /// @param request_timeout Timeout for the transaction in milliseconds.
     /// @param connect_callback Optional callback invoked when the client
     /// connects to the server.
+    /// @param close_callback Optional callback invoked when the client
+    /// closes the connection to the server.
     ///
     /// @throw HttpClientError If invalid arguments were provided.
     void asyncSendRequest(const Url& url,
@@ -167,7 +184,9 @@ public:
                           const RequestTimeout& request_timeout =
                           RequestTimeout(10000),
                           const ConnectHandler& connect_callback =
-                          ConnectHandler());
+                          ConnectHandler(),
+                          const CloseHandler& close_callback =
+                          CloseHandler());
 
     /// @brief Closes all connections.
     void stop();

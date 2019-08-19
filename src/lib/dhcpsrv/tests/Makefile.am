@@ -156,50 +156,40 @@ endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+
 if HAVE_MYSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
 endif
-
 if HAVE_PGSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 endif
-
 if HAVE_CQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
 endif
 
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
-
-if HAVE_MYSQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-if HAVE_PGSQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-if HAVE_CQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
-endif
-
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdhcpsrv_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 libdhcpsrv_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif

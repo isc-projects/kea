@@ -167,7 +167,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             (keyword == "max-reconnect-tries") ||
             (keyword == "request-timeout") ||
             (keyword == "tcp-keepalive") ||
-            (keyword == "port")) {
+            (keyword == "port") ||
+            (keyword == "max-row-errors")) {
             // integer parameters
             int64_t int_value;
             try {

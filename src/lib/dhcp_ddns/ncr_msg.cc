@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <dhcp_ddns/ncr_msg.h>
-#include <dns/name.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <cryptolink/cryptolink.h>

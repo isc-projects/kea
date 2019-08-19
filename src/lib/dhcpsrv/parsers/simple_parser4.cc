@@ -37,6 +37,8 @@ namespace dhcp {
 /// Order follows global_param rule in bison grammar.
 const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "valid-lifetime",               Element::integer },
+    { "min-valid-lifetime",           Element::integer },
+    { "max-valid-lifetime",           Element::integer },
     { "renew-timer",                  Element::integer },
     { "rebind-timer",                 Element::integer },
     { "decline-probation-period",     Element::integer },
@@ -72,7 +74,49 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "calculate-tee-times",          Element::boolean },
     { "t1-percent",                   Element::real },
     { "t2-percent",                   Element::real },
-    { "loggers",                      Element::list }
+    { "loggers",                      Element::list },
+    { "hostname-char-set",            Element::string },
+    { "hostname-char-replacement",    Element::string }
+};
+
+/// @brief This table defines default global values for DHCPv4
+///
+/// Some of the global parameters defined in the global scope (i.e. directly
+/// in Dhcp4) are optional. If not defined, the following values will be
+/// used.
+const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
+    { "valid-lifetime",            Element::integer, "7200" },
+    { "decline-probation-period",  Element::integer, "86400" }, // 24h
+    { "dhcp4o6-port",              Element::integer, "0" },
+    { "echo-client-id",            Element::boolean, "true" },
+    { "match-client-id",           Element::boolean, "true" },
+    { "authoritative",             Element::boolean, "false" },
+    { "next-server",               Element::string,  "0.0.0.0" },
+    { "server-hostname",           Element::string,  "" },
+    { "boot-file-name",            Element::string,  "" },
+    { "server-tag",                Element::string,  "" },
+    { "reservation-mode",          Element::string,  "all" },
+    { "calculate-tee-times",       Element::boolean, "false" },
+    { "t1-percent",                Element::real,    ".50" },
+    { "t2-percent",                Element::real,    ".875" }
+};
+
+/// @brief This table defines all option definition parameters.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows option_def_param rules in bison grammar.
+const SimpleKeywords SimpleParser4::OPTION4_DEF_PARAMETERS = {
+    { "name",         Element::string },
+    { "code",         Element::integer },
+    { "type",         Element::string },
+    { "record-types", Element::string },
+    { "space",        Element::string },
+    { "encapsulate",  Element::string },
+    { "array",        Element::boolean, },
+    { "user-context", Element::map },
+    { "comment",      Element::string },
+    { "metadata",     Element::map }
 };
 
 /// @brief This table defines default values for option definitions in DHCPv4.
@@ -86,6 +130,23 @@ const SimpleDefaults SimpleParser4::OPTION4_DEF_DEFAULTS = {
     { "encapsulate",  Element::string,  "" }
 };
 
+/// @brief This table defines all option parameters.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows option_param rules in bison grammar.
+const SimpleKeywords SimpleParser4::OPTION4_PARAMETERS = {
+    { "name",         Element::string },
+    { "data",         Element::string },
+    { "code",         Element::integer },
+    { "space",        Element::string },
+    { "csv-format",   Element::boolean },
+    { "always-send",  Element::boolean },
+    { "user-context", Element::map },
+    { "comment",      Element::string },
+    { "metadata",     Element::map }
+};
+
 /// @brief This table defines default values for options in DHCPv4.
 ///
 /// Dhcp4 usually contains option values (option-data) defined in global,
@@ -97,26 +158,41 @@ const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
     { "always-send",  Element::boolean, "false"}
 };
 
-/// @brief This table defines default global values for DHCPv4
+/// @brief This table defines all subnet parameters for DHCPv4.
 ///
-/// Some of the global parameters defined in the global scope (i.e. directly
-/// in Dhcp4) are optional. If not defined, the following values will be
-/// used.
-const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
-    { "valid-lifetime",           Element::integer, "7200" },
-    { "decline-probation-period", Element::integer, "86400" }, // 24h
-    { "dhcp4o6-port",             Element::integer, "0" },
-    { "echo-client-id",           Element::boolean, "true" },
-    { "match-client-id",          Element::boolean, "true" },
-    { "authoritative",            Element::boolean, "false" },
-    { "next-server",              Element::string,  "0.0.0.0" },
-    { "server-hostname",          Element::string,  "" },
-    { "boot-file-name",           Element::string,  "" },
-    { "server-tag",               Element::string,  "" },
-    { "reservation-mode",         Element::string,  "all" },
-    { "calculate-tee-times",      Element::boolean, "false" },
-    { "t1-percent",               Element::real,    ".50" },
-    { "t2-percent",               Element::real,    ".875" }
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows subnet4_param rule in bison grammar.
+const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
+    { "valid-lifetime",         Element::integer },
+    { "min-valid-lifetime",     Element::integer },
+    { "max-valid-lifetime",     Element::integer },
+    { "renew-timer",            Element::integer },
+    { "rebind-timer",           Element::integer },
+    { "option-data",            Element::list },
+    { "pools",                  Element::list },
+    { "subnet",                 Element::string },
+    { "interface",              Element::string },
+    { "id",                     Element::integer },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "reservations",           Element::list },
+    { "reservation-mode",       Element::string },
+    { "relay",                  Element::map },
+    { "match-client-id",        Element::boolean },
+    { "authoritative",          Element::boolean },
+    { "next-server",            Element::string },
+    { "server-hostname",        Element::string },
+    { "boot-file-name",         Element::string },
+    { "4o6-interface",          Element::string },
+    { "4o6-interface-id",       Element::string },
+    { "4o6-subnet",             Element::string },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "calculate-tee-times",    Element::boolean },
+    { "t1-percent",             Element::real },
+    { "t2-percent",             Element::real },
+    { "metadata",               Element::map }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -148,17 +224,6 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
     { "4o6-subnet",       Element::string,  "" },
 };
 
-/// @brief This table defines default values for each IPv4 shared network.
-const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
-    { "client-class",     Element::string, "" },
-    { "interface",        Element::string, "" }
-};
-
-/// @brief This table defines default values for interfaces for DHCPv4.
-const SimpleDefaults SimpleParser4::IFACE4_DEFAULTS = {
-    { "re-detect", Element::boolean, "true" }
-};
-
 /// @brief List of parameters that can be inherited to subnet4 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp4) and
@@ -181,18 +246,82 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "reservation-mode",
     "server-hostname",
     "valid-lifetime",
+    "min-valid-lifetime",
+    "max-valid-lifetime",
     "calculate-tee-times",
     "t1-percent",
     "t2-percent"
 };
 
+/// @brief This table defines all pool parameters.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows pool_param rules in bison grammar.
+const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
+    { "pool",                   Element::string },
+    { "option-data",            Element::list },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "metadata",               Element::map }
+};
+
+/// @brief This table defines all shared network parameters for DHCPv4.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows shared_network_param rule in bison grammar.
+const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
+    { "name",                   Element::string },
+    { "subnet4",                Element::list },
+    { "interface",              Element::string },
+    { "renew-timer",            Element::integer },
+    { "rebind-timer",           Element::integer },
+    { "option-data",            Element::list },
+    { "match-client-id",        Element::boolean },
+    { "authoritative",          Element::boolean },
+    { "next-server",            Element::string },
+    { "server-hostname",        Element::string },
+    { "boot-file-name",         Element::string },
+    { "relay",                  Element::map },
+    { "reservation-mode",       Element::string },
+    { "client-class",           Element::string },
+    { "require-client-classes", Element::list },
+    { "valid-lifetime",         Element::integer },
+    { "min-valid-lifetime",     Element::integer },
+    { "max-valid-lifetime",     Element::integer },
+    { "user-context",           Element::map },
+    { "comment",                Element::string },
+    { "calculate-tee-times",    Element::boolean },
+    { "t1-percent",             Element::real },
+    { "t2-percent",             Element::real },
+    { "metadata",               Element::map }
+};
+
+/// @brief This table defines default values for each IPv4 shared network.
+const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
+    { "client-class",     Element::string, "" },
+    { "interface",        Element::string, "" }
+};
+
+/// @brief This table defines default values for interfaces for DHCPv4.
+const SimpleDefaults SimpleParser4::IFACE4_DEFAULTS = {
+    { "re-detect", Element::boolean, "true" }
+};
+
 /// @brief This table defines default values for dhcp-queue-control in DHCPv4.
 const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
     { "enable-queue",   Element::boolean, "false"},
-    { "queue-type", Element::string,  "kea-ring4"},
-    { "capacity",  Element::integer, "500"}
+    { "queue-type",     Element::string,  "kea-ring4"},
+    { "capacity",       Element::integer, "500"}
 };
 
+/// @brief This defines default values for sanity checking for DHCPv4.
+const SimpleDefaults SimpleParser4::SANITY_CHECKS4_DEFAULTS = {
+    { "lease-checks", Element::string, "warn" }
+};
 
 /// @}
 
@@ -200,7 +329,7 @@ const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
 /// --- end of default values -------------------------------------------------
 /// ---------------------------------------------------------------------------
 
-size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
+size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     size_t cnt = 0;
 
     // Set global defaults first.
@@ -260,10 +389,22 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
 
     cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL4_DEFAULTS);
 
+    // Set the defaults for sanity-checks.  If the element isn't
+    // there we'll add it.
+    ConstElementPtr sanity_checks = global->get("sanity-checks");
+    if (sanity_checks) {
+        mutable_cfg = boost::const_pointer_cast<Element>(sanity_checks);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("sanity-checks", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, SANITY_CHECKS4_DEFAULTS);
+
     return (cnt);
 }
 
-size_t SimpleParser4::deriveParameters(isc::data::ElementPtr global) {
+size_t SimpleParser4::deriveParameters(ElementPtr global) {
     size_t cnt = 0;
 
     // Now derive global parameters into subnets.

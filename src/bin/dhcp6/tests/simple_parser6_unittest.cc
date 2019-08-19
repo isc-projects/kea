@@ -152,29 +152,37 @@ TEST_F(SimpleParser6Test, globalDefaults6) {
 // scope to the subnet scope.
 TEST_F(SimpleParser6Test, inheritGlobalToSubnet6) {
     ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
-                                          "  \"rebind-timer\": 2,"
-                                          "  \"preferred-lifetime\": 3,"
-                                          "  \"valid-lifetime\": 4,"
-                                          "  \"subnet6\": [ { \"renew-timer\": 100 } ] "
-                                          "}");
+                                  "  \"rebind-timer\": 2,"
+                                  "  \"preferred-lifetime\": 3,"
+                                  "  \"min-preferred-lifetime\": 2,"
+                                  "  \"max-preferred-lifetime\": 4,"
+                                  "  \"valid-lifetime\": 4,"
+                                  "  \"min-valid-lifetime\": 3,"
+                                  "  \"max-valid-lifetime\": 5,"
+                                  "  \"subnet6\": [ { \"renew-timer\": 100 } ] "
+                                  "}");
 
     ConstElementPtr subnets = global->find("subnet6");
     ASSERT_TRUE(subnets);
     ConstElementPtr subnet = subnets->get(0);
     ASSERT_TRUE(subnet);
 
-    // we should inherit 3 parameters. Renew-timer should remain intact,
+    // we should inherit 7 parameters. Renew-timer should remain intact,
     // as it was already defined in the subnet scope.
     size_t num;
     EXPECT_NO_THROW(num = SimpleParser6::deriveParameters(global));
-    EXPECT_EQ(3, num);
+    EXPECT_EQ(7, num);
 
     // Check the values. 3 of them are inherited, while the fourth one
     // was already defined in the subnet, so should not be inherited.
     checkIntegerValue(subnet, "renew-timer", 100);
     checkIntegerValue(subnet, "rebind-timer", 2);
     checkIntegerValue(subnet, "preferred-lifetime", 3);
+    checkIntegerValue(subnet, "min-preferred-lifetime", 2);
+    checkIntegerValue(subnet, "max-preferred-lifetime", 4);
     checkIntegerValue(subnet, "valid-lifetime", 4);
+    checkIntegerValue(subnet, "min-valid-lifetime", 3);
+    checkIntegerValue(subnet, "max-valid-lifetime", 5);
 }
 
 // This test checks if the parameters in "subnet6" are assigned default values

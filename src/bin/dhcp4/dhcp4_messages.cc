@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed May 22 2019 18:21
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Jul 10 2019 15:10
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -23,6 +23,7 @@ extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES = "DHCP4_CLIE
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA = "DHCP4_CLIENT_FQDN_DATA";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS = "DHCP4_CLIENT_FQDN_PROCESS";
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_DATA = "DHCP4_CLIENT_HOSTNAME_DATA";
+extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_MALFORMED = "DHCP4_CLIENT_HOSTNAME_MALFORMED";
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_HOSTNAME_PROCESS";
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
 extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED = "DHCP4_COMMAND_RECEIVED";
@@ -93,6 +94,7 @@ extern const isc::log::MessageID DHCP4_PACKET_DROP_0006 = "DHCP4_PACKET_DROP_000
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0007 = "DHCP4_PACKET_DROP_0007";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0008 = "DHCP4_PACKET_DROP_0008";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0009 = "DHCP4_PACKET_DROP_0009";
+extern const isc::log::MessageID DHCP4_PACKET_DROP_0010 = "DHCP4_PACKET_DROP_0010";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0001 = "DHCP4_PACKET_NAK_0001";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0002 = "DHCP4_PACKET_NAK_0002";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003 = "DHCP4_PACKET_NAK_0003";
@@ -158,6 +160,7 @@ const char* values[] = {
     "DHCP4_CLIENT_FQDN_DATA", "%1: Client sent FQDN option: %2",
     "DHCP4_CLIENT_FQDN_PROCESS", "%1: processing Client FQDN option",
     "DHCP4_CLIENT_HOSTNAME_DATA", "%1: client sent Hostname option: %2",
+    "DHCP4_CLIENT_HOSTNAME_MALFORMED", "%1: client hostname option malformed: %2",
     "DHCP4_CLIENT_HOSTNAME_PROCESS", "%1: processing client's Hostname option",
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
     "DHCP4_COMMAND_RECEIVED", "received command %1, arguments: %2",
@@ -188,7 +191,7 @@ const char* values[] = {
     "DHCP4_DHCP4O6_RECEIVE_FAIL", "failed to receive DHCPv4o6: %1",
     "DHCP4_DHCP4O6_RECEIVING", "receiving DHCPv4o6 packet from DHCPv6 server",
     "DHCP4_DHCP4O6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",
-    "DHCP4_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal",
+    "DHCP4_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP4_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP4_EMPTY_HOSTNAME", "%1: received empty hostname from the client, skipping processing of this option",
     "DHCP4_FLEX_ID", "flexible identifier generated for incoming packet: %1",
@@ -210,7 +213,7 @@ const char* values[] = {
     "DHCP4_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP4_INIT_REBOOT", "%1: client is in INIT-REBOOT state and requests address %2",
     "DHCP4_LEASE_ADVERT", "%1: lease %2 will be advertised",
-    "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated",
+    "DHCP4_LEASE_ALLOC", "%1: lease %2 has been allocated for %3 seconds",
     "DHCP4_NCR_CREATE", "%1: DDNS updates enabled, therefore sending name change requests",
     "DHCP4_NCR_CREATION_FAILED", "%1: failed to generate name change requests for DNS: %2",
     "DHCP4_NOT_RUNNING", "DHCPv4 server is not running",
@@ -228,6 +231,7 @@ const char* values[] = {
     "DHCP4_PACKET_DROP_0007", "%1: failed to process packet: %2",
     "DHCP4_PACKET_DROP_0008", "%1: DHCP service is globally disabled",
     "DHCP4_PACKET_DROP_0009", "%1: Option 53 missing (no DHCP message type), is this a BOOTP packet?",
+    "DHCP4_PACKET_DROP_0010", "dropped as member of the special class 'DROP': %1",
     "DHCP4_PACKET_NAK_0001", "%1: failed to select a subnet for incoming packet, src %2, type %3",
     "DHCP4_PACKET_NAK_0002", "%1: invalid address %2 requested by INIT-REBOOT",
     "DHCP4_PACKET_NAK_0003", "%1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3",

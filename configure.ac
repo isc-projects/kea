@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.6.0-beta, kea-dev@lists.isc.org)
+AC_INIT(kea,1.6.0-beta2-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -435,45 +435,6 @@ fi
 AM_CONDITIONAL(PERFDHCP, test x$enable_perfdhcp != xno)
 AC_SUBST(DISTCHECK_PERFDHCP_CONFIGURE_FLAG)
 
-# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
-# It may likely work with earlier versions, but 2.7 was the oldest one we tested
-# it with. We require python only if kea-shell was enabled. It is disabled
-# by default to not introduce hard dependency on python.
-AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
-  [enable kea-shell, a text management client for Control Agent [default=no]])],
-  enable_shell=$enableval, enable_shell=no)
-
-DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
-PKGPYTHONDIR=
-m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
- [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
-  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
-if test "x$enable_shell" != xno ; then
-# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-# We try to find 3.x first. If not found, we can do with 2.7.
-  AM_PATH_PYTHON([2.7])
-  # pkgpythondir needs to be expanded
-  saved_prefix="$prefix"
-  if test "$prefix" = "NONE"; then
-    prefix=$ac_default_prefix
-  fi
-  PKGPYTHONDIR="$pkgpythondir"
-  OLD=
-  while test "x$OLD" != "x$PKGPYTHONDIR"; do
-    OLD="$PKGPYTHONDIR"
-    eval PKGPYTHONDIR="\"$OLD\""
-  done
-  prefix="$saved_prefix"
-  DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
-else
-  PYTHON=no
-fi
-
-# Export to makefiles the info whether we have shell enabled or not
-AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
-AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
-AC_SUBST(PKGPYTHONDIR)
-
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    KEA_CXXFLAGS="$KEA_CXXFLAGS -fPIC"
@@ -605,8 +566,11 @@ AC_ARG_WITH([gtest],
                             [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
         [gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
 
-AC_ARG_WITH(lcov,
-[  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
+AC_ARG_WITH([lcov],
+            [AS_HELP_STRING([--with-lcov=PROGRAM],
+                            [enable gtest and coverage target using the specified lcov])],
+                            [lcov="$withval"],
+                            [lcov="no"])
 
 USE_LCOV="no"
 if test "$lcov" != "no"; then
@@ -853,10 +817,12 @@ if test "$CQL_CONFIG" != "" ; then
     fi
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
-    CQL_CPPFLAGS="$CQL_INCLUDEDIR `$CQL_CONFIG --cflags-only-other $cql_lib`"
-    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
+    CQL_CPPFLAGS=`$CQL_CONFIG --cflags-only-other $cql_lib`
+    CQL_LIBS=`$CQL_CONFIG --libs $cql_lib`
+    CQL_LIBS="$CQL_LIBS $CRYPTO_LIBS"
     CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
+    CQL_CPPFLAGS="${CQL_CPPFLAGS} ${CQL_INCLUDEDIR}"
     AC_SUBST(CQL_CPPFLAGS)
     AC_SUBST(CQL_LIBS)
 
@@ -893,6 +859,9 @@ AC_ARG_WITH([sysrepo],
     [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
+    if test "$PKG_CONFIG" = ""; then
+        AC_MSG_ERROR([--with-sysrepo specified without any parameter and pkg-config was not found. Either use --with-sysrepo=path or install pkg-config])
+    fi
     SYSREPO_CONFIG="$PKG_CONFIG"
     DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 elif test "${sysrepo_config}" != "no" ; then
@@ -962,7 +931,15 @@ if test "$SYSREPO_CONFIG" != "" ; then
         [AC_LANG_PROGRAM(
             [#include <sysrepo-cpp/Session.hpp>],
             [sysrepo::Connection("conn-name");])],
-        [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+        [AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <sysrepo-cpp/Session.hpp>],
+                [auto is_empty = [[]](sysrepo::S_Val v){
+                    return (v->empty()); };
+                ])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library, new])
+             AC_DEFINE([HAVE_POST_0_7_7_SYSREPO], [1], [Using sysrepo > 0.7.7])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library, yes])])],
         [AC_LINK_IFELSE(
             [AC_LANG_PROGRAM(
                 [#include <sysrepo-cpp/Session.h>],
@@ -1052,6 +1029,25 @@ AC_MSG_RESULT([$LOG4CPLUS_VERSION])
 
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
+
+# Older log4cplus versions (1.2.0) don't have the initializer.h header that
+# would allow explicit initialization. Newer versions (2.0.4 for sure, possibly
+# older as well) have it and it's recommended to use it. We detect whether
+# it's present or not and do explicit initalization if possible.
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
+LIBS_SAVED="$LIBS"
+LIBS="$LOG4CPLUS_LIBS $LIBS"
+AC_MSG_CHECKING([log4cplus explicit initialization (log4cplus/initializer.h)])
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <log4cplus/initializer.h>],
+                         [log4cplus::Initializer initializer;]
+                         )],
+        [AC_MSG_RESULT([yes])
+         AC_DEFINE(LOG4CPLUS_INITIALIZER_H, [1], [Explicit initialization of log4cplus possible])],
+        [AC_MSG_RESULT(no)])
+LIBS="$LIBS_SAVED"
+CPPFLAGS=$CPPFLAGS_SAVED
 
 #
 # Configure Boost header path
@@ -1322,7 +1318,7 @@ fi
 
 #
 # Doesn't seem to be required?
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
+#CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
 # Disable threads: they seems to break things on some systems
 # As now we use threads in boost ASIO this is commented out...
@@ -1421,48 +1417,147 @@ fi
 
 AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 
+# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
+# It may likely work with earlier versions, but 2.7 was the oldest one we tested
+# it with. We require python only if kea-shell was enabled. It is disabled
+# by default to not introduce hard dependency on python.
+AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
+  [enable kea-shell, a text management client for Control Agent [default=no]])],
+  enable_shell=$enableval, enable_shell=no)
+
+
 AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
-  [regenerate documentation using Docbook [default=no]])],
+  [regenerate documentation using Sphinx [default=no]])],
   enable_generate_docs=$enableval, enable_generate_docs=no)
 
-if test "x$enable_generate_docs" != xno ; then
 
-# xsltproc --nonet parameter
-  NONET="--nonet"
-  AC_ARG_VAR(XSLTPROC_NET, [xsltproc uses the Internet to fetch DTDs, entities or documents.])
-  if test "x$XSLTPROC_NET" != x ; then
-    NONET=
-  fi
-  AC_SUBST(NONET)
+DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
+PKGPYTHONDIR=
+shell_report=no
+m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+ [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
+  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
+if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
+# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
+# We try to find 3.x first. If not found, we can do with 2.7.
+  AM_PATH_PYTHON([2.7])
 
-# Check for xsltproc
-  AC_PATH_PROG([XSLTPROC], [xsltproc])
-  if test -z "$XSLTPROC"; then
-    AC_MSG_ERROR("xsltproc not found; it is required for --enable-generate-docs")
-  else
-    AC_MSG_CHECKING([if $XSLTPROC works])
-    # run xsltproc to see if works
-    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
-    if test $? -ne 0 ; then
-      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
-    fi
-    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
-    if test $? -ne 0 ; then
-      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
-    fi
-    AC_MSG_RESULT(yes)
+  AC_ARG_WITH(site-packages,
+           AC_HELP_STRING([--with-site-packages],
+                          [place to install Kea Python module]),
+           [pythondir=$withval;
+            pkgpythondir=${pythondir}/$PACKAGE_NAME])
+  if test "$pythondir" = "yes"; then
+     AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --site-packages=/usr/lib/python3/dist-packages])
   fi
 
-  AC_PATH_PROG([ELINKS], [elinks])
-  if test -z "$ELINKS"; then
-    AC_MSG_ERROR("elinks not found; it is required for --enable-generate-docs")
+  # pkgpythondir needs to be expanded
+  saved_prefix="$prefix"
+  if test "$prefix" = "NONE"; then
+    prefix=$ac_default_prefix
   fi
+  PKGPYTHONDIR="$pkgpythondir"
+  OLD=
+  while test "x$OLD" != "x$PKGPYTHONDIR"; do
+    OLD="$PKGPYTHONDIR"
+    eval PKGPYTHONDIR="\"$OLD\""
+  done
+  prefix="$saved_prefix"
+  DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
+  shell_report="yes, install to $pythondir"
+else
+  PYTHON=no
 fi
 
-# Don't fail here if not found, used to generate PDF documentation.
-AC_PATH_PROG([DBLATEX], [dblatex])
-AM_CONDITIONAL(HAVE_DBLATEX, test "x$DBLATEX" != "x")
+# Export to makefiles the info whether we have shell enabled or not
+AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
+AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
+AC_SUBST(PKGPYTHONDIR)
 
+AC_ARG_WITH([sphinx],
+  AC_HELP_STRING([--with-sphinx=PATH], [path to sphinx-build tool]),
+  [sphinx_path="$withval"])
+
+AC_ARG_WITH([pdflatex],
+  AC_HELP_STRING([--with-pdflatex=PATH], [path to pdflatex tool]),
+  [pdflatex_path="$withval"])
+PDFLATEX=no
+
+if test "x$enable_generate_docs" != xno ; then
+  # Check for sphinx-build
+  AC_MSG_CHECKING([for sphinx-build])
+  if test -z "$sphinx_path"; then
+     AC_PATH_PROGS([SPHINXBUILD], [sphinx-build sphinx-build-3])
+  else
+     SPHINXBUILD="$sphinx_path"
+  fi
+
+  if test -z "$SPHINXBUILD"; then
+    AC_MSG_ERROR([sphinx-build not found; it is required for --enable-generate-docs, please see http://www.sphinx-doc.org/en/master/usage/installation.html for details])
+  else
+    AC_MSG_RESULT([$SPHINXBUILD])
+
+    AC_MSG_CHECKING([whether $SPHINXBUILD is runnable])
+    $SPHINXBUILD --version > conftest.err 2>&1
+    if test $? -ne 0 ; then
+      AC_MSG_ERROR([error with $SPHINXBUILD --version, check conftest.err for details])
+    fi
+    rm -f conftest.err
+    AC_MSG_RESULT([yes])
+  fi
+
+  # Check for pdflatex
+  if test -z "$pdflatex_path"; then
+     AC_PATH_PROG([PDFLATEX], [pdflatex])
+  else
+     PDFLATEX="$pdflatex_path"
+  fi
+
+  if test -z "$PDFLATEX"; then
+    PDFLATEX=no
+  elif test "x$PDFLATEX" == "xno"; then
+    AC_MSG_CHECKING([for pdflatex])
+    AC_MSG_RESULT([no (disabled)])
+  else
+    AC_MSG_CHECKING([whether $PDFLATEX is runnable])
+    $PDFLATEX --version > /dev/null 2>&1
+    if test $? -ne 0 ; then
+      AC_MSG_RESULT([no - disabled building docs in PDF])
+      PDFLATEX=no
+    else
+      AC_MSG_RESULT([yes])
+    fi
+  fi
+
+  if test -n "$SPHINXBUILD" -a "x$PDFLATEX" != "xno"; then
+    AC_MSG_CHECKING([whether $SPHINXBUILD and $PDFLATEX work])
+    ti=`mktemp -d`
+    to=`mktemp -d`
+    echo 'hello' > $ti/contents.rst
+    sphinx-build -b latex -C $ti $to > /dev/null 2>&1
+    pushd $to > /dev/null 2>&1
+    $PDFLATEX -interaction nonstopmode Python.tex > /dev/null 2>&1
+    popd > /dev/null 2>&1
+    file $to/Python.pdf | grep PDF > /dev/null 2>&1
+    if test $? -ne 0 ; then
+      AC_MSG_RESULT([no - disabled building docs in PDF])
+      PDFLATEX=no
+    else
+      AC_MSG_RESULT([ok])
+    fi
+    rm -rf $ti $to
+  fi
+
+  if test "x$PDFLATEX" != "xno"; then
+    generate_docs_report="html, man and pdf"
+  else
+    generate_docs_report="html, man but no pdf"
+  fi
+else
+  generate_docs_report="no"
+fi
+
+AM_CONDITIONAL(HAVE_PDFLATEX, test "x$PDFLATEX" != "xno")
 AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
 AC_ARG_ENABLE(install-configurations,
@@ -1522,12 +1617,24 @@ AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset
 
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
+# Autoconf 2.70 has runstatedir but is not yet released.
+m4_version_prereq([2.70], [], [dnl
+    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])dnl
+    AC_SUBST(runstatedir)dnl
+])
+if test "x$runstatedir" = "x"; then
+    runstatedir="$localstatedir/run"
+fi
+
+# Expand runstatedir to remove ${localstatedir} from it
+if (echo ${runstatedir} | grep -q localstatedir); then
+    runstatedir="$(eval echo ${runstatedir})"
+fi
+
 AC_CONFIG_FILES([Makefile
-                 compatcheck/Makefile
                  doc/Makefile
-                 doc/guide/Makefile
-                 doc/version.ent
-                 doc/docgen/Makefile
+                 doc/sphinx/Makefile
+                 doc/devel/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
                  ext/coroutine/Makefile
@@ -1703,6 +1810,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
                  src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
                  src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
+                 src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh
+                 src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh
                  src/share/database/scripts/mysql/wipe_data.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
@@ -1712,6 +1821,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
                  src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
                  src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
+                 src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh
                  src/share/database/scripts/pgsql/wipe_data.sh
                  src/share/yang/Makefile
                  src/share/yang/modules/Makefile
@@ -1981,11 +2091,11 @@ Developer:
   Valgrind:                  $found_valgrind
   C++ Code Coverage:         $USE_LCOV
   Logger checks:             $enable_logger_checks
-  Generate Documentation:    $enable_generate_docs
+  Generate Documentation:    $generate_docs_report
   Generate Parser:           $enable_generate_parser
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
-  Kea-shell:                 $enable_shell
+  Kea-shell:                 $shell_report
 
 END
 

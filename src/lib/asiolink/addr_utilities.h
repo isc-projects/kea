@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <asiolink/io_address.h>
 
 namespace isc {
-namespace dhcp {
+namespace asiolink {
 
 /// This code is based on similar code from the Dibbler project. I, Tomasz Mrugalski,
 /// as a sole creator of that code hereby release it under BSD license for the benefit
@@ -25,8 +25,7 @@ namespace dhcp {
 /// @param len prefix length
 ///
 /// @return first address from a prefix
-isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                            uint8_t len);
+IOAddress firstAddrInPrefix(const IOAddress& prefix, uint8_t len);
 
 /// @brief returns a last address in a given prefix
 ///
@@ -37,13 +36,12 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 /// @param len prefix length
 ///
 /// @return first address from a prefix
-isc::asiolink::IOAddress lastAddrInPrefix(const isc::asiolink::IOAddress& prefix,
-                                           uint8_t len);
+IOAddress lastAddrInPrefix(const IOAddress& prefix, uint8_t len);
 
 /// @brief Generates an IPv4 netmask of specified length
 /// @throw BadValue if len is greater than 32
 /// @return netmask
-isc::asiolink::IOAddress getNetmask4(uint8_t len);
+IOAddress getNetmask4(uint8_t len);
 
 
 /// @brief Returns number of available addresses in the specified range (min - max).
@@ -56,8 +54,7 @@ isc::asiolink::IOAddress getNetmask4(uint8_t len);
 /// @param min the first address in range
 /// @param max the last address in range
 /// @return number of addresses in range
-uint64_t addrsInRange(const isc::asiolink::IOAddress& min,
-                      const isc::asiolink::IOAddress& max);
+uint64_t addrsInRange(const IOAddress& min, const IOAddress& max);
 
 /// @brief Returns prefix length from the specified range (min - max).
 ///
@@ -68,8 +65,7 @@ uint64_t addrsInRange(const isc::asiolink::IOAddress& min,
 /// @param min the first address in range
 /// @param max the last address in range
 /// @return the prefix length or -1 if the range is not from a prefix
-int prefixLengthFromRange(const isc::asiolink::IOAddress& min,
-                          const isc::asiolink::IOAddress& max);
+int prefixLengthFromRange(const IOAddress& min, const IOAddress& max);
 
 /// @brief Returns number of available IPv6 prefixes in the specified prefix.
 ///

@@ -10,6 +10,8 @@
 #include <cc/stamped_value.h>
 #include <database/audit_entry.h>
 #include <database/database_connection.h>
+#include <database/server.h>
+#include <database/server_collection.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
@@ -23,6 +25,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -107,7 +110,7 @@ public:
     explicit MySqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
-    ~MySqlConfigBackendImpl();
+    virtual ~MySqlConfigBackendImpl();
 
     /// @brief Creates MySQL binding from a @c Triplet.
     ///
@@ -116,6 +119,24 @@ public:
     /// a pointer to a binding representing 32-bit unsigned integer value
     /// otherwise.
     static db::MySqlBindingPtr createBinding(const Triplet<uint32_t>& triplet);
+
+    /// @brief Creates MySQL binding from a @c Triplet max value.
+    ///
+    /// @param triplet Triplet value from which the binding should be created.
+    /// @return Pointer to a null binding if the triplet is "unspecified" or
+    /// the max value is the same as the default value, or a pointer to
+    /// a binding representing 32-bit unsigned integer value from the max
+    /// value otherwise.
+    static db::MySqlBindingPtr createMaxBinding(const Triplet<uint32_t>& triplet);
+
+    /// @brief Creates MySQL binding from a @c Triplet min value.
+    ///
+    /// @param triplet Triplet value from which the binding should be created.
+    /// @return Pointer to a null binding if the triplet is "unspecified" or
+    /// the min value is the same as the default value, or a pointer to
+    /// a binding representing 32-bit unsigned integer value from the min
+    /// value otherwise.
+    static db::MySqlBindingPtr createMinBinding(const Triplet<uint32_t>& triplet);
 
     /// @brief Creates @c Triplet object from MySQL binding.
     ///
@@ -128,24 +149,21 @@ public:
     /// a 32-bit unsigned integer.
     static Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& binding);
 
-    /// @brief Returns server tags associated with the particular selector.
+    /// @brief Creates @c Triplet object from MySQL bindings.
     ///
-    /// @param server_selector Server selector.
-    /// @return Set of server tags.
-    std::set<std::string> getServerTags(const db::ServerSelector& server_selector) const {
-        std::set<std::string> tags;
-        switch (server_selector.getType()) {
-        case db::ServerSelector::Type::ALL:
-            tags.insert("all");
-            return (tags);
-
-        default:
-            return (server_selector.getTags());
-        }
-
-        // Unassigned server case.
-        return (tags);
-    }
+    /// @param def_binding Pointer to the MySQL binding of the default.
+    /// @param min_binding Pointer to the MySQL binding of the min value.
+    /// @param max_binding Pointer to the MySQL binding of the max value.
+    /// @return Triplet value set to "unspecified" if the MySQL binding
+    /// represents a NULL value or a Triplet value encapsulating 32-bit
+    /// unsigned integer if the MySQL represents an integer.
+    /// When max or max bindings are not NULL their values are used.
+    /// @throw isc::Unexpected if the provided binding pointer is NULL.
+    /// @throw isc::InvalidOperation if the binding does not represent
+    /// a 32-bit unsigned integer.
+    static Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& def_binding,
+                                           const db::MySqlBindingPtr& min_binding,
+                                           const db::MySqlBindingPtr& max_binding);
 
     /// @brief Returns server tag associated with the particular selector.
     ///
@@ -160,14 +178,14 @@ public:
     /// is more than one server tag associated with the selector.
     std::string getServerTag(const db::ServerSelector& server_selector,
                              const std::string& operation) const {
-        auto tags = getServerTags(server_selector);
+        auto tags = server_selector.getTags();
         if (tags.size() != 1) {
             isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
                       " while " << operation << ". Got: "
                       << getServerTagsAsText(server_selector));
         }
 
-        return (*tags.begin());
+        return (tags.begin()->get());
     }
 
     /// @brief Returns server tags associated with the particular selector
@@ -176,12 +194,12 @@ public:
     /// This method is useful for logging purposes.
     std::string getServerTagsAsText(const db::ServerSelector& server_selector) const {
         std::ostringstream s;
-        auto server_tags = getServerTags(server_selector);
+        auto server_tags = server_selector.getTags();
         for (auto tag : server_tags) {
             if (s.tellp() != 0) {
                 s << ", ";
             }
-            s << tag;
+            s << tag.get();
         }
 
         return (s.str());
@@ -243,14 +261,11 @@ public:
                              const std::string& operation,
                              db::MySqlBindingCollection& in_bindings) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
+        // For ANY server, we use queries that lack server tag.
+        if (!server_selector.amAny() && !server_selector.amUnassigned()) {
+            auto tag = getServerTag(server_selector, operation);
+            in_bindings.insert(in_bindings.begin(), db::MySqlBinding::createString(tag));
         }
-
-        auto tag = getServerTag(server_selector, operation);
-
-        in_bindings.insert(in_bindings.begin(), db::MySqlBinding::createString(tag));
 
         return (conn_.updateDeleteQuery(index, in_bindings));
     }
@@ -287,6 +302,13 @@ public:
                              const db::ServerSelector& server_selector,
                              const std::string& operation,
                              KeyType key) {
+        // When deleting by some key, we must use ANY.
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "deleting an unassigned object requires "
+                      "an explicit server tag or using ANY server. The UNASSIGNED "
+                      "server selector is currently not supported");
+        }
+
         db::MySqlBindingCollection in_bindings;
 
         if (db::MySqlBindingTraits<KeyType>::column_type == MYSQL_TYPE_STRING) {
@@ -306,7 +328,7 @@ public:
     /// size of the bindings collection must match the number of placeholders
     /// in the prepared statement. The input bindings collection must be empty
     /// if the query contains no WHERE clause.
-    /// @param [out] subnets Reference to the container where fetched parameters
+    /// @param [out] parameters Reference to the container where fetched parameters
     /// will be inserted.
     void getGlobalParameters(const int index,
                              const db::MySqlBindingCollection& in_bindings,
@@ -530,6 +552,19 @@ public:
     processOptionRow(const Option::Universe& universe,
                      db::MySqlBindingCollection::iterator first_binding);
 
+    /// @brief Associates a configuration element with multiple servers.
+    ///
+    /// @param index Query index.
+    /// @param server_selector Server selector, perhaps with multiple server tags.
+    /// @param first_binding First binding to be used in the query.
+    /// @param in_bindings Parameter pack holding bindings for the query. Note that
+    /// the server tag (or server id) must be the last binding in the prepared
+    /// statement. The caller must not include this binding in the parameter pack.
+    void attachElementToServers(const int index,
+                                const db::ServerSelector& server_selector,
+                                const db::MySqlBindingPtr& first_binding,
+                                const db::MySqlBindingPtr& in_bindings...);
+
     /// @brief Creates input binding for relay addresses.
     ///
     /// @param network Pointer to a shared network or subnet for which binding
@@ -540,11 +575,26 @@ public:
 
     /// @brief Creates input binding for 'require_client_classes' parameter.
     ///
-    /// @param network Pointer to a shared network or subnet for which binding
-    /// should be created.
+    /// @tparam T of pointer to objects with getRequiredClasses
+    /// method, e.g. shared network, subnet, pool or prefix delegation pool.
+    /// @param object Pointer to an object with getRequiredClasses method
     /// @return Pointer to the binding (possibly null binding if there are no
     /// required classes specified).
-    db::MySqlBindingPtr createInputRequiredClassesBinding(const NetworkPtr& network);
+    template<typename T>
+    db::MySqlBindingPtr createInputRequiredClassesBinding(const T& object) {
+        // Create JSON list of required classes.
+        data::ElementPtr required_classes_element = data::Element::createList();
+        const auto& required_classes = object->getRequiredClasses();
+        for (auto required_class = required_classes.cbegin();
+             required_class != required_classes.cend();
+             ++required_class) {
+            required_classes_element->add(data::Element::create(*required_class));
+        }
+
+        return (required_classes_element ?
+                db::MySqlBinding::createString(required_classes_element->str()) :
+                db::MySqlBinding::createNull());
+    }
 
     /// @brief Creates input binding for user context parameter.
     ///
@@ -559,6 +609,154 @@ public:
         auto context_element = config_element->getContext();
         return (context_element ? db::MySqlBinding::createString(context_element->str()) :
                 db::MySqlBinding::createNull());
+    }
+
+    /// @brief Creates input binding for option value parameter.
+    ///
+    /// @param option Option descriptor holding option for which binding is to
+    /// be created.
+    /// @return Pointer to the binding (possibly null binding if formatted
+    /// value is non-empty.
+    db::MySqlBindingPtr createOptionValueBinding(const OptionDescriptorPtr& option);
+
+    /// @brief Retrieves a server.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param server_tag Server tag of the server to be retrieved.
+    /// @return Pointer to the @c Server object representing the server or
+    /// null if such server doesn't exist.
+    db::ServerPtr getServer(const int index, const data::ServerTag& server_tag);
+
+    /// @brief Retrieves all servers.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param [out] servers Reference to the container where fetched servers
+    /// will be inserted.
+    void getAllServers(const int index, db::ServerCollection& servers);
+
+    /// @brief Sends query to retrieve servers.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Reference to the MySQL input bindings.
+    /// @param [out] servers Reference to the container where fetched servers
+    /// will be inserted.
+    void getServers(const int index,
+                    const db::MySqlBindingCollection& in_bindings,
+                    db::ServerCollection& servers);
+
+    /// @brief Creates or updates a server.
+    ///
+    /// This method attempts to insert a new server into the database using
+    /// the query identified by @c create_index. If the insertion fails because
+    /// the server with the given tag already exists in the database, the
+    /// existing server is updated using the query identified by the
+    /// @c update_index.
+    ///
+    /// @param create_audit_revision Index of the query inserting audit
+    /// revision.
+    /// @param create_index Index of the INSERT query to be used.
+    /// @param update_index Index of the UPDATE query to be used.
+    /// @param server Pointer to the server to be inserted or updated.
+    /// @throw InvalidOperation when trying to create a duplicate or
+    /// update the logical server 'all'.
+    void createUpdateServer(const int& create_audit_revision,
+                            const int& create_index,
+                            const int& update_index,
+                            const db::ServerPtr& server);
+
+    /// @brief Executes multiple update and/or delete queries with no input
+    /// bindings.
+    ///
+    /// This is a convenience function which takes multiple query indexes as
+    /// arguments and for each index executes an update or delete query.
+    /// One of the applications of this function is to remove dangling
+    /// configuration elements after the server associated with these elements
+    /// have been deleted.
+    ///
+    /// @tparam T type of the indexes, e.g. @c MySqlConfigBackendDHCPv4Impl::StatementIndex.
+    /// @tparam R parameter pack holding indexes of type @c T.
+    /// @param first_index first index.
+    /// @param other_indexes remaining indexes.
+    template<typename T, typename... R>
+    void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
+        std::vector<T> indexes({ first_index, other_indexes... });
+        db::MySqlBindingCollection empty_bindings;
+        for (auto index : indexes) {
+            conn_.updateDeleteQuery(index, empty_bindings);
+        }
+    }
+
+    /// @brief Removes configuration elements from the index which don't match
+    /// the specified server selector.
+    ///
+    /// This is a generic function which removes configuration elements which
+    /// don't match the specified selector. In order to fetch all server tags
+    /// for the returned configuration element, the query must not limit the
+    /// results to the given server tag. Instead, it must post process the
+    /// result to eliminate those configuration elements for which the desired
+    /// server tag wasn't found.
+    ///
+    /// If the server selector is set to ANY, this method is no-op.
+    ///
+    /// @tparam CollectionIndex Type of the collection to be processed.
+    /// @param server_selector Server selector.
+    /// @param index Reference to the index holding the returned configuration
+    /// elements to be processed.
+    template<typename CollectionIndex>
+    void tossNonMatchingElements(const db::ServerSelector& server_selector,
+                                 CollectionIndex& index) {
+        // Don't filter the matching server tags if the server selector is
+        // set to ANY.
+        if (server_selector.amAny()) {
+            return;
+        }
+
+        // Go over the collection of elements.
+        for (auto elem = index.begin(); elem != index.end(); ) {
+
+            // If we're asking for shared networks matching all servers,
+            // we have to make sure that the fetched element has "all"
+            // server tag.
+            if (server_selector.amAll()) {
+                if (!(*elem)->hasAllServerTag()) {
+                    // It doesn't so let's remove it.
+                    elem = index.erase(elem);
+                    continue;
+                }
+
+            } else if (server_selector.amUnassigned()) {
+                // Returned element has server tags but we expect that the
+                // elements are unassigned.
+                if (!(*elem)->getServerTags().empty()) {
+                    elem = index.erase(elem);
+                    continue;
+                }
+
+            } else {
+                // Server selector contains explicit server tags, so
+                // let's see if the returned elements includes any of
+                // them.
+                auto tags = server_selector.getTags();
+                bool tag_found = false;
+                for (auto tag : tags) {
+                    if ((*elem)->hasServerTag(tag) ||
+                        (*elem)->hasAllServerTag()) {
+                        tag_found = true;
+                        break;
+                    }
+                }
+                if (!tag_found) {
+                    // Tag not matching, so toss the element.
+                    elem = index.erase(elem);
+                    continue;
+                }
+            }
+
+            // Go to the next element if we didn't toss the current one.
+            // Otherwise, the erase() function should have already taken
+            // us to the next one.
+            ++elem;
+        }
     }
 
     /// @brief Returns backend type in the textual format.
@@ -581,14 +779,6 @@ public:
     ///
     /// @return Port number on which database service is available.
     uint16_t getPort() const;
-
-    /// @brief Creates input binding for option value parameter.
-    ///
-    /// @param option Option descriptor holding option for which binding is to
-    /// be created.
-    /// @return Pointer to the binding (possibly null binding if formatted
-    /// value is non-empty.
-    db::MySqlBindingPtr createOptionValueBinding(const OptionDescriptorPtr& option);
 
     /// @brief Represents connection to the MySQL database.
     db::MySqlConnection conn_;

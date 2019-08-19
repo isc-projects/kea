@@ -64,17 +64,17 @@ mysql_wipe() {
     assert_eq 0 $ERRCODE "mysql-wipe: drop table sql failed, exit code %d, expected %d"
 }
 
-mysql_lease_init_test() {
-    test_start "mysql.lease-init"
+mysql_db_init_test() {
+    test_start "mysql.db-init"
 
     # Let's wipe the whole database
     mysql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
-    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-init mysql returned non-zero status code %d, expected %d"
 
     # Ok, now let's check if the tables are indeed there.
     # First table: schema_version. Should have 2 columns: version and minor.
@@ -118,8 +118,8 @@ EOF
     test_finish 0
 }
 
-mysql_lease_version_test() {
-    test_start "mysql.lease-version"
+mysql_db_version_test() {
+    test_start "mysql.db-version"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -133,7 +133,7 @@ CREATE TABLE schema_version (
 INSERT INTO schema_version VALUES (1, 7);
 EOF
 
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name)
+    version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name)
 
     assert_str_eq "1.7" ${version} "Expected kea-admin to return %s, returned value was %s"
 
@@ -150,10 +150,10 @@ mysql_host_reservation_init_test() {
     mysql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
-    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-init mysql returned non-zero status code %d, expected %d"
 
     # Ok, now let's check if the tables are indeed there.
     # First table: schema_version. Should have 2 columns: version and minor.
@@ -254,15 +254,15 @@ mysql_upgrade_test() {
     mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
 
     # Sanity check - verify that it reports version 1.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 8.0
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    # Ok, we have a 1.0 database. Let's upgrade it to 8.2
+    ${keaadmin} db-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
-    assert_eq 0 $ERRCODE "kea-admin lease-upgrade mysql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-upgrade mysql returned non-zero status code %d, expected %d"
 
     # Let's check that the new tables are indeed there.
 
@@ -689,9 +689,41 @@ EOF
     qry="SELECT COUNT(*) FROM parameter_data_type";
     run_statement "parameter_data_type count" "$qry" 4;
 
-    # Verify upgraded schema reports version 8.0
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "8.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    # Schema upgrade from 8.0 to 8.2
+
+    # New lifetime bounds.
+
+    # table: dhcp4_shared_network
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent, boot_file_name, next_server, server_hostname from dhcp4_shared_network"
+    run_statement "dhcp4_shared_network" "$qry"
+
+    # table: dhcp4_subnet
+    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent from dhcp4_subnet"
+    run_statement "dhcp4_subnet" "$qry"
+
+    # table: dhcp6_shared_network
+    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime,rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_shared_network"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp6_subnet
+    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
+    run_statement "dhcp6_subnet" "$qry"
+
+    # table: dhcp4_pool (should include three new columns)
+    qry="select client_class, require_client_classes, user_context from dhcp4_pool"
+    run_statement "dhcp4_pool" "$qry"
+
+    # table: dhcp6_pd_pool (should include five new columns)
+    qry="select excluded_prefix, excluded_prefix_length, client_class, require_client_classes, user_context from dhcp6_pd_pool"
+    run_statement "dhcp6_pd_pool" "$qry"
+
+    # table: dhcp6_pool (should include three new columns)
+    qry="select client_class, require_client_classes, user_context from dhcp6_pool"
+    run_statement "dhcp6_pool" "$qry"
+
+    # Verify upgraded schema reports version 8.2
+    version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    assert_str_eq "8.2" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -726,7 +758,7 @@ mysql_lease4_dump_test() {
     mysql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
 
@@ -786,7 +818,7 @@ mysql_lease6_dump_test() {
     mysql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
 
@@ -830,9 +862,9 @@ mysql_lease4_stat_test() {
     mysql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-init mysql returned non-zero status code %d, expected %d"
 
     # Verify lease4 stat table is present
     qry="select count(subnet_id) from lease4_stat";
@@ -922,10 +954,10 @@ mysql_lease6_stat_test() {
     mysql_wipe
 
     # Ok, now let's initialize the database
-    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
-    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+    assert_eq 0 $ERRCODE "kea-admin db-init mysql returned non-zero status code %d, expected %d"
 
     # verify lease6 stat table is present
     qry="select count(subnet_id) from lease6_stat"
@@ -981,7 +1013,7 @@ mysql_lease_stat_upgrade_test() {
     run_statement "insert v6 leases" "$qry"
 
     # Ok, we have a 4.0 database with leases. Let's upgrade it to 6.0
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     #
@@ -1129,7 +1161,7 @@ mysql_unused_subnet_id_test() {
     run_statement "insert options" "$qry"
 
     # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
-    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ${keaadmin} db-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
     # Upgrade should succeed
@@ -1171,9 +1203,9 @@ mysql_unused_subnet_id_test() {
     mysql_wipe
 }
 
-mysql_lease_init_test
+mysql_db_init_test
 mysql_host_reservation_init_test
-mysql_lease_version_test
+mysql_db_version_test
 mysql_upgrade_test
 mysql_lease4_dump_test
 mysql_lease6_dump_test

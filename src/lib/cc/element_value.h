@@ -7,6 +7,7 @@
 #ifndef ELEMENT_VALUE_H
 #define ELEMENT_VALUE_H
 
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <string>
 
@@ -91,6 +92,22 @@ public:
     /// @param el Element holding a value to be extracted.
     std::string operator()(ConstElementPtr el) const {
         return (el->stringValue());
+    }
+};
+
+/// @brief The @c ElementValue specialization for IOAddress.
+template<>
+class ElementValue<asiolink::IOAddress> {
+public:
+
+    /// @brief Function operator extracting an @c Element value as
+    /// IOAddress.
+    ///
+    /// @note This does NOT support empty string value.
+    ///
+    /// @param el Element holding a value to be extracted.
+    asiolink::IOAddress operator()(ConstElementPtr el) const {
+        return (asiolink::IOAddress(el->stringValue()));
     }
 };
 

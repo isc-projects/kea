@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,7 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     if (ip_len < 5) {
         isc_throw(InvalidPacketHeader, "Value of the length of the IP header must not be"
                   << " lower than 5 words. The length of the received header is "
-                  << ip_len << ".");
+                  << static_cast<unsigned>(ip_len) << ".");
     }
 
     // Seek to the position of source IP address.

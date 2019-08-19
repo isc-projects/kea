@@ -10,23 +10,37 @@ namespace isc {
 namespace data {
 
 StampedElement::StampedElement()
-    /// @todo Change it to microsec_clock once we transition to subsecond
-    /// precision.
-    : id_(0), timestamp_(boost::posix_time::second_clock::local_time()),
-      server_tag_() {
+    : BaseStampedElement(), server_tags_() {
+}
+
+bool
+StampedElement::hasServerTag(const ServerTag& server_tag) const {
+    return (server_tags_.count(server_tag) > 0);
 }
 
 void
-StampedElement::updateModificationTime() {
-    /// @todo Change it to microsec_clock once we transition to subsecond
-    /// precision.
-    setModificationTime(boost::posix_time::second_clock::local_time());
+StampedElement::delServerTag(const std::string& server_tag) {
+    if (!server_tags_.erase(ServerTag(server_tag))) {
+        isc_throw(NotFound, "can't find server tag '" << server_tag << "' to delete");
+    }
 }
+
+bool
+StampedElement::hasAllServerTag() const {
+    return (hasServerTag(ServerTag(ServerTag::ALL)));
+}
+
 
 ElementPtr
 StampedElement::getMetadata() const {
     ElementPtr metadata = Element::createMap();
-    metadata->set("server-tag", Element::create(getServerTag()));
+    ElementPtr tags = Element::createList();
+
+    for (auto server_tag : server_tags_) {
+        tags->add(Element::create(server_tag.get()));
+    }
+
+    metadata->set("server-tags", tags);
     return (metadata);
 }
 

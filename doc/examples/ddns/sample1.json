@@ -10,11 +10,11 @@
 
 // --------------  Global Parameters ----------------
 //
-//   D2 will listen for update requests for Kea DHCP servers at 172.16.1.10
+//   D2 will listen for update requests for Kea DHCP servers at 127.0.0.1
 //   on port 53001.  Maximum time to we will  wait for a DNS server to
 //   respond to us is 1000 ms.
 
-    "ip-address": "172.16.1.10",
+    "ip-address": "127.0.0.1",
     "port": 53001,
     "dns-server-timeout" : 1000,
 
@@ -136,6 +136,7 @@
 
 // The following configures logging. It assumes that messages with at least
 // informational level (info, warn, error and fatal) should be logged to stdout.
+// It also specifies a custom log pattern.
     "loggers": [
         {
             "name": "kea-dhcp-ddns",
@@ -150,7 +151,8 @@
                     // kept.
                     "flush": true,
                     "maxsize": 204800,
-                    "maxver": 4
+                    "maxver": 4,
+                    "pattern": "%d [%c/%i] %m\n"
                 }
             ],
             "debuglevel": 0,

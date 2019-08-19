@@ -150,6 +150,11 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
             dest.flush_ = flush_ptr->boolValue();
         }
 
+        isc::data::ConstElementPtr pattern = output_option->get("pattern");
+        if (pattern) {
+            dest.pattern_ = pattern->stringValue();
+        }
+
         destination.push_back(dest);
     }
 }

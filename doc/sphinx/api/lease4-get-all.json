@@ -1,0 +1,21 @@
+{
+    "avail": "1.4.0",
+    "brief": [
+        "This command retrieves all IPv4 leases or all leases for the specified set of subnets."
+    ],
+    "cmd-comment": [
+        "The ``lease4-get-all`` command may result in very large responses."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-get-all\",",
+        "    \"arguments\": \"subnets\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp59\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-get-all",
+    "support": [
+        "kea-dhcp4"
+    ]
+}

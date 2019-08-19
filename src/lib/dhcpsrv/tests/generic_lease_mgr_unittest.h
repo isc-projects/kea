@@ -210,6 +210,9 @@ public:
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
+    /// @brief Test making/fetching leases with IAIDs > signed 32-bit max.
+    void testLease6LargeIaidCheck();
+
     /// @brief Test method which returns all IPv6 leases.
     void testGetLeases6();
 
@@ -248,14 +251,7 @@ public:
     void testLease6HWTypeAndSource();
 
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
-    ///
-    /// This method checks basic IPv6 lease operations. There's check_t1_t2
-    /// parameter that controls whether the backend supports storing T1, T2
-    /// parameters. memfile supports it, while MySQL doesn't. If T1,T2
-    /// storage is not supported, the expected values are 0.
-    ///
-    /// @param check_t1_t2 controls whether T1,T2 timers should be checked
-    void testAddGetDelete6(bool check_t1_t2);
+    void testAddGetDelete6();
 
     /// @brief Check GetLease6 methods - access by DUID/IAID
     ///
@@ -279,7 +275,7 @@ public:
     /// Adds leases to the database and checks that they can be accessed via
     /// a combination of DIUID and IAID.
     void testGetLease6DuidIaidSubnetId();
-    
+
     /// @brief verifies getLeases6 method by DUID
     ///
     /// Adds 3 leases to backend and retrieves, verifes empty

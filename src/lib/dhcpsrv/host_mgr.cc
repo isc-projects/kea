@@ -48,6 +48,10 @@ HostMgr::addBackend(const std::string& access) {
 
 bool
 HostMgr::delBackend(const std::string& db_type) {
+    if (getHostMgrPtr()->cache_ptr_ &&
+        getHostMgrPtr()->cache_ptr_->getType() == db_type) {
+        getHostMgrPtr()->cache_ptr_.reset();
+    }
     return (HostDataSourceFactory::del(getHostMgrPtr()->alternate_sources_, db_type));
 }
 

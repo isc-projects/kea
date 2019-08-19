@@ -133,6 +133,14 @@ public:
     /// if such subnet doesn't exist within shared network.
     Subnet4Ptr getSubnet(const SubnetID& subnet_id) const;
 
+    /// @brief Returns a subnet for a specified subnet prefix.
+    ///
+    /// @param subnet_prefix Subnet prefix.
+    ///
+    /// @return Shared pointer to a subnet using this prefix or null pointer
+    /// if such subnet doesn't exist within shared network.
+    Subnet4Ptr getSubnet(const std::string& subnet_prefix) const;
+
     /// @brief Retrieves next available IPv4 subnet within shared network.
     ///
     /// See documentation for @ref SharedNetwork4::getNextSubnet.
@@ -224,8 +232,8 @@ typedef boost::multi_index_container<
         // Second index allows for access by shared network id.
         boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<SharedNetworkIdIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
-                                              &data::StampedElement::getId>
+            boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
+                                              &data::BaseStampedElement::getId>
         >,
         // Third index allows for access by shared network's name.
         boost::multi_index::ordered_unique<
@@ -243,9 +251,9 @@ typedef boost::multi_index_container<
         // Fifth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement,
+            boost::multi_index::const_mem_fun<data::BaseStampedElement,
                                               boost::posix_time::ptime,
-                                              &data::StampedElement::getModificationTime>
+                                              &data::BaseStampedElement::getModificationTime>
         >
     >
 > SharedNetwork4Collection;
@@ -341,6 +349,14 @@ public:
     /// if such subnet doesn't exist within shared network.
     Subnet6Ptr getSubnet(const SubnetID& subnet_id) const;
 
+    /// @brief Returns a subnet for a specified subnet prefix.
+    ///
+    /// @param subnet_prefix Subnet prefix.
+    ///
+    /// @return Shared pointer to a subnet using this prefix or null pointer
+    /// if such subnet doesn't exist within shared network.
+    Subnet6Ptr getSubnet(const std::string& subnet_prefix) const;
+
     /// @brief Retrieves next available IPv6 subnet within shared network.
     ///
     /// See documentation for @ref SharedNetwork6::getNextSubnet.
@@ -420,8 +436,8 @@ typedef boost::multi_index_container<
         // Second index allows for access by shared network id.
         boost::multi_index::hashed_non_unique<
             boost::multi_index::tag<SharedNetworkIdIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement, uint64_t,
-                                              &data::StampedElement::getId>
+            boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
+                                              &data::BaseStampedElement::getId>
         >,
         // Third index allows for access by shared network's name.
         boost::multi_index::ordered_unique<
@@ -432,12 +448,47 @@ typedef boost::multi_index_container<
         // Fourth index allows for searching using subnet modification time.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
-            boost::multi_index::const_mem_fun<data::StampedElement,
+            boost::multi_index::const_mem_fun<data::BaseStampedElement,
                                               boost::posix_time::ptime,
-                                              &data::StampedElement::getModificationTime>
+                                              &data::BaseStampedElement::getModificationTime>
         >
     >
 > SharedNetwork6Collection;
+
+/// @brief A class containing static convenience methods to fetch the shared
+/// networks from the containers.
+///
+/// @tparam ReturnPtrType Type of the returned object, i.e. @c SharedNetwork4Ptr
+/// or @c SharedNetwork6Ptr.
+/// @tparam CollectionType One of the @c SharedNetwork4Collection or
+/// @c SharedNetwork6Collection.
+template<typename ReturnPtrType, typename CollectionType>
+class SharedNetworkFetcher {
+public:
+
+    /// @brief Fetches shared network by name.
+    ///
+    /// @param collection Const reference to the collection from which the shared
+    /// network is to be fetched.
+    /// @param name Name of the shared network to be fetched.
+    /// @return Pointer to the fetched shared network or null if no such shared
+    /// network could be found.
+    static ReturnPtrType get(const CollectionType& collection, const std::string& name) {
+        auto& index = collection.template get<SharedNetworkNameIndexTag>();
+        auto sn = index.find(name);
+        if (sn != index.end()) {
+            return (*sn);
+        }
+        // No network found. Return null pointer.
+        return (ReturnPtrType());
+    }
+};
+
+/// @brief Type of the @c SharedNetworkFetcher used for IPv4.
+using SharedNetworkFetcher4 = SharedNetworkFetcher<SharedNetwork4Ptr, SharedNetwork4Collection>;
+
+/// @brief Type of the @c SharedNetworkFetcher used for IPv6.
+using SharedNetworkFetcher6 = SharedNetworkFetcher<SharedNetwork6Ptr, SharedNetwork6Collection>;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

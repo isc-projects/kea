@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -44,7 +44,7 @@
 #ifndef YY_AGENT_AGENT_PARSER_H_INCLUDED
 # define YY_AGENT_AGENT_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "agent_parser.yy" // lalr1.cc:401
+#line 17 "agent_parser.yy"
 
 #include <string>
 #include <cc/data.h>
@@ -55,7 +55,7 @@ using namespace isc::agent;
 using namespace isc::data;
 using namespace std;
 
-#line 59 "agent_parser.h" // lalr1.cc:401
+#line 59 "agent_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -177,9 +177,10 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined AGENT_DEBUG */
 
-#line 14 "agent_parser.yy" // lalr1.cc:401
+#line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 183 "agent_parser.h" // lalr1.cc:401
+#line 183 "agent_parser.h"
+
 
 
 
@@ -478,16 +479,17 @@ namespace isc { namespace agent {
         TOKEN_FLUSH = 287,
         TOKEN_MAXSIZE = 288,
         TOKEN_MAXVER = 289,
-        TOKEN_DHCP4 = 290,
-        TOKEN_DHCP6 = 291,
-        TOKEN_DHCPDDNS = 292,
-        TOKEN_START_JSON = 293,
-        TOKEN_START_AGENT = 294,
-        TOKEN_START_SUB_AGENT = 295,
-        TOKEN_STRING = 296,
-        TOKEN_INTEGER = 297,
-        TOKEN_FLOAT = 298,
-        TOKEN_BOOLEAN = 299
+        TOKEN_PATTERN = 290,
+        TOKEN_DHCP4 = 291,
+        TOKEN_DHCP6 = 292,
+        TOKEN_DHCPDDNS = 293,
+        TOKEN_START_JSON = 294,
+        TOKEN_START_AGENT = 295,
+        TOKEN_START_SUB_AGENT = 296,
+        TOKEN_STRING = 297,
+        TOKEN_INTEGER = 298,
+        TOKEN_FLOAT = 299,
+        TOKEN_BOOLEAN = 300
       };
     };
 
@@ -629,25 +631,25 @@ namespace isc { namespace agent {
         // Type destructor.
 switch (yytype)
     {
-      case 53: // value
-      case 56: // map_value
-      case 107: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 108: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 44: // "boolean"
+      case 45: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 43: // "floating point"
+      case 44: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 42: // "integer"
+      case 43: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 41: // "constant string"
+      case 42: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -730,13 +732,13 @@ switch (yytype)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1326,6 +1328,21 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_PATTERN (location_type l)
+      {
+        return symbol_type (token::TOKEN_PATTERN, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PATTERN (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PATTERN, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_DHCP4 (location_type l)
       {
         return symbol_type (token::TOKEN_DHCP4, std::move (l));
@@ -1502,7 +1519,7 @@ switch (yytype)
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const short yypact_ninf_;
+    static const signed char yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token number \a t to a symbol number.
@@ -1519,7 +1536,7 @@ switch (yytype)
   static const unsigned char yydefact_[];
 
   // YYPGOTO[NTERM-NUM].
-  static const short yypgoto_[];
+  static const signed char yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
   static const short yydefgoto_[];
@@ -1529,7 +1546,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned short yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const short yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1779,12 +1796,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 187,     ///< Last index in yytable_.
-      yynnts_ = 97,  ///< Number of nonterminal symbols.
+      yylast_ = 202,     ///< Last index in yytable_.
+      yynnts_ = 99,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 45  ///< Number of tokens.
+      yyntokens_ = 46  ///< Number of tokens.
     };
 
 
@@ -1831,9 +1848,10 @@ switch (yytype)
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
+      45
     };
-    const unsigned user_token_number_max_ = 299;
+    const unsigned user_token_number_max_ = 300;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1854,25 +1872,25 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 53: // value
-      case 56: // map_value
-      case 107: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 108: // socket_type_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 44: // "boolean"
+      case 45: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 43: // "floating point"
+      case 44: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 42: // "integer"
+      case 43: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 41: // "constant string"
+      case 42: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -1891,25 +1909,25 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 53: // value
-      case 56: // map_value
-      case 107: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 108: // socket_type_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 44: // "boolean"
+      case 45: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 43: // "floating point"
+      case 44: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 42: // "integer"
+      case 43: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 41: // "constant string"
+      case 42: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -1935,25 +1953,25 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 53: // value
-      case 56: // map_value
-      case 107: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 108: // socket_type_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 44: // "boolean"
+      case 45: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 43: // "floating point"
+      case 44: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 42: // "integer"
+      case 43: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 41: // "constant string"
+      case 42: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2025,14 +2043,15 @@ switch (yytype)
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299
+     295,   296,   297,   298,   299,   300
     };
     return token_type (yytoken_number_[type]);
   }
 
-#line 14 "agent_parser.yy" // lalr1.cc:401
+#line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2036 "agent_parser.h" // lalr1.cc:401
+#line 2054 "agent_parser.h"
+
 
 
 

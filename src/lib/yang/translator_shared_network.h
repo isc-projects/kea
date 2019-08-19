@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +22,13 @@ namespace yang {
 ///     "name": <name>,
 ///     "subnet4": <subnet list>,
 ///     "valid-lifetime": <valid lifetime>,
+///     "min-valid-lifetime": <minimum valid lifetime>,
+///     "max-valid-lifetime": <maximum valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
+///     "calculate-tee-times": <calculate T1/T2 times>,
+///     "t1-percent": <T1 percent>,
+///     "t2-percent": <T2 percent>,
 ///     "option-data": [ <list of option data> ],
 ///     "interface": "<interface>",
 ///     "client-class": "<guard class name>",
@@ -46,9 +51,16 @@ namespace yang {
 ///     "name": <name>,
 ///     "subnet6": <subnet list>,
 ///     "preferred-lifetime": <preferred lifetime>,
+///     "min-preferred-lifetime": <minimum preferred lifetime>,
+///     "max-preferred-lifetime": <maximum preferred lifetime>,
 ///     "valid-lifetime": <valid lifetime>,
+///     "min-valid-lifetime": <minimum valid lifetime>,
+///     "max-valid-lifetime": <maximum valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
+///     "calculate-tee-times": <calculate T1/T2 times>,
+///     "t1-percent": <T1 percent>,
+///     "t2-percent": <T2 percent>,
 ///     "option-data": [ <list of option data> ],
 ///     "interface": "<interface>",
 ///     "interface-id": "<interface id>",
@@ -66,8 +78,13 @@ namespace yang {
 /// @code
 ///  +--rw name                      string
 ///  +--rw valid-lifetime?           uint32
+///  +--rw min-valid-lifetime?       uint32
+///  +--rw max-valid-lifetime?       uint32
 ///  +--rw renew-timer?              uint32
 ///  +--rw rebind-timer?             uint32
+///  +--rw calculate-tee-times?      boolean
+///  +--rw t1-percent?               decimal64
+///  +--rw t2-percent?               decimal64
 ///  +--rw option-data*
 ///  +--rw interface?                string
 ///  +--rw client-class?             string
@@ -85,6 +102,8 @@ namespace yang {
 ///  (DHCPv6 only)
 ///  +--rw subnet6*
 ///  +--rw preferred-lifetime?       uint32
+///  +--rw min-preferred-lifetime?   uint32
+///  +--rw max-preferred-lifetime?   uint32
 ///  +--rw interface-id?             string
 ///  +--rw rapid-commit?             boolean
 /// @endcode

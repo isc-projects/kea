@@ -1,0 +1,38 @@
+{
+    "avail": "1.3.0",
+    "brief": [
+        "This command creates and adds a new subnet to the existing server configuration. This operation has no impact on other subnets."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet6-add\",",
+        "    \"arguments\": {",
+        "        \"subnet6\": [ {",
+        "            \"id\": 234,",
+        "            \"subnet\": \"2001:db8:1::/64\",",
+        "            ...",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp70\"/>",
+    "hook": "subnet_cmds",
+    "name": "subnet6-add",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 subnet added\",",
+        "    \"arguments\": {",
+        "        \"subnet6\": [",
+        "            {",
+        "                \"id\": 234,",
+        "                \"subnet\": \"2001:db8:1::/64\"",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

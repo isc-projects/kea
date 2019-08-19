@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,7 @@ public:
     /// @brief Default constructor.
     ///
     /// Sets current universal time as time value.
+    /// Time resolution is to seconds (i.e no fractional seconds).
     HttpDateTime();
 
     /// @brief Construct from @c boost::posix_time::ptime object.

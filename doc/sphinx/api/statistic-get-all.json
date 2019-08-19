@@ -1,0 +1,37 @@
+{
+    "avail": "1.0.0",
+    "brief": [
+        "This command retrieves all recorded statistics."
+    ],
+    "cmd-comment": [
+        "The server responds with the details of all recorded statistics, with a result of 0 indicating that it iterated over all statistics (even when the total number of statistics is zero)."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"statistic-get-all\",",
+        "    \"arguments\": { }",
+        "}"
+    ],
+    "resp-syntax": [
+        "{",
+        "   \"result\": 0,",
+        "   \"arguments\": {",
+        "       \"declined-addresses\": [ [ 0, \"2019-07-30 10:04:28.386733\" ] ],",
+        "       \"reclaimed-declined-addresses\": [ [ 0, \"2019-07-30 10:04:28.386735\" ] ],",
+        "       \"reclaimed-leases\": [ [ 0, \"2019-07-30 10:04:28.386736\" ] ],",
+        "       \"subnet[1].assigned-addresses\": [ [ 0, \"2019-07-30 10:04:28.386740\" ] ],",
+        "       \"subnet[1].declined-addresses\": [ [ 0, \"2019-07-30 10:04:28.386743\" ] ],",
+        "       \"subnet[1].reclaimed-declined-addresses\": [ [ 0, \"2019-07-30 10:04:28.386745\" ] ],",
+        "       \"subnet[1].reclaimed-leases\": [ [ 0, \"2019-07-30 10:04:28.386747\" ] ],",
+        "       \"subnet[1].total-addresses\": [ [ 200, \"2019-07-30 10:04:28.386719\" ] ]",
+        "       }",
+        "}"
+    ],
+
+    "description": "See <xref linkend=\"command-statistic-get-all\"/>",
+    "name": "statistic-get-all",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

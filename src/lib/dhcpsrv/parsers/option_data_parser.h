@@ -64,6 +64,7 @@ public:
     ///         space
     std::pair<OptionDescriptor, std::string>
     parse(isc::data::ConstElementPtr single_option);
+
 private:
 
     /// @brief Finds an option definition within an option space

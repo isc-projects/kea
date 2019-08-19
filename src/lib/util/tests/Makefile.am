@@ -49,7 +49,6 @@ run_unittests_SOURCES += pid_file_unittest.cc
 run_unittests_SOURCES += process_spawn_unittest.cc
 run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += random_number_generator_unittest.cc
-run_unittests_SOURCES += socketsession_unittest.cc
 run_unittests_SOURCES += staged_value_unittest.cc
 run_unittests_SOURCES += state_model_unittest.cc
 run_unittests_SOURCES += strutil_unittest.cc

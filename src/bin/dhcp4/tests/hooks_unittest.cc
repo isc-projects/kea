@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1748,8 +1748,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
-    const uint32_t temp_t1 = 50;
-    const uint32_t temp_t2 = 75;
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
@@ -1768,8 +1766,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_t1, temp_t2, temp_timestamp,
-                              subnet_->getID()));
+                              temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -1797,9 +1794,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
+    // Check that preferred, valid and cltt were really updated
     EXPECT_EQ(l->valid_lft_, subnet_->getValid());
 
     // Check that the callback called is indeed the one we installed
@@ -1848,8 +1843,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
-    const uint32_t temp_t1 = 50;
-    const uint32_t temp_t2 = 75;
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
@@ -1868,18 +1861,15 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_t1, temp_t2, temp_timestamp,
-                              subnet_->getID()));
+                              temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
     Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, preferred, valid and cltt really set.
+    // Check that preferred, valid and cltt really set.
     // Constructed lease looks as if it was assigned 10 seconds ago
-    // EXPECT_EQ(l->t1_, temp_t1);
-    // EXPECT_EQ(l->t2_, temp_t2);
     EXPECT_EQ(l->valid_lft_, temp_valid);
     EXPECT_EQ(l->cltt_, temp_timestamp);
 
@@ -1902,9 +1892,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     l = checkLease(ack, clientid, req->getHWAddr(), addr);
     ASSERT_TRUE(l);
 
-    // Check that T1, T2, valid and cltt were NOT updated
-    EXPECT_EQ(temp_t1, l->t1_);
-    EXPECT_EQ(temp_t2, l->t2_);
+    // Check that valid and cltt were NOT updated
     EXPECT_EQ(temp_valid, l->valid_lft_);
     EXPECT_EQ(temp_timestamp, l->cltt_);
 
@@ -2121,8 +2109,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
-    const uint32_t temp_t1 = 50;
-    const uint32_t temp_t2 = 75;
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
@@ -2141,8 +2127,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_t1, temp_t2, temp_timestamp,
-                              subnet_->getID()));
+                              temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -2214,8 +2199,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
-    const uint32_t temp_t1 = 50;
-    const uint32_t temp_t2 = 75;
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
@@ -2234,8 +2217,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_t1, temp_t2, temp_timestamp,
-                              subnet_->getID()));
+                              temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database
@@ -2329,8 +2311,6 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
-    const uint32_t temp_t1 = 50;
-    const uint32_t temp_t2 = 75;
     const uint32_t temp_valid = 100;
     const time_t temp_timestamp = time(NULL) - 10;
 
@@ -2349,8 +2329,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(addr, hw,
                               &client_id_->getDuid()[0], client_id_->getDuid().size(),
-                              temp_valid, temp_t1, temp_t2, temp_timestamp,
-                              subnet_->getID()));
+                              temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
     // Check that the lease is really in the database

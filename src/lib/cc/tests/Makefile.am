@@ -19,6 +19,7 @@ run_unittests_SOURCES += data_unittests.cc
 run_unittests_SOURCES += data_file_unittests.cc
 run_unittests_SOURCES += element_value_unittests.cc
 run_unittests_SOURCES += json_feed_unittests.cc
+run_unittests_SOURCES += server_tag_unittest.cc
 run_unittests_SOURCES += simple_parser_unittest.cc
 run_unittests_SOURCES += stamped_element_unittest.cc
 run_unittests_SOURCES += stamped_value_unittest.cc

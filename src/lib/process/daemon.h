@@ -268,7 +268,7 @@ private:
     std::string proc_name_;
 
     /// @brief Pointer to the directory where PID file(s) are written
-    /// It defaults to --localstatedir
+    /// It defaults to --localstatedir / run
     std::string pid_file_dir_;
 
     /// @brief Pointer to the PID file for this process

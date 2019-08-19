@@ -27,7 +27,7 @@ namespace util {
 /// is not mandatory. The value of the @c Optional may be initialized to
 /// "unspecified" initially. When the configuration parser finds that the
 /// particular parameter exists in the configuration file, the default value
-/// can be overriden and the value may be marked as "specified". If the
+/// can be overridden and the value may be marked as "specified". If the
 /// parameter is not found, the value remains "unspecified" and the appropriate
 /// actions may be taken, e.g. the default value may be used.
 ///

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,6 +143,22 @@ This debug message indicates that the value of start is outside of the
 string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
 still pushed.  The strings are displayed in hex.
+
+# For use with TokenSubOption
+
+% EVAL_DEBUG_SUB_OPTION Pushing option %1 sub-option %2 with value %3
+This debug message indicates that the given string representing the
+value of the requested sub-option of the requested parent option is
+being pushed onto the value stack. The string may be the text or
+binary value of the string based on the representation type requested
+(.text or .hex) or "true" or "false" if the requested type is .exists.
+The codes are the parent option and the sub-option codes as requested
+in the classification statement.
+
+% EVAL_DEBUG_SUB_OPTION_NO_OPTION Requested option %1 sub-option %2, but the parent option is not present, pushing result %3
+This debug message indicates that the parent option was not found.
+The codes are the parent option and the sub-option codes as requested
+in the classification statement.
 
 # For use with TokenToHexString
 

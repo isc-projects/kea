@@ -632,7 +632,7 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
 // Test checks whether simple add, get and delete operations are possible
 // on Lease6
 TEST_F(CqlLeaseMgrTest, testAddGetDelete6) {
-    testAddGetDelete6(false);
+    testAddGetDelete6();
 }
 
 /// @brief Basic Lease6 Checks
@@ -654,6 +654,14 @@ TEST_F(CqlLeaseMgrTest, maxDate6) {
 /// length exceeds 255 characters.
 TEST_F(CqlLeaseMgrTest, lease6InvalidHostname) {
     testLease6InvalidHostname();
+}
+
+/// @brief Verify that large IAID values work correctly.
+///
+/// Adds lease with a large IAID to the database and verifies it can
+/// fetched correclty.
+TEST_F(CqlLeaseMgrTest, leases6LargeIaidCheck) {
+    testLease6LargeIaidCheck();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID

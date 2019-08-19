@@ -13,6 +13,8 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/shared_network.h>
 #include <boost/pointer_cast.hpp>
 #include <string>
@@ -28,6 +30,10 @@ SharedNetwork4Ptr
 SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork4Ptr shared_network;
     try {
+
+        // Check parameters.
+        checkKeywords(SimpleParser4::SHARED_NETWORK4_PARAMETERS,
+                      shared_network_data);
 
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork4 object.
@@ -191,6 +197,10 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork6Ptr shared_network;
     std::string name;
     try {
+        // Check parameters.
+        checkKeywords(SimpleParser6::SHARED_NETWORK6_PARAMETERS,
+                      shared_network_data);
+
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork6 object.
         std::string name = getString(shared_network_data, "name");
@@ -200,11 +210,8 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         parseCommonTimers(shared_network_data, network);
 
         // preferred-lifetime
-        Triplet<uint32_t> preferred;
-        if (shared_network_data->contains("preferred-lifetime")) {
-            shared_network->setPreferred(getInteger(shared_network_data,
-                                                    "preferred-lifetime"));
-        }
+        shared_network->setPreferred(parseLifetime(shared_network_data,
+                                                   "preferred-lifetime"));
 
         // Get interface-id option content. For now we support string
         // representation only
@@ -336,4 +343,3 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
-

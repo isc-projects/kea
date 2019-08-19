@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -166,7 +166,7 @@ TEST(UDPSocket, processReceivedData) {
                                             // Where data is put
                                             // cppcheck-suppress variableScope
     size_t                  expected;       // Expected amount of data
-                                            // cppcheck-suppress variableScope    
+                                            // cppcheck-suppress variableScope
     size_t                  offset;         // Where to put next data
                                             // cppcheck-suppress variableScope
     size_t                  cumulative;     // Cumulative data received

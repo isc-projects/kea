@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -249,8 +249,6 @@ public:
     ///
     /// The following lease parameters are set to constant values:
     /// - valid lifetime = 1200,
-    /// - T1 = 600,
-    /// - T2 = 900,
     /// - DNS update forward flag = false,
     /// - DNS update reverse flag = false,
     ///
@@ -273,8 +271,6 @@ public:
         fillRandom(clientid.begin(), clientid.end());
 
         uint32_t valid_lft = 1200;
-        uint32_t t1 = 600;
-        uint32_t t2 = 900;
         time_t timestamp = time(NULL) - 86400 + random()%86400;
         bool fqdn_fwd = false;
         bool fqdn_rev = false;
@@ -285,7 +281,7 @@ public:
 
         // Return created lease.
         return (Lease4Ptr(new Lease4(address, hwaddr, &clientid[0],
-                                     clientid.size(), valid_lft, t1, t2,
+                                     clientid.size(), valid_lft,
                                      timestamp, subnet_id, fqdn_fwd,
                                      fqdn_rev, hostname.str())));
     }
@@ -303,8 +299,6 @@ public:
     /// - lease type = IA_NA
     /// - valid lifetime = 1200,
     /// - preferred lifetime = 1000
-    /// - T1 = 600,
-    /// - T2 = 900,
     /// - DNS update forward flag = false,
     /// - DNS update reverse flag = false,
     ///
@@ -325,8 +319,6 @@ public:
         uint32_t iaid = 1 + random()%100;
         uint32_t valid_lft = 1200;
         uint32_t preferred_lft = 1000;
-        uint32_t t1 = 600;
-        uint32_t t2 = 900;
         time_t timestamp = time(NULL) - 86400 + random()%86400;
         bool fqdn_fwd = false;
         bool fqdn_rev = false;
@@ -337,7 +329,7 @@ public:
 
         // Return created lease.
         Lease6Ptr lease(new Lease6(lease_type, address, duid, iaid,
-                                   preferred_lft, valid_lft, t1, t2,
+                                   preferred_lft, valid_lft,
                                    subnet_id, fqdn_fwd, fqdn_rev,
                                    hostname.str()));
         lease->cltt_ = timestamp;
@@ -370,6 +362,7 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     pmap["lfc-interval"] = "10";
     pmap["persist"] = "true";
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["max-row-errors"] = "5";
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
     // Expecting that persist parameter is yes or no. Everything other than
@@ -381,6 +374,16 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     // The lfc-interval must be an integer.
     pmap["persist"] = "true";
     pmap["lfc-interval"] = "bogus";
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // The max-row-errors must be an integer.
+    pmap["persist"] = "true";
+    pmap["max-row-errors"] = "bogus";
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // The max-row-errors must be >= 0.
+    pmap["persist"] = "true";
+    pmap["max-row-errors"] = "-1";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
@@ -545,7 +548,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr,
                                    static_cast<const uint8_t*>(0), 0,
-                                   100, 50, 60, 0, 1));
+                                   100, 0, 1));
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
     std::string updated_file_contents = new_file_contents +
@@ -625,8 +628,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // Check if we can still write to the lease file.
     std::vector<uint8_t> duid_vec(13);
     DuidPtr duid(new DUID(duid_vec));
-    Lease6Ptr new_lease(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),duid,
-                                   123, 300, 400, 100, 300, 2));
+    Lease6Ptr new_lease(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"), duid,
+                                   123, 300, 400, 2));
     new_lease->cltt_ = 0;
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
@@ -823,9 +826,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
 // Checks that adding/getting/deleting a Lease6 object works.
 TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     startBackend(V6);
-    testAddGetDelete6(true); // true - check T1,T2 values
-    // memfile is able to preserve those values, but some other
-    // backends can't do that.
+    testAddGetDelete6();
 }
 
 /// @brief Basic Lease4 Checks

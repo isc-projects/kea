@@ -712,7 +712,7 @@ CqlLease4Exchange::retrieve() {
         }
 
         Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
-                                    client_id_.size(), valid_lifetime_, 0, 0,
+                                    client_id_.size(), valid_lifetime_,
                                     cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname_));
 
@@ -1501,7 +1501,7 @@ CqlLease6Exchange::retrieve() {
         // expire time retrieved from the database).
         Lease6Ptr result(
             new Lease6(static_cast<Lease::Type>(lease_type_), addr, duid, iaid_,
-                       pref_lifetime_, valid_lifetime_, 0, 0, subnet_id_,
+                       pref_lifetime_, valid_lifetime_, subnet_id_,
                        fqdn_fwd_, fqdn_rev_, hostname_, hwaddr, prefix_len_));
 
         time_t cltt = 0;

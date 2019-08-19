@@ -12,6 +12,8 @@
 #include <ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/timeouts.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <http/date_time.h>
@@ -270,7 +272,7 @@ HAService::readyStateHandler() {
     case HA_HOT_STANDBY_ST:
         verboseTransition(HA_HOT_STANDBY_ST);
         break;
-        
+
     case HA_LOAD_BALANCING_ST:
         verboseTransition(HA_LOAD_BALANCING_ST);
         break;
@@ -732,17 +734,9 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
         // Count contacted servers.
         ++sent_num;
 
-        // Lease updates for deleted leases.
-        for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6Delete(**l),
-                                 parking_lot);
-        }
-
-        // Lease updates for new allocations and updated leases.
-        for (auto l = leases->begin(); l != leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6Update(**l),
-                                 parking_lot);
-        }
+        // Send new/updated leases and deleted leases in one command.
+        asyncSendLeaseUpdate(query, conf, CommandCreator::createLease6BulkApply(leases, deleted_leases),
+                             parking_lot);
     }
 
     return (sent_num);
@@ -808,7 +802,10 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
                 // Handle third group of errors.
                 try {
-                    verifyAsyncResponse(response);
+                    auto args = verifyAsyncResponse(response);
+                    // In the v6 case the server may return a list of failed lease
+                    // updates and we should log them.
+                    logFailedLeaseUpdates(query, args);
 
                 } catch (const std::exception& ex) {
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_FAILED)
@@ -857,7 +854,11 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 // Then it returns control to the DHCP server.
                 runModel(HA_LEASE_UPDATES_COMPLETE_EVT);
             }
-        });
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 
     // Request scheduled, so update the request counters for the query.
     if (pending_requests_.count(query) == 0) {
@@ -897,6 +898,58 @@ HAService::shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) co
     }
 
     return (false);
+}
+
+void
+HAService::logFailedLeaseUpdates(const PktPtr& query,
+                                 const ConstElementPtr& args) const {
+    // If there are no arguments, it means that the update was successful.
+    if (!args || (args->getType() != Element::map)) {
+        return;
+    }
+
+    // Instead of duplicating the code between the failed-deleted-leases and
+    // failed-leases, let's just have one function that does it for both.
+    auto log_proc = [](const PktPtr query, const ConstElementPtr& args,
+                       const std::string& param_name, const log::MessageID& mesid) {
+
+        // Check if there are any failed leases.
+        auto failed_leases = args->get(param_name);
+
+        // The failed leases must be a list.
+        if (failed_leases && (failed_leases->getType() == Element::list)) {
+            // Go over the failed leases and log each of them.
+            for (int i = 0; i < failed_leases->size(); ++i) {
+                auto lease = failed_leases->get(i);
+                if (lease->getType() == Element::map) {
+
+                    // ip-address
+                    auto ip_address = lease->get("ip-address");
+
+                    // lease type
+                    auto lease_type = lease->get("type");
+
+                    // error-message
+                    auto error_message = lease->get("error-message");
+
+                    LOG_INFO(ha_logger, mesid)
+                        .arg(query->getLabel())
+                        .arg(lease_type && (lease_type->getType() == Element::string) ?
+                             lease_type->stringValue() : "(uknown)")
+                        .arg(ip_address && (ip_address->getType() == Element::string) ?
+                             ip_address->stringValue() : "(unknown)")
+                        .arg(error_message && (error_message->getType() == Element::string) ?
+                             error_message->stringValue() : "(unknown)");
+                }
+            }
+        }
+    };
+
+    // Process "failed-deleted-leases"
+    log_proc(query, args, "failed-deleted-leases", HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER);
+
+    // Process "failed-leases".
+    log_proc(query, args, "failed-leases", HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER);
 }
 
 ConstElementPtr
@@ -1004,7 +1057,11 @@ HAService::asyncSendHeartbeat() {
             // asynchronous tasks etc. Then it returns control to the DHCP server.
             startHeartbeat();
             runModel(HA_HEARTBEAT_COMPLETE_EVT);
-      });
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 }
 
 void
@@ -1090,7 +1147,11 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
                  post_request_action(error_message.empty(),
                                      error_message);
              }
-    });
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 }
 
 void
@@ -1157,7 +1218,11 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
                  post_request_action(error_message.empty(),
                                      error_message);
              }
-    });
+        },
+        HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
 }
 
 void
@@ -1393,7 +1458,12 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                  error_message,
                                  dhcp_disabled);
             }
-    }, HttpClient::RequestTimeout(config_->getSyncTimeout()));
+        },
+        HttpClient::RequestTimeout(config_->getSyncTimeout()),
+        boost::bind(&HAService::clientConnectHandler, this, _1, _2),
+        boost::bind(&HAService::clientCloseHandler, this, _1)
+    );
+
 }
 
 ConstElementPtr
@@ -1549,6 +1619,35 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
     return (args);
 }
 
+bool
+HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd) {
+
+    // If things look ok register the socket with Interface Manager. Note
+    // we don't register if the FD is < 0 to avoid an expection throw.
+    // It is unlikely that this will occur but we want to be liberal
+    // and avoid issues.
+    if ((!ec || (ec.value() == boost::asio::error::in_progress))
+        && (tcp_native_fd >= 0)) {
+        // External socket callback is a NOP. Ready events handlers are
+        // run by an explicit call IOService ready in kea-dhcp<n> code.
+        // We are registerin the socket only to interrupt main-thread
+        // select().
+        IfaceMgr::instance().addExternalSocket(tcp_native_fd, 0);
+    }
+
+    // If ec.value() == boost::asio::error::already_connected, we should already
+    // be registered, so nothing to do.  If it is any other value, then connect
+    // failed and Connection logic should handle that, not us, so no matter
+    // what happens we're returning true.
+    return (true);
+}
+
+void
+HAService::clientCloseHandler(int tcp_native_fd) {
+    if (tcp_native_fd >= 0) {
+        IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
+    }
+};
 
 } // end of namespace isc::ha
 } // end of namespace isc

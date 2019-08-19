@@ -450,13 +450,13 @@ and the attempt ended in error.  The access string in question - which
 should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
-% DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks.
+% DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks (%3).
 This warning message is printed when the lease being loaded does not match the
 configuration. Due to lease-checks value, the lease will be loaded, but
 it will most likely be unused by Kea, as there is no subnet that matches
 the IP address associated with the lease.
 
-% DHCPSRV_LEASE_SANITY_FAIL_DISCARD The lease %1 with subnet-id %2 failed subnet-id checks and was dropped.
+% DHCPSRV_LEASE_SANITY_FAIL_DISCARD The lease %1 with subnet-id %2 failed subnet-id checks (%3) and was dropped.
 This warning message is printed when a lease was loaded, but Kea was told
 (by setting lease-checks parameter) to discard leases with inconsistent
 data. The lease was discarded, because either there is no subnet configured

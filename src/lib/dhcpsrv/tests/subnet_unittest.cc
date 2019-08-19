@@ -1042,16 +1042,16 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     // Pool3 requires a member of bar
     mypool = subnet->getPool(Lease::TYPE_NA, no_class,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_FALSE(mypool);
     mypool = subnet->getPool(Lease::TYPE_NA, foo_class,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_FALSE(mypool);
     mypool = subnet->getPool(Lease::TYPE_NA, bar_class,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_EQ(mypool, pool3);
     mypool = subnet->getPool(Lease::TYPE_NA, three_classes,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
+                             IOAddress("2001:db8:1:3::dead:beef"));
     EXPECT_EQ(mypool, pool3);
 }
 
@@ -1682,6 +1682,58 @@ TEST(Subnet6Test, lastAllocated) {
 
     // No, you can't set the last allocated IPv4 address in IPv6 subnet
     EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_V4, ia), BadValue);
+}
+
+// This test verifies that the IPv4 subnet can be fetched by id.
+TEST(SubnetFetcherTest, getSubnet4ById) {
+    Subnet4Collection collection;
+
+    // Subnet hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto subnet = SubnetFetcher4::get(collection, SubnetID(1024));
+    EXPECT_FALSE(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1024));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 2048));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet = SubnetFetcher4::get(collection, SubnetID(1024));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(1024, subnet->getID());
+    EXPECT_EQ("192.0.2.0/24", subnet->toText());
+
+    subnet = SubnetFetcher4::get(collection, SubnetID(2048));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(2048, subnet->getID());
+    EXPECT_EQ("192.0.3.0/24", subnet->toText());
+}
+
+// This test verifies that the IPv6 subnet can be fetched by id.
+TEST(SubnetFetcherTest, getSubnet6ById) {
+    Subnet6Collection collection;
+
+    // Subnet hasn't been added to the collection. A null pointer should
+    // be returned.
+    auto subnet = SubnetFetcher6::get(collection, SubnetID(1026));
+    EXPECT_FALSE(subnet);
+
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4, 1024));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet.reset(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4, 2048));
+    EXPECT_NO_THROW(collection.push_back(subnet));
+
+    subnet = SubnetFetcher6::get(collection, SubnetID(1024));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(1024, subnet->getID());
+    EXPECT_EQ("2001:db8:1::/64", subnet->toText());
+
+    subnet = SubnetFetcher6::get(collection, SubnetID(2048));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(2048, subnet->getID());
+    EXPECT_EQ("2001:db8:2::/64", subnet->toText());
 }
 
 };

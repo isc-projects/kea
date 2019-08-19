@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/eval/eval_messages.mes on Fri Feb 08 2019 20:17
+// File created from ../../../src/lib/eval/eval_messages.mes on Fri Jun 14 2019 20:35
 
 #ifndef EVAL_MESSAGES_H
 #define EVAL_MESSAGES_H
@@ -28,6 +28,8 @@ extern const isc::log::MessageID EVAL_DEBUG_STRING;
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING;
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_EMPTY;
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_RANGE;
+extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION;
+extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION_NO_OPTION;
 extern const isc::log::MessageID EVAL_DEBUG_TOHEXSTRING;
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_DATA;
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND;

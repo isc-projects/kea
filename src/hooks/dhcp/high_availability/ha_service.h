@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -450,6 +450,18 @@ protected:
                               const data::ConstElementPtr& command,
                               const hooks::ParkingLotHandlePtr& parking_lot);
 
+    /// @brief Log failed lease updates.
+    ///
+    /// Logs failed lease updates included in the "failed-deleted-leases"
+    /// and/or "failed-leases" carried in the response to the
+    /// @c lease6-bulk-apply command.
+    ///
+    /// @param query Pointer to the DHCP client's query.
+    /// @param args Arguments of the response. It may be null, in which
+    /// case the function simply returns.
+    void logFailedLeaseUpdates(const dhcp::PktPtr& query,
+                               const data::ConstElementPtr& args) const;
+
     /// @brief Checks if the lease updates should be sent as result of leases
     /// allocation or release.
     ///
@@ -714,6 +726,26 @@ protected:
     /// @return Pointer to the response arguments.
     /// @throw CtrlChannelError if response is invalid or contains an error.
     data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response);
+
+    /// @brief HttpClient connect callback handler
+    ///
+    /// Passed into HttpClient calls to allow registration of client's TCP socket
+    /// with an external monitor (such as IfaceMgr's  main-thread select()).
+    ///
+    /// @param ec Error status of the ASIO connect
+    /// @param tcp_native_fd socket descriptor to register
+    /// @return always true. Registeration cannot fail, and if ec indicates a real
+    /// error we want Connection logic to process it.
+    bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
+
+    /// @brief HttpClient close callback handler
+    ///
+    /// Passed into HttpClient calls to allow unregistration of client's
+    /// TCP socket with an external monitor (such as IfaceMgr's
+    /// main-thread select()).
+    ///
+    /// @param tcp_native_fd socket descriptor to register
+    void clientCloseHandler(int tcp_native_fd);
 
     /// @brief Pointer to the IO service object shared between this hooks
     /// library and the DHCP server.

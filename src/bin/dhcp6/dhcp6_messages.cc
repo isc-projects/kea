@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Wed May 22 2019 18:12
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Tue Jul 16 2019 11:03
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -88,6 +88,7 @@ extern const isc::log::MessageID DHCP6_NO_SOCKETS_OPEN = "DHCP6_NO_SOCKETS_OPEN"
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET = "DHCP6_OPEN_SOCKET";
 extern const isc::log::MessageID DHCP6_OPEN_SOCKET_FAIL = "DHCP6_OPEN_SOCKET_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_DHCP_DISABLED = "DHCP6_PACKET_DROP_DHCP_DISABLED";
+extern const isc::log::MessageID DHCP6_PACKET_DROP_DROP_CLASS = "DHCP6_PACKET_DROP_DROP_CLASS";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_PARSE_FAIL = "DHCP6_PACKET_DROP_PARSE_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_SERVERID_MISMATCH = "DHCP6_PACKET_DROP_SERVERID_MISMATCH";
 extern const isc::log::MessageID DHCP6_PACKET_DROP_UNICAST = "DHCP6_PACKET_DROP_UNICAST";
@@ -97,6 +98,7 @@ extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL = "DHCP6_PACKET_PROCE
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION = "DHCP6_PACKET_PROCESS_STD_EXCEPTION";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED = "DHCP6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL = "DHCP6_PACKET_RECEIVE_FAIL";
+extern const isc::log::MessageID DHCP6_PACKET_SEND = "DHCP6_PACKET_SEND";
 extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL = "DHCP6_PACKET_SEND_FAIL";
 extern const isc::log::MessageID DHCP6_PACK_FAIL = "DHCP6_PACK_FAIL";
 extern const isc::log::MessageID DHCP6_PARSER_COMMIT_EXCEPTION = "DHCP6_PARSER_COMMIT_EXCEPTION";
@@ -195,7 +197,7 @@ const char* values[] = {
     "DHCP6_DHCP4O6_RECEIVE_FAIL", "failed to receive DHCPv4o6: %1",
     "DHCP6_DHCP4O6_RECEIVING", "receiving DHCPv4o6 packet from DHCPv4 server",
     "DHCP6_DHCP4O6_SEND_FAIL", "failed to send DHCPv4o6 packet: %1",
-    "DHCP6_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal",
+    "DHCP6_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP6_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP6_FLEX_ID", "flexible identifier generated for incoming packet: %1",
     "DHCP6_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",
@@ -217,7 +219,7 @@ const char* values[] = {
     "DHCP6_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP6_LEASE_ADVERT", "%1: lease for address %2 and iaid=%3 will be advertised",
     "DHCP6_LEASE_ADVERT_FAIL", "%1: failed to advertise an address lease for iaid=%2",
-    "DHCP6_LEASE_ALLOC", "%1: lease for address %2 and iaid=%3 has been allocated",
+    "DHCP6_LEASE_ALLOC", "%1: lease for address %2 and iaid=%3 has been allocated for %4 seconds",
     "DHCP6_LEASE_ALLOC_FAIL", "%1: failed to grant an address lease for iaid=%2",
     "DHCP6_LEASE_DATA", "%1: detailed lease information for iaid=%2: %3",
     "DHCP6_LEASE_NA_WITHOUT_DUID", "%1: address lease for address %2 does not have a DUID",
@@ -229,6 +231,7 @@ const char* values[] = {
     "DHCP6_OPEN_SOCKET", "opening service sockets on port %1",
     "DHCP6_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCP6_PACKET_DROP_DHCP_DISABLED", "%1: DHCP service is globally disabled",
+    "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special class 'DROP': %1",
     "DHCP6_PACKET_DROP_PARSE_FAIL", "failed to parse packet from %1 to %2, received over interface %3, reason: %4",
     "DHCP6_PACKET_DROP_SERVERID_MISMATCH", "%1: dropping packet with server identifier: %2, server is using: %3",
     "DHCP6_PACKET_DROP_UNICAST", "%1: dropping unicast %2 packet as this packet should be sent to multicast",
@@ -238,6 +241,7 @@ const char* values[] = {
     "DHCP6_PACKET_PROCESS_STD_EXCEPTION", "exception occurred during packet processing: %1",
     "DHCP6_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP6_PACKET_RECEIVE_FAIL", "error on attempt to receive packet: %1",
+    "DHCP6_PACKET_SEND", "%1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8",
     "DHCP6_PACKET_SEND_FAIL", "failed to send DHCPv6 packet: %1",
     "DHCP6_PACK_FAIL", "failed to assemble response correctly",
     "DHCP6_PARSER_COMMIT_EXCEPTION", "parser failed to commit changes",
@@ -246,7 +250,7 @@ const char* values[] = {
     "DHCP6_PARSER_FAIL", "failed to create or run parser for configuration element %1: %2",
     "DHCP6_PD_LEASE_ADVERT", "%1: lease for prefix %2/%3 and iaid=%4 will be advertised",
     "DHCP6_PD_LEASE_ADVERT_FAIL", "%1: failed to advertise a prefix lease for iaid=%2",
-    "DHCP6_PD_LEASE_ALLOC", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated",
+    "DHCP6_PD_LEASE_ALLOC", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated for %5 seconds",
     "DHCP6_PD_LEASE_ALLOC_FAIL", "%1: failed to grant a prefix lease for iaid=%2",
     "DHCP6_PD_LEASE_RENEW", "%1: lease for prefix %2/%3 and iaid=%4 has been allocated",
     "DHCP6_PROCESS_IA_NA_EXTEND", "%1: extending lease lifetime for IA_NA option with iaid=%2",

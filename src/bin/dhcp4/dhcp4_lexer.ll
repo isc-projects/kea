@@ -581,6 +581,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"max-row-errors\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_MAX_ROW_ERRORS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("max_row_errors", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -589,6 +598,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("valid-lifetime", driver.loc_);
+    }
+}
+
+\"min-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_MIN_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("min-valid-lifetime", driver.loc_);
+    }
+}
+
+\"max-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_MAX_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("max-valid-lifetime", driver.loc_);
     }
 }
 
@@ -976,6 +1007,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_MAXVER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("maxver", driver.loc_);
+    }
+}
+
+\"pattern\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp4Parser::make_PATTERN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("pattern", driver.loc_);
     }
 }
 
@@ -1447,6 +1487,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname-char-set\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::DHCP_DDNS:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
     default:
@@ -1456,6 +1497,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname-char-replacement\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::DHCP_DDNS:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
     default:

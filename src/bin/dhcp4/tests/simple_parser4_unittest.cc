@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -115,6 +115,8 @@ TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
     ElementPtr global = parseJSON("{ \"renew-timer\": 1,"
                                   "  \"rebind-timer\": 2,"
                                   "  \"valid-lifetime\": 4,"
+                                  "  \"min-valid-lifetime\": 3,"
+                                  "  \"max-valid-lifetime\": 5,"
                                   "  \"subnet4\": [ { \"renew-timer\": 100 } ] "
                                   "}");
     ConstElementPtr subnets = global->find("subnet4");
@@ -122,17 +124,19 @@ TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
     ConstElementPtr subnet = subnets->get(0);
     ASSERT_TRUE(subnet);
 
-    // we should inherit 3 parameters. Renew-timer should remain intact,
+    // we should inherit 4 parameters. Renew-timer should remain intact,
     // as it was already defined in the subnet scope.
     size_t num;
     EXPECT_NO_THROW(num = SimpleParser4::deriveParameters(global));
-    EXPECT_EQ(2, num);
+    EXPECT_EQ(4, num);
 
     // Check the values. 2 of them are inherited, while the third one
     // was already defined in the subnet, so should not be inherited.
     checkIntegerValue(subnet, "renew-timer", 100);
     checkIntegerValue(subnet, "rebind-timer", 2);
     checkIntegerValue(subnet, "valid-lifetime", 4);
+    checkIntegerValue(subnet, "min-valid-lifetime", 3);
+    checkIntegerValue(subnet, "max-valid-lifetime", 5);
 }
 
 // This test checks if the parameters in "subnet4" are assigned default values

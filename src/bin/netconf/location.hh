@@ -1,5 +1,4 @@
-// Generated 201905221355
-// A Bison parser, made by GNU Bison 3.3.2.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Locations for Bison parsers in C++
 
@@ -55,9 +54,10 @@
 #  endif
 # endif
 
-#line 14 "netconf_parser.yy" // location.cc:339
+#line 14 "netconf_parser.yy"
 namespace isc { namespace netconf {
-#line 60 "location.hh" // location.cc:339
+#line 60 "location.hh"
+
   /// A point in a source file.
   class position
   {
@@ -317,7 +317,8 @@ namespace isc { namespace netconf {
     return ostr;
   }
 
-#line 14 "netconf_parser.yy" // location.cc:339
+#line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 322 "location.hh" // location.cc:339
+#line 323 "location.hh"
+
 #endif // !YY_NETCONF_LOCATION_HH_INCLUDED

@@ -161,6 +161,68 @@ protected:
         }
     }
 
+    /// @brief Retrieve a single configuration property from the backend.
+    ///
+    /// This is common method for retrieving a single configuration property
+    /// from the selected database without specifying the server selector. The
+    /// server specific backends call this method to retrieve a single object.
+    /// For example, the DHCPv4 configuration backend pool may use this function
+    /// to implement a @c getServer4 method:
+    ///
+    /// @code
+    /// ServerPtr getServer4(const BackendSelector& backend_selector,
+    ///                      const std::string& server_tag) const {
+    ///     ServerPtr server;
+    ///     getPropertyPtrConst<ServerPtr, const std::string&>
+    ///         (&ConfigBackendDHCPv4::getServer4, backend_selector,
+    ///          server_tag);
+    ///     return (server);
+    /// }
+    /// @endcode
+    ///
+    /// where @c ConfigBackendDHCPv4::getServer4 has the following signature:
+    ///
+    /// @code
+    /// ServerPtr getServer4(const std::string&) const;
+    /// @endcode
+    ///
+    /// This method is used in cases when server selector is not applicable.
+    ///
+    /// @tparam PropertyType Type of the object returned by the backend call.
+    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
+    /// method to be invoked.
+    /// @tparam Args Parameter pack holding types of the arguments provided
+    /// in the call to this method.
+    ///
+    /// @param MethodPointer Pointer to the backend method to be called.
+    /// @param backend_selector Backend selector.
+    /// @param [out] property Reference to the shared pointer where retrieved
+    /// property should be assigned.
+    /// @param input Values to be used as input to the backend call.
+    ///
+    /// @throw db::NoSuchDatabase if no database matching the given selector
+    /// was found.
+    /// @throw db::AmbiguousDatabase if multiple databases matching the selector
+    /// were found.
+    template<typename PropertyType, typename... FnPtrArgs, typename... Args>
+    void getBackendPropertyPtrConst(PropertyType (ConfigBackendType::*MethodPointer)
+                                    (FnPtrArgs...) const,
+                                    const db::BackendSelector& backend_selector,
+                                    PropertyType& property,
+                                    Args... input) const {
+        auto backends = selectBackends(backend_selector);
+        if (backends.empty()) {
+            isc_throw(db::NoSuchDatabase, "no such database found for selector: "
+                      << backend_selector.toText());
+
+        } else if (backends.size() > 1) {
+            isc_throw(db::AmbiguousDatabase, "more than one database found for "
+                      "selector: " << backend_selector.toText());
+        }
+
+        property = ((*(*(backends.begin())).*MethodPointer)(input...));
+    }
+
     /// @brief Retrieve multiple configuration properties from the pool.
     ///
     /// This is a common method for retrieving multiple configuration properties
@@ -309,6 +371,58 @@ protected:
         }
     }
 
+    /// @brief Get all configuration properties from the backend.
+    ///
+    /// This is a common method for retrieving all configuration properties
+    /// from the selected database without specifying the server selector. The
+    /// server specific backends call this method to retrieve all objects of
+    /// the same type. For example, the DHCPv4 configuration backend pool may
+    /// use this function to implement a @c getAllServers4 method:
+    ///
+    /// @code
+    /// ServerCollection getAllServers4(const BackendSelector&) const {
+    ///     ServerCollection servers;
+    ///     getAllBackendPropertiesConst<ServerCollection>
+    ///         (&ConfigBackendDHCPv4::getAllServers4, backend_selector, servers);
+    ///     return (servers);
+    /// }
+    /// @endcode
+    ///
+    /// where @c ConfigBackendDHCPv4::getAllServers4 has the following signature:
+    ///
+    /// @code
+    /// ServerCollection getAllServers4() const;
+    /// @endcode
+    ///
+    /// This method is used in cases when server selector is not applicable.
+    ///
+    /// @tparam PropertyCollectionType Type of the container into which the
+    /// properties are stored.
+    ///
+    /// @param MethodPointer Pointer to the backend method to be called.
+    /// @param backend_selector Backend selector.
+    /// @param [out] properties Reference to the collection of retrieved properties.
+    ///
+    /// @throw db::NoSuchDatabase if no database matching the given selector
+    /// was found.
+    /// @throw db::AmbiguousDatabase if multiple databases matching the selector
+    /// were found.
+    template<typename PropertyCollectionType>
+    void getAllBackendPropertiesConst(PropertyCollectionType (ConfigBackendType::*MethodPointer)() const,
+                                      const db::BackendSelector& backend_selector,
+                                      PropertyCollectionType& properties) const {
+        auto backends = selectBackends(backend_selector);
+        if (backends.empty()) {
+            isc_throw(db::NoSuchDatabase, "no such database found for selector: "
+                      << backend_selector.toText());
+
+        } else if (backends.size() > 1) {
+            isc_throw(db::AmbiguousDatabase, "more than one database found for "
+                      "selector: " << backend_selector.toText());
+        }
+
+        properties = (*(*(backends.begin())).*MethodPointer)();
+    }
 
     /// @brief Add, update or delete property from the backend.
     ///
@@ -373,6 +487,67 @@ protected:
         }
 
         return ((*(*(backends.begin())).*MethodPointer)(server_selector, input...));
+    }
+
+    /// @brief Add, update or delete property from the backend.
+    ///
+    /// This is a common method for storing a single configuration property in
+    /// a database, updating an existing property or deleting the property
+    /// without specifying the server selector. The server specific backends
+    /// call this method. For example, the DHCPv4 configuration backend pool
+    /// may use this function to implement the @c createUpdateServer4 method:
+    ///
+    /// @code
+    /// void createUpdateServer4(const BackendSelector& backend_selector,
+    ///                          const ServerSelector& server_selector,
+    ///                          const ServerPtr& server) {
+    ///     createUpdateDeleteBackendProperty<void, const ServerPtr&>
+    ///         (&ConfigBackendDHCPv4::createUpdateServer4, backend_selector,
+    ///          server);
+    /// }
+    /// @endcode
+    ///
+    /// where @c ConfigBackendDHCPv4::createUpdateServer4 has the following
+    /// signature:
+    ///
+    /// @code
+    /// void createUpdateServer4(const ServerPtr&);
+    /// @endcode
+    ///
+    /// This method is used in cases when server selector is not applicable.
+    ///
+    /// @tparam ReturnValue Returned value, typically void or uint64_t.
+    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
+    /// method to be invoked.
+    /// @tparam Args Parameter pack holding types of the arguments provided
+    /// in the call to this method.
+    ///
+    /// @param MethodPointer Pointer to the backend method to be called.
+    /// @param backend_selector Backend selector.
+    /// @param input Objects used as arguments to the backend method to be
+    /// called.
+    ///
+    /// @throw db::NoSuchDatabase if no database matching the given selector
+    /// was found.
+    /// @throw db::AmbiguousDatabase if multiple databases matching the selector
+    /// were found.
+    /// @return Number of affected properties, if the value is non void.
+    template<typename ReturnValue, typename... FnPtrArgs, typename... Args>
+    ReturnValue createUpdateDeleteBackendProperty(ReturnValue (ConfigBackendType::*MethodPointer)
+                                                  (FnPtrArgs...),
+                                                  const db::BackendSelector& backend_selector,
+                                                  Args... input) {
+        auto backends = selectBackends(backend_selector);
+        if (backends.empty()) {
+            isc_throw(db::NoSuchDatabase, "no such database found for selector: "
+                      << backend_selector.toText());
+
+        } else if (backends.size() > 1) {
+            isc_throw(db::AmbiguousDatabase, "more than one database found for "
+                      "selector: " << backend_selector.toText());
+        }
+
+        return ((*(*(backends.begin())).*MethodPointer)(input...));
     }
 
     /// @brief Selects existing backends matching the selector.

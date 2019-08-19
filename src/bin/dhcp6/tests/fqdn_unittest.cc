@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,8 +85,8 @@ public:
         // generateClientId assigns DUID to duid_.
         generateClientId();
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                                duid_, 1234, 501, 502, 503,
-                                504, 1, HWAddrPtr(), 0));
+                                duid_, 1234, 501, 502,
+                                1, HWAddrPtr(), 0));
         // Config DDNS to be enabled, all controls off
         enableD2();
     }

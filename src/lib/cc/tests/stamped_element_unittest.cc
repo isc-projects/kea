@@ -23,8 +23,8 @@ TEST(StampedElementTest, create) {
     // Default identifier is 0.
     EXPECT_EQ(0, element.getId());
 
-    // Default server tag is empty.
-    EXPECT_TRUE(element.getServerTag().empty());
+    // By default there is no server tag.
+    EXPECT_TRUE(element.getServerTags().empty());
 
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.
@@ -34,7 +34,7 @@ TEST(StampedElementTest, create) {
     EXPECT_LT(delta.seconds(), 5);
 }
 
-// Tests that default id can be overriden by a new value.
+// Tests that default id can be overridden by a new value.
 TEST(StampedElementTest, setId) {
     StampedElement element;
     element.setId(123);
@@ -70,12 +70,45 @@ TEST(StampedElementTest, update) {
     EXPECT_LT(delta.seconds(), 5);
 }
 
-// Tests that server tag can be overriden by a new value.
+// Tests that one or more server tag can be specified.
 TEST(StampedElementTest, setServerTag) {
     StampedElement element;
     element.setServerTag("foo");
-    EXPECT_EQ("foo", element.getServerTag());
+    EXPECT_EQ(1, element.getServerTags().size());
+    EXPECT_EQ("foo", element.getServerTags().begin()->get());
+
+    element.setServerTag("bar");
+    EXPECT_EQ(2, element.getServerTags().size());
+
+    EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
+    EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
+    EXPECT_FALSE(element.hasServerTag(ServerTag("xyz")));
+    EXPECT_FALSE(element.hasAllServerTag());
+
+    element.setServerTag(ServerTag::ALL);
+    EXPECT_TRUE(element.hasAllServerTag());
 }
+
+// Tests that a server tag can be deleted.
+TEST(StampedElementTest, delServerTag) {
+    StampedElement element;
+    EXPECT_THROW(element.delServerTag("foo"), isc::NotFound);
+    element.setServerTag("foo");
+    element.setServerTag("bar");
+
+    ASSERT_EQ(2, element.getServerTags().size());
+    EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
+    EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
+
+    EXPECT_NO_THROW(element.delServerTag("foo"));
+    ASSERT_EQ(1, element.getServerTags().size());
+    EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
+
+    EXPECT_NO_THROW(element.delServerTag("bar"));
+    EXPECT_EQ(0, element.getServerTags().size());
+    EXPECT_THROW(element.delServerTag("bar"), isc::NotFound);
+}
+
 
 // Test that metadata can be created from the StampedElement.
 TEST(StampedElementTest, getMetadata) {
@@ -85,7 +118,12 @@ TEST(StampedElementTest, getMetadata) {
     ASSERT_TRUE(metadata);
     ASSERT_EQ(Element::map, metadata->getType());
 
-    auto server_tag_element = metadata->get("server-tag");
+    auto server_tags_element = metadata->get("server-tags");
+    ASSERT_TRUE(server_tags_element);
+    EXPECT_EQ(Element::list, server_tags_element->getType());
+    EXPECT_EQ(1, server_tags_element->size());
+
+    auto server_tag_element = server_tags_element->get(0);
     ASSERT_TRUE(server_tag_element);
     EXPECT_EQ(Element::string, server_tag_element->getType());
     EXPECT_EQ("world", server_tag_element->stringValue());

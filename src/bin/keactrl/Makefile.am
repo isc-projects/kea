@@ -6,34 +6,23 @@ SUBDIRS = . tests
 # setting KEACTRL_CONF environment variable.
 sbin_SCRIPTS  = keactrl
 KEA_CONFIGFILES = kea-dhcp4.conf kea-dhcp6.conf kea-dhcp-ddns.conf \
-                  kea-ctrl-agent.conf kea-netconf.conf
+                  kea-ctrl-agent.conf
+if HAVE_SYSREPO
+KEA_CONFIGFILES += kea-netconf.conf
+endif
+
 CONFIGFILES = keactrl.conf $(KEA_CONFIGFILES)
 
-man_MANS = keactrl.8
-DISTCLEANFILES = keactrl keactrl.conf $(man_MANS)
+DISTCLEANFILES = keactrl keactrl.conf
 CLEANFILES = $(KEA_CONFIGFILES)
 EXTRA_DIST = keactrl.in keactrl.conf.in kea-dhcp4.conf.pre \
              kea-dhcp6.conf.pre kea-dhcp-ddns.conf.pre \
-             kea-ctrl-agent.conf.pre kea-netconf.conf.pre \
-             $(man_MANS) keactrl.xml
+             kea-ctrl-agent.conf.pre kea-netconf.conf.pre
 
 # *.conf files are not really sources used for building other targets, but we need
 # these files to be generated before make install is called.
 BUILT_SOURCES = $(KEA_CONFIGFILES)
 
-if GENERATE_DOCS
-
-keactrl.8: keactrl.xml
-	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/keactrl.xml
-
-else
-
-$(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
-
-endif
 
 kea-dhcp4.conf: kea-dhcp4.conf.pre
 	$(top_builddir)/tools/path_replacer.sh \

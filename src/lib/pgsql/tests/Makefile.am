@@ -26,6 +26,7 @@ libpgsql_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(PGSQL_LIBS)
 
 libpgsql_unittests_LDADD  = $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+libpgsql_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la

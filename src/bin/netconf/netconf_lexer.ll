@@ -453,6 +453,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"pattern\" {
+    switch(driver.ctx_) {
+    case ParserContext::OUTPUT_OPTIONS:
+        return NetconfParser::make_PATTERN(driver.loc_);
+    default:
+        return NetconfParser::make_STRING("pattern", driver.loc_);
+    }
+}
+
 \"debuglevel\" {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:

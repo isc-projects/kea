@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <http/date_time.h>
+#include <util/boost_time_utils.h>
 #include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 #include <sstream>
@@ -46,7 +47,7 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
     : io_service_(io_service), config_(config), timer_(), interval_(0),
       poke_time_(boost::posix_time::microsec_clock::universal_time()),
       heartbeat_impl_(0), partner_state_(-1), clock_skew_(0, 0, 0, 0),
-      last_clock_skew_warn_() {
+      last_clock_skew_warn_(), my_time_at_skew_(), partner_time_at_skew_() {
 }
 
 CommunicationState::~CommunicationState() {
@@ -216,26 +217,37 @@ CommunicationState::isClockSkewGreater(const long seconds) const {
 
 void
 CommunicationState::setPartnerTime(const std::string& time_text) {
-    HttpDateTime partner_time = HttpDateTime().fromRfc1123(time_text);
-    HttpDateTime current_time = HttpDateTime();
-
-    clock_skew_ = partner_time.getPtime() - current_time.getPtime();
+    partner_time_at_skew_ = HttpDateTime().fromRfc1123(time_text).getPtime();
+    my_time_at_skew_ = HttpDateTime().getPtime();
+    clock_skew_ = partner_time_at_skew_ - my_time_at_skew_;
 }
 
 std::string
 CommunicationState::logFormatClockSkew() const {
-    std::ostringstream s;
+    std::ostringstream os;
+
+    if ((my_time_at_skew_.is_not_a_date_time()) ||
+        (partner_time_at_skew_.is_not_a_date_time())) {
+        // Guard against being called before times have been set.
+        // Otherwise we'll get out-range exceptions.
+        return ("skew not initialized");
+    }
+
+    // Note HttpTime resolution is only to seconds, so we use fractional
+    // precision of zero when logging.
+    os << "my time: " << util::ptimeToText(my_time_at_skew_, 0)
+       << ", partner's time: " << util::ptimeToText(partner_time_at_skew_, 0)
+       << ", partner's clock is ";
 
     // If negative clock skew, the partner's time is behind our time.
     if (clock_skew_.is_negative()) {
-        s << clock_skew_.invert_sign().total_seconds() << "s behind";
-
+        os << clock_skew_.invert_sign().total_seconds() << "s behind";
     } else {
         // Partner's time is ahead of ours.
-        s << clock_skew_.total_seconds() << "s ahead";
+        os << clock_skew_.total_seconds() << "s ahead";
     }
 
-    return (s.str());
+    return (os.str());
 }
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,

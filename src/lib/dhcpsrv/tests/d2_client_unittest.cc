@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -127,7 +127,9 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getGeneratedPrefix(), generated_prefix);
     EXPECT_EQ(d2_client_config->getQualifyingSuffix(), qualifying_suffix);
 
+    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
     EXPECT_EQ(d2_client_config->getHostnameCharSet(), hostname_char_set);
+    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
     EXPECT_EQ(d2_client_config->getHostnameCharReplacement(), hostname_char_replacement);
     EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
 
@@ -179,6 +181,53 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        hostname_char_set,
                                                        hostname_char_replacement)),
                  D2ClientError);
+
+    Optional<std::string> opt_hostname_char_set("", true);
+    Optional<std::string> opt_hostname_char_replacement("", true);
+
+    // Veeify that constructor handles optional hostname char stuff.
+    ASSERT_NO_THROW(d2_client_config.reset(new
+                                           D2ClientConfig(enable_updates,
+                                                          server_ip,
+                                                          server_port,
+                                                          sender_ip,
+                                                          sender_port,
+                                                          max_queue_size,
+                                                          ncr_protocol,
+                                                          ncr_format,
+                                                          override_no_update,
+                                                          override_client_update,
+                                                          replace_client_name_mode,
+                                                          generated_prefix,
+                                                          qualifying_suffix,
+                                                          opt_hostname_char_set,
+                                                          opt_hostname_char_replacement)));
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the accessors return the expected values.
+    EXPECT_TRUE(d2_client_config->getHostnameCharSet().unspecified());
+    EXPECT_EQ(d2_client_config->getHostnameCharSet(), opt_hostname_char_set);
+    EXPECT_TRUE(d2_client_config->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ(d2_client_config->getHostnameCharReplacement(), opt_hostname_char_replacement);
+    EXPECT_FALSE(d2_client_config->getHostnameSanitizer());
+
+    // Verify what toElement returns.
+    expected = "{\n"
+        "\"enable-updates\": true,\n"
+        "\"server-ip\": \"127.0.0.1\",\n"
+        "\"server-port\": 477,\n"
+        "\"sender-ip\": \"127.0.0.1\",\n"
+        "\"sender-port\": 478,\n"
+        "\"max-queue-size\": 2048,\n"
+        "\"ncr-protocol\": \"UDP\",\n"
+        "\"ncr-format\": \"JSON\",\n"
+        "\"override-no-update\": true,\n"
+        "\"override-client-update\": true,\n"
+        "\"replace-client-name\": \"when-present\",\n"
+        "\"generated-prefix\": \"the_prefix\",\n"
+        "\"qualifying-suffix\": \"the.suffix.\"\n"
+        "}\n";
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 
     /// @todo if additional validation is added to ctor, this test needs to
     /// expand accordingly.

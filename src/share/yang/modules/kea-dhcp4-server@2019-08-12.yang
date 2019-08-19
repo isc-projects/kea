@@ -1,0 +1,519 @@
+module kea-dhcp4-server {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp4-server";
+  prefix "kea-dhcp4-server";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import kea-types {
+    prefix kea;
+    revision-date 2019-08-12;
+  }
+  import kea-dhcp-types {
+    prefix dhcp;
+    revision-date 2019-08-12;
+  }
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This model defines a YANG data model that can be
+               used to configure and manage a Kea DHCPv4 server.";
+
+  revision 2019-08-12 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Typedefs
+  */
+  typedef host-identifier-type {
+    type enumeration {
+      enum "duid" {
+        description "DUID";
+      }
+      enum "hw-address" {
+        description "Hardware address";
+      }
+      enum "circuit-id" {
+        description "Circuit-id option";
+      }
+      enum "client-id" {
+        description "Client identifier";
+      }
+      enum "flex-id" {
+        description "Flexible identifier";
+      }
+    }
+    description "Host identifier type.";
+  }
+
+  /*
+  * Groupings
+  */
+  grouping match-client-id {
+    description "Match client ID grouping.";
+    leaf match-client-id {
+      type boolean;
+      description "Use client-id for lease lookups. If set to false, client-id
+                   will be ignored.";
+    }
+  }
+
+  grouping next-server {
+    description "Next server address grouping.";
+    leaf next-server {
+      type inet:ipv4-address;
+      description "Next server IPv4 address. If set, this value will be set
+                   in siaddr field.";
+    }
+  }
+
+  grouping server-hostname {
+    description "Server hostname grouping.";
+    leaf server-hostname {
+      type string;
+      description "Server hostname (up to 64 bytes).";
+    }
+  }
+
+  grouping boot-file-name {
+    description "Boot file name grouping.";
+    leaf boot-file-name {
+      type string;
+      description "Boot file name (up to 128 bytes).";
+    }
+  }
+
+  grouping authoritative {
+    description "Authoritative grouping.";
+    leaf authoritative {
+      type boolean;
+      description "NAK requests for unknown clients. If set to false
+                   ignore them.";
+      }
+  }
+
+  grouping relay {
+    description "Relay grouping.";
+    leaf-list ip-addresses {
+      type inet:ipv4-address;
+      description "IPv4 addresses.";
+    }
+  }
+
+  grouping host {
+    description "Host grouping.";
+    leaf identifier-type {
+      type host-identifier-type;
+      mandatory true;
+      description "Host identifier type.";
+    }
+    uses dhcp:host-identifier;
+    leaf ip-address {
+      type inet:ipv4-address;
+      description "Host reserved IPv4 address.";
+    }
+    uses dhcp:host-hostname;
+    uses dhcp:host-client-classes;
+    uses option-data-list;
+    uses next-server;
+    uses server-hostname;
+    uses boot-file-name;
+    uses dhcp:host-user-context;
+  }
+
+  grouping reservations {
+    description "Host reservations grouping.";
+    list host {
+      key "identifier-type identifier";
+      description "Host reservation list.";
+      uses host;
+    }
+  }
+
+  grouping subnet4-list {
+    description "Subnet4 list grouping.";
+    list subnet4 {
+      key id;
+      ordered-by user;
+      description "List of IPv4 subnets.";
+      uses dhcp:valid-lifetime;
+      uses dhcp:min-valid-lifetime;
+      uses dhcp:max-valid-lifetime;
+      uses dhcp:renew-timer;
+      uses dhcp:rebind-timer;
+      uses dhcp:calculate-tee-times;
+      uses dhcp:t1-percent;
+      uses dhcp:t2-percent;
+      uses option-data-list;
+      list pool {
+        key "start-address end-address";
+        ordered-by user;
+        description "Pool list.";
+        leaf prefix {
+          type inet:ipv4-prefix;
+          description "Defines a pool of dynamic IPv4 addresses to be managed
+                       by the server.";
+        }
+        leaf start-address {
+          type inet:ipv4-address;
+          mandatory true;
+          description "First IPv4 address in a pool.";
+        }
+        leaf end-address {
+          type inet:ipv4-address;
+          mandatory true;
+          description "Last IPv4 address in a pool.";
+        }
+        uses option-data-list;
+        uses dhcp:pool-client-class;
+        uses dhcp:pool-require-client-classes;
+        uses dhcp:pool-user-context;
+      }
+      leaf subnet {
+        type inet:ipv4-prefix;
+        mandatory true;
+        description "IPv4 subnet prefix.";
+      }
+      uses dhcp:subnet-interface;
+      uses dhcp:subnet-id;
+      uses dhcp:subnet-client-class;
+      uses dhcp:subnet-require-client-classes;
+      uses reservations {
+        refine host {
+          description "Subnet host reservations list.";
+        }
+      }
+      uses dhcp:reservation-mode;
+      container relay {
+        description "Optional information about relay agent.";
+        uses relay;
+      }
+      uses match-client-id;
+      uses next-server;
+      uses server-hostname;
+      uses boot-file-name;
+      leaf subnet-4o6-interface {
+        type string;
+        description "Subnet DHCPv4-over-DHCPv6 interface.";
+      }
+      leaf subnet-4o6-interface-id {
+        type string;
+        description "Subnet DHCPv4-over-DHCPv6 interface-id option.";
+      }
+      leaf subnet-4o6-subnet {
+        type inet:ipv6-prefix;
+        description "Subnet DHCPv4-over-DHCPv6 IPv6 prefix.";
+      }
+      uses authoritative;
+      uses dhcp:subnet-user-context;
+    }
+  }
+
+  grouping client-classes {
+    description "Client class grouping.";
+    list client-class {
+      key name;
+      ordered-by user;
+      description "List of client classes.";
+      uses dhcp:class-name;
+      uses dhcp:class-test;
+      uses dhcp:class-only-if-required;
+      uses option-def-list;
+      uses option-data-list;
+      uses next-server;
+      uses server-hostname;
+      uses boot-file-name;
+      uses dhcp:class-user-context;
+    }
+  }
+
+  grouping option-def-list {
+    description "Option definition list grouping.";
+    list option-def {
+      key "code space";
+      description "Option definition entry.";
+      leaf code {
+        type uint8;
+        mandatory true;
+        description "Option code to be used by the new option definition.";
+      }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space for the new option (typically dhcp4).";
+      }
+      uses dhcp:option-def-name;
+      uses dhcp:option-def-type;
+      uses dhcp:option-def-record-types;
+      uses dhcp:option-def-encapsulate;
+      uses dhcp:option-def-array;
+      uses dhcp:option-def-user-context;
+     }
+  }
+
+  grouping option-data-list {
+    description "Option data list grouping.";
+    list option-data {
+      key "code space";
+      description "Option data entry.";
+      leaf code {
+        type uint8;
+        mandatory true;
+        description "Option code.";
+      }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space.";
+      }
+      uses dhcp:option-data-name;
+      uses dhcp:option-data-data;
+      uses dhcp:option-data-csv-format;
+      uses dhcp:option-data-always-send;
+      uses dhcp:option-data-user-context;
+    }
+  }
+
+  /*
+  * Data Nodes
+  */
+
+  container config {
+    // config true;
+    description "Contains DHCPv4 server configuration.";
+
+    uses dhcp:valid-lifetime;
+    uses dhcp:min-valid-lifetime;
+    uses dhcp:max-valid-lifetime;
+    uses dhcp:renew-timer;
+    uses dhcp:rebind-timer;
+    uses dhcp:calculate-tee-times;
+    uses dhcp:t1-percent;
+    uses dhcp:t2-percent;
+    uses dhcp:decline-probation-period;
+    uses subnet4-list;
+
+    list shared-network {
+      key name;
+      description "List of IPv4 shared networks.";
+      uses dhcp:network-name;
+      uses subnet4-list;
+      uses dhcp:network-interface;
+      uses dhcp:renew-timer;
+      uses dhcp:rebind-timer;
+      uses option-data-list;
+      uses match-client-id;
+      uses next-server;
+      uses server-hostname;
+      uses boot-file-name;
+      container relay {
+        description "Optional information about relay agent.";
+        uses relay;
+      }
+      uses authoritative;
+      uses dhcp:reservation-mode;
+      uses dhcp:network-client-class;
+      uses dhcp:network-require-client-classes;
+      uses dhcp:valid-lifetime;
+      uses dhcp:min-valid-lifetime;
+      uses dhcp:max-valid-lifetime;
+      uses dhcp:calculate-tee-times;
+      uses dhcp:t1-percent;
+      uses dhcp:t2-percent;
+      uses dhcp:network-user-context;
+    }
+
+    container interfaces-config {
+      description "Network interfaces configuration.";
+      leaf-list interfaces {
+        type string;
+        description "Name of the interface (e.g. eth0) or name/address
+                     (e.g. eth0/192.168.1.1) or * (use all interfaces).";
+      }
+      leaf dhcp-socket-type {
+        type enumeration {
+          enum "raw" {
+            description "DHCP service uses RAW sockets.";
+          }
+          enum "udp" {
+            description "DHCP service uses UDP sockets.";
+          }
+        }
+        description "Type of sockets to use.";
+      }
+      leaf outbound-interface {
+        type enumeration {
+          enum "same-as-inbound" {
+            description "Send the response on the interface where the query
+                         was received.";
+          }
+          enum "use-routing" {
+            description "Use kernel routing.";
+          }
+        }
+        description "Control the interface used to send a response.";
+      }
+      uses dhcp:interfaces-re-detect;
+      uses dhcp:interfaces-user-context;
+    }
+
+    uses dhcp:databases;
+
+    leaf-list host-reservation-identifiers {
+      type host-identifier-type;
+      description "Host reservation identifiers.";
+    }
+
+    uses client-classes;
+    uses option-def-list;
+    uses option-data-list;
+    uses kea:hooks-libraries;
+    uses dhcp:expired-leases-processing;
+    uses dhcp:dhcp4o6-port;
+    uses kea:control-socket;
+    uses dhcp:hostname-char-set;
+    uses dhcp:hostname-char-replacement;
+    uses dhcp:dhcp-ddns;
+
+    leaf echo-client-id {
+      type boolean;
+      description "Send client-id back when the client sent it. This
+                   is conformant with RFC6842, but some older, buggy
+                   clients have problems with it.";
+    }
+
+    uses match-client-id;
+    uses next-server;
+    uses server-hostname;
+    uses boot-file-name;
+    uses authoritative;
+    uses kea:user-context {
+      refine user-context {
+        description "DHCPv4 server user context. Arbitrary JSON data can
+                     be stored here.";
+      }
+    }
+    uses dhcp:sanity-checks;
+    uses dhcp:reservation-mode;
+    uses reservations {
+      refine host {
+        description "Global host reservations list.";
+      }
+    }
+    uses dhcp:config-control;
+    uses dhcp:server-tag;
+    uses dhcp:dhcp-queue-control;
+    uses kea:loggers;
+  }
+
+  /*
+  * State data
+  */
+  container state {
+    config false;
+    description "State of Kea DHCPv4 server.";
+
+    container leases {
+      description "Kea DHCPv4 leases.";
+      list lease {
+        key ip-address;
+        description "List of Kea DHCPv4 leases.";
+        leaf ip-address {
+          type inet:ipv4-address;
+          mandatory true;
+          description "Lease IP address.";
+        }
+        leaf hw-address {
+          type binary;
+          mandatory true;
+          description "Lease hardware address.";
+        }
+        leaf client-id {
+          type binary;
+          description "Lease client-id.";
+        }
+        uses dhcp:valid-lifetime {
+          refine valid-lifetime {
+            mandatory true;
+          }
+        }
+        leaf cltt {
+          type uint32;
+          units "seconds";
+          mandatory true;
+          description "Lease client last transmission time.";
+        }
+        leaf subnet-id {
+          type uint32;
+          mandatory true;
+          description "Lease subnet ID.";
+        }
+        leaf fqdn-fwd {
+          type boolean;
+          description "Lease FQDN forward flag.";
+        }
+        leaf fqdn-rev {
+          type boolean;
+          description "Lease FQDN reverse lag.";
+        }
+        leaf hostname {
+          type string;
+          description "Lease hostname.";
+        }
+        leaf state {
+          type dhcp:lease-state;
+          description "Lease state.";
+        }
+        leaf user-context {
+          type kea:user-context;
+          description "Lease user context.";
+        }
+      }
+    }
+
+    container lease-stats {
+      description "Lease statistics.";
+      list subnet {
+        key subnet-id;
+        description "List of IPv4 subnets.";
+        leaf subnet-id {
+          type uint32;
+          mandatory true;
+          description "Subnet ID.";
+        }
+        leaf total-addresses {
+          type uint32;
+          mandatory true;
+          description "Total addresses counter.";
+        }
+        leaf assigned-addresses {
+          type uint32;
+          mandatory true;
+          description "Assigned addresses counter.";
+        }
+        leaf declined-addresses {
+          type uint32;
+          mandatory true;
+          description "Declined addresses counter.";
+        }
+      }
+    }
+
+    container hosts {
+      description "Kea DHCPv4 hosts.";
+      list host {
+        key "subnet-id identifier-type identifier";
+        description "List of Kea DHCPv4 hosts.";
+        uses host;
+        uses dhcp:host-subnet-id;
+        leaf auth-key {
+          type string;
+          description "Host authentication key (unused in DHCPv4).";
+        }
+      }
+    }
+  }
+}

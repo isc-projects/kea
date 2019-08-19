@@ -234,7 +234,7 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
         LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Config reload failed:" + string(ex.what())));
+                             "Config reload failed: " + string(ex.what())));
     }
 }
 
@@ -374,6 +374,12 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     isc::config::parseAnswer(rcode, result);
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        // Update the fetch globals callback.
+        auto cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+        cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
+            return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+        });
 
         // Use new configuration.
         CfgMgr::instance().commit();
@@ -533,6 +539,17 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
     return (answer);
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandServerTagGetHandler(const std::string&,
+                                                ConstElementPtr) {
+    const std::string& tag =
+        CfgMgr::instance().getCurrentCfg()->getServerTag();
+    ElementPtr response = Element::createMap();
+    response->set("server-tag", Element::create(tag));
+
+    return (createAnswer(CONTROL_RESULT_SUCCESS, response));
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -586,6 +603,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "config-write") {
             return (srv->commandConfigWriteHandler(command, args));
+
+        } else if (command == "server-tag-get") {
+            return (srv->commandServerTagGetHandler(command, args));
 
         }
 
@@ -834,6 +854,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("leases-reclaim",
         boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("server-tag-get",
+        boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
@@ -864,6 +887,18 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
 
     CommandMgr::instance().registerCommand("statistic-remove-all",
         boost::bind(&StatsMgr::statisticRemoveAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-age-set",
+        boost::bind(&StatsMgr::statisticSetMaxSampleAgeHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-age-set-all",
+        boost::bind(&StatsMgr::statisticSetMaxSampleAgeAllHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-count-set",
+        boost::bind(&StatsMgr::statisticSetMaxSampleCountHandler, _1, _2));
+
+    CommandMgr::instance().registerCommand("statistic-sample-count-set-all",
+        boost::bind(&StatsMgr::statisticSetMaxSampleCountAllHandler, _1, _2));
 }
 
 void ControlledDhcpv6Srv::shutdown() {
@@ -895,6 +930,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
+        CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
@@ -902,6 +938,10 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
         CommandMgr::instance().deregisterCommand("statistic-reset");
         CommandMgr::instance().deregisterCommand("statistic-reset-all");
+        CommandMgr::instance().deregisterCommand("statistic-sample-age-set");
+        CommandMgr::instance().deregisterCommand("statistic-sample-age-set-all");
+        CommandMgr::instance().deregisterCommand("statistic-sample-count-set");
+        CommandMgr::instance().deregisterCommand("statistic-sample-count-set-all");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,11 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Unsigned 8 bit integer.
     uint8_t u8(123);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u8));
+#else
     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -70,7 +74,11 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Unsigned 16 bit integer.
     uint16_t u16(12345);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u16));
+#else
     s_val.reset(new Val(u16, SR_UINT16_T));
+#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -79,7 +87,11 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Unsigned 32 bit integer.
     uint32_t u32(123456789);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u32));
+#else
     s_val.reset(new Val(u32, SR_UINT32_T));
+#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -88,7 +100,11 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Signed 8 bit integer.
     int8_t s8(-123);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s8));
+#else
     s_val.reset(new Val(s8, SR_INT8_T));
+#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -97,7 +113,11 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Signed 16 bit integer.
     int16_t s16(-12345);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s16));
+#else
     s_val.reset(new Val(s16, SR_INT16_T));
+#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -106,7 +126,11 @@ TEST(TranslatorBasicTest, valueFrom) {
 
     // Signed 32 bit integer.
     int32_t s32(-123456789);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s32));
+#else
     s_val.reset(new Val(s32, SR_INT32_T));
+#endif
     EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::integer, elem->getType());
@@ -138,10 +162,13 @@ TEST(TranslatorBasicTest, valueFrom) {
     EXPECT_EQ("foobar", elem->stringValue());
     elem.reset();
 
-    // Unknown / unsupported.
+    // Decimal 64.
     double d64(.1234);
     s_val.reset(new Val(d64));
-    EXPECT_THROW(TranslatorBasic::value(s_val), NotImplemented);
+    EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
+    ASSERT_TRUE(elem);
+    ASSERT_EQ(Element::real, elem->getType());
+    EXPECT_DOUBLE_EQ(d64, elem->doubleValue());
 }
 
 // Test basic yang value to JSON using sysrepo test models.
@@ -191,7 +218,11 @@ TEST(TranslatorBasicTest, getItem) {
     // Unsigned 8 bit integer.
     xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u8));
+#else
     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -202,7 +233,11 @@ TEST(TranslatorBasicTest, getItem) {
     // Unsigned 16 bit integer.
     xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u16));
+#else
     s_val.reset(new Val(u16, SR_UINT16_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -213,7 +248,11 @@ TEST(TranslatorBasicTest, getItem) {
     // Unsigned 32 bit integer.
     xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u32));
+#else
     s_val.reset(new Val(u32, SR_UINT32_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -224,7 +263,11 @@ TEST(TranslatorBasicTest, getItem) {
     // Signed 8 bit integer.
     xpath = "/keatest-module:main/i8";
     int8_t s8(8);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s8));
+#else
     s_val.reset(new Val(s8, SR_INT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -235,7 +278,11 @@ TEST(TranslatorBasicTest, getItem) {
     // Signed 16 bit integer.
     xpath = "/keatest-module:main/i16";
     int16_t s16(16);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s16));
+#else
     s_val.reset(new Val(s16, SR_INT16_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -246,7 +293,11 @@ TEST(TranslatorBasicTest, getItem) {
     // Signed 32 bit integer.
     xpath = "/keatest-module:main/i32";
     int32_t s32(32);
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(s32));
+#else
     s_val.reset(new Val(s32, SR_INT32_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
@@ -294,13 +345,25 @@ TEST(TranslatorBasicTest, getItem) {
 
     // Leaf-list: 1, 2 and 3.
     u8 = 1;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u8));
+#else
     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     u8 = 2;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u8));
+#else
     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     u8 = 3;
+#ifdef HAVE_POST_0_7_7_SYSREPO
+    s_val.reset(new Val(u8));
+#else
     s_val.reset(new Val(u8, SR_UINT8_T));
+#endif
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItems(xpath));
     ASSERT_TRUE(elem);
@@ -313,7 +376,10 @@ TEST(TranslatorBasicTest, getItem) {
     xpath = "/keatest-module:main/dec64";
     s_val.reset(new Val(9.85));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_THROW(elem = t_obj->getItem(xpath), NotImplemented);
+    EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
+    ASSERT_TRUE(elem);
+    ASSERT_EQ(Element::real, elem->getType());
+    EXPECT_EQ("9.85", elem->str());
     elem.reset();
 
     // Not found.
@@ -441,9 +507,13 @@ TEST(TranslatorBasicTest, valueTo) {
     EXPECT_EQ("Zm9vYmFy", string(s_val->data()->get_binary()));
     s_val.reset();
 
-    // Unknown / unsupported.
-    elem = Element::create(.1234);
-    EXPECT_THROW(TranslatorBasic::value(elem, SR_DECIMAL64_T), NotImplemented);
+    // Decimal 64.
+    double d64(.1234);
+    elem = Element::create(d64);
+    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, SR_DECIMAL64_T));
+    ASSERT_TRUE(s_val);
+    EXPECT_DOUBLE_EQ(d64, s_val->data()->get_decimal64());
+    s_val.reset();
 }
 
 // Test JSON to  basic yang value using sysrepo test models.
@@ -581,6 +651,17 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_EQ("Zm9vYmFy", string(s_val->data()->get_binary()));
     s_val.reset();
 
+    // Decimal 64.
+    xpath = "/keatest-module:main/dec64";
+    double d64(9.85);
+    elem = Element::create(d64);
+    EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_DECIMAL64_T));
+    EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
+    ASSERT_TRUE(s_val);
+    ASSERT_EQ(SR_DECIMAL64_T, s_val->type());
+    EXPECT_DOUBLE_EQ(d64, s_val->data()->get_decimal64());
+    s_val.reset();
+
     // Leaf-list.
     xpath = "/keatest-module:main/numbers";
     S_Vals s_vals;
@@ -605,11 +686,6 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_NO_THROW(s_vals = sess->get_items(xpath.c_str()));
     EXPECT_FALSE(s_vals);
     s_vals.reset();
-
-    // Unknown / unsupported.
-    xpath = "/keatest-module:main/dec64";
-    elem = Element::create(9.85);
-    EXPECT_THROW(t_obj->setItem(xpath, elem, SR_DECIMAL64_T), NotImplemented);
 
     // Bad xpath.
     xpath = "/keatest-module:main/no_such_string";
@@ -678,7 +754,7 @@ TEST(TranslatorBasicTest, list) {
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 
-    // Not found: same than empty because sr_get_items_iter() translates
+    // Not found: same as empty because sr_get_items_iter() translates
     // SR_ERR_NOT_FOUND by SR_ERR_OK...
 }
 

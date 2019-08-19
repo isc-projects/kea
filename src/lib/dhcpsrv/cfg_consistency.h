@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,7 +34,7 @@ class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToEle
 
     /// @brief Constructor
     CfgConsistency()
-        : lease_sanity_check_(LEASE_CHECK_WARN) {
+        : lease_sanity_check_(LEASE_CHECK_NONE) {
 
     }
 

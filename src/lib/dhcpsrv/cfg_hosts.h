@@ -633,7 +633,7 @@ private:
     virtual void add6(const HostPtr& host);
 
     /// @brief Next host id.
-    uint64_t next_host_id_;
+    uint64_t next_host_id_ = 0;
 
     /// @brief Multi-index container holding @c Host objects.
     ///

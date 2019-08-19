@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2907,6 +2907,169 @@ TEST_F(TokenTest, vendorClass6DataIndex) {
               "pushing result ''");
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA Data 3 (out of 5 received) in vendor"
               " class found, pushing result 'gamma'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks that the existing RAI -sunoption can be found.
+TEST_F(TokenTest, subOption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should be found and option[82].option[13] should evaluate
+    // to thecontent of that sub-option, i.e. "thirteen"
+    EXPECT_EQ("thirteen", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 13 with value 'thirteen'");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks that the code properly handles cases when
+// there is a RAI option, but there's no requested sub-option.
+TEST_F(TokenTest, subOptionNoSubOption) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                15, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no sub-option 15),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 15 with value ''");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks that the code properly handles cases when
+// there's no RAI option at all.
+TEST_F(TokenTest, subOptionNoOption) {
+
+    // We didn't call insertRelay4Option(), so there's no RAI option.
+
+    // Creating the token should be safe.
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                13, TokenOption::TEXTUAL)));
+
+    // We should be able to evaluate it.
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // we should have one value on the stack
+    ASSERT_EQ(1, values_.size());
+
+    // The option should NOT be found (there is no option 82),
+    // so the expression should evaluate to ""
+    EXPECT_EQ("", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUB_OPTION_NO_OPTION Requested option 82 "
+              "sub-option 13, but the parent option is not present, "
+              "pushing result ''");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks that only the requested parent is searched for
+// the requested sub-option.
+TEST_F(TokenTest, subOptionOptionOnly) {
+
+    // Insert relay option with sub-options 1 and 13
+    insertRelay4Option();
+
+    // Add options 13 and 70 to the packet.
+    OptionPtr opt13(new OptionString(Option::V4, 13, "THIRTEEN"));
+    OptionPtr opt70(new OptionString(Option::V4, 70, "SEVENTY"));
+    pkt4_->addOption(opt13);
+    pkt4_->addOption(opt70);
+
+    // The situation is as follows:
+    // Packet:
+    //  - option 13 (containing "THIRTEEN")
+    //  - option 82 (rai)
+    //      - option 1 (containing "one")
+    //      - option 13 (containing "thirteen")
+
+    // Let's try to get option 13. It should get the one from RAI
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                13, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("thirteen", values_.top());
+
+    // Try to get option 1. It should get the one from RAI
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                1, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("one", values_.top());
+
+    // Try to get option 70. It should fail, as there's no such
+    // sub option in RAI.
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                70, TokenOption::TEXTUAL)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("", values_.top());
+
+    // Try to check option 1. It should return "true"
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                1, TokenOption::EXISTS)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+
+    // Try to check option 70. It should return "false"
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS,
+                                                70, TokenOption::EXISTS)));
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 13 with value 'thirteen'");
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 1 with value 'one'");
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 70 with value ''");
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 1 with value 'true'");
+    addString("EVAL_DEBUG_SUB_OPTION Pushing option 82 "
+              "sub-option 70 with value 'false'");
     EXPECT_TRUE(checkFile());
 }
 

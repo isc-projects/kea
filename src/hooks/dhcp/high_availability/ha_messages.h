@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Fri Feb 08 2019 20:34
+// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes on Mon Jul 08 2019 13:20
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H
@@ -52,6 +52,8 @@ extern const isc::log::MessageID HA_LEASE_SYNC_STALE_LEASE6_SKIP;
 extern const isc::log::MessageID HA_LEASE_UPDATES_DISABLED;
 extern const isc::log::MessageID HA_LEASE_UPDATES_ENABLED;
 extern const isc::log::MessageID HA_LEASE_UPDATE_COMMUNICATIONS_FAILED;
+extern const isc::log::MessageID HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER;
+extern const isc::log::MessageID HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER;
 extern const isc::log::MessageID HA_LEASE_UPDATE_FAILED;
 extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING;
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING;

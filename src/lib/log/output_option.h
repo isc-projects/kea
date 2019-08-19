@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,6 +36,13 @@ namespace log {
 
 struct OutputOption {
 
+    /// Default layout pattern for console logs
+    static const std::string DEFAULT_CONSOLE_PATTERN;
+    /// Default layout pattern for file logs
+    static const std::string DEFAULT_FILE_PATTERN;
+    /// Default layout pattern for syslog logs
+    static const std::string DEFAULT_SYSLOG_PATTERN;
+
     /// Destinations.  Prefixed "DEST_" to avoid problems with the C stdio.h
     /// FILE type.
     typedef enum {
@@ -53,7 +60,7 @@ struct OutputOption {
     /// \brief Constructor
     OutputOption() : destination(DEST_CONSOLE), stream(STR_STDERR),
                      flush(true), facility("LOCAL0"), filename(""),
-                     maxsize(0), maxver(0)
+                     maxsize(0), maxver(0), pattern("")
     {}
 
     /// Members. 
@@ -65,6 +72,7 @@ struct OutputOption {
     std::string     filename;           ///< Filename if file output
     size_t          maxsize;            ///< 0 if no maximum size
     unsigned int    maxver;             ///< Maximum versions (none if <= 0)
+    std::string     pattern;            ///< log content pattern
 };
 
 OutputOption::Destination getDestination(const std::string& dest_str);

@@ -1006,6 +1006,15 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         callout_handle->getArgument("query4", query);
     }
 
+    // Check the DROP special class.
+    if (query->inClass("DROP")) {
+        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_PACKET_DROP_0010)
+            .arg(query->toText());
+        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
+        return;
+    }
+
     AllocEngine::ClientContext4Ptr ctx;
 
     try {
@@ -1808,13 +1817,25 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         .arg(opt_hostname->getValue());
 
     std::string hostname = isc::util::str::trim(opt_hostname->getValue());
-    unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    unsigned int label_count;
+
+    try  {
+        // Parsing into labels can throw on malformed content so we're
+        // going to explicitly catch that here.
+        label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    } catch (const std::exception& exc) {
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_MALFORMED)
+            .arg(ex.getQuery()->getLabel())
+            .arg(exc.what());
+        return;
+    }
+
     // The hostname option sent by the client should be at least 1 octet long.
     // If it isn't we ignore this option. (Per RFC 2131, section 3.14)
     /// @todo It would be more liberal to accept this and let it fall into
     /// the case  of replace or less than two below.
     if (label_count == 0) {
-        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME)
+        LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_EMPTY_HOSTNAME)
             .arg(ex.getQuery()->getLabel());
         return;
     }
@@ -2120,9 +2141,16 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
         // the client.
-        LOG_INFO(lease4_logger, fake_allocation ? DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
-            .arg(query->getLabel())
-            .arg(lease->addr_.toText());
+        if (fake_allocation) {
+            LOG_INFO(lease4_logger, DHCP4_LEASE_ADVERT)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText());
+        } else {
+            LOG_INFO(lease4_logger, DHCP4_LEASE_ALLOC)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(lease->valid_lft_);
+        }
 
         // We're logging this here, because this is the place where we know
         // which subnet has been actually used for allocation. If the

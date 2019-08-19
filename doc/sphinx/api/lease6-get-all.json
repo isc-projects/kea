@@ -1,0 +1,63 @@
+{
+    "avail": "1.3.0",
+    "brief": [
+        "This command retrieves all IPv6 leases or all leases for the specified set of subnets."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease6-get-all\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [ 1, 2, 3, 4 ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp59\"/>",
+    "hook": "lease_cmds",
+    "name": "lease6-get-all",
+    "resp-comment": [
+        "The lease6-get-all command may result in very large responses."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"arguments\": {",
+        "        \"leases\": [",
+        "            {",
+        "                \"cltt\": 12345678,",
+        "                \"duid\": \"42:42:42:42:42:42:42:42\",",
+        "                \"fqdn-fwd\": false,",
+        "                \"fqdn-rev\": true,",
+        "                \"hostname\": \"myhost.example.com.\",",
+        "                \"hw-address\": \"08:08:08:08:08:08\",",
+        "                \"iaid\": 1,",
+        "                \"ip-address\": \"2001:db8:2::1\",",
+        "                \"preferred-lft\": 500,",
+        "                \"state\": 0,",
+        "                \"subnet-id\": 44,",
+        "                \"type\": \"IA_NA\",",
+        "                \"valid-lft\": 3600",
+        "            },",
+        "            {",
+        "                \"cltt\": 12345678,",
+        "                \"duid\": \"21:21:21:21:21:21:21:21\",",
+        "                \"fqdn-fwd\": false,",
+        "                \"fqdn-rev\": true,",
+        "                \"hostname\": \"\",",
+        "                \"iaid\": 1,",
+        "                \"ip-address\": \"2001:db8:0:0:2::\",",
+        "                \"preferred-lft\": 500,",
+        "                \"prefix-len\": 80,",
+        "                \"state\": 0,",
+        "                \"subnet-id\": 44,",
+        "                \"type\": \"IA_PD\",",
+        "                \"valid-lft\": 3600",
+        "            }",
+        "        ]",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"2 IPv6 lease(s) found.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

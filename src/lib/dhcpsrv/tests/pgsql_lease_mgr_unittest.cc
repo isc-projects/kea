@@ -406,7 +406,7 @@ TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
 // Test checks whether simple add, get and delete operations are possible
 // on Lease6
 TEST_F(PgSqlLeaseMgrTest, testAddGetDelete6) {
-    testAddGetDelete6(false);
+    testAddGetDelete6();
 }
 
 /// @brief Basic Lease6 Checks
@@ -428,6 +428,14 @@ TEST_F(PgSqlLeaseMgrTest, maxDate6) {
 /// length exceeds 255 characters.
 TEST_F(PgSqlLeaseMgrTest, lease6InvalidHostname) {
     testLease6InvalidHostname();
+}
+
+/// @brief Verify that large IAID values work correctly.
+///
+/// Adds lease with a large IAID to the database and verifies it can
+/// fetched correclty.
+TEST_F(PgSqlLeaseMgrTest, leases6LargeIaidCheck) {
+    testLease6LargeIaidCheck();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID

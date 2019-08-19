@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,10 +74,26 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
         if (preferred) {
             result->set("preferred-lifetime", preferred);
         }
+        ConstElementPtr min_pref = getItem(xpath + "/min-preferred-lifetime");
+        if (min_pref) {
+            result->set("min-preferred-lifetime", min_pref);
+        }
+        ConstElementPtr max_pref = getItem(xpath + "/max-preferred-lifetime");
+        if (max_pref) {
+            result->set("max-preferred-lifetime", max_pref);
+        }
     }
     ConstElementPtr valid = getItem(xpath + "/valid-lifetime");
     if (valid) {
         result->set("valid-lifetime", valid);
+    }
+    ConstElementPtr min_valid = getItem(xpath + "/min-valid-lifetime");
+    if (min_valid) {
+        result->set("min-valid-lifetime", min_valid);
+    }
+    ConstElementPtr max_valid = getItem(xpath + "/max-valid-lifetime");
+    if (max_valid) {
+        result->set("max-valid-lifetime", max_valid);
     }
     ConstElementPtr renew = getItem(xpath + "/renew-timer");
     if (renew) {
@@ -86,6 +102,18 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
     ConstElementPtr rebind = getItem(xpath + "/rebind-timer");
     if (rebind) {
         result->set("rebind-timer", rebind);
+    }
+    ConstElementPtr calculate = getItem(xpath + "/calculate-tee-times");
+    if (calculate) {
+        result->set("calculate-tee-times", calculate);
+    }
+    ConstElementPtr t1_percent = getItem(xpath + "/t1-percent");
+    if (t1_percent) {
+        result->set("t1-percent", t1_percent);
+    }
+    ConstElementPtr t2_percent = getItem(xpath + "/t2-percent");
+    if (t2_percent) {
+        result->set("t2-percent", t2_percent);
     }
     ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
@@ -186,10 +214,26 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
         if (preferred) {
             setItem(xpath + "/preferred-lifetime", preferred, SR_UINT32_T);
         }
+        ConstElementPtr min_pref = elem->get("min-preferred-lifetime");
+        if (min_pref) {
+            setItem(xpath + "/min-preferred-lifetime", min_pref, SR_UINT32_T);
+        }
+        ConstElementPtr max_pref = elem->get("max-preferred-lifetime");
+        if (max_pref) {
+            setItem(xpath + "/max-preferred-lifetime", max_pref, SR_UINT32_T);
+        }
     }
     ConstElementPtr valid = elem->get("valid-lifetime");
     if (valid) {
         setItem(xpath + "/valid-lifetime", valid, SR_UINT32_T);
+    }
+    ConstElementPtr min_valid = elem->get("min-valid-lifetime");
+    if (min_valid) {
+        setItem(xpath + "/min-valid-lifetime", min_valid, SR_UINT32_T);
+    }
+    ConstElementPtr max_valid = elem->get("max-valid-lifetime");
+    if (max_valid) {
+        setItem(xpath + "/max-valid-lifetime", max_valid, SR_UINT32_T);
     }
     ConstElementPtr renew = elem->get("renew-timer");
     if (renew) {
@@ -198,6 +242,18 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
     ConstElementPtr rebind = elem->get("rebind-timer");
     if (rebind) {
         setItem(xpath + "/rebind-timer", rebind, SR_UINT32_T);
+    }
+    ConstElementPtr calculate = elem->get("calculate-tee-times");
+    if (calculate) {
+        setItem(xpath + "/calculate-tee-times", calculate, SR_BOOL_T);
+    }
+    ConstElementPtr t1_percent =  elem->get("t1-percent");
+    if (t1_percent) {
+        setItem(xpath + "/t1-percent", t1_percent, SR_DECIMAL64_T);
+    }
+    ConstElementPtr t2_percent =  elem->get("t2-percent");
+    if (t2_percent) {
+        setItem(xpath + "/t2-percent", t2_percent, SR_DECIMAL64_T);
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {

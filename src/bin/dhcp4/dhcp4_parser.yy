@@ -100,8 +100,11 @@ using namespace std;
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
+  MAX_ROW_ERRORS "max-row-errors"
 
   VALID_LIFETIME "valid-lifetime"
+  MIN_VALID_LIFETIME "min-valid-lifetime"
+  MAX_VALID_LIFETIME "max-valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   CALCULATE_TEE_TIMES "calculate-tee-times"
@@ -213,6 +216,7 @@ using namespace std;
   FLUSH "flush"
   MAXSIZE "maxsize"
   MAXVER "maxver"
+  PATTERN "pattern"
 
   DHCP6 "Dhcp6"
   DHCPDDNS "DhcpDdns"
@@ -441,6 +445,8 @@ global_params: global_param
 // These are the parameters that are allowed in the top-level for
 // Dhcp4.
 global_param: valid_lifetime
+            | min_valid_lifetime
+            | max_valid_lifetime
             | renew_timer
             | rebind_timer
             | decline_probation_period
@@ -477,12 +483,24 @@ global_param: valid_lifetime
             | t1_percent
             | t2_percent
             | loggers
+            | hostname_char_set
+            | hostname_char_replacement
             | unknown_map_entry
             ;
 
 valid_lifetime: VALID_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("valid-lifetime", prf);
+};
+
+min_valid_lifetime: MIN_VALID_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("min-valid-lifetime", prf);
+};
+
+max_valid_lifetime: MAX_VALID_LIFETIME COLON INTEGER {
+    ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-valid-lifetime", prf);
 };
 
 renew_timer: RENEW_TIMER COLON INTEGER {
@@ -720,6 +738,7 @@ database_map_param: database_type
                   | keyspace
                   | consistency
                   | serial_consistency
+                  | max_row_errors
                   | unknown_map_entry
                   ;
 
@@ -849,6 +868,12 @@ reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 };
+
+max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-row-errors", n);
+};
+
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -1083,6 +1108,8 @@ subnet4_params: subnet4_param
 
 // This defines a list of allowed parameters for each subnet.
 subnet4_param: valid_lifetime
+             | min_valid_lifetime
+             | max_valid_lifetime
              | renew_timer
              | rebind_timer
              | option_data_list
@@ -1237,6 +1264,8 @@ shared_network_param: name
                     | client_class
                     | require_client_classes
                     | valid_lifetime
+                    | min_valid_lifetime
+                    | max_valid_lifetime
                     | user_context
                     | comment
                     | calculate_tee_times
@@ -2282,6 +2311,7 @@ output_params: output
              | flush
              | maxsize
              | maxver
+             | pattern
              ;
 
 output: OUTPUT {
@@ -2306,6 +2336,15 @@ maxver: MAXVER COLON INTEGER {
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
 };
+
+pattern: PATTERN {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr sev(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("pattern", sev);
+    ctx.leave();
+};
+
 
 %%
 

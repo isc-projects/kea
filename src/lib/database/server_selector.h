@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef SERVER_SELECTOR_H
 #define SERVER_SELECTOR_H
 
+#include <cc/server_tag.h>
 #include <set>
 #include <string>
 
@@ -49,34 +50,39 @@ public:
     enum class Type {
         UNASSIGNED,
         ALL,
-        SUBSET
+        SUBSET,
+        ANY
     };
 
     /// @brief Factory returning "unassigned" server selector.
-    static ServerSelector& UNASSIGNED() {
-        static ServerSelector selector(Type::UNASSIGNED);
+    static ServerSelector UNASSIGNED() {
+        ServerSelector selector(Type::UNASSIGNED);
         return (selector);
     }
 
     /// @brief Factory returning "all servers" selector.
-    static ServerSelector& ALL() {
-        static ServerSelector selector(Type::ALL);
+    static ServerSelector ALL() {
+        ServerSelector selector(Type::ALL);
         return (selector);
     }
 
     /// @brief Factory returning selector of one server.
     ///
     /// @param server_tag tag of the single server to be selected.
-    static ServerSelector& ONE(const std::string& server_tag) {
-        static ServerSelector selector(server_tag);
+    static ServerSelector ONE(const std::string& server_tag) {
+        ServerSelector selector((data::ServerTag(server_tag)));
         return (selector);
     }
 
     /// @brief Factory returning "multiple servers" selector.
     ///
     /// @param server_tags set of server tags to be selected.
-    static ServerSelector& MULTIPLE(const std::set<std::string>& server_tags) {
-        static ServerSelector selector(server_tags);
+    /// @throw InvalidOperation if no server tags provided.
+    static ServerSelector MULTIPLE(const std::set<std::string>& server_tags);
+
+    /// @brief Factory returning "any server" selector.
+    static ServerSelector ANY() {
+        ServerSelector selector(Type::ANY);
         return (selector);
     }
 
@@ -87,10 +93,17 @@ public:
 
     /// @brief Returns tags associated with the selector.
     ///
-    /// @return server tags for mutliple selections and for one server,
+    /// @return server tags for multiple selections and for one server,
     /// empty set for all servers and and unassigned.
-    std::set<std::string> getTags() const {
+    std::set<data::ServerTag> getTags() const {
         return (tags_);
+    }
+
+    /// @brief Convenience method checking if the server selector has no tags.
+    ///
+    /// @return true when the server selector has no tags, false otherwise.
+    bool hasNoTags() const {
+        return (tags_.empty());
     }
 
     /// @brief Convenience method checking if the server selector is "unassigned".
@@ -100,35 +113,49 @@ public:
         return (getType() == Type::UNASSIGNED);
     }
 
+    /// @brief Convenience method checking if the server selector is "all".
+    ///
+    /// @return true if the selector is "all", false otherwise.
+    bool amAll() const {
+        return (getType() == Type::ALL);
+    }
+
+    /// @brief Convenience method checking if the server selector is "any".
+    ///
+    /// @return true if the selector is "any", false otherwise.
+    bool amAny() const {
+        return (getType() == Type::ANY);
+    }
+
+    /// @brief Convenience method checking if the server selector has multiple tags.
+    ///
+    /// @return true if it has multiple tags, false otherwise.
+    bool hasMultipleTags() const {
+        return (tags_.size() > 1);
+    }
+
 private:
 
-    /// @brief Constructor used for "unassigned" and "all" slection types.
+    /// @brief Constructor used for "unassigned" and "all" selection types.
     ///
     /// @param type selector type.
-    explicit ServerSelector(const Type& type)
-        : type_(type), tags_() {
-    }
+    explicit ServerSelector(const Type& type);
 
     /// @brief Constructor used for selecting a single server.
     ///
     /// @param server_tag tag of the server to be selected.
-    explicit ServerSelector(const std::string& server_tag)
-        : type_(Type::SUBSET), tags_() {
-        tags_.insert(server_tag);
-    }
+    explicit ServerSelector(const data::ServerTag& server_tag);
 
     /// @brief Constructor used for selecting multiple servers.
     ///
     /// @param server_tags set of server tags.
-    explicit ServerSelector(const std::set<std::string>& server_tags)
-        : type_(Type::SUBSET), tags_(server_tags) {
-    }
+    explicit ServerSelector(const std::set<data::ServerTag>& server_tags);
 
     /// @brief Selection type used.
     Type type_;
 
     /// @brief Holds tags of explicitly selected servers.
-    std::set<std::string> tags_;
+    std::set<data::ServerTag> tags_;
 };
 
 

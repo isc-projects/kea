@@ -291,6 +291,18 @@ private:
     commandLeasesReclaimHandler(const std::string& command,
                                 isc::data::ConstElementPtr args);
 
+    /// @brief handler for server-tag-get command
+    ///
+    /// This method handles the server-tag-get command, which retrieves
+    /// the current server tag and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    commandServerTagGetHandler(const std::string& command,
+                               isc::data::ConstElementPtr args);
+
     /// @brief Reclaims expired IPv6 leases and reschedules timer.
     ///
     /// This is a wrapper method for @c AllocEngine::reclaimExpiredLeases6.

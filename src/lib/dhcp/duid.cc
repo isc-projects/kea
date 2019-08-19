@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,8 @@ namespace dhcp {
 
 DUID::DUID(const std::vector<uint8_t>& duid) {
     if (duid.size() > MAX_DUID_LEN) {
-        isc_throw(isc::BadValue, "DUID too large");
+        isc_throw(isc::BadValue, "DUID size is " << duid.size()
+                  << " bytes, exceeds maximum of " << MAX_DUID_LEN);
     }
     if (duid.empty()) {
         isc_throw(isc::BadValue, "Empty DUIDs are not allowed");
@@ -32,7 +33,8 @@ DUID::DUID(const std::vector<uint8_t>& duid) {
 
 DUID::DUID(const uint8_t* data, size_t len) {
     if (len > MAX_DUID_LEN) {
-        isc_throw(isc::BadValue, "DUID too large");
+        isc_throw(isc::BadValue, "DUID size is " << len
+                  << " bytes, exceeds maximum of " << MAX_DUID_LEN);
     }
     if (len == 0) {
         isc_throw(isc::BadValue, "Empty DUIDs/Client-ids not allowed");
@@ -44,7 +46,6 @@ DUID::DUID(const uint8_t* data, size_t len) {
 const std::vector<uint8_t>& DUID::getDuid() const {
     return (duid_);
 }
-
 DUID::DUIDType DUID::getType() const {
     if (duid_.size() < 2) {
         return (DUID_UNKNOWN);

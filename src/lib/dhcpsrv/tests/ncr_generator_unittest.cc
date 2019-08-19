@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -254,8 +254,7 @@ public:
     /// @brief Implementation of the method creating DHCPv6 lease instance.
     virtual void initLease() {
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                                duid_, 1234, 501, 502, 503,
-                                504, 1, HWAddrPtr(), 0));
+                                duid_, 1234, 501, 502, 1, HWAddrPtr(), 0));
     }
 };
 
@@ -433,7 +432,7 @@ public:
     /// @brief Implementation of the method creating DHCPv4 lease instance.
     virtual void initLease() {
         lease_.reset(new Lease4(IOAddress("192.0.2.1"), hwaddr_, ClientIdPtr(),
-                                100, 30, 60, time(NULL), 1));
+                                100, time(NULL), 1));
     }
 };
 

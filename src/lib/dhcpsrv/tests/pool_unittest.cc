@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/pool.h>
+#include <testutils/test_to_element.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -120,6 +121,33 @@ TEST(Pool4Test, toText) {
 
     Pool4 pool2(IOAddress("192.0.2.128"), 28);
     EXPECT_EQ("type=V4, 192.0.2.128-192.0.2.143", pool2.toText());
+
+    Pool4 pool3(IOAddress("192.0.2.0"), IOAddress("192.0.2.127"));
+    EXPECT_EQ("type=V4, 192.0.2.0-192.0.2.127", pool3.toText());
+}
+
+// Simple check if toElement returns reasonable values
+TEST(Pool4Test, toElement) {
+    Pool4 pool1(IOAddress("192.0.2.7"), IOAddress("192.0.2.17"));
+    std::string expected1 = "{"
+        " \"pool\": \"192.0.2.7-192.0.2.17\", "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool4>(expected1, pool1);
+
+    Pool4 pool2(IOAddress("192.0.2.128"), 28);
+    std::string expected2 = "{"
+        " \"pool\": \"192.0.2.128/28\", "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool4>(expected2, pool2);
+
+    Pool4 pool3(IOAddress("192.0.2.0"), IOAddress("192.0.2.127"));
+    std::string expected3 = "{"
+        " \"pool\": \"192.0.2.0/25\", "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool4>(expected3, pool3);
 }
 
 // This test checks that it is possible to specify pool specific options.
@@ -506,6 +534,50 @@ TEST(Pool6Test, toText) {
               " excluded_prefix_len=120",
               pool3.toText());
 
+    Pool6 pool4(Lease::TYPE_NA, IOAddress("2001:db8::"),
+                IOAddress("2001:db8::ffff"));
+    EXPECT_EQ("type=IA_NA, 2001:db8::-2001:db8::ffff, delegated_len=128",
+              pool4.toText());
+}
+
+// Simple check if toElement returns reasonable values
+TEST(Pool6Test, toElement) {
+    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+    std::string expected1 = "{"
+        " \"pool\": \"2001:db8::1-2001:db8::2\", "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool6>(expected1, pool1);
+
+    Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
+    std::string expected2 = "{"
+        " \"prefix\": \"2001:db8:1::\", "
+        " \"prefix-len\": 96, "
+        " \"delegated-len\": 112, "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool6>(expected2, pool2);
+
+    Pool6 pool3(IOAddress("2001:db8:1::"), 96, 112,
+                IOAddress("2001:db8:1::1000"), 120);
+    std::string expected3 = "{"
+        " \"prefix\": \"2001:db8:1::\", "
+        " \"prefix-len\": 96, "
+        " \"delegated-len\": 112, "
+        " \"excluded-prefix\": \"2001:db8:1::1000\", "
+        " \"excluded-prefix-len\": 120, "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool6>(expected3, pool3);
+
+    Pool6 pool4(Lease::TYPE_NA, IOAddress("2001:db8::"),
+                IOAddress("2001:db8::ffff"));
+    std::string expected4 = "{"
+        " \"pool\": \"2001:db8::/112\", "
+        " \"option-data\": [ ] "
+        "}";
+    isc::test::runToElementTest<Pool6>(expected4, pool4);
 }
 
 // Checks if the number of possible leases in range is reported correctly.

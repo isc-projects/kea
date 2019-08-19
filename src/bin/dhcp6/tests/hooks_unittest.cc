@@ -2682,7 +2682,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -2785,7 +2785,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -2885,7 +2885,7 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Renew) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -3311,7 +3311,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Release) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -3392,7 +3392,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6ReleasePD) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_PD, prefix, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 80));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -3474,7 +3474,7 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Release) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -3541,7 +3541,7 @@ TEST_F(HooksDhcpv6SrvTest, dropLease6Release) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -3808,7 +3808,7 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Rebind) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during REBIND.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -3906,7 +3906,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during REBIND.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -4004,7 +4004,7 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during REBIND.
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(),
+                               501, 502, subnet_->getID(),
                                HWAddrPtr(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));

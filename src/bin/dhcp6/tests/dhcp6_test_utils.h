@@ -310,49 +310,47 @@ public:
                                        D6O_INTERFACE_ID, tmp)));
     }
 
-    // Generate client-id option
-    isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
-
-        if (duid_size == 0) {
+    /// @brief Generate binary data option
+    ///
+    /// Creates an Option in the V6 space with the given type and binary data
+    /// of the given number of bytes.  The data is initialized to the values
+    /// 100 to 100 + n, where n is the desired number of bytes.
+    ///
+    /// @param type option type for the new option
+    /// @param data_size number of bytes of data to generate
+    ///
+    /// @return Pointer to the new option
+    isc::dhcp::OptionPtr generateBinaryOption(const DHCPv6OptionType type, size_t data_size) {
+        if (data_size == 0) {
             return (isc::dhcp::OptionPtr
-                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID)));
+                    (new isc::dhcp::Option(isc::dhcp::Option::V6, type)));
 
         }
 
-        isc::dhcp::OptionBuffer clnt_duid(duid_size);
-        for (size_t i = 0; i < duid_size; i++) {
-            clnt_duid[i] = 100 + i;
+        isc::dhcp::OptionBuffer data_data(data_size);
+        for (size_t i = 0; i < data_size; i++) {
+            data_data[i] = 100 + i;
         }
-
-        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(clnt_duid));
 
         return (isc::dhcp::OptionPtr
-                (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID,
-                                       clnt_duid.begin(),
-                                       clnt_duid.begin() + duid_size)));
+                (new isc::dhcp::Option(isc::dhcp::Option::V6, type,
+                                       data_data.begin(),
+                                       data_data.begin() + data_size)));
+    }
+
+    // Generate client-id option
+    isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
+        isc::dhcp::OptionPtr opt = generateBinaryOption(D6O_CLIENTID, duid_size);
+        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(opt->getData()));
+        return (opt);
     }
 
     /// Generate server-id option
     /// @param duid_size size of the duid
     isc::dhcp::OptionPtr generateServerId(size_t duid_size = 32) {
-
-        if (duid_size == 0) {
-            return (isc::dhcp::OptionPtr
-                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID)));
-
-        }
-
-        isc::dhcp::OptionBuffer clnt_duid(duid_size);
-        for (size_t i = 0; i < duid_size; i++) {
-            clnt_duid[i] = 100 + i;
-        }
-
-        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(clnt_duid));
-
-        return (isc::dhcp::OptionPtr
-                (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID,
-                                       clnt_duid.begin(),
-                                       clnt_duid.begin() + duid_size)));
+        isc::dhcp::OptionPtr opt = generateBinaryOption(D6O_SERVERID, duid_size);
+        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(opt->getData()));
+        return (opt);
     }
 
     // Checks if server response (ADVERTISE or REPLY) includes proper
@@ -527,8 +525,8 @@ public:
     /// @param expected_t2 expected T2 value
     /// @return IAADDR option for easy chaining with checkIAAddr method
     boost::shared_ptr<isc::dhcp::Option6IAAddr>
-        checkIA_NA(const isc::dhcp::Pkt6Ptr& rsp, uint32_t expected_iaid,
-                   uint32_t expected_t1, uint32_t expected_t2);
+    checkIA_NA(const isc::dhcp::Pkt6Ptr& rsp, uint32_t expected_iaid,
+               uint32_t expected_t1, uint32_t expected_t2);
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_PD option
@@ -542,11 +540,19 @@ public:
     checkIA_PD(const isc::dhcp::Pkt6Ptr& rsp, uint32_t expected_iaid,
                uint32_t expected_t1, uint32_t expected_t2);
 
+
     // Check that generated IAADDR option contains expected address
     // and lifetime values match the configured subnet
+    /// @param expected_pref check that lease preferedlifetime has the not-zero
+    /// expected value (zero value means that do not check).
+    /// @param expected_valid check that lease valid lifetime has the not-zero
+    /// expected value (zero value means that do not check).
     void checkIAAddr(const boost::shared_ptr<isc::dhcp::Option6IAAddr>& addr,
                      const isc::asiolink::IOAddress& expected_addr,
-                     isc::dhcp::Lease::Type type) {
+                     isc::dhcp::Lease::Type type,
+                     uint32_t expected_pref = 0,
+                     uint32_t expected_valid = 0) {
+
 
         // Check that the assigned address is indeed from the configured pool.
         // Note that when comparing addresses, we compare the textual
@@ -554,8 +560,24 @@ public:
         // an ostream, which means it can't be used in EXPECT_EQ.
         EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
-        EXPECT_EQ(subnet_->getPreferred(), addr->getPreferred());
-        EXPECT_EQ(subnet_->getValid(), addr->getValid());
+        if (subnet_->getPreferred().getMin() != subnet_->getPreferred().getMax()) {
+            EXPECT_LE(subnet_->getPreferred().getMin(), addr->getPreferred());
+            EXPECT_GE(subnet_->getPreferred().getMax(), addr->getPreferred());
+        } else {
+            EXPECT_EQ(subnet_->getPreferred(), addr->getPreferred());
+        }
+        if (subnet_->getValid().getMin() != subnet_->getValid().getMax()) {
+            EXPECT_LE(subnet_->getValid().getMin(), addr->getValid());
+            EXPECT_GE(subnet_->getValid().getMax(), addr->getValid());
+        } else {
+            EXPECT_EQ(subnet_->getValid(), addr->getValid());
+        }
+        if (expected_pref) {
+            EXPECT_EQ(expected_pref, addr->getPreferred());
+        }
+        if (expected_valid) {
+            EXPECT_EQ(expected_valid, addr->getValid());
+        }
     }
 
     // Checks if the lease sent to client is present in the database
@@ -668,11 +690,20 @@ public:
     /// @param prefix_len length of the prefix (128 for addresses)
     /// @param insert_before_renew should the lease be inserted into the database
     ///        before we try renewal?
+    /// @param expire_before_renew should the lease be expired before we try
+    ///        renewal?
+    /// @param hint_pref preferred lifetime hint (default is 300)
+    /// @param hint_valid valid lifetime hint (default is 500)
+    /// @param expected_pref expected preferred lifetime (zero means not check)
+    /// @param expected_valid expected valid lifetime (zero means not check)
     void
     testRenewBasic(isc::dhcp::Lease::Type type,
                    const std::string& existing_addr,
                    const std::string& renew_addr, const uint8_t prefix_len,
-                   bool insert_before_renew = true);
+                   bool insert_before_renew = true,
+                   bool expire_before_renew = false,
+                   uint32_t hint_pref = 300, uint32_t hint_valid = 500,
+                   uint32_t expected_pref = 0, uint32_t expected_valid = 0);
 
     /// @brief Checks if RENEW with invalid IAID is processed correctly.
     ///

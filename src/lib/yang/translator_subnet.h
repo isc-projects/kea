@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +22,13 @@ namespace yang {
 /// @code
 /// {
 ///     "valid-lifetime": <valid lifetime>,
+///     "min-valid-lifetime": <minimum valid lifetime>,
+///     "max-valid-lifetime": <maximum valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
+///     "calculate-tee-times": <calculate T1/T2 times>,
+///     "t1-percent": <T1 percent>,
+///     "t2-percent": <T2 percent>,
 ///     "option-data": [ <list of option data> ],
 ///     "pools": [ <list of pools> ],
 ///     "subnet": "<subnet prefix>",
@@ -51,9 +56,16 @@ namespace yang {
 /// @code
 /// {
 ///     "preferred-lifetime": <preferred lifetime>,
+///     "min-preferred-lifetime": <minimum preferred lifetime>,
+///     "max-preferred-lifetime": <maximum preferred lifetime>,
 ///     "valid-lifetime": <valid lifetime>,
+///     "min-valid-lifetime": <minimum valid lifetime>,
+///     "max-valid-lifetime": <maximum valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
+///     "calculate-tee-times": <calculate T1/T2 times>,
+///     "t1-percent": <T1 percent>,
+///     "t2-percent": <T2 percent>,
 ///     "option-data": [ <list of option data> ],
 ///     "pools": [ <list of pools> ],
 ///     "pd-pools": [ <list of prefix delegation pools> ],
@@ -87,8 +99,13 @@ namespace yang {
 /// YANG syntax for kea-dhcp[46]-server is with id as the key:
 /// @code
 ///  +--rw valid-lifetime?           uint32
+///  +--rw min-valid-lifetime?       uint32
+///  +--rw max-valid-lifetime?       uint32
 ///  +--rw renew-timer?              uint32
 ///  +--rw rebind-timer?             uint32
+///  +--rw calculate-tee-times?      boolean
+///  +--rw t1-percent?               decimal64
+///  +--rw t2-percent?               decimal64
 ///  +--rw option-data*
 ///  +--rw pool*
 ///  +--rw subnet                    inet:ip-prefix
@@ -111,6 +128,8 @@ namespace yang {
 ///  +--rw authoritative?            boolean
 ///  (DHCPv6 only)
 ///  +--rw preferred-lifetime?       uint32
+///  +--rw min-preferred-lifetime?   uint32
+///  +--rw max-preferred-lifetime?   uint32
 ///  +--rw pd-pool*
 ///  +--rw interface-id?             string
 ///  +--rw rapid-commit?             boolean

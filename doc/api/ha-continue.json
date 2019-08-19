@@ -1,8 +1,0 @@
-{
-    "name": "ha-continue",
-    "brief": "This command is used to resume the operation of the paused HA state machine.",
-    "description": "See <xref linkend=\"anchor-in-the-docs\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
-    "avail": "1.4.0",
-    "hook": "high_availability"
-}

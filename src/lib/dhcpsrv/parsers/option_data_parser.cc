@@ -13,6 +13,8 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/foreach.hpp>
@@ -34,6 +36,13 @@ OptionDataParser::OptionDataParser(const uint16_t address_family,
 
 std::pair<OptionDescriptor, std::string>
 OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
+
+    // Check parameters.
+    if (address_family_ == AF_INET) {
+        checkKeywords(SimpleParser4::OPTION4_PARAMETERS, single_option);
+    } else {
+        checkKeywords(SimpleParser6::OPTION6_PARAMETERS, single_option);
+    }
 
     // Try to create the option instance.
     std::pair<OptionDescriptor, std::string> opt = createOption(single_option);
@@ -290,10 +299,15 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         data_tokens = isc::util::str::tokens(data_param, ",", true);
 
     } else {
-        // Otherwise, the option data is specified as a string of
-        // hexadecimal digits that we have to turn into binary format.
+        // Try to convert the values in quotes into a vector of ASCII codes.
+        // If the identifier lacks opening and closing quote, this will return
+        // an empty value, in which case we'll try to decode it as a string of
+        // hexadecimal digits.
         try {
-            util::str::decodeFormattedHexString(data_param, binary);
+            binary = util::str::quotedStringToBinary(data_param);
+            if (binary.empty()) {
+                util::str::decodeFormattedHexString(data_param, binary);
+            }
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
                       << " string of hexadecimal digits: " << data_param

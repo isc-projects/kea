@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Tue Apr 16 2019 17:21
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Fri Jun 21 2019 16:14
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -329,8 +329,8 @@ const char* values[] = {
     "DHCPSRV_HOOK_LEASE6_RECOVER_SKIP", "DHCPv6 lease %1 was not recovered from declined state because a callout set the skip status.",
     "DHCPSRV_HOOK_LEASE6_SELECT_SKIP", "Lease6 (non-temporary) creation was skipped, because of callout skip flag.",
     "DHCPSRV_INVALID_ACCESS", "invalid database access string: %1",
-    "DHCPSRV_LEASE_SANITY_FAIL", "The lease %1 with subnet-id %2 failed subnet-id checks.",
-    "DHCPSRV_LEASE_SANITY_FAIL_DISCARD", "The lease %1 with subnet-id %2 failed subnet-id checks and was dropped.",
+    "DHCPSRV_LEASE_SANITY_FAIL", "The lease %1 with subnet-id %2 failed subnet-id checks (%3).",
+    "DHCPSRV_LEASE_SANITY_FAIL_DISCARD", "The lease %1 with subnet-id %2 failed subnet-id checks (%3) and was dropped.",
     "DHCPSRV_LEASE_SANITY_FIXED", "The lease %1 with subnet-id %2 failed subnet-id checks, but was corrected to subnet-id %3.",
     "DHCPSRV_MEMFILE_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_MEMFILE_ADD_ADDR6", "adding IPv6 lease with address %1",

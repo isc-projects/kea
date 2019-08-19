@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <asiolink/io_address.h>
+#include <stats/stats_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <string>
 
@@ -66,6 +67,12 @@ namespace {
 ///      server1 and server2 for each HA server
 ///      option 1234 'foo' aka telephones
 ///      option 1234 'bar' aka computers
+///
+/// - Configuration 3:
+///   - Used for the DROP class
+///   - 1 subnet: 2001:db8:1::/48
+///   - 2 pool: 2001:db8:1:1::/64
+///   - the following class defined: option 1234 'foo', DROP
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -249,8 +256,38 @@ const char* CONFIGS[] = {
         "          \"prefix-len\": 48, \"delegated-len\": 64,"
         "          \"client-class\": \"server2_and_computers\" } ]"
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+        "\"valid-lifetime\": 4000 }",
 
+    // Configuration 3
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ "
+        "{"
+        "    \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\""
+        "},"
+        "{"
+        "    \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\""
+        "} ],"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"DROP\","
+        "   \"test\": \"option[host-name].text == 'foo'\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
 };
 
 /// @brief Test fixture class for testing client classification by the
@@ -2040,6 +2077,45 @@ TEST_F(ClassifyTest, pDserver2Computer) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:4::", lease_client.addr_.toText());
+}
+
+// This test checks the handling for the DROP special class.
+TEST_F(ClassifyTest, dropClass) {
+    Dhcp6Client client;
+    client.setDUID("01:02:03:05");
+    client.setInterface("eth1");
+    client.requestAddress();
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(CONFIGS[3], *client.getServer()));
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client.doSolicit(true));
+
+    // No option: no drop.
+    EXPECT_TRUE(client.getContext().response_);
+
+    // Retry with an option matching the DROP class.
+    Dhcp6Client client2;
+
+    // Add the host-name option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    client2.addExtraOption(hostname);
+
+    // Send a message to the server.
+    ASSERT_NO_THROW(client2.doSolicit(true));
+
+    // Option, dropped.
+    EXPECT_FALSE(client2.getContext().response_);
+
+    // There should also be pkt6-receive-drop stat bumped up.
+    stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
+
+    // This statistic must be present and must be set to 1.
+    ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
 } // end of anonymous namespace

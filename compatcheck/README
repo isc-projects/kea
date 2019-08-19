@@ -1,5 +1,0 @@
-This directory is a collection of compatibility checker programs.
-They will be run before any other installation attempts on 'make install'
-to see if the installation causes any substantial compatibility problems
-with existing configurations.  If any checker program finds an issue,
-'make install' will stop at that point.

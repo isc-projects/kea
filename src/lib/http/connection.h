@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,6 +78,152 @@ private:
         SocketCallbackFunction callback_;
     };
 
+protected:
+
+    class Transaction;
+
+    /// @brief Shared pointer to the @c Transaction.
+    typedef boost::shared_ptr<Transaction> TransactionPtr;
+
+    /// @brief Represents a single exchange of the HTTP messages.
+    ///
+    /// In HTTP/1.1 multiple HTTP message exchanges may be conducted
+    /// over the same persistent connection before the connection is
+    /// closed. Since ASIO handlers for these exchanges may be sometimes
+    /// executed out of order, there is a need to associate the states of
+    /// the exchanges with the appropriate ASIO handlers. This object
+    /// represents such state and includes: received request, request
+    /// parser (being in the particular state of parsing), input buffer
+    /// and the output buffer.
+    ///
+    /// The new @c Transaction instance is created when the connection
+    /// is established and the server starts receiving the HTTP request.
+    /// The shared pointer to the created transaction is passed between
+    /// the asynchronous handlers. Therefore, as long as the asynchronous
+    /// communication is conducted the instance of the transaction is
+    /// held by the IO service which runs the handlers. The transaction
+    /// instance exists as long as the asynchronous handlers for the
+    /// given request/response exchange are executed. When the server
+    /// responds to the client and all corresponding IO handlers are
+    /// invoked the transaction is automatically destroyed.
+    ///
+    /// The timeout may occur anytime during the transaction. In such
+    /// cases, a new transaction instance is created to send the
+    /// HTTP 408 (timeout) response to the client. Creation of the
+    /// new transaction for the timeout response is necessary because
+    /// there may be some asynchronous handlers scheduled by the
+    /// original transaction which rely on the original transaction's
+    /// state. The timeout response's state is held within the new
+    /// transaction spawned from the original transaction.
+    class Transaction {
+    public:
+
+        /// @brief Constructor.
+        ///
+        /// @param response_creator Pointer to the response creator being
+        /// used for generating a response from the request.
+        /// @param request Pointer to the HTTP request. If the request is
+        /// null, the constructor creates new request instance using the
+        /// provided response creator.
+        Transaction(const HttpResponseCreatorPtr& response_creator,
+                    const HttpRequestPtr& request = HttpRequestPtr());
+
+        /// @brief Creates new transaction instance.
+        ///
+        /// It is called when the HTTP server has just scheduled asynchronous
+        /// reading of the HTTP message.
+        ///
+        /// @param response_creator Pointer to the response creator to be passed
+        /// to the transaction's constructor.
+        ///
+        /// @return Pointer to the created transaction instance.
+        static TransactionPtr create(const HttpResponseCreatorPtr& response_creator);
+
+        /// @brief Creates new transaction from the current transaction.
+        ///
+        /// This method creates new transaction and inherits the request
+        /// from the existing transaction. This is used when the timeout
+        /// occurs during the messages exchange. The server creates the new
+        /// transaction to handle the timeout but this new transaction must
+        /// include the request instance so as HTTP version information can
+        /// be inferred from it while sending the timeout response. The
+        /// HTTP version information should match between the request and
+        /// the response.
+        ///
+        /// @param response_creator Pointer to the response creator.
+        /// @param transaction Existing transaction from which the request
+        /// should be inherited. If the transaction is null, the new (dummy)
+        /// request is created for the new transaction.
+        static TransactionPtr spawn(const HttpResponseCreatorPtr& response_creator,
+                                    const TransactionPtr& transaction);
+
+        /// @brief Returns request instance associated with the transaction.
+        HttpRequestPtr getRequest() const {
+            return (request_);
+        }
+
+        /// @brief Returns parser instance associated with the transaction.
+        HttpRequestParserPtr getParser() const {
+            return (parser_);
+        }
+
+        /// @brief Returns pointer to the first byte of the input buffer.
+        char* getInputBufData() {
+            return (input_buf_.data());
+        }
+
+        /// @brief Returns input buffer size.
+        size_t getInputBufSize() const {
+            return (input_buf_.size());
+        }
+
+        /// @brief Checks if the output buffer contains some data to be
+        /// sent.
+        ///
+        /// @return true if the output buffer contains data to be sent,
+        /// false otherwise.
+        bool outputDataAvail() const {
+            return (!output_buf_.empty());
+        }
+
+        /// @brief Returns pointer to the first byte of the output buffer.
+        const char* getOutputBufData() const {
+            return (output_buf_.data());
+        }
+
+        /// @brief Returns size of the output buffer.
+        size_t getOutputBufSize() const {
+            return (output_buf_.size());
+        }
+
+        /// @brief Replaces output buffer contents with new contents.
+        ///
+        /// @param response New contents for the output buffer.
+        void setOutputBuf(const std::string& response) {
+            output_buf_ = response;
+        }
+
+        /// @brief Erases n bytes from the beginning of the output buffer.
+        ///
+        /// @param length Number of bytes to be erased.
+        void consumeOutputBuf(const size_t length) {
+            output_buf_.erase(0, length);
+        }
+
+    private:
+
+        /// @brief Pointer to the request received over this connection.
+        HttpRequestPtr request_;
+
+        /// @brief Pointer to the HTTP request parser.
+        HttpRequestParserPtr parser_;
+
+        /// @brief Buffer for received data.
+        std::array<char, 32768> input_buf_;
+
+        /// @brief Buffer used for outbound data.
+        std::string output_buf_;
+    };
 
 public:
 
@@ -105,7 +251,7 @@ public:
     /// @brief Destructor.
     ///
     /// Closes current connection.
-    ~HttpConnection();
+    virtual ~HttpConnection();
 
     /// @brief Asynchronously accepts new connection.
     ///
@@ -124,23 +270,32 @@ public:
     /// HTTP response using supplied response creator object.
     ///
     /// In case of error the connection is stopped.
-    void doRead();
+    ///
+    /// @param transaction Pointer to the transaction for which the read
+    /// operation should be performed. It defaults to null pointer which
+    /// indicates that this function should create new transaction.
+    void doRead(TransactionPtr transaction = TransactionPtr());
 
-private:
+protected:
 
     /// @brief Starts asynchronous write to the socket.
     ///
     /// The @c output_buf_ must contain the data to be sent.
     ///
     /// In case of error the connection is stopped.
-    void doWrite();
+    ///
+    /// @param transaction Pointer to the transaction for which the write
+    /// operation should be performed.
+    void doWrite(TransactionPtr transaction);
 
     /// @brief Sends HTTP response asynchronously.
     ///
     /// Internally it calls @ref HttpConnection::doWrite to send the data.
     ///
     /// @param response Pointer to the HTTP response to be sent.
-    void asyncSendResponse(const ConstHttpResponsePtr& response);
+    /// @param transaction Pointer to the transaction.
+    void asyncSendResponse(const ConstHttpResponsePtr& response,
+                           TransactionPtr transaction);
 
     /// @brief Local callback invoked when new connection is accepted.
     ///
@@ -157,28 +312,28 @@ private:
     /// parsing. When the parser signals end of the HTTP request the callback
     /// prepares a response and starts asynchronous send over the socket.
     ///
+    /// @param transaction Pointer to the transaction for which the callback
+    /// is invoked.
     /// @param ec Error code.
     /// @param length Length of the received data.
-    void socketReadCallback(boost::system::error_code ec,
+    void socketReadCallback(TransactionPtr transaction,
+                            boost::system::error_code ec,
                             size_t length);
 
     /// @brief Callback invoked when data is sent over the socket.
     ///
+    /// @param transaction Pointer to the transaction for which the callback
+    /// is invoked.
     /// @param ec Error code.
     /// @param length Length of the data sent.
-    void socketWriteCallback(boost::system::error_code ec,
-                             size_t length);
-
-    /// @brief Reinitializes request processing state after sending a response.
-    ///
-    /// This method is only called for persistent connections, when the response
-    /// to a previous command has been sent. It initializes the state machine to
-    /// be able to process the next request. It also sets the persistent connection
-    /// idle timer to monitor the connection timeout.
-    void reinitProcessingState();
+    virtual void socketWriteCallback(TransactionPtr transaction,
+                                     boost::system::error_code ec,
+                                     size_t length);
 
     /// @brief Reset timer for detecting request timeouts.
-    void setupRequestTimer();
+    ///
+    /// @param transaction Pointer to the transaction to be guarded by the timeout.
+    void setupRequestTimer(TransactionPtr transaction = TransactionPtr());
 
     /// @brief Reset timer for detecing idle timeout in persistent connections.
     void setupIdleTimer();
@@ -187,7 +342,9 @@ private:
     ///
     /// This callback creates HTTP response with Request Timeout error code
     /// and sends it to the client.
-    void requestTimeoutCallback();
+    ///
+    /// @param transaction Pointer to the transaction for which timeout occurs.
+    void requestTimeoutCallback(TransactionPtr transaction);
 
     void idleTimeoutCallback();
 
@@ -220,20 +377,8 @@ private:
     /// HTTP responses.
     HttpResponseCreatorPtr response_creator_;
 
-    /// @brief Pointer to the request received over this connection.
-    HttpRequestPtr request_;
-
-    /// @brief Pointer to the HTTP request parser.
-    HttpRequestParserPtr parser_;
-
     /// @brief External TCP acceptor callback.
     HttpAcceptorCallback acceptor_callback_;
-
-    /// @brief Buffer for received data.
-    std::array<char, 32768> buf_;
-
-    /// @brief Buffer used for outbound data.
-    std::string output_buf_;
 };
 
 } // end of namespace isc::http

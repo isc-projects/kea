@@ -1,0 +1,148 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "8.1" ]; then
+    printf "This script upgrades 8.1 to 8.2. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Drop existing trigger on the dhcp4_shared_network table.
+DROP TRIGGER dhcp4_shared_network_ADEL;
+
+# Create new trigger which will delete options associated with the shared
+# network.
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_BDEL BEFORE DELETE ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, "delete");
+        DELETE FROM dhcp4_options WHERE shared_network_name = OLD.name;
+    END $$
+DELIMITER ;
+
+# Drop existing trigger on the dhcp4_subnet table.
+DROP TRIGGER dhcp4_subnet_ADEL;
+
+# Create new trigger which will delete pools associated with the subnet and
+# the options associated with the subnet.
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_BDEL BEFORE DELETE ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_subnet', OLD.subnet_id, "delete");
+        DELETE FROM dhcp4_pool WHERE subnet_id = OLD.subnet_id;
+        DELETE FROM dhcp4_options WHERE dhcp4_subnet_id = OLD.subnet_id;
+    END $$
+DELIMITER ;
+
+# Do not perform cascade deletion of the data in the dhcp4_pool because
+# the cascade deletion does not execute triggers associated with the table.
+# Instead we are going to use triggers on the dhcp4_subnet table.
+ALTER TABLE dhcp4_pool
+    DROP FOREIGN KEY fk_dhcp4_pool_subnet_id;
+
+ALTER TABLE dhcp4_pool
+    ADD CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp4_subnet (subnet_id)
+    ON DELETE NO ACTION ON UPDATE CASCADE;
+
+# Drop existing trigger on the dhcp6_shared_network table.
+DROP TRIGGER dhcp6_shared_network_ADEL;
+
+# Create new trigger which will delete options associated with the shared
+# network.
+DELIMITER $$
+CREATE TRIGGER dhcp6_shared_network_BDEL BEFORE DELETE ON dhcp6_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_shared_network', OLD.id, "delete");
+        DELETE FROM dhcp6_options WHERE shared_network_name = OLD.name;
+    END $$
+DELIMITER ;
+
+# Drop existing trigger on the dhcp6_subnet table.
+DROP TRIGGER dhcp6_subnet_ADEL;
+
+# Create new trigger which will delete pools associated with the subnet and
+# the options associated with the subnet.
+DELIMITER $$
+CREATE TRIGGER dhcp6_subnet_BDEL BEFORE DELETE ON dhcp6_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_subnet', OLD.subnet_id, "delete");
+        DELETE FROM dhcp6_pool WHERE subnet_id = OLD.subnet_id;
+        DELETE FROM dhcp6_pd_pool WHERE subnet_id = OLD.subnet_id;
+        DELETE FROM dhcp6_options WHERE dhcp6_subnet_id = OLD.subnet_id;
+    END $$
+DELIMITER ;
+
+# Do not perform cascade deletion of the data in the dhcp6_pool and dhcp6_pd_pool
+# because the cascaded deletion does not execute triggers associated with the table.
+# Instead we are going to use triggers on the dhcp6_subnet table.
+ALTER TABLE dhcp6_pool
+    DROP FOREIGN KEY fk_dhcp6_pool_subnet_id;
+
+ALTER TABLE dhcp6_pd_pool
+    DROP FOREIGN KEY fk_dhcp6_pd_pool_subnet_id;
+
+ALTER TABLE dhcp6_pool
+    ADD CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE NO ACTION ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_pd_pool
+    ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE NO ACTION ON UPDATE CASCADE;
+
+# Create trigger which removes pool specific options upon removal of
+# the pool.
+DELIMITER $$
+CREATE TRIGGER dhcp6_pd_pool_BDEL BEFORE DELETE ON dhcp6_pd_pool FOR EACH ROW
+BEGIN
+DELETE FROM dhcp6_options WHERE scope_id = 6 AND pd_pool_id = OLD.id;
+END
+$$
+DELIMITER ;
+
+# Add missing columns in pools.
+ALTER TABLE dhcp4_pool
+    ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN require_client_classes LONGTEXT,
+    ADD COLUMN user_context LONGTEXT;
+
+ALTER TABLE dhcp6_pd_pool
+    ADD COLUMN excluded_prefix VARCHAR(45) DEFAULT NULL,
+    ADD COLUMN excluded_prefix_length TINYINT(3) NOT NULL,
+    ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN require_client_classes LONGTEXT,
+    ADD COLUMN user_context LONGTEXT;
+
+ALTER TABLE dhcp6_pool
+    ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN require_client_classes LONGTEXT,
+    ADD COLUMN user_context LONGTEXT;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '8', minor = '2';
+
+# This line concludes database upgrade to version 8.2.
+
+EOF
+
+RESULT=$?
+
+exit $?

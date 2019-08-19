@@ -50,7 +50,7 @@ public:
                       "' found in the configuration");
         }
 
-        networks_.push_back(network);
+        static_cast<void>(networks_.push_back(network));
     }
 
     /// @brief Deletes shared network from the configuration.
@@ -202,7 +202,7 @@ public:
             (*other_network)->getCfgOption()->createOptions(cfg_def);
 
             // Add the new/updated nework.
-            networks_.push_back(*other_network);
+            static_cast<void>(networks_.push_back(*other_network));
         }
     }
 

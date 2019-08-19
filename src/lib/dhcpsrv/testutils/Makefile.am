@@ -23,6 +23,10 @@ libdhcpsrvtest_la_SOURCES += test_config_backend.h
 libdhcpsrvtest_la_SOURCES += test_config_backend_dhcp4.cc test_config_backend_dhcp4.h
 libdhcpsrvtest_la_SOURCES += test_config_backend_dhcp6.cc test_config_backend_dhcp6.h
 
+if HAVE_MYSQL
+libdhcpsrvtest_la_SOURCES += mysql_generic_backend_unittest.cc mysql_generic_backend_unittest.h
+endif
+
 libdhcpsrvtest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 

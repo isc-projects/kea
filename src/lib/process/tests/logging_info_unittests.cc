@@ -85,6 +85,7 @@ TEST_F(LoggingInfoTest, defaults) {
         "\"name\": \"kea\",\n"
         "\"output_options\": [ {\n"
         " \"output\": \"stdout\",\n \"maxsize\": 10240000,\n"
+        " \"pattern\": \"\","
         " \"maxver\": 1,\n \"flush\": true } ],\n"
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";

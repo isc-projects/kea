@@ -1,0 +1,43 @@
+{
+    "avail": "1.6.0",
+    "brief": [
+        "This command creates or replaces an IPv4 subnet in the configuration database."
+    ],
+    "cmd-comment": [
+        "The provided list must contain exactly one subnet specification. The ``shared-network-name`` parameter is required for these commands; it associates the subnet with the shared network by its name. If the subnet must not belong to any shared network (a global subnet), the ``null`` value must be specified for the shared network name. The ``server-tags`` list is mandatory and must contain one or more server tags as strings to explicitly associate the subnet with one or more user-defined servers. The ``remote-subnet4-set`` command may include the special server tag \"all\" to associate the subnet with all servers."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-subnet4-set\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": <subnet identifier>,",
+        "                \"subnet\": <subnet prefix>,",
+        "                \"shared-network-name\": <shared network name> | null,",
+        "                <the rest of the subnet specification here>",
+        "            }",
+        "        ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-subnet4-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv4 subnet successfully set.\",",
+        "    \"arguments\": {",
+        "        \"id\": <subnet identifier>,",
+        "        \"subnet\": <subnet prefix>",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

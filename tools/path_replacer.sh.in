@@ -19,12 +19,15 @@
 prefix=@prefix@
 sysconfdir=@sysconfdir@
 localstatedir=@localstatedir@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
 
 echo "Replacing \@prefix\@ with ${prefix}"
+echo "Replacing \@libdir\@ with ${libdir}"
 echo "Replacing \@sysconfdir\@ with ${sysconfdir}"
 echo "Replacing \@localstatedir\@ with ${localstatedir}"
 
 echo "Input file: $1"
 echo "Output file: $2"
 
-sed -e "s@SEP@\@localstatedir\@@SEP@${localstatedir}@SEP@g; s@SEP@\@prefix\@@SEP@${prefix}@SEP@g; s@SEP@\@sysconfdir\@@SEP@${sysconfdir}@SEP@g" $1 > $2
+sed -e "s@SEP@\@libdir\@@SEP@${libdir}@SEP@g; s@SEP@\@localstatedir\@@SEP@${localstatedir}@SEP@g; s@SEP@\@prefix\@@SEP@${prefix}@SEP@g; s@SEP@\@sysconfdir\@@SEP@${sysconfdir}@SEP@g" $1 > $2

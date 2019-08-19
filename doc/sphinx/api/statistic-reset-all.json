@@ -1,0 +1,21 @@
+{
+    "avail": "1.0.0",
+    "brief": [
+        "This command sets all statistics to their neutral values: 0 for integer, 0.0 for float, 0h0m0s0us for time duration, and \"\" for string type."
+    ],
+    "cmd-comment": [
+        "If the operation is successful, the server responds with a status of 0, indicating success, and an empty parameters field. If an error is encountered, the server returns a status code of 1 (error) and the text field contains the error description."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"statistic-reset-all\",",
+        "    \"arguments\": { }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-statistic-reset-all\"/>",
+    "name": "statistic-reset-all",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

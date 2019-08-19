@@ -40,12 +40,21 @@ import xml.etree.ElementTree as ET
 
 
 SYSTEMS = {
-    'fedora': ['27', '28', '29'],
+    'fedora': ['27',  # EOLed
+               '28',  # EOLed
+               '29',
+               '30'],
     'centos': ['7'],
     'rhel': ['8'],
-    'ubuntu': ['16.04', '18.04', '18.10'],
-    'debian': ['8', '9'],
-    'freebsd': ['11.2', '12.0'],
+    'ubuntu': ['16.04',
+               '18.04',
+               '18.10',  # EOLed
+               '19.04'],
+    'debian': ['8',
+               '9',
+               '10'],
+    'freebsd': ['11.2',
+                '12.0'],
 }
 
 # pylint: disable=C0326
@@ -56,6 +65,8 @@ IMAGE_TEMPLATES = {
     'fedora-28-virtualbox':    {'bare': 'generic/fedora28',            'kea': 'godfryd/kea-fedora-28'},
     'fedora-29-lxc':           {'bare': 'godfryd/lxc-fedora-29',       'kea': 'godfryd/kea-fedora-29'},
     'fedora-29-virtualbox':    {'bare': 'generic/fedora29',            'kea': 'godfryd/kea-fedora-29'},
+    'fedora-30-lxc':           {'bare': 'godfryd/lxc-fedora-30',       'kea': 'godfryd/kea-fedora-30'},
+    'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
@@ -65,10 +76,14 @@ IMAGE_TEMPLATES = {
     'ubuntu-18.04-virtualbox': {'bare': 'ubuntu/bionic64',             'kea': 'godfryd/kea-ubuntu-18.04'},
     'ubuntu-18.10-lxc':        {'bare': 'godfryd/lxc-ubuntu-18.10',    'kea': 'godfryd/kea-ubuntu-18.10'},
     'ubuntu-18.10-virtualbox': {'bare': 'ubuntu/cosmic64',             'kea': 'godfryd/kea-ubuntu-18.10'},
+    'ubuntu-19.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-19.04',    'kea': 'godfryd/kea-ubuntu-19.04'},
+    'ubuntu-19.04-virtualbox': {'bare': 'ubuntu/disco64',              'kea': 'godfryd/kea-ubuntu-19.04'},
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
     'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
     'debian-9-virtualbox':     {'bare': 'debian/stretch64',            'kea': 'godfryd/kea-debian-9'},
+    'debian-10-lxc':           {'bare': 'godfryd/lxc-debian-10',       'kea': 'godfryd/kea-debian-10'},
+    'debian-10-virtualbox':    {'bare': 'debian/buster64',             'kea': 'godfryd/kea-debian-10'},
     'freebsd-11.2-virtualbox': {'bare': 'generic/freebsd11',           'kea': 'godfryd/kea-freebsd-11.2'},
     'freebsd-12.0-virtualbox': {'bare': 'generic/freebsd12',           'kea': 'godfryd/kea-freebsd-12.0'},
 }
@@ -147,9 +162,9 @@ def get_system_revision():
     """Return tuple containing system name and its revision."""
     system = platform.system()
     if system == 'Linux':
-        system, revision, _ = platform.dist()  # pylit: disable=deprecated-method
+        system, revision, _ = platform.dist()  # pylint: disable=deprecated-method
         if system == 'debian':
-            revision = revision[0]
+            revision = revision.split('.')[0]
         elif system == 'redhat':
             system = 'rhel'
             revision = revision[0]
@@ -498,7 +513,10 @@ class VagrantEnv(object):
                     provider_found = True
                     break
             if provider_found:
-                v = int(ver['number'])
+                try:
+                    v = int(ver['number'])
+                except:
+                    return ver['number']
                 if v > latest_version:
                     latest_version = v
         return latest_version
@@ -528,19 +546,17 @@ class VagrantEnv(object):
 
     def package(self):
         """Package Vagrant system into Vagrant box."""
+        execute('vagrant halt', cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
+
+        box_path = os.path.join(self.vagrant_dir, 'kea-%s-%s.box' % (self.system, self.revision))
+        if os.path.exists(box_path):
+            os.unlink(box_path)
 
         if self.provider == 'virtualbox':
-            box_path = "kea-%s-%s.box" % (self.system, self.revision)
             cmd = "vagrant package --output %s" % box_path
             execute(cmd, cwd=self.vagrant_dir, timeout=4 * 60, dry_run=self.dry_run)
 
         elif self.provider == 'lxc':
-            execute('vagrant halt', cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
-
-            box_path = os.path.join(self.vagrant_dir, 'kea-%s-%s.box' % (self.system, self.revision))
-            if os.path.exists(box_path):
-                os.unlink(box_path)
-
             lxc_box_dir = os.path.join(self.vagrant_dir, 'lxc-box')
             if os.path.exists(lxc_box_dir):
                 execute('sudo rm -rf %s' % lxc_box_dir)
@@ -861,6 +877,7 @@ def _configure_mysql(system, revision, features):
 
 
 def _configure_pgsql(system, features):
+    """ Configure PostgreSQL DB """
     if system in ['fedora', 'centos']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
@@ -869,8 +886,18 @@ def _configure_pgsql(system, features):
                 execute('sudo postgresql-setup initdb')
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
-    execute('sudo systemctl start postgresql.service')
-    execute('sudo systemctl enable postgresql.service')
+    elif system == 'freebsd':
+        # pgsql must be enabled before runnig initdb
+        execute('sudo sysrc postgresql_enable="yes"')
+        execute('sudo /usr/local/etc/rc.d/postgresql initdb')
+
+    if system == 'freebsd':
+        # echo or redirection to stdout is needed otherwise the script will hang at "line = p.stdout.readline()"
+        execute('sudo service postgresql start && echo "PostgreSQL started"')
+    else:
+        execute('sudo systemctl enable postgresql.service')
+        execute('sudo systemctl start postgresql.service')
+
     cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
     cmd += "DROP DATABASE IF EXISTS keatest;\n"
     cmd += "DROP USER IF EXISTS keatest;\n"
@@ -881,7 +908,7 @@ def _configure_pgsql(system, features):
     cmd += "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;\n"
     cmd += "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;\n"
     cmd += "EOF\n\""
-    execute(cmd)
+    execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as posgres user directory to "/home/jenkins": Permission denied
 
     if 'forge' in features:
         cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
@@ -891,13 +918,22 @@ def _configure_pgsql(system, features):
         cmd += "CREATE DATABASE keadb;\n"
         cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
         cmd += "EOF\n\""
-        execute(cmd)
+        execute(cmd, cwd='/tmp')  # CWD to avoid: could not change as posgres user directory to "/home/jenkins": Permission denied
         # TODO: in /etc/postgresql/10/main/pg_hba.conf
         # change:
         #    local   all             all                                     peer
         # to:
         #    local   all             all                                     md5
     log.info('postgresql just configured')
+
+
+def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep_time_after_attempt=None,
+                capture=False):
+    cmd = 'sudo apt update'
+    if system == 'debian' and int(revision) >= 10:
+        cmd += ' --allow-releaseinfo-change'
+    return execute(cmd, env=env, check_times=check_times, attempts=attempts,
+                   sleep_time_after_attempt=sleep_time_after_attempt, capture=capture)
 
 
 def _install_cassandra_deb(system, revision, env, check_times):
@@ -908,7 +944,9 @@ def _install_cassandra_deb(system, revision, env, check_times):
         execute(cmd, env=env, check_times=check_times)
         execute('wget -qO- https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -',
                 env=env, check_times=check_times)
-        execute('sudo apt update', env=env, check_times=check_times)
+        _apt_update(system, revision, env=env, check_times=check_times)
+        # ca-certificates-java needs to be installed first because it fails if installed together with cassandra
+        install_pkgs('ca-certificates-java', env=env, check_times=check_times)
         install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
@@ -922,13 +960,16 @@ def _install_cassandra_deb(system, revision, env, check_times):
                     env=env, check_times=check_times)
             execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
                     env=env, check_times=check_times)
+            if system == 'debian' and revision == '10':
+                install_pkgs('multiarch-support', env=env, check_times=check_times)
+
         execute('sudo dpkg -i cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb',
                 env=env, check_times=check_times)
         execute('rm -rf cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb',
                 env=env, check_times=check_times)
 
 
-def _install_cassandra_rpm(system, env, check_times):
+def _install_cassandra_rpm(system, revision, env, check_times):
     """Install Cassandra and cpp-driver using RPM package."""
     if not os.path.exists('/usr/bin/cassandra'):
         if system == 'centos':
@@ -942,12 +983,18 @@ def _install_cassandra_rpm(system, env, check_times):
 
     if system == 'centos':
         execute('sudo systemctl daemon-reload')
+
+    if system == 'fedora' and revision == '30':
+        execute("echo '-Xms1G -Xmx1G' | sudo tee -a /etc/cassandra/jvm.options")
     execute('sudo systemctl start cassandra')
 
     if not os.path.exists('/usr/include/cassandra.h'):
         execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm')
         execute('wget http://downloads.datastax.com/cpp-driver/centos/7/cassandra/v2.11.0/cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
-        execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+        if system == 'centos':
+            execute('sudo rpm -i cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
+        else:
+            execute('sudo dnf install -y cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
         execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
 
 
@@ -996,13 +1043,16 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
+            packages.extend(['python3-sphinx', 'texlive', 'texlive-collection-latexextra'])
 
         if 'mysql' in features:
+            execute('sudo dnf remove -y community-mysql-devel || true')
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
             packages.extend(['postgresql-devel', 'postgresql-server'])
+            if revision in ['30']:
+                packages.extend(['postgresql-server-devel'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1018,7 +1068,7 @@ def prepare_system_local(features, check_times):
         execute('sudo dnf clean packages', env=env, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_rpm(system, env, check_times)
+            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare centos
     elif system == 'centos':
@@ -1031,7 +1081,7 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel'])
 
         if 'docs' in features:
-            packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
+            packages.extend(['python-virtualenv'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
@@ -1047,11 +1097,17 @@ def prepare_system_local(features, check_times):
 
         install_pkgs(packages, env=env, check_times=check_times)
 
+        if 'docs' in features:
+            execute('virtualenv ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
+
         if 'unittest' in features:
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(system, env, check_times)
+            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare rhel
     elif system == 'rhel':
@@ -1071,6 +1127,8 @@ def prepare_system_local(features, check_times):
 
         if 'radius' in features:
             packages.extend(['git'])
+            if 'forge' in features:
+                packages.extend(['freeradius'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1097,14 +1155,14 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(system, env, check_times)
+            _install_cassandra_rpm(system, revision, env, check_times)
 
     # prepare ubuntu
     elif system == 'ubuntu':
-        execute('sudo apt update', env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+        _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev']
+                    'libboost-system-dev', 'gnupg']
 
         if 'unittest' in features:
             if revision.startswith('16.'):
@@ -1113,7 +1171,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['dblatex', 'xsltproc', 'elinks', 'docbook-xsl'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1144,10 +1202,10 @@ def prepare_system_local(features, check_times):
 
     # prepare debian
     elif system == 'debian':
-        execute('sudo apt update', env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+        _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
-                    'liblog4cplus-dev', 'libboost-system-dev']
+                    'liblog4cplus-dev', 'libboost-system-dev', 'gnupg']
 
         if 'unittest' in features:
             if revision == '8':
@@ -1157,7 +1215,12 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['dblatex', 'xsltproc', 'elinks', 'docbook-xsl'])
+            if revision == '8':
+                packages.extend(['virtualenv'])
+            else:
+                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
+                if revision == '9':
+                    packages.extend(['texlive-generic-extra'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1165,12 +1228,20 @@ def prepare_system_local(features, check_times):
 
         if 'mysql' in features:
             if revision == '8':
-                packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+                packages.extend(['mysql-client', 'libmysqlclient-dev'])
             else:
-                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev'])
+            if revision in ['8', '9']:
+                packages.append('mysql-server')
+            else:
+                packages.append('mariadb-server')
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+            packages.extend(['postgresql-client', 'libpq-dev'])
+            if revision == '8':
+                packages.extend(['postgresql', 'postgresql-client'])
+            else:
+                packages.append('postgresql-all')
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1179,6 +1250,12 @@ def prepare_system_local(features, check_times):
             packages.extend(['ccache'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
+
+        if 'docs' in features and revision == '8':
+            execute('virtualenv -p /usr/bin/python3 ~/venv',
+                    env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install sphinx typing sphinx-rtd-theme',
+                    env=env, timeout=120, check_times=check_times)
 
         if 'cql' in features and revision != '8':
             # there is no libuv1 package in case of debian 8
@@ -1189,13 +1266,16 @@ def prepare_system_local(features, check_times):
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
 
         if 'docs' in features:
-            packages.extend(['libxslt', 'elinks', 'docbook-xsl'])
+            packages.extend(['py36-sphinx', 'py36-sphinx_rtd_theme'])
 
         if 'unittest' in features:
             _install_gtest_sources()
 
         if 'mysql' in features:
             packages.extend(['mysql57-server', 'mysql57-client'])
+
+        if 'pgsql' in features:
+            packages.extend(['postgresql11-server', 'postgresql11-client'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1216,7 +1296,7 @@ def prepare_system_local(features, check_times):
     if 'pgsql' in features:
         _configure_pgsql(system, features)
 
-    if 'radius' in features:
+    if 'radius' in features and 'native-pkg' not in features:
         _install_freeradius_client(system, revision, features, env, check_times)
 
     #execute('sudo rm -rf /usr/share/doc')
@@ -1244,8 +1324,8 @@ def _calculate_build_timeout(features):
     return timeout
 
 
-def _prepare_ccache_if_needed(system, features, ccache_dir, env):
-    if 'ccache' in features or ccache_dir is not None:
+def _prepare_ccache_if_needed(system, ccache_dir, env):
+    if ccache_dir is not None:
         if system in ['debian', 'ubuntu']:
             ccache_bin_path = '/usr/lib/ccache/'
         elif system in ['centos', 'rhel', 'fedora']:
@@ -1296,6 +1376,10 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             raise NotImplementedError
     if 'docs' in features and not (system == 'rhel' and revision == '8'):
         cmd += ' --enable-generate-docs'
+        if system == 'debian' and revision == '8':
+            cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
+        elif system == 'centos' and revision == '7':
+            cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
     if 'shell' in features:
@@ -1317,14 +1401,14 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cpus = jobs
 
     # enable ccache if requested
-    env = _prepare_ccache_if_needed(system, features, ccache_dir, env)
+    env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     # do build
     timeout = _calculate_build_timeout(features)
     if 'distcheck' in features:
         cmd = 'make distcheck'
     else:
-        cmd = 'make -j%s' % cpus
+        cmd = 'make -C doc/sphinx -j%s' % cpus
     execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
@@ -1404,7 +1488,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     """Build native (RPM or DEB) packages."""
 
     # enable ccache if requested
-    env = _prepare_ccache_if_needed(system, features, ccache_dir, env)
+    env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
     assert repo_url is not None
@@ -1426,6 +1510,9 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         elif system == 'fedora' and revision == '29':
             frc.append('freeradius-client-1.1.7-isc20190408101030.fc29')
             frc.append('freeradius-client-devel-1.1.7-isc20190408101030.fc29')
+        elif system == 'fedora' and revision == '30':
+            frc.append('freeradius-client-1.1.7-isc201906181200.fc30')
+            frc.append('freeradius-client-devel-1.1.7-isc201906181200.fc30')
         elif system == 'centos':
             frc.append('freeradius-client-1.1.7-isc20190408140511.el7')
             frc.append('freeradius-client-devel-1.1.7-isc20190408140511.el7')
@@ -1463,7 +1550,9 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
 
         # do rpm build
-        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
+        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
+        cmd += " -D'_topdir /home/vagrant/rpm-root'"
+        cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
         cmd = cmd % (pkg_version, pkg_isc_version)
         execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
@@ -1474,12 +1563,17 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
 
     elif system in ['ubuntu', 'debian']:
+        if system == 'debian' and revision == '9':
+            # debian 9 does not support apt-installing over https, so install proper transport
+            install_pkgs('apt-transport-https', env=env, check_times=check_times)
         # install our freeradius-client but now from deb
         execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
-        execute("sudo apt-key adv --fetch-keys %s/repository/repo-keys/repo-key.gpg" % repository_url)
+        key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
+        execute('wget -qO- %s | sudo apt-key add -' % key_url,
+                env=env, check_times=check_times)
         # try apt update for up to 10 times if there is an error
         for _ in range(10):
-            _, out = execute('sudo apt update', capture=True)
+            _, out = _apt_update(system, revision, capture=True)
             if 'Bad header data' not in out:
                 break
             time.sleep(4)
@@ -1519,6 +1613,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, 
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
     system, revision = get_system_revision()
+    log.info('Building for %s %s', system, revision)
 
     execute('df -h', dry_run=dry_run)
 
@@ -1582,10 +1677,11 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
     return dt, error, total, passed
 
 
-def package_box(provider, system, revision, features, dry_run, check_times):
+def package_box(provider, system, revision, features, dry_run, check_times, reuse):
     """Prepare Vagrant box of specified system."""
     ve = VagrantEnv(provider, system, revision, features, 'bare', dry_run, check_times=check_times)
-    ve.destroy()
+    if not reuse:
+        ve.destroy()
     ve.bring_up_latest_box()
     ve.prepare_system()
     # TODO cleanup
@@ -1792,11 +1888,13 @@ def parse_args():
                                    "To get the list of created systems run: ./hammer.py created-systems.")
     parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
     parser = subparsers.add_parser('package-box',
-                                   help="Package currently running system into Vagrant Box. Prepared box can be "
+                                   help="Prepare system from scratch and package it into Vagrant Box. Prepared box can be "
                                    "later deployed to Vagrant Cloud.",
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('--repository-url', default=None,
                         help='Repository for 3rd party dependencies and for uploading built packages.')
+    parser.add_argument('-u', '--reuse', action='store_true',
+                        help='Reuse existing system image, otherwise (default case) if there is any exising then destroy it first.')
 
     args = main_parser.parse_args()
 
@@ -2037,7 +2135,7 @@ def main():
         _check_system_revision(args.system, args.revision)
         features = _get_features(args)
         log.info('Enabled features: %s', ' '.join(features))
-        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
+        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse)
 
     elif args.command == "prepare-system":
         prepare_system_cmd(args)

@@ -201,6 +201,9 @@ TEST_F(LoggingTest, parsingFile) {
     EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
     // Default for immediate flush is true
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
+
+    // Pattern should default to empty string.
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].pattern_.empty());
 }
 
 // Checks if the LogConfigParser class is able to transform data structures
@@ -368,6 +371,84 @@ TEST_F(LoggingTest, logRotate) {
 
     // Clean up.
     wipeFiles();
+}
+
+// Verifies that a valid output option,'pattern' paress correctly.
+TEST_F(LoggingTest, validPattern) {
+
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output_options\": ["
+    "            {"
+    "                \"output\": \"stdout\","
+    "                \"pattern\": \"mylog %m\n\""
+    "            }"
+    "        ],"
+    "        \"severity\": \"INFO\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    EXPECT_NO_THROW(parser.parseConfiguration(config));
+
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_EQ(storage->getLoggingInfo()[0].destinations_[0].pattern_,
+              std::string("mylog %m\n"));
+}
+
+// Verifies that output option,'pattern', may be an empty string
+TEST_F(LoggingTest, emptyPattern) {
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output_options\": ["
+    "            {"
+    "                \"output\": \"stdout\","
+    "                \"pattern\": \"\""
+    "            }"
+    "        ],"
+    "        \"severity\": \"INFO\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    EXPECT_NO_THROW(parser.parseConfiguration(config));
+
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].pattern_.empty());
 }
 
 /// @todo Add tests for malformed logging configuration

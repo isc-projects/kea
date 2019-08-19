@@ -308,6 +308,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname-char-set\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
     default:
@@ -317,6 +318,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"hostname-char-replacement\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
     default:
@@ -775,6 +777,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"max-row-errors\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_MAX_ROW_ERRORS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max_row_errors", driver.loc_);
+    }
+}
+
 \"preferred-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -786,6 +797,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"min-preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MIN_PREFERRED_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("min-preferred-lifetime", driver.loc_);
+    }
+}
+
+\"max-preferred-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MAX_PREFERRED_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-preferred-lifetime", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -794,6 +827,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("valid-lifetime", driver.loc_);
+    }
+}
+
+\"min-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MIN_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("min-valid-lifetime", driver.loc_);
+    }
+}
+
+\"max-valid-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_MAX_VALID_LIFETIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-valid-lifetime", driver.loc_);
     }
 }
 
@@ -1268,6 +1323,14 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"pattern\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp6Parser::make_PATTERN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("pattern", driver.loc_);
+    }
+}
 
 \"debuglevel\" {
     switch(driver.ctx_) {

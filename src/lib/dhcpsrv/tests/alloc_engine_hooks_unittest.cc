@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,8 +99,6 @@ public:
         callout_handle.getArgument("lease6", lease);
         callback_addr_updated_ = addr_override_;
         lease->addr_ = callback_addr_updated_;
-        lease->t1_ = t1_override_;
-        lease->t2_ = t2_override_;
         lease->preferred_lft_ = pref_override_;
         lease->valid_lft_ = valid_override_;
 
@@ -124,8 +122,6 @@ public:
 
     // Values to be used in callout to override lease6 content
     static const IOAddress addr_override_;
-    static const uint32_t t1_override_;
-    static const uint32_t t2_override_;
     static const uint32_t pref_override_;
     static const uint32_t valid_override_;
 
@@ -150,8 +146,6 @@ public:
 // linker complains about undefined references if they are defined within
 // the class declaration.
 const IOAddress HookAllocEngine6Test::addr_override_("2001:db8::abcd");
-const uint32_t HookAllocEngine6Test::t1_override_ = 6000;
-const uint32_t HookAllocEngine6Test::t2_override_ = 7000;
 const uint32_t HookAllocEngine6Test::pref_override_ = 8000;
 const uint32_t HookAllocEngine6Test::valid_override_ = 9000;
 
@@ -253,8 +247,6 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Make sure that the overridden values are different than the ones from
     // subnet originally used to create the lease
-    ASSERT_NE(t1_override_, subnet_->getT1());
-    ASSERT_NE(t2_override_, subnet_->getT2());
     ASSERT_NE(pref_override_, subnet_->getPreferred());
     ASSERT_NE(valid_override_, subnet_->getValid());
     ASSERT_FALSE(subnet_->inRange(addr_override_));
@@ -284,8 +276,6 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // See if the values overridden by callout are there
     EXPECT_TRUE(lease->addr_.equals(addr_override_));
-    EXPECT_EQ(t1_override_, lease->t1_);
-    EXPECT_EQ(t2_override_, lease->t2_);
     EXPECT_EQ(pref_override_, lease->preferred_lft_);
     EXPECT_EQ(valid_override_, lease->valid_lft_);
 
@@ -296,8 +286,6 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Check if values in the database are overridden
     EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));
-    EXPECT_EQ(t1_override_, from_mgr->t1_);
-    EXPECT_EQ(t2_override_, from_mgr->t2_);
     EXPECT_EQ(pref_override_, from_mgr->preferred_lft_);
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
 
@@ -422,8 +410,6 @@ public:
         callout_handle.getArgument("lease4", lease);
         callback_addr_updated_ = addr_override_;
         lease->addr_ = callback_addr_updated_;
-        lease->t1_ = t1_override_;
-        lease->t2_ = t2_override_;
         lease->valid_lft_ = valid_override_;
 
         return (0);
@@ -446,8 +432,6 @@ public:
 
     // Values to be used in callout to override lease4 content
     static const IOAddress addr_override_;
-    static const uint32_t t1_override_;
-    static const uint32_t t2_override_;
     static const uint32_t valid_override_;
 
     // Callback will store original and overridden values here
@@ -471,8 +455,6 @@ public:
 // linker complains about undefined references if they are defined within
 // the class declaration.
 const IOAddress HookAllocEngine4Test::addr_override_("192.0.3.1");
-const uint32_t HookAllocEngine4Test::t1_override_ = 4000;
-const uint32_t HookAllocEngine4Test::t2_override_ = 7000;
 const uint32_t HookAllocEngine4Test::valid_override_ = 9000;
 
 IOAddress HookAllocEngine4Test::callback_addr_original_("::");
@@ -572,8 +554,6 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Make sure that the overridden values are different than the ones from
     // subnet originally used to create the lease
-    ASSERT_NE(t1_override_, subnet_->getT1());
-    ASSERT_NE(t2_override_, subnet_->getT2());
     ASSERT_NE(valid_override_, subnet_->getValid());
     ASSERT_FALSE(subnet_->inRange(addr_override_));
 
@@ -609,8 +589,6 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // See if the values overridden by callout are there
     EXPECT_TRUE(lease->addr_.equals(addr_override_));
-    EXPECT_EQ(t1_override_, lease->t1_);
-    EXPECT_EQ(t2_override_, lease->t2_);
     EXPECT_EQ(valid_override_, lease->valid_lft_);
 
     // Now check if the lease is in the database
@@ -619,8 +597,6 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Check if values in the database are overridden
     EXPECT_TRUE(from_mgr->addr_.equals(addr_override_));
-    EXPECT_EQ(t1_override_, from_mgr->t1_);
-    EXPECT_EQ(t2_override_, from_mgr->t2_);
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
 
     // Check if the callout handle state was reset after the callout.

@@ -35,7 +35,6 @@ public:
 /// @brief Implements parser for IPv6 shared networks.
 class SharedNetwork6Parser : public BaseNetworkParser {
 public:
-
     /// @brief Parses shared configuration information for IPv6 shared network.
     ///
     /// @param shared_network_data Data element holding shared network

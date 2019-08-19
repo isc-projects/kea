@@ -79,6 +79,7 @@ int main() {
         conn.reset(new Connection("sysrepo setup check"));
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't connect to sysrepo: " << ex.what() << endl;
+        cerr << "ERROR: Make sure the sysrepod daemon is running." << endl;
         exit(-1);
     }
 

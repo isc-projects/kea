@@ -203,6 +203,32 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     }
 
+    // Sanity checks on built-in classes
+    for (auto bn : builtinNames) {
+        if (name == bn) {
+            if (required) {
+                isc_throw(DhcpConfigError, "built-in class '" << name
+                          << "' only-if-required flag must be false");
+            }
+            if (!test.empty()) {
+                isc_throw(DhcpConfigError, "built-in class '" << name
+                          << "' test expression must be empty");
+            }
+        }
+    }
+
+    // Sanity checks on DROP
+    if (name == "DROP") {
+        if (required) {
+            isc_throw(DhcpConfigError, "special class '" << name
+                      << "' only-if-required flag must be false");
+        }
+        if (depend_on_known) {
+            isc_throw(DhcpConfigError, "special class '" << name
+                      << "' must not depend on 'KNOWN'/'UNKNOWN' classes");
+        }
+    }
+
     // Add the client class definition
     try {
         class_dictionary->addClass(name, match_expr, test, required,

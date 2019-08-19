@@ -2,7 +2,9 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = . testutils tests benchmarks
 
-dhcp_data_dir = @localstatedir@/@PACKAGE@
+# DATA_DIR is the directory where to put default CSV files and the DHCPv6
+# server ID file (i.e. the file where the server finds its DUID at startup).
+dhcp_data_dir = @localstatedir@/lib/@PACKAGE@
 kea_lfc_location = @prefix@/sbin/kea-lfc
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""
@@ -208,7 +210,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 15:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 16:1:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)

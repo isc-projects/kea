@@ -1,0 +1,57 @@
+{
+    "avail": "1.3.0",
+    "brief": [
+        "This command adds a new shared network."
+    ],
+    "cmd-comment": [
+        "The ``network6-add`` command uses the same syntax as ``network4-add`` for both the query and the response. However, there are some parameters that are IPv4-only (e.g. match-client-id) and some that are IPv6-only (e.g. interface-id)."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"network4-add\",",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [ {",
+        "            \"name\": \"floor13\",",
+        "            \"subnet4\": [",
+        "            {",
+        "                \"id\": 100,",
+        "                \"pools\": [ { \"pool\": \"192.0.2.2-192.0.2.99\" } ],",
+        "                \"subnet\": \"192.0.2.0/24\",",
+        "                \"option-data\": [",
+        "                    {",
+        "                        \"name\": \"routers\",",
+        "                        \"data\": \"192.0.2.1\"",
+        "                    }",
+        "                ]",
+        "            },",
+        "            {",
+        "                \"id\": 101,",
+        "                \"pools\": [ { \"pool\": \"192.0.3.2-192.0.3.99\" } ],",
+        "                \"subnet\": \"192.0.3.0/24\",",
+        "                \"option-data\": [",
+        "                    {",
+        "                        \"name\": \"routers\",",
+        "                        \"data\": \"192.0.3.1\"",
+        "                    }",
+        "                ]",
+        "            } ]",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp75\"/>",
+    "hook": "subnet_cmds",
+    "name": "network6-add",
+    "resp-syntax": [
+        "{",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [ { \"name\": \"floor13\" } ]",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"A new IPv4 shared network 'floor13' added\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

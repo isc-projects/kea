@@ -63,6 +63,11 @@ This debug message is issued when the HTTP request timeout has occurred and
 the server is going to send a response with Http Request timeout status
 code.
 
+% HTTP_CONNECTION_CLOSE_CALLBACK_FAILED Connection close callback threw an exception
+This is an error message emitted when the close connection callback
+registered on the connection failed unexpectedly.  This is a programmatic
+error that should be submitted as a bug.
+
 % HTTP_CONNECTION_STOP stopping HTTP connection from %1
 This debug message is issued when one of the HTTP connections is stopped.
 The connection can be stopped as a result of an error or after the

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,8 +72,8 @@ class LFCSetup;
 /// parameter in the database access string. The [path] is the
 /// absolute path to the file (including file name). If this parameter
 /// is not specified, the default location in the installation
-/// directory is used: var/kea/kea-leases4.csv and
-/// var/kea/kea-leases6.csv.
+/// directory is used: <install-dir>/var/lib/kea/kea-leases4.csv and
+/// <install-dir>/var/lib/kea/kea-leases6.csv.
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 

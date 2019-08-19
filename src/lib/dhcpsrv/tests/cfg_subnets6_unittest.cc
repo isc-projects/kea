@@ -588,11 +588,14 @@ TEST(CfgSubnets6Test, duplication) {
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4, 123));
     Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4, 124));
     Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4, 123));
+    Subnet6Ptr subnet4(new Subnet6(IOAddress("2000::1"), 48, 1, 2, 3, 4, 125));
 
     ASSERT_NO_THROW(cfg.add(subnet1));
     EXPECT_NO_THROW(cfg.add(subnet2));
     // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
     EXPECT_THROW(cfg.add(subnet3), isc::dhcp::DuplicateSubnetID);
+    // Subnet 4 has a similar but different subnet as subnet 1.
+    EXPECT_NO_THROW(cfg.add(subnet4));
 }
 
 // This test check if IPv6 subnets can be unparsed in a predictable way,
@@ -616,6 +619,9 @@ TEST(CfgSubnets6Test, unparseSubnet) {
 
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
+    subnet2->setValid(Triplet<uint32_t>(200));
+    subnet2->setPreferred(Triplet<uint32_t>(100));
+
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
@@ -624,6 +630,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
     subnet3->setT2Percent(0.65);
+    subnet3->setValid(Triplet<uint32_t>(100, 200, 300));
+    subnet3->setPreferred(Triplet<uint32_t>(50, 100, 150));
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -659,8 +667,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ \"2001:db8:ff::2\" ] },\n"
-        "    \"preferred-lifetime\": 3,\n"
-        "    \"valid-lifetime\": 4,\n"
+        "    \"preferred-lifetime\": 100,\n"
+        "    \"valid-lifetime\": 200,\n"
         "    \"user-context\": { },\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -672,8 +680,12 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
-        "    \"preferred-lifetime\": 3,\n"
-        "    \"valid-lifetime\": 4,\n"
+        "    \"preferred-lifetime\": 100,\n"
+        "    \"min-preferred-lifetime\": 50,\n"
+        "    \"max-preferred-lifetime\": 150,\n"
+        "    \"valid-lifetime\": 200,\n"
+        "    \"min-valid-lifetime\": 100,\n"
+        "    \"max-valid-lifetime\": 300,\n"
         "    \"rapid-commit\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [ ],\n"
@@ -1035,12 +1047,7 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
         "            \"require-client-classes\": [] \n,"
-        "            \"reservation-mode\": \"all\", \n"
-        "            \"4o6-interface\": \"\", \n"
-        "            \"4o6-interface-id\": \"\", \n"
-        "            \"4o6-subnet\": \"\", \n"
-        "            \"dhcp4o6-port\": 0, \n"
-        "            \"decline-probation-period\": 86400 \n"
+        "            \"reservation-mode\": \"all\" \n"
         "        }";
 
 
@@ -1084,6 +1091,241 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
             EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()))
                 << "expected:" << (*test).t2_percent << " actual: " << subnet->getT2Percent();
         }
+    }
+}
+
+// This test verifies the Subnet6 parser's validation logic for
+// preferred-lifetime and indirectly shared lifetime parsing.
+// Note the valid-lifetime stuff is similar and already done for Subnet4.
+TEST(CfgSubnets6Test, preferredLifetimeValidation) {
+    // First we create a set of elements that provides all
+    // required for a Subnet6.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/64\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\" \n"
+        "        }";
+
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    {
+        SCOPED_TRACE("no preferred-lifetime");
+
+        data::ElementPtr copied = data::copy(elems);
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_TRUE(subnet->getPreferred().unspecified());
+        data::ConstElementPtr repr = subnet->toElement();
+        EXPECT_FALSE(repr->get("preferred-lifetime"));
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("preferred-lifetime only");
+
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("preferred-lifetime", data::Element::create(100));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(100, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-preferred-lifetime only");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(100));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(100, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        // Bound only: forgot it was a bound.
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("max-preferred-lifetime only");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("max-preferred-lifetime", data::Element::create(100));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(100, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        // Bound only: forgot it was a bound.
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-preferred-lifetime and preferred-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(100));
+        // Use a different (and greater) value for the default.
+        copied->set("preferred-lifetime", data::Element::create(200));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(200, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(200, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("200", value->str());
+        data::ConstElementPtr min_value = repr->get("min-preferred-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("max-preferred-lifetime and preferred-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("max-preferred-lifetime", data::Element::create(200));
+        // Use a different (and smaller) value for the default.
+        copied->set("preferred-lifetime", data::Element::create(100));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(200, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        data::ConstElementPtr max_value = repr->get("max-preferred-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("200", max_value->str());
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+    }
+
+    {
+        SCOPED_TRACE("min-preferred-lifetime and max-preferred-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(100));
+        copied->set("max-preferred-lifetime", data::Element::create(200));
+        Subnet6ConfigParser parser;
+        // No idea about the value to use for the default so failing.
+        ASSERT_THROW(parser.parse(copied), DhcpConfigError);
+    }
+
+    {
+        SCOPED_TRACE("all 3 (min, max and default) preferred-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(100));
+        // Use a different (and greater) value for the default.
+        copied->set("preferred-lifetime", data::Element::create(200));
+        // Use a different (and greater than both) value for max.
+        copied->set("max-preferred-lifetime", data::Element::create(300));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(200, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(300, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("200", value->str());
+        data::ConstElementPtr min_value = repr->get("min-preferred-lifetime");
+        ASSERT_TRUE(min_value);
+        EXPECT_EQ("100", min_value->str());
+        data::ConstElementPtr max_value = repr->get("max-preferred-lifetime");
+        ASSERT_TRUE(max_value);
+        EXPECT_EQ("300", max_value->str());
+    }
+
+    {
+        SCOPED_TRACE("default value too small");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(200));
+        // 100 < 200 so it will fail.
+        copied->set("preferred-lifetime", data::Element::create(100));
+        // Use a different (and greater than both) value for max.
+        copied->set("max-preferred-lifetime", data::Element::create(300));
+        Subnet6ConfigParser parser;
+        ASSERT_THROW(parser.parse(copied), DhcpConfigError);
+    }
+
+    {
+        SCOPED_TRACE("default value too large");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(100));
+        // Use a different (and greater) value for the default.
+        copied->set("preferred-lifetime", data::Element::create(300));
+        // 300 > 200 so it will fail.
+        copied->set("max-preferred-lifetime", data::Element::create(200));
+        Subnet6ConfigParser parser;
+        ASSERT_THROW(parser.parse(copied), DhcpConfigError);
+    }
+
+    {
+        SCOPED_TRACE("equal bounds are ignored");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("min-preferred-lifetime", data::Element::create(100));
+        copied->set("preferred-lifetime", data::Element::create(100));
+        copied->set("max-preferred-lifetime", data::Element::create(100));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().getMin());
+        EXPECT_EQ(100, subnet->getPreferred().getMax());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        EXPECT_EQ("100", value->str());
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
     }
 }
 

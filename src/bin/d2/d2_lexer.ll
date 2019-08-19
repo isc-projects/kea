@@ -484,6 +484,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"pattern\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
+        return isc::d2::D2Parser::make_PATTERN(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("pattern", driver.loc_);
+    }
+}
+
 \"name\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:

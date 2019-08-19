@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 
 $NAMESPACE isc::ha
 
@@ -163,14 +163,14 @@ This error message is issued to indicate that the heartbeat command handler
 failed while processing the command. The argument provides the reason for
 failure.
 
-% HA_HIGH_CLOCK_SKEW partner's clock is %1, please synchronize clocks!
+% HA_HIGH_CLOCK_SKEW %1, please synchronize clocks!
 This warning message is issued when the clock skew between the active servers
 exceeds 30 seconds. The HA service continues to operate but may not function
 properly, especially for low lease lifetimes. The administrator should
 should synchronize the clocks, e.g. using NTP. If the clock skew exceeds
 60 seconds, the HA service will terminate.
 
-% HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION partner's clock is %1, causing HA service to terminate
+% HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION %1, causing HA service to terminate
 This warning message is issued when the clock skew between the active servers
 exceeds 60 seconds. The HA service stops. The servers will continue to respond
 to the DHCP queries but won't exchange lease updates or send heartbeats.
@@ -262,6 +262,17 @@ This warning message indicates that there was a problem in communication with a
 HA peer while processing a DHCP client query and sending lease update. The
 client's DHCP message will be dropped.
 
+% HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER %1: failed to create or update the lease having type %2 for address %3, reason: %4
+This informational message is issued when one of the leases failed to be
+created or updated on the HA peer whilw processing the lease updates sent
+from this server. This may indicate an issue with communication between
+the peer and its lease database.
+
+% HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER %1: failed to delete the lease having type %2 for address %3, reason: %4
+This informational message is issued when one of the leases failed to delete
+on the HA peer while processing lease updates sent from this server. Typically,
+the lease fails to delete when it doesn't exist in the peer's database.
+
 % HA_LEASE_UPDATE_FAILED %1: lease update to %2 failed: %3
 This warning message indicates that a peer returned an error status code
 in response to a lease update. The client's DHCP message will be dropped.
@@ -349,7 +360,8 @@ lease database synchronization with the partner. The first argument specifies
 the name of the partner server. The second argument specifies the duration of
 the synchronization.
 
-% HA_TERMINATED HA service terminated because of the unacceptable clock skew; fix the problem and restart!
+% HA_TERMINATED HA service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!
 This error message is issued to indicate that the HA service has been stopped
-due to unacceptable clock skew. The error can be fixed by synchronizing the
-clocks on the active servers and restarting Kea.
+due to an unacceptable condition (e.g. too large of a clock skew). The exact
+cause should appear in a previous error message.  Address the condition
+reported then restart the servers to resume service.

@@ -39,7 +39,7 @@
                 "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
             }
         }
-    }
+    },
 
     // Specify hooks libraries that are attached to the Netconf agent.
     // Note currently there is no defined hook points to attach to.
@@ -47,7 +47,7 @@
     // existing hooks library or the Netconf agent will fail to start.
 //  "hooks-libraries": [
 //  {
-//      "library": "/opt/local/netconf-commands.so",
+//      "library": "@libdir@/kea/hooks/netconf-commands.so",
 //      "parameters": {
 //          "param1": "foo"
 //      }
@@ -70,6 +70,10 @@
                 // - syslog:name (logs to syslog using specified name)
                 // Any other value is considered a name of a time
                 "output": "@localstatedir@/log/kea-netconf.log"
+
+                // Shorter log pattern suitable for use with systemd,
+                // avoids redundant information
+                // "pattern": "%-5p %m\n"
 
                 // This governs whether the log output is flushed to disk after
                 // every write.

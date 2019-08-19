@@ -293,6 +293,8 @@ HttpRequestParser::expectingNewLineHandler(const unsigned int next_state) {
                     if (content_length > 0) {
                         // There is body in this request, so let's parse it.
                         transition(HTTP_BODY_ST, DATA_READ_OK_EVT);
+                    } else {
+                        transition(HTTP_PARSE_OK_ST, HTTP_PARSE_OK_EVT);
                     }
                 } catch (const std::exception& ex) {
                     // There is no body in this message. If the body is required

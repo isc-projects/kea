@@ -45,7 +45,7 @@
     // Agent will fail to start.
     "hooks-libraries": [
 //  {
-//      "library": "/opt/local/control-agent-commands.so",
+//      "library": "@libdir@/kea/hooks/control-agent-commands.so",
 //      "parameters": {
 //          "param1": "foo"
 //      }
@@ -68,6 +68,10 @@
                 // - syslog:name (logs to syslog using specified name)
                 // Any other value is considered a name of a time
                 "output": "@localstatedir@/log/kea-ctrl-agent.log"
+
+                // Shorter log pattern suitable for use with systemd,
+                // avoids redundant information
+                // "pattern": "%-5p %m\n"
 
                 // This governs whether the log output is flushed to disk after
                 // every write.

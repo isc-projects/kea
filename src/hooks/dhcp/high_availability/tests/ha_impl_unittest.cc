@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -351,7 +351,7 @@ TEST_F(HAImplTest, leases4Committed) {
     HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
     Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
                                 static_cast<const uint8_t*>(0), 0,
-                                60, 30, 40, 0, 1));
+                                60, 0, 1));
     leases4->push_back(lease4);
     callout_handle->setArgument("leases4", leases4);
 
@@ -417,7 +417,7 @@ TEST_F(HAImplTest, leases6Committed) {
     // updates.
     DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
     Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
-                                1234, 50, 60, 30, 40, 1));
+                                1234, 50, 60, 1));
     leases6->push_back(lease6);
     callout_handle->setArgument("leases6", leases6);
 

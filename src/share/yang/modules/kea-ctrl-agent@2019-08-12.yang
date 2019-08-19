@@ -1,0 +1,78 @@
+module kea-ctrl-agent {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:kea-ctrl-agent";
+  prefix "kea-ctrl-agent";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import kea-types {
+    prefix kea;
+    revision-date 2019-08-12;
+  }
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This model defines a YANG data model that can be
+               used to configure and manage a Kea control agent.";
+
+  revision 2019-08-12 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Data Nodes
+  */
+
+  container config {
+    // config true;
+    description "Contains control agent configuration.";
+
+    leaf http-host {
+      type inet:ip-address;
+      description "IP address to which HTTP service will be bound.";
+    }
+
+    leaf http-port {
+      type uint16;
+      description "Port to which HTTP service will be bound.";
+    }
+
+    container control-sockets {
+      description "Control sockets.";
+      list socket {
+        key server-type;
+        description "List of server control socket.";
+        leaf server-type {
+          type enumeration {
+            enum "dhcp4" {
+              description "kea-dhcp4 server";
+            }
+            enum "dhcp6" {
+              description "kea-dhcp6 server";
+            }
+            enum "d2" {
+              description "kea-dhcp-ddns server";
+            }
+          }
+          mandatory true;
+          description "Server type.";
+        }
+        container control-socket {
+          description "Control socket information.";
+          uses kea:control-socket-info;
+        }
+      }
+    }
+
+    uses kea:hooks-libraries;
+
+    leaf user-context {
+      type kea:user-context;
+      description "Control agent user context.";
+    }
+
+    uses kea:loggers;
+  }
+}

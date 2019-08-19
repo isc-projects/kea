@@ -1023,6 +1023,9 @@ void initOptionSpace(OptionDefContainerPtr& defs,
             defs->clear();
             throw;
         }
-        defs->push_back(definition);
+
+        // option_defs is a multi-index container with no unique indexes
+        // so push_back can't fail).
+        static_cast<void>(defs->push_back(definition));
     }
 }

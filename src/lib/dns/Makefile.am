@@ -92,8 +92,8 @@ EXTRA_DIST += rdata/in_1/dhcid_49.cc
 EXTRA_DIST += rdata/in_1/dhcid_49.h
 EXTRA_DIST += rdata/in_1/srv_33.cc
 EXTRA_DIST += rdata/in_1/srv_33.h
-#EXTRA_DIST += rdata/template.cc
-#EXTRA_DIST += rdata/template.h
+EXTRA_DIST += rdata/template.cc
+EXTRA_DIST += rdata/template.h
 
 noinst_SCRIPTS = gen-rdatacode.py
 
@@ -103,7 +103,7 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libkea-dns++.la
 
-libkea_dns___la_LDFLAGS = -no-undefined -version-info 3:0:0
+libkea_dns___la_LDFLAGS = -no-undefined -version-info 3:1:0
 libkea_dns___la_LDFLAGS += $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 libkea_dns___la_SOURCES =
