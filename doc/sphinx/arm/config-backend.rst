@@ -141,6 +141,8 @@ the list of supported configuration parameters, can be found in
 
 .. _cb-sharing:
 
+.. _command-server-tag-get:
+
 Configuration Sharing and Server Tags
 -------------------------------------
 
@@ -156,7 +158,8 @@ by "server tags". The server tag is an arbitrary string holding the name
 of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
 independent in the database, i.e. the same server tag can be created for
 the DHCPv4 and the DHCPv6 server respectively. The value is configured
-using ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope.
+using ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
+server-tag can be checked with the ``server-tag-get`` command.
 
 The server definition, which consists of the server tag and the server
 description, must be stored in the configuration database prior to creating
