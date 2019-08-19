@@ -10,7 +10,7 @@ AC_PREREQ([2.69])
 # For patch releases, this is x.y.x-Pn, where x.y.z denotes the release
 # that was used as the base and n is the patch number. Patchlevel
 # counts from 1.
-AC_INIT(kea,1.4.0-P1, kea-dev@lists.isc.org)
+AC_INIT(kea,1.4.0-P2, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so

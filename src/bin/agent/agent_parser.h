@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.4.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 // This special exception was added by the Free Software Foundation in
 // version 2.2 of Bison.
 
+
 /**
  ** \file agent_parser.h
  ** Define the isc::agent::parser class.
@@ -37,10 +38,13 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
+// Undocumented macros, especially those whose name start with YY_,
+// are private implementation details.  Do not rely on them.
+
 #ifndef YY_AGENT_AGENT_PARSER_H_INCLUDED
 # define YY_AGENT_AGENT_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "agent_parser.yy" // lalr1.cc:377
+#line 17 "agent_parser.yy"
 
 #include <string>
 #include <cc/data.h>
@@ -51,7 +55,7 @@ using namespace isc::agent;
 using namespace isc::data;
 using namespace std;
 
-#line 55 "agent_parser.h" // lalr1.cc:377
+#line 59 "agent_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -59,7 +63,43 @@ using namespace std;
 # include <stdexcept>
 # include <string>
 # include <vector>
-# include "stack.hh"
+
+#if defined __cplusplus
+# define YY_CPLUSPLUS __cplusplus
+#else
+# define YY_CPLUSPLUS 199711L
+#endif
+
+// Support move semantics when possible.
+#if 201103L <= YY_CPLUSPLUS
+# define YY_MOVE           std::move
+# define YY_MOVE_OR_COPY   move
+# define YY_MOVE_REF(Type) Type&&
+# define YY_RVREF(Type)    Type&&
+# define YY_COPY(Type)     Type
+#else
+# define YY_MOVE
+# define YY_MOVE_OR_COPY   copy
+# define YY_MOVE_REF(Type) Type&
+# define YY_RVREF(Type)    const Type&
+# define YY_COPY(Type)     const Type&
+#endif
+
+// Support noexcept when possible.
+#if 201103L <= YY_CPLUSPLUS
+# define YY_NOEXCEPT noexcept
+# define YY_NOTHROW
+#else
+# define YY_NOEXCEPT
+# define YY_NOTHROW throw ()
+#endif
+
+// Support constexpr when possible.
+#if 201703 <= YY_CPLUSPLUS
+# define YY_CONSTEXPR constexpr
+#else
+# define YY_CONSTEXPR
+#endif
 # include "location.hh"
 #include <typeinfo>
 #ifndef YYASSERT
@@ -86,15 +126,6 @@ using namespace std;
 # define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
 #endif
 
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
-# else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
-# endif
-#endif
-
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
 # define YYUSE(E) ((void) (E))
@@ -102,7 +133,7 @@ using namespace std;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -121,6 +152,18 @@ using namespace std;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
+#  endif
+# endif
+
 /* Debug traces.  */
 #ifndef AGENT_DEBUG
 # if defined YYDEBUG
@@ -134,120 +177,175 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined AGENT_DEBUG */
 
-#line 14 "agent_parser.yy" // lalr1.cc:377
+#line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 140 "agent_parser.h" // lalr1.cc:377
+#line 183 "agent_parser.h"
 
 
 
-  /// A char[S] buffer to store and retrieve objects.
+
+  /// A Bison parser.
+  class AgentParser
+  {
+  public:
+#ifndef AGENT_STYPE
+  /// A buffer to store and retrieve objects.
   ///
   /// Sort of a variant, but does not keep track of the nature
   /// of the stored data, since that knowledge is available
-  /// via the current state.
-  template <size_t S>
-  struct variant
+  /// via the current parser state.
+  class semantic_type
   {
+  public:
     /// Type of *this.
-    typedef variant<S> self_type;
+    typedef semantic_type self_type;
 
     /// Empty construction.
-    variant ()
-      : yytypeid_ (YY_NULLPTR)
+    semantic_type () YY_NOEXCEPT
+      : yybuffer_ ()
+      , yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
     template <typename T>
-    variant (const T& t)
+    semantic_type (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
-      YYASSERT (sizeof (T) <= S);
-      new (yyas_<T> ()) T (t);
+      YYASSERT (sizeof (T) <= size);
+      new (yyas_<T> ()) T (YY_MOVE (t));
     }
 
     /// Destruction, allowed only if empty.
-    ~variant ()
+    ~semantic_type () YY_NOEXCEPT
     {
       YYASSERT (!yytypeid_);
     }
 
+# if 201103L <= YY_CPLUSPLUS
+    /// Instantiate a \a T in here from \a t.
+    template <typename T, typename... U>
+    T&
+    emplace (U&&... u)
+    {
+      YYASSERT (!yytypeid_);
+      YYASSERT (sizeof (T) <= size);
+      yytypeid_ = & typeid (T);
+      return *new (yyas_<T> ()) T (std::forward <U>(u)...);
+    }
+# else
     /// Instantiate an empty \a T in here.
     template <typename T>
     T&
-    build ()
+    emplace ()
     {
       YYASSERT (!yytypeid_);
-      YYASSERT (sizeof (T) <= S);
+      YYASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
-      return *new (yyas_<T> ()) T;
+      return *new (yyas_<T> ()) T ();
     }
 
     /// Instantiate a \a T in here from \a t.
     template <typename T>
     T&
-    build (const T& t)
+    emplace (const T& t)
     {
       YYASSERT (!yytypeid_);
-      YYASSERT (sizeof (T) <= S);
+      YYASSERT (sizeof (T) <= size);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (t);
+    }
+# endif
+
+    /// Instantiate an empty \a T in here.
+    /// Obsolete, use emplace.
+    template <typename T>
+    T&
+    build ()
+    {
+      return emplace<T> ();
+    }
+
+    /// Instantiate a \a T in here from \a t.
+    /// Obsolete, use emplace.
+    template <typename T>
+    T&
+    build (const T& t)
+    {
+      return emplace<T> (t);
     }
 
     /// Accessor to a built \a T.
     template <typename T>
     T&
-    as ()
+    as () YY_NOEXCEPT
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
-      YYASSERT (sizeof (T) <= S);
+      YYASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
     /// Const accessor to a built \a T (for %printer).
     template <typename T>
     const T&
-    as () const
+    as () const YY_NOEXCEPT
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
-      YYASSERT (sizeof (T) <= S);
+      YYASSERT (sizeof (T) <= size);
       return *yyas_<T> ();
     }
 
-    /// Swap the content with \a other, of same type.
+    /// Swap the content with \a that, of same type.
     ///
     /// Both variants must be built beforehand, because swapping the actual
     /// data requires reading it (with as()), and this is not possible on
     /// unconstructed variants: it would require some dynamic testing, which
-    /// should not be the variant's responsability.
+    /// should not be the variant's responsibility.
     /// Swapping between built and (possibly) non-built is done with
-    /// variant::move ().
+    /// self_type::move ().
     template <typename T>
     void
-    swap (self_type& other)
+    swap (self_type& that) YY_NOEXCEPT
     {
       YYASSERT (yytypeid_);
-      YYASSERT (*yytypeid_ == *other.yytypeid_);
-      std::swap (as<T> (), other.as<T> ());
+      YYASSERT (*yytypeid_ == *that.yytypeid_);
+      std::swap (as<T> (), that.as<T> ());
     }
 
-    /// Move the content of \a other to this.
+    /// Move the content of \a that to this.
     ///
-    /// Destroys \a other.
+    /// Destroys \a that.
     template <typename T>
     void
-    move (self_type& other)
+    move (self_type& that)
     {
-      build<T> ();
-      swap<T> (other);
-      other.destroy<T> ();
+# if 201103L <= YY_CPLUSPLUS
+      emplace<T> (std::move (that.as<T> ()));
+# else
+      emplace<T> ();
+      swap<T> (that);
+# endif
+      that.destroy<T> ();
     }
 
-    /// Copy the content of \a other to this.
+# if 201103L <= YY_CPLUSPLUS
+    /// Move the content of \a that to this.
     template <typename T>
     void
-    copy (const self_type& other)
+    move (self_type&& that)
     {
-      build<T> (other.as<T> ());
+      emplace<T> (std::move (that.as<T> ()));
+      that.destroy<T> ();
+    }
+#endif
+
+    /// Copy the content of \a that to this.
+    template <typename T>
+    void
+    copy (const self_type& that)
+    {
+      emplace<T> (that.as<T> ());
     }
 
     /// Destroy the stored \a T.
@@ -261,13 +359,13 @@ namespace isc { namespace agent {
 
   private:
     /// Prohibit blind copies.
-    self_type& operator=(const self_type&);
-    variant (const self_type&);
+    self_type& operator= (const self_type&);
+    semantic_type (const self_type&);
 
     /// Accessor to raw memory as \a T.
     template <typename T>
     T*
-    yyas_ ()
+    yyas_ () YY_NOEXCEPT
     {
       void *yyp = yybuffer_.yyraw;
       return static_cast<T*> (yyp);
@@ -276,53 +374,49 @@ namespace isc { namespace agent {
     /// Const accessor to raw memory as \a T.
     template <typename T>
     const T*
-    yyas_ () const
+    yyas_ () const YY_NOEXCEPT
     {
       const void *yyp = yybuffer_.yyraw;
       return static_cast<const T*> (yyp);
      }
 
-    union
-    {
-      /// Strongest alignment constraints.
-      long double yyalign_me;
-      /// A buffer large enough to store any of the semantic values.
-      char yyraw[S];
-    } yybuffer_;
-
-    /// Whether the content is built: if defined, the name of the stored type.
-    const std::type_info *yytypeid_;
-  };
-
-
-  /// A Bison parser.
-  class AgentParser
-  {
-  public:
-#ifndef AGENT_STYPE
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
       // value
       // map_value
       // socket_type_value
-      char dummy1[sizeof(ElementPtr)];
+      char dummy1[sizeof (ElementPtr)];
 
       // "boolean"
-      char dummy2[sizeof(bool)];
+      char dummy2[sizeof (bool)];
 
       // "floating point"
-      char dummy3[sizeof(double)];
+      char dummy3[sizeof (double)];
 
       // "integer"
-      char dummy4[sizeof(int64_t)];
+      char dummy4[sizeof (int64_t)];
 
       // "constant string"
-      char dummy5[sizeof(std::string)];
-};
+      char dummy5[sizeof (std::string)];
+    };
 
-    /// Symbol semantic values.
-    typedef variant<sizeof(union_type)> semantic_type;
+    /// The size of the largest semantic type.
+    enum { size = sizeof (union_type) };
+
+    /// A buffer to store semantic values.
+    union
+    {
+      /// Strongest alignment constraints.
+      long double yyalign_me;
+      /// A buffer large enough to store any of the semantic values.
+      char yyraw[size];
+    } yybuffer_;
+
+    /// Whether the content is built: if defined, the name of the stored type.
+    const std::type_info *yytypeid_;
+  };
+
 #else
     typedef AGENT_STYPE semantic_type;
 #endif
@@ -332,7 +426,18 @@ namespace isc { namespace agent {
     /// Syntax errors thrown from user actions.
     struct syntax_error : std::runtime_error
     {
-      syntax_error (const location_type& l, const std::string& m);
+      syntax_error (const location_type& l, const std::string& m)
+        : std::runtime_error (m)
+        , location (l)
+      {}
+
+      syntax_error (const syntax_error& s)
+        : std::runtime_error (s.what ())
+        , location (s.location)
+      {}
+
+      ~syntax_error () YY_NOEXCEPT YY_NOTHROW;
+
       location_type location;
     };
 
@@ -402,7 +507,7 @@ namespace isc { namespace agent {
     /// A complete symbol.
     ///
     /// Expects its Base type to provide access to the symbol type
-    /// via type_get().
+    /// via type_get ().
     ///
     /// Provide access to semantic value and location.
     template <typename Base>
@@ -412,39 +517,150 @@ namespace isc { namespace agent {
       typedef Base super_type;
 
       /// Default constructor.
-      basic_symbol ();
+      basic_symbol ()
+        : value ()
+        , location ()
+      {}
+
+#if 201103L <= YY_CPLUSPLUS
+      /// Move constructor.
+      basic_symbol (basic_symbol&& that);
+#endif
 
       /// Copy constructor.
-      basic_symbol (const basic_symbol& other);
+      basic_symbol (const basic_symbol& that);
 
       /// Constructor for valueless symbols, and symbols from each type.
-
-  basic_symbol (typename Base::kind_type t, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const bool v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const double v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
-
-
-      /// Constructor for symbols with semantic value.
-      basic_symbol (typename Base::kind_type t,
-                    const semantic_type& v,
-                    const location_type& l);
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, location_type&& l)
+        : Base (t)
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const location_type& l)
+        : Base (t)
+        , location (l)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ElementPtr&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, double&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const double& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, int64_t&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
 
       /// Destroy the symbol.
-      ~basic_symbol ();
+      ~basic_symbol ()
+      {
+        clear ();
+      }
 
       /// Destroy contents, and record that is empty.
-      void clear ();
+      void clear ()
+      {
+        // User destructor.
+        symbol_number_type yytype = this->type_get ();
+        basic_symbol<Base>& yysym = *this;
+        (void) yysym;
+        switch (yytype)
+        {
+       default:
+          break;
+        }
+
+        // Type destructor.
+switch (yytype)
+    {
+      case 53: // value
+      case 56: // map_value
+      case 107: // socket_type_value
+        value.template destroy< ElementPtr > ();
+        break;
+
+      case 44: // "boolean"
+        value.template destroy< bool > ();
+        break;
+
+      case 43: // "floating point"
+        value.template destroy< double > ();
+        break;
+
+      case 42: // "integer"
+        value.template destroy< int64_t > ();
+        break;
+
+      case 41: // "constant string"
+        value.template destroy< std::string > ();
+        break;
+
+      default:
+        break;
+    }
+
+        Base::clear ();
+      }
 
       /// Whether empty.
-      bool empty () const;
+      bool empty () const YY_NOEXCEPT;
 
       /// Destructive move, \a s is emptied into this.
       void move (basic_symbol& s);
@@ -456,8 +672,10 @@ namespace isc { namespace agent {
       location_type location;
 
     private:
+#if YY_CPLUSPLUS < 201103L
       /// Assignment operator.
-      basic_symbol& operator= (const basic_symbol& other);
+      basic_symbol& operator= (const basic_symbol& that);
+#endif
     };
 
     /// Type access provider for token (enum) based symbols.
@@ -466,8 +684,13 @@ namespace isc { namespace agent {
       /// Default constructor.
       by_type ();
 
+#if 201103L <= YY_CPLUSPLUS
+      /// Move constructor.
+      by_type (by_type&& that);
+#endif
+
       /// Copy constructor.
-      by_type (const by_type& other);
+      by_type (const by_type& that);
 
       /// The symbol type as needed by the constructor.
       typedef token_type kind_type;
@@ -483,10 +706,10 @@ namespace isc { namespace agent {
 
       /// The (internal) type number (corresponding to \a type).
       /// \a empty when empty.
-      symbol_number_type type_get () const;
+      symbol_number_type type_get () const YY_NOEXCEPT;
 
       /// The token.
-      token_type token () const;
+      token_type token () const YY_NOEXCEPT;
 
       /// The symbol type.
       /// \a empty_symbol when empty.
@@ -495,185 +718,89 @@ namespace isc { namespace agent {
     };
 
     /// "External" symbols: returned by the scanner.
-    typedef basic_symbol<by_type> symbol_type;
+    struct symbol_type : basic_symbol<by_type>
+    {
+      /// Superclass.
+      typedef basic_symbol<by_type> super_type;
 
-    // Symbol constructors declarations.
-    static inline
-    symbol_type
-    make_END (const location_type& l);
+      /// Empty symbol.
+      symbol_type () {}
 
-    static inline
-    symbol_type
-    make_COMMA (const location_type& l);
-
-    static inline
-    symbol_type
-    make_COLON (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LSQUARE_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RSQUARE_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LCURLY_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RCURLY_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NULL_TYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CONTROL_AGENT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HTTP_HOST (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HTTP_PORT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_USER_CONTEXT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_COMMENT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CONTROL_SOCKETS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP4_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP6_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_D2_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SOCKET_NAME (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SOCKET_TYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_UNIX (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HOOKS_LIBRARIES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LIBRARY (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PARAMETERS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LOGGING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LOGGERS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NAME (const location_type& l);
-
-    static inline
-    symbol_type
-    make_OUTPUT_OPTIONS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_OUTPUT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DEBUGLEVEL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SEVERITY (const location_type& l);
-
-    static inline
-    symbol_type
-    make_FLUSH (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MAXSIZE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MAXVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP4 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP6 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCPDDNS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_START_JSON (const location_type& l);
-
-    static inline
-    symbol_type
-    make_START_AGENT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_START_SUB_AGENT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_STRING (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_INTEGER (const int64_t& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_FLOAT (const double& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_BOOLEAN (const bool& v, const location_type& l);
-
+      /// Constructor for valueless symbols, and symbols from each type.
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, location_type l)
+        : super_type(token_type (tok), std::move (l))
+      {
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+      }
+#else
+      symbol_type (int tok, const location_type& l)
+        : super_type(token_type (tok), l)
+      {
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_HTTP_HOST || tok == token::TOKEN_HTTP_PORT || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_CONTROL_SOCKETS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_AGENT || tok == token::TOKEN_START_SUB_AGENT);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, bool v, location_type l)
+        : super_type(token_type (tok), std::move (v), std::move (l))
+      {
+        YYASSERT (tok == token::TOKEN_BOOLEAN);
+      }
+#else
+      symbol_type (int tok, const bool& v, const location_type& l)
+        : super_type(token_type (tok), v, l)
+      {
+        YYASSERT (tok == token::TOKEN_BOOLEAN);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, double v, location_type l)
+        : super_type(token_type (tok), std::move (v), std::move (l))
+      {
+        YYASSERT (tok == token::TOKEN_FLOAT);
+      }
+#else
+      symbol_type (int tok, const double& v, const location_type& l)
+        : super_type(token_type (tok), v, l)
+      {
+        YYASSERT (tok == token::TOKEN_FLOAT);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, int64_t v, location_type l)
+        : super_type(token_type (tok), std::move (v), std::move (l))
+      {
+        YYASSERT (tok == token::TOKEN_INTEGER);
+      }
+#else
+      symbol_type (int tok, const int64_t& v, const location_type& l)
+        : super_type(token_type (tok), v, l)
+      {
+        YYASSERT (tok == token::TOKEN_INTEGER);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      symbol_type (int tok, std::string v, location_type l)
+        : super_type(token_type (tok), std::move (v), std::move (l))
+      {
+        YYASSERT (tok == token::TOKEN_STRING);
+      }
+#else
+      symbol_type (int tok, const std::string& v, const location_type& l)
+        : super_type(token_type (tok), v, l)
+      {
+        YYASSERT (tok == token::TOKEN_STRING);
+      }
+#endif
+    };
 
     /// Build a parser object.
     AgentParser (isc::agent::ParserContext& ctx_yyarg);
     virtual ~AgentParser ();
+
+    /// Parse.  An alias for parse ().
+    /// \returns  0 iff parsing succeeded.
+    int operator() ();
 
     /// Parse.
     /// \returns  0 iff parsing succeeded.
@@ -700,6 +827,654 @@ namespace isc { namespace agent {
 
     /// Report a syntax error.
     void error (const syntax_error& err);
+
+    // Implementation of make_symbol for each symbol type.
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_END (location_type l)
+      {
+        return symbol_type (token::TOKEN_END, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_END (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_END, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_COMMA (location_type l)
+      {
+        return symbol_type (token::TOKEN_COMMA, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_COMMA (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_COMMA, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_COLON (location_type l)
+      {
+        return symbol_type (token::TOKEN_COLON, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_COLON (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_COLON, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_LSQUARE_BRACKET (location_type l)
+      {
+        return symbol_type (token::TOKEN_LSQUARE_BRACKET, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_LSQUARE_BRACKET (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_LSQUARE_BRACKET, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_RSQUARE_BRACKET (location_type l)
+      {
+        return symbol_type (token::TOKEN_RSQUARE_BRACKET, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_RSQUARE_BRACKET (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_RSQUARE_BRACKET, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_LCURLY_BRACKET (location_type l)
+      {
+        return symbol_type (token::TOKEN_LCURLY_BRACKET, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_LCURLY_BRACKET (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_LCURLY_BRACKET, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_RCURLY_BRACKET (location_type l)
+      {
+        return symbol_type (token::TOKEN_RCURLY_BRACKET, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_RCURLY_BRACKET (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_RCURLY_BRACKET, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_NULL_TYPE (location_type l)
+      {
+        return symbol_type (token::TOKEN_NULL_TYPE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_NULL_TYPE (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_NULL_TYPE, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_CONTROL_AGENT (location_type l)
+      {
+        return symbol_type (token::TOKEN_CONTROL_AGENT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_CONTROL_AGENT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_CONTROL_AGENT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_HTTP_HOST (location_type l)
+      {
+        return symbol_type (token::TOKEN_HTTP_HOST, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_HTTP_HOST (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_HTTP_HOST, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_HTTP_PORT (location_type l)
+      {
+        return symbol_type (token::TOKEN_HTTP_PORT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_HTTP_PORT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_HTTP_PORT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_USER_CONTEXT (location_type l)
+      {
+        return symbol_type (token::TOKEN_USER_CONTEXT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_USER_CONTEXT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_USER_CONTEXT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_COMMENT (location_type l)
+      {
+        return symbol_type (token::TOKEN_COMMENT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_COMMENT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_COMMENT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_CONTROL_SOCKETS (location_type l)
+      {
+        return symbol_type (token::TOKEN_CONTROL_SOCKETS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_CONTROL_SOCKETS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_CONTROL_SOCKETS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DHCP4_SERVER (location_type l)
+      {
+        return symbol_type (token::TOKEN_DHCP4_SERVER, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DHCP4_SERVER (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DHCP4_SERVER, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DHCP6_SERVER (location_type l)
+      {
+        return symbol_type (token::TOKEN_DHCP6_SERVER, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DHCP6_SERVER (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DHCP6_SERVER, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_D2_SERVER (location_type l)
+      {
+        return symbol_type (token::TOKEN_D2_SERVER, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_D2_SERVER (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_D2_SERVER, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SOCKET_NAME (location_type l)
+      {
+        return symbol_type (token::TOKEN_SOCKET_NAME, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SOCKET_NAME (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_SOCKET_NAME, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SOCKET_TYPE (location_type l)
+      {
+        return symbol_type (token::TOKEN_SOCKET_TYPE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SOCKET_TYPE (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_SOCKET_TYPE, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_UNIX (location_type l)
+      {
+        return symbol_type (token::TOKEN_UNIX, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_UNIX (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_UNIX, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_HOOKS_LIBRARIES (location_type l)
+      {
+        return symbol_type (token::TOKEN_HOOKS_LIBRARIES, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_HOOKS_LIBRARIES (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_LIBRARY (location_type l)
+      {
+        return symbol_type (token::TOKEN_LIBRARY, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_LIBRARY (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_LIBRARY, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_PARAMETERS (location_type l)
+      {
+        return symbol_type (token::TOKEN_PARAMETERS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PARAMETERS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PARAMETERS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_LOGGING (location_type l)
+      {
+        return symbol_type (token::TOKEN_LOGGING, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_LOGGING (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_LOGGING, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_LOGGERS (location_type l)
+      {
+        return symbol_type (token::TOKEN_LOGGERS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_LOGGERS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_LOGGERS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_NAME (location_type l)
+      {
+        return symbol_type (token::TOKEN_NAME, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_NAME (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_NAME, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_OUTPUT_OPTIONS (location_type l)
+      {
+        return symbol_type (token::TOKEN_OUTPUT_OPTIONS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_OUTPUT_OPTIONS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_OUTPUT_OPTIONS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_OUTPUT (location_type l)
+      {
+        return symbol_type (token::TOKEN_OUTPUT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_OUTPUT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_OUTPUT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DEBUGLEVEL (location_type l)
+      {
+        return symbol_type (token::TOKEN_DEBUGLEVEL, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DEBUGLEVEL (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DEBUGLEVEL, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SEVERITY (location_type l)
+      {
+        return symbol_type (token::TOKEN_SEVERITY, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SEVERITY (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_SEVERITY, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_FLUSH (location_type l)
+      {
+        return symbol_type (token::TOKEN_FLUSH, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_FLUSH (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_FLUSH, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_MAXSIZE (location_type l)
+      {
+        return symbol_type (token::TOKEN_MAXSIZE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_MAXSIZE (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_MAXSIZE, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_MAXVER (location_type l)
+      {
+        return symbol_type (token::TOKEN_MAXVER, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_MAXVER (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_MAXVER, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DHCP4 (location_type l)
+      {
+        return symbol_type (token::TOKEN_DHCP4, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DHCP4 (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DHCP4, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DHCP6 (location_type l)
+      {
+        return symbol_type (token::TOKEN_DHCP6, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DHCP6 (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DHCP6, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DHCPDDNS (location_type l)
+      {
+        return symbol_type (token::TOKEN_DHCPDDNS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DHCPDDNS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DHCPDDNS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_START_JSON (location_type l)
+      {
+        return symbol_type (token::TOKEN_START_JSON, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_START_JSON (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_START_JSON, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_START_AGENT (location_type l)
+      {
+        return symbol_type (token::TOKEN_START_AGENT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_START_AGENT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_START_AGENT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_START_SUB_AGENT (location_type l)
+      {
+        return symbol_type (token::TOKEN_START_SUB_AGENT, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_START_SUB_AGENT (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_START_SUB_AGENT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_STRING (std::string v, location_type l)
+      {
+        return symbol_type (token::TOKEN_STRING, std::move (v), std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_STRING (const std::string& v, const location_type& l)
+      {
+        return symbol_type (token::TOKEN_STRING, v, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_INTEGER (int64_t v, location_type l)
+      {
+        return symbol_type (token::TOKEN_INTEGER, std::move (v), std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_INTEGER (const int64_t& v, const location_type& l)
+      {
+        return symbol_type (token::TOKEN_INTEGER, v, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_FLOAT (double v, location_type l)
+      {
+        return symbol_type (token::TOKEN_FLOAT, std::move (v), std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_FLOAT (const double& v, const location_type& l)
+      {
+        return symbol_type (token::TOKEN_FLOAT, v, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_BOOLEAN (bool v, location_type l)
+      {
+        return symbol_type (token::TOKEN_BOOLEAN, std::move (v), std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_BOOLEAN (const bool& v, const location_type& l)
+      {
+        return symbol_type (token::TOKEN_BOOLEAN, v, l);
+      }
+#endif
+
 
   private:
     /// This class is not copyable.
@@ -737,7 +1512,7 @@ namespace isc { namespace agent {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const short int yypact_[];
+  static const short yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -748,14 +1523,14 @@ namespace isc { namespace agent {
   static const signed char yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
-  static const short int yydefgoto_[];
+  static const short yydefgoto_[];
 
   // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
   // positive, shift that token.  If negative, reduce the rule whose
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const short int yycheck_[];
+  static const short yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -776,14 +1551,15 @@ namespace isc { namespace agent {
     static const char* const yytname_[];
 #if AGENT_DEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned short int yyrline_[];
+  static const unsigned short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
     virtual void yystack_print_ ();
 
-    // Debugging.
+    /// Debugging level.
     int yydebug_;
+    /// Debug stream.
     std::ostream* yycdebug_;
 
     /// \brief Display a symbol type, value and location.
@@ -805,26 +1581,26 @@ namespace isc { namespace agent {
     struct by_state
     {
       /// Default constructor.
-      by_state ();
+      by_state () YY_NOEXCEPT;
 
       /// The symbol type as needed by the constructor.
       typedef state_type kind_type;
 
       /// Constructor.
-      by_state (kind_type s);
+      by_state (kind_type s) YY_NOEXCEPT;
 
       /// Copy constructor.
-      by_state (const by_state& other);
+      by_state (const by_state& that) YY_NOEXCEPT;
 
       /// Record that this symbol is empty.
-      void clear ();
+      void clear () YY_NOEXCEPT;
 
       /// Steal the symbol type from \a that.
       void move (by_state& that);
 
       /// The (internal) type number (corresponding to \a state).
       /// \a empty_symbol when empty.
-      symbol_number_type type_get () const;
+      symbol_number_type type_get () const YY_NOEXCEPT;
 
       /// The state number used to denote an empty symbol.
       enum { empty_state = -1 };
@@ -841,11 +1617,140 @@ namespace isc { namespace agent {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
+      /// Move or copy construction.
+      stack_symbol_type (YY_RVREF (stack_symbol_type) that);
       /// Steal the contents from \a sym to build this.
-      stack_symbol_type (state_type s, symbol_type& sym);
-      /// Assignment, needed by push_back.
-      stack_symbol_type& operator= (const stack_symbol_type& that);
+      stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) sym);
+#if YY_CPLUSPLUS < 201103L
+      /// Assignment, needed by push_back by some old implementations.
+      /// Moves the contents of that.
+      stack_symbol_type& operator= (stack_symbol_type& that);
+#endif
     };
+
+    /// A stack with random access from its top.
+    template <typename T, typename S = std::vector<T> >
+    class stack
+    {
+    public:
+      // Hide our reversed order.
+      typedef typename S::reverse_iterator iterator;
+      typedef typename S::const_reverse_iterator const_iterator;
+      typedef typename S::size_type size_type;
+
+      stack (size_type n = 200)
+        : seq_ (n)
+      {}
+
+      /// Random access.
+      ///
+      /// Index 0 returns the topmost element.
+      T&
+      operator[] (size_type i)
+      {
+        return seq_[size () - 1 - i];
+      }
+
+      /// Random access.
+      ///
+      /// Index 0 returns the topmost element.
+      T&
+      operator[] (int i)
+      {
+        return operator[] (size_type (i));
+      }
+
+      /// Random access.
+      ///
+      /// Index 0 returns the topmost element.
+      const T&
+      operator[] (size_type i) const
+      {
+        return seq_[size () - 1 - i];
+      }
+
+      /// Random access.
+      ///
+      /// Index 0 returns the topmost element.
+      const T&
+      operator[] (int i) const
+      {
+        return operator[] (size_type (i));
+      }
+
+      /// Steal the contents of \a t.
+      ///
+      /// Close to move-semantics.
+      void
+      push (YY_MOVE_REF (T) t)
+      {
+        seq_.push_back (T ());
+        operator[] (0).move (t);
+      }
+
+      /// Pop elements from the stack.
+      void
+      pop (int n = 1) YY_NOEXCEPT
+      {
+        for (; 0 < n; --n)
+          seq_.pop_back ();
+      }
+
+      /// Pop all elements from the stack.
+      void
+      clear () YY_NOEXCEPT
+      {
+        seq_.clear ();
+      }
+
+      /// Number of elements on the stack.
+      size_type
+      size () const YY_NOEXCEPT
+      {
+        return seq_.size ();
+      }
+
+      /// Iterator on top of the stack (going downwards).
+      const_iterator
+      begin () const YY_NOEXCEPT
+      {
+        return seq_.rbegin ();
+      }
+
+      /// Bottom of the stack.
+      const_iterator
+      end () const YY_NOEXCEPT
+      {
+        return seq_.rend ();
+      }
+
+      /// Present a slice of the top of a stack.
+      class slice
+      {
+      public:
+        slice (const stack& stack, int range)
+          : stack_ (stack)
+          , range_ (range)
+        {}
+
+        const T&
+        operator[] (int i) const
+        {
+          return stack_[range_ - i];
+        }
+
+      private:
+        const stack& stack_;
+        int range_;
+      };
+
+    private:
+      stack (const stack&);
+      stack& operator= (const stack&);
+      /// The wrapped container.
+      S seq_;
+    };
+
 
     /// Stack type.
     typedef stack<stack_symbol_type> stack_type;
@@ -856,20 +1761,20 @@ namespace isc { namespace agent {
     /// Push a new state on the stack.
     /// \param m    a debug message to display
     ///             if null, no trace is output.
-    /// \param s    the symbol
+    /// \param sym  the symbol
     /// \warning the contents of \a s.value is stolen.
-    void yypush_ (const char* m, stack_symbol_type& s);
+    void yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym);
 
     /// Push a new look ahead token on the state on the stack.
     /// \param m    a debug message to display
     ///             if null, no trace is output.
     /// \param s    the state
     /// \param sym  the symbol (for its value and location).
-    /// \warning the contents of \a s.value is stolen.
-    void yypush_ (const char* m, state_type s, symbol_type& sym);
+    /// \warning the contents of \a sym.value is stolen.
+    void yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym);
 
-    /// Pop \a n symbols the three stacks.
-    void yypop_ (unsigned int n = 1);
+    /// Pop \a n symbols from the stack.
+    void yypop_ (int n = 1);
 
     /// Constants.
     enum
@@ -888,16 +1793,17 @@ namespace isc { namespace agent {
     isc::agent::ParserContext& ctx;
   };
 
-  // Symbol number corresponding to token number t.
   inline
   AgentParser::token_number_type
   AgentParser::yytranslate_ (token_type t)
   {
+    // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
+    // TOKEN-NUM as returned by yylex.
     static
     const token_number_type
     translate_table[] =
     {
-     0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -928,59 +1834,84 @@ namespace isc { namespace agent {
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44
     };
-    const unsigned int user_token_number_max_ = 299;
+    const unsigned user_token_number_max_ = 299;
     const token_number_type undef_token_ = 2;
 
-    if (static_cast<int>(t) <= yyeof_)
+    if (static_cast<int> (t) <= yyeof_)
       return yyeof_;
-    else if (static_cast<unsigned int> (t) <= user_token_number_max_)
+    else if (static_cast<unsigned> (t) <= user_token_number_max_)
       return translate_table[t];
     else
       return undef_token_;
   }
 
-  inline
-  AgentParser::syntax_error::syntax_error (const location_type& l, const std::string& m)
-    : std::runtime_error (m)
-    , location (l)
-  {}
-
   // basic_symbol.
+#if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  inline
-  AgentParser::basic_symbol<Base>::basic_symbol ()
-    : value ()
-  {}
-
-  template <typename Base>
-  inline
-  AgentParser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
-    : Base (other)
+  AgentParser::basic_symbol<Base>::basic_symbol (basic_symbol&& that)
+    : Base (std::move (that))
     , value ()
-    , location (other.location)
+    , location (std::move (that.location))
   {
-      switch (other.type_get ())
+    switch (this->type_get ())
     {
       case 53: // value
       case 56: // map_value
       case 107: // socket_type_value
-        value.copy< ElementPtr > (other.value);
+        value.move< ElementPtr > (std::move (that.value));
         break;
 
       case 44: // "boolean"
-        value.copy< bool > (other.value);
+        value.move< bool > (std::move (that.value));
         break;
 
       case 43: // "floating point"
-        value.copy< double > (other.value);
+        value.move< double > (std::move (that.value));
         break;
 
       case 42: // "integer"
-        value.copy< int64_t > (other.value);
+        value.move< int64_t > (std::move (that.value));
         break;
 
       case 41: // "constant string"
-        value.copy< std::string > (other.value);
+        value.move< std::string > (std::move (that.value));
+        break;
+
+      default:
+        break;
+    }
+
+  }
+#endif
+
+  template <typename Base>
+  AgentParser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
+    : Base (that)
+    , value ()
+    , location (that.location)
+  {
+    switch (this->type_get ())
+    {
+      case 53: // value
+      case 56: // map_value
+      case 107: // socket_type_value
+        value.copy< ElementPtr > (YY_MOVE (that.value));
+        break;
+
+      case 44: // "boolean"
+        value.copy< bool > (YY_MOVE (that.value));
+        break;
+
+      case 43: // "floating point"
+        value.copy< double > (YY_MOVE (that.value));
+        break;
+
+      case 42: // "integer"
+        value.copy< int64_t > (YY_MOVE (that.value));
+        break;
+
+      case 41: // "constant string"
+        value.copy< std::string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -990,186 +1921,48 @@ namespace isc { namespace agent {
   }
 
 
-  template <typename Base>
-  inline
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
-    : Base (t)
-    , value ()
-    , location (l)
-  {
-    (void) v;
-      switch (this->type_get ())
-    {
-      case 53: // value
-      case 56: // map_value
-      case 107: // socket_type_value
-        value.copy< ElementPtr > (v);
-        break;
-
-      case 44: // "boolean"
-        value.copy< bool > (v);
-        break;
-
-      case 43: // "floating point"
-        value.copy< double > (v);
-        break;
-
-      case 42: // "integer"
-        value.copy< int64_t > (v);
-        break;
-
-      case 41: // "constant string"
-        value.copy< std::string > (v);
-        break;
-
-      default:
-        break;
-    }
-}
-
-
-  // Implementation of basic_symbol constructor for each type.
 
   template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
-    : Base (t)
-    , value ()
-    , location (l)
-  {}
-
-  template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-  template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
-    : Base (t)
-    , value (v)
-    , location (l)
-  {}
-
-
-  template <typename Base>
-  inline
-  AgentParser::basic_symbol<Base>::~basic_symbol ()
-  {
-    clear ();
-  }
-
-  template <typename Base>
-  inline
-  void
-  AgentParser::basic_symbol<Base>::clear ()
-  {
-    // User destructor.
-    symbol_number_type yytype = this->type_get ();
-    basic_symbol<Base>& yysym = *this;
-    (void) yysym;
-    switch (yytype)
-    {
-   default:
-      break;
-    }
-
-    // Type destructor.
-    switch (yytype)
-    {
-      case 53: // value
-      case 56: // map_value
-      case 107: // socket_type_value
-        value.template destroy< ElementPtr > ();
-        break;
-
-      case 44: // "boolean"
-        value.template destroy< bool > ();
-        break;
-
-      case 43: // "floating point"
-        value.template destroy< double > ();
-        break;
-
-      case 42: // "integer"
-        value.template destroy< int64_t > ();
-        break;
-
-      case 41: // "constant string"
-        value.template destroy< std::string > ();
-        break;
-
-      default:
-        break;
-    }
-
-    Base::clear ();
-  }
-
-  template <typename Base>
-  inline
   bool
-  AgentParser::basic_symbol<Base>::empty () const
+  AgentParser::basic_symbol<Base>::empty () const YY_NOEXCEPT
   {
     return Base::type_get () == empty_symbol;
   }
 
   template <typename Base>
-  inline
   void
   AgentParser::basic_symbol<Base>::move (basic_symbol& s)
   {
-    super_type::move(s);
-      switch (this->type_get ())
+    super_type::move (s);
+    switch (this->type_get ())
     {
       case 53: // value
       case 56: // map_value
       case 107: // socket_type_value
-        value.move< ElementPtr > (s.value);
+        value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
       case 44: // "boolean"
-        value.move< bool > (s.value);
+        value.move< bool > (YY_MOVE (s.value));
         break;
 
       case 43: // "floating point"
-        value.move< double > (s.value);
+        value.move< double > (YY_MOVE (s.value));
         break;
 
       case 42: // "integer"
-        value.move< int64_t > (s.value);
+        value.move< int64_t > (YY_MOVE (s.value));
         break;
 
       case 41: // "constant string"
-        value.move< std::string > (s.value);
+        value.move< std::string > (YY_MOVE (s.value));
         break;
 
       default:
         break;
     }
 
-    location = s.location;
+    location = YY_MOVE (s.location);
   }
 
   // by_type.
@@ -1178,9 +1971,18 @@ namespace isc { namespace agent {
     : type (empty_symbol)
   {}
 
+#if 201103L <= YY_CPLUSPLUS
   inline
-  AgentParser::by_type::by_type (const by_type& other)
-    : type (other.type)
+  AgentParser::by_type::by_type (by_type&& that)
+    : type (that.type)
+  {
+    that.clear ();
+  }
+#endif
+
+  inline
+  AgentParser::by_type::by_type (const by_type& that)
+    : type (that.type)
   {}
 
   inline
@@ -1205,19 +2007,19 @@ namespace isc { namespace agent {
 
   inline
   int
-  AgentParser::by_type::type_get () const
+  AgentParser::by_type::type_get () const YY_NOEXCEPT
   {
     return type;
   }
 
   inline
   AgentParser::token_type
-  AgentParser::by_type::token () const
+  AgentParser::by_type::token () const YY_NOEXCEPT
   {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
     static
-    const unsigned short int
+    const unsigned short
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
@@ -1226,271 +2028,13 @@ namespace isc { namespace agent {
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299
     };
-    return static_cast<token_type> (yytoken_number_[type]);
-  }
-  // Implementation of make_symbol for each symbol type.
-  AgentParser::symbol_type
-  AgentParser::make_END (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_END, l);
+    return token_type (yytoken_number_[type]);
   }
 
-  AgentParser::symbol_type
-  AgentParser::make_COMMA (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_COMMA, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_COLON (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_COLON, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_LSQUARE_BRACKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LSQUARE_BRACKET, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_RSQUARE_BRACKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RSQUARE_BRACKET, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_LCURLY_BRACKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LCURLY_BRACKET, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_RCURLY_BRACKET (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_RCURLY_BRACKET, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_NULL_TYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_NULL_TYPE, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_CONTROL_AGENT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CONTROL_AGENT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_HTTP_HOST (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HTTP_HOST, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_HTTP_PORT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HTTP_PORT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_USER_CONTEXT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_USER_CONTEXT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_COMMENT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_COMMENT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_CONTROL_SOCKETS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CONTROL_SOCKETS, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_DHCP4_SERVER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP4_SERVER, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_DHCP6_SERVER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP6_SERVER, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_D2_SERVER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_D2_SERVER, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_SOCKET_NAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SOCKET_NAME, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_SOCKET_TYPE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_UNIX (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_UNIX, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_HOOKS_LIBRARIES (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_LIBRARY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LIBRARY, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_PARAMETERS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PARAMETERS, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_LOGGING (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LOGGING, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_LOGGERS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_LOGGERS, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_NAME (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_NAME, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_OUTPUT_OPTIONS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_OUTPUT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_OUTPUT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_DEBUGLEVEL (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DEBUGLEVEL, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_SEVERITY (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_SEVERITY, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_FLUSH (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_FLUSH, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_MAXSIZE (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_MAXSIZE, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_MAXVER (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_MAXVER, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_DHCP4 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP4, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_DHCP6 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP6, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_DHCPDDNS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCPDDNS, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_START_JSON (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_START_JSON, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_START_AGENT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_START_AGENT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_START_SUB_AGENT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_START_SUB_AGENT, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_STRING (const std::string& v, const location_type& l)
-  {
-    return symbol_type (token::TOKEN_STRING, v, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_INTEGER (const int64_t& v, const location_type& l)
-  {
-    return symbol_type (token::TOKEN_INTEGER, v, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_FLOAT (const double& v, const location_type& l)
-  {
-    return symbol_type (token::TOKEN_FLOAT, v, l);
-  }
-
-  AgentParser::symbol_type
-  AgentParser::make_BOOLEAN (const bool& v, const location_type& l)
-  {
-    return symbol_type (token::TOKEN_BOOLEAN, v, l);
-  }
-
-
-#line 14 "agent_parser.yy" // lalr1.cc:377
+#line 14 "agent_parser.yy"
 } } // isc::agent
-#line 1494 "agent_parser.h" // lalr1.cc:377
+#line 2037 "agent_parser.h"
+
 
 
 

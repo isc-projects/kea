@@ -94,7 +94,7 @@ const std::string FILE_HEADER =
     <title>Kea Messages Manual</title>\n\
 \n\
     <copyright>\n\
-      <year>2011-2018</year>\n\
+      <year>2011-2019</year>\n\
       <holder>Internet Systems Consortium, Inc. (\"ISC\")</holder>\n\
     </copyright>\n\
 \n\
