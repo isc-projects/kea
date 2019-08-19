@@ -1,4 +1,4 @@
-Kea 1.6.0 released on Aug 21, 2019
+Kea 1.6.0 released on Aug 28, 2019
 
 1654.	[sec]		tmark
 	kea-dhcp4 Memfile logic now ensures during reading and writing
