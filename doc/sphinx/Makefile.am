@@ -70,7 +70,7 @@ rst_man_sources+=man/perfdhcp.8.rst
 man_sources=$(rst_man_sources) conf.py
 man8s=$(foreach rst,$(rst_man_sources), $(sphinxbuilddir)/$(basename $(rst)))
 
-EXTRA_DIST += $(main_sources) $(man_sources) mes2doc.py api2doc.py
+EXTRA_DIST+=$(main_sources) $(man_sources) mes2doc.py api2doc.py
 
 # list of messages files that are used to generate kea-messages.rst and then kea-messages.pdf
 mes_files1=$(shell cat mes-files.txt)
@@ -81,9 +81,14 @@ mes_files=$(foreach mf,$(mes_files1), $(top_srcdir)/$(mf))
 api_files1=$(shell cat api-files.txt)
 api_files=$(foreach af,$(api_files1), $(srcdir)/$(af))
 
-EXTRA_DIST += mes-files.txt
-EXTRA_DIST += api-files.txt
-EXTRA_DIST += $(api_files)
+EXTRA_DIST+=mes-files.txt
+EXTRA_DIST+=api-files.txt
+EXTRA_DIST+=$(api_files)
+EXTRA_DIST+=api/README
+EXTRA_DIST+=api/_template.json
+EXTRA_DIST+=api/generate-templates
+EXTRA_DIST+=api/cmds-list
+
 
 if HAVE_PDFLATEX
 all: html mans pdf
