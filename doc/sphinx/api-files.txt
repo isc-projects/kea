@@ -97,6 +97,14 @@ api/remote-option6-pool-del.json
 api/remote-option6-pool-set.json
 api/remote-option6-subnet-del.json
 api/remote-option6-subnet-set.json
+api/remote-server4-del.json
+api/remote-server4-get-all.json
+api/remote-server4-get.json
+api/remote-server4-set.json
+api/remote-server6-del.json
+api/remote-server6-get-all.json
+api/remote-server6-get.json
+api/remote-server6-set.json
 api/remote-subnet4-del-by-id.json
 api/remote-subnet4-del-by-prefix.json
 api/remote-subnet4-get-by-id.json
@@ -114,6 +122,7 @@ api/reservation-del.json
 api/reservation-get.json
 api/reservation-get-all.json
 api/reservation-get-page.json
+api/server-tag-get.json
 api/shutdown.json
 api/statistic-get-all.json
 api/statistic-get.json
@@ -121,6 +130,10 @@ api/statistic-remove-all.json
 api/statistic-remove.json
 api/statistic-reset-all.json
 api/statistic-reset.json
+api/statistic-sample-age-set-all.json
+api/statistic-sample-age-set.json
+api/statistic-sample-count-set-all.json
+api/statistic-sample-count-set.json
 api/stat-lease4-get.json
 api/stat-lease6-get.json
 api/subnet4-add.json
