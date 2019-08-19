@@ -151,7 +151,7 @@ API Reference
 
         else:
             rst += '   {\n'
-            rst += '       "result": "<integer>",\n'
+            rst += '       "result": <integer>,\n'
             rst += '       "text": "<string>"\n'
             rst += '   }'
         rst += '\n\n'
