@@ -34,8 +34,8 @@ Kea depends on C++ compiler, make, libtool, boost (at least includes, but many
 OSes require boost-system library), log4cplus and one crypto library (either
 OpenSSL or Botan) for compilation.  Optional backends (MySQL, PostgreSQL and
 Cassandra) have additional dependencies. For detailed installation directions,
-see the guide at doc/guide/kea-guide.txt or doc/guide/kea-guide.html or on
-the Kea wiki: https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#installation
+see the documentation in doc/sphinx folder or on the Kea online docs:
+https://kea.readthedocs.io/.
 Other optional dependencies are FreeRADIUS client (this requires a subscriber
 only RADIUS hook) and Sysrepo, a system for providing YANG/NETCONF interface.
 

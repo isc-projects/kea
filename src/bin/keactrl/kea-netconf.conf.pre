@@ -9,7 +9,7 @@
 // in ISC's Knowledgebase
 // (https://kb.isc.org/docs/kea-administrator-reference-manual;
 // the direct link for the stable version is
-// https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html).
+// https://kea.readthedocs.io/).
 //
 // This configuration file contains only Netconf's configuration.
 // If configurations for other Kea services are also included in this file they

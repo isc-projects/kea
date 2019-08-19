@@ -16,7 +16,7 @@
 // details. These are section numbers in Kea User's Guide. The version matching
 // your software should come with your Kea package, but it is also available
 // in ISC's Knowledgebase (https://kb.isc.org/docs/kea-administrator-reference-manual; the direct link for
-// the stable version is https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html).
+// the stable version is https://kea.readthedocs.io/).
 //
 // This configuration file contains only DHCPv6 server's configuration.
 // If configurations for other Kea services are also included in this file they

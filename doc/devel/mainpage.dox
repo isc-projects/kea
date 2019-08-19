@@ -25,7 +25,7 @@
  * <a href="https://kb.isc.org/docs/kea-administrator-reference-manual">Kea
  * Administrator Reference Manual</a> instead. If you are using a beta or
  * development version of Kea, the
- * <a href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html">
+ * <a href="https://kea.readthedocs.io/">
  * development version of the manual</a> is recommended.
  *
  * Regardless of your field of expertise, you are encouraged to visit the
