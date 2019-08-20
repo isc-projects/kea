@@ -3624,8 +3624,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
                           "subnet set");
     }
 
+    // The inserted subnet contains two options.
+    ASSERT_EQ(2, countRows("dhcp4_options"));
+
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
+    cbptr_->createUpdateOption4(ServerSelector::ANY(), subnet->getID(),
                                 opt_boot_file_name);
 
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
@@ -3653,11 +3656,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
                           "subnet specific option set");
     }
 
+    // We have added one option to the existing subnet. We should now have
+    // three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
+
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
                                 opt_boot_file_name);
 
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ANY(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
     returned_opt_boot_file_name =
@@ -3676,6 +3683,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
                           "subnet specific option set");
     }
 
+    // Updating the option should replace the existing instance with the new
+    // instance. Therefore, we should still have three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
+
     // It should succeed for any server.
     EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(), subnet->getID(),
                                        opt_boot_file_name->option_->getType(),
@@ -3693,6 +3704,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
                           AuditEntry::ModificationType::UPDATE,
                           "subnet specific option deleted");
     }
+
+    // We should have only two options after deleting one of them.
+    ASSERT_EQ(2, countRows("dhcp4_options"));
 }
 
 // This test verifies that option can be inserted, updated and deleted
@@ -3708,6 +3722,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
                           AuditEntry::ModificationType::CREATE,
                           "subnet set");
     }
+
+    // Inserted subnet has two options.
+    ASSERT_EQ(2, countRows("dhcp4_options"));
 
     // Add an option into the pool.
     const PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.10"));
@@ -3747,6 +3764,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
                           "pool specific option set");
     }
 
+    // With the newly inserted option we should now have three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
 
     // Modify the option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
@@ -3781,6 +3800,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
                           "pool specific option set");
     }
 
+    // The new option instance should replace the existing one, so we should
+    // still have three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
+
     // Delete option for any server should succeed.
     EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                        pool->getFirstAddress(),
@@ -3808,6 +3831,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
                           AuditEntry::ModificationType::UPDATE,
                           "pool specific option deleted");
     }
+
+    // The option has been deleted so the number of options should now
+    // be down to 2.
+    EXPECT_EQ(2, countRows("dhcp4_options"));
 }
 
 // This test verifies that shared network level option can be added,
@@ -3830,6 +3857,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
                           AuditEntry::ModificationType::CREATE,
                           "shared network set");
     }
+
+    // The inserted shared network has no options.
+    ASSERT_EQ(0, countRows("dhcp4_options"));
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
@@ -3861,6 +3891,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
                           "shared network specific option set");
     }
 
+    // One option should now be stored in the database.
+    ASSERT_EQ(1, countRows("dhcp4_options"));
+
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 shared_network->getName(),
@@ -3885,6 +3918,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
                           "shared network specific option set");
     }
 
+    // The new option instance should replace the existing option instance,
+    // so we should still have one option.
+    ASSERT_EQ(1, countRows("dhcp4_options"));
+
     // Deleting an option for any server should succeed.
     EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                        shared_network->getName(),
@@ -3901,6 +3938,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
                           AuditEntry::ModificationType::UPDATE,
                           "shared network specific option deleted");
     }
+
+    // After deleting the option we should be back to 0.
+    EXPECT_EQ(0, countRows("dhcp4_options"));
 }
 
 

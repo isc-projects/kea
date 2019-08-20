@@ -666,12 +666,9 @@ namespace {
 #endif
 
 #ifndef MYSQL_UPDATE_OPTION_COMMON
-#define MYSQL_UPDATE_OPTION_COMMON(table_prefix, pd_pool_id, ...) \
+#define MYSQL_UPDATE_OPTION_COMMON(table_prefix, server_join, pd_pool_id, ...) \
     "UPDATE " #table_prefix "_options AS o " \
-    "INNER JOIN " #table_prefix "_options_server AS a" \
-    "  ON o.option_id = a.option_id " \
-    "INNER JOIN " #table_prefix "_server AS s" \
-    "  ON a.server_id = s.id " \
+    server_join \
     "SET" \
     "  o.code = ?," \
     "  o.value = ?," \
@@ -689,16 +686,26 @@ namespace {
     "WHERE " #__VA_ARGS__
 
 #define MYSQL_UPDATE_OPTION4_WITH_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", s.tag = ? __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp4, \
+    "INNER JOIN dhcp4_options_server AS a" \
+    "  ON o.option_id = a.option_id " \
+    "INNER JOIN dhcp4_server AS s" \
+    "  ON a.server_id = s.id ", \
+    "", s.tag = ? __VA_ARGS__)
 
 #define MYSQL_UPDATE_OPTION4_NO_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", "", __VA_ARGS__)
 
 #define MYSQL_UPDATE_OPTION6_WITH_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp6, ", o.pd_pool_id = ? ", s.tag = ? __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp6, \
+    "INNER JOIN dhcp6_options_server AS a" \
+    "  ON o.option_id = a.option_id " \
+    "INNER JOIN dhcp6_server AS s" \
+    "  ON a.server_id = s.id ", \
+    ", o.pd_pool_id = ? ", s.tag = ? __VA_ARGS__)
 
 #define MYSQL_UPDATE_OPTION6_NO_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp6, ", o.pd_pool_id = ? ", __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp6, "", ", o.pd_pool_id = ? ", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_UPDATE_SERVER
@@ -824,20 +831,20 @@ namespace {
     "WHERE a.option_def_id IS NULL " #__VA_ARGS__
 #endif
 
-#ifndef MYSQL_DELETE_OPTION
-#define MYSQL_DELETE_OPTION_COMMON(table_prefix, ...) \
+#ifndef MYSQL_DELETE_OPTION_WITH_TAG
+#define MYSQL_DELETE_OPTION_WITH_TAG(table_prefix, ...) \
     "DELETE o FROM " #table_prefix "_options AS o " \
     "INNER JOIN " #table_prefix "_options_server AS a" \
     "  ON o.option_id = a.option_id " \
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON a.server_id = s.id " \
-    #__VA_ARGS__
+    "WHERE s.tag = ? " #__VA_ARGS__
+#endif
 
-#define MYSQL_DELETE_OPTION_WITH_TAG(table_prefix, ...) \
-    MYSQL_DELETE_OPTION_COMMON(table_prefix, WHERE s.tag = ? __VA_ARGS__)
-
+#ifndef MYSQL_DELETE_OPTION_NO_TAG
 #define MYSQL_DELETE_OPTION_NO_TAG(table_prefix, ...) \
-    MYSQL_DELETE_OPTION_COMMON(table_prefix, __VA_ARGS__)
+    "DELETE o FROM " #table_prefix "_options AS o " \
+    #__VA_ARGS__
 #endif
 
 #ifndef MYSQL_DELETE_OPTION_UNASSIGNED
