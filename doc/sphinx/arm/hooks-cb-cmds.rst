@@ -1382,7 +1382,7 @@ For example:
    {
        "command": "remote-option6-pd-pool-set",
        "arguments": {
-           "pools": [
+           "pd-pools": [
                {
                    "prefix": "3001:1::",
                    "length": 64
