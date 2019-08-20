@@ -1,5 +1,13 @@
 Kea 1.6.0 released on Aug 28, 2019
 
+1656.	[bug]		marcin
+	Corrected a bug in the Kea MySQL Configuration Backend which
+	caused the Kea DHCPv6 server to incorrectly require the server
+	tag to be provided with the remote-subnet6-option-set command.
+	In addition, corrected issues with setting and deleting
+	pool specific DHCP options via the Configuration Backend.
+	(Gitlab #847,!23-p, git 578bc6c997679c507c2f9e419783d34de77816cd)
+
 1655.	[bug]		marcin
 	Corrected a bug in the Kea MySQL Configuration Backend which
 	prevented the DHCP servers from discovering and fetching the
