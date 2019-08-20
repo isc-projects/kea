@@ -1740,7 +1740,8 @@ DELIMITER ;
 -- The following parameters are passed to the procedure:
 -- - modification_type: "create", "update" or "delete"
 -- - scope_id: identifier of the option scope, e.g.
---   global, subnet specific etc.
+--   global, subnet specific etc. See dhcp_option_scope
+--   for specific values.
 -- - option_id: identifier of the option.
 -- - subnet_id: identifier of the subnet if the option
 --   belongs to the subnet.
@@ -2578,10 +2579,13 @@ BEGIN
 END $$
 DELIMITER ;
 
-# Recreate dhcp4_options_AINS trigger to use pass timestamp to the updated
+# Recreate dhcp4_options_AINS trigger to pass timestamp to the updated
 # version of the createOptionAuditDHCP4.
 DROP TRIGGER IF EXISTS dhcp4_options_AINS;
 
+# This trigger is executed after inserting a DHCPv4 option into the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
 DELIMITER $$
 CREATE TRIGGER dhcp4_options_AINS AFTER INSERT ON dhcp4_options
     FOR EACH ROW
@@ -2592,10 +2596,13 @@ CREATE TRIGGER dhcp4_options_AINS AFTER INSERT ON dhcp4_options
     END $$
 DELIMITER ;
 
-# Recreate dhcp4_options_AUPD trigger to use pass timestamp to the updated
+# Recreate dhcp4_options_AUPD trigger to pass timestamp to the updated
 # version of the createOptionAuditDHCP4.
 DROP TRIGGER IF EXISTS dhcp4_options_AUPD;
 
+# This trigger is executed after updating a DHCPv4 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
 DELIMITER $$
 CREATE TRIGGER dhcp4_options_AUPD AFTER UPDATE ON dhcp4_options
     FOR EACH ROW
@@ -2606,10 +2613,13 @@ CREATE TRIGGER dhcp4_options_AUPD AFTER UPDATE ON dhcp4_options
     END $$
 DELIMITER ;
 
-# Recreate dhcp4_options_ADEL trigger to use pass timestamp to the updated
+# Recreate dhcp4_options_ADEL trigger to pass timestamp to the updated
 # version of the createOptionAuditDHCP4.
 DROP TRIGGER IF EXISTS dhcp4_options_ADEL;
 
+# This trigger is executed after deleting a DHCPv4 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
 DELIMITER $$
 CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
     FOR EACH ROW
@@ -2630,7 +2640,8 @@ DELIMITER ;
 -- The following parameters are passed to the procedure:
 -- - modification_type: "create", "update" or "delete"
 -- - scope_id: identifier of the option scope, e.g.
---   global, subnet specific etc.
+--   global, subnet specific etc. See dhcp_option_scope
+--   for specific values.
 -- - option_id: identifier of the option.
 -- - subnet_id: identifier of the subnet if the option
 --   belongs to the subnet.
@@ -2714,10 +2725,13 @@ BEGIN
 END $$
 DELIMITER ;
 
-# Recreate dhcp6_options_AINS trigger to use pass timestamp to the updated
+# Recreate dhcp6_options_AINS trigger to pass timestamp to the updated
 # version of the createOptionAuditDHCP6.
 DROP TRIGGER IF EXISTS dhcp6_options_AINS;
 
+# This trigger is executed after inserting a DHCPv6 option into the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
 DELIMITER $$
 CREATE TRIGGER dhcp6_options_AINS AFTER INSERT ON dhcp6_options
     FOR EACH ROW
@@ -2728,10 +2742,13 @@ CREATE TRIGGER dhcp6_options_AINS AFTER INSERT ON dhcp6_options
     END $$
 DELIMITER ;
 
-# Recreate dhcp6_options_AUPD trigger to use pass timestamp to the updated
+# Recreate dhcp6_options_AUPD trigger to pass timestamp to the updated
 # version of the createOptionAuditDHCP6.
 DROP TRIGGER IF EXISTS dhcp6_options_AUPD;
 
+# This trigger is executed after updating a DHCPv6 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
 DELIMITER $$
 CREATE TRIGGER dhcp6_options_AUPD AFTER UPDATE ON dhcp6_options
     FOR EACH ROW
@@ -2742,10 +2759,13 @@ CREATE TRIGGER dhcp6_options_AUPD AFTER UPDATE ON dhcp6_options
     END $$
 DELIMITER ;
 
-# Recreate dhcp6_options_ADEL trigger to use pass timestamp to the updated
+# Recreate dhcp6_options_ADEL trigger to pass timestamp to the updated
 # version of the createOptionAuditDHCP6.
 DROP TRIGGER IF EXISTS dhcp6_options_ADEL;
 
+# This trigger is executed after deleting a DHCPv6 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
 DELIMITER $$
 CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
     FOR EACH ROW
