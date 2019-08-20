@@ -1,5 +1,13 @@
 Kea 1.6.0 released on Aug 28, 2019
 
+1655.	[bug]		marcin
+	Corrected a bug in the Kea MySQL Configuration Backend which
+	prevented the DHCP servers from discovering and fetching the
+	changes applied with the new commands. The new commands set
+	and delete the options embedded within the subnets, shared
+	networks and pools.
+	(Gitlab #845,!22-p, git 7fb2255b212e4e98ff4dbf6d8e2e0ada78701110)
+
 1654.	[sec]		tmark
 	kea-dhcp4 Memfile logic now ensures during reading and writing
 	that leases which are not in the declined state, have either
