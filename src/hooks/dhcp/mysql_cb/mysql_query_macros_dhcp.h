@@ -265,6 +265,131 @@ namespace {
 
 #endif
 
+#ifndef MYSQL_GET_POOL4_COMMON
+#define MYSQL_GET_POOL4_COMMON(server_join, ...) \
+      "SELECT" \
+      "  p.id," \
+      "  p.start_address," \
+      "  p.end_address," \
+      "  p.subnet_id," \
+      "  p.client_class," \
+      "  p.require_client_classes," \
+      "  p.user_context," \
+      "  p.modification_ts," \
+      "  x.option_id," \
+      "  x.code," \
+      "  x.value," \
+      "  x.formatted_value," \
+      "  x.space," \
+      "  x.persistent," \
+      "  x.dhcp4_subnet_id," \
+      "  x.scope_id," \
+      "  x.user_context," \
+      "  x.shared_network_name," \
+      "  x.pool_id," \
+      "  x.modification_ts " \
+      "FROM dhcp4_pool AS p " \
+      server_join \
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
+      #__VA_ARGS__ \
+      " ORDER BY p.id, x.option_id"
+
+#define MYSQL_GET_POOL4_RANGE_WITH_TAG(...) \
+    MYSQL_GET_POOL4_COMMON( \
+       "INNER JOIN dhcp4_subnet_server AS s ON p.subnet_id = s.subnet_id " \
+       "INNER JOIN dhcp4_server AS srv " \
+       " ON (s.server_id = srv.id) OR (s.server_id = 1) ", \
+       __VA_ARGS__)
+
+#define MYSQL_GET_POOL4_RANGE_NO_TAG(...) \
+    MYSQL_GET_POOL4_COMMON("", __VA_ARGS__)
+#endif
+
+#ifndef MYSQL_GET_POOL6_COMMON
+#define MYSQL_GET_POOL6_COMMON(server_join, ...) \
+    "SELECT" \
+    "  p.id," \
+    "  p.start_address," \
+    "  p.end_address," \
+    "  p.subnet_id," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
+    "  p.modification_ts," \
+    "  x.option_id," \
+    "  x.code," \
+    "  x.value," \
+    "  x.formatted_value," \
+    "  x.space," \
+    "  x.persistent," \
+    "  x.dhcp6_subnet_id," \
+    "  x.scope_id," \
+    "  x.user_context," \
+    "  x.shared_network_name," \
+    "  x.pool_id," \
+    "  x.modification_ts," \
+    "  x.pd_pool_id " \
+    "FROM dhcp6_pool AS p " \
+    server_join \
+    "LEFT JOIN dhcp6_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
+    #__VA_ARGS__ \
+    " ORDER BY p.id, x.option_id"
+
+#define MYSQL_GET_POOL6_RANGE_WITH_TAG(...) \
+    MYSQL_GET_POOL6_COMMON( \
+    "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id " \
+    "INNER JOIN dhcp6_server AS srv " \
+    " ON (s.server_id = srv.id) OR (s.server_id = 1) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_POOL6_RANGE_NO_TAG(...) \
+    MYSQL_GET_POOL6_COMMON("", __VA_ARGS__)
+#endif
+
+#ifndef MYSQL_GET_PD_POOL_COMMON
+#define MYSQL_GET_PD_POOL_COMMON(server_join, ...) \
+    "SELECT" \
+    "  p.id," \
+    "  p.prefix," \
+    "  p.prefix_length," \
+    "  p.delegated_prefix_length," \
+    "  p.subnet_id," \
+    "  p.excluded_prefix," \
+    "  p.excluded_prefix_length," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
+    "  p.modification_ts," \
+    "  x.option_id," \
+    "  x.code," \
+    "  x.value," \
+    "  x.formatted_value," \
+    "  x.space," \
+    "  x.persistent," \
+    "  x.dhcp6_subnet_id," \
+    "  x.scope_id," \
+    "  x.user_context," \
+    "  x.shared_network_name," \
+    "  x.pool_id," \
+    "  x.modification_ts," \
+    "  x.pd_pool_id " \
+    "FROM dhcp6_pd_pool AS p " \
+    server_join \
+    "LEFT JOIN dhcp6_options AS x ON x.scope_id = 6 AND p.id = x.pd_pool_id " \
+    #__VA_ARGS__ \
+    " ORDER BY p.id, x.option_id" \
+
+#define MYSQL_GET_PD_POOL_WITH_TAG(...) \
+    MYSQL_GET_PD_POOL_COMMON( \
+    "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id " \
+    "INNER JOIN dhcp6_server AS srv " \
+    " ON (s.server_id = srv.id) OR (s.server_id = 1) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_PD_POOL_NO_TAG(...) \
+    MYSQL_GET_PD_POOL_COMMON("", __VA_ARGS__)
+#endif
+
 #ifndef MYSQL_GET_SHARED_NETWORK4
 #define MYSQL_GET_SHARED_NETWORK4_COMMON(server_join, ...) \
     "SELECT" \
@@ -858,10 +983,6 @@ namespace {
 #ifndef MYSQL_DELETE_OPTION_POOL_RANGE
 #define MYSQL_DELETE_OPTION_POOL_RANGE(table_prefix, ...) \
     "DELETE o FROM " #table_prefix "_options AS o " \
-    "INNER JOIN " #table_prefix "_options_server AS a" \
-    "  ON o.option_id = a.option_id " \
-    "INNER JOIN " #table_prefix "_server AS s" \
-    "  ON a.server_id = s.id " \
     "WHERE " #__VA_ARGS__ \
     "  AND o.pool_id = " \
     "  (SELECT id FROM " #table_prefix "_pool" \
@@ -871,10 +992,6 @@ namespace {
 #ifndef MYSQL_DELETE_OPTION_PD_POOL
 #define MYSQL_DELETE_OPTION_PD_POOL(...) \
     "DELETE o FROM dhcp6_options AS o " \
-    "INNER JOIN dhcp6_options_server AS a" \
-    "  ON o.option_id = a.option_id " \
-    "INNER JOIN dhcp6_server AS s" \
-    "  ON a.server_id = s.id " \
     "WHERE " #__VA_ARGS__ \
     "  AND o.pd_pool_id = " \
     "  (SELECT id FROM dhcp6_pd_pool" \

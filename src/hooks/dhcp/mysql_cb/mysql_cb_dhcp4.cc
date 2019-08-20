@@ -72,6 +72,7 @@ public:
         GET_MODIFIED_SUBNETS4_UNASSIGNED,
         GET_SHARED_NETWORK_SUBNETS4,
         GET_POOL4_RANGE,
+        GET_POOL4_RANGE_ANY,
         GET_SHARED_NETWORK4_NAME_NO_TAG,
         GET_SHARED_NETWORK4_NAME_ANY,
         GET_SHARED_NETWORK4_NAME_UNASSIGNED,
@@ -818,16 +819,25 @@ public:
         PoolCollection pools;
         std::vector<uint64_t> pool_ids;
 
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
-                MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
-            };
+        if (server_selector.amAny()) {
+                MySqlBindingCollection in_bindings = {
+                    MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+                    MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
+                };
+                getPools(GET_POOL4_RANGE_ANY, in_bindings, pools, pool_ids);
 
-            getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
-            // Break if something is found?
+        } else {
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                MySqlBindingCollection in_bindings = {
+                    MySqlBinding::createString(tag.get()),
+                    MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+                    MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
+                };
+
+                getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
+                // Break if something is found?
+            }
         }
 
         if (!pools.empty()) {
@@ -2194,37 +2204,15 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_SUBNET4_ANY(WHERE s.shared_network_name = ?)
     },
 
-    // Select pool by address range.
+    // Select pool by address range for a server.
     { MySqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE,
-      "SELECT"
-      "  p.id,"
-      "  p.start_address,"
-      "  p.end_address,"
-      "  p.subnet_id,"
-      "  p.client_class,"
-      "  p.require_client_classes,"
-      "  p.user_context,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp4_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts "
-      "FROM dhcp4_pool AS p "
-      "INNER JOIN dhcp4_subnet_server AS s ON p.subnet_id = s.subnet_id "
-      "INNER JOIN dhcp4_server AS srv "
-      " ON (s.server_id = srv.id) OR (s.server_id = 1) "
-      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) "
-      " AND p.start_address = ? AND p.end_address = ? "
-      "ORDER BY p.id, x.option_id"
+      MYSQL_GET_POOL4_RANGE_WITH_TAG(WHERE (srv.tag = ? OR srv.id = 1) AND p.start_address = ? \
+                                     AND p.end_address = ?)
+    },
+
+    // Select pool by address range for any server
+    { MySqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE_ANY,
+      MYSQL_GET_POOL4_RANGE_NO_TAG(WHERE p.start_address = ? AND p.end_address = ?)
     },
 
     // Select shared network by name.

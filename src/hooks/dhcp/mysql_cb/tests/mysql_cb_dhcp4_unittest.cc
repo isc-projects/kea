@@ -3661,7 +3661,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     ASSERT_EQ(3, countRows("dhcp4_options"));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
+    cbptr_->createUpdateOption4(ServerSelector::ANY(), subnet->getID(),
                                 opt_boot_file_name);
 
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ANY(),
@@ -3730,7 +3730,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     const PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::ALL(),
+    cbptr_->createUpdateOption4(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_boot_file_name);
@@ -3769,7 +3769,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
 
     // Modify the option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::ALL(),
+    cbptr_->createUpdateOption4(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_boot_file_name);
@@ -3862,7 +3862,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     ASSERT_EQ(0, countRows("dhcp4_options"));
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::ALL(),
+    cbptr_->createUpdateOption4(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_boot_file_name);
 
@@ -3895,7 +3895,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     ASSERT_EQ(1, countRows("dhcp4_options"));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::ALL(),
+    cbptr_->createUpdateOption4(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_boot_file_name);
 

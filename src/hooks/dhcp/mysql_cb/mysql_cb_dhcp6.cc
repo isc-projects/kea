@@ -73,7 +73,9 @@ public:
         GET_MODIFIED_SUBNETS6_UNASSIGNED,
         GET_SHARED_NETWORK_SUBNETS6,
         GET_POOL6_RANGE,
+        GET_POOL6_RANGE_ANY,
         GET_PD_POOL,
+        GET_PD_POOL_ANY,
         GET_SHARED_NETWORK6_NAME_NO_TAG,
         GET_SHARED_NETWORK6_NAME_ANY,
         GET_SHARED_NETWORK6_NAME_UNASSIGNED,
@@ -1038,21 +1040,30 @@ public:
         PoolCollection pools;
         std::vector<uint64_t> pool_ids;
 
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        if (server_selector.amAny()) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
-                MySqlBinding::createString(pool_start_address.toText()),
-                MySqlBinding::createString(pool_end_address.toText())
+                    MySqlBinding::createString(pool_start_address.toText()),
+                    MySqlBinding::createString(pool_end_address.toText())
             };
+            getPools(GET_POOL6_RANGE_ANY, in_bindings, pools, pool_ids);
 
-            getPools(GET_POOL6_RANGE, in_bindings, pools, pool_ids);
+        } else {
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                MySqlBindingCollection in_bindings = {
+                    MySqlBinding::createString(tag.get()),
+                    MySqlBinding::createString(pool_start_address.toText()),
+                    MySqlBinding::createString(pool_end_address.toText())
+                };
+                getPools(GET_POOL6_RANGE, in_bindings, pools, pool_ids);
 
-            // Return upon the first pool found.
-            if (!pools.empty()) {
-                pool_id = pool_ids[0];
-                return (boost::dynamic_pointer_cast<Pool6>(*pools.begin()));
             }
+        }
+
+        // Return upon the first pool found.
+        if (!pools.empty()) {
+            pool_id = pool_ids[0];
+            return (boost::dynamic_pointer_cast<Pool6>(*pools.begin()));
         }
 
         pool_id = 0;
@@ -1073,16 +1084,23 @@ public:
         PoolCollection pd_pools;
         std::vector<uint64_t> pd_pool_ids;
 
-        auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        if (server_selector.amAny()) {
             MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag.get()),
                 MySqlBinding::createString(pd_pool_prefix.toText()),
                 MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
             };
+            getPdPools(GET_PD_POOL_ANY, in_bindings, pd_pools, pd_pool_ids);
 
-            getPdPools(GET_PD_POOL, in_bindings, pd_pools, pd_pool_ids);
-            // Break if something is found?
+        } else {
+            auto tags = server_selector.getTags();
+            for (auto tag : tags) {
+                MySqlBindingCollection in_bindings = {
+                    MySqlBinding::createString(tag.get()),
+                    MySqlBinding::createString(pd_pool_prefix.toText()),
+                    MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
+                };
+                getPdPools(GET_PD_POOL, in_bindings, pd_pools, pd_pool_ids);
+            }
         }
 
         if (!pd_pools.empty()) {
@@ -1975,9 +1993,6 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        auto tag = getServerTag(server_selector,
-                                "creating or updating subnet level option");
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -2635,75 +2650,26 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_SUBNET6_ANY(WHERE s.shared_network_name = ?)
     },
 
-    // Select pool by address range.
+    // Select pool by address range for a server.
     { MySqlConfigBackendDHCPv6Impl::GET_POOL6_RANGE,
-      "SELECT"
-      "  p.id,"
-      "  p.start_address,"
-      "  p.end_address,"
-      "  p.subnet_id,"
-      "  p.client_class,"
-      "  p.require_client_classes,"
-      "  p.user_context,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp6_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts,"
-      "  x.pd_pool_id "
-      "FROM dhcp6_pool AS p "
-      "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id "
-      "INNER JOIN dhcp6_server AS srv "
-      " ON (s.server_id = srv.id) OR (s.server_id = 1) "
-      "LEFT JOIN dhcp6_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) "
-      " AND p.start_address = ? AND p.end_address = ? "
-      "ORDER BY p.id, x.option_id"
+      MYSQL_GET_POOL6_RANGE_WITH_TAG(WHERE (srv.tag = ? OR srv.id = 1) AND p.start_address = ? \
+                                     AND p.end_address = ?)
     },
 
-    // Select prefix delegation pool.
+    // Select pool by address range for any server.
+    { MySqlConfigBackendDHCPv6Impl::GET_POOL6_RANGE_ANY,
+      MYSQL_GET_POOL6_RANGE_NO_TAG(WHERE p.start_address = ? AND p.end_address = ?)
+    },
+
+    // Select prefix delegation pool for a server.
     { MySqlConfigBackendDHCPv6Impl::GET_PD_POOL,
-      "SELECT"
-      "  p.id,"
-      "  p.prefix,"
-      "  p.prefix_length,"
-      "  p.delegated_prefix_length,"
-      "  p.subnet_id,"
-      "  p.excluded_prefix,"
-      "  p.excluded_prefix_length,"
-      "  p.client_class,"
-      "  p.require_client_classes,"
-      "  p.user_context,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp6_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts,"
-      "  x.pd_pool_id "
-      "FROM dhcp6_pd_pool AS p "
-      "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id "
-      "INNER JOIN dhcp6_server AS srv "
-      " ON (s.server_id = srv.id) OR (s.server_id = 1) "
-      "LEFT JOIN dhcp6_options AS x ON x.scope_id = 6 AND p.id = x.pd_pool_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) "
-      " AND p.prefix = ? AND p.prefix_length = ? "
-      "ORDER BY p.id, x.option_id"
+      MYSQL_GET_PD_POOL_WITH_TAG(WHERE (srv.tag = ? OR srv.id = 1) \
+                                 AND p.prefix = ? AND p.prefix_length = ?)
+    },
+
+    // Select prefix delegation pool for any server.
+    { MySqlConfigBackendDHCPv6Impl::GET_PD_POOL_ANY,
+      MYSQL_GET_PD_POOL_NO_TAG(WHERE p.prefix = ? AND p.prefix_length = ?)
     },
 
     // Select shared network by name.

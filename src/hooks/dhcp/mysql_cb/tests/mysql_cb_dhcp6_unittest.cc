@@ -3669,7 +3669,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
     ASSERT_EQ(4, countRows("dhcp6_options"));
 
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ALL(), subnet->getID(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(), subnet->getID(),
                                 opt_posix_timezone);
 
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -3702,7 +3702,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
     ASSERT_EQ(5, countRows("dhcp6_options"));
 
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(), subnet->getID(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(), subnet->getID(),
                                 opt_posix_timezone);
 
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -3772,7 +3772,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
                                          IOAddress("2001:db8::10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_posix_timezone);
@@ -3811,7 +3811,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
 
     // Modify the option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_posix_timezone);
@@ -3903,7 +3903,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
     int pd_pool_len = prefixLengthFromRange(pd_pool->getFirstAddress(),
                                             pd_pool->getLastAddress());
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pd_pool->getFirstAddress(),
                                 static_cast<uint8_t>(pd_pool_len),
                                 opt_posix_timezone);
@@ -3943,7 +3943,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
 
     // Modify the option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pd_pool->getFirstAddress(),
                                 static_cast<uint8_t>(pd_pool_len),
                                 opt_posix_timezone);
@@ -4037,7 +4037,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
     ASSERT_EQ(0, countRows("dhcp6_options"));
 
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_posix_timezone);
 
@@ -4070,7 +4070,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
     ASSERT_EQ(1, countRows("dhcp6_options"));
 
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_posix_timezone);
 
