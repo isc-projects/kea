@@ -381,9 +381,8 @@ public:
                       << host->getHostname() << ", reason: " << ex.what());
         }
 
-        // Add the data to the vector.  Note the end element is one after the
-        // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[columns_num_]));
+        // Add the data to the vector.
+        return (std::vector<MYSQL_BIND>(bind_.begin(), bind_.begin() + columns_num_));
     };
 
     /// @brief Create BIND array to receive Host data.
