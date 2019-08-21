@@ -43,6 +43,13 @@ TEST(MySqlBindingTest, conditionalString) {
     EXPECT_EQ("foo", binding->getString());
 }
 
+// This test verifies that empty string is stored in the database.
+TEST(MySqlBindingTest, emptyString) {
+    auto binding = MySqlBinding::condCreateString(Optional<std::string>(""));
+    ASSERT_FALSE(binding->amNull());
+    EXPECT_TRUE(binding->getString().empty());
+}
+
 // This test verifies that an error is thrown upon an attempt to use
 // invalid accessor for a string binding.
 TEST(MySqlBindingTest, stringTypeMismatch) {
