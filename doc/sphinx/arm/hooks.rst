@@ -294,7 +294,7 @@ loaded by the correct process per the table below.
    +-----------------+---------------+------------------------------------------------------------+
    | Name            | Availability  | Description                                                |
    +=================+===============+============================================================+
-   | user_chk        | Kea sources   |Reads known users list from a file. Unknown users will be   |
+   | User Check      | Kea sources   |Reads known users list from a file. Unknown users will be   |
    |                 | (since 0.8)   |assigned a lease from the last subnet defined in the        |
    |                 |               |configuration file, e.g. to redirect them a captive         |
    |                 |               |portal. This demonstrates how an external source of         |
