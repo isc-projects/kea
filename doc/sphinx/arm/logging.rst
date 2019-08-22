@@ -320,7 +320,7 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | hooks library.                 |
    +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.options``,           | core                   | Used by the DHCP               |
-   | ``kea-dhcp4.options``            |                        | server to log                  |
+   | ``kea-dhcp6.options``            |                        | server to log                  |
    |                                  |                        | messages related to            |
    |                                  |                        | the processing of              |
    |                                  |                        | options in the DHCP            |
