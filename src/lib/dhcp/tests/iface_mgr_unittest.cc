@@ -2602,7 +2602,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
         struct ifreq ifr;
         memset(& ifr.ifr_name, 0, sizeof ifr.ifr_name);
-        strncpy(ifr.ifr_name, iface.getName().c_str(), sizeof ifr.ifr_name);
+        strncpy(ifr.ifr_name, iface.getName().c_str(), sizeof(ifr.ifr_name) - 1);
 
         int s = -1; // Socket descriptor
 
