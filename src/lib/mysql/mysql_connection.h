@@ -359,7 +359,8 @@ public:
         int status = 0;
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
-            status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+            status = mysql_stmt_bind_param(statements_[index],
+                                           in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
             checkError(status, index, "unable to bind parameters for select");
         }
 
@@ -432,7 +433,8 @@ public:
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+        int status = mysql_stmt_bind_param(statements_[index],
+                                           in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
@@ -474,7 +476,8 @@ public:
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+        int status = mysql_stmt_bind_param(statements_[index],
+                                           in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
