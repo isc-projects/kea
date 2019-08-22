@@ -102,6 +102,7 @@ SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     // the copy should be safe due to the above check, but we'd be rather
     // paranoid about making it 100% sure even if the check has a bug (with
     // triggering the assertion in the worse case)
+    memset(&impl.sock_un_.sun_path, 0, sizeof(impl.sock_un_.sun_path));
     strncpy(impl.sock_un_.sun_path, unix_file.c_str(),
             sizeof(impl.sock_un_.sun_path) - 1);
     assert(impl.sock_un_.sun_path[sizeof(impl.sock_un_.sun_path) - 1] == '\0');

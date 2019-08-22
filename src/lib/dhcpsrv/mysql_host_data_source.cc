@@ -119,6 +119,7 @@ public:
         memset(user_context_, 0, sizeof(user_context_));
         memset(dhcp4_server_hostname_, 0, sizeof(dhcp4_server_hostname_));
         memset(dhcp4_boot_file_name_, 0, sizeof(dhcp4_boot_file_name_));
+        memset(auth_key_, 0, sizeof(auth_key_));
 
         // Set the column names for use by this class. This only comprises
         // names used by the MySqlHostExchange class. Derived classes will
