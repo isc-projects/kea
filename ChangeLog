@@ -1,5 +1,12 @@
 Kea 1.6.0 released on Aug 28, 2019
 
+1657.	[bug]		marcin, tomek
+	Corrected multiple occurrences of out of bounds vector reads.
+	These could cause server to assert when GLIBCXX_ASSERTIONS
+	was enabled during compilation. Also, elminated overflows as
+	a result of strncpy.
+	(Gitlab #851,!24-p, git 4b1d6ffc5ae4f1e1fa5990a644c9786e7f6afea6)
+
 1656.	[bug]		marcin
 	Corrected a bug in the Kea MySQL Configuration Backend which
 	caused the Kea DHCPv6 server to incorrectly require the server
