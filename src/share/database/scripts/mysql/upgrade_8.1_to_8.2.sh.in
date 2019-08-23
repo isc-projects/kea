@@ -11,10 +11,70 @@ fi
 
 VERSION=`mysql_version "$@"`
 
+# We need to set global RESULT when we exit. This is checked by callers.
+bail() {
+    RESULT=$1
+    exit $1
+}
+
 if [ "$VERSION" != "8.1" ]; then
     printf "This script upgrades 8.1 to 8.2. Reported version is $VERSION. Skipping upgrade.\n"
-    exit 0
+    bail 0
 fi
+
+# Get the schema name from database argument. We need this to
+# query information_schema for the right database.
+for arg in $@
+do
+    cnt=`echo $arg | grep -c "^\-\-"`
+    if [ $cnt -eq 0 ]
+    then
+        schema="$arg"
+        break;
+    fi
+done
+
+# Make sure we can id the schema
+if [ -z $schema ]
+then
+    printf "Could not find database schema name in cmd line args: $@\n"
+    bail 255
+fi
+
+# Save the command line args, as we use these later change_column function. 
+cmdargs="$@"
+
+# Function to rename a column in a table.
+change_column() {
+    local schema="$1"
+    local table="$2"
+    local ocolumn="$3"
+    local ncolumn="$4"
+
+    # First let's find out if the column name in the table actually needs updating.
+    sql="select count(column_name) from information_schema.columns where table_schema='$schema' and table_name = '$table' and column_name = '$ocolumn'"
+
+    count=`mysql -N -B $cmdargs -e "$sql"`
+    if [ $? -ne 0 ]
+    then
+        printf "change_column: schema query failed [$sql]\n"
+        bail 255;
+    fi
+
+    # If we found a match record, the column needs to be renamed 
+    if [ "$count" -eq 1 ]
+    then
+        sql="ALTER TABLE $table CHANGE COLUMN $ocolumn $ncolumn"
+        mysql -N -B $cmdargs -e "$sql"
+        if [ $? -ne 0 ]
+        then
+            printf "change_column: alter query failed: [$sql]\n"
+            bail 255;
+        fi
+    else
+        printf "$table column is already correct\n"
+    fi
+}
 
 mysql "$@" <<EOF
 
@@ -426,5 +486,14 @@ SET version = '8', minor = '2';
 EOF
 
 RESULT=$?
+if [ $RESULT -ne 0 ]
+then
+    exit $RESULT
+fi
 
-exit $?
+# We need to rename the columns in the option def tables because "array" is
+# a MySQL keyword as of 8.0.17
+change_column $schema dhcp4_option_def array "is_array TINYINT(1) NOT NULL"
+change_column $schema dhcp6_option_def array "is_array TINYINT(1) NOT NULL"
+
+bail 0

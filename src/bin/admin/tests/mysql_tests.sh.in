@@ -499,7 +499,7 @@ EOF
     run_statement "dhcp4_global_parameter_server" "$qry"
 
     # table: dhcp4_option_def
-    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def"
+    qry="select id, code, name, space, type, modification_ts, is_array, encapsulate, record_types, user_context from dhcp4_option_def"
     run_statement "dhcp4_option_def" "$qry"
 
     # table: dhcp4_option_def_server
@@ -555,7 +555,7 @@ EOF
     run_statement "dhcp6_global_parameter_server" "$qry"
 
     # table: dhcp6_option_def
-    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def"
+    qry="select id, code, name, space, type, modification_ts, is_array, encapsulate, record_types, user_context from dhcp6_option_def"
     run_statement "dhcp6_option_def" "$qry"
 
     # table: dhcp6_option_def_server
@@ -724,6 +724,14 @@ EOF
     # Verify upgraded schema reports version 8.2
     version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "8.2" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    # Verify that dhcp4_option_def column name is is_array
+    qry="select is_array from dhcp4_option_def"
+    run_statement "dhcp4_option_def verify is_array column" "$qry"
+
+    # Verify that dhcp6_option_def column name is is_array
+    qry="select is_array from dhcp6_option_def"
+    run_statement "dhcp6_option_def verify is_array column" "$qry"
 
     # Let's wipe the whole database
     mysql_wipe
