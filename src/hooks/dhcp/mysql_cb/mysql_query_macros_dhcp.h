@@ -540,7 +540,7 @@ namespace {
     "  d.space," \
     "  d.type," \
     "  d.modification_ts," \
-    "  d.array," \
+    "  d.is_array," \
     "  d.encapsulate," \
     "  d.record_types," \
     "  d.user_context," \
@@ -697,7 +697,7 @@ namespace {
     "  space," \
     "  type," \
     "  modification_ts," \
-    "  array," \
+    "  is_array," \
     "  encapsulate," \
     "  record_types," \
     "  user_context" \
@@ -783,7 +783,7 @@ namespace {
     "  d.space = ?," \
     "  d.type = ?," \
     "  d.modification_ts = ?," \
-    "  d.array = ?," \
+    "  d.is_array = ?," \
     "  d.encapsulate = ?," \
     "  d.record_types = ?," \
     "  d.user_context = ? " \
