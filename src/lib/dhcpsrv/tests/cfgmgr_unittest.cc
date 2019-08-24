@@ -424,6 +424,9 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+
+    // Revert to default configuration.
+    ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(original_config));
 }
 
 // This test verifies that the configuration staging, commit and rollback works

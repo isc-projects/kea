@@ -454,7 +454,7 @@ public:
         auto found_network = networks->getByName("one");
         if (fetchConfigElement("dhcp4_shared_network") &&
             (getTimestamp("dhcp4_shared_network") > lb_modification_time)) {
-            EXPECT_TRUE(found_network);
+            ASSERT_TRUE(found_network);
             EXPECT_TRUE(found_network->hasFetchGlobalsFn());
 
         } else {
