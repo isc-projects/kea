@@ -237,7 +237,7 @@ namespace {
     "LEFT JOIN dhcp6_options AS y ON y.scope_id = 6 AND d.id = y.pd_pool_id " \
     "LEFT JOIN dhcp6_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp6_subnet_id " \
     #__VA_ARGS__                                                        \
-    " ORDER BY s.subnet_id, p.id, d.id, x.option_id, o.option_id"
+    " ORDER BY s.subnet_id, p.id, d.id, x.option_id, y.option_id, o.option_id"
 
 #define MYSQL_GET_SUBNET6_NO_TAG(...) \
     MYSQL_GET_SUBNET6_COMMON( \
