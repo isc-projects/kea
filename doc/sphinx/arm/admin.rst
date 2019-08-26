@@ -259,7 +259,7 @@ To create the database:
 
    (path-to-kea is the location where Kea is installed.)
 
-    The database may also be dropped as manually as follows:
+    The database may also be dropped manually as follows:
 
     .. code-block:: mysql
 
