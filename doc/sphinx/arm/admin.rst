@@ -231,7 +231,7 @@ To create the database:
     access the database at runtime.  Among those checks is that the schema does not contain
     any pre-existing tables.  If there are any pre-existing tables they must be removed
     manaully.  An additional check examines the user's ability to create functions and
-    triggers.  If you encounter the following error
+    triggers.  If you encounter the following error:
 
     .. code-block:: console
 
