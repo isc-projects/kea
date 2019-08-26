@@ -134,6 +134,8 @@ memfile_init() {
 # create the schema.
 mysql_can_create() {
 
+    # Let's grab the version for possible debugging issues.  It also
+    # determines basic functional access to db.
     RESULT=$(mysql_execute "select @@global.version;")
     ERRCODE=$?
     if [ $ERRCODE -ne  0 ]
@@ -142,13 +144,7 @@ mysql_can_create() {
         exit 1
     fi
 
-    printf "MySQL Version is:[ $RESULT ]\n"
-    mainversion=`echo $RESULT | cut -f1 -d'.'`
-    if [ $mainversion -lt 8 ]
-    then
-        # We should be good to go.
-        return;
-    fi
+    printf "MySQL Version is:\n" "$RESULT"
 
     # SQL to drop our test table and trigger
     cleanup_sql="DROP TABLE IF EXISTS kea_dummy_table; DROP PROCEDURE IF EXISTS kea_dummy_trigger;"
@@ -180,7 +176,7 @@ END;"
         log_error "mysql_can_create cannot create table, check user permissions, mysql status = $ERRCODE"
         perms_ok=0;
     else
-        # Now attempt to maek trigger
+        # Now attempt to make trigger
         RESULT=$(mysql_execute "$trigger_sql")
         ERRCODE=$?
         if [ $ERRCODE -ne  0 ]
@@ -238,7 +234,7 @@ mysql_init() {
     # Beginning with MySQL 8.0, the db user needs additional settings or SUPER
     # privileges to create triggers and or functions. Call mysql_can_create to find
     # out if we're good to go.  If not, it will exit.
-    printf "Verifying create permissions for $db_user\n"
+    printf "Verifying create permissions for %s\n" "$db_user"
     mysql_can_create
 
     printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
@@ -352,7 +348,7 @@ mysql_upgrade() {
     # Beginning with MySQL 8.0, the db user needs additional settings or SUPER
     # privileges to create triggers and or functions. Call mysql_can_create to find
     # out if we're good to go.  If not, it will exit.
-    printf "Verifying upgrade permissions for $db_user\n"
+    printf "Verifying upgrade permissions for %s\n" "$db_user"
     mysql_can_create
 
     for script in "${scripts_dir}"/mysql/upgrade*.sh
