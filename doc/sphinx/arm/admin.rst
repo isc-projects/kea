@@ -211,16 +211,66 @@ To create the database:
    allow Kea access to the MySQL instance. All apostrophes in the
    command lines above are required.)
 
-4. At this point, administrators may elect to create the database tables.
-   (Alternatively, the tables can be created by exiting MySQL and using the
-   ``kea-admin`` tool, as explained below.) To do this:
+4. Create the database.
 
-   .. code-block:: mysql
+    You'll need to exit mysql client
+
+    .. code-block:: mysql
+
+      mysql> quit
+      Bye
+
+    and then use the  ``kea-admin`` tool to create the database.
+
+    .. code-block:: console
+
+        $ kea-admin db-init mysql -u database-user -p database-password -n database-name
+
+    While it is possible to create the database from within mysql client, we recommend you
+    use the kea-admin tool as it performs some necessary validations to ensure Kea can
+    access the database at runtime.  Among those checks is that the schema does not contain
+    any pre-existing tables.  If there are any pre-existing tables they must be removed
+    manaully.  An additional check examines the user's ability to create functions and
+    triggers.  If you encounter the following error
+
+    .. code-block:: console
+
+        ERROR 1419 (HY000) at line 1: You do not have the SUPER privilege and binary logging is
+        enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)
+        ERROR/kea-admin: mysql_can_create cannot trigger, check user permissions, mysql status = 1
+        mysql: [Warning] Using a password on the command line interface can be insecure.
+        ERROR/kea-admin: Create failed, the user, keatest, has insufficient privileges.
+
+    Then user does not have the necessary permissions to create functions or triggers.
+    The simplest way around this is to set the global MySQL variable, log_bin_trust_function_creators to 1
+    via mysql client. Note you must do this as a user with SUPER privileges:
+
+    .. code-block:: mysql
+
+        mysql> set @@global.log_bin_trust_function_creators = 1;
+        Query OK, 0 rows affected (0.00 sec)
+
+    If you choose to create the database with mysql directly, you may do as as follows:
+
+    .. code-block:: mysql
 
       mysql> CONNECT database-name;
       mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_create.mysql
 
    (path-to-kea is the location where Kea is installed.)
+
+    The database may also be dropped as manually as follows:
+
+    .. code-block:: mysql
+
+      mysql> CONNECT database-name;
+      mysql> SOURCE path-to-kea/share/kea/scripts/mysql/dhcpdb_drop.mysql
+
+   (path-to-kea is the location where Kea is installed.)
+
+.. warning::
+    Dropping the database will result in the unrecoverable loss of any data it contains.
+
 
 5. Exit MySQL:
 
