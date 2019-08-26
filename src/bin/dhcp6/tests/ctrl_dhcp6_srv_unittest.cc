@@ -21,6 +21,7 @@
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <testutils/sandbox.h>
+#include <util/boost_time_utils.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -1113,6 +1114,129 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
     );
     ASSERT_FALSE(lease0);
     ASSERT_FALSE(lease1);
+}
+
+// Tests that the server properly responds to statistics commands.  Note this
+// is really only intended to verify that the appropriate Statistics handler
+// is called based on the command.  It is not intended to be an exhaustive
+// test of Dhcpv6 statistics.
+TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
+    createUnixChannelServer();
+    std::string response;
+
+    // Check statistic-get
+    sendUnixCommand("{ \"command\" : \"statistic-get\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
+
+    // Check statistic-get-all
+    sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
+                    "  \"arguments\": {}}", response);
+
+    // preparing the schema which check if all statistics are set to zero
+    std::string stats_get_all = "{ \"arguments\": { "
+         "\"declined-addresses\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("declined-addresses")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-advertise-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-advertise-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-advertise-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-advertise-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-decline-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-decline-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-dhcpv4-query-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-dhcpv4-query-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-dhcpv4-response-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-dhcpv4-response-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-dhcpv4-response-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-dhcpv4-response-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-infrequest-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-infrequest-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-parse-failed\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-parse-failed")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-rebind-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-rebind-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-receive-drop\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-receive-drop")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-release-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-release-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-renew-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-renew-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-reply-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-reply-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-reply-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-reply-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-request-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-request-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-solicit-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-solicit-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt6-unknown-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-unknown-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"reclaimed-declined-addresses\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("reclaimed-declined-addresses")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"reclaimed-leases\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("reclaimed-leases")
+                                    ->getInteger().second) + "\" ] ] }, "
+         "\"result\": 0 }";
+
+    EXPECT_EQ(stats_get_all, response);
+
+    // Check statistic-reset
+    sendUnixCommand("{ \"command\" : \"statistic-reset\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-reset-all
+    sendUnixCommand("{ \"command\" : \"statistic-reset-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"All statistics reset to neutral values.\" }", response);
+
+    // Check statistic-remove
+    sendUnixCommand("{ \"command\" : \"statistic-remove\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-remove-all
+    sendUnixCommand("{ \"command\" : \"statistic-remove-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics removed.\" }",
+              response);
+
+    // Check statistic-sample-age-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-age-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
+              response);
+
+    // Check statistic-sample-count-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-count-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
+              response);
 }
 
 // Tests that the server properly responds to shtudown command sent

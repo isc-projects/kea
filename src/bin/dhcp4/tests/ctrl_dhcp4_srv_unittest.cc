@@ -21,6 +21,7 @@
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
+#include <util/boost_time_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <testutils/sandbox.h>
@@ -550,7 +551,50 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     // Check statistic-get-all
     sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
                     "  \"arguments\": {}}", response);
-    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
+
+    // preparing the schema which check if all statistics are set to zero
+    std::string stats_get_all = "{ \"arguments\": { "
+         "\"declined-addresses\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("declined-addresses")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-ack-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-ack-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-ack-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-ack-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-decline-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-decline-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-discover-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-discover-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-inform-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-inform-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-nak-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-nak-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-nak-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-nak-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-offer-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-offer-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-offer-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-offer-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-parse-failed\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-parse-failed")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-receive-drop\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-receive-drop")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-release-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-release-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-request-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-request-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-sent")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"pkt4-unknown-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-unknown-received")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"reclaimed-declined-addresses\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("reclaimed-declined-addresses")
+                                    ->getInteger().second) + "\" ] ], "
+         "\"reclaimed-leases\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("reclaimed-leases")
+                                    ->getInteger().second) + "\" ] ] }, "
+         "\"result\": 0 }";
+
+    EXPECT_EQ(stats_get_all, response);
 
     // Check statistic-reset
     sendUnixCommand("{ \"command\" : \"statistic-reset\", "

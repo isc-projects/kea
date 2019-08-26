@@ -316,17 +316,19 @@ TEST_F(InfRequestTest, infRequestStats) {
         getCfgSubnets6()->getAll();
     ASSERT_EQ(1, subnets->size());
 
-    // Ok, let's check the statistics. None should be present.
+    // Ok, let's check the statistics. All should be present because we initialize
+    // all of them in server constructor. This piece of code is mainly reffered
+    // to previous situation when Kea used lazy initialization of statistics.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr pkt6_infreq_rcvd = mgr.getObservation("pkt6-infrequest-received");
     ObservationPtr pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
     ObservationPtr pkt6_sent = mgr.getObservation("pkt6-sent");
-    EXPECT_FALSE(pkt6_rcvd);
-    EXPECT_FALSE(pkt6_infreq_rcvd);
-    EXPECT_FALSE(pkt6_reply_sent);
-    EXPECT_FALSE(pkt6_sent);
+    EXPECT_TRUE(pkt6_rcvd);
+    EXPECT_TRUE(pkt6_infreq_rcvd);
+    EXPECT_TRUE(pkt6_reply_sent);
+    EXPECT_TRUE(pkt6_sent);
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NAME_SERVERS);

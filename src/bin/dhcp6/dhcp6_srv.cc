@@ -216,7 +216,54 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
         return;
     }
+    // Initializing all observations with zero value
+    isc::stats::StatsMgr::instance().setValue("pkt6-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-solicit-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-advertise-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-request-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-reply-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-renew-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-rebind-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-release-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-decline-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-infrequest-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-dhcpv4-query-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-dhcpv4-response-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-unknown-received",
+                                              static_cast<int64_t>(0));
 
+    isc::stats::StatsMgr::instance().setValue("pkt6-sent",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-advertise-sent",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-reply-sent",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-dhcpv4-response-sent",
+                                              static_cast<int64_t>(0));
+
+    isc::stats::StatsMgr::instance().setValue("pkt6-parse-failed",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(0));
+
+    isc::stats::StatsMgr::instance().setValue("reclaimed-leases",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("declined-addresses",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("reclaimed-declined-addresses",
+                                              static_cast<int64_t>(0));
     // All done, so can proceed
     shutdown_ = false;
 }

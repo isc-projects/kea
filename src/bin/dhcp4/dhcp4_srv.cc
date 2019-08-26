@@ -481,6 +481,48 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
         return;
     }
 
+    // Initializing all observations with zero value
+    isc::stats::StatsMgr::instance().setValue("pkt4-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-discover-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-offer-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-request-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-ack-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-nak-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-release-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-decline-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-inform-received",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-unknown-received",
+                                              static_cast<int64_t>(0));
+
+    isc::stats::StatsMgr::instance().setValue("pkt4-sent",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-offer-sent",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-ack-sent",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-nak-sent",
+                                              static_cast<int64_t>(0));
+
+    isc::stats::StatsMgr::instance().setValue("pkt4-parse-failed",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("pkt4-receive-drop",
+                                              static_cast<int64_t>(0));
+
+    isc::stats::StatsMgr::instance().setValue("reclaimed-leases",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("declined-addresses",
+                                              static_cast<int64_t>(0));
+    isc::stats::StatsMgr::instance().setValue("reclaimed-declined-addresses",
+                                              static_cast<int64_t>(0));
     shutdown_ = false;
 }
 
