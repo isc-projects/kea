@@ -1,8 +1,8 @@
-16xx.   [bug]       tmark
+1658.	[bug]		tmark
 	Renamed the column "array" in option definition tables
 	in MySQL schema to "is_array" to avoid a reserved word
 	conflict introduced by MySQL 8.0.17.
-	(Gitlab #853,!26-p, git TBD)
+	(Gitlab #853,!26-p, git 6665c3b6d0f9f2a45b7710e8e9a36fff8f99bf7f)
 
 Kea 1.6.0 released on Aug 28, 2019
 
