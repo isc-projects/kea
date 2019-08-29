@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,7 +149,10 @@ public:
             if (len > b_result.size()) {
                 len = b_result.size();
             }
-            return (std::vector<uint8_t>(&b_result[0], &b_result[len]));
+            // Return vector with content. Construct &b_result[len] attempts
+            // to get an address of one element beyond the b_result. Replaced
+            // with the address of first element + len
+            return (std::vector<uint8_t>(&b_result[0], &b_result[0]+len));
         } catch (const Botan::Exception& exc) {
             isc_throw(LibraryError, "Botan error: " << exc.what());
         }

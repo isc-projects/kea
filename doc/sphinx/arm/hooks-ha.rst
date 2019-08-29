@@ -41,7 +41,7 @@ The following sections describe the configuration and operation of the
 Kea HA hook library.
 
 Supported Configurations
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Kea HA hook library supports two configurations, also known as HA
 modes: load-balancing and hot-standby. In the load-balancing mode, two
@@ -92,7 +92,7 @@ responses, because not only do active servers send lease updates to each
 other, but also to the backup servers.
 
 Clocks on Active Servers
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Synchronized clocks are essential for the HA setup to operate reliably.
 The servers share lease information via lease updates and during
@@ -128,7 +128,7 @@ clocks and restart the servers.
 .. _ha-server-states:
 
 Server States
--------------
+~~~~~~~~~~~~~
 
 .. _command-ha-heartbeat:
 
@@ -303,7 +303,7 @@ for more details).
 .. _ha-scope-transition:
 
 Scope Transition in a Partner-Down Case
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When one of the servers finds that its partner is unavailable, it starts
 serving clients from both its own scope and the scope of the unavailable
@@ -334,7 +334,7 @@ back to the correct server via the rebinding mechanism.
 .. _ha-load-balancing-config:
 
 Load-Balancing Configuration
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following is the configuration snippet to enable high availability
 on the primary server within the load-balancing configuration. The same
@@ -515,7 +515,7 @@ available, ``server1`` will allocate the lease from the pool of
 .. _ha-load-balancing-advanced-config:
 
 Load Balancing with Advanced Classification
--------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the previous section, we provided an example of a load-balancing
 configuration with client classification limited to the ``HA_server1``
@@ -622,7 +622,7 @@ expression and class dependencies.
 .. _ha-hot-standby-config:
 
 Hot-Standby Configuration
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following is an example configuration of the primary server in the
 hot-standby configuration:
@@ -703,7 +703,7 @@ hot-standby and load-balancing modes of operation.
 .. _ha-sharing-lease-info:
 
 Lease Information Sharing
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An HA-enabled server informs its active partner about allocated or
 renewed leases by sending appropriate control commands, and the partner
@@ -784,7 +784,7 @@ designed to maximize flexibility of administration.
 .. _ha-syncing-page-limit:
 
 Controlling Lease-Page Size Limit
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An HA-enabled server initiates synchronization of the lease database
 after downtime or upon receiving the ``ha-sync`` command. The server
@@ -807,7 +807,7 @@ less than 10000 lines.
 .. _ha-syncing-timeouts:
 
 Timeouts
---------
+~~~~~~~~
 
 In deployments with a large number of clients connected to the network,
 lease-database synchronization after a server failure may be a
@@ -885,7 +885,7 @@ the Kea source at: ``src/lib/config/timeouts.h``.
 .. _ha-pause-state-machine:
 
 Pausing the HA State Machine
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The high-availability state machine includes many different states
 described in detail in :ref:`ha-server-states`. The server
@@ -1063,7 +1063,7 @@ states anyway.
 .. _ha-ctrl-agent-config:
 
 Control Agent Configuration
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :ref:`kea-ctrl-agent` describes in detail the Kea daemon, which
 provides a RESTful interface to control the Kea servers. The same
@@ -1102,7 +1102,7 @@ load-balancing and the hot-standby cases presented in previous sections.
 .. _ha-control-commands:
 
 Control Commands for High Availability
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Even though the HA hook library is designed to automatically resolve
 issues with DHCP service interruptions by redirecting the DHCP traffic
@@ -1124,7 +1124,7 @@ library which are available for the administrator.
 .. _command-ha-sync:
 
 The ha-sync Command
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 The ``ha-sync`` command instructs the server to synchronize its local
 lease database with the selected peer. The server fetches all leases
@@ -1172,7 +1172,7 @@ database inconsistencies.
 .. _command-ha-scopes:
 
 The ha-scopes Command
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 This command allows modification of the HA scopes that the server is
 serving. Consult :ref:`ha-load-balancing-config` and
@@ -1207,7 +1207,7 @@ specify an empty list:
 .. _command-ha-continue:
 
 The ha-continue Command
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 This command is used to resume the operation of the paused HA state
 machine, as described in :ref:`ha-pause-state-machine`. It takes no arguments, so the

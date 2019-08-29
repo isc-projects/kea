@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,10 @@ TEST(DuidTest, constructor) {
 // This test verifies if DUID size restrictions are implemented
 // properly.
 TEST(DuidTest, size) {
+
+    // Ensure that our size constant is RFC-compliant.
+    ASSERT_EQ(128, MAX_DUID_LEN);
+
     uint8_t data[MAX_DUID_LEN + 1];
     vector<uint8_t> data2;
     for (uint8_t i = 0; i < MAX_DUID_LEN + 1; ++i) {
@@ -220,6 +224,9 @@ TEST(ClientIdTest, constructor) {
 
 // Check that client-id sizes are reasonable
 TEST(ClientIdTest, size) {
+    // Ensure that our size constant is RFC-compliant.
+    ASSERT_EQ(128, MAX_CLIENT_ID_LEN);
+
     uint8_t data[MAX_CLIENT_ID_LEN + 1];
     vector<uint8_t> data2;
     for (uint8_t i = 0; i < MAX_CLIENT_ID_LEN + 1; ++i) {

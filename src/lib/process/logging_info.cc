@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,8 @@ LoggingDestination::equals(const LoggingDestination& other) const {
     return (output_ == other.output_ &&
             maxver_ == other.maxver_ &&
             maxsize_ == other.maxsize_ &&
-            flush_ == other.flush_);
+            flush_ == other.flush_ &&
+            pattern_ == other.pattern_);
 }
 
 ElementPtr
@@ -35,6 +36,8 @@ LoggingDestination::toElement() const {
     result->set("maxsize", Element::create(static_cast<long long>(maxsize_)));
     // Set flush
     result->set("flush", Element::create(flush_));
+    // Set pattern
+    result->set("pattern", Element::create(pattern_));
 
     return(result);
 }
@@ -148,6 +151,9 @@ LoggingInfo::toSpec() const {
 
         // Copy the immediate flush flag
         option.flush = dest->flush_;
+
+        // Copy the pattern
+        option.pattern = dest->pattern_;
 
         // ... and set the destination
         spec.addOutputOption(option);

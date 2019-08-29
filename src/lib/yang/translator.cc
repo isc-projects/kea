@@ -48,11 +48,10 @@ TranslatorBasic::~TranslatorBasic() {
 }
 
 ElementPtr
-
 #ifndef HAVE_PRE_0_7_6_SYSREPO
-    TranslatorBasic::value(sysrepo::S_Val s_val) {
+TranslatorBasic::value(sysrepo::S_Val s_val) {
 #else
-    TranslatorBasic::value(S_Val s_val) {
+TranslatorBasic::value(S_Val s_val) {
 #endif
     if (!s_val) {
         isc_throw(BadValue, "value called with null");
@@ -89,6 +88,9 @@ ElementPtr
 
     case SR_INT32_T:
         return (Element::create(static_cast<long long>(s_val->data()->get_int32())));
+
+    case SR_DECIMAL64_T:
+        return (Element::create(s_val->data()->get_decimal64()));
 
     case SR_IDENTITYREF_T:
         return (Element::create(string(s_val->data()->get_identityref())));
@@ -256,6 +258,13 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
 #else
         s_val.reset(new Val(static_cast<int32_t>(elem->intValue()), type));
 #endif
+        break;
+
+    case SR_DECIMAL64_T:
+        if (elem->getType() != Element::real) {
+            isc_throw(BadValue, "value for a real called with not a real");
+        }
+        s_val.reset(new Val(elem->doubleValue()));
         break;
 
     case SR_BINARY_T:

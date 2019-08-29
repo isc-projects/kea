@@ -41,6 +41,11 @@ public:
     /// 0 and 0x32.
     CfgHostsTest();
 
+    /// @brief Destructor.
+    ///
+    /// This destructor resets global state after tests are run.
+    ~CfgHostsTest();
+
     /// @brief Increases last byte of an address.
     ///
     /// @param address Address to be increased.
@@ -86,6 +91,10 @@ CfgHostsTest::CfgHostsTest() {
         IOAddress addrb(addrb_template + i);
         addressesb_.push_back(addrb);
     }
+}
+
+CfgHostsTest::~CfgHostsTest() {
+    CfgMgr::instance().setFamily(AF_INET);
 }
 
 IOAddress

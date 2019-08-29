@@ -879,7 +879,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_option_def (
     space VARCHAR(128) NOT NULL,
     type TINYINT UNSIGNED NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
-    array TINYINT(1) NOT NULL,
+    is_array TINYINT(1) NOT NULL,
     encapsulate VARCHAR(128) NOT NULL,
     record_types VARCHAR(512) DEFAULT NULL,
     user_context LONGTEXT,
@@ -1136,7 +1136,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_option_def (
     space VARCHAR(128) NOT NULL,
     type TINYINT UNSIGNED NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
-    array TINYINT(1) NOT NULL,
+    is_array TINYINT(1) NOT NULL,
     encapsulate VARCHAR(128) NOT NULL,
     record_types VARCHAR(512) DEFAULT NULL,
     user_context LONGTEXT,
@@ -1740,7 +1740,8 @@ DELIMITER ;
 -- The following parameters are passed to the procedure:
 -- - modification_type: "create", "update" or "delete"
 -- - scope_id: identifier of the option scope, e.g.
---   global, subnet specific etc.
+--   global, subnet specific etc. See dhcp_option_scope
+--   for specific values.
 -- - option_id: identifier of the option.
 -- - subnet_id: identifier of the subnet if the option
 --   belongs to the subnet.
@@ -2474,6 +2475,305 @@ BEGIN
 DELETE FROM dhcp6_options WHERE scope_id = 6 AND pd_pool_id = OLD.id;
 END
 $$
+DELIMITER ;
+
+# Add missing columns in pools.
+ALTER TABLE dhcp4_pool
+    ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN require_client_classes LONGTEXT,
+    ADD COLUMN user_context LONGTEXT;
+
+ALTER TABLE dhcp6_pd_pool
+    ADD COLUMN excluded_prefix VARCHAR(45) DEFAULT NULL,
+    ADD COLUMN excluded_prefix_length TINYINT(3) NOT NULL,
+    ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN require_client_classes LONGTEXT,
+    ADD COLUMN user_context LONGTEXT;
+
+ALTER TABLE dhcp6_pool
+    ADD COLUMN client_class VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN require_client_classes LONGTEXT,
+    ADD COLUMN user_context LONGTEXT;
+
+-- -----------------------------------------------------
+--
+-- New version of the createOptionAuditDHCP4 stored
+-- procedure which updates modification timestamp of
+-- a parent object when an option is modified.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: "create", "update" or "delete"
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- - modification_ts: modification timestamp of the
+--   option.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createOptionAuditDHCP4;
+DELIMITER $$
+CREATE PROCEDURE createOptionAuditDHCP4(IN modification_type VARCHAR(32),
+                                        IN scope_id TINYINT(3) UNSIGNED,
+                                        IN option_id BIGINT(20) UNSIGNED,
+                                        IN subnet_id INT(10) UNSIGNED,
+                                        IN host_id INT(10) UNSIGNED,
+                                        IN network_name VARCHAR(128),
+                                        IN pool_id BIGINT(20),
+                                        IN modification_ts TIMESTAMP)
+BEGIN
+    # These variables will hold shared network id and subnet id that
+    # we will select.
+    DECLARE snid VARCHAR(128);
+    DECLARE sid INT(10) UNSIGNED;
+
+    # Cascade transaction flag is set to 1 to prevent creation of
+    # the audit entries for the options when the options are
+    # created as part of the parent object creation or update.
+    # For example: when the option is added as part of the subnet
+    # addition, the cascade transaction flag is equal to 1. If
+    # the option is added into the existing subnet the cascade
+    # transaction is equal to 0. Note that depending on the option
+    # scope the audit entry will contain the object_type value
+    # of the parent object to cause the server to replace the
+    # entire subnet. The only case when the object_type will be
+    # set to 'dhcp4_options' is when a global option is added.
+    # Global options do not have the owner.
+    IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
+        # todo: host manager hasn't been updated to use audit
+        # mechanisms so ignore host specific options for now.
+        IF scope_id = 0 THEN
+            # If a global option is added or modified, create audit
+            # entry for the 'dhcp4_options' table.
+            CALL createAuditEntryDHCP4('dhcp4_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            # If subnet specific option is added or modified, update
+            # the modification timestamp of this subnet to allow the
+            # servers to refresh the subnet information. This will
+            # also result in creating an audit entry for this subnet.
+            UPDATE dhcp4_subnet AS s SET s.modification_ts = modification_ts
+                WHERE s.subnet_id = subnet_id;
+        ELSEIF scope_id = 4 THEN
+            # If shared network specific option is added or modified,
+            # update the modification timestamp of this shared network
+            # to allow the servers to refresh the shared network
+            # information. This will also result in creating an
+            # audit entry for this shared network.
+           SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
+           UPDATE dhcp4_shared_network AS n SET n.modification_ts = modification_ts
+                WHERE n.id = snid;
+        ELSEIF scope_id = 5 THEN
+            # If pool specific option is added or modified, update
+            # the modification timestamp of the owning subnet.
+            SELECT dhcp4_pool.subnet_id INTO sid FROM dhcp4_pool WHERE id = pool_id;
+            UPDATE dhcp4_subnet AS s SET s.modification_ts = modification_ts
+                WHERE s.subnet_id = sid;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+# Recreate dhcp4_options_AINS trigger to pass timestamp to the updated
+# version of the createOptionAuditDHCP4.
+DROP TRIGGER IF EXISTS dhcp4_options_AINS;
+
+# This trigger is executed after inserting a DHCPv4 option into the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_AINS AFTER INSERT ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4("create", NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                    NEW.modification_ts);
+    END $$
+DELIMITER ;
+
+# Recreate dhcp4_options_AUPD trigger to pass timestamp to the updated
+# version of the createOptionAuditDHCP4.
+DROP TRIGGER IF EXISTS dhcp4_options_AUPD;
+
+# This trigger is executed after updating a DHCPv4 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_AUPD AFTER UPDATE ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4("update", NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                    NEW.modification_ts);
+    END $$
+DELIMITER ;
+
+# Recreate dhcp4_options_ADEL trigger to pass timestamp to the updated
+# version of the createOptionAuditDHCP4.
+DROP TRIGGER IF EXISTS dhcp4_options_ADEL;
+
+# This trigger is executed after deleting a DHCPv4 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4("delete", OLD.scope_id, OLD.option_id, OLD.dhcp4_subnet_id,
+                                    OLD.host_id, OLD.shared_network_name, OLD.pool_id,
+                                    NOW());
+    END $$
+DELIMITER ;
+
+
+-- -----------------------------------------------------
+--
+-- New version of the createOptionAuditDHCP4 stored
+-- procedure which updates modification timestamp of
+-- a parent object when an option is modified.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: "create", "update" or "delete"
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc. See dhcp_option_scope
+--   for specific values.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- - pd_pool_id: identifier of the pool if the option
+--   belongs to the pd pool.
+-- - modification_ts: modification timestamp of the
+--   option.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createOptionAuditDHCP6;
+DELIMITER $$
+CREATE PROCEDURE createOptionAuditDHCP6(IN modification_type VARCHAR(32),
+                                        IN scope_id TINYINT(3) UNSIGNED,
+                                        IN option_id BIGINT(20) UNSIGNED,
+                                        IN subnet_id INT(10) UNSIGNED,
+                                        IN host_id INT(10) UNSIGNED,
+                                        IN network_name VARCHAR(128),
+                                        IN pool_id BIGINT(20),
+                                        IN pd_pool_id BIGINT(20),
+                                        IN modification_ts TIMESTAMP)
+BEGIN
+    # These variables will hold shared network id and subnet id that
+    # we will select.
+    DECLARE snid VARCHAR(128);
+    DECLARE sid INT(10) UNSIGNED;
+
+    # Cascade transaction flag is set to 1 to prevent creation of
+    # the audit entries for the options when the options are
+    # created as part of the parent object creation or update.
+    # For example: when the option is added as part of the subnet
+    # addition, the cascade transaction flag is equal to 1. If
+    # the option is added into the existing subnet the cascade
+    # transaction is equal to 0. Note that depending on the option
+    # scope the audit entry will contain the object_type value
+    # of the parent object to cause the server to replace the
+    # entire subnet. The only case when the object_type will be
+    # set to 'dhcp6_options' is when a global option is added.
+    # Global options do not have the owner.
+    IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
+        # todo: host manager hasn't been updated to use audit
+        # mechanisms so ignore host specific options for now.
+        IF scope_id = 0 THEN
+            # If a global option is added or modified, create audit
+            # entry for the 'dhcp6_options' table.
+            CALL createAuditEntryDHCP6('dhcp6_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            # If subnet specific option is added or modified, update
+            # the modification timestamp of this subnet to allow the
+            # servers to refresh the subnet information. This will
+            # also result in creating an audit entry for this subnet.
+            UPDATE dhcp6_subnet AS s SET s.modification_ts = modification_ts
+                WHERE s.subnet_id = subnet_id;
+        ELSEIF scope_id = 4 THEN
+            # If shared network specific option is added or modified,
+            # update the modification timestamp of this shared network
+            # to allow the servers to refresh the shared network
+            # information. This will also result in creating an
+            # audit entry for this shared network.
+           SELECT id INTO snid FROM dhcp6_shared_network WHERE name = network_name LIMIT 1;
+           UPDATE dhcp6_shared_network AS n SET n.modification_ts = modification_ts
+               WHERE n.id = snid;
+        ELSEIF scope_id = 5 THEN
+            # If pool specific option is added or modified, update
+            # the modification timestamp of the owning subnet.
+            SELECT dhcp6_pool.subnet_id INTO sid FROM dhcp6_pool WHERE id = pool_id;
+            UPDATE dhcp6_subnet AS s SET s.modification_ts = modification_ts
+                WHERE s.subnet_id = sid;
+        ELSEIF scope_id = 6 THEN
+            # If pd pool specific option is added or modified, create
+            # audit entry for the subnet which this pool belongs to.
+            SELECT dhcp6_pd_pool.subnet_id INTO sid FROM dhcp6_pd_pool WHERE id = pd_pool_id;
+            UPDATE dhcp6_subnet AS s SET s.modification_ts = modification_ts
+                WHERE s.subnet_id = sid;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+# Recreate dhcp6_options_AINS trigger to pass timestamp to the updated
+# version of the createOptionAuditDHCP6.
+DROP TRIGGER IF EXISTS dhcp6_options_AINS;
+
+# This trigger is executed after inserting a DHCPv6 option into the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
+DELIMITER $$
+CREATE TRIGGER dhcp6_options_AINS AFTER INSERT ON dhcp6_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP6("create", NEW.scope_id, NEW.option_id, NEW.dhcp6_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                    NEW.pd_pool_id, NEW.modification_ts);
+    END $$
+DELIMITER ;
+
+# Recreate dhcp6_options_AUPD trigger to pass timestamp to the updated
+# version of the createOptionAuditDHCP6.
+DROP TRIGGER IF EXISTS dhcp6_options_AUPD;
+
+# This trigger is executed after updating a DHCPv6 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
+DELIMITER $$
+CREATE TRIGGER dhcp6_options_AUPD AFTER UPDATE ON dhcp6_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP6("update", NEW.scope_id, NEW.option_id, NEW.dhcp6_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id,
+                                    NEW.pd_pool_id, NEW.modification_ts);
+    END $$
+DELIMITER ;
+
+# Recreate dhcp6_options_ADEL trigger to pass timestamp to the updated
+# version of the createOptionAuditDHCP6.
+DROP TRIGGER IF EXISTS dhcp6_options_ADEL;
+
+# This trigger is executed after deleting a DHCPv6 option in the
+# database. It creates appropriate audit entry for this option or
+# a parent object owning this option.
+DELIMITER $$
+CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP6("delete", OLD.scope_id, OLD.option_id, OLD.dhcp6_subnet_id,
+                                    OLD.host_id, OLD.shared_network_name, OLD.pool_id,
+                                    OLD.pd_pool_id, NOW());
+    END $$
 DELIMITER ;
 
 # Update the schema version number

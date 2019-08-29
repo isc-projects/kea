@@ -162,10 +162,13 @@ TEST(TranslatorBasicTest, valueFrom) {
     EXPECT_EQ("foobar", elem->stringValue());
     elem.reset();
 
-    // Unknown / unsupported.
+    // Decimal 64.
     double d64(.1234);
     s_val.reset(new Val(d64));
-    EXPECT_THROW(TranslatorBasic::value(s_val), NotImplemented);
+    EXPECT_NO_THROW(elem = TranslatorBasic::value(s_val));
+    ASSERT_TRUE(elem);
+    ASSERT_EQ(Element::real, elem->getType());
+    EXPECT_DOUBLE_EQ(d64, elem->doubleValue());
 }
 
 // Test basic yang value to JSON using sysrepo test models.
@@ -373,7 +376,10 @@ TEST(TranslatorBasicTest, getItem) {
     xpath = "/keatest-module:main/dec64";
     s_val.reset(new Val(9.85));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_THROW(elem = t_obj->getItem(xpath), NotImplemented);
+    EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
+    ASSERT_TRUE(elem);
+    ASSERT_EQ(Element::real, elem->getType());
+    EXPECT_EQ("9.85", elem->str());
     elem.reset();
 
     // Not found.
@@ -501,9 +507,13 @@ TEST(TranslatorBasicTest, valueTo) {
     EXPECT_EQ("Zm9vYmFy", string(s_val->data()->get_binary()));
     s_val.reset();
 
-    // Unknown / unsupported.
-    elem = Element::create(.1234);
-    EXPECT_THROW(TranslatorBasic::value(elem, SR_DECIMAL64_T), NotImplemented);
+    // Decimal 64.
+    double d64(.1234);
+    elem = Element::create(d64);
+    EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, SR_DECIMAL64_T));
+    ASSERT_TRUE(s_val);
+    EXPECT_DOUBLE_EQ(d64, s_val->data()->get_decimal64());
+    s_val.reset();
 }
 
 // Test JSON to  basic yang value using sysrepo test models.
@@ -641,6 +651,17 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_EQ("Zm9vYmFy", string(s_val->data()->get_binary()));
     s_val.reset();
 
+    // Decimal 64.
+    xpath = "/keatest-module:main/dec64";
+    double d64(9.85);
+    elem = Element::create(d64);
+    EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_DECIMAL64_T));
+    EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
+    ASSERT_TRUE(s_val);
+    ASSERT_EQ(SR_DECIMAL64_T, s_val->type());
+    EXPECT_DOUBLE_EQ(d64, s_val->data()->get_decimal64());
+    s_val.reset();
+
     // Leaf-list.
     xpath = "/keatest-module:main/numbers";
     S_Vals s_vals;
@@ -665,11 +686,6 @@ TEST(TranslatorBasicTest, setItem) {
     EXPECT_NO_THROW(s_vals = sess->get_items(xpath.c_str()));
     EXPECT_FALSE(s_vals);
     s_vals.reset();
-
-    // Unknown / unsupported.
-    xpath = "/keatest-module:main/dec64";
-    elem = Element::create(9.85);
-    EXPECT_THROW(t_obj->setItem(xpath, elem, SR_DECIMAL64_T), NotImplemented);
 
     // Bad xpath.
     xpath = "/keatest-module:main/no_such_string";

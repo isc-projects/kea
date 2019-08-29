@@ -492,19 +492,20 @@ namespace isc { namespace d2 {
         TOKEN_FLUSH = 299,
         TOKEN_MAXSIZE = 300,
         TOKEN_MAXVER = 301,
-        TOKEN_TOPLEVEL_JSON = 302,
-        TOKEN_TOPLEVEL_DHCPDDNS = 303,
-        TOKEN_SUB_DHCPDDNS = 304,
-        TOKEN_SUB_TSIG_KEY = 305,
-        TOKEN_SUB_TSIG_KEYS = 306,
-        TOKEN_SUB_DDNS_DOMAIN = 307,
-        TOKEN_SUB_DDNS_DOMAINS = 308,
-        TOKEN_SUB_DNS_SERVER = 309,
-        TOKEN_SUB_DNS_SERVERS = 310,
-        TOKEN_STRING = 311,
-        TOKEN_INTEGER = 312,
-        TOKEN_FLOAT = 313,
-        TOKEN_BOOLEAN = 314
+        TOKEN_PATTERN = 302,
+        TOKEN_TOPLEVEL_JSON = 303,
+        TOKEN_TOPLEVEL_DHCPDDNS = 304,
+        TOKEN_SUB_DHCPDDNS = 305,
+        TOKEN_SUB_TSIG_KEY = 306,
+        TOKEN_SUB_TSIG_KEYS = 307,
+        TOKEN_SUB_DDNS_DOMAIN = 308,
+        TOKEN_SUB_DDNS_DOMAINS = 309,
+        TOKEN_SUB_DNS_SERVER = 310,
+        TOKEN_SUB_DNS_SERVERS = 311,
+        TOKEN_STRING = 312,
+        TOKEN_INTEGER = 313,
+        TOKEN_FLOAT = 314,
+        TOKEN_BOOLEAN = 315
       };
     };
 
@@ -646,25 +647,25 @@ namespace isc { namespace d2 {
         // Type destructor.
 switch (yytype)
     {
-      case 71: // value
-      case 75: // map_value
-      case 99: // ncr_protocol_value
+      case 72: // value
+      case 76: // map_value
+      case 100: // ncr_protocol_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 59: // "boolean"
+      case 60: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 58: // "floating point"
+      case 59: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 57: // "integer"
+      case 58: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 56: // "constant string"
+      case 57: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -747,13 +748,13 @@ switch (yytype)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_PORT || tok == token::TOKEN_DNS_SERVER_TIMEOUT || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_JSON || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_FORWARD_DDNS || tok == token::TOKEN_REVERSE_DDNS || tok == token::TOKEN_DDNS_DOMAINS || tok == token::TOKEN_KEY_NAME || tok == token::TOKEN_DNS_SERVERS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_TSIG_KEYS || tok == token::TOKEN_ALGORITHM || tok == token::TOKEN_DIGEST_BITS || tok == token::TOKEN_SECRET || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCPDDNS || tok == token::TOKEN_SUB_DHCPDDNS || tok == token::TOKEN_SUB_TSIG_KEY || tok == token::TOKEN_SUB_TSIG_KEYS || tok == token::TOKEN_SUB_DDNS_DOMAIN || tok == token::TOKEN_SUB_DDNS_DOMAINS || tok == token::TOKEN_SUB_DNS_SERVER || tok == token::TOKEN_SUB_DNS_SERVERS);
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_PORT || tok == token::TOKEN_DNS_SERVER_TIMEOUT || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_JSON || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_FORWARD_DDNS || tok == token::TOKEN_REVERSE_DDNS || tok == token::TOKEN_DDNS_DOMAINS || tok == token::TOKEN_KEY_NAME || tok == token::TOKEN_DNS_SERVERS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_TSIG_KEYS || tok == token::TOKEN_ALGORITHM || tok == token::TOKEN_DIGEST_BITS || tok == token::TOKEN_SECRET || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCPDDNS || tok == token::TOKEN_SUB_DHCPDDNS || tok == token::TOKEN_SUB_TSIG_KEY || tok == token::TOKEN_SUB_TSIG_KEYS || tok == token::TOKEN_SUB_DDNS_DOMAIN || tok == token::TOKEN_SUB_DDNS_DOMAINS || tok == token::TOKEN_SUB_DNS_SERVER || tok == token::TOKEN_SUB_DNS_SERVERS);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_PORT || tok == token::TOKEN_DNS_SERVER_TIMEOUT || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_JSON || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_FORWARD_DDNS || tok == token::TOKEN_REVERSE_DDNS || tok == token::TOKEN_DDNS_DOMAINS || tok == token::TOKEN_KEY_NAME || tok == token::TOKEN_DNS_SERVERS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_TSIG_KEYS || tok == token::TOKEN_ALGORITHM || tok == token::TOKEN_DIGEST_BITS || tok == token::TOKEN_SECRET || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCPDDNS || tok == token::TOKEN_SUB_DHCPDDNS || tok == token::TOKEN_SUB_TSIG_KEY || tok == token::TOKEN_SUB_TSIG_KEYS || tok == token::TOKEN_SUB_DDNS_DOMAIN || tok == token::TOKEN_SUB_DDNS_DOMAINS || tok == token::TOKEN_SUB_DNS_SERVER || tok == token::TOKEN_SUB_DNS_SERVERS);
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_DHCP6 || tok == token::TOKEN_DHCP4 || tok == token::TOKEN_CONTROL_AGENT || tok == token::TOKEN_DHCPDDNS || tok == token::TOKEN_IP_ADDRESS || tok == token::TOKEN_PORT || tok == token::TOKEN_DNS_SERVER_TIMEOUT || tok == token::TOKEN_NCR_PROTOCOL || tok == token::TOKEN_UDP || tok == token::TOKEN_TCP || tok == token::TOKEN_NCR_FORMAT || tok == token::TOKEN_JSON || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_FORWARD_DDNS || tok == token::TOKEN_REVERSE_DDNS || tok == token::TOKEN_DDNS_DOMAINS || tok == token::TOKEN_KEY_NAME || tok == token::TOKEN_DNS_SERVERS || tok == token::TOKEN_HOSTNAME || tok == token::TOKEN_TSIG_KEYS || tok == token::TOKEN_ALGORITHM || tok == token::TOKEN_DIGEST_BITS || tok == token::TOKEN_SECRET || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_TOPLEVEL_JSON || tok == token::TOKEN_TOPLEVEL_DHCPDDNS || tok == token::TOKEN_SUB_DHCPDDNS || tok == token::TOKEN_SUB_TSIG_KEY || tok == token::TOKEN_SUB_TSIG_KEYS || tok == token::TOKEN_SUB_DDNS_DOMAIN || tok == token::TOKEN_SUB_DDNS_DOMAINS || tok == token::TOKEN_SUB_DNS_SERVER || tok == token::TOKEN_SUB_DNS_SERVERS);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1523,6 +1524,21 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_PATTERN (location_type l)
+      {
+        return symbol_type (token::TOKEN_PATTERN, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PATTERN (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PATTERN, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_TOPLEVEL_JSON (location_type l)
       {
         return symbol_type (token::TOKEN_TOPLEVEL_JSON, std::move (l));
@@ -2022,11 +2038,11 @@ switch (yytype)
     {
       yyeof_ = 0,
       yylast_ = 304,     ///< Last index in yytable_.
-      yynnts_ = 146,  ///< Number of nonterminal symbols.
+      yynnts_ = 148,  ///< Number of nonterminal symbols.
       yyfinal_ = 20, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 60  ///< Number of tokens.
+      yyntokens_ = 61  ///< Number of tokens.
     };
 
 
@@ -2075,9 +2091,9 @@ switch (yytype)
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
-      55,    56,    57,    58,    59
+      55,    56,    57,    58,    59,    60
     };
-    const unsigned user_token_number_max_ = 314;
+    const unsigned user_token_number_max_ = 315;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -2098,25 +2114,25 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 71: // value
-      case 75: // map_value
-      case 99: // ncr_protocol_value
+      case 72: // value
+      case 76: // map_value
+      case 100: // ncr_protocol_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 59: // "boolean"
+      case 60: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 58: // "floating point"
+      case 59: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 57: // "integer"
+      case 58: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 56: // "constant string"
+      case 57: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -2135,25 +2151,25 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 71: // value
-      case 75: // map_value
-      case 99: // ncr_protocol_value
+      case 72: // value
+      case 76: // map_value
+      case 100: // ncr_protocol_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 59: // "boolean"
+      case 60: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 58: // "floating point"
+      case 59: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 57: // "integer"
+      case 58: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 56: // "constant string"
+      case 57: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -2179,25 +2195,25 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 71: // value
-      case 75: // map_value
-      case 99: // ncr_protocol_value
+      case 72: // value
+      case 76: // map_value
+      case 100: // ncr_protocol_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 59: // "boolean"
+      case 60: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 58: // "floating point"
+      case 59: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 57: // "integer"
+      case 58: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 56: // "constant string"
+      case 57: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2270,14 +2286,15 @@ switch (yytype)
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307,   308,   309,   310,   311,   312,   313,   314
+     305,   306,   307,   308,   309,   310,   311,   312,   313,   314,
+     315
     };
     return token_type (yytoken_number_[type]);
   }
 
 #line 14 "d2_parser.yy"
 } } // isc::d2
-#line 2281 "d2_parser.h"
+#line 2298 "d2_parser.h"
 
 
 

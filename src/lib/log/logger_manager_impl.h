@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,25 +147,15 @@ private:
     static void initRootLogger(isc::log::Severity severity = isc::log::INFO,
                                int dbglevel = 0, bool buffer = false);
 
-    /// \brief Set layout for console appender
+    /// \brief Set layout for an appender
     ///
     /// Sets the layout of the specified appender to one suitable for file
     /// or console output:
     ///
-    /// YYYY-MM-DD HH:MM:SS.ssss SEVERITY [root.logger] message
-    ///
     /// \param appender Appender for which this pattern is to be set.
-    static void setConsoleAppenderLayout(log4cplus::SharedAppenderPtr& appender);
-
-    /// \brief Set layout for syslog appender
-    ///
-    /// Sets the layout of the specified appender to one suitable for the
-    /// syslog file:
-    ///
-    /// SEVERITY [root.logger] message
-    ///
-    /// \param appender Appender for which this pattern is to be set.
-    static void setSyslogAppenderLayout(log4cplus::SharedAppenderPtr& appender);
+    /// \param pattern  Log message format pattern
+    static void setAppenderLayout(log4cplus::SharedAppenderPtr& appender,
+                                  std::string pattern);
 
     /// \brief Store all buffer appenders
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,13 +21,12 @@ static const std::map<std::string, std::string> YANG_REVISIONS = {
     { "ietf-dhcpv6-types", "2018-09-04" },
     { "ietf-dhcpv6-options", "2018-09-04" },
     { "ietf-dhcpv6-server", "2018-09-04" },
-    { "kea-types", "2018-11-20" },
-    { "kea-logging", "2018-11-20" },
-    { "kea-dhcp-types", "2018-11-20" },
-    { "kea-dhcp4-server", "2018-11-20" },
-    { "kea-dhcp6-server", "2018-11-20" },
-    { "kea-ctrl-agent", "2018-11-20" },
-    { "kea-dhcp-ddns", "2018-11-20" }
+    { "kea-types", "2019-08-12" },
+    { "kea-dhcp-types", "2019-08-12" },
+    { "kea-dhcp4-server", "2019-08-12" },
+    { "kea-dhcp6-server", "2019-08-12" },
+    { "kea-ctrl-agent", "2019-08-12" },
+    { "kea-dhcp-ddns", "2019-08-12" }
 };
 
 }; // end of namespace isc::yang

@@ -1,28 +1,38 @@
 {
-    "name": "remote-option-def4-del",
-    "brief": "This command is used to delete a DHCPv4 option definition from the configuration database.",
-    "support": [ "kea-dhcp4" ],
     "avail": "1.6.0",
+    "brief": [
+        "This command deletes a DHCPv4 option definition from the configuration database."
+    ],
+    "cmd-comment": [
+        "This command includes a list with exactly one option definition specification, comprising an option name and code. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-option-def4-del\",",
+        "    \"arguments\": {",
+        "        \"option-defs\": [ {",
+        "            \"code\": <option code>,",
+        "            \"space\": <option space>",
+        "        } ],",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        },",
+        "        \"server-tags\": [ <single server tag as string> ]",
+        "    }",
+        "}"
+    ],
     "hook": "cb_cmds",
-    "cmd-syntax": "{
-    \"command\": \"remote-option-def4-del\",
-    \"arguments\": {
-        \"option-defs\": [ {
-            \"code\": <option code>,
-            \"space\": <option space
-        } ],
-        \"remote\": {
-            <specification of the database to connect to>
-        },
-        \"server-tags\": [ <single server tag as string> ]
-    }
-}",
-    "cmd-comment": "This command includes a list with exactly one option definition specification comprising an option name and code. The <command>server-tags</command> list is mandatory and it must contain exactly one server tag. Specifying an empty list, a value of <command>null</command> or multiple server tags will result in an error.",
-    "resp-syntax": "{
-    \"result\": 0,
-    \"text\": \"1 DHCPv4 option definition(s) deleted.\",
-    \"arguments\": {
-        \"count\": 1
-    }
-}"
+    "name": "remote-option-def4-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"1 DHCPv4 option definition(s) deleted.\",",
+        "    \"arguments\": {",
+        "        \"count\": 1",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
 }

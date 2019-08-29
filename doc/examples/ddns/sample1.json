@@ -136,6 +136,7 @@
 
 // The following configures logging. It assumes that messages with at least
 // informational level (info, warn, error and fatal) should be logged to stdout.
+// It also specifies a custom log pattern.
     "loggers": [
         {
             "name": "kea-dhcp-ddns",
@@ -150,7 +151,8 @@
                     // kept.
                     "flush": true,
                     "maxsize": 204800,
-                    "maxver": 4
+                    "maxver": 4,
+                    "pattern": "%d [%c/%i] %m\n"
                 }
             ],
             "debuglevel": 0,

@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.6.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.6.0, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -859,6 +859,9 @@ AC_ARG_WITH([sysrepo],
     [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
+    if test "$PKG_CONFIG" = ""; then
+        AC_MSG_ERROR([--with-sysrepo specified without any parameter and pkg-config was not found. Either use --with-sysrepo=path or install pkg-config])
+    fi
     SYSREPO_CONFIG="$PKG_CONFIG"
     DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 elif test "${sysrepo_config}" != "no" ; then
@@ -1026,6 +1029,25 @@ AC_MSG_RESULT([$LOG4CPLUS_VERSION])
 
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
+
+# Older log4cplus versions (1.2.0) don't have the initializer.h header that
+# would allow explicit initialization. Newer versions (2.0.4 for sure, possibly
+# older as well) have it and it's recommended to use it. We detect whether
+# it's present or not and do explicit initalization if possible.
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
+LIBS_SAVED="$LIBS"
+LIBS="$LOG4CPLUS_LIBS $LIBS"
+AC_MSG_CHECKING([log4cplus explicit initialization (log4cplus/initializer.h)])
+AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <log4cplus/initializer.h>],
+                         [log4cplus::Initializer initializer;]
+                         )],
+        [AC_MSG_RESULT([yes])
+         AC_DEFINE(LOG4CPLUS_INITIALIZER_H, [1], [Explicit initialization of log4cplus possible])],
+        [AC_MSG_RESULT(no)])
+LIBS="$LIBS_SAVED"
+CPPFLAGS=$CPPFLAGS_SAVED
 
 #
 # Configure Boost header path
@@ -1411,6 +1433,7 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
 
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
+shell_report=no
 m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
  [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
   python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
@@ -1418,6 +1441,16 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
 # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
 # We try to find 3.x first. If not found, we can do with 2.7.
   AM_PATH_PYTHON([2.7])
+
+  AC_ARG_WITH(site-packages,
+           AC_HELP_STRING([--with-site-packages],
+                          [place to install Kea Python module]),
+           [pythondir=$withval;
+            pkgpythondir=${pythondir}/$PACKAGE_NAME])
+  if test "$pythondir" = "yes"; then
+     AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --site-packages=/usr/lib/python3/dist-packages])
+  fi
+
   # pkgpythondir needs to be expanded
   saved_prefix="$prefix"
   if test "$prefix" = "NONE"; then
@@ -1431,6 +1464,7 @@ if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
   done
   prefix="$saved_prefix"
   DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
+  shell_report="yes, install to $pythondir"
 else
   PYTHON=no
 fi
@@ -2061,7 +2095,7 @@ Developer:
   Generate Parser:           $enable_generate_parser
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
-  Kea-shell:                 $enable_shell
+  Kea-shell:                 $shell_report
 
 END
 

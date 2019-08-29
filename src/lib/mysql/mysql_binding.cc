@@ -292,7 +292,9 @@ MySqlBinding::convertFromDatabaseTime(const MYSQL_TIME& database_time) {
 
 MySqlBinding::MySqlBinding(enum_field_types buffer_type,
                            const size_t length)
-    : buffer_(length), length_(length),
+    // Make sure that the buffer has non-zero length in case we need to
+    // reference its first element to assign it to the MySQL binding.
+    : buffer_(length > 0 ? length : 1), length_(length),
       null_value_(buffer_type == MYSQL_TYPE_NULL) {
     memset(&bind_, 0, sizeof(MYSQL_BIND));
     bind_.buffer_type = buffer_type;

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,9 +167,9 @@ DUIDFactory::createEN(const uint32_t enterprise_id,
             // Variable length identifier consists of random numbers. The generated
             // identifier is always 6 bytes long.
             ::srandom(time(NULL));
-            fillRandom(&duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN],
-                       &duid_out[DUID_TYPE_LEN + ENTERPRISE_ID_LEN +
-                                 DUID_EN_IDENTIFIER_LEN]);
+            fillRandom(duid_out.begin() + DUID_TYPE_LEN + ENTERPRISE_ID_LEN,
+                       duid_out.end());
+
         } else {
             // Append existing identifier.
             duid_out.insert(duid_out.end(), identifier_current.begin(),

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -330,5 +330,22 @@ TEST_F(HttpResponseParserTest, logFormatHttpMessage) {
               HttpResponseParser::logFormatHttpMessage(message, 3));
 }
 
+TEST_F(HttpResponseParserTest, parseEmptyResponse) {
+    std::string http_resp = "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json\r\n";
+    std::string json = "";
+
+    http_resp = createResponseString(http_resp, json);
+
+    ASSERT_NO_FATAL_FAILURE(doParse(http_resp));
+
+    HttpResponseJson response = testResponseWithJson(http_resp, json);
+
+    EXPECT_EQ("", response_.getBody());
+    EXPECT_EQ(1, response_.getHttpVersion().major_);
+    EXPECT_EQ(1, response_.getHttpVersion().minor_);
+    EXPECT_EQ(HttpStatusCode::OK, response_.getStatusCode());
+    EXPECT_EQ("OK", response_.getStatusPhrase());
+}
 
 }

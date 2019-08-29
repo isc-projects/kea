@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,7 +111,9 @@ LoggerManagerImpl::createConsoleAppender(log4cplus::Logger& logger,
     log4cplus::SharedAppenderPtr console(
         new log4cplus::ConsoleAppender(
             (opt.stream == OutputOption::STR_STDERR), opt.flush));
-    setConsoleAppenderLayout(console);
+
+    setAppenderLayout(console, (opt.pattern.empty() ?
+                                OutputOption::DEFAULT_CONSOLE_PATTERN : opt.pattern));
     logger.addAppender(console);
 }
 
@@ -146,8 +148,8 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
             new log4cplus::RollingFileAppender(properties));
     }
 
-    // use the same console layout for the files.
-    setConsoleAppenderLayout(fileapp);
+    setAppenderLayout(fileapp, (opt.pattern.empty() ?
+                                OutputOption::DEFAULT_FILE_PATTERN : opt.pattern));
     logger.addAppender(fileapp);
 }
 
@@ -171,7 +173,8 @@ LoggerManagerImpl::createSyslogAppender(log4cplus::Logger& logger,
     properties.setProperty("facility", opt.facility);
     log4cplus::SharedAppenderPtr syslogapp(
         new log4cplus::SysLogAppender(properties));
-    setSyslogAppenderLayout(syslogapp);
+    setAppenderLayout(syslogapp, (opt.pattern.empty() ?
+                                  OutputOption::DEFAULT_SYSLOG_PATTERN : opt.pattern));
     logger.addAppender(syslogapp);
 }
 
@@ -236,32 +239,11 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
     }
 }
 
-void LoggerManagerImpl::setConsoleAppenderLayout(
-        log4cplus::SharedAppenderPtr& appender)
+
+void LoggerManagerImpl::setAppenderLayout(
+        log4cplus::SharedAppenderPtr& appender,
+        std::string pattern)
 {
-    // Create the pattern we want for the output - local time.
-    string pattern = "%D{%Y-%m-%d %H:%M:%S.%q} %-5p [%c/%i] %m\n";
-
-    // Finally the text of the message
-    appender->setLayout(
-#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
-                        auto_ptr<log4cplus::Layout>
-#else
-                        unique_ptr<log4cplus::Layout>
-#endif
-                        (new log4cplus::PatternLayout(pattern)));
-}
-
-// Set the the "syslog" layout for the given appenders.  This is the same
-// as the console, but without the timestamp (which is expected to be
-// set by syslogd).
-
-void LoggerManagerImpl::setSyslogAppenderLayout(
-        log4cplus::SharedAppenderPtr& appender)
-{
-    // Create the pattern we want for the output - local time.
-    string pattern = "%-5p [%c] %m\n";
-
     // Finally the text of the message
     appender->setLayout(
 #if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)

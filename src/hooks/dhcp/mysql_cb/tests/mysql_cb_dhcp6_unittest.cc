@@ -222,8 +222,15 @@ public:
                               IOAddress("2001:db8:1::60")));
         subnet->addPool(pool2);
 
-        pdpool1.reset(new Pool6(Lease::TYPE_PD,
-                                IOAddress("2001:db8:c::"), 48, 64));
+        pool2->allowClientClass("work");
+        pool2->requireClientClass("required-class3");
+        pool2->requireClientClass("required-class4");
+        user_context = Element::createMap();
+        user_context->set("bar", Element::create("foo"));
+        pool2->setContext(user_context);
+
+        pdpool1.reset(new Pool6(IOAddress("2001:db8:c::"), 48, 64,
+                                IOAddress("2001:db8:c::1"), 96));
         subnet->addPool(pdpool1);
 
         pdpool1->getCfgOption()->add(test_options_[3]->option_,
@@ -234,9 +241,18 @@ public:
                                      test_options_[4]->persistent_,
                                      test_options_[4]->space_name_);
 
-        pdpool2.reset(new Pool6(Lease::TYPE_PD,
-                                IOAddress("2001:db8:d::"), 48, 64));
+        // Create the prefix delegation pool with an excluded prefix.
+        pdpool2.reset(new Pool6(IOAddress("2001:db8:d::"), 48, 64,
+                                IOAddress("2001:db8:d::2000"), 120));
+
         subnet->addPool(pdpool2);
+
+        pdpool2->allowClientClass("work");
+        pdpool2->requireClientClass("required-class3");
+        pdpool2->requireClientClass("required-class4");
+        user_context = Element::createMap();
+        user_context->set("bar", Element::create("foo"));
+        pdpool2->setContext(user_context);
 
         test_subnets_.push_back(subnet);
 
@@ -3649,8 +3665,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
                           "subnet set");
     }
 
+    // The inserted subnet contains four options.
+    ASSERT_EQ(4, countRows("dhcp6_options"));
+
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ALL(), subnet->getID(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(), subnet->getID(),
                                 opt_posix_timezone);
 
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -3678,8 +3697,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
                           "subnet specific option set");
     }
 
+    // We have added one option to the existing subnet. We should now have
+    // five options.
+    ASSERT_EQ(5, countRows("dhcp6_options"));
+
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(), subnet->getID(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(), subnet->getID(),
                                 opt_posix_timezone);
 
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
@@ -3701,6 +3724,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
                           "subnet specific option set");
     }
 
+    // Updating the option should replace the existing instance with the new
+    // instance. Therefore, we should still have five options.
+    ASSERT_EQ(5, countRows("dhcp6_options"));
+
     // It should succeed for any server.
     EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(), subnet->getID(),
                                        opt_posix_timezone->option_->getType(),
@@ -3718,6 +3745,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6) {
                           AuditEntry::ModificationType::UPDATE,
                           "subnet specific option deleted");
     }
+
+    // We should have only four options after deleting one of them.
+    ASSERT_EQ(4, countRows("dhcp6_options"));
 }
 
 // This test verifies that option can be inserted, updated and deleted
@@ -3734,12 +3764,15 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
                           "subnet set");
     }
 
+    // Inserted subnet has four options.
+    ASSERT_EQ(4, countRows("dhcp6_options"));
+
     // Add an option into the pool.
     const PoolPtr pool = subnet->getPool(Lease::TYPE_NA,
                                          IOAddress("2001:db8::10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_posix_timezone);
@@ -3773,10 +3806,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
                           "address pool specific option set");
     }
 
+    // With the newly inserted option we should now have five options.
+    ASSERT_EQ(5, countRows("dhcp6_options"));
 
     // Modify the option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_posix_timezone);
@@ -3807,6 +3842,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
                           "address pool specific option set");
     }
 
+    // The new option instance should replace the existing one, so we should
+    // still have five options.
+    ASSERT_EQ(5, countRows("dhcp6_options"));
+
     // Delete option for any server should succeed.
     EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
                                        pool->getFirstAddress(),
@@ -3834,6 +3873,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePoolOption6) {
                           AuditEntry::ModificationType::UPDATE,
                           "address pool specific option deleted");
     }
+
+    // The option has been deleted so the number of options should now
+    // be down to 4.
+    EXPECT_EQ(4, countRows("dhcp6_options"));
 }
 
 // This test verifies that option can be inserted, updated and deleted
@@ -3850,6 +3893,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
                           "subnet set");
     }
 
+    // Inserted subnet has four options.
+    ASSERT_EQ(4, countRows("dhcp6_options"));
+
     // Add an option into the pd pool.
     const PoolPtr pd_pool = subnet->getPool(Lease::TYPE_PD,
                                             IOAddress("2001:db8:a:10::"));
@@ -3857,7 +3903,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
     int pd_pool_len = prefixLengthFromRange(pd_pool->getFirstAddress(),
                                             pd_pool->getLastAddress());
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pd_pool->getFirstAddress(),
                                 static_cast<uint8_t>(pd_pool_len),
                                 opt_posix_timezone);
@@ -3892,10 +3938,12 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
                           "prefix delegation pool specific option set");
     }
 
+    // With the newly inserted option we should now have five options.
+    ASSERT_EQ(5, countRows("dhcp6_options"));
 
     // Modify the option and update it in the database.
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 pd_pool->getFirstAddress(),
                                 static_cast<uint8_t>(pd_pool_len),
                                 opt_posix_timezone);
@@ -3927,6 +3975,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
                           "prefix delegation pool specific option set");
     }
 
+    // The new option instance should replace the existing one, so we should
+    // still have five options.
+    ASSERT_EQ(5, countRows("dhcp6_options"));
+
     // Delete option for any server should succeed.
     EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
                                        pd_pool->getFirstAddress(),
@@ -3954,6 +4006,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeletePdPoolOption6) {
                           AuditEntry::ModificationType::UPDATE,
                           "prefix delegation pool specific option deleted");
     }
+
+    // The option has been deleted so the number of options should now
+    // be down to 4.
+    EXPECT_EQ(4, countRows("dhcp6_options"));
 }
 
 // This test verifies that shared network level option can be added,
@@ -3977,8 +4033,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
                           "shared network set");
     }
 
+    // The inserted shared network has no options.
+    ASSERT_EQ(0, countRows("dhcp6_options"));
+
     OptionDescriptorPtr opt_posix_timezone = test_options_[0];
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_posix_timezone);
 
@@ -4007,8 +4066,11 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
                           "shared network specific option set");
     }
 
+    // One option should now be stored in the database.
+    ASSERT_EQ(1, countRows("dhcp6_options"));
+
     opt_posix_timezone->persistent_ = !opt_posix_timezone->persistent_;
-    cbptr_->createUpdateOption6(ServerSelector::ALL(),
+    cbptr_->createUpdateOption6(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_posix_timezone);
 
@@ -4031,6 +4093,10 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
                           "shared network specific option set");
     }
 
+    // The new option instance should replace the existing option instance,
+    // so we should still have one option.
+    ASSERT_EQ(1, countRows("dhcp6_options"));
+
     // Deleting an option for any server should succeed.
     EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
                                        shared_network->getName(),
@@ -4047,6 +4113,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteSharedNetworkOption6) {
                           AuditEntry::ModificationType::UPDATE,
                           "shared network specific option deleted");
     }
+
+    // After deleting the option we should be back to 0.
+    EXPECT_EQ(0, countRows("dhcp6_options"));
 }
 
 }

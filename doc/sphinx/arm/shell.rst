@@ -109,7 +109,8 @@ tested with Python 2.7 and various versions of Python 3, up to 3.5.
 Since not every Kea deployment uses this feature and there are
 deployments that do not have Python, the Kea shell is not enabled by
 default. To use it, specify ``--enable-shell`` when running "configure"
-during the installation of Kea.
+during the installation of Kea. When building on Debian systems, also
+``--with-site-packages=...`` may be useful.
 
 The Kea shell is intended to serve more as a demonstration of the
 RESTful interface's capabilities (and, perhaps, an illustration for

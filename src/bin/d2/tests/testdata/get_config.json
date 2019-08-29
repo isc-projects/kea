@@ -41,7 +41,8 @@
                         "flush": true,
                         "maxsize": 204800,
                         "maxver": 4,
-                        "output": "stdout"
+                        "output": "stdout",
+                        "pattern": "%d [%c/%i] %m\n"
                     }
                 ],
                 "severity": "INFO"

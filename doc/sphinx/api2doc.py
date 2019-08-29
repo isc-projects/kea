@@ -6,7 +6,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http:#mozilla.org/MPL/2.0/.
 
-# Produce API Manual
+# Produce API Reference
+# - reads *.json files (each file describes a single command)
+# - produces .rst file suitable for Sphinx as output
 
 import os
 import json
@@ -27,7 +29,12 @@ def read_input_files(files):
     apis = {}
     for f in files:
         name = os.path.basename(f)[:-5]
+        # Skip special names starting with _ (such as _template.json)
+        if name.startswith('_'):
+            print("Skipping %s (starts with underscore)" % f)
+            continue
         with open(f) as fp:
+            print("Processing %s" % f)
             # use OrderedDict to preserve order of fields in cmd-syntax
             try:
                 descr = json.load(fp, object_pairs_hook=collections.OrderedDict)
@@ -87,7 +94,9 @@ API Reference
         rst += '-' * len(name) + '\n\n'
 
         # command overview
-        rst += '%s\n\n' % func['brief']
+        for brief_line in func['brief']:
+            rst += '%s\n' % brief_line
+        rst += '\n'
 
         # command can be issued to the following daemons
         rst += 'Supported by: '
@@ -104,7 +113,7 @@ API Reference
 
         # command syntax
         rst += 'Command syntax:\n\n'
-        rst += '.. code-block:: json\n\n'
+        rst += '::\n\n'
         if 'cmd-syntax' in func:
             cmd_syntaxes = [func['cmd-syntax']]
             if isinstance(cmd_syntaxes, dict):
@@ -114,9 +123,9 @@ API Reference
                     rst += cmd_syntax['comment']
                     rst += '\n\n'
                     del cmd_syntax['comment']
-                txt = json.dumps(cmd_syntax, indent=4, separators=(',', ': '))
-                lines = [ '    %s' % l for l in txt.splitlines()]
-                rst += '\n'.join(lines)
+
+                for line in cmd_syntax:
+                    rst += '    %s\n' % line
         else:
             rst += '   {\n'
             rst += '       "command": \"%s\"\n' % name
@@ -124,29 +133,32 @@ API Reference
         rst += '\n\n'
 
         if 'cmd-comment' in func:
-            rst += func['cmd-comment']
-            rst += '\n\n'
+            for l in func['cmd-comment']:
+                rst += "%s\n" % l
+            rst += '\n'
 
         # response syntax
         rst += 'Response syntax:\n\n'
-        rst += '.. code-block:: json\n\n'
+        rst += '::\n\n'
         if 'resp-syntax' in func:
             resp_syntaxes = [func['resp-syntax']]
             if isinstance(resp_syntaxes, dict):
                 resp_syntaxes = [resp_syntax]
             for resp_syntax in resp_syntaxes:
-                txt = json.dumps(resp_syntax, indent=4, separators=(',', ': '))
-                lines = [ '    %s' % l for l in txt.splitlines()]
-                rst += '\n'.join(lines)
+
+                for line in resp_syntax:
+                    rst += '    %s\n' % line
+
         else:
             rst += '   {\n'
-            rst += '       "result": "<integer>",\n'
+            rst += '       "result": <integer>,\n'
             rst += '       "text": "<string>"\n'
             rst += '   }'
         rst += '\n\n'
 
         if 'resp-comment' in func:
-            rst += func['resp-comment']
+            for resp_comment_line in func['resp-comment']:
+                rst += "%s\n" % resp_comment_line
             rst += '\n\n'
         else:
             rst += 'Result is an integer representation of the status. Currently supported statuses are:\n\n'
@@ -158,18 +170,23 @@ API Reference
     return rst
 
 
-def main():
-    args = parse_args()
-
-    apis = read_input_files(args.files)
+def generate(in_files, out_file):
+    apis = read_input_files(in_files)
 
     rst = generate_rst(apis)
 
-    if args.output:
-        with open(args.output, 'w') as f:
+    if out_file:
+        with open(out_file, 'w') as f:
             f.write(rst)
+        print('Wrote generated RST content to: %s' % out_file)
     else:
         print(rst)
+
+
+def main():
+    args = parse_args()
+    generate(args.files, args.output)
+
 
 if __name__ == '__main__':
     main()

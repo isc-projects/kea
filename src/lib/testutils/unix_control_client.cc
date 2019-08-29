@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ bool UnixControlClient::connectToServer(const std::string& socket_path) {
     memset(&srv_addr, 0, sizeof(srv_addr));
     srv_addr.sun_family = AF_UNIX;
     strncpy(srv_addr.sun_path, socket_path.c_str(),
-            sizeof(srv_addr.sun_path));
+            sizeof(srv_addr.sun_path) - 1);
     socklen_t len = sizeof(srv_addr);
 
     // Connect to the specified UNIX socket

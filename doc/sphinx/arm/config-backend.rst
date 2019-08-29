@@ -29,6 +29,7 @@ network grows, the usefulness of the CB becomes obvious.
 A good example of a use case for the CB is a pair of Kea DHCP servers which can be configured
 to support High Availability as described in
 :ref:`high-availability-library`. The configurations of both servers
+(including the value of the ``server-tag`` parameter)
 are almost exactly the same. They may differ by the server identifier
 and designation of the server as a primary or standby (or secondary).
 They may also differ by the interfaces configuration. Typically, the
@@ -140,6 +141,8 @@ the list of supported configuration parameters, can be found in
 
 .. _cb-sharing:
 
+.. _command-server-tag-get:
+
 Configuration Sharing and Server Tags
 -------------------------------------
 
@@ -154,7 +157,9 @@ The configuration elements in the database are associated with the servers
 by "server tags". The server tag is an arbitrary string holding the name
 of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
 independent in the database, i.e. the same server tag can be created for
-the DHCPv4 and the DHCPv6 server respectively.
+the DHCPv4 and the DHCPv6 server respectively. The value is configured
+using ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
+server-tag can be checked with the ``server-tag-get`` command.
 
 The server definition, which consists of the server tag and the server
 description, must be stored in the configuration database prior to creating

@@ -1,7 +1,12 @@
 {
-    "name": "cache-clear",
-    "brief": "This command removes all cached host reservations.",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.4.0",
+    "brief": [
+        "This command removes all cached host reservations."
+    ],
     "hook": "host_cache",
-    "avail": "1.4.0"
+    "name": "cache-clear",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
 }

@@ -115,6 +115,18 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     if (nodelay) {
         result->set("tcp-nodelay", nodelay);
     }
+    ConstElementPtr consistency = getItem(xpath + "/consistency");
+    if (consistency) {
+        result->set("consistency", consistency);
+    }
+    ConstElementPtr serial_consistency = getItem(xpath + "/serial-consistency");
+    if (serial_consistency) {
+        result->set("serial-consistency", serial_consistency);
+    }
+    ConstElementPtr max_row_errors = getItem(xpath + "/max-row-errors");
+    if (max_row_errors) {
+        result->set("max-row-errors", max_row_errors);
+    }
     ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
@@ -220,6 +232,18 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
     ConstElementPtr nodelay = elem->get("tcp-nodelay");
     if (nodelay) {
         setItem(xpath + "/tcp-nodelay", nodelay, SR_BOOL_T);
+    }
+    ConstElementPtr consistency = elem->get("consistency");
+    if (consistency) {
+        setItem(xpath + "/consistency", consistency, SR_STRING_T);
+    }
+    ConstElementPtr serial_consistency = elem->get("serial-consistency");
+    if (serial_consistency) {
+        setItem(xpath + "/serial-consistency", serial_consistency, SR_STRING_T);
+    }
+    ConstElementPtr max_row_errors = elem->get("max-row-errors");
+    if (max_row_errors) {
+        setItem(xpath + "/max-row-errors", max_row_errors, SR_UINT32_T);
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {

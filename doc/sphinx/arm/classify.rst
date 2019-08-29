@@ -213,6 +213,11 @@ This does not apply to the KNOWN or UNKNOWN classes.
    +-----------------------+-------------------------------+-----------------------+
    | Option existence      | option[123].exists            | 'true'                |
    +-----------------------+-------------------------------+-----------------------+
+   | Binary content of the | option[12].option[34].hex     | '(content of the      |
+   | sub-option            |                               | sub-option)'          |
+   +-----------------------+-------------------------------+-----------------------+
+   | Sub-Option existence  | option[12].option[34].exists  | 'true'                |
+   +-----------------------+-------------------------------+-----------------------+
    | Client class          | member('foobar')              | 'true'                |
    | membership            |                               |                       |
    +-----------------------+-------------------------------+-----------------------+

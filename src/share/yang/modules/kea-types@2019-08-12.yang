@@ -1,0 +1,160 @@
+module kea-types {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:kea-types";
+  prefix "kea-types";
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This file defines some commonly used Kea types and groupings.";
+
+  revision 2019-08-12 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Typedef
+  */
+  typedef user-context {
+    type string;
+    description "User context (JSON map).";
+  }
+
+  /*
+  * Grouping
+  */
+  grouping user-context {
+    description "User context grouping.";
+    leaf user-context {
+      type user-context;
+      description "User context entry.";
+    }
+  }
+
+  grouping control-socket-info {
+    description "Control socket parameters.";
+    leaf socket-name {
+      type string;
+      mandatory true;
+      description "Path to the UNIX socket.";
+    }
+    leaf socket-type {
+      type enumeration {
+        enum "unix" {
+          description "Unix socket type.";
+        }
+      }
+      mandatory true;
+      description "Socket type.";
+    }
+    leaf user-context {
+      type user-context;
+      description "Control socket user context.";
+    }
+  }
+
+  grouping control-socket {
+    description "Control socket grouping.";
+    container control-socket {
+      presence "Have control socket.";
+      description "Control socket container.";
+      uses control-socket-info;
+    }
+  }
+
+  grouping hooks-libraries {
+    description "Hooks libraries grouping.";
+    list hook-library {
+      key library;
+      description "List of hook library.";
+      leaf library {
+        type string;
+        mandatory true;
+        description "Path to the DSO.";
+      }
+      leaf parameters {
+        type string;
+        description "Parameters (JSON value).";
+      }
+    }
+  }
+
+  grouping loggers {
+    description "Loggers.";
+    list logger {
+      key name;
+      description "List of loggers.";
+      leaf name {
+        type string;
+        mandatory true;
+        description "Name of the logger.";
+      }
+      list output-option {
+        key output;
+        description "List of output options.";
+        leaf output {
+          type string;
+          description "Type of output. Special values are stdout (standard
+            output), stderr (standard error), syslog (syslog using default
+            name), syslog:name (syslog using specified name). Any other
+            value is interpreted as a filename.";
+        }
+        leaf flush {
+          type boolean;
+          description "When true flush buffers after each message.";
+        }
+        leaf maxsize {
+          type uint32;
+          description "Maximum size of output file before rotation.
+            Values below 204800 including 0 disable rotation.";
+        }
+        leaf maxver {
+          type uint32 {
+            range 1..max;
+          }
+          description "Maximum version to keep a rotated output file.";
+        }
+        leaf pattern {
+          type string;
+          description "Custom log layout.";
+        }
+      }
+      leaf debuglevel {
+        type uint8 {
+          range 0..99;
+        }
+        description "What level of debug messages should be printed.";
+      }
+      leaf severity {
+        type enumeration {
+          enum "FATAL" {
+            description "Condition is so serious that the server cannot
+              continue executing";
+          }
+          enum "ERROR" {
+            description "Error condition. The server will continue
+              executing, but the results may not be as expected.";
+          }
+          enum "WARN" {
+            description "Out of the ordinary condition. However, the server
+              will continue executing normally.";
+          }
+          enum "INFO" {
+            description "Information message marking some event.";
+          }
+          enum "DEBUG" {
+            description "For debugging purposes.";
+          }
+          enum "NONE" {
+            description "All messages are inhibited.";
+          }
+        }
+        description "Category of messages logged.";
+      }
+      leaf user-context {
+        type user-context;
+        description "Logger user context.";
+      }
+    }
+  }
+}

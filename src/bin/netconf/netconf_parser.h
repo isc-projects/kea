@@ -486,13 +486,14 @@ namespace isc { namespace netconf {
         TOKEN_FLUSH = 294,
         TOKEN_MAXSIZE = 295,
         TOKEN_MAXVER = 296,
-        TOKEN_START_JSON = 297,
-        TOKEN_START_NETCONF = 298,
-        TOKEN_START_SUB_NETCONF = 299,
-        TOKEN_STRING = 300,
-        TOKEN_INTEGER = 301,
-        TOKEN_FLOAT = 302,
-        TOKEN_BOOLEAN = 303
+        TOKEN_PATTERN = 297,
+        TOKEN_START_JSON = 298,
+        TOKEN_START_NETCONF = 299,
+        TOKEN_START_SUB_NETCONF = 300,
+        TOKEN_STRING = 301,
+        TOKEN_INTEGER = 302,
+        TOKEN_FLOAT = 303,
+        TOKEN_BOOLEAN = 304
       };
     };
 
@@ -634,25 +635,25 @@ namespace isc { namespace netconf {
         // Type destructor.
 switch (yytype)
     {
-      case 57: // value
-      case 60: // map_value
-      case 119: // socket_type_value
+      case 58: // value
+      case 61: // map_value
+      case 120: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 48: // "boolean"
+      case 49: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 47: // "floating point"
+      case 48: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 46: // "integer"
+      case 47: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 45: // "constant string"
+      case 46: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -735,13 +736,13 @@ switch (yytype)
       symbol_type (int tok, location_type l)
         : super_type(token_type (tok), std::move (l))
       {
-        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
       }
 #else
       symbol_type (int tok, const location_type& l)
         : super_type(token_type (tok), l)
       {
-        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
+        YYASSERT (tok == token::TOKEN_END || tok == token::TOKEN_COMMA || tok == token::TOKEN_COLON || tok == token::TOKEN_LSQUARE_BRACKET || tok == token::TOKEN_RSQUARE_BRACKET || tok == token::TOKEN_LCURLY_BRACKET || tok == token::TOKEN_RCURLY_BRACKET || tok == token::TOKEN_NULL_TYPE || tok == token::TOKEN_NETCONF || tok == token::TOKEN_USER_CONTEXT || tok == token::TOKEN_COMMENT || tok == token::TOKEN_BOOT_UPDATE || tok == token::TOKEN_SUBSCRIBE_CHANGES || tok == token::TOKEN_VALIDATE_CHANGES || tok == token::TOKEN_MANAGED_SERVERS || tok == token::TOKEN_DHCP4_SERVER || tok == token::TOKEN_DHCP6_SERVER || tok == token::TOKEN_D2_SERVER || tok == token::TOKEN_CA_SERVER || tok == token::TOKEN_MODEL || tok == token::TOKEN_CONTROL_SOCKET || tok == token::TOKEN_SOCKET_TYPE || tok == token::TOKEN_UNIX || tok == token::TOKEN_HTTP || tok == token::TOKEN_STDOUT || tok == token::TOKEN_SOCKET_NAME || tok == token::TOKEN_SOCKET_URL || tok == token::TOKEN_HOOKS_LIBRARIES || tok == token::TOKEN_LIBRARY || tok == token::TOKEN_PARAMETERS || tok == token::TOKEN_LOGGING || tok == token::TOKEN_LOGGERS || tok == token::TOKEN_NAME || tok == token::TOKEN_OUTPUT_OPTIONS || tok == token::TOKEN_OUTPUT || tok == token::TOKEN_DEBUGLEVEL || tok == token::TOKEN_SEVERITY || tok == token::TOKEN_FLUSH || tok == token::TOKEN_MAXSIZE || tok == token::TOKEN_MAXVER || tok == token::TOKEN_PATTERN || tok == token::TOKEN_START_JSON || tok == token::TOKEN_START_NETCONF || tok == token::TOKEN_START_SUB_NETCONF);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1436,6 +1437,21 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_PATTERN (location_type l)
+      {
+        return symbol_type (token::TOKEN_PATTERN, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_PATTERN (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_PATTERN, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_START_JSON (location_type l)
       {
         return symbol_type (token::TOKEN_START_JSON, std::move (l));
@@ -1844,12 +1860,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 232,     ///< Last index in yytable_.
-      yynnts_ = 103,  ///< Number of nonterminal symbols.
+      yylast_ = 234,     ///< Last index in yytable_.
+      yynnts_ = 105,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 49  ///< Number of tokens.
+      yyntokens_ = 50  ///< Number of tokens.
     };
 
 
@@ -1897,9 +1913,9 @@ switch (yytype)
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48
+      45,    46,    47,    48,    49
     };
-    const unsigned user_token_number_max_ = 303;
+    const unsigned user_token_number_max_ = 304;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1920,25 +1936,25 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 57: // value
-      case 60: // map_value
-      case 119: // socket_type_value
+      case 58: // value
+      case 61: // map_value
+      case 120: // socket_type_value
         value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 48: // "boolean"
+      case 49: // "boolean"
         value.move< bool > (std::move (that.value));
         break;
 
-      case 47: // "floating point"
+      case 48: // "floating point"
         value.move< double > (std::move (that.value));
         break;
 
-      case 46: // "integer"
+      case 47: // "integer"
         value.move< int64_t > (std::move (that.value));
         break;
 
-      case 45: // "constant string"
+      case 46: // "constant string"
         value.move< std::string > (std::move (that.value));
         break;
 
@@ -1957,25 +1973,25 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 57: // value
-      case 60: // map_value
-      case 119: // socket_type_value
+      case 58: // value
+      case 61: // map_value
+      case 120: // socket_type_value
         value.copy< ElementPtr > (YY_MOVE (that.value));
         break;
 
-      case 48: // "boolean"
+      case 49: // "boolean"
         value.copy< bool > (YY_MOVE (that.value));
         break;
 
-      case 47: // "floating point"
+      case 48: // "floating point"
         value.copy< double > (YY_MOVE (that.value));
         break;
 
-      case 46: // "integer"
+      case 47: // "integer"
         value.copy< int64_t > (YY_MOVE (that.value));
         break;
 
-      case 45: // "constant string"
+      case 46: // "constant string"
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
@@ -2001,25 +2017,25 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 57: // value
-      case 60: // map_value
-      case 119: // socket_type_value
+      case 58: // value
+      case 61: // map_value
+      case 120: // socket_type_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 48: // "boolean"
+      case 49: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 47: // "floating point"
+      case 48: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 46: // "integer"
+      case 47: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 45: // "constant string"
+      case 46: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2091,14 +2107,14 @@ switch (yytype)
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300,   301,   302,   303
+     295,   296,   297,   298,   299,   300,   301,   302,   303,   304
     };
     return token_type (yytoken_number_[type]);
   }
 
 #line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2102 "netconf_parser.h"
+#line 2118 "netconf_parser.h"
 
 
 

@@ -1,18 +1,29 @@
 {
-    "name": "network4-list",
-    "brief": "The network4-list command is used to retrieve full list of currently configured shared networks.",
-    "description": "See <xref linkend=\"command-networkX-list\"/>",
-    "support": [ "kea-dhcp4"],
     "avail": "1.3.0",
+    "brief": [
+        "This command retrieves the full list of currently configured shared networks."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"network4-list\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-networkX-list\"/>",
     "hook": "subnet_cmds",
-    "resp-syntax": {
-        "arguments": {
-            "shared-networks": [
-                { "name": "floor1" },
-                { "name": "office" }
-            ]
-        },
-        "result": 0,
-        "text": "2 IPv4 network(s) found"
-    }
+    "name": "network4-list",
+    "resp-syntax": [
+        "{",
+        "    \"arguments\": {",
+        "        \"shared-networks\": [",
+        "            { \"name\": \"floor1\" },",
+        "            { \"name\": \"office\" }",
+        "        ]",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"2 IPv4 network(s) found\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
 }

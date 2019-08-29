@@ -581,6 +581,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"max-row-errors\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_MAX_ROW_ERRORS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("max_row_errors", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -998,6 +1007,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_MAXVER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("maxver", driver.loc_);
+    }
+}
+
+\"pattern\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
+        return isc::dhcp::Dhcp4Parser::make_PATTERN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("pattern", driver.loc_);
     }
 }
 

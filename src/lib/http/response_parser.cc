@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -295,6 +295,8 @@ HttpResponseParser::expectingNewLineHandler(const unsigned int next_state) {
                     if (content_length > 0) {
                         // There is body in this request, so let's parse it.
                         transition(HTTP_BODY_ST, DATA_READ_OK_EVT);
+                    } else {
+                        transition(HTTP_PARSE_OK_ST, HTTP_PARSE_OK_EVT);
                     }
                 } catch (const std::exception& ex) {
                     // There is no body in this message. If the body is required

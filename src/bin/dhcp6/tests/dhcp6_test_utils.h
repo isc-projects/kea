@@ -310,49 +310,47 @@ public:
                                        D6O_INTERFACE_ID, tmp)));
     }
 
-    // Generate client-id option
-    isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
-
-        if (duid_size == 0) {
+    /// @brief Generate binary data option
+    ///
+    /// Creates an Option in the V6 space with the given type and binary data
+    /// of the given number of bytes.  The data is initialized to the values
+    /// 100 to 100 + n, where n is the desired number of bytes.
+    ///
+    /// @param type option type for the new option
+    /// @param data_size number of bytes of data to generate
+    ///
+    /// @return Pointer to the new option
+    isc::dhcp::OptionPtr generateBinaryOption(const DHCPv6OptionType type, size_t data_size) {
+        if (data_size == 0) {
             return (isc::dhcp::OptionPtr
-                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID)));
+                    (new isc::dhcp::Option(isc::dhcp::Option::V6, type)));
 
         }
 
-        isc::dhcp::OptionBuffer clnt_duid(duid_size);
-        for (size_t i = 0; i < duid_size; i++) {
-            clnt_duid[i] = 100 + i;
+        isc::dhcp::OptionBuffer data_data(data_size);
+        for (size_t i = 0; i < data_size; i++) {
+            data_data[i] = 100 + i;
         }
-
-        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(clnt_duid));
 
         return (isc::dhcp::OptionPtr
-                (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID,
-                                       clnt_duid.begin(),
-                                       clnt_duid.begin() + duid_size)));
+                (new isc::dhcp::Option(isc::dhcp::Option::V6, type,
+                                       data_data.begin(),
+                                       data_data.begin() + data_size)));
+    }
+
+    // Generate client-id option
+    isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
+        isc::dhcp::OptionPtr opt = generateBinaryOption(D6O_CLIENTID, duid_size);
+        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(opt->getData()));
+        return (opt);
     }
 
     /// Generate server-id option
     /// @param duid_size size of the duid
     isc::dhcp::OptionPtr generateServerId(size_t duid_size = 32) {
-
-        if (duid_size == 0) {
-            return (isc::dhcp::OptionPtr
-                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID)));
-
-        }
-
-        isc::dhcp::OptionBuffer clnt_duid(duid_size);
-        for (size_t i = 0; i < duid_size; i++) {
-            clnt_duid[i] = 100 + i;
-        }
-
-        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(clnt_duid));
-
-        return (isc::dhcp::OptionPtr
-                (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID,
-                                       clnt_duid.begin(),
-                                       clnt_duid.begin() + duid_size)));
+        isc::dhcp::OptionPtr opt = generateBinaryOption(D6O_SERVERID, duid_size);
+        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(opt->getData()));
+        return (opt);
     }
 
     // Checks if server response (ADVERTISE or REPLY) includes proper

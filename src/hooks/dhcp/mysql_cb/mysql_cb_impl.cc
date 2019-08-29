@@ -933,22 +933,6 @@ MySqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
 }
 
 MySqlBindingPtr
-MySqlConfigBackendImpl::createInputRequiredClassesBinding(const NetworkPtr& network) {
-    // Create JSON list of required classes.
-    ElementPtr required_classes_element = Element::createList();
-    const auto& required_classes = network->getRequiredClasses();
-    for (auto required_class = required_classes.cbegin();
-         required_class != required_classes.cend();
-         ++required_class) {
-        required_classes_element->add(Element::create(*required_class));
-    }
-
-    return (required_classes_element ?
-            MySqlBinding::createString(required_classes_element->str()) :
-            MySqlBinding::createNull());
-}
-
-MySqlBindingPtr
 MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& option) {
     OptionPtr opt = option->option_;
     if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {

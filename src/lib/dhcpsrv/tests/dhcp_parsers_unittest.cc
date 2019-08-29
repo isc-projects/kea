@@ -421,7 +421,6 @@ public:
             // If error was reported, the error string should contain
             // position of the data element which caused failure.
             if (rcode_ != 0) {
-                std::cout << "Error text:" << error_text_ << std::endl;
                 EXPECT_TRUE(errorContainsPosition(status, "<string>"));
             }
         }
@@ -1719,6 +1718,111 @@ TEST_F(ParseConfigTest, hexOptionData) {
         ASSERT_EQ(2, opt->getAddresses().size());
         EXPECT_EQ("12.0.3.1", opt->getAddresses()[0].toText());
         EXPECT_EQ("192.0.3.2", opt->getAddresses()[1].toText());
+    }
+}
+
+// Verifies that binary option data can be configured with either
+// "'strings'" or hex literals.
+TEST_F(ParseConfigTest, stringOrHexBinaryData) {
+    // Structure the defines a given test scenario
+    struct Scenario {
+        std::string description_;  // describes the scenario for logging
+        std::string str_data_;     // configured data value of the option
+        std::vector<uint8_t> exp_binary_; // expected parsed binary data
+        std::string exp_error_;    // expected error test for invalid input
+    };
+
+    // Convenience value to use for initting valid scenarios
+    std::string no_error("");
+
+    // Valid and invalid scenarios we will test.
+    // Note we are not concerned with the varitions of valid or invalid
+    // hex literals those are tested elsewhere.
+    std::vector<Scenario> scenarios = {
+        {
+            "valid hex digits",
+            "0C:00:03:01:C0:00:03:02",
+            {0x0C,0x00,0x03,0x01,0xC0,0x00,0x03,0x02},
+            no_error
+        },
+        {
+            "valid string",
+            "'abcdefghijk'",
+            {0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6A,0x6B},
+            no_error
+        },
+        {
+            "valid empty",
+            "",
+            {},
+            no_error
+        },
+        {
+            "invalid empty",
+            "''",
+            {},
+            "Configuration parsing failed: option data is not a valid string"
+            " of hexadecimal digits: '' (<string>:7:13)"
+        },
+        {
+            "missing end quote",
+            "'abcdefghijk",
+            {},
+            "Configuration parsing failed: option data is not a valid string"
+            " of hexadecimal digits: 'abcdefghijk (<string>:7:13)"
+        },
+        {
+            "missing open quote",
+            "abcdefghijk'",
+            {},
+            "Configuration parsing failed: option data is not a valid string"
+            " of hexadecimal digits: abcdefghijk' (<string>:7:13)"
+        },
+        {
+            "no quotes",
+            "abcdefghijk",
+            {},
+            "Configuration parsing failed: option data is not a valid string"
+            " of hexadecimal digits: abcdefghijk (<string>:7:13)"
+        }
+    };
+
+    // Iterate over our test scenarios
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        {
+            // Build the configuration text.
+            ostringstream os;
+            os <<
+                "{ \n"
+                "  \"option-data\": [ { \n"
+                "    \"name\": \"user-class\", \n"
+                "    \"code\": 77, \n"
+                "    \"space\": \"dhcp4\", \n"
+                "    \"csv-format\": false, \n"
+                "    \"data\": \"" << scenario.str_data_ << "\" \n"
+                " } ] \n"
+                "} \n";
+
+            // Attempt to parse it.
+            reset_context(AF_INET);
+            int rcode = 0;
+            ASSERT_NO_THROW(rcode = parseConfiguration(os.str(), true));
+
+            if (!scenario.exp_error_.empty()) {
+                // We expected to fail, did we?
+                ASSERT_NE(0, rcode);
+                // Did we fail for the reason we think we should?
+                EXPECT_EQ(error_text_, scenario.exp_error_);
+            } else {
+                // We expected to succeed, did we?
+                ASSERT_EQ(0, rcode);
+                OptionPtr opt = getOptionPtr(DHCP4_OPTION_SPACE, 77);
+                ASSERT_TRUE(opt);
+                // Verify the parsed data is correct.
+                EXPECT_EQ(opt->getData(), scenario.exp_binary_);
+            }
+        }
     }
 }
 

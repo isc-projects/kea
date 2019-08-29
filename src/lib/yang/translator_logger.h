@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,12 +33,12 @@ namespace yang {
 ///    "output": <output, e.g. log file name>,
 ///    "maxver": <maximum file version>,
 ///    "maxsize": <maxium file size>,
-///    "flush": <flush flag>
+///    "flush": <flush flag>,
+///    "pattern": <custom layout>
 /// }
 /// @endcode
 ///
-/// YANG syntax for kea-logging is with name as the logger list key and
-/// output as the output option list key.
+/// YANG syntax for loggers is:
 /// @code
 ///  +--rw logger               (list)
 ///     |
@@ -48,6 +48,7 @@ namespace yang {
 ///     |     +--rw maxver?     uint32
 ///     |     +--rw maxsize?    uint32
 ///     |     +--rw flush?      boolean
+///     |     +--rw pattern?    string
 ///     +--rw debuglevel?       uint8
 ///     +--rw severity?         enumeration
 ///     +--rw user-context?     string
@@ -150,14 +151,14 @@ protected:
     void setOutputOptions(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
 
-    /// @brief getLogger JSON for kea-logging.
+    /// @brief getLogger JSON for loggers.
     ///
     /// @param xpath The xpath of the logger.
     /// @return JSON representation of the logger.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLoggerKea(const std::string& xpath);
 
-    /// @brief setLogger for kea-logging.
+    /// @brief setLogger for loggers.
     ///
     /// @param xpath The xpath of the logger.
     /// @param elem The JSON element.
@@ -200,14 +201,14 @@ public:
                       isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getLoggers JSON for kea-logging.
+    /// @brief getLoggers JSON for loggers.
     ///
     /// @param xpath The xpath of loggers.
     /// @return JSON representation of  loggers.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLoggersKea(const std::string& xpath);
 
-    /// @brief setLoggers for kea-logging.
+    /// @brief setLoggers for loggers.
     ///
     /// @param xpath The xpath of loggers.
     /// @param elem The JSON element.

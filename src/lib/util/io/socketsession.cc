@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,8 +102,9 @@ SocketSessionForwarder::SocketSessionForwarder(const std::string& unix_file) :
     // the copy should be safe due to the above check, but we'd be rather
     // paranoid about making it 100% sure even if the check has a bug (with
     // triggering the assertion in the worse case)
+    memset(&impl.sock_un_.sun_path, 0, sizeof(impl.sock_un_.sun_path));
     strncpy(impl.sock_un_.sun_path, unix_file.c_str(),
-            sizeof(impl.sock_un_.sun_path));
+            sizeof(impl.sock_un_.sun_path) - 1);
     assert(impl.sock_un_.sun_path[sizeof(impl.sock_un_.sun_path) - 1] == '\0');
     impl.sock_un_len_ = offsetof(struct sockaddr_un, sun_path) +
         unix_file.length();

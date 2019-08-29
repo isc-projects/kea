@@ -1,0 +1,837 @@
+module kea-dhcp-types {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp-types";
+  prefix "kea-dhcp-types";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import kea-types {
+    prefix kea;
+    revision-date 2019-08-12;
+  }
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This file defines some commonly used Kea DHCP types and
+               groupings.";
+  revision 2019-08-12 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Typedef
+  */
+  typedef host-reservation-mode {
+    type enumeration {
+      enum "disabled" {
+        description "Host reservation support is disabled.";
+      }
+      enum "out-of-pool" {
+        description "Allows only out of pool host reservations.";
+      }
+      enum "all" {
+        description "Allows both in pool and out of pool host reservations.";
+      }
+      enum "global" {
+        description "Allows only global host reservations.";
+      }
+    }
+    description "Host reservation mode.";
+  }
+
+  typedef lease-state {
+    type enumeration {
+      enum "default" {
+        description "Active/default";
+      }
+      enum "declined" {
+        description "Declined";
+      }
+      enum "expired-reclaimed" {
+        description "Expired-reclaimed";
+      }
+    }
+    description "Defines state of the lease.";
+  }
+
+  /*
+  * Grouping
+  */
+  grouping valid-lifetime {
+    description "Valid lifetime grouping.";
+    leaf valid-lifetime {
+      type uint32;
+      units "seconds";
+      description "Valid lifetime entry.";
+    }
+  }
+
+  grouping min-valid-lifetime {
+    description "Minimum valid lifetime grouping.";
+    leaf min-valid-lifetime {
+      type uint32;
+      units "seconds";
+      description "Minimum valid lifetime entry.";
+    }
+  }
+
+  grouping max-valid-lifetime {
+    description "Maximum valid lifetime grouping.";
+    leaf max-valid-lifetime {
+      type uint32;
+      units "seconds";
+      description "Maximum valid lifetime entry.";
+    }
+  }
+
+  grouping renew-timer {
+    description "Renew timer grouping.";
+    leaf renew-timer {
+      type uint32;
+      units "seconds";
+      description "Renew timer entry.";
+    }
+  }
+
+  grouping rebind-timer {
+    description "Rebind timer grouping.";
+    leaf rebind-timer {
+      type uint32;
+      units "seconds";
+      description "Rebind timer entry.";
+    }
+  }
+
+  grouping calculate-tee-times {
+    description "Calculate T1/T2 grouping.";
+    leaf calculate-tee-times {
+      type boolean;
+      description "Calculate T1/T2 entry.";
+    }
+  }
+
+  grouping t1-percent {
+    description "T1 timer grouping.";
+    leaf t1-percent {
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
+      description "T1 timer entry.";
+    }
+  }
+
+  grouping t2-percent {
+    description "T2 timer grouping.";
+    leaf t2-percent {
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
+      description "T2 timer entry.";
+    }
+  }
+
+  grouping database {
+    description "Database grouping.";
+    leaf database-type {
+      type string;
+      mandatory true;
+      description "Database type (e.g. mysql).";
+    }
+    leaf user {
+      type string;
+      description "Database user name.";
+    }
+    leaf password {
+      type string;
+      description "Database user password.";
+    }
+    leaf host {
+      type string;
+      description "Database host.";
+    }
+    leaf name {
+      type string;
+      description "Database name.";
+    }
+    leaf persist {
+      type boolean;
+      description "Write lease to disk file. This parameter applies only to
+                   memfile backend.";
+    }
+    leaf port {
+      type uint16;
+      description "Database port.";
+    }
+    leaf lfc-interval {
+      type uint32;
+      units "seconds";
+      description "Interval between two lease file cleanups.";
+    }
+    leaf readonly {
+      type boolean;
+      description "If set to true, the database will be connected in
+                   read-only mode. This does not make sense for lease
+                   databases, only for host reservations and possibly
+                   for upcoming config backend.";
+    }
+    leaf connect-timeout {
+      type uint32;
+      units "milliseconds";
+      description "Database connection timeout.";
+    }
+    leaf contact-points {
+      type string;
+      description "Cassandra database contact points, a coma separated list of
+                   IP addresses.";
+    }
+    leaf keyspace {
+      type string;
+      description "Cassandra database keyspace (this is Cassandra's equivalent
+                   of a database name).";
+    }
+    leaf max-reconnect-tries {
+      type uint32;
+      description "Maximum of recovery attempts before exit.";
+    }
+    leaf reconnect-wait-time {
+      type uint32;
+      units "milliseconds";
+      description "Waiting delay between two recovery attempts.";
+    }
+    leaf request-timeout {
+      type uint32;
+      units "milliseconds";
+      description "Timeout waiting for a response.";
+    }
+    leaf tcp-keepalive {
+      type uint32;
+      units "seconds";
+      description "TCP keepalive for the database connection.";
+    }
+    leaf tcp-nodelay {
+      type boolean;
+      description "TCP nodelay for the database connection.";
+    }
+    leaf consistency {
+      type string;
+      description "Consistency level.";
+    }
+    leaf serial-consistency {
+      type string;
+      description "Serial consistency level.";
+    }
+    leaf max-row-errors {
+      type uint32;
+      description "Maximum row errors (0 means unlimited).";
+   }
+    uses kea:user-context {
+      refine user-context {
+        description "Database user context. Arbitrary JSON data can be
+                     stored here.";
+      }
+    }
+  }
+
+  grouping databases {
+    description "Databases grouping.";
+    container lease-database {
+      presence "Have lease database.";
+      description "Lease database.";
+      uses database;
+    }
+    list hosts-database {
+      key database-type;
+      description "List of databases.";
+      uses database;
+    }
+  }
+
+  grouping expired-leases-processing {
+    description "Expired leases processing grouping.";
+    container expired-leases-processing {
+      description "Expired leases processing setup.";
+      leaf reclaim-timer-wait-time {
+        type uint32;
+        units "seconds";
+        description "Interval between reclamation cycles.";
+      }
+      leaf flush-reclaimed-timer-wait-time {
+        type uint32;
+        units "seconds";
+        description "Interval between reclaimed leases collection.";
+      }
+      leaf hold-reclaimed-time {
+        type uint32;
+        units "seconds";
+        description "Hold timer for re-assignment.";
+      }
+      leaf max-reclaim-leases {
+        type uint32;
+        description "Maximum number of reclaimed leases per cycle.";
+      }
+      leaf max-reclaim-time {
+        type uint32;
+        units "milliseconds";
+        description "Maximum duration of a reclamation cycle.";
+      }
+      leaf unwarned-reclaim-cycles {
+        type uint32;
+        description "Maximum numbers of uncomplete cycles before warning.";
+      }
+    }
+  }
+
+  grouping hostname-char-set {
+    description "Hostname character set grouping.";
+    leaf hostname-char-set {
+      type string;
+      description "A regex defining invalid characters. If detected, those
+                   will be replaced by hostname-char-replacement.";
+    }
+  }
+
+  grouping hostname-char-replacement {
+    description "Hostname character replacement grouping.";
+    leaf hostname-char-replacement {
+      type string;
+      description "Replacement for invalid charaters. See
+                   hostname-char-set.";
+    }
+  }
+
+  grouping dhcp-ddns {
+    description "DHCP-DDNS grouping.";
+    container dhcp-ddns {
+      description "DHCP-DDNS client setup.";
+      leaf enable-updates {
+        type boolean;
+        description "Enable DHCP-DDNS updates.";
+      }
+      leaf qualifying-suffix {
+        type string;
+        description "DHCP-DDNS qualifying suffix.";
+      }
+      leaf server-ip {
+        type inet:ip-address;
+        description "DHCP-DDNS server IP address.";
+      }
+      leaf server-port {
+        type uint16;
+        description "DHCP-DDNS server port.";
+      }
+      leaf sender-ip {
+        type inet:ip-address;
+        description "DHCP-DDNS sender IP address.";
+      }
+      leaf sender-port {
+        type uint16;
+        description "DHCP-DDNS sender port.";
+      }
+      leaf max-queue-size {
+        type uint32;
+        description "Maximum DHCP-DDNS queue size.";
+      }
+      leaf ncr-protocol {
+        type enumeration {
+          enum "UDP" {
+            description "UDP transport";
+          }
+          enum "TCP" {
+            description "TCP transport";
+          }
+        }
+        description "Protocol to use for DHCP-DDNS communication.
+                     Currently only UDP is supported.";
+      }
+      leaf ncr-format {
+        type enumeration {
+          enum "JSON" {
+            description "JSON format";
+          }
+        }
+        description "Packet format to use for DHCP-DDNS.";
+      }
+      leaf override-no-update {
+        type boolean;
+        description "Ignore client request and send update.";
+      }
+      leaf override-client-update {
+        type boolean;
+        description "Ignore client delegation.";
+      }
+      leaf replace-client-name {
+        type enumeration {
+          enum "when-present" {
+            description "When the client sent a name.";
+          }
+          enum "never" {
+            description "Never replace or generate a name.";
+          }
+          enum "always" {
+            description "Always replace or generate a name.";
+          }
+          enum "when-not-present" {
+            description "When the client did not send a name.";
+          }
+        }
+        description "Replace the name provided by the client.";
+      }
+      leaf generated-prefix {
+        type string;
+        description "DHCP-DDNS generated prefix.";
+      }
+      uses hostname-char-set;
+      uses hostname-char-replacement;
+      uses kea:user-context {
+        refine user-context {
+          description "DHCP-DDNS user context. Arbitrary JSON data can
+                       be stored here.";
+        }
+      }
+    }
+  }
+
+  grouping sanity-checks {
+    description "Sanity checks grouping.";
+    container sanity-checks {
+      description "Sanity checks container.";
+      leaf lease-checks {
+        type enumeration {
+          enum "none" {
+            description "No checks.";
+          }
+          enum "warn" {
+            description "When a check fails print a warning and accept the
+                         lease.";
+          }
+          enum "fix" {
+            description "When a check fails try to fix it and accept the
+                         lease.";
+          }
+          enum "fix-del" {
+            description "When a check fails try to fix it and reject the
+                         lease if still bad.";
+          }
+          enum "del" {
+            description "When a check fails reject the lease.";
+          }
+        }
+        description "Lease checks: verify subnet-id consistency on memfile
+                     loading.";
+      }
+    }
+  }
+
+  grouping client-class {
+    description "Client class grouping.";
+    leaf client-class {
+      type string;
+      description "Client class entry.";
+    }
+  }
+
+  grouping pool-client-class {
+    description "Client class grouping for a pool.";
+    uses client-class {
+      refine client-class {
+        description "Pool client class guard (only clients belonging
+                     to this class will be allowed in this pool).";
+      }
+    }
+  }
+
+  grouping subnet-client-class {
+    description "Client class grouping for a subnet.";
+    uses client-class {
+      refine client-class {
+        description "Subnet client class guard (only clients belonging to this
+                     class will be allowed in this subnet).";
+      }
+    }
+  }
+
+  grouping network-client-class {
+    description "Client class grouping for a shared network.";
+    uses client-class {
+      refine client-class {
+        description "Shared network client class guard (only clients
+                     belonging to this class will be allowed in this
+                     shared network).";
+      }
+    }
+  }
+
+  grouping require-client-classes {
+    description "Require client classes grouping.";
+    leaf-list require-client-classes {
+      type string;
+      description "List of client classes.";
+    }
+  }
+
+  grouping pool-require-client-classes {
+    description "Require client classes grouping for a pool.";
+    uses require-client-classes {
+      refine require-client-classes {
+        description "Pool require client classes.";
+      }
+    }
+  }
+
+  grouping subnet-require-client-classes {
+    description "Require client classes grouping for a subnet.";
+    uses require-client-classes {
+      refine require-client-classes {
+        description "Subnet require client classes.";
+      }
+    }
+  }
+
+  grouping network-require-client-classes {
+    description "Require client classes grouping for a shared network.";
+    uses require-client-classes {
+      refine require-client-classes {
+        description "Shared network require client classes.";
+      }
+    }
+  }
+
+  grouping interface {
+    description "Interface grouping.";
+    leaf interface {
+      type string;
+      description "Interface entry.";
+    }
+  }
+
+  grouping subnet-interface {
+    description "Interface grouping for a subnet.";
+    uses interface {
+      refine interface {
+        description "Name of the network interface this subnet is directly
+                     accessible with (optional).";
+      }
+    }
+  }
+
+  grouping network-interface {
+    description "Interface grouping for a shared network.";
+    uses interface {
+      refine interface {
+        description "Specifies the network interface this shared network is
+                     directly accessible with. (optional)";
+      }
+    }
+  }
+
+  grouping subnet-id {
+    description "Subnet ID grouping.";
+    leaf id {
+      type uint32 {
+        range 1..max;
+      }
+      mandatory true;
+      description "Subnet ID, a unique identifier used to locate or reference
+                   a subnet.";
+    }
+  }
+
+  grouping host-identifier {
+    description "Host identifier grouping.";
+    leaf identifier {
+      type string;
+      description "Host identifier.";
+    }
+  }
+
+  grouping host-hostname {
+    description "Host DNS name grouping.";
+    leaf hostname {
+      type string;
+      description "Host DNS name.";
+    }
+  }
+
+  grouping host-client-classes {
+    description "Host client classes grouping.";
+    leaf-list client-classes {
+      type string;
+      description "Host client classes (if host identifier matches, a
+                   client's packet will be added to the classes liste
+                   here.)";
+    }
+  }
+
+  grouping host-subnet-id {
+    description "Host subnet ID grouping.";
+    leaf subnet-id {
+      type uint32;
+      mandatory true;
+      description "Host subnet ID.";
+    }
+  }
+
+  grouping reservation-mode {
+    description "Reservation mode grouping.";
+    leaf reservation-mode {
+      type host-reservation-mode;
+      description "Reservation mode entry.";
+    }
+  }
+
+  grouping interfaces-re-detect {
+    description "Interfaces re-detect grouping.";
+    leaf re-detect {
+      type boolean;
+      description "Re-detect interfaces at each reconfiguration.";
+    }
+  }
+
+  grouping class-name {
+    description "Client class name grouping.";
+    leaf name {
+      type string;
+      mandatory true;
+      description "Name of the client class.";
+    }
+  }
+
+  grouping class-test {
+    description "Client class test grouping.";
+    leaf test {
+      type string;
+      description "Defines an expression that evaluates every incoming
+                   packet.";
+    }
+  }
+
+  grouping class-only-if-required {
+    description "Client class only-if-required grouping.";
+    leaf only-if-required {
+      type boolean;
+      description "Client class only if required flag.";
+    }
+  }
+
+  grouping option-def-name {
+    description "Option definition name grouping.";
+    leaf name {
+      type string;
+      mandatory true;
+      description "Name of the new option being defined.";
+    }
+  }
+
+  grouping option-def-type {
+    description "Option definition type grouping.";
+    leaf type {
+      type string;
+      mandatory true;
+      description "Type of the new option being defined (such as
+                   string, record or uint8).";
+    }
+  }
+
+  grouping option-def-record-types {
+    description "Option definition record types grouping.";
+    leaf record-types {
+      type string;
+      description "Option definition record types.";
+    }
+  }
+
+  grouping option-def-encapsulate {
+    description "Option definition encapsulate grouping.";
+    leaf encapsulate {
+      type string;
+      description "Defines option space this new option encapsulates.
+                   Usually empty.";
+    }
+  }
+
+  grouping option-data-name {
+    description "Option data name grouping.";
+    leaf name {
+      type string;
+      description "Option name.";
+    }
+  }
+
+  grouping option-data-data {
+    description "Option data data grouping.";
+    leaf data {
+      type string;
+      description "Option data.";
+    }
+  }
+
+  grouping option-data-csv-format {
+    description "Option data csv-format grouping.";
+    leaf csv-format {
+      type boolean;
+      description "If true, the option is specified as comma separated
+                   values.  If false, it is expected as a hex string.";
+    }
+  }
+
+  grouping option-data-always-send {
+    description "Option data always-send grouping.";
+    leaf always-send {
+      type boolean;
+      description "Defines whether to always send the option,
+                   regardless if the client requested it or not.";
+    }
+  }
+
+  grouping option-def-array {
+    description "Option data array grouping.";
+    leaf array {
+      type boolean;
+      description "Option definition array flag.";
+    }
+  }
+
+  grouping decline-probation-period {
+    description "Decline probation period grouping.";
+    leaf decline-probation-period {
+      type uint32;
+      units "seconds";
+      description "Decline probabation period.";
+    }
+  }
+
+  grouping network-name {
+    description "Shared network name grouping.";
+    leaf name {
+      type string;
+      mandatory true;
+      description "Shared network name.";
+    }
+  }
+
+  grouping dhcp4o6-port {
+    description "DHCPv4-over-DHCPv6 port grouping.";
+    leaf dhcp4o6-port {
+      type uint16;
+      description "DHCPv4-over-DHCPv6 interserver port.";
+    }
+  }
+
+  grouping pool-user-context {
+    description "User context grouping for a pool.";
+    uses kea:user-context {
+      refine user-context {
+        description "Pool user context. Arbitrary JSON data can be
+                     stored here.";
+      }
+    }
+  }
+
+  grouping host-user-context {
+    description "User context grouping for a host reservation.";
+    uses kea:user-context {
+      refine user-context {
+        description "Host user context. Arbitrary JSON data can be
+                     stored here.";
+      }
+    }
+  }
+
+  grouping subnet-user-context {
+    description "User context grouping for a subnet.";
+    uses kea:user-context {
+      refine user-context {
+        description "Subnet user context. Arbitrary JSON data can be
+                     stored here.";
+      }
+    }
+  }
+
+  grouping network-user-context {
+    description "User context grouping for a shared network.";
+    uses kea:user-context {
+      refine user-context {
+        description "Shared network user context. Arbitrary JSON data can be
+                     stored here.";
+      }
+    }
+  }
+
+  grouping interfaces-user-context {
+    description "User context grouping for interfaces.";
+    uses kea:user-context {
+      refine user-context {
+        description "Interfaces user context. Arbitrary JSON data can
+                     be stored here.";
+      }
+    }
+  }
+
+  grouping class-user-context {
+    description "User context grouping for a client class.";
+    uses kea:user-context {
+      refine user-context {
+        description "Client class user context. Arbitrary JSON data can
+                     be stored here.";
+      }
+    }
+  }
+
+  grouping option-def-user-context {
+    description "User context grouping for an option definition.";
+    uses kea:user-context {
+      refine user-context {
+        description "Option definition user context. Arbitrary JSON data
+                     can be stored here.";
+      }
+    }
+  }
+
+  grouping option-data-user-context {
+    description "User context grouping for an option data.";
+    uses kea:user-context {
+      refine user-context {
+        description "Option user context. Arbitrary JSON data can be
+                     stored here.";
+      }
+    }
+  }
+
+  grouping config-control {
+    description "Config control grouping.";
+    container config-control {
+      description "Config control.";
+      leaf config-fetch-wait-time {
+        type uint32;
+        units "seconds";
+        description "Configuration fetch wait time entry.";
+      }
+      list config-database {
+        key database-type;
+        description "List of databases.";
+        uses database;
+      }
+    }
+  }
+
+  grouping server-tag {
+    description "Server tag grouping.";
+    leaf server-tag {
+      type string;
+      description "Server tag.";
+    }
+  }
+
+  grouping dhcp-queue-control {
+    description "DHCP queue control grouping.";
+    leaf dhcp-queue-control {
+      type string;
+      description "DHCP queue control (JSON map).";
+    }
+  }
+
+}

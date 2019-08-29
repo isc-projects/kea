@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,7 @@ namespace yang {
 /// Supports the following models:
 /// - kea-dhcp4-server
 /// - kea-dhcp6-server
-/// - kea-dhcp-ddns (not yet supported by the server itself)
+/// - kea-dhcp-ddns
 /// - kea-ctrl-agent
 class TranslatorControlSocket : virtual public TranslatorBasic {
 public:

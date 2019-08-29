@@ -1,7 +1,19 @@
 {
-    "name": "version-get",
-    "brief": "The version-get command returns extended information about Kea version. The returned string is the same as if Kea would be run with -V command line option.",
+    "avail": "1.2.0",
+    "brief": [
+        "This command returns extended information about the Kea version that is running. The returned string is the same as if Kea were run with the ``-V`` command-line option."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"version-get\"",
+        "}"
+    ],
     "description": "See <xref linkend=\"command-version-get\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
-    "avail": "1.2.0"
+    "name": "version-get",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
 }

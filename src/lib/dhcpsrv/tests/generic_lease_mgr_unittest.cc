@@ -175,7 +175,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
 
     } else if (address == straddress4_[7]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(), HTYPE_ETHER)); // Empty
-        lease->client_id_ = ClientIdPtr();              // Empty
+        lease->client_id_ = ClientIdPtr(
+            new ClientId(vector<uint8_t>(8, 0x77)));
         lease->valid_lft_ = 7975;
         lease->cltt_ = 213876;
         lease->subnet_id_ = 19;
@@ -566,6 +567,7 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
 
     // Check that an empty vector is valid
     EXPECT_TRUE(leases[7]->hwaddr_->hwaddr_.empty());
+    EXPECT_FALSE(leases[7]->client_id_->getClientId().empty());
     returned = lmptr_->getLease4(*leases[7]->hwaddr_);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[7], *returned.begin());
@@ -1158,13 +1160,6 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
     returned = lmptr_->getLease4(*leases[3]->client_id_);
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[3], *returned.begin());
-
-    // Check that client-id is NULL
-    EXPECT_FALSE(leases[7]->client_id_);
-    HWAddr tmp(*leases[7]->hwaddr_);
-    returned = lmptr_->getLease4(tmp);
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[7], *returned.begin());
 
     // Try to get something with invalid client ID
     const uint8_t invalid_data[] = {0, 0, 0};

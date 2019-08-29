@@ -10,8 +10,8 @@
 
   <info>
     <productname>ISC Kea</productname>
-    <date>July 24, 2019</date>
-    <edition>1.6.0-beta2</edition>
+    <date>Aug 28, 2019</date>
+    <edition>1.6.0</edition>
     <author>
       <contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
@@ -35,7 +35,7 @@
 
   <docinfo>
     <copyright>
-      <year>2018</year>
+      <year>2018-2019</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>

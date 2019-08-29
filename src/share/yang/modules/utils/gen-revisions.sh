@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,6 @@ for m in keatest-module*.yang \
          ietf-dhcpv6-options*.yang \
          ietf-dhcpv6-server*.yang \
          kea-types*.yang \
-         kea-logging*.yang \
          kea-dhcp-types*.yang \
          kea-dhcp4-server*.yang \
          kea-dhcp6-server*.yang \

@@ -1,13 +1,19 @@
 {
-    "name": "cache-get",
-    "brief": "Returns full content of the host cache.",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
+    "brief": [
+        "This command returns the full content of the host cache."
+    ],
     "hook": "host_cache",
-
-    "resp-syntax": {
-        "result": 0,
-        "text": "123 entries returned.",
-        "arguments": "<list of host reservations>"
-    }
+    "name": "cache-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"123 entries returned.\",",
+        "    \"arguments\": <list of host reservations>",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
 }

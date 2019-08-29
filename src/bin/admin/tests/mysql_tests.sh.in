@@ -499,7 +499,7 @@ EOF
     run_statement "dhcp4_global_parameter_server" "$qry"
 
     # table: dhcp4_option_def
-    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def"
+    qry="select id, code, name, space, type, modification_ts, is_array, encapsulate, record_types, user_context from dhcp4_option_def"
     run_statement "dhcp4_option_def" "$qry"
 
     # table: dhcp4_option_def_server
@@ -555,7 +555,7 @@ EOF
     run_statement "dhcp6_global_parameter_server" "$qry"
 
     # table: dhcp6_option_def
-    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def"
+    qry="select id, code, name, space, type, modification_ts, is_array, encapsulate, record_types, user_context from dhcp6_option_def"
     run_statement "dhcp6_option_def" "$qry"
 
     # table: dhcp6_option_def_server
@@ -624,7 +624,7 @@ EOF
     # First set the cascade_transaction session variable to check that
     # the procedure won't create the audit entry for the option when
     # this flag is set.
-    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL)"
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL, now())"
     run_statement "createOptionAuditDHCP4 cascade update" "$qry"
 
     # The number of rows matching the audit entry should be 0.
@@ -633,7 +633,7 @@ EOF
 
     # This time set the cascade_update to 0 and expect that the
     # audit entry will be created for the option.
-    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL)"
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL, now())"
     run_statement "createOptionAuditDHCP4 cascade update" "$qry"
 
     qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
@@ -667,7 +667,7 @@ EOF
     # First set the cascade_transaction session variable to check that
     # the procedure won't create the audit entry for the option when
     # this flag is set.
-    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL)"
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL, now())"
     run_statement "createOptionAuditDHCP6 cascade update" "$qry"
 
     # The number of rows matching the audit entry should be 0.
@@ -676,7 +676,7 @@ EOF
 
     # This time set the cascade_update to 0 and expect that the
     # audit entry will be created for the option.
-    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL)"
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL,now())"
     run_statement "createOptionAuditDHCP6 cascade update" "$qry"
 
     qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
@@ -709,9 +709,29 @@ EOF
     qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
 
+    # table: dhcp4_pool (should include three new columns)
+    qry="select client_class, require_client_classes, user_context from dhcp4_pool"
+    run_statement "dhcp4_pool" "$qry"
+
+    # table: dhcp6_pd_pool (should include five new columns)
+    qry="select excluded_prefix, excluded_prefix_length, client_class, require_client_classes, user_context from dhcp6_pd_pool"
+    run_statement "dhcp6_pd_pool" "$qry"
+
+    # table: dhcp6_pool (should include three new columns)
+    qry="select client_class, require_client_classes, user_context from dhcp6_pool"
+    run_statement "dhcp6_pool" "$qry"
+
     # Verify upgraded schema reports version 8.2
     version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "8.2" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    # Verify that dhcp4_option_def column name is is_array
+    qry="select is_array from dhcp4_option_def"
+    run_statement "dhcp4_option_def verify is_array column" "$qry"
+
+    # Verify that dhcp6_option_def column name is is_array
+    qry="select is_array from dhcp6_option_def"
+    run_statement "dhcp6_option_def verify is_array column" "$qry"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1106,6 +1126,8 @@ mysql_lease_stat_upgrade_test() {
 
     # Let's wipe the whole database
     mysql_wipe
+
+    test_finish 0
 }
 
 # Verifies that you can upgrade from an earlier version and
@@ -1189,6 +1211,8 @@ mysql_unused_subnet_id_test() {
 
     # Let's wipe the whole database
     mysql_wipe
+
+    test_finish 0
 }
 
 mysql_db_init_test

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,26 +35,12 @@ unless you alter description of existing commands or add a new one.
 
 There are several steps needed to document a new API command:
 
- 1. edit docgen/cmds-list and add the new command
- 2. ./configure --enable-generate-docs
- 3. make - you need to build the sources first, am afraid. The reason why you
-    need to do this is that the tool kea-docgen depends on libkea-cc as it
-    loads JSON files. This means that the libs need to be built first.
- 4. (optional) run: make templates
-    This will go through the list of commands listed in cmds-list
-    and will check if there are corresponding JSON files in api/name.json
-    If the file is missing, a new JSON will be created using template.
-    If you dislike this generator, you can always use api/_template.json
-    and copy it over under the name of a new command.
- 5. Edit api/command-name.json. If the command is provided by the daemon
-    out of its own (and not via hook), simply delete the hook entry.
-    If you don't want to provide command syntax (cmd-syntax key),
-    any comments about the syntax (cmd-comment key) or response syntax
-    (resp-syntax) or any comment about response (resp-comment), simply
-    remove those unused keys. The generator will attempt to generate
-    boilerplates for it.
- 6. Generate api.xml: make api
- 7. Rebuild User's Guide as usual: make guide
+ 1. Configure sources with ./configure --enable-generate-docs
+ 1. Copy doc/sphinx/api/_template.json to appropriate name.
+ 2. Remove comments from it and fill in the actual content.
+ 3. Update api_files variable in doc/sphinx/Makefile.am
+ 4. make html will generate multi-page html.
+ 5. make singlehtml will generate a single page html.
 
 A word of caution regaring editing JSON files. The files themselves need to be
 valid JSON files. They also often contain fields, such as command syntax or
@@ -62,6 +48,12 @@ command response, there are themselves a JSON or JSON like structures. That
 means that some trickery with escaping double quotes will be involved. Note
 there is no need to escape any other character, unless you want to specify
 non-printable characters.
+
+Also, while Kea's JSON parser supports comments and multi-line string, they
+are not part of JSON standard. That means that external tools, such as python
+or Sphinx parsers are not able to deal with them. Therefore comments must
+be removed and long strings (such as command descriptions or example invocations)
+are to be presented as a list of strings ( e.g. [ "line1", "line2, "line3" ]).
 
 @section docsDevelGuide Generating Developer's Guide
 
@@ -71,7 +63,7 @@ generate nice diagrams. To generate developer's guide, do the following commands
 
 @code
 $ ./configure
-$ cd doc
+$ cd doc/devel
 $ make devel
 @endcode
 

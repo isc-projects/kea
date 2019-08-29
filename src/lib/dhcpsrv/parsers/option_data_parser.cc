@@ -299,10 +299,15 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         data_tokens = isc::util::str::tokens(data_param, ",", true);
 
     } else {
-        // Otherwise, the option data is specified as a string of
-        // hexadecimal digits that we have to turn into binary format.
+        // Try to convert the values in quotes into a vector of ASCII codes.
+        // If the identifier lacks opening and closing quote, this will return
+        // an empty value, in which case we'll try to decode it as a string of
+        // hexadecimal digits.
         try {
-            util::str::decodeFormattedHexString(data_param, binary);
+            binary = util::str::quotedStringToBinary(data_param);
+            if (binary.empty()) {
+                util::str::decodeFormattedHexString(data_param, binary);
+            }
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
                       << " string of hexadecimal digits: " << data_param

@@ -817,3 +817,26 @@ The following are the current limitations of the DHCP-DDNS Server.
 -  Requests received from the DHCP servers are placed in a queue until
    they are processed. Currently, all queued requests are lost if the
    server shuts down.
+
+Supported Standards
+===================
+
+The following RFCs are supported by the DHCP-DDNS server:
+
+- *Secret Key Transaction Authentication for DNS (TSIG)*, `RFC 2845
+  <https://tools.ietf.org/html/rfc2845>`__: All DNS Update packets sent and
+  received by DHCP-DDNS server can be protected by TSIG signatures.
+
+- *Dynamic Updates in the Domain Name System (DNS UPDATE)*, `RFC 2136
+  <https://tools.ietf.org/html/rfc2136>`__: The whole DNS Update mechanism is
+  supported.
+
+- *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
+  Configuration Protocol (DHCP) Clients*, `RFC 4703
+  <https://tools.ietf.org/html/rfc4703>`__: The DHCP-DDNS takes care of the
+  conflict resolution. This capability is used by DHCPv4 and DHCPv6 servers.
+
+- *A DNS Resource Record (RR) for Encoding Dynamic Host Configuration Protocol
+  (DHCP) Information (DHCID RR)*, `RFC 4701
+  <https://tools.ietf.org/html/rfc4701>`__: The DHCP-DDNS server uses the DHCID
+  records.

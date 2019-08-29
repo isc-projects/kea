@@ -119,6 +119,7 @@ public:
         memset(user_context_, 0, sizeof(user_context_));
         memset(dhcp4_server_hostname_, 0, sizeof(dhcp4_server_hostname_));
         memset(dhcp4_boot_file_name_, 0, sizeof(dhcp4_boot_file_name_));
+        memset(auth_key_, 0, sizeof(auth_key_));
 
         // Set the column names for use by this class. This only comprises
         // names used by the MySqlHostExchange class. Derived classes will
@@ -370,7 +371,7 @@ public:
             // auth key
             bind_[13].buffer_type = MYSQL_TYPE_STRING;
             std::string auth_key = host->getKey().toText();
-            std::strncpy(auth_key_, auth_key.c_str(), TEXT_AUTH_KEY_LEN);
+            std::strncpy(auth_key_, auth_key.c_str(), TEXT_AUTH_KEY_LEN - 1);
             auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;
             bind_[13].buffer_length = auth_key.length();
@@ -381,9 +382,8 @@ public:
                       << host->getHostname() << ", reason: " << ex.what());
         }
 
-        // Add the data to the vector.  Note the end element is one after the
-        // end of the array.
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[columns_num_]));
+        // Add the data to the vector.
+        return (std::vector<MYSQL_BIND>(bind_.begin(), bind_.begin() + columns_num_));
     };
 
     /// @brief Create BIND array to receive Host data.

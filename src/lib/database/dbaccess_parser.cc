@@ -54,6 +54,7 @@ DbAccessParser::parse(std::string& access_string,
     int64_t reconnect_wait_time = 0;
     int64_t request_timeout = 0;
     int64_t tcp_keepalive = 0;
+    int64_t max_row_errors = 0;
 
     // 2. Update the copy with the passed keywords.
     for (std::pair<std::string, ConstElementPtr> param : database_config->mapValue()) {
@@ -99,6 +100,10 @@ DbAccessParser::parse(std::string& access_string,
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(port);
 
+            } else if (param.first == "max-row-errors") {
+                max_row_errors = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(max_row_errors);
             } else {
                 // all remaining string parameters
                 // type
@@ -172,6 +177,16 @@ DbAccessParser::parse(std::string& access_string,
         isc_throw(DbConfigError, "port value: " << port
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint16_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+
+    // f. Check that the max-row-errors is within a reasonable range.
+    if ((max_row_errors < 0) ||
+        (max_row_errors > std::numeric_limits<uint32_t>::max())) {
+        ConstElementPtr value = database_config->get("max-row-errors");
+        isc_throw(DbConfigError, "max-row-errors value: " << max_row_errors
+                  << " is out of range, expected value: 0.."
+                  << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");
     }
 

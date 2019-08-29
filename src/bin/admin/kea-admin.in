@@ -130,6 +130,78 @@ memfile_init() {
     exit 1
 }
 
+# Validates that the MySQL db_users's permissions are sufficient to
+# create the schema.
+mysql_can_create() {
+
+    # Let's grab the version for possible debugging issues.  It also
+    # determines basic functional access to db.
+    RESULT=$(mysql_execute "select @@global.version;")
+    ERRCODE=$?
+    if [ $ERRCODE -ne  0 ]
+    then
+        log_error "mysql_can_create: get MySQL version failed, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    printf "MySQL Version is:\n" "$RESULT"
+
+    # SQL to drop our test table and trigger
+    cleanup_sql="DROP TABLE IF EXISTS kea_dummy_table; DROP PROCEDURE IF EXISTS kea_dummy_trigger;"
+
+    # SQL to create our test table
+    table_sql="CREATE TABLE kea_dummy_table(dummy INT UNSIGNED PRIMARY KEY NOT NULL);"
+
+    # SQL to create our test trigger
+    trigger_sql="\
+CREATE TRIGGER kea_dummy_trigger BEFORE insert ON kea_dummy_table FOR EACH ROW\n \
+BEGIN\n \
+END;"
+
+    # Let's clean up just in case.
+    RESULT=$(mysql_execute "$cleanup_sql")
+    ERRCODE=$?
+    if [ $ERRCODE -ne  0 ]
+    then
+        log_error "mysql_can_create cannot run pre cleanup, mysql status = $ERRCODE"
+        exit 1;
+    fi
+
+    # Now make the dummy table.
+    perms_ok=1
+    RESULT=$(mysql_execute "$table_sql")
+    ERRCODE=$?
+    if [ $ERRCODE -ne  0 ]
+    then
+        log_error "mysql_can_create cannot create table, check user permissions, mysql status = $ERRCODE"
+        perms_ok=0;
+    else
+        # Now attempt to make trigger
+        RESULT=$(mysql_execute "$trigger_sql")
+        ERRCODE=$?
+        if [ $ERRCODE -ne  0 ]
+        then
+            log_error "mysql_can_create cannot trigger, check user permissions, mysql status = $ERRCODE"
+            perms_ok=0;
+        fi
+    fi
+
+    # Try to cleanup no matter what happened above
+    RESULT=$(mysql_execute "$cleanup_sql")
+    ERRCODE=$?
+    if [ $ERRCODE -ne  0 ]
+    then
+        log_error "mysql_can_create cannot run post cleanup, mysql status = $ERRCODE"
+        exit 1;
+    fi
+
+    if [ $perms_ok -ne 1 ]
+    then
+        log_error "Create failed, the user, $db_user, has insufficient privileges."
+        exit 1;
+    fi
+}
+
 # Initializes a new, empty MySQL database.
 # It essentially calls scripts/mysql/dhcpdb_create.mysql script, with
 # some extra sanity checks. It will refuse to use it if there are any
@@ -158,6 +230,12 @@ mysql_init() {
         log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
         exit 1
     fi
+
+    # Beginning with MySQL 8.0, the db user needs additional settings or SUPER
+    # privileges to create triggers and or functions. Call mysql_can_create to find
+    # out if we're good to go.  If not, it will exit.
+    printf "Verifying create permissions for %s\n" "$db_user"
+    mysql_can_create
 
     printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
     mysql -B --host=$db_host --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
@@ -266,6 +344,12 @@ mysql_upgrade() {
         log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
     fi
+
+    # Beginning with MySQL 8.0, the db user needs additional settings or SUPER
+    # privileges to create triggers and or functions. Call mysql_can_create to find
+    # out if we're good to go.  If not, it will exit.
+    printf "Verifying upgrade permissions for %s\n" "$db_user"
+    mysql_can_create
 
     for script in "${scripts_dir}"/mysql/upgrade*.sh
     do

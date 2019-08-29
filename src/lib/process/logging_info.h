@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,10 @@ public:
     /// @brief Immediate flush
     bool flush_;
 
+    /// @brief defines the log format pattern
+    /// It dictates what additional elements are output
+    std::string pattern_;
+
     /// @brief Compares two objects for equality.
     ///
     /// @param other Object to be compared with this object.
@@ -47,7 +51,7 @@ public:
 
     /// @brief Default constructor.
     LoggingDestination()
-        : output_("stdout"), maxver_(1), maxsize_(10240000), flush_(true) {
+        : output_("stdout"), maxver_(1), maxsize_(10240000), flush_(true), pattern_("") {
     }
 
     /// @brief Unparse a configuration object
@@ -68,6 +72,7 @@ public:
 ///                    "maxver": 8,
 ///                    "maxsize": 204800,
 ///                    "flush": true
+///                    "pattern": "%-5p [%c] %m\n"
 ///                }
 ///            ],
 ///            "severity": "WARN",

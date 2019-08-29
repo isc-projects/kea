@@ -106,6 +106,9 @@ namespace {
     "  s.authoritative," \
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -217,6 +220,14 @@ namespace {
     "  s.max_preferred_lifetime," \
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
+    "  d.excluded_prefix," \
+    "  d.excluded_prefix_length," \
+    "  d.client_class," \
+    "  d.require_client_classes," \
+    "  d.user_context," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -226,7 +237,7 @@ namespace {
     "LEFT JOIN dhcp6_options AS y ON y.scope_id = 6 AND d.id = y.pd_pool_id " \
     "LEFT JOIN dhcp6_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp6_subnet_id " \
     #__VA_ARGS__                                                        \
-    " ORDER BY s.subnet_id, p.id, d.id, x.option_id, o.option_id"
+    " ORDER BY s.subnet_id, p.id, d.id, x.option_id, y.option_id, o.option_id"
 
 #define MYSQL_GET_SUBNET6_NO_TAG(...) \
     MYSQL_GET_SUBNET6_COMMON( \
@@ -252,6 +263,131 @@ namespace {
     "  ON a.server_id = srv.id ", \
     WHERE a.subnet_id IS NULL __VA_ARGS__)
 
+#endif
+
+#ifndef MYSQL_GET_POOL4_COMMON
+#define MYSQL_GET_POOL4_COMMON(server_join, ...) \
+      "SELECT" \
+      "  p.id," \
+      "  p.start_address," \
+      "  p.end_address," \
+      "  p.subnet_id," \
+      "  p.client_class," \
+      "  p.require_client_classes," \
+      "  p.user_context," \
+      "  p.modification_ts," \
+      "  x.option_id," \
+      "  x.code," \
+      "  x.value," \
+      "  x.formatted_value," \
+      "  x.space," \
+      "  x.persistent," \
+      "  x.dhcp4_subnet_id," \
+      "  x.scope_id," \
+      "  x.user_context," \
+      "  x.shared_network_name," \
+      "  x.pool_id," \
+      "  x.modification_ts " \
+      "FROM dhcp4_pool AS p " \
+      server_join \
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
+      #__VA_ARGS__ \
+      " ORDER BY p.id, x.option_id"
+
+#define MYSQL_GET_POOL4_RANGE_WITH_TAG(...) \
+    MYSQL_GET_POOL4_COMMON( \
+       "INNER JOIN dhcp4_subnet_server AS s ON p.subnet_id = s.subnet_id " \
+       "INNER JOIN dhcp4_server AS srv " \
+       " ON (s.server_id = srv.id) OR (s.server_id = 1) ", \
+       __VA_ARGS__)
+
+#define MYSQL_GET_POOL4_RANGE_NO_TAG(...) \
+    MYSQL_GET_POOL4_COMMON("", __VA_ARGS__)
+#endif
+
+#ifndef MYSQL_GET_POOL6_COMMON
+#define MYSQL_GET_POOL6_COMMON(server_join, ...) \
+    "SELECT" \
+    "  p.id," \
+    "  p.start_address," \
+    "  p.end_address," \
+    "  p.subnet_id," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
+    "  p.modification_ts," \
+    "  x.option_id," \
+    "  x.code," \
+    "  x.value," \
+    "  x.formatted_value," \
+    "  x.space," \
+    "  x.persistent," \
+    "  x.dhcp6_subnet_id," \
+    "  x.scope_id," \
+    "  x.user_context," \
+    "  x.shared_network_name," \
+    "  x.pool_id," \
+    "  x.modification_ts," \
+    "  x.pd_pool_id " \
+    "FROM dhcp6_pool AS p " \
+    server_join \
+    "LEFT JOIN dhcp6_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
+    #__VA_ARGS__ \
+    " ORDER BY p.id, x.option_id"
+
+#define MYSQL_GET_POOL6_RANGE_WITH_TAG(...) \
+    MYSQL_GET_POOL6_COMMON( \
+    "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id " \
+    "INNER JOIN dhcp6_server AS srv " \
+    " ON (s.server_id = srv.id) OR (s.server_id = 1) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_POOL6_RANGE_NO_TAG(...) \
+    MYSQL_GET_POOL6_COMMON("", __VA_ARGS__)
+#endif
+
+#ifndef MYSQL_GET_PD_POOL_COMMON
+#define MYSQL_GET_PD_POOL_COMMON(server_join, ...) \
+    "SELECT" \
+    "  p.id," \
+    "  p.prefix," \
+    "  p.prefix_length," \
+    "  p.delegated_prefix_length," \
+    "  p.subnet_id," \
+    "  p.excluded_prefix," \
+    "  p.excluded_prefix_length," \
+    "  p.client_class," \
+    "  p.require_client_classes," \
+    "  p.user_context," \
+    "  p.modification_ts," \
+    "  x.option_id," \
+    "  x.code," \
+    "  x.value," \
+    "  x.formatted_value," \
+    "  x.space," \
+    "  x.persistent," \
+    "  x.dhcp6_subnet_id," \
+    "  x.scope_id," \
+    "  x.user_context," \
+    "  x.shared_network_name," \
+    "  x.pool_id," \
+    "  x.modification_ts," \
+    "  x.pd_pool_id " \
+    "FROM dhcp6_pd_pool AS p " \
+    server_join \
+    "LEFT JOIN dhcp6_options AS x ON x.scope_id = 6 AND p.id = x.pd_pool_id " \
+    #__VA_ARGS__ \
+    " ORDER BY p.id, x.option_id" \
+
+#define MYSQL_GET_PD_POOL_WITH_TAG(...) \
+    MYSQL_GET_PD_POOL_COMMON( \
+    "INNER JOIN dhcp6_subnet_server AS s ON p.subnet_id = s.subnet_id " \
+    "INNER JOIN dhcp6_server AS srv " \
+    " ON (s.server_id = srv.id) OR (s.server_id = 1) ", \
+    __VA_ARGS__)
+
+#define MYSQL_GET_PD_POOL_NO_TAG(...) \
+    MYSQL_GET_PD_POOL_COMMON("", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_GET_SHARED_NETWORK4
@@ -404,7 +540,7 @@ namespace {
     "  d.space," \
     "  d.type," \
     "  d.modification_ts," \
-    "  d.array," \
+    "  d.is_array," \
     "  d.encapsulate," \
     "  d.record_types," \
     "  d.user_context," \
@@ -518,8 +654,11 @@ namespace {
     "  start_address," \
     "  end_address," \
     "  subnet_id," \
+    "  client_class," \
+    "  require_client_classes," \
+    "  user_context," \
     "  modification_ts" \
-    ") VALUES (?, ?, ?, ?)"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_PD_POOL
@@ -529,8 +668,13 @@ namespace {
     "  prefix_length," \
     "  delegated_prefix_length," \
     "  subnet_id," \
+    "  excluded_prefix," \
+    "  excluded_prefix_length," \
+    "  client_class," \
+    "  require_client_classes," \
+    "  user_context," \
     "  modification_ts" \
-    ") VALUES (?, ?, ?, ?, ?)"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_SHARED_NETWORK_SERVER
@@ -553,7 +697,7 @@ namespace {
     "  space," \
     "  type," \
     "  modification_ts," \
-    "  array," \
+    "  is_array," \
     "  encapsulate," \
     "  record_types," \
     "  user_context" \
@@ -639,7 +783,7 @@ namespace {
     "  d.space = ?," \
     "  d.type = ?," \
     "  d.modification_ts = ?," \
-    "  d.array = ?," \
+    "  d.is_array = ?," \
     "  d.encapsulate = ?," \
     "  d.record_types = ?," \
     "  d.user_context = ? " \
@@ -647,12 +791,9 @@ namespace {
 #endif
 
 #ifndef MYSQL_UPDATE_OPTION_COMMON
-#define MYSQL_UPDATE_OPTION_COMMON(table_prefix, pd_pool_id, ...) \
+#define MYSQL_UPDATE_OPTION_COMMON(table_prefix, server_join, pd_pool_id, ...) \
     "UPDATE " #table_prefix "_options AS o " \
-    "INNER JOIN " #table_prefix "_options_server AS a" \
-    "  ON o.option_id = a.option_id " \
-    "INNER JOIN " #table_prefix "_server AS s" \
-    "  ON a.server_id = s.id " \
+    server_join \
     "SET" \
     "  o.code = ?," \
     "  o.value = ?," \
@@ -670,16 +811,26 @@ namespace {
     "WHERE " #__VA_ARGS__
 
 #define MYSQL_UPDATE_OPTION4_WITH_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", s.tag = ? __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp4, \
+    "INNER JOIN dhcp4_options_server AS a" \
+    "  ON o.option_id = a.option_id " \
+    "INNER JOIN dhcp4_server AS s" \
+    "  ON a.server_id = s.id ", \
+    "", s.tag = ? __VA_ARGS__)
 
 #define MYSQL_UPDATE_OPTION4_NO_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", "", __VA_ARGS__)
 
 #define MYSQL_UPDATE_OPTION6_WITH_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp6, ", o.pd_pool_id = ? ", s.tag = ? __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp6, \
+    "INNER JOIN dhcp6_options_server AS a" \
+    "  ON o.option_id = a.option_id " \
+    "INNER JOIN dhcp6_server AS s" \
+    "  ON a.server_id = s.id ", \
+    ", o.pd_pool_id = ? ", s.tag = ? __VA_ARGS__)
 
 #define MYSQL_UPDATE_OPTION6_NO_TAG(...) \
-    MYSQL_UPDATE_OPTION_COMMON(dhcp6, ", o.pd_pool_id = ? ", __VA_ARGS__)
+    MYSQL_UPDATE_OPTION_COMMON(dhcp6, "", ", o.pd_pool_id = ? ", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_UPDATE_SERVER
@@ -805,20 +956,20 @@ namespace {
     "WHERE a.option_def_id IS NULL " #__VA_ARGS__
 #endif
 
-#ifndef MYSQL_DELETE_OPTION
-#define MYSQL_DELETE_OPTION_COMMON(table_prefix, ...) \
+#ifndef MYSQL_DELETE_OPTION_WITH_TAG
+#define MYSQL_DELETE_OPTION_WITH_TAG(table_prefix, ...) \
     "DELETE o FROM " #table_prefix "_options AS o " \
     "INNER JOIN " #table_prefix "_options_server AS a" \
     "  ON o.option_id = a.option_id " \
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON a.server_id = s.id " \
-    #__VA_ARGS__
+    "WHERE s.tag = ? " #__VA_ARGS__
+#endif
 
-#define MYSQL_DELETE_OPTION_WITH_TAG(table_prefix, ...) \
-    MYSQL_DELETE_OPTION_COMMON(table_prefix, WHERE s.tag = ? __VA_ARGS__)
-
+#ifndef MYSQL_DELETE_OPTION_NO_TAG
 #define MYSQL_DELETE_OPTION_NO_TAG(table_prefix, ...) \
-    MYSQL_DELETE_OPTION_COMMON(table_prefix, __VA_ARGS__)
+    "DELETE o FROM " #table_prefix "_options AS o " \
+    #__VA_ARGS__
 #endif
 
 #ifndef MYSQL_DELETE_OPTION_UNASSIGNED
@@ -832,10 +983,6 @@ namespace {
 #ifndef MYSQL_DELETE_OPTION_POOL_RANGE
 #define MYSQL_DELETE_OPTION_POOL_RANGE(table_prefix, ...) \
     "DELETE o FROM " #table_prefix "_options AS o " \
-    "INNER JOIN " #table_prefix "_options_server AS a" \
-    "  ON o.option_id = a.option_id " \
-    "INNER JOIN " #table_prefix "_server AS s" \
-    "  ON a.server_id = s.id " \
     "WHERE " #__VA_ARGS__ \
     "  AND o.pool_id = " \
     "  (SELECT id FROM " #table_prefix "_pool" \
@@ -845,10 +992,6 @@ namespace {
 #ifndef MYSQL_DELETE_OPTION_PD_POOL
 #define MYSQL_DELETE_OPTION_PD_POOL(...) \
     "DELETE o FROM dhcp6_options AS o " \
-    "INNER JOIN dhcp6_options_server AS a" \
-    "  ON o.option_id = a.option_id " \
-    "INNER JOIN dhcp6_server AS s" \
-    "  ON a.server_id = s.id " \
     "WHERE " #__VA_ARGS__ \
     "  AND o.pd_pool_id = " \
     "  (SELECT id FROM dhcp6_pd_pool" \

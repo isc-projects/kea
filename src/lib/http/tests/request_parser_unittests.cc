@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -366,6 +366,22 @@ TEST_F(HttpRequestParserTest, getBufferAsString) {
     // Only 3 characters requested. The request should be truncated.
     EXPECT_EQ("POS.........\n(truncating HTTP message larger than 3 characters)\n",
               parser.getBufferAsString(3));
+}
+
+TEST_F(HttpRequestParserTest, parseEmptyRequest) {
+    std::string http_req = "POST / HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n";
+    std::string json = "";
+
+    http_req = createRequestString(http_req, json);
+
+    ASSERT_NO_FATAL_FAILURE(doParse(http_req));
+
+    EXPECT_EQ(HttpRequest::Method::HTTP_POST, request_.getMethod());
+    EXPECT_EQ("/", request_.getUri());
+    EXPECT_EQ("", request_.getBody());
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(1, request_.getHttpVersion().minor_);
 }
 
 }

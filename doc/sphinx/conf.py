@@ -12,10 +12,13 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+# to avoid "sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object"
+import sys
+sys.setrecursionlimit(5000)
 
 # -- Project information -----------------------------------------------------
 
@@ -151,8 +154,10 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'kea-arm.tex', 'Kea Administrator Reference Manual Documentation', author, 'manual'),
-    (messages_doc, 'kea-messages.tex', 'Kea Messages Manual', author, 'manual'),
 ]
+
+if os.getenv("READTHEDOCS", "False") == "False":
+    latex_documents.append((messages_doc, 'kea-messages.tex', 'Kea Messages Manual', author, 'manual'))
 
 
 # -- Options for manual page output ------------------------------------------
@@ -182,6 +187,31 @@ man_pages = [
 todo_include_todos = True
 
 
+
+# Do generation of api.rst and kea-messages.rst here in conf.py instead of Makefile.am
+# so they are available on ReadTheDocs as there makefiles are not used for building docs.
+def run_generate_docs(_):
+    import os
+    import sys
+    src_dir = os.path.abspath(os.path.dirname(__file__))
+    print(src_dir)
+    sys.path.append(src_dir)
+
+    import api2doc
+    with open(os.path.join(src_dir, 'api-files.txt')) as af:
+        api_files = af.read().split()
+    api_files = [os.path.abspath(os.path.join(src_dir, af)) for af in api_files]
+    api2doc.generate(api_files, os.path.join(src_dir, 'api.rst'))
+
+    import mes2doc
+    with open(os.path.join(src_dir, 'mes-files.txt')) as mf:
+        mes_files = mf.read().split()
+    mes_files = [os.path.abspath(os.path.join(src_dir, '../..', mf)) for mf in mes_files]
+    mes2doc.generate(mes_files, os.path.join(src_dir, 'kea-messages.rst'))
+
+
 # custom setup hook
 def setup(app):
     app.add_stylesheet('kea.css')
+
+    app.connect('builder-inited', run_generate_docs)

@@ -126,7 +126,7 @@ increase the time it takes each unit test to execute.
 
   The unit tests are run automatically when "make check" is executed (providing
   that Kea has been build with the \c --with-mysql switch (see the installation
-  section in the <a href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html">Kea Administrator
+  section in the <a href="https://kea.readthedocs.io/">Kea Administrator
   Reference Manual</a>).
 
  @subsection pgsqlUnitTestsPrerequisites PostgreSQL Database

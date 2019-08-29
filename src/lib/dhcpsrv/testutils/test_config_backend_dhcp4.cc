@@ -708,7 +708,7 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
     auto not_in_selected_servers = false;
     for (auto subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.
-        auto pool = subnet->getPool(Lease::TYPE_NA, pool_start_address);
+        auto pool = subnet->getPool(Lease::TYPE_V4, pool_start_address);
         if (!pool) {
             continue;
         }

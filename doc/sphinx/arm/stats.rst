@@ -123,6 +123,17 @@ The server returns details of the requested statistic, with a result of
 "arguments" parameter. If the requested statistic is not found, the
 response will contain an empty map, i.e. only { } as an argument, but
 the status code will still indicate success (0).
+An example response:
+
+::
+
+   {
+       "command": "statistic-get",
+       "arguments": {
+           "pkt4-received": [ [ 125, "2019-07-30 10:11:19.498739" ], [ 100, "2019-07-30 10:11:19.498662" ] ]
+       },
+       "result": 0
+   }
 
 .. _command-statistic-reset:
 
@@ -192,6 +203,24 @@ example command may look like this:
 The server responds with details of all recorded statistics, with a
 result set to 0 to indicate that it iterated over all statistics (even
 when the total number of statistics is zero).
+An example response returning all collected statistics:
+
+::
+
+   {
+       "command": "statistic-get-all",
+       "arguments": {
+           "declined-addresses": [ [ 0, "2019-07-30 10:04:28.386733" ] ],
+           "reclaimed-declined-addresses": [ [ 0, "2019-07-30 10:04:28.386735" ] ],
+           "reclaimed-leases": [ [ 0, "2019-07-30 10:04:28.386736" ] ],
+           "subnet[1].assigned-addresses": [ [ 0, "2019-07-30 10:04:28.386740" ] ],
+           "subnet[1].declined-addresses": [ [ 0, "2019-07-30 10:04:28.386743" ] ],
+           "subnet[1].reclaimed-declined-addresses": [ [ 0, "2019-07-30 10:04:28.386745" ] ],
+           "subnet[1].reclaimed-leases": [ [ 0, "2019-07-30 10:04:28.386747" ] ],
+           "subnet[1].total-addresses": [ [ 200, "2019-07-30 10:04:28.386719" ] ]
+       },
+       "result": 0
+   }
 
 .. _command-statistic-reset-all:
 

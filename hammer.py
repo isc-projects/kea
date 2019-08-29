@@ -162,7 +162,7 @@ def get_system_revision():
     """Return tuple containing system name and its revision."""
     system = platform.system()
     if system == 'Linux':
-        system, revision, _ = platform.dist()  # pylit: disable=deprecated-method
+        system, revision, _ = platform.dist()  # pylint: disable=deprecated-method
         if system == 'debian':
             revision = revision.split('.')[0]
         elif system == 'redhat':
@@ -877,6 +877,7 @@ def _configure_mysql(system, revision, features):
 
 
 def _configure_pgsql(system, features):
+    """ Configure PostgreSQL DB """
     if system in ['fedora', 'centos']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
@@ -885,8 +886,18 @@ def _configure_pgsql(system, features):
                 execute('sudo postgresql-setup initdb')
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
-    execute('sudo systemctl start postgresql.service')
-    execute('sudo systemctl enable postgresql.service')
+    elif system == 'freebsd':
+        # pgsql must be enabled before runnig initdb
+        execute('sudo sysrc postgresql_enable="yes"')
+        execute('sudo /usr/local/etc/rc.d/postgresql initdb')
+
+    if system == 'freebsd':
+        # echo or redirection to stdout is needed otherwise the script will hang at "line = p.stdout.readline()"
+        execute('sudo service postgresql start && echo "PostgreSQL started"')
+    else:
+        execute('sudo systemctl enable postgresql.service')
+        execute('sudo systemctl start postgresql.service')
+
     cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
     cmd += "DROP DATABASE IF EXISTS keatest;\n"
     cmd += "DROP USER IF EXISTS keatest;\n"
@@ -934,6 +945,8 @@ def _install_cassandra_deb(system, revision, env, check_times):
         execute('wget -qO- https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -',
                 env=env, check_times=check_times)
         _apt_update(system, revision, env=env, check_times=check_times)
+        # ca-certificates-java needs to be installed first because it fails if installed together with cassandra
+        install_pkgs('ca-certificates-java', env=env, check_times=check_times)
         install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
@@ -1158,7 +1171,7 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme'])
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1205,7 +1218,7 @@ def prepare_system_local(features, check_times):
             if revision == '8':
                 packages.extend(['virtualenv'])
             else:
-                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme'])
+                packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'texlive', 'texlive-latex-extra'])
                 if revision == '9':
                     packages.extend(['texlive-generic-extra'])
 
@@ -1260,6 +1273,9 @@ def prepare_system_local(features, check_times):
 
         if 'mysql' in features:
             packages.extend(['mysql57-server', 'mysql57-client'])
+
+        if 'pgsql' in features:
+            packages.extend(['postgresql11-server', 'postgresql11-client'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1534,7 +1550,9 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
 
         # do rpm build
-        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
+        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
+        cmd += " -D'_topdir /home/vagrant/rpm-root'"
+        cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
         cmd = cmd % (pkg_version, pkg_isc_version)
         execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 

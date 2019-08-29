@@ -45,6 +45,7 @@ Kea, can be found in ISC's `Knowledgebase <https://kb.isc.org/docs/kea-administr
    :name: appendices
    :maxdepth: 1
 
+   api
    manpages
    kea-messages
    arm/acknowledgments

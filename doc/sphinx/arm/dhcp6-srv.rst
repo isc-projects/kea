@@ -296,6 +296,15 @@ can be used to configure the memfile backend.
    default value of the ``lfc-interval`` is ``3600``. A value of 0
    disables the LFC.
 
+-  ``max-row-errors``: when the server loads a lease file, it is processed
+   row by row, each row contaning a single lease. If a row is flawed and
+   cannot be processed correctly the server will log it, discard the row,
+   and go on to the next row. This parameter can be used to set a limit on
+   the number of such discards that may occur after which the server will
+   abandon the effort and exit.  The default value of 0 disables the limit
+   and allows the server to process the entire file, regardless of how many
+   rows are discarded.
+
 An example configuration of the memfile backend is presented below:
 
 ::
@@ -305,14 +314,17 @@ An example configuration of the memfile backend is presented below:
            "type": "memfile",
            "persist": true,
            "name": "/tmp/kea-leases6.csv",
-           "lfc-interval": 1800
+           "lfc-interval": 1800,
+           "max-row-errors": 100
        }
    }
 
 This configuration selects the ``/tmp/kea-leases6.csv`` as the storage
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
-of the lease file every 30 minutes.
+of the lease file every 30 minutes and sets the maximum number of row
+errors to 100.
+
 
 It is important to know how the lease file contents are organized to
 understand why the periodic lease file cleanup is needed. Every time the
@@ -1161,6 +1173,26 @@ Kea supports the following formats when specifying hexadecimal data:
 Care should be taken to use proper encoding when using hexadecimal
 format; Kea's ability to validate data correctness in hexadecimal is
 limited.
+
+As of Kea 1.6.0, it is also possible to specify data for binary options as
+a single-quoted text string within double quotes as shown (note that
+``csv-format`` must be set to false):
+
+::
+
+   "Dhcp6": {
+       "option-data": [
+           {
+               "name": "subscriber-id",
+               "code": 38,
+               "space": "dhcp6",
+               "csv-format": false,
+               "data": "'convert this text to binary'"
+           },
+           ...
+       ],
+       ...
+   }
 
 Most of the parameters in the "option-data" structure are optional and
 can be omitted in some circumstances, as discussed in :ref:`dhcp6-option-data-defaults`.
@@ -3505,6 +3537,19 @@ indirectly) and not only-if-required is evaluated.
    "reserved-class1" from the previous example, add a
    "member('KNOWN')" statement in the expression.
 
+.. note::
+   Beware that the reserved classes are assigned to the processed
+   packet after all classes with the ``only-if-required`` parameter
+   set to ``false`` have been evaluated. This has an implication that
+   these classes must not depend on the statically assigned classes
+   from the host reservations. If there is a need to create such
+   dependency, the ``only-if-required`` must be set to ``true`` for
+   the dependent classes. Such classes are evaluated after the static
+   classes have been assigned to the packet. This, however, imposes
+   additional configuration overhead, because all classes marked as
+   ``only-if-required`` must be listed in the ``require-client-classes``
+   list for every subnet where they are used.
+
 .. _reservations6-mysql-pgsql-cql:
 
 Storing Host Reservations in MySQL, PostgreSQL, or Cassandra
@@ -3926,16 +3971,41 @@ However, care should be taken for each subnet to have the same value.
 Local and Relayed Traffic in Shared Networks
 --------------------------------------------
 
-It is possible to specify an interface name in the shared network scope
+It is possible to specify an interface name at the shared network level
 to tell the server that this specific shared network is reachable
-directly (not via relays) using a local network interface. It is
-sufficient to specify it once at the shared network level. As all
+directly (not via relays) using the local network interface. As all
 subnets in a shared network are expected to be used on the same physical
 link, it is a configuration error to attempt to define a shared network
-using subnets that are reachable over different interfaces. It is
-possible to specify the interface parameter on each subnet, although its
-value must be the same for each subnet. Thus it is usually more
-convenient to specify it once at the shared network level.
+using subnets that are reachable over different interfaces. In other
+words, all subnets within the shared network must have the same value
+of the "interface" parameter. The following configuration is wrong.
+
+::
+
+   "shared-networks": [
+       {
+           "name": "office-floor-2",
+           "subnet6": [
+               {
+                   "subnet": "2001:db8::/64",
+                   "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ],
+                   "interface": "eth0"
+               },
+               {
+                    "subnet": "3ffe:abcd::/64",
+                    "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
+
+                    # Specifying the different interface name is a configuration
+                    # error. This value should rather be "eth0" or the interface
+                    # name in the other subnet should be "eth1".
+                    # "interface": "eth1"
+               }
+           ],
+       } ]
+
+To minimize the chance of the configuration errors, it is often more convenient
+to simply specify the interface name once, at the shared network level, like
+shown in the example below.
 
 ::
 
@@ -3951,33 +4021,29 @@ convenient to specify it once at the shared network level.
                {
                    "subnet": "2001:db8::/64",
                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ],
-                   "interface": "eth0"
                },
                {
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
-
-                    # Specifying a different interface name is a configuration
-                    # error:
-                    # "interface": "eth1"
                }
            ],
        } ]
 
-Somewhat similar to interface names, relay IP addresses can also be
-specified for the whole shared network. However, depending on the relay
-configuration, it may use different IP addresses depending on which
-subnet is being used. Thus there is no requirement to use the same IP
-relay address for each subnet. Here's an example:
+
+In case of the relayed traffic, the subnets are typically selected using
+the relay agents' addresses. If the subnets are used independently (not
+grouped within a shared network) it is allowed to specify different relay
+address for each of these subnets. When multiple subnets belong to a
+shared network they must be selected via the same relay address and,
+similarly to the case of the local traffic described above, it is a
+configuration error to specify different relay addresses for the respective
+subnets in the shared network. The following configuration is wrong.
 
 ::
 
    "shared-networks": [
        {
            "name": "kakapo",
-           "relay": {
-               "ip-addresses":  [ "2001:db8::abcd" ]
-           },
            "subnet6": [
                {
                    "subnet": "2001:db8::/64",
@@ -3990,6 +4056,10 @@ relay address for each subnet. Here's an example:
                     "subnet": "3ffe:abcd::/64",
                     "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
                     "relay": {
+                       # Specifying a different relay address for this
+                       # subnet is a configuration error. In this case
+                       # it should be 2001:db8::1234 or the relay address
+                       # in the previous subnet should be 3ffe:abcd::cafe.
                        "ip-addresses": [ "3ffe:abcd::cafe" ]
                     }
                }
@@ -3997,12 +4067,45 @@ relay address for each subnet. Here's an example:
        }
    ]
 
-In this particular case the relay IP address specified at the network
-level doesn't make much sense, as it is overridden in both subnets, but
-it was left there as an example of how one could be defined at the
-network level. Note that the relay agent IP address typically belongs to
-the subnet it relays packets from, but this is not a strict requirement.
-Kea accepts any value here as long as it is a valid IPv6 address.
+Again, it is better to specify the relay address at the shared network
+level and this value will be inherited by all subnets belonging to the
+shared network.
+
+::
+
+   "shared-networks": [
+       {
+           "name": "kakapo",
+           "relay": {
+               # This relay address is inherited by both subnets.
+               "ip-addresses": [ "2001:db8::1234" ]
+           },
+           "subnet6": [
+               {
+                   "subnet": "2001:db8::/64",
+                   "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
+               },
+               {
+                    "subnet": "3ffe:abcd::/64",
+                    "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
+               }
+           ]
+       }
+   ]
+
+Even though it is technically possible to configure two (or more) subnets
+within the shared network to use different relay addresses, this will almost
+always lead to a different behavior than what the user would expect. In this
+case, the Kea server will initially select one of the subnets by matching
+the relay address in the client's packet with the subnet's conifguration.
+However, it MAY end up using the other subnet (even though it does not match
+the relay address) if the client already has a lease in this subnet, has a
+host reservation in this subnet or simply the initially selected subnet has no
+more addresses available. Therefore, it is strongly recommended to always
+specify subnet selectors (interface or a relay address) at shared network
+level if the subnets belong to a shared network, as it is rarely useful to
+specify them at the subnet level and it may lead to the configurtion errors
+described above.
 
 Client Classification in Shared Networks
 ----------------------------------------
@@ -5513,22 +5616,40 @@ The following standards are currently supported:
 -  *Dynamic Host Configuration Protocol for IPv6*, `RFC
    3315 <https://tools.ietf.org/html/rfc3315>`__: Supported messages are
    SOLICIT, ADVERTISE, REQUEST, RELEASE, RENEW, REBIND,
-   INFORMATION-REQUEST, CONFIRM and REPLY.
+   INFORMATION-REQUEST, CONFIRM, DECLINE and REPLY. The only not
+   supported message is RECONFIGURE.
+
+-  *Dynamic Host Configuration Protocol (DHCPv6) Options for
+   Session Initiation Protocol (SIP) Servers*, `RFC 3319
+   <https://tools.ietf.org/html/rfc3319>`__: All defined options are supported.
 
 -  *IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP)
    version 6*, `RFC 3633 <https://tools.ietf.org/html/rfc3633>`__:
    Supported options are IA_PD and IA_PREFIX. Also supported is the
    status code NoPrefixAvail.
 
--  *DNS Configuration options for Dynamic Host Configuration Protocol
-   for IPv6 (DHCPv6)*, `RFC
-   3646 <https://tools.ietf.org/html/rfc3646>`__: Supported option is
-   DNS_SERVERS.
+-  *DNS Configuration options for Dynamic Host Configuration Protocol for IPv6
+   (DHCPv6)*, `RFC 3646 <https://tools.ietf.org/html/rfc3646>`__: All defined
+   options are supported.
+
+-  *Stateless Dynamic Host Configuration Protocol (DHCP) Service for IPv6*, `RFC
+   3736 <https://tools.ietf.org/html/rfc3736>`__: The server operation in
+   stateless mode is supported. Kea is currently server only, so the client side
+   is not implemented.
+
+-  *Information Refresh Time Option for Dynamic Host Configuration Protocol for
+   IPv6 (DHCPv6)*, `RFC 4242 <https://tools.ietf.org/html/rfc4242>`__: The
+   sole defined option (information-refresh-time) is supported.
 
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Relay
    Agent Remote-ID Option*, `RFC
    4649 <https://tools.ietf.org/html/rfc4649>`__: REMOTE-ID option is
    supported.
+
+-  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
+   Configuration Protocol (DHCP) Clients*, `RFC 4703
+   <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses DHCP-DDNS
+   server to resolve conflicts.
 
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client
    Fully Qualified Domain Name (FQDN) Option*, `RFC
@@ -5562,10 +5683,11 @@ The following standards are currently supported:
    options indicated in this specification are supported by the DHCPv6
    server.
 
--  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC
-   8415 <https://tools.ietf.org/html/rfc8415>`__: New DHCPv6 protocol
-   specification which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242,
-   RFC 7083, RFC 7283, and RFC 7550.
+-  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC 8415
+   <https://tools.ietf.org/html/rfc8415>`__: New DHCPv6 protocol specification
+   which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283,
+   and RFC 7550. All features, with the exception of Reconfigure mechanism and
+   the now deprecated temporary addresses (IA_TA) mechanism, are supported.
 
 .. _dhcp6-limit:
 
@@ -5581,7 +5703,8 @@ treated as “not implemented yet”, rather than actual limitations.
    8415 <https://tools.ietf.org/html/rfc8415>`__ allows for multiple
    addresses or prefixes to be allocated for a single IA.
 
--  Temporary addresses are not supported.
+-  Temporary addresses are not supported. There is no intention to ever
+   implement this feature, as it is deprecated in RFC8415.
 
 -  Client reconfiguration (RECONFIGURE) is not yet supported.
 
@@ -5652,7 +5775,7 @@ the global DHCPv6 options (``option-data``) are modified using
    +==========================+============================+===========+===========+===========+============+
    | calculate-tee-times      | yes                        | yes       | yes       | n/a       | n/a        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
-   | client-class             | n/a                        | yes       | yes       | no        | no         |
+   | client-class             | n/a                        | yes       | yes       | yes       | yes        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
    | decline-probation-period | yes                        | n/a       | n/a       | n/a       | n/a        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
@@ -5660,9 +5783,9 @@ the global DHCPv6 options (``option-data``) are modified using
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
    | dhcp4o6-port             | yes                        | n/a       | n/a       | n/a       | n/a        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
-   | excluded-prefix          | n/a                        | n/a       | n/a       | n/a       | no         |
+   | excluded-prefix          | n/a                        | n/a       | n/a       | n/a       | yes        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
-   | excluded-prefix-len      | n/a                        | n/a       | n/a       | n/a       | no         |
+   | excluded-prefix-len      | n/a                        | n/a       | n/a       | n/a       | yes        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
    | interface                | n/a                        | yes       | yes       | n/a       | n/a        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
@@ -5688,7 +5811,7 @@ the global DHCPv6 options (``option-data``) are modified using
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
    | renew-timer              | yes                        | yes       | yes       | n/a       | n/a        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
-   | require-client-classes   | n/a                        | yes       | yes       | no        | no         |
+   | require-client-classes   | n/a                        | yes       | yes       | yes       | yes        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
    | reservation-mode         | yes                        | yes       | yes       | n/a       | n/a        |
    +--------------------------+----------------------------+-----------+-----------+-----------+------------+
@@ -5711,6 +5834,7 @@ Configuration Backend for the DHCPv6 server:
 
    {
        "Dhcp6": {
+       "server-tag": "my DHCPv6 server",
            "config-control": {
                "config-databases": [
                    {

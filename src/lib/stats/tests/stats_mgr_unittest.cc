@@ -225,16 +225,16 @@ TEST_F(StatsMgrTest, getGetAll) {
     StatsMgr::instance().setValue("delta", "Lorem");
 
     // The string's representation of firstly added statistics
-    std::string alpha_first = ", 1234, \"" +
+    std::string alpha_first = ", [ 1234, \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
-    std::string beta_first = ", 12.34, \"" +
+    std::string beta_first = ", [ 12.34, \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
-    std::string gamma_first = ", \"01:02:03.000004\", \"" +
+    std::string gamma_first = ", [ \"01:02:03.000004\", \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
-    std::string delta_first = ", \"Lorem\", \"" +
+    std::string delta_first = ", [ \"Lorem\", \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
@@ -260,16 +260,16 @@ TEST_F(StatsMgrTest, getGetAll) {
 
     std::string exp_str_alpha = "[ [ 6912, \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
-                                   ->getInteger().second) + "\"" + alpha_first;
+                                   ->getInteger().second) + "\" ]" + alpha_first;
     std::string exp_str_beta = "[ [ 69.12, \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
-                                   ->getFloat().second) + "\"" + beta_first;
+                                   ->getFloat().second) + "\" ]" + beta_first;
     std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
-                                   ->getDuration().second) + "\"" + gamma_first;
+                                   ->getDuration().second) + "\" ]" + gamma_first;
     std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
         isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
-                                   ->getString().second) + "\"" + delta_first;
+                                   ->getString().second) + "\" ]" + delta_first;
 
     // Check that individual stats are reported properly
     EXPECT_EQ("{ \"alpha\": " + exp_str_alpha + " }", rep_alpha->str());
