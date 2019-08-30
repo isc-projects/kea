@@ -1478,9 +1478,9 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
 
         if 'forge' in features:
             if 'mysql' in features:
-                execute('kea-admin lease-init mysql -u keauser -p keapass -n keadb', dry_run=dry_run)
+                execute('kea-admin db-init mysql -u keauser -p keapass -n keadb', dry_run=dry_run)
             if 'pgsql' in features:
-                execute('kea-admin lease-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
+                execute('kea-admin db-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
 
 
 def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
