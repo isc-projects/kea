@@ -38,9 +38,9 @@ software separately. (For the build requirements, also see :ref:`build-requireme
 
 -  Kea supports two cryptographic libraries: Botan and OpenSSL. Only one
    of them is required to be installed during compilation. Kea uses the
-   Botan library for C++ (https://botan.randombit.net/), version 1.9 or
-   later. Note that support for Botan versions earlier than 2.0 will be
-   removed in Kea 1.6.0 and later. As an alternative to Botan, Kea can
+   Botan library for C++ (https://botan.randombit.net/), version 2.0 or
+   later. Note that support for Botan versions earlier than 2.0 was
+   removed in Kea 1.7.0 and later. As an alternative to Botan, Kea can
    use the OpenSSL cryptographic library (https://www.openssl.org/),
    version 1.0.2 or later.
 

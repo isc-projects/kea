@@ -69,9 +69,8 @@ the system:
    versions). The Boost system library must also be installed.
    Installing a header-only version of Boost is no longer recommended.
 
--  OpenSSL (at least version 1.0.1) or Botan (at least version 1.9).
-   Note that OpenSSL version 1.0.2 or 1.1.0 or later and Botan version 2
-   or later are strongly recommended.
+-  OpenSSL (at least version 1.0.1) or Botan (at least version 2).
+   Note that OpenSSL version 1.0.2 or 1.1.0 or later is strongly recommended.
 
 -  log4cplus (at least version 1.0.3) development include headers.
 
