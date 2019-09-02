@@ -3,7 +3,7 @@
         "comment": "Kea is doing now RA. yay!",
         "hop-limit": 64,
         "interfaces-config": {
-            "interfaces": [ "ethX" ]
+            "interfaces": [ ]
         },
         "loggers": [
             {
@@ -14,7 +14,8 @@
                         "flush": true,
                         "maxsize": 10240000,
                         "maxver": 1,
-                        "output": "stdout"
+                        "output": "stdout",
+                        "pattern": ""
                     }
                 ],
                 "severity": "INFO"

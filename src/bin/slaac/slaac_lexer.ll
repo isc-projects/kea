@@ -420,6 +420,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"pattern\" {
+    switch(driver.ctx_) {
+    case ParserContext::OUTPUT_OPTIONS:
+        return SlaacParser::make_PATTERN(driver.loc_);
+    default:
+        return SlaacParser::make_STRING("pattern", driver.loc_);
+    }
+}
+
 \"debuglevel\" {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
