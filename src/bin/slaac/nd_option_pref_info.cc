@@ -144,7 +144,7 @@ OptionPrefInfo::~OptionPrefInfo() {
 }
 
 void OptionPrefInfo::checkPrefix(const IOAddress& pref) {
-    const IOAddress& first = dhcp::firstAddrInPrefix(pref, prefix_length_);
+    const IOAddress& first = asiolink::firstAddrInPrefix(pref, prefix_length_);
     if (first != pref) {
         isc_throw(BadValue, "bad prefix " << pref.toText() << "/"
                   << static_cast<unsigned>(prefix_length_)

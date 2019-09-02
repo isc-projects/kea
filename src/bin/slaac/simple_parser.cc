@@ -138,6 +138,7 @@ SlaacSimpleParser::parseExperimental(const SlaacConfigPtr& config,
     /// @todo: parse experimental structure
 }
 
+void
 SlaacSimpleParser::parsePrefixInfos(PrefixInfosConfig& config,
                                     const ConstElementPtr& json) {
     // Reset first the config.
