@@ -54,6 +54,17 @@ TEST(SlaacProcess, construction) {
 
     // Verify that the constructor succeeds with a valid io_service
     lcl_io_service.reset(new IOService());
+    /// @todo: this throws in process construction. I think it expects interfaces to be
+    /// defined, but there are none and it tries to open non-existing socket.
+    // frame #1: 0x0000000100005543 slaac_unittests`void boost::throw_exception<boost::system::system_error>(e=<unavailable>) at throw_exception.hpp:69:5 [opt]
+    //     frame #2: 0x0000000100073391 slaac_unittests`boost::asio::basic_socket<boost::asio::ip::icmp, boost::asio::raw_socket_service<boost::asio::ip::icmp> >::open(boost::asio::ip::icmp const&) [inlined] boost::asio::detail::do_throw_error(location=<unavailable>) at throw_error.ipp:38:3 [opt]
+    //     frame #3: 0x0000000100073344 slaac_unittests`boost::asio::basic_socket<boost::asio::ip::icmp, boost::asio::raw_socket_service<boost::asio::ip::icmp> >::open(boost::asio::ip::icmp const&) [inlined] boost::asio::detail::throw_error(location=<unavailable>) at throw_error.hpp:42 [opt]
+    //     frame #4: 0x0000000100073344 slaac_unittests`boost::asio::basic_socket<boost::asio::ip::icmp, boost::asio::raw_socket_service<boost::asio::ip::icmp> >::open(this=<unavailable>, protocol=<unavailable>) at basic_socket.hpp:270 [opt]
+    //     frame #5: 0x000000010007324f slaac_unittests`isc::slaac::RequestHandler::RequestHandler(this=0x00007ffeefbff440, io_service=0x0000000100700070) at slaac_process.cc:119:13 [opt]
+    //     frame #6: 0x0000000100071af6 slaac_unittests`isc::slaac::SlaacProcess::SlaacProcess(char const*, boost::shared_ptr<isc::asiolink::IOService> const&) [inlined] isc::slaac::RequestHandler::RequestHandler(this=<unavailable>, io_service=<unavailable>) at slaac_process.cc:117:1 [opt]
+    //     frame #7: 0x0000000100071aee slaac_unittests`isc::slaac::SlaacProcess::SlaacProcess(this=0x00007ffeefbff3f8, name="TestProcess", io_service=0x00007ffeefbff5f0) at slaac_process.cc:47 [opt]
+    //
+
     ASSERT_NO_THROW(SlaacProcess("TestProcess", lcl_io_service));
 
     // Verify tha the configuration is accessible after construction.
