@@ -27,7 +27,8 @@ namespace isc {
 namespace dhcp {
 
 SharedNetwork4Ptr
-SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
+SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
+                            bool check_iface) {
     SharedNetwork4Ptr shared_network;
     try {
 
@@ -46,6 +47,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // interface is an optional parameter
         if (shared_network_data->contains("interface")) {
+            // check_iface applies only on subnets?
             shared_network->setIface(getString(shared_network_data, "interface"));
         }
 
@@ -63,7 +65,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             // Create parser instance of subnet4.
             Subnets4ListConfigParser parser;
             Subnet4Collection subnets;
-            parser.parse(subnets, json);
+            parser.parse(subnets, json, check_iface);
 
             // Add all returned subnets into shared network.
             for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
@@ -195,7 +197,8 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
 }
 
 SharedNetwork6Ptr
-SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
+SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
+                            bool check_iface) {
     SharedNetwork6Ptr shared_network;
     std::string name;
     try {
@@ -250,6 +253,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // Get interface name. If it is defined, then the subnet is available
         // directly over specified network interface.
+        // check_iface applies only on subnets?
         if (!iface.unspecified() && !iface.empty()) {
             shared_network->setIface(iface);
         }
@@ -304,7 +308,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             // Create parser instance of subnet6.
             Subnets6ListConfigParser parser;
             Subnet6Collection subnets;
-            parser.parse(subnets, json);
+            parser.parse(subnets, json, check_iface);
 
             // Add all returned subnets into shared network.
             for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
