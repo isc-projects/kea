@@ -25,11 +25,14 @@ public:
     ///
     /// @param shared_network_data Data element holding shared network
     /// configuration to be parsed.
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
     ///
     /// @return Pointer to an object representing shared network.
     /// @throw DhcpConfigError when shared network configuration is invalid.
     SharedNetwork4Ptr
-    parse(const data::ConstElementPtr& shared_network_data);
+    parse(const data::ConstElementPtr& shared_network_data,
+          bool check_iface = true);
 };
 
 /// @brief Implements parser for IPv6 shared networks.
@@ -39,11 +42,14 @@ public:
     ///
     /// @param shared_network_data Data element holding shared network
     /// configuration to be parsed.
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
     ///
     /// @return Pointer to an object representing shared network.
     /// @throw DhcpConfigError when shared network configuration is invalid.
     SharedNetwork6Ptr
-    parse(const data::ConstElementPtr& shared_network_data);
+    parse(const data::ConstElementPtr& shared_network_data,
+          bool check_iface = true);
 };
 
 } // enf of namespace isc::dhcp

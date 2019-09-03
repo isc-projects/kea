@@ -556,12 +556,15 @@ Pools4ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list) {
 SubnetConfigParser::SubnetConfigParser(uint16_t family)
     : pools_(new PoolStorage()),
       address_family_(family),
-      options_(new CfgOption()) {
+      options_(new CfgOption()),
+      check_iface_(true) {
     relay_info_.reset(new isc::dhcp::Network::RelayInfo());
 }
 
 SubnetPtr
-SubnetConfigParser::parse(ConstElementPtr subnet) {
+SubnetConfigParser::parse(ConstElementPtr subnet, bool check_iface) {
+
+    check_iface_ = check_iface;
 
     ConstElementPtr options_params = subnet->get("option-data");
     if (options_params) {
@@ -682,7 +685,7 @@ Subnet4ConfigParser::Subnet4ConfigParser()
 }
 
 Subnet4Ptr
-Subnet4ConfigParser::parse(ConstElementPtr subnet) {
+Subnet4ConfigParser::parse(ConstElementPtr subnet, bool check_iface) {
     // Check parameters.
     checkKeywords(SimpleParser4::SUBNET4_PARAMETERS, subnet);
 
@@ -693,7 +696,7 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
         parser.parse(pools_, pools);
     }
 
-    SubnetPtr generic = SubnetConfigParser::parse(subnet);
+    SubnetPtr generic = SubnetConfigParser::parse(subnet, check_iface);
 
     if (!generic) {
         // Sanity check: not supposed to fail.
@@ -831,7 +834,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     if (params->contains("interface")) {
         std::string iface = getString(params, "interface");
         if (!iface.empty()) {
-            if (!IfaceMgr::instance().getIface(iface)) {
+            if (check_iface_ && !IfaceMgr::instance().getIface(iface)) {
                 ConstElementPtr error = params->get("interface");
                 isc_throw(DhcpConfigError, "Specified network interface name " << iface
                           << " for subnet " << subnet4->toText()
@@ -933,12 +936,14 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 //**************************** Subnets4ListConfigParser **********************
 
 size_t
-Subnets4ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) {
+Subnets4ListConfigParser::parse(SrvConfigPtr cfg,
+                                ConstElementPtr subnets_list,
+                                bool check_iface) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         Subnet4ConfigParser parser;
-        Subnet4Ptr subnet = parser.parse(subnet_json);
+        Subnet4Ptr subnet = parser.parse(subnet_json, check_iface);
         if (subnet) {
 
             // Adding a subnet to the Configuration Manager may fail if the
@@ -958,12 +963,13 @@ Subnets4ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) 
 
 size_t
 Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
-                                data::ConstElementPtr subnets_list) {
+                                data::ConstElementPtr subnets_list,
+                                bool check_iface) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         Subnet4ConfigParser parser;
-        Subnet4Ptr subnet = parser.parse(subnet_json);
+        Subnet4Ptr subnet = parser.parse(subnet_json, check_iface);
         if (subnet) {
             try {
                 auto ret = subnets.push_back(subnet);
@@ -1117,7 +1123,7 @@ Subnet6ConfigParser::Subnet6ConfigParser()
 }
 
 Subnet6Ptr
-Subnet6ConfigParser::parse(ConstElementPtr subnet) {
+Subnet6ConfigParser::parse(ConstElementPtr subnet, bool check_iface) {
     // Check parameters.
     checkKeywords(SimpleParser6::SUBNET6_PARAMETERS, subnet);
 
@@ -1133,7 +1139,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
         parser.parse(pools_, pd_pools);
     }
 
-    SubnetPtr generic = SubnetConfigParser::parse(subnet);
+    SubnetPtr generic = SubnetConfigParser::parse(subnet, check_iface);
 
     if (!generic) {
         // Sanity check: not supposed to fail.
@@ -1269,7 +1275,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     // Get interface name. If it is defined, then the subnet is available
     // directly over specified network interface.
     if (!iface.unspecified() && !iface.empty()) {
-        if (!IfaceMgr::instance().getIface(iface)) {
+        if (check_iface_ && !IfaceMgr::instance().getIface(iface)) {
             ConstElementPtr error = params->get("interface");
             isc_throw(DhcpConfigError, "Specified network interface name " << iface
                       << " for subnet " << subnet6->toText()
@@ -1325,12 +1331,14 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 //**************************** Subnet6ListConfigParser ********************
 
 size_t
-Subnets6ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) {
+Subnets6ListConfigParser::parse(SrvConfigPtr cfg,
+                                ConstElementPtr subnets_list,
+                                bool check_iface) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         Subnet6ConfigParser parser;
-        Subnet6Ptr subnet = parser.parse(subnet_json);
+        Subnet6Ptr subnet = parser.parse(subnet_json, check_iface);
 
         // Adding a subnet to the Configuration Manager may fail if the
         // subnet id is invalid (duplicate). Thus, we catch exceptions
@@ -1348,12 +1356,13 @@ Subnets6ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) 
 
 size_t
 Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
-                                ConstElementPtr subnets_list) {
+                                ConstElementPtr subnets_list,
+                                bool check_iface) {
     size_t cnt = 0;
     BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
 
         Subnet6ConfigParser parser;
-        Subnet6Ptr subnet = parser.parse(subnet_json);
+        Subnet6Ptr subnet = parser.parse(subnet_json, check_iface);
         if (subnet) {
             try {
                 auto ret = subnets.push_back(subnet);
