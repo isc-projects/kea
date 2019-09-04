@@ -234,6 +234,9 @@ public:
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     virtual ~Dhcpv4Srv();
 
+    /// @brief This function set to defaults all statistics starting with pkt4-.
+    void setPacketStatisticsDefaults();
+
     /// @brief Checks if the server is running in a test mode.
     ///
     /// @return true if the server is running in the test mode,

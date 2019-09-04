@@ -107,7 +107,25 @@ struct Dhcp4Hooks {
         hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
     }
 };
-
+    /// Set of all statistics observed in DHCPv4 server
+    std::set<std::string> dhcp4_statistics = {
+        "pkt4-received",
+        "pkt4-discover-received",
+        "pkt4-offer-received",
+        "pkt4-request-received",
+        "pkt4-ack-received",
+        "pkt4-nak-received",
+        "pkt4-release-received",
+        "pkt4-decline-received",
+        "pkt4-inform-received",
+        "pkt4-unknown-received",
+        "pkt4-sent",
+        "pkt4-offer-sent",
+        "pkt4-ack-sent",
+        "pkt4-nak-sent",
+        "pkt4-parse-failed",
+        "pkt4-receive-drop"
+    };
 } // end of anonymous namespace
 
 // Declare a Hooks object. As this is outside any function or method, it
@@ -481,49 +499,20 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
         return;
     }
 
-    // Initializing all observations with zero value
-    isc::stats::StatsMgr::instance().setValue("pkt4-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-discover-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-offer-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-request-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-ack-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-nak-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-release-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-decline-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-inform-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-unknown-received",
-                                              static_cast<int64_t>(0));
-
-    isc::stats::StatsMgr::instance().setValue("pkt4-sent",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-offer-sent",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-ack-sent",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-nak-sent",
-                                              static_cast<int64_t>(0));
-
-    isc::stats::StatsMgr::instance().setValue("pkt4-parse-failed",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt4-receive-drop",
-                                              static_cast<int64_t>(0));
-
-    isc::stats::StatsMgr::instance().setValue("reclaimed-leases",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("declined-addresses",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("reclaimed-declined-addresses",
-                                              static_cast<int64_t>(0));
+    // Initializing all observations with default value
+    setPacketStatisticsDefaults();
     shutdown_ = false;
+}
+
+void Dhcpv4Srv::setPacketStatisticsDefaults() {
+    std::set<std::string>::iterator it;
+    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+
+    // Iterate over set of observed statistics
+    for (it = dhcp4_statistics.begin(); it != dhcp4_statistics.end(); ++it) {
+        // Initialize them with default value 0
+        stats_mgr.setValue((*it), static_cast<int64_t>(0));
+    }
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
