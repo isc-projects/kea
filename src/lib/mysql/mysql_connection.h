@@ -144,7 +144,7 @@ public:
     /// @brief Prepared statements
     ///
     /// This field is public, because it is used heavily from MySqlConnection
-    /// and will be from MySqlHostDataSource.
+    /// and from MySqlHostDataSource.
     std::vector<MYSQL_STMT*> statements_;
 
     bool connected_;     ///< Flag to indicate openDatabase has been called
@@ -223,8 +223,8 @@ public:
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
-    MySqlConnection(const ParameterMap& parameters)
-        : DatabaseConnection(parameters), connected_(false), prepared_(false) {
+    MySqlConnection(const ParameterMap& parameters) :
+        DatabaseConnection(parameters), connected_(false), prepared_(false) {
     }
 
     /// @brief Destructor
@@ -378,7 +378,8 @@ public:
         int status = 0;
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
-            status = mysql_stmt_bind_param(holderHandle.statements_[index], &in_bind_vec[0]);
+            status = mysql_stmt_bind_param(holderHandle.statements_[index],
+                                           &in_bind_vec[0]);
             checkError(status, index, "unable to bind parameters for select");
         }
 
@@ -453,7 +454,8 @@ public:
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(holderHandle.statements_[index], &in_bind_vec[0]);
+        int status = mysql_stmt_bind_param(holderHandle.statements_[index],
+                                           &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
@@ -493,7 +495,8 @@ public:
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(holderHandle.statements_[index], &in_bind_vec[0]);
+        int status = mysql_stmt_bind_param(holderHandle.statements_[index],
+                                           &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement

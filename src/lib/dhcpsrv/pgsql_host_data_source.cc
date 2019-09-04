@@ -1621,82 +1621,6 @@ TaggedStatementArray tagged_statements = { {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
-    // PgSqlHostDataSourceImpl::INSERT_HOST
-    // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    {13,
-     { OID_BYTEA, OID_INT2, OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR,
-       OID_TEXT, OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR},
-     "insert_host",
-     "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
-     "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
-     "  dhcp4_client_classes, dhcp6_client_classes, user_context, "
-     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) "
-     "RETURNING host_id"
-    },
-
-    //PgSqlHostDataSourceImpl::INSERT_V6_RESRV
-    // Inserts a single IPv6 reservation into 'reservations' table.
-    {5,
-     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
-     "insert_v6_resrv",
-     "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-     "  dhcp6_iaid, host_id) "
-     "VALUES ($1, $2, $3, $4, $5)"
-    },
-
-    // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
-    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {7,
-     { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8},
-     "insert_v4_host_option",
-     "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
-     "  persistent, user_context, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, 3)"
-    },
-
-    // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION
-    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
-    // Using fixed scope_id = 3, which associates an option with host.
-    {7,
-     { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8},
-     "insert_v6_host_option",
-     "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
-     "  persistent, user_context, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, 3)"
-    },
-
-    // PgSqlHostDataSourceImpl::DEL_HOST_ADDR4
-    // Deletes a v4 host that matches (subnet-id, addr4)
-    {2,
-     { OID_INT8, OID_INT8 },
-     "del_host_addr4",
-     "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 AND ipv4_address = $2"
-    },
-
-    // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID
-    // Deletes a v4 host that matches (subnet4-id, identifier-type, identifier)
-    {3,
-     { OID_INT8, OID_INT2, OID_BYTEA },
-     "del_host_subid4_id",
-     "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 "
-     "AND dhcp_identifier_type = $2 "
-     "AND dhcp_identifier = $3"
-    },
-
-    // PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID
-    // Deletes a v6 host that matches (subnet6-id, identifier-type, identifier)
-    {3,
-     { OID_INT8, OID_INT2, OID_BYTEA },
-     "del_host_subid6_id",
-     "DELETE FROM hosts WHERE dhcp6_subnet_id = $1 "
-     "AND dhcp_identifier_type = $2 "
-     "AND dhcp_identifier = $3"
-    },
-
     // PgSqlHostDataSourceImpl::GET_HOST_SUBID4
     //
     // Retrieves host information for all hosts in a subnet, along with the
@@ -1795,6 +1719,84 @@ TaggedStatementArray tagged_statements = { {
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_HOST
+    // Inserts a host into the 'hosts' table. Returns the inserted host id.
+    {13,
+     { OID_BYTEA, OID_INT2,
+       OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
+       OID_VARCHAR, OID_VARCHAR, OID_TEXT,
+       OID_INT8, OID_VARCHAR, OID_VARCHAR, OID_VARCHAR },
+     "insert_host",
+     "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
+     "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
+     "  dhcp4_client_classes, dhcp6_client_classes, user_context, "
+     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) "
+     "RETURNING host_id"
+    },
+
+    //PgSqlHostDataSourceImpl::INSERT_V6_RESRV
+    // Inserts a single IPv6 reservation into 'reservations' table.
+    {5,
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
+     "insert_v6_resrv",
+     "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+     "  dhcp6_iaid, host_id) "
+     "VALUES ($1, $2, $3, $4, $5)"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
+    // Inserts a single DHCPv4 option into 'dhcp4_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {7,
+     { OID_INT2, OID_BYTEA, OID_TEXT,
+       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8 },
+     "insert_v4_host_option",
+     "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
+     "  persistent, user_context, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, 3)"
+    },
+
+    // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION
+    // Inserts a single DHCPv6 option into 'dhcp6_options' table.
+    // Using fixed scope_id = 3, which associates an option with host.
+    {7,
+     { OID_INT2, OID_BYTEA, OID_TEXT,
+       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8 },
+     "insert_v6_host_option",
+     "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
+     "  persistent, user_context, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, 3)"
+    },
+
+    // PgSqlHostDataSourceImpl::DEL_HOST_ADDR4
+    // Deletes a v4 host that matches (subnet-id, addr4)
+    {2,
+     { OID_INT8, OID_INT8 },
+     "del_host_addr4",
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 AND ipv4_address = $2"
+    },
+
+    // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID
+    // Deletes a v4 host that matches (subnet4-id, identifier-type, identifier)
+    {3,
+     { OID_INT8, OID_INT2, OID_BYTEA },
+     "del_host_subid4_id",
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 "
+     "AND dhcp_identifier_type = $2 "
+     "AND dhcp_identifier = $3"
+    },
+
+    // PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID
+    // Deletes a v6 host that matches (subnet6-id, identifier-type, identifier)
+    {3,
+     { OID_INT8, OID_INT2, OID_BYTEA },
+     "del_host_subid6_id",
+     "DELETE FROM hosts WHERE dhcp6_subnet_id = $1 "
+     "AND dhcp_identifier_type = $2 "
+     "AND dhcp_identifier = $3"
     }
 }
 };
@@ -1802,8 +1804,8 @@ TaggedStatementArray tagged_statements = { {
 }  // namespace
 
 PgSqlHostDataSourceImpl::
-PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
-    : conn_(parameters),
+PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters) :
+    conn_(parameters),
       is_readonly_(false) {
 
     // Open the database.

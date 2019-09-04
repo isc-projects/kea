@@ -1082,8 +1082,8 @@ protected:
     bool fetch_type_;
 };
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), conn_(parameters) {
+PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters) :
+    conn_(parameters) {
     conn_.openDatabase();
 
     // Validate schema version first.

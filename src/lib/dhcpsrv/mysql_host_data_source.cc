@@ -2348,7 +2348,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2415,8 +2414,8 @@ TaggedStatementArray tagged_statements = { {
 }; // anonymous namespace
 
 MySqlHostDataSourceImpl::
-MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
-    : conn_(parameters),
+MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters) :
+    conn_(parameters),
       is_readonly_(false) {
 
     // Open the database.

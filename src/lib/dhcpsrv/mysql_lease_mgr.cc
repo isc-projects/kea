@@ -1670,8 +1670,8 @@ private:
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
-    : conn_(parameters) {
+MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters) :
+    conn_(parameters) {
 
     // Open the database.
     conn_.openDatabase();

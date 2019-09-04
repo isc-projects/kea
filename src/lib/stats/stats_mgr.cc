@@ -25,8 +25,8 @@ StatsMgr& StatsMgr::instance() {
     return (stats_mgr);
 }
 
-StatsMgr::StatsMgr()
-    :global_(new StatContext()) {
+StatsMgr::StatsMgr() :
+    global_(new StatContext()) {
     mutex_.reset(new std::mutex());
 }
 
@@ -111,7 +111,6 @@ ObservationPtr StatsMgr::getObservation(const std::string& name, bool lock) cons
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->get(name));
-
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat, bool lock) {

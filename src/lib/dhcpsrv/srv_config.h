@@ -615,6 +615,7 @@ public:
     uint32_t getServerMaxThreadQueueSize() const {
         return (server_max_thread_queue_size_);
     }
+
     /// @brief Returns pointer to the D2 client configuration
     D2ClientConfigPtr getD2ClientConfig() {
         return (d2_client_config_);

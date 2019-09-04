@@ -300,8 +300,8 @@ public:
     /// @brief Constructor
     ///
     /// Initialize PgSqlConnection object with parameters needed for connection.
-    PgSqlConnection(const ParameterMap& parameters)
-        : DatabaseConnection(parameters), connected_(false), prepared_(false) {
+    PgSqlConnection(const ParameterMap& parameters) :
+        DatabaseConnection(parameters), connected_(false), prepared_(false) {
     }
 
     /// @brief Destructor
@@ -399,7 +399,7 @@ public:
     /// @brief Raw statements
     ///
     /// This field is public, because it is used heavily from PgSqlConnection
-    /// and will be from MySqlHostDataSource.
+    /// and from PgSqlHostDataSource.
     std::vector<const PgSqlTaggedStatement*> statements_;
 
     /// @brief PgSql connection handle
