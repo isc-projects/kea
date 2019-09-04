@@ -12,6 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <gtest/gtest.h>
@@ -21,6 +22,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 class SharedNetworkParserTest : public ::testing::Test {
@@ -219,6 +221,8 @@ private:
 // This test verifies that shared network parser for IPv4 works properly
 // in a positive test scenario.
 TEST_F(SharedNetwork4ParserTest, parse) {
+    IfaceMgrTestConfig ifmgr(true);
+
     // Basic configuration for shared network. A bunch of parameters
     // have to be specified for subnets because subnet parsers expect
     // that default and global values are set.
@@ -228,12 +232,6 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     // Parse configuration specified above.
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
-
-    try {
-        network = parser.parse(config_element);
-    } catch (const std::exception& ex) {
-        std::cout << "kabook: " << ex.what() << std::endl;
-    }
 
     ASSERT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
@@ -330,6 +328,8 @@ TEST_F(SharedNetwork4ParserTest, missingName) {
 // This test verifies that it's possible to specify client-class,
 // match-client-id, and authoritative on shared-network level.
 TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
+    IfaceMgrTestConfig ifmgr(true);
+
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -353,6 +353,7 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
 // This test verifies that parsing of the "relay" element.
 // It checks both valid and invalid scenarios.
 TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
+    IfaceMgrTestConfig ifmgr(true);
 
     // Create the vector of test scenarios.
     std::vector<RelayTest> tests = {
@@ -429,6 +430,24 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
             relayTest(*test);
         }
     }
+}
+
+// This test verifies that an interface which is not in the system is rejected.
+TEST_F(SharedNetwork4ParserTest, iface) {
+    // Basic configuration for shared network.
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    EXPECT_NO_THROW(parser.parse(config_element, false));
+    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+
+    // Configure default test interfaces.
+    IfaceMgrTestConfig ifmgr(true);
+
+    EXPECT_NO_THROW(parser.parse(config_element, false));
+    EXPECT_NO_THROW(parser.parse(config_element));
 }
 
 
@@ -539,6 +558,8 @@ public:
 // This test verifies that shared network parser for IPv4 works properly
 // in a positive test scenario.
 TEST_F(SharedNetwork6ParserTest, parse) {
+    IfaceMgrTestConfig ifmgr(true);
+
     // Basic configuration for shared network. A bunch of parameters
     // have to be specified for subnets because subnet parsers expect
     // that default and global values are set.
@@ -634,6 +655,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
 // This test verifies that shared network parser for IPv4 works properly
 // in a positive test scenario.
 TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
+    IfaceMgrTestConfig ifmgr(true);
+
     // Use the configuration with interface-id instead of interface parameter.
     use_iface_id_ = true;
     std::string config = getWorkingConfig();
@@ -653,6 +676,8 @@ TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
 // This test verifies that error is returned when trying to configure a
 // shared network with both interface and interface id.
 TEST_F(SharedNetwork6ParserTest, mutuallyExclusiveInterfaceId) {
+    IfaceMgrTestConfig ifmgr(true);
+
     // Use the configuration with interface-id instead of interface parameter.
     use_iface_id_ = true;
     std::string config = getWorkingConfig();
@@ -669,6 +694,8 @@ TEST_F(SharedNetwork6ParserTest, mutuallyExclusiveInterfaceId) {
 // This test verifies that it's possible to specify client-class
 // on shared-network level.
 TEST_F(SharedNetwork6ParserTest, clientClass) {
+    IfaceMgrTestConfig ifmgr(true);
+
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -686,6 +713,8 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
 // This test verifies that it's possible to specify require-client-classes
 // on shared-network level.
 TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
+    IfaceMgrTestConfig ifmgr(true);
+
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -708,6 +737,8 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
 // This test verifies that bad require-client-classes configs raise
 // expected errors.
 TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
+    IfaceMgrTestConfig ifmgr(true);
+
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -737,6 +768,8 @@ TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
 // This test verifies that v6 parsing of the "relay" element.
 // It checks both valid and invalid scenarios.
 TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
+    IfaceMgrTestConfig ifmgr(true);
+
 
     // Create the vector of test scenarios.
     std::vector<RelayTest> tests = {
@@ -813,6 +846,24 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
             relayTest(*test);
         }
     }
+}
+
+// This test verifies that an interface which is not in the system is rejected.
+TEST_F(SharedNetwork6ParserTest, iface) {
+    // Basic configuration for shared network.
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    EXPECT_NO_THROW(parser.parse(config_element, false));
+    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+
+    // Configure default test interfaces.
+    IfaceMgrTestConfig ifmgr(true);
+
+    EXPECT_NO_THROW(parser.parse(config_element, false));
+    EXPECT_NO_THROW(parser.parse(config_element));
 }
 
 } // end of anonymous namespace

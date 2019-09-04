@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_string.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -25,6 +26,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {
@@ -1395,6 +1397,30 @@ TEST(CfgSubnets6Test, hostnameSanitizierValidation) {
         EXPECT_EQ("^[A-Z]", subnet->getHostnameCharSet().get());
         EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
     }
+}
+
+// This test verifies that an interface which is not in the system is rejected.
+TEST(CfgSubnets6Test, iface) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/64\", \n"
+        "            \"interface\": \"eth1\"\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet6ConfigParser parser;
+    EXPECT_NO_THROW(parser.parse(elems, false));
+    EXPECT_THROW(parser.parse(elems), DhcpConfigError);
+
+    // Configure default test interfaces.
+    IfaceMgrTestConfig config(true);
+    EXPECT_NO_THROW(parser.parse(elems, false));
+    EXPECT_NO_THROW(parser.parse(elems));
 }
 
 } // end of anonymous namespace

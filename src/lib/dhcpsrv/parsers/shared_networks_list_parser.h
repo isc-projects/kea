@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,18 +31,21 @@ public:
 
     /// @brief Parses a list of shared networks.
     ///
+    /// @tparam Type of the configuration structure into which the result
+    /// will be stored, i.e. @ref CfgSharedNetworks4 or @ref CfgSharedNetworks6.
     /// @param [out] cfg Shared networks configuration structure into which
     /// the data should be parsed.
     /// @param shared_networks_list_data List element holding a list of
     /// shared networks.
-    /// @tparam Type of the configuration structure into which the result
-    /// will be stored, i.e. @ref CfgSharedNetworks4 or @ref CfgSharedNetworks6.
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
     ///
     /// @throw DhcpConfigError when error has occurred, e.g. when networks
     /// with duplicated names have been specified.
     template<typename CfgSharedNetworksTypePtr>
     void parse(CfgSharedNetworksTypePtr& cfg,
-               const data::ConstElementPtr& shared_networks_list_data) {
+               const data::ConstElementPtr& shared_networks_list_data,
+                bool check_iface = true) {
         try {
             // Get the C++ vector holding networks.
             const std::vector<data::ElementPtr>& networks_list =
@@ -51,7 +54,7 @@ public:
             for (auto network_element = networks_list.cbegin();
                  network_element != networks_list.cend(); ++network_element) {
                 SharedNetworkParserType parser;
-                auto network = parser.parse(*network_element);
+                auto network = parser.parse(*network_element, check_iface);
                 cfg->add(network);
             }
         } catch (const DhcpConfigError&) {

@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
@@ -15,12 +16,15 @@
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
 // This is a basic test verifying that all shared networks are correctly
 // parsed.
 TEST(SharedNetworkListParserTest, parse) {
+    IfaceMgrTestConfig ifmgr(true);
+
     // Basic configuration with array of shared networks.
     std::string config = "["
         "    {"
@@ -37,7 +41,7 @@ TEST(SharedNetworkListParserTest, parse) {
     ElementPtr config_element = Element::fromJSON(config);
 
     SharedNetworks4ListParser parser;
-    CfgSharedNetworks4Ptr cfg(new CfgSharedNetworks4());;
+    CfgSharedNetworks4Ptr cfg(new CfgSharedNetworks4());
     ASSERT_NO_THROW(parser.parse(cfg, config_element));
 
     SharedNetwork4Ptr network1 = cfg->getByName("bird");
@@ -58,6 +62,8 @@ TEST(SharedNetworkListParserTest, parse) {
 // This test verifies that specifying two networks with the same name
 // yields an error.
 TEST(SharedNetworkListParserTest, duplicatedName) {
+    IfaceMgrTestConfig ifmgr(true);
+
     // Basic configuration with two networks having the same name.
     std::string config = "["
         "    {"
@@ -73,8 +79,33 @@ TEST(SharedNetworkListParserTest, duplicatedName) {
     ElementPtr config_element = Element::fromJSON(config);
 
     SharedNetworks4ListParser parser;
-    CfgSharedNetworks4Ptr cfg(new CfgSharedNetworks4());;
+    CfgSharedNetworks4Ptr cfg(new CfgSharedNetworks4());
     EXPECT_THROW(parser.parse(cfg, config_element), DhcpConfigError);
+}
+
+// This test verifies that an interface which is not in the system is rejected.
+TEST(SharedNetworkListParserTest, iface) {
+    // Basic configuration with a shared network.
+    std::string config = "["
+        "    {"
+        "        \"name\": \"bird\","
+        "        \"interface\": \"eth0\""
+        "    }"
+        "]";
+
+    ElementPtr config_element = Element::fromJSON(config);
+    SharedNetworks6ListParser parser;
+    CfgSharedNetworks6Ptr cfg(new CfgSharedNetworks6());
+    EXPECT_NO_THROW(parser.parse(cfg, config_element, false));
+    cfg.reset(new CfgSharedNetworks6());
+    EXPECT_THROW(parser.parse(cfg, config_element), DhcpConfigError);
+
+    // Configure default test interfaces.
+    IfaceMgrTestConfig ifmgr(true);
+    cfg.reset(new CfgSharedNetworks6());
+    EXPECT_NO_THROW(parser.parse(cfg, config_element, false));
+    cfg.reset(new CfgSharedNetworks6());
+    EXPECT_NO_THROW(parser.parse(cfg, config_element));
 }
 
 } // end of anonymous namespace

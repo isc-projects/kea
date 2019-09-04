@@ -8179,7 +8179,6 @@ const char* UNPARSED_CONFIGS[] = {
 "            {\n"
 "                \"comment\": \"A shared network\",\n"
 "                \"calculate-tee-times\": true,\n"
-"                \"interface\": \"\",\n"
 "                \"name\": \"foo\",\n"
 "                \"option-data\": [ ],\n"
 "                \"preferred-lifetime\": 3600,\n"
