@@ -198,7 +198,7 @@ public:
     ///
     /// @brief Get UDP port on which server should listen.
     ///
-    /// Typically, server listens on UDP port 547. Other ports are used
+    /// Typically, server listens on UDP port number 547. Other ports are used
     /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
