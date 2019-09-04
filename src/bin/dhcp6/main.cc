@@ -7,6 +7,7 @@
 #include <config.h>
 #include <kea_version.h>
 
+#include <cc/command_interpreter.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/parser_context.h>
@@ -37,9 +38,8 @@ using namespace std;
 /// Dhcpv6Srv and other classes, see \ref dhcpv6Session.
 
 namespace {
-const char* const DHCP6_NAME = "kea-dhcp6";
 
-const char* const DHCP6_LOGGER_NAME = "kea-dhcp6";
+const char* const DHCP6_NAME = "kea-dhcp6";
 
 /// @brief Prints Kea Usage and exits
 ///
@@ -62,7 +62,7 @@ usage() {
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
-} // end of anonymous namespace
+}  // namespace
 
 int
 main(int argc, char* argv[]) {
@@ -193,11 +193,8 @@ main(int argc, char* argv[]) {
                 cerr << "Error encountered: " << answer->stringValue() << endl;
                 return (EXIT_FAILURE);
             }
-
-
-            return (EXIT_SUCCESS);
         } catch (const std::exception& ex) {
-            cerr << "Syntax check failed with " << ex.what() << endl;
+            cerr << "Syntax check failed with: " << ex.what() << endl;
         }
         return (EXIT_FAILURE);
     }
@@ -207,11 +204,10 @@ main(int argc, char* argv[]) {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        Daemon::setDefaultLoggerName(DHCP6_LOGGER_NAME);
+        Daemon::setDefaultLoggerName(DHCP6_ROOT_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
-        Daemon::loggerInit(DHCP6_LOGGER_NAME, verbose_mode);
-
+        Daemon::loggerInit(DHCP6_ROOT_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
             .arg(getpid())
             .arg(server_port_number)
@@ -221,21 +217,19 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp6_logger, DHCP6_STARTING).arg(VERSION);
 
         // Create the server instance.
-        ControlledDhcpv6Srv server(server_port_number, client_port_number);
+        ControlledDhcpv6Srv server(server_port_number, client_port_number, true);
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
 
-        // Create our PID file
+        // Create our PID file.
         server.setProcName(DHCP6_NAME);
         server.setConfigFile(config_file);
         server.createPIDFile();
 
         try {
-            // Initialize the server, e.g. establish control session
-            // Read a configuration file
+            // Initialize the server.
             server.init(config_file);
-
         } catch (const std::exception& ex) {
 
             try {
@@ -245,8 +239,8 @@ main(int argc, char* argv[]) {
                 LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
             } catch (...) {
                 // The exception thrown during the initialization could
-                // originate from logger subsystem. Therefore LOG_ERROR() may
-                // fail as well.
+                // originate from logger subsystem. Therefore LOG_ERROR()
+                // may fail as well.
                 cerr << "Failed to initialize server: " << ex.what() << endl;
             }
 
@@ -277,7 +271,6 @@ main(int argc, char* argv[]) {
         }
         ret = EXIT_FAILURE;
     } catch (const std::exception& ex) {
-
         // First, we print the error on stderr (that should always work)
         cerr << DHCP6_NAME << "Fatal error during start up: " << ex.what()
              << endl;

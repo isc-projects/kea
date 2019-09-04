@@ -10,6 +10,7 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
+#include <dhcpsrv/thread_resource_mgr.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_constants.h>

@@ -708,9 +708,9 @@ OptionDefinition::writeToBuffer(Option::Universe u,
             OptionDataTypeUtil::writePrefix(PrefixLen(len), address, buf);
 
             return;
-    }
+        }
     case OPT_PSID_TYPE:
-    {
+        {
         std::string txt = value;
 
         // first let's remove any whitespaces

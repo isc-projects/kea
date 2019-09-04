@@ -24,7 +24,6 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
-#include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
@@ -437,7 +436,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     EXPECT_NO_THROW ({
             LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(v6packed)),
-                                    "dhcp6", options);
+                                    DHCP6_OPTION_SPACE, options);
     });
 
     EXPECT_EQ(options.size(), 6); // there should be 5 options
@@ -780,7 +779,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred);
+        LibDHCP::unpackOptions4(v4packed, DHCP4_OPTION_SPACE, options, deferred);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -1917,8 +1916,8 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
 // This test checks if the definition of the DHCPv6 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
-    const OptionDefContainerPtr& defs =
-        LibDHCP::getVendorOption6Defs(VENDOR_ID_CABLE_LABS);
+    const OptionDefContainerPtr defs =
+        LibDHCP::getVendorOptionDefs(Option::V6, VENDOR_ID_CABLE_LABS);
     ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
@@ -1933,8 +1932,8 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
 // This test checks if the definition of the DHCPv4 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
-    const OptionDefContainerPtr& defs =
-        LibDHCP::getVendorOption4Defs(VENDOR_ID_CABLE_LABS);
+    const OptionDefContainerPtr defs =
+        LibDHCP::getVendorOptionDefs(Option::V4, VENDOR_ID_CABLE_LABS);
     ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
@@ -2079,7 +2078,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     isc::util::encode::decodeHex(vendor_class_hex, bin);
 
     ASSERT_NO_THROW ({
-            LibDHCP::unpackOptions6(bin, "dhcp6", options);
+            LibDHCP::unpackOptions6(bin, DHCP6_OPTION_SPACE, options);
         });
 
     EXPECT_EQ(options.size(), 1); // There should be 1 option.
@@ -2198,7 +2197,7 @@ TEST_F(LibDhcpTest, sw46options) {
 
     OptionBuffer buf(mape_bin);
 
-    size_t parsed;
+    size_t parsed = 0;
 
     EXPECT_NO_THROW (parsed = LibDHCP::unpackOptions6(buf, "dhcp6", options));
     EXPECT_EQ(mape_bin.size(), parsed);
@@ -2257,4 +2256,4 @@ TEST_F(LibDhcpTest, sw46options) {
     EXPECT_EQ("type=00093, len=00004: 8 (uint8) len=6,psid=63 (psid)", portparam->toText());
 }
 
-} // end of anonymous space
+}  // end of anonymous space

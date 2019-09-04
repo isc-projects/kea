@@ -10,8 +10,10 @@
 #include <stats/observation.h>
 #include <stats/context.h>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -75,56 +77,56 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the observation
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void setValue(const std::string& name, const int64_t value);
+    void setValue(const std::string& name, const int64_t value, bool lock = true);
 
     /// @brief Records absolute floating point observation.
     ///
     /// @param name name of the observation
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void setValue(const std::string& name, const double value);
+    void setValue(const std::string& name, const double value, bool lock = true);
 
     /// @brief Records absolute duration observation.
     ///
     /// @param name name of the observation
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void setValue(const std::string& name, const StatsDuration& value);
+    void setValue(const std::string& name, const StatsDuration& value, bool lock = true);
 
     /// @brief Records absolute string observation.
     ///
     /// @param name name of the observation
     /// @param value string value observed
     /// @throw InvalidStatType if statistic is not a string
-    void setValue(const std::string& name, const std::string& value);
+    void setValue(const std::string& name, const std::string& value, bool lock = true);
 
     /// @brief Records incremental integer observation.
     ///
     /// @param name name of the observation
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
-    void addValue(const std::string& name, const int64_t value);
+    void addValue(const std::string& name, const int64_t value, bool lock = true);
 
     /// @brief Records incremental floating point observation.
     ///
     /// @param name name of the observation
     /// @param value floating point value observed
     /// @throw InvalidStatType if statistic is not fp
-    void addValue(const std::string& name, const double value);
+    void addValue(const std::string& name, const double value, bool lock = true);
 
     /// @brief Records incremental duration observation.
     ///
     /// @param name name of the observation
     /// @param value duration value observed
     /// @throw InvalidStatType if statistic is not time duration
-    void addValue(const std::string& name, const StatsDuration& value);
+    void addValue(const std::string& name, const StatsDuration& value, bool lock = true);
 
     /// @brief Records incremental string observation.
     ///
     /// @param name name of the observation
     /// @param value string value observed
     /// @throw InvalidStatType if statistic is not a string
-    void addValue(const std::string& name, const std::string& value);
+    void addValue(const std::string& name, const std::string& value, bool lock = true);
 
     /// @brief Determines maximum age of samples.
     ///
@@ -222,7 +224,7 @@ class StatsMgr : public boost::noncopyable {
     /// Used in testing only. Production code should use @ref get() method.
     /// @param name name of the statistic
     /// @return Pointer to the Observation object
-    ObservationPtr getObservation(const std::string& name) const;
+    ObservationPtr getObservation(const std::string& name, bool lock = true) const;
 
     /// @brief Generates statistic name in a given context
     ///
@@ -447,14 +449,13 @@ private:
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void setValueInternal(const std::string& name, DataType value) {
-
         // If we want to log each observation, here would be the best place for it.
-        ObservationPtr stat = getObservation(name);
+        ObservationPtr stat = getObservation(name, false);
         if (stat) {
             stat->setValue(value);
         } else {
             stat.reset(new Observation(name, value));
-            addObservation(stat);
+            addObservation(stat, false);
         }
     }
 
@@ -472,14 +473,13 @@ private:
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void addValueInternal(const std::string& name, DataType value) {
-
         // If we want to log each observation, here would be the best place for it.
-        ObservationPtr existing = getObservation(name);
+        ObservationPtr existing = getObservation(name, false);
         if (!existing) {
             // We tried to add to a non-existing statistic. We can recover from
             // that. Simply add the new incremental value as a new statistic and
             // we're done.
-            setValue(name, value);
+            setValue(name, value, false);
             return;
         } else {
             // Let's hope it is of correct type. If not, the underlying
@@ -495,7 +495,7 @@ private:
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
     /// @param stat observation
-    void addObservation(const ObservationPtr& stat);
+    void addObservation(const ObservationPtr& stat, bool lock = true);
 
     /// @private
 
@@ -503,7 +503,7 @@ private:
     ///
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
-    bool deleteObservation(const std::string& name);
+    bool deleteObservation(const std::string& name, bool lock = true);
 
     /// @brief Utility method that attempts to extract statistic name
     ///
@@ -562,6 +562,8 @@ private:
 
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
+
+    boost::scoped_ptr<std::mutex> mutex_;
 };
 
 };

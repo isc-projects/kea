@@ -606,6 +606,34 @@ public:
         return (dhcp4o6_port_);
     }
 
+    /// @brief Sets the server thread count.
+    ///
+    /// @param threads value of the server thread count
+    void setServerThreadCount(uint32_t threads) {
+        server_threads_ = threads;
+    }
+
+    /// @brief Retrieves the server thread count.
+    ///
+    /// @return value of the server thread count
+    uint32_t getServerThreadCount() const {
+        return (server_threads_);
+    }
+
+    /// @brief Sets the server max thread queue size.
+    ///
+    /// @param size max thread queue size
+    void setServerMaxThreadQueueSize(uint32_t size) {
+        server_max_thread_queue_size_ = size;
+    }
+
+    /// @brief Retrieves the server max thread queue size.
+    ///
+    /// @return value of the max thread queue size
+    uint32_t getServerMaxThreadQueueSize() const {
+        return (server_max_thread_queue_size_);
+    }
+
     /// @brief Returns pointer to the D2 client configuration
     D2ClientConfigPtr getD2ClientConfig() {
         return (d2_client_config_);
@@ -824,6 +852,11 @@ private:
     /// this socket is bound and connected to this port and port + 1
     uint16_t dhcp4o6_port_;
 
+    /// @brief The server thread count.
+    uint32_t server_threads_;
+
+    /// @brief The server max thread queue size.
+    uint32_t server_max_thread_queue_size_;
     /// @brief Stores D2 client configuration
     D2ClientConfigPtr d2_client_config_;
 
@@ -844,7 +877,7 @@ typedef boost::shared_ptr<SrvConfig> SrvConfigPtr;
 typedef boost::shared_ptr<const SrvConfig> ConstSrvConfigPtr;
 //@}
 
-} // namespace isc::dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCPSRV_CONFIG_H

@@ -9,6 +9,7 @@
 
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space_container.h>
+#include <dhcp/option_space.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
@@ -26,7 +27,7 @@ class LibDHCP {
 public:
 
     /// Map of factory functions.
-    typedef std::map<unsigned short, Option::Factory*>  FactoryMap;
+    typedef std::map<unsigned short, Option::Factory*> FactoryMap;
 
     /// @brief Returns collection of option definitions.
     ///
@@ -281,21 +282,15 @@ public:
                                       uint16_t type,
                                       Option::Factory * factory);
 
-    /// @brief Returns v4 option definitions for a given vendor
+    /// @brief Returns option definitions for given universe and vendor
     ///
+    /// @param u option universe
     /// @param vendor_id enterprise-id of a given vendor
+    ///
     /// @return a container for a given vendor (or NULL if no option
     ///         definitions are defined)
-    static const OptionDefContainerPtr&
-    getVendorOption4Defs(const uint32_t vendor_id);
-
-    /// @brief Returns v6 option definitions for a given vendor
-    ///
-    /// @param vendor_id enterprise-id of a given vendor
-    /// @return a container for a given vendor (or NULL if no option
-    ///         definitions are defined)
-    static const OptionDefContainerPtr&
-    getVendorOption6Defs(const uint32_t vendor_id);
+    static const OptionDefContainerPtr
+    getVendorOptionDefs(Option::Universe u, const uint32_t vendor_id);
 
     /// @brief Parses provided buffer as DHCPv6 vendor options and creates
     ///        Option objects.
@@ -371,37 +366,14 @@ public:
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 private:
-
-    /// Initialize standard DHCPv4 option definitions.
+    /// Initialize DHCP option definitions.
     ///
-    /// The method creates option definitions for all DHCPv4 options.
-    /// Currently this function is not implemented.
+    /// The method creates option definitions for all DHCP options.
     ///
     /// @throw std::bad alloc if system went out of memory.
     /// @throw MalformedOptionDefinition if any of the definitions
     /// are incorrect. This is programming error.
-    static void initStdOptionDefs4();
-
-    /// Initialize standard DHCPv6 option definitions.
-    ///
-    /// The method creates option definitions for all DHCPv6 options.
-    ///
-    /// @throw std::bad_alloc if system went out of memory.
-    /// @throw MalformedOptionDefinition if any of the definitions
-    /// is incorrect. This is a programming error.
-    static void initStdOptionDefs6();
-
-    /// Initialize last resort DHCPv4 option definitions.
-    static void initLastResortOptionDefs();
-
-    /// Initialize DOCSIS DHCPv4 option definitions.
-    static void initVendorOptsDocsis4();
-
-    /// Initialize DOCSIS DHCPv6 option definitions.
-    static void initVendorOptsDocsis6();
-
-    /// Initialize private DHCPv6 option definitions.
-    static void initVendorOptsIsc6();
+    static void initStdOptionDefs(const std::string& space);
 
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
@@ -409,23 +381,9 @@ private:
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v6factories_;
 
-    /// Container with DHCPv4 option definitions.
-    static OptionDefContainerPtr v4option_defs_;
-
-    /// Container with DHCPv6 option definitions.
-    static OptionDefContainerPtr v6option_defs_;
 
     /// Container that holds option definitions for various option spaces.
     static OptionDefContainers option_defs_;
-
-    /// Container for v4 vendor option definitions
-    static VendorOptionDefContainers vendor4_defs_;
-
-    /// Container for v6 vendor option definitions
-    static VendorOptionDefContainers vendor6_defs_;
-
-    /// Container with DHCPv4 last resort option definitions.
-    static OptionDefContainerPtr lastresort_defs_;
 
     /// Container for additional option definitions created in runtime.
     static util::StagedValue<OptionDefSpaceContainer> runtime_option_defs_;

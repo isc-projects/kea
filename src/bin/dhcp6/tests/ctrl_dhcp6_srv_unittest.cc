@@ -29,15 +29,14 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <thread>
 
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <cstdlib>
-
-#include <thread>
 
 using namespace std;
 using namespace isc;
@@ -1096,6 +1095,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "pkt6-receive-drop"
     };
 
+    // preparing the schema which check if all statistics are set to zero
     std::ostringstream s;
     s << "{ \"arguments\": { ";
     for (auto st = initial_stats.begin(); st != initial_stats.end();) {
