@@ -222,7 +222,7 @@ main(int argc, char* argv[]) {
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
 
-        // Create our PID file
+        // Create our PID file.
         server.setProcName(DHCP6_NAME);
         server.setConfigFile(config_file);
         server.createPIDFile();
