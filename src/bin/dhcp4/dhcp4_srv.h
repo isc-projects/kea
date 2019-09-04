@@ -1013,6 +1013,7 @@ protected:
     /// UDP port number on which server listens.
     uint16_t server_port_;
 
+protected:
     /// UDP port number to which server sends all responses.
     uint16_t client_port_;
 

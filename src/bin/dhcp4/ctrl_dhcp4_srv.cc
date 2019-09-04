@@ -944,7 +944,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("config-get");
         CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-reload");
-        CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("dhcp-disable");

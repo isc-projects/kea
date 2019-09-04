@@ -34,6 +34,10 @@
 #include <sstream>
 #include <thread>
 
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
