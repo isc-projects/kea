@@ -2661,6 +2661,7 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
+    // server-id is forbidden.
     sanityCheck(discover, FORBIDDEN);
 
     bool drop = false;
@@ -2720,8 +2721,9 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context) {
-    /// @todo Uncomment this (see ticket #3116)
-    /// sanityCheck(request, MANDATORY);
+    // Since we cannot distinguish  between client states
+    // we'll make server-id is optional for REQUESTs.
+    sanityCheck(request, OPTIONAL);
 
     bool drop = false;
     Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request, drop));
@@ -2782,8 +2784,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& context) {
-    /// @todo Uncomment this (see ticket #3116)
-    /// sanityCheck(release, MANDATORY);
+    // Server-id is mandatory in DHCPRELEASE (see table 5, RFC2131)
+    // but ISC DHCP does not enforce this, so we'll follow suit.
+    sanityCheck(release, OPTIONAL);
 
     // Try to find client-id. Note that for the DHCPRELEASE we don't check if the
     // match-client-id configuration parameter is disabled because this parameter
@@ -2897,10 +2900,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
 
 void
 Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& context) {
-
     // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
-    /// @todo Uncomment this (see ticket #3116)
-    // sanityCheck(decline, MANDATORY);
+    // but ISC DHCP does not enforce this, so we'll follow suit.
+    sanityCheck(decline, OPTIONAL);
 
     // Client is supposed to specify the address being declined in
     // Requested IP address option, but must not set its ciaddr.
@@ -2911,7 +2913,7 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& cont
     if (!opt_requested_address) {
 
         isc_throw(RFCViolation, "Mandatory 'Requested IP address' option missing"
-                  "in DHCPDECLINE sent from " << decline->getLabel());
+                  " in DHCPDECLINE sent from " << decline->getLabel());
     }
     IOAddress addr(opt_requested_address->readAddress());
 
@@ -3047,8 +3049,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    // DHCPINFORM MUST not include server identifier.
-    sanityCheck(inform, FORBIDDEN);
+    // server-id is supposed to be forbidden (as is requested address)
+    // but ISC DHCP does not enforce either. So neither will we.
+    sanityCheck(inform, OPTIONAL);
 
     bool drop = false;
     Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform, drop));
@@ -3319,15 +3322,15 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
     switch (serverid) {
     case FORBIDDEN:
         if (server_id) {
-            isc_throw(RFCViolation, "Server-id option was not expected, but "
-                      << "received in "
+            isc_throw(RFCViolation, "Server-id option was not expected, but"
+                      << " received in message "
                       << query->getName());
         }
         break;
 
     case MANDATORY:
         if (!server_id) {
-            isc_throw(RFCViolation, "Server-id option was expected, but not "
+            isc_throw(RFCViolation, "Server-id option was expected, but not"
                       " received in message "
                       << query->getName());
         }
@@ -3349,7 +3352,7 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
 
     // If there's no client-id (or a useless one is provided, i.e. 0 length)
     if (!client_id || client_id->len() == client_id->getHeaderLen()) {
-        isc_throw(RFCViolation, "Missing or useless client-id and no HW address "
+        isc_throw(RFCViolation, "Missing or useless client-id and no HW address"
                   " provided in message "
                   << query->getName());
     }

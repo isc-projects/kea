@@ -1,3 +1,8 @@
+1661.	[bug]		tmark
+	kea-dhcp4 now rejects inbound client messages that have
+	neither a hardware address nor a client identifier.
+	(Gitlab #821,!501, git TBD)
+
 1660.	[func]		franek
 	Statistics of the DHCP packets are now initialized upon the
 	server startup. This makes the statistics available for fetching

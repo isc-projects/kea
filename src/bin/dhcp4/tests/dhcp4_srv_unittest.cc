@@ -32,8 +32,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/host_mgr.h>
-#include <gtest/gtest.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 #include <util/encode/hex.h>
 #include <boost/scoped_ptr.hpp>
 
@@ -717,12 +717,212 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
     testDiscoverRequest(DHCPREQUEST);
 }
 
-TEST_F(Dhcpv4SrvTest, processRelease) {
+// Verifies that DHCPDISCOVERs are sanity checked correctly.
+// 1. They must have either hardware address or client id
+// 2. They must not have server id
+TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Should throw, no hardware address or client id
+    ASSERT_THROW_MSG(srv.processDiscover(pkt), RFCViolation,
+                     "Missing or useless client-id and no HW address"
+                     " provided in message DHCPDISCOVER");
+
+    // Add a hardware address. This should not throw.
+    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    pkt->setHWAddr(hwaddr);
+    ASSERT_NO_THROW(srv.processDiscover(pkt));
+
+    // Now let's make a new pkt with client-id only, it should not throw.
+    pkt.reset(new Pkt4(DHCPDISCOVER, 1234));
+    pkt->addOption(generateClientId());
+    ASSERT_NO_THROW(srv.processDiscover(pkt));
+
+    // Now let's add a server-id. This should throw.
+    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                              DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(server_id_def);
+
+    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    server_id->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(server_id);
+    EXPECT_THROW_MSG(srv.processDiscover(pkt), RFCViolation,
+                     "Server-id option was not expected,"
+                     " but received in message DHCPDISCOVER");
+}
+
+// Verifies that DHCPREQEUSTs are sanity checked correctly.
+// 1. They must have either hardware address or client id
+// 2. They must have a requested address
+// 3. They may or may not have a server id
+TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
+
+    // Should throw, no hardware address or client id
+    ASSERT_THROW_MSG(srv.processRequest(pkt), RFCViolation,
+                     "Missing or useless client-id and no HW address"
+                     " provided in message DHCPREQUEST");
+
+    // Add a hardware address. Should not throw.
+    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    pkt->setHWAddr(hwaddr);
+    EXPECT_NO_THROW(srv.processRequest(pkt));
+
+    // Now let's add a requested address. This should not throw.
+    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                             DHO_DHCP_REQUESTED_ADDRESS);
+    ASSERT_TRUE(req_addr_def);
+    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    req_addr->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(req_addr);
+    ASSERT_NO_THROW(srv.processRequest(pkt));
+
+    // Now let's make a new pkt with client-id only and an address, it should not throw.
+    pkt.reset(new Pkt4(DHCPREQUEST, 1234));
+    pkt->addOption(generateClientId());
+    pkt->addOption(req_addr);
+    ASSERT_NO_THROW(srv.processRequest(pkt));
+
+    // Now let's add a server-id. This should not throw.
+    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                              DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(server_id_def);
+
+    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    server_id->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(server_id);
+    EXPECT_NO_THROW(srv.processRequest(pkt));
+}
+
+// Verifies that DHCPDECLINEs are sanity checked correctly.
+// 1. They must have either hardware address or client id
+// 2. They must have a requested address
+// 3. They may or may not have a server id
+TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
+
+    // Should throw, no hardware address or client id
+    ASSERT_THROW_MSG(srv.processDecline(pkt), RFCViolation,
+                     "Missing or useless client-id and no HW address"
+                     " provided in message DHCPDECLINE");
+
+    // Add a hardware address. Should throw because of missing address.
+    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    pkt->setHWAddr(hwaddr);
+    ASSERT_THROW_MSG(srv.processDecline(pkt), RFCViolation,
+                    "Mandatory 'Requested IP address' option missing in DHCPDECLINE"
+                    " sent from [hwtype=1 00:fe:fe:fe:fe:fe], cid=[no info], tid=0x4d2");
+
+
+    // Now let's add a requested address. This should not throw.
+    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                             DHO_DHCP_REQUESTED_ADDRESS);
+    ASSERT_TRUE(req_addr_def);
+    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    req_addr->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(req_addr);
+    ASSERT_NO_THROW(srv.processDecline(pkt));
+
+    // Now let's make a new pkt with client-id only and an address, it should not throw.
+    pkt.reset(new Pkt4(DHCPDECLINE, 1234));
+    pkt->addOption(generateClientId());
+    pkt->addOption(req_addr);
+    ASSERT_NO_THROW(srv.processDecline(pkt));
+
+    // Now let's add a server-id. This should not throw.
+    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                              DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(server_id_def);
+
+    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    server_id->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(server_id);
+    EXPECT_NO_THROW(srv.processDecline(pkt));
+}
+
+// Verifies that DHCPRELEASEs are sanity checked correctly.
+// 1. They must have either hardware address or client id
+// 2. They may or may not have a server id
+TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
-    // Should not throw
+    // Should throw, no hardware address or client id
+    ASSERT_THROW_MSG(srv.processRelease(pkt), RFCViolation,
+                     "Missing or useless client-id and no HW address"
+                     " provided in message DHCPRELEASE");
+
+    // Add a hardware address. Should not throw.
+    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    pkt->setHWAddr(hwaddr);
     EXPECT_NO_THROW(srv.processRelease(pkt));
+
+    // Make a new pkt with client-id only.  Should not throw.
+    pkt.reset(new Pkt4(DHCPRELEASE, 1234));
+    pkt->addOption(generateClientId());
+    ASSERT_NO_THROW(srv.processRelease(pkt));
+
+    // Now let's add a server-id. This should not throw.
+    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                              DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(server_id_def);
+
+    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    server_id->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(server_id);
+    EXPECT_NO_THROW(srv.processRelease(pkt));
+}
+
+// Verifies that DHCPINFORMs are sanity checked correctly.
+// 1. They must have either hardware address or client id
+// 2. They may or may not have requested address
+// 3. They may or may not have a server id
+TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
+    NakedDhcpv4Srv srv;
+    Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
+
+    // Should throw, no hardware address or client id
+    ASSERT_THROW_MSG(srv.processInform(pkt), RFCViolation,
+                     "Missing or useless client-id and no HW address"
+                     " provided in message DHCPINFORM");
+
+    // Add a hardware address. Should not throw.
+    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    pkt->setHWAddr(hwaddr);
+    ASSERT_NO_THROW(srv.processInform(pkt));
+
+    // Now let's add a requested address. This should not throw.
+    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                             DHO_DHCP_REQUESTED_ADDRESS);
+    ASSERT_TRUE(req_addr_def);
+    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    req_addr->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(req_addr);
+    ASSERT_NO_THROW(srv.processInform(pkt));
+
+    // Now let's make a new pkt with client-id only and an address, it should not throw.
+    pkt.reset(new Pkt4(DHCPINFORM, 1234));
+    pkt->addOption(generateClientId());
+    pkt->addOption(req_addr);
+    ASSERT_NO_THROW(srv.processInform(pkt));
+
+    // Now let's add a server-id. This should not throw.
+    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                              DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(server_id_def);
+
+    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    server_id->writeAddress(IOAddress("192.0.2.3"));
+    pkt->addOption(server_id);
+    EXPECT_NO_THROW(srv.processInform(pkt));
 }
 
 // This test verifies that incoming DISCOVER can be handled properly, that an
