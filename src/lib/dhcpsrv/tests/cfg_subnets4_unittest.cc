@@ -1616,4 +1616,28 @@ TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
     }
 }
 
+// This test verifies that an interface which is not in the system is rejected.
+TEST(CfgSubnets4Test, iface) {
+    // Create a configuration.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"interface\": \"eth1\"\n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+        << "invalid JSON:" << json << "\n test is broken";
+
+    Subnet4ConfigParser parser;
+    EXPECT_NO_THROW(parser.parse(elems, false));
+    EXPECT_THROW(parser.parse(elems), DhcpConfigError);
+
+    // Configure default test interfaces.
+    IfaceMgrTestConfig config(true);
+    EXPECT_NO_THROW(parser.parse(elems, false));
+    EXPECT_NO_THROW(parser.parse(elems));
+}
+
 } // end of anonymous namespace

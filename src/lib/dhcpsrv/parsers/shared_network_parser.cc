@@ -47,8 +47,19 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
 
         // interface is an optional parameter
         if (shared_network_data->contains("interface")) {
-            // check_iface applies only on subnets?
-            shared_network->setIface(getString(shared_network_data, "interface"));
+            std::string iface = getString(shared_network_data, "interface");
+            if (!iface.empty()) {
+                if (check_iface && !IfaceMgr::instance().getIface(iface)) {
+                    ConstElementPtr error =
+                        shared_network_data->get("interface");
+                    isc_throw(DhcpConfigError,
+                              "Specified network interface name " << iface
+                              << " for shared network " << name
+                              << " is not present in the system ("
+                              << error->getPosition() << ")");
+                }
+                shared_network->setIface(iface);
+            }
         }
 
         if (shared_network_data->contains("option-data")) {
@@ -225,6 +236,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             ifaceid = getString(shared_network_data, "interface-id");
         }
 
+        // Interface is an optional parameter
         Optional<std::string> iface;
         if (shared_network_data->contains("interface")) {
             iface = getString(shared_network_data, "interface");
@@ -251,16 +263,18 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             shared_network->setInterfaceId(opt);
         }
 
-        // Get interface name. If it is defined, then the subnet is available
+        // Set interface name. If it is defined, then subnets are available
         // directly over specified network interface.
-        // check_iface applies only on subnets?
         if (!iface.unspecified() && !iface.empty()) {
+            if (check_iface && !IfaceMgr::instance().getIface(iface)) {
+                ConstElementPtr error = shared_network_data->get("interface");
+                isc_throw(DhcpConfigError,
+                          "Specified network interface name " << iface
+                          << " for shared network " << name
+                          << " is not present in the system ("
+                          << error->getPosition() << ")");
+            }
             shared_network->setIface(iface);
-        }
-
-        // Interface is an optional parameter
-        if (shared_network_data->contains("interface")) {
-            shared_network->setIface(getString(shared_network_data, "interface"));
         }
 
         if (shared_network_data->contains("rapid-commit")) {
