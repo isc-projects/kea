@@ -89,9 +89,6 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
-    /// @brief This function set to defaults all statistics starting with pkt6-.
-    void setPacketStatisticsDefaults();
-
     /// @brief Checks if the server is running in unit test mode.
     ///
     /// @return true if the server is running in unit test mode,
@@ -204,6 +201,14 @@ public:
 
 protected:
 
+    /// @brief This function sets statistics related to DHCPv6 packets processing
+    /// to their initial values.
+    ///
+    /// All of the statistics observed by the DHCPv6 server and with the names
+    /// like "pkt6-" are reset to 0. This function must be invoked in the class
+    /// constructor.
+    void setPacketStatisticsDefaults();
+    
     /// @brief Compare received server id with our server id
     ///
     /// Checks if the server id carried in a query from a client matches

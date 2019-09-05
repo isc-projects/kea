@@ -69,6 +69,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iomanip>
+#include <set>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -107,25 +108,28 @@ struct Dhcp4Hooks {
         hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
     }
 };
-    /// Set of all statistics observed in DHCPv4 server
-    std::set<std::string> dhcp4_statistics = {
-        "pkt4-received",
-        "pkt4-discover-received",
-        "pkt4-offer-received",
-        "pkt4-request-received",
-        "pkt4-ack-received",
-        "pkt4-nak-received",
-        "pkt4-release-received",
-        "pkt4-decline-received",
-        "pkt4-inform-received",
-        "pkt4-unknown-received",
-        "pkt4-sent",
-        "pkt4-offer-sent",
-        "pkt4-ack-sent",
-        "pkt4-nak-sent",
-        "pkt4-parse-failed",
-        "pkt4-receive-drop"
-    };
+
+/// List of statistics which is initialized to 0 during the DHCPv4
+/// server startup.
+std::set<std::string> dhcp4_statistics = {
+    "pkt4-received",
+    "pkt4-discover-received",
+    "pkt4-offer-received",
+    "pkt4-request-received",
+    "pkt4-ack-received",
+    "pkt4-nak-received",
+    "pkt4-release-received",
+    "pkt4-decline-received",
+    "pkt4-inform-received",
+    "pkt4-unknown-received",
+    "pkt4-sent",
+    "pkt4-offer-sent",
+    "pkt4-ack-sent",
+    "pkt4-nak-sent",
+    "pkt4-parse-failed",
+    "pkt4-receive-drop"
+};
+
 } // end of anonymous namespace
 
 // Declare a Hooks object. As this is outside any function or method, it
@@ -153,7 +157,6 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         isc_throw(BadValue, "query value must not be NULL when"
                   " creating an instance of the Dhcpv4Exchange");
     }
-
     // Create response message.
     initResponse();
     // Select subnet for the query message.
@@ -505,11 +508,10 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
 }
 
 void Dhcpv4Srv::setPacketStatisticsDefaults() {
-    std::set<std::string>::iterator it;
     isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
 
     // Iterate over set of observed statistics
-    for (it = dhcp4_statistics.begin(); it != dhcp4_statistics.end(); ++it) {
+    for (auto it = dhcp4_statistics.begin(); it != dhcp4_statistics.end(); ++it) {
         // Initialize them with default value 0
         stats_mgr.setValue((*it), static_cast<int64_t>(0));
     }

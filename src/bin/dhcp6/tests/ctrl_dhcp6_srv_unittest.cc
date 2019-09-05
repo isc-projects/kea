@@ -1134,47 +1134,41 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
     sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
                     "  \"arguments\": {}}", response);
 
-    // preparing the schema which check if all statistics are set to zero
-    std::string stats_get_all = "{ \"arguments\": { "
-         "\"pkt6-advertise-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-advertise-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-advertise-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-advertise-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-decline-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-decline-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-dhcpv4-query-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-dhcpv4-query-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-dhcpv4-response-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-dhcpv4-response-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-dhcpv4-response-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-dhcpv4-response-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-infrequest-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-infrequest-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-parse-failed\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-parse-failed")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-rebind-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-rebind-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-receive-drop\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-receive-drop")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-release-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-release-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-renew-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-renew-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-reply-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-reply-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-reply-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-reply-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-request-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-request-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-solicit-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-solicit-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt6-unknown-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-unknown-received")
-                                    ->getInteger().second) + "\" ] ] }, "
-         "\"result\": 0 }";
+    std::set<std::string> initial_stats = {
+        "pkt6-received",
+        "pkt6-solicit-received",
+        "pkt6-advertise-received",
+        "pkt6-request-received",
+        "pkt6-reply-received",
+        "pkt6-renew-received",
+        "pkt6-rebind-received",
+        "pkt6-decline-received",
+        "pkt6-release-received",
+        "pkt6-infrequest-received",
+        "pkt6-dhcpv4-query-received",
+        "pkt6-dhcpv4-response-received",
+        "pkt6-unknown-received",
+        "pkt6-sent",
+        "pkt6-advertise-sent",
+        "pkt6-reply-sent",
+        "pkt6-dhcpv4-response-sent",
+        "pkt6-parse-failed",
+        "pkt6-receive-drop"
+    };
+
+    std::ostringstream s;
+    s << "{ \"arguments\": { ";
+    for (auto st = initial_stats.begin(); st != initial_stats.end();) {
+        s << "\"" << *st << "\": [ [ 0, \"";
+        s << isc::util::ptimeToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
+        s << "\" ] ]";
+        if (++st != initial_stats.end()) {
+            s << ", ";
+        }
+    }
+    s << " }, \"result\": 0 }";
+
+    auto stats_get_all = s.str();
 
     EXPECT_EQ(stats_get_all, response);
 

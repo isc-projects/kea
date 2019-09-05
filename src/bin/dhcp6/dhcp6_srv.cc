@@ -78,6 +78,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <set>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -172,28 +173,30 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
     return (option_status);
 }
 
-    /// Set of all statistics observed in DHCPv6 server
-    std::set<std::string> dhcp6_statistics = {
-        "pkt6-received",
-        "pkt6-solicit-received",
-        "pkt6-advertise-received",
-        "pkt6-request-received",
-        "pkt6-reply-received",
-        "pkt6-renew-received",
-        "pkt6-rebind-received",
-        "pkt6-decline-received",
-        "pkt6-release-received",
-        "pkt6-infrequest-received",
-        "pkt6-dhcpv4-query-received",
-        "pkt6-dhcpv4-response-received",
-        "pkt6-unknown-received",
-        "pkt6-sent",
-        "pkt6-advertise-sent",
-        "pkt6-reply-sent",
-        "pkt6-dhcpv4-response-sent",
-        "pkt6-parse-failed",
-        "pkt6-receive-drop"
-    };
+/// List of statistics which is initialized to 0 during the DHCPv6
+/// server startup.
+std::set<std::string> dhcp6_statistics = {
+    "pkt6-received",
+    "pkt6-solicit-received",
+    "pkt6-advertise-received",
+    "pkt6-request-received",
+    "pkt6-reply-received",
+    "pkt6-renew-received",
+    "pkt6-rebind-received",
+    "pkt6-decline-received",
+    "pkt6-release-received",
+    "pkt6-infrequest-received",
+    "pkt6-dhcpv4-query-received",
+    "pkt6-dhcpv4-response-received",
+    "pkt6-unknown-received",
+    "pkt6-sent",
+    "pkt6-advertise-sent",
+    "pkt6-reply-sent",
+    "pkt6-dhcpv4-response-sent",
+    "pkt6-parse-failed",
+    "pkt6-receive-drop"
+};
+
 }; // anonymous namespace
 
 namespace isc {
@@ -246,11 +249,10 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
 }
 
 void Dhcpv6Srv::setPacketStatisticsDefaults() {
-    std::set<std::string>::iterator it;
     isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
 
     // Iterate over set of observed statistics
-    for (it = dhcp6_statistics.begin(); it != dhcp6_statistics.end(); ++it) {
+    for (auto it = dhcp6_statistics.begin(); it != dhcp6_statistics.end(); ++it) {
         // Initialize them with default value 0
         stats_mgr.setValue((*it), static_cast<int64_t>(0));
     }

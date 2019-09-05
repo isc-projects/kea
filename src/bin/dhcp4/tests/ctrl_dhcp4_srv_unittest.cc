@@ -552,41 +552,39 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
                     "  \"arguments\": {}}", response);
 
+    std::set<std::string> initial_stats = {
+        "pkt4-received",
+        "pkt4-discover-received",
+        "pkt4-offer-received",
+        "pkt4-request-received",
+        "pkt4-ack-received",
+        "pkt4-nak-received",
+        "pkt4-release-received",
+        "pkt4-decline-received",
+        "pkt4-inform-received",
+        "pkt4-unknown-received",
+        "pkt4-sent",
+        "pkt4-offer-sent",
+        "pkt4-ack-sent",
+        "pkt4-nak-sent",
+        "pkt4-parse-failed",
+        "pkt4-receive-drop"
+    };
+
     // preparing the schema which check if all statistics are set to zero
-    std::string stats_get_all = "{ \"arguments\": { "
-         "\"pkt4-ack-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-ack-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-ack-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-ack-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-decline-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-decline-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-discover-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-discover-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-inform-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-inform-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-nak-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-nak-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-nak-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-nak-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-offer-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-offer-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-offer-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-offer-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-parse-failed\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-parse-failed")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-receive-drop\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-receive-drop")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-release-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-release-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-request-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-request-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-sent")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"pkt4-unknown-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt4-unknown-received")
-                                    ->getInteger().second) + "\" ] ] }, "
-         "\"result\": 0 }";
+    std::ostringstream s;
+    s << "{ \"arguments\": { ";
+    for (auto st = initial_stats.begin(); st != initial_stats.end();) {
+        s << "\"" << *st << "\": [ [ 0, \"";
+        s << isc::util::ptimeToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
+        s << "\" ] ]";
+        if (++st != initial_stats.end()) {
+            s << ", ";
+        }
+    }
+    s << " }, \"result\": 0 }";
+
+    auto stats_get_all = s.str();
 
     EXPECT_EQ(stats_get_all, response);
 

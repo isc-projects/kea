@@ -2589,10 +2589,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     // And pretend it's packet is only 3 bytes long.
     pkt->data_.resize(3);
 
-    // Check that those statistics are set before the test.
-    // All should be present because we initialize
-    // all of them in server constructor. This piece of code is mainly reffered
-    // to previous situation when Kea used lazy initialization of statistics.
+    // Check that the tested statistics is initially set to 0
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr parse_fail = mgr.getObservation("pkt6-parse-failed");
     ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");

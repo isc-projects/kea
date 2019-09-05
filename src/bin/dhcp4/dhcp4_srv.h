@@ -234,9 +234,6 @@ public:
     /// @brief Destructor. Used during DHCPv4 service shutdown.
     virtual ~Dhcpv4Srv();
 
-    /// @brief This function set to defaults all statistics starting with pkt4-.
-    void setPacketStatisticsDefaults();
-
     /// @brief Checks if the server is running in a test mode.
     ///
     /// @return true if the server is running in the test mode,
@@ -654,6 +651,14 @@ protected:
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
     void processClientName(Dhcpv4Exchange& ex);
+
+    /// @brief This function sets statistics related to DHCPv4 packets processing
+    /// to their initial values.
+    ///
+    /// All of the statistics observed by the DHCPv4 server and with the names
+    /// like "pkt4-" are reset to 0. This function must be invoked in the class
+    /// constructor.
+    void setPacketStatisticsDefaults();
 
     /// @brief this is a prefix added to the content of vendor-class option
     ///

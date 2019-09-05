@@ -52,19 +52,20 @@ for a list of statistics-oriented commands.
 Statistics Lifecycle
 ====================
 
-It is useful to understand how the Statistics Manager module works.
-Since Kea 1.7.0 when the server starts operation, the manager contains
-all statistics related to runned type of DHCP server, initialized with
-default value. If the ``statistic-get-all`` command is executed at that point,
-a list with these statistics is returned. Once the server performs an operation
-that causes a statistic to change, the related statistic will be created or updated.
-In general, once a statistic is recorded even once, it is kept in the manager
-until explicitly removed, by ``statistic-remove`` or ``statistic-remove-all``
+In Kea 1.6.0 version and earlier, when the Kea server is started some
+of the statistics are initially not returned. For example, the ``pkt4-received``
+statistic is not initialized until the first DHCP packet is received.
+In the later Kea versions, this behavior has been changed and all of the
+statistics supported by the servers is initialized upon the servers' startup
+and should be returned in response to the commands such as
+``statistic-get-all``. The runtime statistics concerning DHCP packets
+processed is initially set to 0 and is not retained across the server
+restarts.
+
+In general, once a statistic is initialized it is held in the manager until
+explicitly removed, by ``statistic-remove`` or ``statistic-remove-all``
 being called, or when the server is shut down.
 Per-subnet statistics are explicitly removed when reconfiguration takes place.
-
-Statistics are considered runtime properties, so they are not retained
-after server restart.
 
 Removing a statistic that is updated frequently makes little sense, as
 it will be re-added when the server code next records that statistic.
@@ -86,7 +87,8 @@ Commands for Manipulating Statistics
 There are several commands defined that can be used for accessing
 (-get), resetting to zero or a neutral value (-reset), or removing a
 statistic completely (-remove). We can change the statistics time based
-limit (-sample-age-set) and size based limit (-sample-count-set).
+limit (-sample-age-set) and size based limit (-sample-count-set) which
+control how long or how many samples of the given statistic are retained.
 The difference between reset and remove is somewhat subtle.
 The reset command sets the value of the statistic to zero or a neutral value,
 so after this operation, the statistic will have a value of 0 (integer),

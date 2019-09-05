@@ -770,10 +770,7 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
     // And pretend it's packet of a different type
     pkt->data_[0] = pkt_type;
 
-    // Check that those statistics are set before the test.
-    // All should be present because we initialize
-    // all of them in server constructor. This piece of code is mainly reffered
-    // to previous situation when Kea used lazy initialization of statistics.
+    // Check that the tested statistics is initially set to 0
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr tested_stat = mgr.getObservation(stat_name);
     EXPECT_TRUE(pkt6_rcvd);

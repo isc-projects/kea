@@ -492,9 +492,7 @@ TEST_F(SARRTest, sarrStats) {
         getCfgSubnets6()->getAll();
     ASSERT_EQ(2, subnets->size());
 
-    // Ok, let's check the statistics. All should be present because we initialize
-    // all of them in server constructor. This piece of code is mainly reffered
-    // to previous situation when Kea used lazy initialization of statistics.
+    // Check that the tested statistics is initially set to 0
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
