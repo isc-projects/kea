@@ -5524,6 +5524,10 @@ following statistics-related commands:
 -  statistic-get-all
 -  statistic-reset-all
 -  statistic-remove-all
+-  statistic-sample-age-set
+-  statistic-sample-age-set-all
+-  statistic-sample-count-set
+-  statistic-sample-count-set-all
 
 as described in :ref:`command-stats`.
 

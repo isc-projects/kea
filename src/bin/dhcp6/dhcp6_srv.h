@@ -89,6 +89,9 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
+    /// @brief This function set to defaults all statistics starting with pkt6-.
+    void setPacketStatisticsDefaults();
+
     /// @brief Checks if the server is running in unit test mode.
     ///
     /// @return true if the server is running in unit test mode,

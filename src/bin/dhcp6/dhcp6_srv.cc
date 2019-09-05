@@ -172,6 +172,28 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
     return (option_status);
 }
 
+    /// Set of all statistics observed in DHCPv6 server
+    std::set<std::string> dhcp6_statistics = {
+        "pkt6-received",
+        "pkt6-solicit-received",
+        "pkt6-advertise-received",
+        "pkt6-request-received",
+        "pkt6-reply-received",
+        "pkt6-renew-received",
+        "pkt6-rebind-received",
+        "pkt6-decline-received",
+        "pkt6-release-received",
+        "pkt6-infrequest-received",
+        "pkt6-dhcpv4-query-received",
+        "pkt6-dhcpv4-response-received",
+        "pkt6-unknown-received",
+        "pkt6-sent",
+        "pkt6-advertise-sent",
+        "pkt6-reply-sent",
+        "pkt6-dhcpv4-response-sent",
+        "pkt6-parse-failed",
+        "pkt6-receive-drop"
+    };
 }; // anonymous namespace
 
 namespace isc {
@@ -216,56 +238,22 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
         return;
     }
-    // Initializing all observations with zero value
-    isc::stats::StatsMgr::instance().setValue("pkt6-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-solicit-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-advertise-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-request-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-reply-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-renew-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-rebind-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-release-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-decline-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-infrequest-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-dhcpv4-query-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-dhcpv4-response-received",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-unknown-received",
-                                              static_cast<int64_t>(0));
+    // Initializing all observations with default value
+    setPacketStatisticsDefaults();
 
-    isc::stats::StatsMgr::instance().setValue("pkt6-sent",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-advertise-sent",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-reply-sent",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-dhcpv4-response-sent",
-                                              static_cast<int64_t>(0));
-
-    isc::stats::StatsMgr::instance().setValue("pkt6-parse-failed",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("pkt6-receive-drop",
-                                              static_cast<int64_t>(0));
-
-    isc::stats::StatsMgr::instance().setValue("reclaimed-leases",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("declined-addresses",
-                                              static_cast<int64_t>(0));
-    isc::stats::StatsMgr::instance().setValue("reclaimed-declined-addresses",
-                                              static_cast<int64_t>(0));
     // All done, so can proceed
     shutdown_ = false;
+}
+
+void Dhcpv6Srv::setPacketStatisticsDefaults() {
+    std::set<std::string>::iterator it;
+    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+
+    // Iterate over set of observed statistics
+    for (it = dhcp6_statistics.begin(); it != dhcp6_statistics.end(); ++it) {
+        // Initialize them with default value 0
+        stats_mgr.setValue((*it), static_cast<int64_t>(0));
+    }
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {

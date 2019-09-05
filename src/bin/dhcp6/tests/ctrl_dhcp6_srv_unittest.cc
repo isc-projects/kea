@@ -1136,8 +1136,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
 
     // preparing the schema which check if all statistics are set to zero
     std::string stats_get_all = "{ \"arguments\": { "
-         "\"declined-addresses\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("declined-addresses")
-                                    ->getInteger().second) + "\" ] ], "
          "\"pkt6-advertise-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-advertise-received")
                                     ->getInteger().second) + "\" ] ], "
          "\"pkt6-advertise-sent\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-advertise-sent")
@@ -1175,10 +1173,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
          "\"pkt6-solicit-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-solicit-received")
                                     ->getInteger().second) + "\" ] ], "
          "\"pkt6-unknown-received\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("pkt6-unknown-received")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"reclaimed-declined-addresses\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("reclaimed-declined-addresses")
-                                    ->getInteger().second) + "\" ] ], "
-         "\"reclaimed-leases\": [ [ 0, \"" + isc::util::ptimeToText(StatsMgr::instance().getObservation("reclaimed-leases")
                                     ->getInteger().second) + "\" ] ] }, "
          "\"result\": 0 }";
 
