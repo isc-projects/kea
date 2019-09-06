@@ -1,6 +1,7 @@
 1659.	[bug]		razvan
-	Fix missing call of commitRuntimeOptionsDefs in v4 code and renamed
-	and reordered functions in unit tests.
+	Corrected an issue in the DHCPv4 server logic whereby the user-defined
+	option definitions were not committed which could result in
+	configuration failures when values for such options were specified.
 	(Gitlab #729, !434, git e5b68fb226161dcdef0e4d2d9d03d9bdb95af5e2)
 
 Kea 1.6.0 released on Aug 28, 2019
