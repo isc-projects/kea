@@ -827,7 +827,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         "           \"persist\":false, \n"
         "           \"lfc-interval\": 0  \n"
         "        }, \n"
-        "       \"expired-leases-processing\": { \n"
+        "        \"expired-leases-processing\": { \n"
         "            \"reclaim-timer-wait-time\": 0, \n"
         "            \"hold-reclaimed-time\": 0, \n"
         "            \"flush-reclaimed-timer-wait-time\": 0 \n"
