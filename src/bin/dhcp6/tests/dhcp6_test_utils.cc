@@ -773,8 +773,10 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
     // Check that the tested statistics is initially set to 0
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr tested_stat = mgr.getObservation(stat_name);
-    EXPECT_TRUE(pkt6_rcvd);
-    EXPECT_TRUE(tested_stat);
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(tested_stat);
+    EXPECT_EQ(0, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(0, tested_stat->getInteger().first);
 
     // Simulate that we have received that traffic
     srv.fakeReceive(pkt);

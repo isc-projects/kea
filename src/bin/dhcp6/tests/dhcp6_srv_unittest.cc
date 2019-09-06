@@ -2593,9 +2593,12 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr parse_fail = mgr.getObservation("pkt6-parse-failed");
     ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
-    EXPECT_TRUE(pkt6_rcvd);
-    EXPECT_TRUE(parse_fail);
-    EXPECT_TRUE(recv_drop);
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+    EXPECT_EQ(0, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(0, parse_fail->getInteger().first);
+    EXPECT_EQ(0, recv_drop->getInteger().first);
 
     // Simulate that we have received that traffic
     srv.fakeReceive(pkt);

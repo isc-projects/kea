@@ -501,12 +501,18 @@ TEST_F(SARRTest, sarrStats) {
     ObservationPtr pkt6_request_rcvd = mgr.getObservation("pkt6-request-received");
     ObservationPtr pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
     ObservationPtr pkt6_sent = mgr.getObservation("pkt6-sent");
-    EXPECT_TRUE(pkt6_rcvd);
-    EXPECT_TRUE(pkt6_solicit_rcvd);
-    EXPECT_TRUE(pkt6_adv_sent);
-    EXPECT_TRUE(pkt6_request_rcvd);
-    EXPECT_TRUE(pkt6_reply_sent);
-    EXPECT_TRUE(pkt6_sent);
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(pkt6_solicit_rcvd);
+    ASSERT_TRUE(pkt6_adv_sent);
+    ASSERT_TRUE(pkt6_request_rcvd);
+    ASSERT_TRUE(pkt6_reply_sent);
+    ASSERT_TRUE(pkt6_sent);
+    EXPECT_EQ(0, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(0, pkt6_solicit_rcvd->getInteger().first);
+    EXPECT_EQ(0, pkt6_adv_sent->getInteger().first);
+    EXPECT_EQ(0, pkt6_request_rcvd->getInteger().first);
+    EXPECT_EQ(0, pkt6_reply_sent->getInteger().first);
+    EXPECT_EQ(0, pkt6_sent->getInteger().first);
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());

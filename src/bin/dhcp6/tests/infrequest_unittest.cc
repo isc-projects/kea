@@ -323,10 +323,14 @@ TEST_F(InfRequestTest, infRequestStats) {
     ObservationPtr pkt6_infreq_rcvd = mgr.getObservation("pkt6-infrequest-received");
     ObservationPtr pkt6_reply_sent = mgr.getObservation("pkt6-reply-sent");
     ObservationPtr pkt6_sent = mgr.getObservation("pkt6-sent");
-    EXPECT_TRUE(pkt6_rcvd);
-    EXPECT_TRUE(pkt6_infreq_rcvd);
-    EXPECT_TRUE(pkt6_reply_sent);
-    EXPECT_TRUE(pkt6_sent);
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(pkt6_infreq_rcvd);
+    ASSERT_TRUE(pkt6_reply_sent);
+    ASSERT_TRUE(pkt6_sent);
+    EXPECT_EQ(0, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(0, pkt6_infreq_rcvd->getInteger().first);
+    EXPECT_EQ(0, pkt6_reply_sent->getInteger().first);
+    EXPECT_EQ(0, pkt6_sent->getInteger().first);
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NAME_SERVERS);
