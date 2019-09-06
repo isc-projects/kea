@@ -208,7 +208,7 @@ protected:
     /// like "pkt6-" are reset to 0. This function must be invoked in the class
     /// constructor.
     void setPacketStatisticsDefaults();
-    
+
     /// @brief Compare received server id with our server id
     ///
     /// Checks if the server id carried in a query from a client matches
