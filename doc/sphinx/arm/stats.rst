@@ -53,19 +53,20 @@ Statistics Lifecycle
 ====================
 
 In Kea 1.6.0 version and earlier, when the Kea server is started some
-of the statistics are initially not returned. For example, the ``pkt4-received``
-statistic is not initialized until the first DHCP packet is received.
+of the statistics are initially not initialized. For example, the ``pkt4-received``
+statistic is not available until the first DHCP packet is received.
 In the later Kea versions, this behavior has been changed and all of the
-statistics supported by the servers is initialized upon the servers' startup
+statistics supported by the servers are initialized upon the servers' startup
 and should be returned in response to the commands such as
 ``statistic-get-all``. The runtime statistics concerning DHCP packets
-processed is initially set to 0 and is not retained across the server
-restarts.
+processed is initially set to 0 and is reset upon the server
+restart.
+
+Per-subnet statistics are recalculated when reconfiguration takes place.
 
 In general, once a statistic is initialized it is held in the manager until
 explicitly removed, by ``statistic-remove`` or ``statistic-remove-all``
 being called, or when the server is shut down.
-Per-subnet statistics are explicitly removed when reconfiguration takes place.
 
 Removing a statistic that is updated frequently makes little sense, as
 it will be re-added when the server code next records that statistic.
