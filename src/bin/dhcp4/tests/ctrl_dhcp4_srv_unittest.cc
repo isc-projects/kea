@@ -6,12 +6,9 @@
 
 #include <config.h>
 
-#include <asiolink/interval_timer.h>
-#include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/timeouts.h>
-#include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
@@ -33,14 +30,9 @@
 #include <gtest/gtest.h>
 
 #include <cstdlib>
-#include <fstream>
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 #include <thread>
-
-#include <arpa/inet.h>
-#include <unistd.h>
 
 using namespace std;
 using namespace isc;
@@ -84,7 +76,7 @@ private:
 class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
     // "Naked" DHCPv4 server, exposes internal fields
 public:
-    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(0) {
+    NakedControlledDhcpv4Srv() : ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000) {
         CfgMgr::instance().setFamily(AF_INET);
     }
 
@@ -93,8 +85,42 @@ public:
     using Dhcpv4Srv::network_state_;
 };
 
-/// @brief Fixture class intended for testing control channel in the DHCPv4Srv
-class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
+class CtrlDhcpv4SrvTest : public BaseServerTest {
+public:
+    CtrlDhcpv4SrvTest()
+        : BaseServerTest() {
+        reset();
+    }
+
+    virtual ~CtrlDhcpv4SrvTest() {
+        LeaseMgrFactory::destroy();
+        StatsMgr::instance().removeAll();
+        CommandMgr::instance().closeCommandSocket();
+        CommandMgr::instance().deregisterAll();
+        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+
+        reset();
+    };
+
+
+    /// @brief Reset hooks data
+    ///
+    /// Resets the data for the hooks-related portion of the test by ensuring
+    /// that no libraries are loaded and that any marker files are deleted.
+    virtual void reset() {
+        // Unload any previously-loaded libraries.
+        HooksManager::unloadLibraries();
+
+        // Get rid of any marker files.
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
+        IfaceMgr::instance().deleteAllExternalSockets();
+        CfgMgr::instance().clear();
+    }
+
+};
+
+class CtrlChannelDhcpv4SrvTest : public CtrlDhcpv4SrvTest {
 public:
     isc::test::Sandbox sandbox;
 
@@ -112,21 +138,15 @@ public:
         if (env) {
             socket_path_ = string(env) + "/kea4.sock";
         } else {
-            socket_path_ = sandbox.join("kea4.sock");
+            socket_path_ = sandbox.join("/kea4.sock");
         }
         reset();
     }
 
     /// @brief Destructor
     ~CtrlChannelDhcpv4SrvTest() {
-        LeaseMgrFactory::destroy();
-        StatsMgr::instance().removeAll();
-
-        CommandMgr::instance().closeCommandSocket();
-        CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
-
         server_.reset();
+        reset();
     };
 
     /// @brief Returns pointer to the server's IO service.
@@ -192,21 +212,9 @@ public:
         ASSERT_GT(isc::config::CommandMgr::instance().getControlSocketFD(), -1);
     }
 
-
-    /// @brief Reset hooks data
-    ///
-    /// Resets the data for the hooks-related portion of the test by ensuring
-    /// that no libraries are loaded and that any marker files are deleted.
+    /// @brief Reset
     void reset() {
-        // Unload any previously-loaded libraries.
-        HooksManager::unloadLibraries();
-
-        // Get rid of any marker files.
-        static_cast<void>(remove(LOAD_MARKER_FILE));
-        static_cast<void>(remove(UNLOAD_MARKER_FILE));
-
-        IfaceMgr::instance().deleteAllExternalSockets();
-        CfgMgr::instance().clear();
+        CtrlDhcpv4SrvTest::reset();
 
         // Remove unix socket file
         static_cast<void>(::remove(socket_path_.c_str()));
@@ -382,10 +390,10 @@ public:
     }
 };
 
-TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
-
+TEST_F(CtrlDhcpv4SrvTest, commands) {
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(
-        server_.reset(new NakedControlledDhcpv4Srv());
+        srv.reset(new NakedControlledDhcpv4Srv())
     );
 
     // Use empty parameters list
@@ -454,7 +462,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
 }
 
 // This test checks which commands are registered by the DHCPv4 server.
-TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
+TEST_F(CtrlDhcpv4SrvTest, commandsRegistration) {
 
     ConstElementPtr list_cmds = createCommand("list-commands");
     ConstElementPtr answer;
@@ -467,8 +475,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
 
     // Created server should register several additional commands.
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv;
     ASSERT_NO_THROW(
-        server_.reset(new NakedControlledDhcpv4Srv());
+        srv.reset(new NakedControlledDhcpv4Srv());
     );
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
@@ -500,7 +509,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
-    server_.reset();
+    srv.reset();
 
     // The list should be (almost) empty again.
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));

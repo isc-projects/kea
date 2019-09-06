@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/timeouts.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
@@ -33,10 +33,6 @@
 #include <iomanip>
 #include <sstream>
 #include <thread>
-
-#include <sys/select.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 
 using namespace std;
 using namespace isc;
@@ -80,7 +76,7 @@ private:
 class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
     // "Naked" DHCPv6 server, exposes internal fields
 public:
-    NakedControlledDhcpv6Srv():ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) {
+    NakedControlledDhcpv6Srv() : ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) {
         CfgMgr::instance().setFamily(AF_INET6);
     }
 
@@ -88,9 +84,6 @@ public:
     using Dhcpv6Srv::receivePacket;
     using Dhcpv6Srv::network_state_;
 };
-
-/// @brief Default control connection timeout.
-const size_t DEFAULT_CONNECTION_TIMEOUT = 10000;
 
 class CtrlDhcpv6SrvTest : public BaseServerTest {
 public:
@@ -102,8 +95,9 @@ public:
     virtual ~CtrlDhcpv6SrvTest() {
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
+        CommandMgr::instance().closeCommandSocket();
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         reset();
     };
@@ -397,10 +391,9 @@ public:
 };
 
 TEST_F(CtrlDhcpv6SrvTest, commands) {
-
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000))
+        srv.reset(new NakedControlledDhcpv6Srv())
     );
 
     // Use empty parameters list
@@ -468,8 +461,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
 
-typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
-
 // This test checks which commands are registered by the DHCPv6 server.
 TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
 
@@ -486,7 +477,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     // Created server should register several additional commands.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(
-        srv.reset(new ControlledDhcpv6Srv(0));
+        srv.reset(new NakedControlledDhcpv6Srv());
     );
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
