@@ -25,11 +25,11 @@ namespace test {
 { \
     try { \
         statement; \
-        ADD_FAILURE() << "no exception, expected:" << #etype; \
+        ADD_FAILURE() << "no exception, expected: " << #etype; \
     } catch (const etype& ex)  { \
         EXPECT_EQ(std::string(ex.what()), emsg); \
     } catch (...) { \
-        ADD_FAILURE() << "wrong exception type thrown, expected " << #etype; \
+        ADD_FAILURE() << "wrong exception type thrown, expected: " << #etype; \
     } \
 } \
 
@@ -46,11 +46,11 @@ namespace test {
 { \
     try { \
         statement; \
-        GTEST_FAIL() << "no exception, expected:" << #etype; \
+        GTEST_FAIL() << "no exception, expected: " << #etype; \
     } catch (const etype& ex)  { \
         ASSERT_EQ(std::string(ex.what()), emsg); \
     } catch (...) { \
-        GTEST_FAIL() << "wrong exception type thrown, expected " << #etype; \
+        GTEST_FAIL() << "wrong exception type thrown, expected: " << #etype; \
     } \
 } \
 

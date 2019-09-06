@@ -730,8 +730,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
                      " provided in message DHCPDISCOVER");
 
     // Add a hardware address. This should not throw.
-    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
     ASSERT_NO_THROW(srv.processDiscover(pkt));
 
@@ -767,8 +767,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
                      " provided in message DHCPREQUEST");
 
     // Add a hardware address. Should not throw.
-    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
     EXPECT_NO_THROW(srv.processRequest(pkt));
 
@@ -812,8 +812,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
                      " provided in message DHCPDECLINE");
 
     // Add a hardware address. Should throw because of missing address.
-    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
     ASSERT_THROW_MSG(srv.processDecline(pkt), RFCViolation,
                     "Mandatory 'Requested IP address' option missing in DHCPDECLINE"
@@ -859,8 +859,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
                      " provided in message DHCPRELEASE");
 
     // Add a hardware address. Should not throw.
-    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
     EXPECT_NO_THROW(srv.processRelease(pkt));
 
@@ -894,8 +894,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
                      " provided in message DHCPINFORM");
 
     // Add a hardware address. Should not throw.
-    uint8_t data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(data, sizeof(data), HTYPE_ETHER));
+    std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
     ASSERT_NO_THROW(srv.processInform(pkt));
 
