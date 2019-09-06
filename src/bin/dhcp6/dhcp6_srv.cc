@@ -451,8 +451,7 @@ bool Dhcpv6Srv::run() {
     if (run_multithreaded_) {
         // Creating the process packet thread pool
         // The number of thread pool's threads should be read from configuration
-        // file or it should be determined by the number of hardware threads and
-        // the number of Cassandra DB nodes.
+        // file or it should be determined by the number of hardware threads.
         pkt_thread_pool_.create(Dhcpv6Srv::threadCount());
     }
 

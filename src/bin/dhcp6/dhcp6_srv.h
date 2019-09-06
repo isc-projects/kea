@@ -759,7 +759,8 @@ protected:
     /// @param preferred_lft preferred lease time of the lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound IA option in which the timers are set.
-    static void setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp);
+    static void setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet,
+                            Option6IAPtr& resp);
 
     /// @brief Attempts to release received addresses
     ///
@@ -916,9 +917,9 @@ public:
     /// @param ia specific IA_NA option to process.
     /// @param new_leases a collection of leases being declined.
     /// @return IA_NA option with response (to be included in Reply message)
-    OptionPtr
-    declineIA(const Pkt6Ptr& decline, const DuidPtr& duid, int& general_status,
-              boost::shared_ptr<Option6IA> ia, Lease6Collection& new_leases);
+    OptionPtr declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
+                        int& general_status, boost::shared_ptr<Option6IA> ia,
+                        Lease6Collection& new_leases);
 
     /// @brief Declines specific IPv6 lease.
     ///

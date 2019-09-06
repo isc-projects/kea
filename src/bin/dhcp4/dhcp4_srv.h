@@ -167,12 +167,16 @@ private:
 
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
+
     /// @brief Pointer to the DHCPv4 message sent by the client.
     Pkt4Ptr query_;
+
     /// @brief Pointer to the DHCPv4 message to be sent to the client.
     Pkt4Ptr resp_;
+
     /// @brief Context for use with allocation engine.
     AllocEngine::ClientContext4Ptr context_;
+
     /// @brief Configured option list.
     /// @note The configured option list is an *ordered* list of
     /// @c CfgOption objects used to append options to the response.
@@ -615,7 +619,8 @@ protected:
     /// @param lease lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound response for the client to which timers are added.
-    static void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp);
+    static void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet,
+                            Pkt4Ptr resp);
 
     /// @brief Append basic options if they are not present.
     ///
@@ -1023,6 +1028,7 @@ protected:
     /// It must be a pointer, because we will support changing engines
     /// during normal operation (e.g. to use different allocators)
     boost::shared_ptr<AllocEngine> alloc_engine_;
+
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
     NetworkStatePtr network_state_;
