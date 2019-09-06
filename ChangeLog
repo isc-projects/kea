@@ -1,3 +1,9 @@
+1660.	[func]		franek
+	Statistics of the DHCP packets are now initialized upon the
+	server startup. This makes the statistics available for fetching
+	via control channel immediately after the server is started.
+	(Gitlab #755,!503, git f0238d1b6e88dfedaa91029ec3b65e06c14cab34)
+
 1659.	[bug]		razvan
 	Corrected an issue in the DHCPv4 server logic whereby the user-defined
 	option definitions were not committed which could result in
