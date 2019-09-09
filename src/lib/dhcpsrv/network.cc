@@ -242,6 +242,10 @@ Network::toElement() const {
         map->set("t2-percent", Element::create(t2_percent_));
     }
 
+    if (!allow_static_leases_.unspecified()) {
+        map->set("allow-static-leases", Element::create(allow_static_leases_));
+    }
+
     return (map);
 }
 

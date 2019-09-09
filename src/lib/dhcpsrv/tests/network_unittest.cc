@@ -169,6 +169,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("calculate-tee-times", Element::create(false));
     globals_->set("t1-percent", Element::create(0.75));
     globals_->set("t2-percent", Element::create(0.6));
+    globals_->set("allow-static-leases", Element::create(false));
     globals_->set("match-client-id", Element::create(true));
     globals_->set("authoritative", Element::create(false));
     globals_->set("next-server", Element::create("192.0.2.3"));
@@ -228,6 +229,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         testNetworkInheritance<TestNetwork>(&Network::getT2Percent,
                                             &Network::setT2Percent,
                                             0.3, 0.6);
+    }
+    {
+        SCOPED_TRACE("allow-static-leases");
+        testNetworkInheritance<TestNetwork>(&Network::getAllowStaticLeases,
+                                            &Network::setAllowStaticLeases,
+                                            true, false);
     }
     {
         SCOPED_TRACE("match-client-id");

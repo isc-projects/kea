@@ -135,6 +135,7 @@ public:
                 "    \"calculate-tee-times\": true,"
                 "    \"t1-percent\": 0.345,"
                 "    \"t2-percent\": 0.721,"
+                "    \"allow-static-leases\": true,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -165,7 +166,8 @@ public:
                 "            \"reservation-mode\": \"all\","
                 "            \"calculate-tee-times\": true,"
                 "            \"t1-percent\": .45,"
-                "            \"t2-percent\": .65"
+                "            \"t2-percent\": .65,"
+                "            \"allow-static-leases\": true"
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -188,7 +190,8 @@ public:
                 "            \"reservation-mode\": \"all\","
                 "            \"calculate-tee-times\": false,"
                 "            \"t1-percent\": .40,"
-                "            \"t2-percent\": .80"
+                "            \"t2-percent\": .80,"
+                "            \"allow-static-leases\": false"
                 "        }"
                 "    ]"
                 "}";
@@ -242,6 +245,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
+    EXPECT_TRUE(network->getAllowStaticLeases());
     EXPECT_EQ("/dev/null", network->getFilename().get());
     EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
     EXPECT_EQ("example.org", network->getSname().get());
@@ -445,6 +449,7 @@ public:
                 "    \"calculate-tee-times\": true,"
                 "    \"t1-percent\": 0.345,"
                 "    \"t2-percent\": 0.721,"
+                "    \"allow-static-leases\": true,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -537,6 +542,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
+    EXPECT_TRUE(network->getAllowStaticLeases());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

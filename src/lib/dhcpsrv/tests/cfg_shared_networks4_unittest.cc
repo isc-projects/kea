@@ -198,6 +198,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network1->setCalculateTeeTimes(true);
     network1->setT1Percent(.35);
     network1->setT2Percent(.655);
+    network1->setAllowStaticLeases(true);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -242,7 +243,8 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"relay\": { \"ip-addresses\": [ \"198.16.1.1\", \"198.16.1.2\" ] },\n"
         "    \"subnet4\": [ ],\n"
         "    \"t1-percent\": .35,\n"
-        "    \"t2-percent\": .655\n"
+        "    \"t2-percent\": .655,\n"
+        "    \"allow-static-leases\": true\n"
         "  }\n"
         "]\n";
 

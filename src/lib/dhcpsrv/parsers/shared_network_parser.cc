@@ -174,6 +174,12 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         parseTeePercents(shared_network_data, network);
 
+        if (shared_network_data->contains("allow-static-leases")) {
+            bool allow_static_leases = getBoolean(shared_network_data,
+                                                  "allow-static-leases");
+            shared_network->setAllowStaticLeases(allow_static_leases);
+        }
+
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;
@@ -325,6 +331,12 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         parseHostReservationMode(shared_network_data, network);
 
         parseTeePercents(shared_network_data, network);
+
+        if (shared_network_data->contains("allow-static-leases")) {
+            bool allow_static_leases = getBoolean(shared_network_data,
+                                                  "allow-static-leases");
+            shared_network->setAllowStaticLeases(allow_static_leases);
+        }
 
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("

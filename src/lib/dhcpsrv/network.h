@@ -206,7 +206,8 @@ public:
     Network()
         : iface_name_(), client_class_(), t1_(), t2_(), valid_(),
           host_reservation_mode_(HR_ALL, true), cfg_option_(new CfgOption()),
-          calculate_tee_times_(), t1_percent_(), t2_percent_() {
+          calculate_tee_times_(), t1_percent_(), t2_percent_(),
+          allow_static_leases_() {
     }
 
     /// @brief Virtual destructor.
@@ -520,6 +521,24 @@ public:
         t2_percent_ = t2_percent;
     }
 
+    /// @brief Returns whether or not static leases are allowed.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getAllowStaticLeases(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getAllowStaticLeases,
+                                     allow_static_leases_,
+                                     inheritance,
+                                     "allow-static-leases"));
+    }
+
+    /// @brief Sets whether or not static leases are allowed.
+    ///
+    /// @param allow_static_leases new value of allowed/forbidden.
+    void setAllowStaticLeases(const util::Optional<bool>& allow_static_leases) {
+        allow_static_leases_ = allow_static_leases;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -781,6 +800,9 @@ protected:
 
     /// @brief Percentage of the lease lifetime to use when calculating T2 timer
     util::Optional<double> t2_percent_;
+
+    /// @brief Allows static leases
+    util::Optional<bool> allow_static_leases_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

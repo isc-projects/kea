@@ -61,6 +61,9 @@ TEST(SharedNetwork4Test, defaults) {
     EXPECT_TRUE(network->getT2Percent().unspecified());
     EXPECT_EQ(0.0, network->getT2Percent().get());
 
+    EXPECT_TRUE(network->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(network->getAllowStaticLeases().get());
+
     EXPECT_TRUE(network->getMatchClientId().unspecified());
     EXPECT_TRUE(network->getMatchClientId().get());
 
@@ -673,6 +676,9 @@ TEST(SharedNetwork6Test, defaults) {
 
     EXPECT_TRUE(network->getT2Percent().unspecified());
     EXPECT_EQ(0.0, network->getT2Percent().get());
+
+    EXPECT_TRUE(network->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(network->getAllowStaticLeases().get());
 
     EXPECT_TRUE(network->getPreferred().unspecified());
     EXPECT_EQ(0, network->getPreferred().get());

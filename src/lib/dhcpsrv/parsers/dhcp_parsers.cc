@@ -925,6 +925,12 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
+
+    // Parse allow-static-leases
+    if (params->contains("allow-static-leases")) {
+        bool allow_static_leases = getBoolean(params, "allow-static-leases");
+        subnet4->setAllowStaticLeases(allow_static_leases);
+    }
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1314,6 +1320,12 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
+
+    // Parse allow-static-leases
+    if (params->contains("allow-static-leases")) {
+        bool allow_static_leases = getBoolean(params, "allow-static-leases");
+        subnet6->setAllowStaticLeases(allow_static_leases);
+    }
 }
 
 //**************************** Subnet6ListConfigParser ********************

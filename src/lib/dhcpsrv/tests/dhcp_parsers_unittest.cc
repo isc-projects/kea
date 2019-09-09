@@ -3121,6 +3121,9 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->getT2Percent().unspecified());
     EXPECT_EQ(0.0, subnet->getT2Percent().get());
 
+    EXPECT_TRUE(subnet->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(subnet->getAllowStaticLeases().get());
+
     EXPECT_TRUE(subnet->getMatchClientId().unspecified());
     EXPECT_TRUE(subnet->getMatchClientId().get());
 
@@ -3192,6 +3195,9 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getT2Percent().unspecified());
     EXPECT_EQ(0.0, subnet->getT2Percent().get());
 
+    EXPECT_TRUE(subnet->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(subnet->getAllowStaticLeases().get());
+
     EXPECT_TRUE(subnet->getPreferred().unspecified());
     EXPECT_EQ(0, subnet->getPreferred().get());
 
@@ -3246,6 +3252,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     EXPECT_TRUE(network->getT2Percent().unspecified());
     EXPECT_EQ(0.0, network->getT2Percent().get());
 
+    EXPECT_TRUE(network->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(network->getAllowStaticLeases().get());
+
     EXPECT_TRUE(network->getMatchClientId().unspecified());
     EXPECT_TRUE(network->getMatchClientId().get());
 
@@ -3299,6 +3308,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getT2Percent().unspecified());
     EXPECT_EQ(0.0, network->getT2Percent().get());
+
+    EXPECT_TRUE(network->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(network->getAllowStaticLeases().get());
 
     EXPECT_TRUE(network->getPreferred().unspecified());
     EXPECT_EQ(0, network->getPreferred().get());

@@ -92,6 +92,9 @@ TEST(Subnet4Test, defaults) {
     EXPECT_TRUE(subnet.getT2Percent().unspecified());
     EXPECT_EQ(0.0, subnet.getT2Percent().get());
 
+    EXPECT_TRUE(subnet.getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(subnet.getAllowStaticLeases().get());
+
     EXPECT_TRUE(subnet.getMatchClientId().unspecified());
     EXPECT_TRUE(subnet.getMatchClientId().get());
 
@@ -813,6 +816,9 @@ TEST(SharedNetwork6Test, defaults) {
 
     EXPECT_TRUE(subnet.getT2Percent().unspecified());
     EXPECT_EQ(0.0, subnet.getT2Percent().get());
+
+    EXPECT_TRUE(subnet.getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(subnet.getAllowStaticLeases().get());
 
     EXPECT_TRUE(subnet.getPreferred().unspecified());
     EXPECT_EQ(0, subnet.getPreferred().get());

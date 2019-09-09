@@ -1027,6 +1027,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
     subnet3->setT2Percent(0.65);
+    subnet3->setAllowStaticLeases(true);
     subnet3->setHostReservationMode(Network::HR_ALL);
     subnet3->setAuthoritative(false);
     subnet3->setMatchClientId(true);
@@ -1100,7 +1101,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"t1-percent\": 0.50,\n"
-        "    \"t2-percent\": 0.65\n"
+        "    \"t2-percent\": 0.65,\n"
+        "    \"allow-static-leases\": true\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
@@ -1364,6 +1366,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         EXPECT_EQ("100", value->str());
         EXPECT_FALSE(repr->get("min-valid-lifetime"));
         EXPECT_FALSE(repr->get("max-valid-lifetime"));
+        EXPECT_FALSE(repr->get("allow-static-leases"));
     }
 
     {
@@ -1537,6 +1540,23 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         ASSERT_TRUE(t2_value);
         ASSERT_EQ(data::Element::integer, t2_value->getType());
         EXPECT_EQ(oneyear, t2_value->intValue());
+    }
+
+    {
+        SCOPED_TRACE("allow static leases");
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("allow-static-leases", data::Element::create(true));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getAllowStaticLeases().unspecified());
+        EXPECT_TRUE(subnet->getAllowStaticLeases());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("allow-static-leases");
+        ASSERT_TRUE(value);
+        ASSERT_EQ(data::Element::boolean, value->getType());
+        EXPECT_TRUE(value->boolValue());
     }
 
     {
