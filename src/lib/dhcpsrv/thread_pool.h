@@ -44,7 +44,7 @@ struct ThreadPoolQueue {
     }
 
     void add(WorkItem item) {
-        isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         if (exit_) {
             return;
         }
@@ -55,7 +55,6 @@ struct ThreadPoolQueue {
 
     bool get(WorkItem& item) {
         std::unique_lock<std::mutex> lock(mutex_);
-
         while (!exit_) {
             if (queue_.empty()) {
                 // Wait for add() or destroy().
@@ -72,22 +71,22 @@ struct ThreadPoolQueue {
     }
 
     size_t count() {
-        isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         return queue_.size();
     }
 
     void removeAll() {
-        isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         removeAllUnsafe();
     }
 
     void create() {
-        isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         exit_ = false;
     }
 
     void destroy() {
-        isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         exit_ = true;
         // Notify get() so that it can exit.
         cv_.notify_all();
