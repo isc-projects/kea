@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <util/signal_set.h>
 
+#include <array>
 #include <cerrno>
 #include <list>
 
@@ -15,6 +16,12 @@ using namespace isc;
 using namespace isc::util;
 
 namespace {
+
+/// @brief Fixed size storage for the codes of received signals.
+///
+/// It is initialized with all zeros, which means that no signals
+/// have been received.
+std::array<int, 1024> received_signals;
 
 /// @brief Returns a pointer to the global set of registered signals.
 ///
@@ -72,8 +79,23 @@ void internalHandler(int sig) {
         }
     }
 
-    // First occurrence, so save it.
-    states->push_back(sig);
+    // We haven't yet received this signal so we have to record its
+    // reception. We're using the fixed size array to temporarily
+    // store the received signal codes. We can't directly insert
+    // the signal to the 'states' list because this would cause a
+    // new allocation (malloc) which is not async-signal-safe.
+    for (int i = 0; i < received_signals.size(); ++i) {
+        // We have already recorded this signal.
+        if (received_signals[i] == sig) {
+            return;
+
+        } else if (received_signals[i] == 0) {
+            // We reached the end of the useful data in the storage.
+            // Put the signal code into the storage.
+            received_signals[i] = sig;
+            break;
+        }
+    }
 }
 
 /// @brief Optional handler to execute at the time of signal receipt
@@ -131,21 +153,24 @@ SignalSet::invokeOnReceiptHandler(int sig) {
     return (signal_processed);
 }
 
-SignalSet::SignalSet(const int sig0) {
+SignalSet::SignalSet(const int sig0)
+    : blocked_(false) {
     // Copy static pointers to ensure they don't lose scope before we do.
     registered_signals_ = getRegisteredSignals();
     signal_states_ = getSignalStates();
     add(sig0);
 }
 
-SignalSet::SignalSet(const int sig0, const int sig1) {
+SignalSet::SignalSet(const int sig0, const int sig1) :
+    blocked_(false) {
     registered_signals_ = getRegisteredSignals();
     signal_states_ = getSignalStates();
     add(sig0);
     add(sig1);
 }
 
-SignalSet::SignalSet(const int sig0, const int sig1, const int sig2) {
+SignalSet::SignalSet(const int sig0, const int sig1, const int sig2) :
+    blocked_(false) {
     registered_signals_ = getRegisteredSignals();
     signal_states_ = getSignalStates();
     add(sig0);
@@ -180,8 +205,9 @@ SignalSet::add(const int sig) {
 }
 
 void
-SignalSet::block() const {
+SignalSet::block() {
     maskSignals(SIG_BLOCK);
+    blocked_ = true;
 }
 
 void
@@ -198,14 +224,49 @@ SignalSet::clear() {
 }
 
 int
-SignalSet::getNext() const {
+SignalSet::getNext() {
+    // Since we're operating on the global values that the signal
+    // handler has access to, we have to temporarily block the
+    // signals to not interfere with unsafe operations performed
+    // by this method. Remember if the signals were blocked or
+    // not to be able to determine whether they should be unblocked
+    // when the function returns.
+    bool was_blocked = blocked_;
+    if (!was_blocked) {
+        block();
+    }
+
+    // We may have some signals received. We need to iterate over those
+    // and move them to the signal states structure.
+    for (int i = 0; i < received_signals.size(); ++i) {
+        // If we hit the end of useful data, break.
+        if (received_signals[i] == 0) {
+            break;
+        }
+        // Check if such signal has been already recorded.
+        if (std::find(signal_states_->begin(), signal_states_->end(), received_signals[i])
+            == signal_states_->end()) {
+            signal_states_->push_back(received_signals[i]);
+        }
+        // Set the current element to 0 to indicate the end of
+        // the useful data and process the next element.
+        received_signals[i] = 0;
+    }
+
+    int sig = -1;
     for (std::list<int>::iterator it = signal_states_->begin();
          it != signal_states_->end(); ++it) {
         if (local_signals_.find(*it) != local_signals_.end()) {
-            return (*it);
+            sig = *it;
+            break;
         }
     }
-    return (-1);
+
+    // If we blocked signals here locally, we have to unblock them.
+    if (!was_blocked) {
+        unblock();
+    }
+    return (sig);
 }
 
 void
@@ -215,6 +276,18 @@ SignalSet::erase(const int sig) {
                   << " from a signal set: signal is not owned by the"
                   " signal set");
     }
+
+    // Since we're operating on the global values that the signal
+    // handler has access to, we have to temporarily block the
+    // signals to not interfere with unsafe operations performed
+    // by this method. Remember if the signals were blocked or
+    // not to be able to determine whether they should be unblocked
+    // when the function returns.
+    bool was_blocked = blocked_;
+    if (!was_blocked) {
+        block();
+    }
+
     // Remove globally registered signal.
     registered_signals_->erase(sig);
     // Remove unhandled signals from the queue.
@@ -227,6 +300,18 @@ SignalSet::erase(const int sig) {
 
     // Remove locally registered signal.
     local_signals_.erase(sig);
+
+    // If the signal is no longer supported by this signal set,
+    // we have to unblock it, because other signal set instance
+    // may be using it. We won't process it anyway after it is
+    // removed from this set.
+    unblock(sig);
+
+    // Unblock all remaining signals if we have blocked them in
+    // this function.
+    if (!was_blocked) {
+        unblock();
+    }
 }
 
 void
@@ -257,12 +342,16 @@ SignalSet::insert(const int sig) {
 }
 
 void
-SignalSet::maskSignals(const int mask) const {
+SignalSet::maskSignals(const int mask, const int sig) const {
     sigset_t new_set;
     sigemptyset(&new_set);
-    for (std::set<int>::const_iterator it = registered_signals_->begin();
-         it != registered_signals_->end(); ++it) {
-        sigaddset(&new_set, *it);
+    if (sig < 0) {
+        for (std::set<int>::const_iterator it = registered_signals_->begin();
+             it != registered_signals_->end(); ++it) {
+            sigaddset(&new_set, *it);
+        }
+    } else {
+        sigaddset(&new_set, sig);
     }
     pthread_sigmask(mask, &new_set, 0);
 }
@@ -298,8 +387,16 @@ SignalSet::remove(const int sig) {
 }
 
 void
-SignalSet::unblock() const {
-    maskSignals(SIG_UNBLOCK);
+SignalSet::unblock(int sig) {
+    // There are two cases supported by this function. One is to
+    // unblock some specific signal. Another one is to unblock all
+    // signals supported by this function. The maskSignals function
+    // will deal wih this internally but we marked signals as unblocked
+    // only if we unblocked all of them (sig is negative).
+    maskSignals(SIG_UNBLOCK, sig);
+    if (sig < 0) {
+        blocked_ = false;
+    }
 }
 
 

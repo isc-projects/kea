@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -136,7 +136,7 @@ public:
     ///
     /// @return A code of the next received signal or -1 if there are no
     /// more signals received.
-    int getNext() const;
+    int getNext();
 
     /// @brief Calls a handler for the next received signal.
     ///
@@ -191,7 +191,7 @@ private:
     ///
     /// This function blocks the signals in a set to prevent race condition
     /// between the signal handler and the new signal coming in.
-    void block() const;
+    void block();
 
     /// @brief Removes the signal from the set.
     ///
@@ -215,7 +215,9 @@ private:
     /// to apply the SIG_BLOCK and SIG_UNBLOCK mask to signals.
     ///
     /// @param mask A mask to be applied to all signals.
-    void maskSignals(const int mask) const;
+    /// @param sig Optional signal to be masked. If this value is negative all
+    /// signals are masked.
+    void maskSignals(const int mask, const int sig = -1) const;
 
     /// @brief Pops a next signal number from the static collection of signals.
     ///
@@ -227,7 +229,13 @@ private:
     /// @brief Unblocks signals in the set.
     ///
     /// This function unblocks the signals in a set.
-    void unblock() const;
+    ///
+    /// @param sig Optional signal to be unblocked. If this is negative, all
+    /// registered signals are unblocked.
+    void unblock(int sig = -1);
+
+    /// @brief Indicates if receiving signals is blocked.
+    bool blocked_;
 
     /// @brief Stores the set of signals registered in this signal set.
     std::set<int> local_signals_;
