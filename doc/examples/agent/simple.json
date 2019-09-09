@@ -32,21 +32,21 @@
             {
                 "comment": "socket to DHCP4 server",
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4"
+                "socket-name": "/tmp/kea4-ctrl-socket"
             },
 
             // Location of the DHCPv6 command channel socket.
             "dhcp6":
             {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v6"
+                "socket-name": "/tmp/kea6-ctrl-socket"
             },
 
             // Location of the D2 command channel socket.
             "d2":
             {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-d2",
+                "socket-name": "/tmp/kea-ddns-ctrl-socket",
                 "user-context": { "in-use": false }
             }
         },

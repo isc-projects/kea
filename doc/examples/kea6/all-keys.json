@@ -56,7 +56,7 @@
             // Location of the unix domain socket file the DHCPv6 server uses
             // to receive control commands from the Kea Control Agent or the
             // local server administrator.
-            "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+            "socket-name": "/tmp/kea6-ctrl-socket",
 
             // Control socket type used by the Kea DHCPv6 server. The 'unix'
             // socket is currently the only supported type.

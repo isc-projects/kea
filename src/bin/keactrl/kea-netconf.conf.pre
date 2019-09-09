@@ -30,13 +30,13 @@
         "dhcp4": {
             "control-socket": {
                 "socket-type": "unix",
-                "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
+                "socket-name": "/tmp/kea4-ctrl-socket"
             }
         },
         "dhcp6": {
             "control-socket": {
                 "socket-type": "unix",
-                "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
+                "socket-name": "/tmp/kea6-ctrl-socket"
             }
         }
     },

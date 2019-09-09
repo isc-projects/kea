@@ -12,7 +12,7 @@
     <interfaces>eth1</interfaces>
   </interfaces-config>
   <control-socket>
-    <socket-name>/tmp/kea6-sock</socket-name>
+    <socket-name>/tmp/kea6-ctrl-socket</socket-name>
     <socket-type>unix</socket-type>
   </control-socket>
 </config>

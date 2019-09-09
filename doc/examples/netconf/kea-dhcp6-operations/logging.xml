@@ -12,7 +12,7 @@
     <subnet>2001:db8::/64</subnet>
   </subnet6>
   <control-socket>
-    <socket-name>/tmp/kea6-sock</socket-name>
+    <socket-name>/tmp/kea6-ctrl-socket</socket-name>
     <socket-type>unix</socket-type>
   </control-socket>
   <logger>

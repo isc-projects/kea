@@ -18,7 +18,7 @@
             {
                 "comment": "control socket for DHCP4 server",
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4"
+                "socket-name": "/tmp/kea4-ctrl-socket"
             }
         },
 

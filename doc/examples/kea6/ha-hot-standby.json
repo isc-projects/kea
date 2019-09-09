@@ -21,7 +21,7 @@
     // API between the HA peers.
     "control-socket": {
         "socket-type": "unix",
-        "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
+        "socket-name": "/tmp/kea6-ctrl-socket"
     },
 
     // Use Memfile lease database backend to store leases in a CSV file.

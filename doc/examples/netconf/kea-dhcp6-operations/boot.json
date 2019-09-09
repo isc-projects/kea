@@ -2,7 +2,7 @@
     "Dhcp6": {
         "control-socket": {
             "socket-type": "unix",
-            "socket-name": "/tmp/kea6-sock"
+            "socket-name": "/tmp/kea6-ctrl-socket"
         }
     }
 }
