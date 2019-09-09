@@ -1,3 +1,10 @@
+1662.	[bug]		marcin
+	Prevent deadlock in the Kea DHCP servers caused by allocating
+	memory in the system signal handler. The issue was found on
+	CentOS 7.6, but could possibly affect Kea running on any other
+	OS.
+	(Gitlab #796,!504, git f858d9d0b63a18370ebb8bd7d1b8250d0c5a1cb5)
+
 1661.	[bug]		tmark
 	kea-dhcp4 now rejects inbound client messages that have
 	neither a hardware address nor a client identifier.
