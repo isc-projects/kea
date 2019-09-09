@@ -874,6 +874,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"allow-static-leases\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_ALLOW_STATIC_LEASES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("allow-static-leases", driver.loc_);
+    }
+}
+
 \"decline-probation-period\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

@@ -94,6 +94,7 @@ using namespace std;
   MAX_VALID_LIFETIME "max-valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
+  ALLOW_STATIC_LEASES "allow-static-leases"
   CALCULATE_TEE_TIMES "calculate-tee-times"
   T1_PERCENT "t1-percent"
   T2_PERCENT "t2-percent"
@@ -491,6 +492,7 @@ global_param: data_directory
             | loggers
             | hostname_char_set
             | hostname_char_replacement
+            | allow_static_leases
             | unknown_map_entry
             ;
 
@@ -540,6 +542,11 @@ renew_timer: RENEW_TIMER COLON INTEGER {
 rebind_timer: REBIND_TIMER COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("rebind-timer", prf);
+};
+
+allow_static_leases: ALLOW_STATIC_LEASES COLON BOOLEAN {
+    ElementPtr asl(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("allow-static-leases", asl);
 };
 
 calculate_tee_times: CALCULATE_TEE_TIMES COLON BOOLEAN {
@@ -1142,6 +1149,7 @@ subnet6_param: preferred_lifetime
              | calculate_tee_times
              | t1_percent
              | t2_percent
+             | allow_static_leases
              | unknown_map_entry
              ;
 
@@ -1268,6 +1276,7 @@ shared_network_param: name
                     | calculate_tee_times
                     | t1_percent
                     | t2_percent
+                    | allow_static_leases
                     | unknown_map_entry
                     ;
 
