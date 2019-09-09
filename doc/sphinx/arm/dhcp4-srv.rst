@@ -197,7 +197,9 @@ client will begin the renewal and rebind procedures.
 .. note::
 
    Beginning with Kea 1.7.0 configured timers are silently limited to one
-   year (365 days or 31536000 seconds).
+   year (365 days or 31536000 seconds). To accept infinity (0xffffffff)
+   valid lifetime and associated timers set the ``allow-static-leases``
+   boolean flag to true (default is false).
 
 .. note::
 

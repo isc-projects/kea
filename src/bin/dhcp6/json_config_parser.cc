@@ -682,7 +682,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "t2-percent") ||
                  (config_pair.first == "loggers") ||
                  (config_pair.first == "hostname-char-set") ||
-                 (config_pair.first == "hostname-char-replacement")) {
+                 (config_pair.first == "hostname-char-replacement") ||
+                 (config_pair.first == "allow-static-leases")) {
 
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);

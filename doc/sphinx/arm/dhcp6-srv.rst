@@ -2123,7 +2123,9 @@ round down) bounds.
 .. note::
 
    Beginning with Kea 1.7.0 configured timers are silently limited to one
-   year (365 days or 31536000 seconds).
+   year (365 days or 31536000 seconds). To accept infinity (0xffffffff)
+   valid lifetime and associated timers set the ``allow-static-leases``
+   boolean flag to true (default is false).
 
 To send specific, fixed values use the following two parameters:
 

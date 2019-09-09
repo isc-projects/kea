@@ -76,7 +76,8 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "t2-percent",                   Element::real },
     { "loggers",                      Element::list },
     { "hostname-char-set",            Element::string },
-    { "hostname-char-replacement",    Element::string }
+    { "hostname-char-replacement",    Element::string },
+    { "allow-static-leases",          Element::boolean }
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -98,7 +99,8 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "reservation-mode",          Element::string,  "all" },
     { "calculate-tee-times",       Element::boolean, "false" },
     { "t1-percent",                Element::real,    ".50" },
-    { "t2-percent",                Element::real,    ".875" }
+    { "t2-percent",                Element::real,    ".875" },
+    { "allow-static-leases",       Element::boolean, "false" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -192,6 +194,7 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "calculate-tee-times",    Element::boolean },
     { "t1-percent",             Element::real },
     { "t2-percent",             Element::real },
+    { "allow-static-leases",    Element::boolean },
     { "metadata",               Element::map }
 };
 
@@ -250,7 +253,8 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "max-valid-lifetime",
     "calculate-tee-times",
     "t1-percent",
-    "t2-percent"
+    "t2-percent",
+    "allow-static-leases"
 };
 
 /// @brief This table defines all pool parameters.
@@ -297,6 +301,7 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "calculate-tee-times",    Element::boolean },
     { "t1-percent",             Element::real },
     { "t2-percent",             Element::real },
+    { "allow-static-leases",    Element::boolean },
     { "metadata",               Element::map }
 };
 

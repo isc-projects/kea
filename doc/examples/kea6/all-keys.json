@@ -731,7 +731,10 @@
                         "min-valid-lifetime": 4000,
 
                         // Subnet level max valid lifetime.
-                        "max-valid-lifetime": 8000
+                        "max-valid-lifetime": 8000,
+
+                        // Subnet level allow static leases.
+                        "allow-static-leases": false
                     }
                 ],
 
@@ -742,7 +745,10 @@
                 "min-valid-lifetime": 4001,
 
                 // Shared network level max valid lifetime.
-                "max-valid-lifetime": 8001
+                "max-valid-lifetime": 8001,
+
+                // Shared network level allow static leases.
+                "allow-static-leases": false
             }
         ],
 
@@ -757,6 +763,10 @@
 
         // Global max valid lifetime value.
         "max-valid-lifetime": 8000,
+
+        // Global allow static leases, i.e. valid lifetime and associated
+        // timers can get the infinity 0xffffffff value.
+        "allow-static-leases": false,
 
         // Reservations (examples are in other files).
         "reservations": [],
