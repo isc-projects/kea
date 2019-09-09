@@ -37,7 +37,7 @@ ThreadPool::~ThreadPool() {
 }
 
 void ThreadPool::create(uint32_t worker_threads) {
-    LOG_INFO(dhcpsrv_logger, "Starting packet thread pool with %1 worker threads")
+    LOG_INFO(dhcpsrv_logger, "Thread pool starting with %1 worker threads")
         .arg(worker_threads);
     if (!worker_threads) {
         return;
@@ -49,11 +49,11 @@ void ThreadPool::create(uint32_t worker_threads) {
         worker_threads_.push_back(make_shared<thread>(&ThreadPool::threadRun, this));
     }
 
-    LOG_INFO(dhcpsrv_logger, "Packet thread pool started");
+    LOG_INFO(dhcpsrv_logger, "Thread pool started");
 }
 
 void ThreadPool::destroy() {
-    LOG_INFO(dhcpsrv_logger, "Shutting down packet thread pool");
+    LOG_INFO(dhcpsrv_logger, "Thread pool shutting down");
     exit_ = true;
     queue_.destroy();
     for (auto thread : worker_threads_) {
@@ -61,7 +61,7 @@ void ThreadPool::destroy() {
     }
     worker_threads_.clear();
 
-    LOG_INFO(dhcpsrv_logger, "Packet thread pool shut down");
+    LOG_INFO(dhcpsrv_logger, "Thread pool shut down");
 }
 
 void ThreadPool::add(WorkItemCallBack call_back) {
@@ -74,7 +74,7 @@ size_t ThreadPool::count() {
 
 void ThreadPool::threadRun() {
     thread::id th_id = this_thread::get_id();
-    LOG_INFO(dhcpsrv_logger, "Packet thread pool new thread started. id: %1").arg(th_id);
+    LOG_INFO(dhcpsrv_logger, "Thread pool thread started. id: %1").arg(th_id);
 
     while (!exit_) {
         WorkItemCallBack work_item;
@@ -83,7 +83,7 @@ void ThreadPool::threadRun() {
         }
     }
 
-    LOG_INFO(dhcpsrv_logger, "Packet thread pool thread ended. id: %1").arg(th_id);
+    LOG_INFO(dhcpsrv_logger, "Thread pool thread ended. id: %1").arg(th_id);
 }
 
 }  // namespace dhcp
