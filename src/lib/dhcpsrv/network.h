@@ -27,7 +27,10 @@
 namespace isc {
 namespace dhcp {
 
-/// List of IOAddresses
+/// @brief Number of seconds in one year (hard limit for timers).
+const uint32_t ONEYEAR_LIFETIME = 365 * 24 * 60 * 60;
+
+/// @brief List of IOAddresses
 typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
 
 class Network;

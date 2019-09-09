@@ -2120,6 +2120,11 @@ zero values these values are used when they are between configured
 minimum (lower values are round up) and maximal (larger values are
 round down) bounds.
 
+.. note::
+
+   Beginning with Kea 1.7.0 configured timers are silently limited to one
+   year (365 days or 31536000 seconds).
+
 To send specific, fixed values use the following two parameters:
 
 -  ``renew-timer`` - specifies the value of T1 in seconds.

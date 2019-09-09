@@ -196,6 +196,11 @@ client will begin the renewal and rebind procedures.
 
 .. note::
 
+   Beginning with Kea 1.7.0 configured timers are silently limited to one
+   year (365 days or 31536000 seconds).
+
+.. note::
+
    Both ``renew-timer`` and ``rebind-timer``
    are optional. The server will only send ``rebind-timer`` to the client,
    via DHCPv4 option code 59, if it is less than ``valid-lifetime``; and it

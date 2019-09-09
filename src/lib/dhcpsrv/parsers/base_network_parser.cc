@@ -92,6 +92,16 @@ BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
                   << min_value << ") and max-" << name << " ("
                   << max_value << ")");
     }
+    // Limit to one year.
+    if (value > ONEYEAR_LIFETIME) {
+        value = ONEYEAR_LIFETIME;
+    }
+    if (min_value > ONEYEAR_LIFETIME) {
+        min_value = ONEYEAR_LIFETIME;
+    }
+    if (max_value > ONEYEAR_LIFETIME) {
+        max_value = ONEYEAR_LIFETIME;
+    }
     return (Triplet<uint32_t>(min_value, value, max_value));
 }
 
@@ -99,11 +109,19 @@ void
 BaseNetworkParser::parseCommonTimers(const ConstElementPtr& network_data,
                                      NetworkPtr& network) {
     if (network_data->contains("renew-timer")) {
-        network->setT1(getInteger(network_data, "renew-timer"));
+        uint32_t value = getInteger(network_data, "renew-timer");
+        if (value > ONEYEAR_LIFETIME) {
+            value = ONEYEAR_LIFETIME;
+        }
+        network->setT1(value);
     }
 
     if (network_data->contains("rebind-timer")) {
-        network->setT2(getInteger(network_data, "rebind-timer"));
+        uint32_t value = getInteger(network_data, "rebind-timer");
+        if (value > ONEYEAR_LIFETIME) {
+            value = ONEYEAR_LIFETIME;
+        }
+        network->setT2(value);
     }
 
     network->setValid(parseLifetime(network_data, "valid-lifetime"));

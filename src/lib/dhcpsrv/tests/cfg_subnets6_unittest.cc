@@ -1283,6 +1283,52 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
     }
 
     {
+        SCOPED_TRACE("all 3 (min, max and default) very large preferred-lifetime");
+        data::ElementPtr copied = data::copy(elems);
+        // Limit is one year seconds so use more.
+        int oneyear = ONEYEAR_LIFETIME;
+        copied->set("min-preferred-lifetime",
+                    data::Element::create(oneyear + 100));
+        // Use a different (and greater) value for the default.
+        copied->set("preferred-lifetime",
+                    data::Element::create(oneyear + 200));
+        // Use a different (and greater than both) value for max.
+        copied->set("max-preferred-lifetime",
+                    data::Element::create(oneyear + 300));
+        // Set renew and rebind timers too.
+        copied->set("renew-timer",
+                    data::Element::create(oneyear + 100));
+        copied->set("rebind-timer",
+                    data::Element::create(oneyear + 200));
+        Subnet6Ptr subnet;
+        Subnet6ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        ASSERT_TRUE(subnet);
+        EXPECT_FALSE(subnet->getPreferred().unspecified());
+        EXPECT_EQ(oneyear, subnet->getPreferred());
+        EXPECT_EQ(oneyear, subnet->getPreferred().getMin());
+        EXPECT_EQ(oneyear, subnet->getPreferred().getMax());
+        EXPECT_EQ(oneyear, subnet->getT1());
+        EXPECT_EQ(oneyear, subnet->getT2());
+        data::ConstElementPtr repr = subnet->toElement();
+        data::ConstElementPtr value = repr->get("preferred-lifetime");
+        ASSERT_TRUE(value);
+        ASSERT_TRUE(value);
+        ASSERT_EQ(data::Element::integer, value->getType());
+        EXPECT_EQ(oneyear, value->intValue());
+        EXPECT_FALSE(repr->get("min-preferred-lifetime"));
+        EXPECT_FALSE(repr->get("max-preferred-lifetime"));
+        data::ConstElementPtr t1_value = repr->get("renew-timer");
+        ASSERT_TRUE(t1_value);
+        ASSERT_EQ(data::Element::integer, t1_value->getType());
+        EXPECT_EQ(oneyear, t1_value->intValue());
+        data::ConstElementPtr t2_value = repr->get("rebind-timer");
+        ASSERT_TRUE(t2_value);
+        ASSERT_EQ(data::Element::integer, t2_value->getType());
+        EXPECT_EQ(oneyear, t2_value->intValue());
+    }
+
+    {
         SCOPED_TRACE("default value too small");
         data::ElementPtr copied = data::copy(elems);
         copied->set("min-preferred-lifetime", data::Element::create(200));
