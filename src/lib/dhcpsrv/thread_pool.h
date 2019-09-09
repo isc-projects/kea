@@ -53,7 +53,6 @@ struct ThreadPoolQueue {
 
     bool get(WorkItem& item) {
         std::unique_lock<std::mutex> lock(mutex_);
-
         while (!exit_) {
             if (queue_.empty()) {
                 // Wait for add() or destroy().
