@@ -682,13 +682,13 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "server-tag") ||
                  (config_pair.first == "reservation-mode") ||
-                 (config_pair.first == "enable-reconfiguration")) {
+                 (config_pair.first == "enable-reconfiguration") ||
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||
                  (config_pair.first == "loggers") ||
                  (config_pair.first == "hostname-char-set") ||
-                 (config_pair.first == "hostname-char-replacement")) {
+                 (config_pair.first == "hostname-char-replacement") ) {
 
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);

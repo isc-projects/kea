@@ -2857,8 +2857,8 @@ TEST_F(Dhcpv6SrvTest, DISABLED_reconfigureAcceptOptionTest) {
     string stored_key;
 
     for (auto& host : ctx.hosts_) {
-        ASSERT_FALSE(host.second->getKey().ToText().empty());
-        stored_key = host.second->getKey().ToText();
+        ASSERT_FALSE(host.second->getKey().toText().empty());
+        stored_key = host.second->getKey().toText();
     }
 
     srv.storeClientIntfInfo(req, ctx);
@@ -2901,8 +2901,8 @@ TEST_F(Dhcpv6SrvTest, DISABLED_reconfigureAcceptOptionTest) {
 
     // Ensure the hosts have keys stored for the client
     for (auto& host : ctx2.hosts_) {
-        ASSERT_FALSE(host.second->getKey().ToText().empty());
-        ASSERT_TRUE(stored_key == host.second->getKey().ToText());
+        ASSERT_FALSE(host.second->getKey().toText().empty());
+        ASSERT_TRUE(stored_key == host.second->getKey().toText());
     }
 
 }

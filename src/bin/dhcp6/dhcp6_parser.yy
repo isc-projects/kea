@@ -485,7 +485,6 @@ global_param: data_directory
             | reservations
             | config_control
             | server_tag
-            | enable_reconfiguration
             | reservation_mode
             | calculate_tee_times
             | t1_percent
@@ -493,6 +492,7 @@ global_param: data_directory
             | loggers
             | hostname_char_set
             | hostname_char_replacement
+            | enable_reconfiguration
             | unknown_map_entry
             ;
 
@@ -573,8 +573,8 @@ server_tag: SERVER_TAG {
 };
 
 enable_reconfiguration: ENABLE_RECONFIGURATION COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("enable-reconfiguration", b);
+    ElementPtr er(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-reconfiguration", er);
 };
 
 interfaces_config: INTERFACES_CONFIG {

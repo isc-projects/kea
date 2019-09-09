@@ -4066,7 +4066,7 @@ void Dhcpv6Srv::updateHostKey(AllocEngine::ClientContext6& ctx) {
         // Now update the context with the new reservation
     } else {
         for (auto& host : ctx.hosts_) {
-            if (host.second->getKey().ToText().empty()) {
+            if (host.second->getKey().toText().empty()) {
                 HostPtr hostPtr = boost::const_pointer_cast<Host>(host.second);
                 // multiple host reservation are assigned the same key
                 // as they belong to the same client
