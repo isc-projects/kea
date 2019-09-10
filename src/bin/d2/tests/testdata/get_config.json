@@ -1,7 +1,7 @@
 {
     "DhcpDdns": {
         "control-socket": {
-            "socket-name": "/tmp/d2-ctrl-socket",
+            "socket-name": "/tmp/kea-ddns-ctrl-socket",
             "socket-type": "unix"
         },
         "dns-server-timeout": 1000,

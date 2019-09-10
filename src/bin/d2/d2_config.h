@@ -80,7 +80,7 @@ namespace d2 {
 ///  "control-socket":
 ///  {
 ///    "socket-type": "unix" ,
-///    "socket-name": "/tmp/d2-ctrl-socket"
+///    "socket-name": "/tmp/kea-ddns-ctrl-socket"
 //// },
 ///  "tsig-keys":
 //// [
