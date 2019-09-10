@@ -145,7 +145,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
         "state, user_context "
       "FROM lease4 "
-      "WHERE state != $1 AND expire < $2 "
+      "WHERE state != $1 AND expire < $2 AND valid_lifetime != 4294967295 "
       "ORDER BY expire "
       "LIMIT $3"},
 
@@ -238,7 +238,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context "
       "FROM lease6 "
-      "WHERE state != $1 AND expire < $2 "
+      "WHERE state != $1 AND expire < $2 AND valid_lifetime != 4294967295 "
       "ORDER BY expire "
       "LIMIT $3"},
 
@@ -469,7 +469,12 @@ public:
             valid_lifetime_str_ = boost::lexical_cast<std::string>(lease->valid_lft_);
             bind_array.add(valid_lifetime_str_);
 
-            expire_str_ = convertToDatabaseTime(lease->cltt_, lease_->valid_lft_);
+            // Avoid overflow
+            uint32_t valid_lft = lease_->valid_lft_;
+            if (valid_lft == Lease::INFINITY_LFT) {
+                valid_lft = Lease::FIVEHUNDREDDAYS;
+            }
+            expire_str_ = convertToDatabaseTime(lease->cltt_, valid_lft);
             bind_array.add(expire_str_);
 
             subnet_id_str_ = boost::lexical_cast<std::string>(lease->subnet_id_);
@@ -524,7 +529,12 @@ public:
 
             getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 
-            cltt_ = expire_ - valid_lifetime_;
+            // Recover from overflow
+            uint32_t valid_lft = valid_lifetime_;
+            if (valid_lft == Lease::INFINITY_LFT) {
+                valid_lft = Lease::FIVEHUNDREDDAYS;
+            }
+            cltt_ = expire_ - valid_lft;
 
             getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
 
@@ -700,7 +710,12 @@ public:
             valid_lifetime_str_ = boost::lexical_cast<std::string>(lease->valid_lft_);
             bind_array.add(valid_lifetime_str_);
 
-            expire_str_ = convertToDatabaseTime(lease->cltt_, lease_->valid_lft_);
+            // Avoid overflow
+            uint32_t valid_lft = lease_->valid_lft_;
+            if (valid_lft == Lease::INFINITY_LFT) {
+                valid_lft = Lease::FIVEHUNDREDDAYS;
+            }
+            expire_str_ = convertToDatabaseTime(lease->cltt_, valid_lft);
             bind_array.add(expire_str_);
 
             subnet_id_str_ = boost::lexical_cast<std::string>(lease->subnet_id_);
@@ -806,7 +821,12 @@ public:
             expire_ = convertFromDatabaseTime(getRawColumnValue(r, row,
                                                                 EXPIRE_COL));
 
-            cltt_ = expire_ - valid_lifetime_;
+            // Recover from overflow
+            uint32_t valid_lft = valid_lifetime_;
+            if (valid_lft == Lease::INFINITY_LFT) {
+                valid_lft = Lease::FIVEHUNDREDDAYS;
+            }
+            cltt_ = expire_ - valid_lft;
 
             getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 

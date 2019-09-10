@@ -68,8 +68,7 @@ public:
     /// @param address Address to use for the initialization
     ///
     /// @return Lease6Ptr.  This will not point to anything if the
-    /// initialization
-    ///         failed (e.g. unknown address).
+    ///         initialization failed (e.g. unknown address).
     Lease6Ptr initializeLease6(std::string address);
 
     /// @brief Check Leases present and different
@@ -144,6 +143,9 @@ public:
 
     /// @brief checks that invalid dates are safely handled.
     void testMaxDate4();
+
+    /// @brief checks that infinite lifetimes do not overflow.
+    void testInfiniteLifeTime4();
 
     /// @brief Test lease retrieval using client id.
     void testGetLease4ClientId();
@@ -244,6 +246,9 @@ public:
     /// @brief Checks that invalid dates are safely handled.
     void testMaxDate6();
 
+    /// @brief checks that infinite lifetimes do not overflow.
+    void testInfiniteLifeTime6();
+
     /// @brief Checks that Lease6 can be stored with and without a hardware address.
     void testLease6MAC();
 
@@ -341,6 +346,14 @@ public:
     ///   least expired
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases6();
+
+    /// @brief Checks that the static (i.e. with infinite valid lifetime)
+    /// DHCPv4 leases will never expire.
+    void testStaticLeases4();
+
+    /// @brief Checks that the static (i.e. with infinite valid lifetime)
+    /// DHCPv4 leases will never expire.
+    void testStaticLeases6();
 
     /// @brief Checks that declined IPv4 leases that have expired can be retrieved.
     ///

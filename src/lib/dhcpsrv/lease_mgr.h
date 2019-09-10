@@ -459,9 +459,9 @@ public:
 
     /// @brief Returns collection of leases for matching DUID
     ///
-    /// @return Lease collection 
+    /// @return Lease collection
     /// (may be empty if no IPv6 lease found for the DUID).
-    virtual Lease6Collection getLeases6(const DUID& duid) const = 0; 
+    virtual Lease6Collection getLeases6(const DUID& duid) const = 0;
 
     /// @brief Returns range of IPv6 leases using paging.
     ///

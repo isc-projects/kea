@@ -302,6 +302,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "FROM lease4 "
       "WHERE state = ? "
       "AND expire < ? "
+      "AND valid_lifetime < 4294967295 "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 
@@ -448,8 +449,12 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        // Avoid overflow
+        uint32_t valid_lft = lease_->valid_lft_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -551,8 +556,12 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        // Avoid overflow
+        uint32_t valid_lft = lease_->valid_lft_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -696,7 +705,12 @@ CqlLease4Exchange::retrieve() {
         }
 
         time_t cltt = 0;
-        CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        // Recover from overflow
+        uint32_t valid_lft = valid_lifetime_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        CqlExchange::convertFromDatabaseTime(expire_, valid_lft, cltt);
 
         HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
@@ -1004,6 +1018,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "FROM lease6 "
       "WHERE state = ? "
       "AND expire < ? "
+      "AND valid_lifetime < 4294967295 "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 
@@ -1112,7 +1127,12 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
+        // Avoid overflow
+        uint32_t valid_lft = lease_->valid_lft_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1247,8 +1267,12 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        // Avoid overflow
+        uint32_t valid_lft = lease_->valid_lft_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1505,7 +1529,12 @@ CqlLease6Exchange::retrieve() {
                        fqdn_fwd_, fqdn_rev_, hostname_, hwaddr, prefix_len_));
 
         time_t cltt = 0;
-        CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        // Recover from overflow
+        uint32_t valid_lft = valid_lifetime_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        CqlExchange::convertFromDatabaseTime(expire_, valid_lft, cltt);
         result->cltt_ = cltt;
 
         result->state_ = state_;
@@ -2311,7 +2340,6 @@ CqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     // Set up the WHERE clause value
     AnyArray data;
-    
     CassBlob duid_data(duid.getDuid());
 
     data.add(&duid_data);

@@ -46,7 +46,7 @@ struct ClientIdHWAddressSubnetIdIndexTag { };
 struct SubnetIdIndexTag { };
 
 /// @brief Tag for index using DUID.
-struct DuidIndexTag { }; 
+struct DuidIndexTag { };
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{

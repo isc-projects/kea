@@ -46,7 +46,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
     row.writeAt(getColumnIndex("address"), lease.addr_.toText());
     row.writeAt(getColumnIndex("duid"), lease.duid_->toText());
     row.writeAt(getColumnIndex("valid_lifetime"), lease.valid_lft_);
-    row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_ + lease.valid_lft_));
+    row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_) + lease.valid_lft_);
     row.writeAt(getColumnIndex("subnet_id"), lease.subnet_id_);
     row.writeAt(getColumnIndex("pref_lifetime"), lease.preferred_lft_);
     row.writeAt(getColumnIndex("lease_type"), lease.type_);

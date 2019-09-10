@@ -320,7 +320,7 @@ public:
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6(const DUID& duid) const override;
-    
+
     /// @brief Returns range of IPv6 leases using paging.
     ///
     /// This method implements paged browsing of the lease database. The first

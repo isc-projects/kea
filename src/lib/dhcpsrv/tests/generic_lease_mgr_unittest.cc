@@ -127,7 +127,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         // The times used in the next tests are deliberately restricted - we
         // should be able to cope with valid lifetimes up to 0xffffffff.
         //  However, this will lead to overflows.
-        // @TODO: test overflow conditions when code has been fixed
+        // @TODO: test overflow conditions as now the code was fixed.
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
         lease->subnet_id_ = 37;
@@ -254,7 +254,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // The times used in the next tests are deliberately restricted - we
         // should be able to cope with valid lifetimes up to 0xffffffff.
         //  However, this will lead to overflows.
-        // @TODO: test overflow conditions when code has been fixed
+        // @TODO: test overflow conditions as now the code was fixed.
         lease->preferred_lft_ = 7200;
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
@@ -713,6 +713,23 @@ GenericLeaseMgrTest::testMaxDate4() {
 }
 
 void
+GenericLeaseMgrTest::testInfiniteLifeTime4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+    Lease4Ptr lease = leases[1];
+
+    // Set valid_lft_ to infinite, cllt_ to now.
+    lease->valid_lft_ = Lease::INFINITY_LFT;
+    lease->cltt_ = time(NULL);
+
+    // Insert should not throw.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+}
+
+void
 GenericLeaseMgrTest::testBasicLease4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -877,6 +894,23 @@ GenericLeaseMgrTest::testMaxDate6() {
     // Set valid_lft_ to 0, which should make expire time small enough to
     // store and try again.
     lease->valid_lft_ = 0;
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+}
+
+void
+GenericLeaseMgrTest::testInfiniteLifeTime6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    Lease6Ptr lease = leases[1];
+
+    // Set valid_lft_ to infinite, cllt_ to now.
+    lease->valid_lft_ = Lease::INFINITY_LFT;
+    lease->cltt_ = time(NULL);
+
+    // Insert should not throw.
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
@@ -2165,6 +2199,48 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
         EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
     }
+}
+
+void
+GenericLeaseMgrTest::testStaticLeases4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+    Lease4Ptr lease = leases[1];
+
+    // Set valid_lft_ to infinite. Leave the small cltt even it won't happen
+    // in the real world to catch more possible issues.
+    lease->valid_lft_ = Lease::INFINITY_LFT;
+
+    // Add it to the database.
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // Retrieve at most 10 expired leases.
+    Lease4Collection expired_leases;
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 10));
+
+    // No lease should be returned.
+    EXPECT_EQ(0, expired_leases.size());
+}
+
+void
+GenericLeaseMgrTest::testStaticLeases6() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    Lease6Ptr lease = leases[1];
+
+    // Set valid_lft_ to infinite. Leave the small cltt even it won't happen
+    // in the real world to catch more possible issues.
+    lease->valid_lft_ = Lease::INFINITY_LFT;
+
+    // Add it to the database.
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // Retrieve at most 10 expired leases.
+    Lease6Collection expired_leases;
+    ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 10));
+
+    // No lease should be returned.
+    EXPECT_EQ(0, expired_leases.size());
 }
 
 void

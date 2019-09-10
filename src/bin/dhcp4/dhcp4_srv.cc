@@ -2178,11 +2178,16 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             LOG_INFO(lease4_logger, DHCP4_LEASE_ADVERT)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText());
-        } else {
+        } else if (lease->valid_lft_ != Lease::INFINITY_LFT) {
             LOG_INFO(lease4_logger, DHCP4_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(lease->valid_lft_);
+        } else {
+            LOG_INFO(lease4_logger, DHCP4_LEASE_ALLOC)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg("infinity");
         }
 
         // We're logging this here, because this is the place where we know

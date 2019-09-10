@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                   DHCPSRV_QUEUE_NCR_SKIP)
             .arg(label)
             .arg(lease->addr_.toText());
-            
+
         return;
     }
 
@@ -55,11 +55,15 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
 
         // Create name change request.
+        uint32_t valid_lft = lease->valid_lft_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
         NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
-                                   dhcid, lease->cltt_ + lease->valid_lft_,
-                                   lease->valid_lft_));
+                                   dhcid, lease->cltt_ + valid_lft,
+                                   valid_lft));
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
             .arg(label)

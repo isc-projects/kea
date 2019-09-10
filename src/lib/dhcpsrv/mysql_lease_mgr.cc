@@ -165,7 +165,8 @@ tagged_statements = { {
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "state, user_context "
                             "FROM lease4 "
-                            "WHERE state != ? AND expire < ? "
+                            "WHERE state != ? AND expire < ?"
+                            " AND valid_lifetime != 4294967295 "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6,
@@ -241,7 +242,8 @@ tagged_statements = { {
                         "hwaddr, hwtype, hwaddr_source, "
                         "state, user_context "
                             "FROM lease6 "
-                            "WHERE state != ? AND expire < ? "
+                            "WHERE state != ? AND expire < ?"
+                            " AND valid_lifetime != 4294967295 "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::INSERT_LEASE4,
@@ -539,7 +541,12 @@ public:
             // expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            MySqlConnection::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+            // Avoid overflow
+            uint32_t valid_lft = lease_->valid_lft_;
+            if (valid_lft == Lease::INFINITY_LFT) {
+                valid_lft = Lease::FIVEHUNDREDDAYS;
+            }
+            MySqlConnection::convertToDatabaseTime(lease_->cltt_, valid_lft,
                                                    expire_);
             bind_[4].buffer_type = MYSQL_TYPE_TIMESTAMP;
             bind_[4].buffer = reinterpret_cast<char*>(&expire_);
@@ -744,7 +751,12 @@ public:
         // Convert times received from the database to times for the lease
         // structure
         time_t cltt = 0;
-        MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        // Recover from overflow
+        uint32_t valid_lft = valid_lifetime_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        MySqlConnection::convertFromDatabaseTime(expire_, valid_lft, cltt);
 
         if (client_id_null_ == MLM_TRUE) {
             // There's no client-id, so we pass client-id_length_ set to 0
@@ -971,7 +983,12 @@ public:
             /// expiry time (expire).  The relationship is given by:
             //
             // expire = cltt_ + valid_lft_
-            MySqlConnection::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+            // Avoid overflow
+            uint32_t valid_lft = lease_->valid_lft_;
+            if (valid_lft == Lease::INFINITY_LFT) {
+                valid_lft = Lease::FIVEHUNDREDDAYS;
+            }
+            MySqlConnection::convertToDatabaseTime(lease_->cltt_, valid_lft,
                                                    expire_);
             bind_[3].buffer_type = MYSQL_TYPE_TIMESTAMP;
             bind_[3].buffer = reinterpret_cast<char*>(&expire_);
@@ -1384,7 +1401,12 @@ public:
                                     subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname, hwaddr, prefixlen_));
         time_t cltt = 0;
-        MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
+        // Recover from overflow
+        uint32_t valid_lft = valid_lifetime_;
+        if (valid_lft == Lease::INFINITY_LFT) {
+            valid_lft = Lease::FIVEHUNDREDDAYS;
+        }
+        MySqlConnection::convertFromDatabaseTime(expire_, valid_lft, cltt);
         result->cltt_ = cltt;
 
         // Set state.
@@ -2312,7 +2334,7 @@ Lease6Collection
 MySqlLeaseMgr::getLeases6(const DUID& duid) const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID)
              .arg(duid.toText());
-   
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -2325,9 +2347,8 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
             const_cast<uint8_t*>(&duid_vector[0]));
     inbind[0].buffer_length = duid_length;
     inbind[0].length = &duid_length;
-    
+
     Lease6Collection result;
-    
     getLeaseCollection(GET_LEASE6_DUID, inbind, result);
 
     return result;

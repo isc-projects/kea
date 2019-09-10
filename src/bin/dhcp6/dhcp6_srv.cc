@@ -1897,12 +1897,18 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID());
-        } else {
+        } else if (lease->valid_lft_ != Lease::INFINITY_LFT) {
             LOG_INFO(lease6_logger, DHCP6_LEASE_ALLOC)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
                 .arg(ia->getIAID())
                 .arg(lease->valid_lft_);
+        } else {
+            LOG_INFO(lease6_logger, DHCP6_LEASE_ALLOC)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ia->getIAID())
+                .arg("infinity");
         }
         LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_LEASE_DATA)
             .arg(query->getLabel())
@@ -2019,13 +2025,20 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
                     .arg((*l)->addr_.toText())
                     .arg(static_cast<int>((*l)->prefixlen_))
                     .arg(ia->getIAID());
-            } else {
+            } else if ((*l)->valid_lft_ != Lease::INFINITY_LFT) {
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ALLOC)
                     .arg(query->getLabel())
                     .arg((*l)->addr_.toText())
                     .arg(static_cast<int>((*l)->prefixlen_))
                     .arg(ia->getIAID())
                     .arg((*l)->valid_lft_);
+            } else {
+                LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ALLOC)
+                    .arg(query->getLabel())
+                    .arg((*l)->addr_.toText())
+                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(ia->getIAID())
+                    .arg("infinity");
             }
 
             boost::shared_ptr<Option6IAPrefix>
