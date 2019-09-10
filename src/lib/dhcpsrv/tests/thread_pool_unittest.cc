@@ -48,13 +48,13 @@ public:
         history_.clear();
     }
 
-    void waitThreads(uint32_t thread_count, bool start = false) {
+    void waitThreads(uint32_t thread_count, uint32_t items_count, bool start = false) {
         // make sure we have all threads running when performing all the checks
         unique_lock<mutex> lck(mutex_);
         if (start) {
             startThreads(thread_count);
         }
-        cv_.wait(lck, [&]{ return (count() == thread_count); });
+        cv_.wait(lck, [&]{ return (count() == items_count); });
     }
 
     void startThreads(uint32_t thread_count) {
@@ -119,12 +119,15 @@ public:
 
 /// @brief test ThreadPool functionality
 TEST_F(ThreadPoolTest, testCreateAndDestroy) {
-    uint32_t items_count = 4;
-    reset(items_count);
+    uint32_t items_count;
+    uint32_t thread_count;
     ThreadPool::WorkItemCallBack call_back;
-
     ThreadPool thread_pool;
     ASSERT_EQ(thread_pool.count(), 0);
+
+    items_count = 4;
+    thread_count = 4;
+    reset(thread_count);
 
     // create tasks which block thread pool threads until signaled by main
     // to force all threads of the thread pool to run exactly one task
@@ -135,7 +138,7 @@ TEST_F(ThreadPoolTest, testCreateAndDestroy) {
     }
     ASSERT_EQ(thread_pool.count(), items_count);
 
-    thread_pool.create(items_count, false);
+    thread_pool.create(thread_count, false);
     ASSERT_EQ(thread_pool.count(), 0);
 
     for (uint32_t i = 0; i < items_count; ++i) {
@@ -146,13 +149,13 @@ TEST_F(ThreadPoolTest, testCreateAndDestroy) {
     thread_pool.destroy();
     ASSERT_EQ(thread_pool.count(), 0);
 
-    thread_pool.create(items_count);
+    thread_pool.create(thread_count);
 
     for (uint32_t i = 0; i < items_count; ++i) {
         thread_pool.add(call_back);
     }
 
-    waitThreads(items_count);
+    waitThreads(thread_count, items_count);
     ASSERT_EQ(thread_pool.count(), 0);
     ASSERT_EQ(ids_.size(), items_count);
     ASSERT_EQ(count(), items_count);
@@ -164,20 +167,21 @@ TEST_F(ThreadPoolTest, testCreateAndDestroy) {
     thread_pool.destroy();
     ASSERT_EQ(thread_pool.count(), 0);
 
-    reset(items_count);
+    items_count = 64;
+    reset(thread_count);
 
     // create tasks which do not block the thread pool threads so that several
     // tasks can be run on the same thread and some of the threads never even
     // having a chance to run
     call_back = std::bind(&ThreadPoolTest::run, this);
 
-    thread_pool.create(items_count);
+    thread_pool.create(thread_count);
 
     for (uint32_t i = 0; i < items_count; ++i) {
         thread_pool.add(call_back);
     }
 
-    waitThreads(items_count);
+    waitThreads(thread_count, items_count);
     ASSERT_EQ(thread_pool.count(), 0);
     ASSERT_EQ(count(), items_count);
 
