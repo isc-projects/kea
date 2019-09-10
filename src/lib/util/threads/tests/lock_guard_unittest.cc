@@ -34,8 +34,8 @@ public:
     /// @brief Constructor
     ///
     /// @param recursive sets the mutex as recursive mutex
-    TestMutex(bool recursive = false) : lock_(0), lock_count_(0), unlock_count_(0),
-        dead_lock_(false), recursive_(recursive) {
+    TestMutex(bool recursive = false) : lock_(0), dead_lock_(false),
+         lock_count_(0), unlock_count_(0), recursive_(recursive) {
     }
 
     /// @brief lock the mutex
@@ -97,6 +97,14 @@ public:
         return lock_;
     }
 
+    /// @brief get the mutex dead lock state
+    ///
+    /// @return the mutex dead lock state
+    bool getDeadLock() {
+        lock_guard<mutex> lk(mutex_);
+        return dead_lock_;
+    }
+
     /// @brief get the number of locks performed on mutex
     ///
     /// @return the mutex number of locks
@@ -111,14 +119,6 @@ public:
     uint32_t getUnlockCount() {
         lock_guard<mutex> lk(mutex_);
         return unlock_count_;
-    }
-
-    /// @brief get the mutex dead lock state
-    ///
-    /// @return the mutex dead lock state
-    bool getDeadLock() {
-        lock_guard<mutex> lk(mutex_);
-        return dead_lock_;
     }
 
     /// @brief test the internal state of the mutex
@@ -141,14 +141,14 @@ private:
     /// @brief internal lock state of the mutex
     int32_t lock_;
 
+    /// @brief state which indicated that the mutex in in dead lock
+    bool dead_lock_;
+
     /// @brief total number of locks performed on the mutex
     uint32_t lock_count_;
 
     /// @brief total number of unlocks performed on the mutex
     uint32_t unlock_count_;
-
-    /// @brief state which indicated that the mutex in in dead lock
-    bool dead_lock_;
 
     /// @brief flag to indicate if the mutex is recursive or not
     bool recursive_;
@@ -160,56 +160,13 @@ private:
     std::thread::id id_;
 };
 
-/// @brief Test Fixture for testing isc:util::thread::LockGuard
+/// @brief Test Fixture for testing isc::util::thread::LockGuard
 class LockGuardTest : public ::testing::Test {
-public:
-    void run() {
-        {
-            // make sure this thread has started and it is accounted for
-            lock_guard<mutex> lk(mutex_);
-            ids_.emplace(this_thread::get_id());
-            ++count_;
-            // wake main thread if it is waiting for this thread to start
-            cv_.notify_all();
-        }
-    }
-
-    void reset() {
-        count_ = 0;
-    }
-
-    uint32_t count() {
-        return count_;
-    }
-
-    std::mutex mutex_;
-
-    condition_variable cv_;
-
-    uint32_t count_;
-
-    set<std::thread::id> ids_;
-
-    list<shared_ptr<std::thread>> threads_;
 };
 
+/// @brief test LockGuard functionality with non-recursive mutex, recursive mutex
+/// and null pointer
 TEST_F(LockGuardTest, testLock) {
-    reset();
-    // make sure we have all threads running when performing all the checks
-    {
-        unique_lock<mutex> lck(mutex_);
-        for (uint32_t i = 0; i < 2; ++i) {
-            threads_.push_back(make_shared<std::thread>(&LockGuardTest::run, this));
-        }
-        cv_.wait(lck, [&]{ return count() == 2; });
-    }
-    for (auto thread : threads_) {
-        thread->join();
-    }
-    threads_.clear();
-    ASSERT_EQ(count_, 2);
-    ASSERT_EQ(ids_.size(), 2);
-
     shared_ptr<TestMutex> test_mutex;
     // test non-recursive lock
     test_mutex = make_shared<TestMutex>();
@@ -222,7 +179,8 @@ TEST_F(LockGuardTest, testLock) {
         {
             // call LockGuard constructor which locks mutex resulting in an
             // exception as the mutex is already locked (dead lock)
-            EXPECT_THROW(LockGuard<TestMutex> lock(test_mutex.get()), isc::InvalidOperation);
+            EXPECT_THROW(LockGuard<TestMutex> lock(test_mutex.get()),
+                         isc::InvalidOperation);
             // expect lock 1 lock_count 1 unlock_count 0 dead_lock true
             // you should not be able to get here...using a real mutex
             test_mutex->testMutexState(1, 1, 0, true);
@@ -263,4 +221,5 @@ TEST_F(LockGuardTest, testLock) {
         }
     }
     }
-}
+
+}  // namespace
