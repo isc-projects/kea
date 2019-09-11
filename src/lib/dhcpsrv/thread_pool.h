@@ -77,6 +77,11 @@ struct ThreadPool {
     /// @return the number of work items in the queue
     size_t count();
 
+    /// @brief size number of thread pool threads
+    ///
+    /// @return the number of threads
+    size_t size();
+
 private:
     /// @brief run function of each thread
     void run();
