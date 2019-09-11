@@ -503,11 +503,6 @@ TEST_F(CqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
-/// @brief Check that Lease4 code safely handles invalid dates.
-TEST_F(CqlLeaseMgrTest, maxDate4) {
-    testMaxDate4();
-}
-
 /// @brief checks that infinite lifetimes do not overflow.
 TEST_F(CqlLeaseMgrTest, infiniteLifeTime4) {
     testInfiniteLifeTime4();
@@ -652,11 +647,6 @@ TEST_F(CqlLeaseMgrTest, testAddGetDelete6) {
 /// IPv6 address) works.
 TEST_F(CqlLeaseMgrTest, basicLease6) {
     testBasicLease6();
-}
-
-/// @brief Check that Lease6 code safely handles invalid dates.
-TEST_F(CqlLeaseMgrTest, maxDate6) {
-    testMaxDate6();
 }
 
 /// @brief checks that infinite lifetimes do not overflow.

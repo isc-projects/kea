@@ -449,12 +449,8 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        // Avoid overflow
-        uint32_t valid_lft = lease_->valid_lft_;
-        if (valid_lft == Lease::INFINITY_LFT) {
-            valid_lft = Lease::FIVEHUNDREDDAYS;
-        }
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -556,12 +552,8 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        // Avoid overflow
-        uint32_t valid_lft = lease_->valid_lft_;
-        if (valid_lft == Lease::INFINITY_LFT) {
-            valid_lft = Lease::FIVEHUNDREDDAYS;
-        }
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -705,12 +697,7 @@ CqlLease4Exchange::retrieve() {
         }
 
         time_t cltt = 0;
-        // Recover from overflow
-        uint32_t valid_lft = valid_lifetime_;
-        if (valid_lft == Lease::INFINITY_LFT) {
-            valid_lft = Lease::FIVEHUNDREDDAYS;
-        }
-        CqlExchange::convertFromDatabaseTime(expire_, valid_lft, cltt);
+        CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
         HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
@@ -1127,12 +1114,7 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        // Avoid overflow
-        uint32_t valid_lft = lease_->valid_lft_;
-        if (valid_lft == Lease::INFINITY_LFT) {
-            valid_lft = Lease::FIVEHUNDREDDAYS;
-        }
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1267,12 +1249,8 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        // Avoid overflow
-        uint32_t valid_lft = lease_->valid_lft_;
-        if (valid_lft == Lease::INFINITY_LFT) {
-            valid_lft = Lease::FIVEHUNDREDDAYS;
-        }
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, valid_lft, expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
+                                           expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1529,12 +1507,7 @@ CqlLease6Exchange::retrieve() {
                        fqdn_fwd_, fqdn_rev_, hostname_, hwaddr, prefix_len_));
 
         time_t cltt = 0;
-        // Recover from overflow
-        uint32_t valid_lft = valid_lifetime_;
-        if (valid_lft == Lease::INFINITY_LFT) {
-            valid_lft = Lease::FIVEHUNDREDDAYS;
-        }
-        CqlExchange::convertFromDatabaseTime(expire_, valid_lft, cltt);
+        CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
         result->cltt_ = cltt;
 
         result->state_ = state_;
