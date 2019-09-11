@@ -344,6 +344,7 @@ public:
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pd pool: client_class
             MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pd pool: require_client_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pd pool: user_context
+            MySqlBinding::createInteger<uint8_t>(), // allow_static_leases
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -525,7 +526,12 @@ public:
                 // 79 is pd pool require_client_classes
                 // 80 is pd pool user_context
 
-                // server_tag (81 / last)
+                // allow_static_leases (81)
+                if (!out_bindings[81]->amNull()) {
+                    last_subnet->setAllowStaticLeases(out_bindings[81]->getBool());
+                }
+
+                // server_tag (82 / last)
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.push_back(last_subnet);
@@ -539,9 +545,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[81]->amNull() &&
-                (last_tag != out_bindings[81]->getString())) {
-                last_tag = out_bindings[81]->getString();
+            if (!out_bindings[82]->amNull() &&
+                (last_tag != out_bindings[82]->getString())) {
+                last_tag = out_bindings[82]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -1210,6 +1216,7 @@ public:
             MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getAllowStaticLeases(Network::Inheritance::NONE)),
             interface_id_binding
         };
 
@@ -1524,6 +1531,7 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // max_preferred_lifetime
             MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
             MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
+            MySqlBinding::createInteger<uint8_t>(), // allow_static_leases
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1669,6 +1677,11 @@ public:
 
                 // {min,max)_valid_lifetime
 
+                // allow_static_leases
+                if (!out_bindings[35]->amNull()) {
+                    last_network->setAllowStaticLeases(out_bindings[35]->getBool());
+                }
+
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
 
@@ -1692,9 +1705,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[35]->amNull() &&
-                (last_tag != out_bindings[35]->getString())) {
-                last_tag = out_bindings[35]->getString();
+            if (!out_bindings[36]->amNull() &&
+                (last_tag != out_bindings[36]->getString())) {
+                last_tag = out_bindings[36]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -1841,6 +1854,7 @@ public:
             MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getT1Percent(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(shared_network->getT2Percent(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getAllowStaticLeases(Network::Inheritance::NONE)),
             interface_id_binding
         };
 
@@ -2807,9 +2821,10 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
+      "  allow_static_leases,"
       "  interface_id"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
@@ -2849,9 +2864,10 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
+      "  allow_static_leases,"
       "  interface_id"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
@@ -2913,6 +2929,7 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
+      "  allow_static_leases = ?,"
       "  interface_id = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
@@ -2939,6 +2956,7 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
+      "  allow_static_leases = ?,"
       "  interface_id = ? "
       "WHERE name = ?" },
 

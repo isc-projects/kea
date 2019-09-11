@@ -310,6 +310,7 @@ public:
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
             MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pool: require_client_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
+            MySqlBinding::createInteger<uint8_t>(), // allow_static_leases
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -425,6 +426,7 @@ public:
                         last_subnet->addRelayAddress(IOAddress(relay_element->get(i)->stringValue()));
                     }
                 }
+
                 // require_client_classes
                 ElementPtr require_element = out_bindings[14]->getJSON();
                 if (require_element) {
@@ -488,7 +490,12 @@ public:
 
                 // pool client_class, require_client_classes and user_context
 
-                // server_tag at 58
+                // allow_static_leases
+                if (!out_bindings[58]->amNull()) {
+                    last_subnet->setAllowStaticLeases(out_bindings[58]->getBool());
+                }
+
+                // server_tag at 59
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.push_back(last_subnet);
@@ -502,9 +509,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[58]->amNull() &&
-                (last_tag != out_bindings[58]->getString())) {
-                last_tag = out_bindings[58]->getString();
+            if (!out_bindings[59]->amNull() &&
+                (last_tag != out_bindings[59]->getString())) {
+                last_tag = out_bindings[59]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -962,7 +969,8 @@ public:
             MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateBool(subnet->getAuthoritative(Network::Inheritance::NONE))
+            MySqlBinding::condCreateBool(subnet->getAuthoritative(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getAllowStaticLeases(Network::Inheritance::NONE)),
         };
 
         MySqlTransaction transaction(conn_);
@@ -1200,6 +1208,7 @@ public:
             MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
             MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
             MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
+            MySqlBinding::createInteger<uint8_t>(), // allow_static_leases
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1346,6 +1355,11 @@ public:
 
                 // {min,max}_valid_lifetime
 
+                // allow_static_leases
+                if (!out_bindings[34]->amNull()) {
+                    last_network->setAllowStaticLeases(out_bindings[34]->getBool());
+                }
+
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
 
@@ -1358,9 +1372,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[34]->amNull() &&
-                (last_tag != out_bindings[34]->getString())) {
-                last_tag = out_bindings[34]->getString();
+            if (!out_bindings[35]->amNull() &&
+                (last_tag != out_bindings[35]->getString())) {
+                last_tag = out_bindings[35]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -1507,7 +1521,8 @@ public:
             MySqlBinding::condCreateBool(shared_network->getAuthoritative(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getFilename(Network::Inheritance::NONE)),
             MySqlBinding::condCreateIPv4Address(shared_network->getSiaddr(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(shared_network->getSname(Network::Inheritance::NONE))
+            MySqlBinding::condCreateString(shared_network->getSname(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getAllowStaticLeases(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -2348,9 +2363,10 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
-      "  authoritative"
+      "  authoritative,"
+      "  allow_static_leases"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -2385,9 +2401,10 @@ TaggedStatementArray tagged_statements = { {
       "  authoritative,"
       "  boot_file_name,"
       "  next_server,"
-      "  server_hostname"
+      "  server_hostname,"
+      "  allow_static_leases"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2452,7 +2469,8 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
-      "  authoritative = ? "
+      "  authoritative = ?,"
+      "  allow_static_leases = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -2478,7 +2496,8 @@ TaggedStatementArray tagged_statements = { {
       "  authoritative = ?,"
       "  boot_file_name = ?,"
       "  next_server = ?,"
-      "  server_hostname = ? "
+      "  server_hostname = ?,"
+      "  allow_static_leases = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

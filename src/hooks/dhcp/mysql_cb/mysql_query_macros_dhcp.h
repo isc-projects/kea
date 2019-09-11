@@ -109,6 +109,7 @@ namespace {
     "  p.client_class," \
     "  p.require_client_classes," \
     "  p.user_context," \
+    "  s.allow_static_leases," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -228,6 +229,7 @@ namespace {
     "  d.client_class," \
     "  d.require_client_classes," \
     "  d.user_context," \
+    "  s.allow_static_leases," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -427,6 +429,7 @@ namespace {
     "  n.server_hostname," \
     "  n.min_valid_lifetime," \
     "  n.max_valid_lifetime," \
+    "  n.allow_static_leases," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -498,6 +501,7 @@ namespace {
     "  n.max_preferred_lifetime," \
     "  n.min_valid_lifetime," \
     "  n.max_valid_lifetime," \
+    "  n.allow_static_leases," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \
