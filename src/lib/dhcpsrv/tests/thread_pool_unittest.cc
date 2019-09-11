@@ -23,7 +23,7 @@ public:
     }
 
     /// @brief task function which registers the thread id and signals main
-    /// thread to stop waiting and then waits from main thread to signal to exit
+    /// thread to stop waiting and then waits for main thread to signal to exit
     void runAndWait() {
         // run task
         run();
