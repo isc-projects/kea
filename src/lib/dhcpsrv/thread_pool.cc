@@ -191,6 +191,9 @@ void ThreadPool::destroy() {
 }
 
 void ThreadPool::start(uint32_t thread_count) {
+    if (!thread_count || !exit_) {
+        return;
+    }
     queue_->start();
     exit_ = false;
     for (int i = 0; i < thread_count; ++i) {
@@ -217,6 +220,10 @@ void ThreadPool::add(WorkItemCallBack call_back) {
 
 size_t ThreadPool::count() {
     return queue_->count();
+}
+
+size_t ThreadPool::size() {
+    return threads_.size();
 }
 
 void ThreadPool::run() {
