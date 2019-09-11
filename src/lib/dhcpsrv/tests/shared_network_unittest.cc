@@ -393,7 +393,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 
     Subnet4Ptr preferred;
 
-    // Initially, for every subnet we sould get the same subnet as the preferred
+    // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
     for (auto i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i]);
@@ -1033,7 +1033,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 
     Subnet6Ptr preferred;
 
-    // Initially, for every subnet we sould get the same subnet as the preferred
+    // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
     for (auto i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_NA);
