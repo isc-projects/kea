@@ -2782,6 +2782,24 @@ SET version = '8', minor = '2';
 
 # This line concludes database upgrade to version 8.2.
 
+# Add allow_static_leases columns
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN allow_static_leases TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN allow_static_leases TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN allow_static_leases TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN allow_static_leases TINYINT(1) DEFAULT NULL;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '0';
+
+# This line concludes database upgrade to version 9.0.
 
 # Notes:
 #

@@ -1812,6 +1812,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
                  src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh
                  src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh
+                 src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh
                  src/share/database/scripts/mysql/wipe_data.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
