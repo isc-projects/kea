@@ -56,7 +56,7 @@ struct ThreadPoolQueue {
     /// This function adds an item to the queue and wakes up at least one thread
     /// waiting on the queue.
     ///
-    /// @param item the new iten to be added to the queue
+    /// @param item the new item to be added to the queue
     void push(WorkItem item) {
         std::lock_guard<std::mutex> lock(mutex_);
         queue_.push(item);
@@ -153,7 +153,6 @@ private:
     std::condition_variable cv_;
 
     /// @brief the sate of the queue
-    ///
     /// The 'enabled' state corresponds to false value
     /// The 'disabled' state corresponds to true value
     std::atomic_bool exit_;
