@@ -189,7 +189,9 @@ TEST_F(ThreadPoolTest, testAddAndCount) {
     uint32_t items_count;
     ThreadPool::WorkItemCallBack call_back;
     ThreadPool thread_pool;
+    // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
     ASSERT_EQ(thread_pool.size(), 0);
 
     items_count = 4;
@@ -210,7 +212,10 @@ TEST_F(ThreadPoolTest, testCreateAndDestroy) {
     uint32_t thread_count;
     ThreadPool::WorkItemCallBack call_back;
     ThreadPool thread_pool;
+    // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
 
     items_count = 4;
     thread_count = 4;
@@ -218,7 +223,7 @@ TEST_F(ThreadPoolTest, testCreateAndDestroy) {
     reset(thread_count);
 
     // create tasks which block thread pool threads until signaled by main
-    // to force all threads of the thread pool to run exactly one task
+    // thread to force all threads of the thread pool to run exactly one task
     call_back = std::bind(&ThreadPoolTest::runAndWait, this);
 
     // add items to stopped thread pool
@@ -373,7 +378,10 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     uint32_t thread_count;
     ThreadPool::WorkItemCallBack call_back;
     ThreadPool thread_pool;
+    // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
 
     items_count = 4;
     thread_count = 4;
@@ -381,7 +389,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     reset(thread_count);
 
     // create tasks which block thread pool threads until signaled by main
-    // to force all threads of the thread pool to run exactly one task
+    // thread to force all threads of the thread pool to run exactly one task
     call_back = std::bind(&ThreadPoolTest::runAndWait, this);
 
     // calling start should create the threads and should keep the queued items
