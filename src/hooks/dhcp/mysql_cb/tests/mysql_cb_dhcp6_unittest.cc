@@ -164,6 +164,7 @@ public:
         subnet->setCalculateTeeTimes(true);
         subnet->setT1Percent(0.345);
         subnet->setT2Percent(0.444);
+        subnet->setAllowStaticLeases(false);
 
         Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
                                  IOAddress("2001:db8::10"),
@@ -307,6 +308,7 @@ public:
         shared_network->setCalculateTeeTimes(true);
         shared_network->setT1Percent(0.345);
         shared_network->setT2Percent(0.444);
+        shared_network->setAllowStaticLeases(false);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
@@ -1346,6 +1348,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6WithOptionalUnspecified) {
     EXPECT_TRUE(returned_subnet->getT2().unspecified());
     EXPECT_EQ(0, returned_subnet->getT2().get());
 
+    EXPECT_TRUE(returned_subnet->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(returned_subnet->getAllowStaticLeases().get());
+
     EXPECT_TRUE(returned_subnet->getHostReservationMode().unspecified());
     EXPECT_EQ(Network::HR_ALL, returned_subnet->getHostReservationMode().get());
 
@@ -1956,6 +1961,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, subnetLifetime) {
     // Update the preferred and valid lifetime.
     subnet->setPreferred( Triplet<uint32_t>(100, 200, 300));
     subnet->setValid( Triplet<uint32_t>(200, 300, 400));
+    subnet->setAllowStaticLeases(true);
     cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
 
     // Fetch and verify again.
@@ -2347,6 +2353,9 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6WithOptionalUnspecified) {
 
     EXPECT_TRUE(returned_network->getRapidCommit().unspecified());
     EXPECT_FALSE(returned_network->getRapidCommit().get());
+
+    EXPECT_TRUE(returned_network->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(returned_network->getAllowStaticLeases().get());
 }
 
 // Test that deleteSharedNetworkSubnets6 with not ANY selector throw.
@@ -2872,6 +2881,7 @@ TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkLifetime) {
     // Update the preferred and valid lifetime.
     network->setPreferred( Triplet<uint32_t>(100, 200, 300));
     network->setValid( Triplet<uint32_t>(200, 300, 400));
+    network->setAllowStaticLeases(true);
     cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), network);
 
     // Fetch and verify again.

@@ -169,6 +169,7 @@ public:
         subnet->setCalculateTeeTimes(true);
         subnet->setT1Percent(0.345);
         subnet->setT2Percent(0.444);
+        subnet->setAllowStaticLeases(false);
 
         Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"), IOAddress("192.0.2.20")));
         subnet->addPool(pool1);
@@ -263,6 +264,7 @@ public:
         shared_network->setSname("frog");
         shared_network->setFilename("/dev/null");
         shared_network->setAuthoritative(true);
+        shared_network->setAllowStaticLeases(false);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
@@ -1310,6 +1312,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithOptionalUnspecified) {
     EXPECT_TRUE(returned_subnet->getT2Percent().unspecified());
     EXPECT_EQ(0.0, returned_subnet->getT2Percent().get());
 
+    EXPECT_TRUE(returned_subnet->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(returned_subnet->getAllowStaticLeases().get());
+
     EXPECT_TRUE(returned_subnet->getMatchClientId().unspecified());
     EXPECT_TRUE(returned_subnet->getMatchClientId().get());
 
@@ -1926,6 +1931,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, subnetLifetime) {
 
     // Update the valid lifetime.
     subnet->setValid( Triplet<uint32_t>(100, 200, 300));
+    subnet->setAllowStaticLeases(true);
     cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
     // Fetch and verify again.
@@ -2312,6 +2318,9 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithOptionalUnspecified) {
 
     EXPECT_TRUE(returned_network->getAuthoritative().unspecified());
     EXPECT_FALSE(returned_network->getAuthoritative().get());
+
+    EXPECT_TRUE(returned_network->getAllowStaticLeases().unspecified());
+    EXPECT_FALSE(returned_network->getAllowStaticLeases().get());
 }
 
 // Test that deleteSharedNetworkSubnets4 with not ANY selector throw.
@@ -2835,6 +2844,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkLifetime) {
 
     // Update the preferred and valid lifetime.
     network->setValid( Triplet<uint32_t>(100, 200, 300));
+    network->setAllowStaticLeases(true);
     cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
 
     // Fetch and verify again.
