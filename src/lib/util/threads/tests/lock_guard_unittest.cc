@@ -47,7 +47,8 @@ public:
                 // lock on a non-recursive mutex resulting in a dead lock
                 dead_lock_ = true;
                 isc_throw(isc::InvalidOperation,
-                          "lock on already locked mutex resulting in deadlock");
+                          "recursive lock on already locked mutex resulting in "
+                          "dead lock");
             } else {
                 // lock on a recursive mutex
                 if (this_thread::get_id() != id_) {
@@ -56,7 +57,7 @@ public:
                     dead_lock_ = true;
                     isc_throw(isc::InvalidOperation,
                               "recursive lock on a different thread on already "
-                              "locked mutex resulting in deadlock");
+                              "locked mutex resulting in dead lock");
                 }
             }
         }
@@ -141,7 +142,7 @@ private:
     /// @brief internal lock state of the mutex
     int32_t lock_;
 
-    /// @brief state which indicated that the mutex in in dead lock
+    /// @brief state which indicates that the mutex is in dead lock
     bool dead_lock_;
 
     /// @brief total number of locks performed on the mutex
