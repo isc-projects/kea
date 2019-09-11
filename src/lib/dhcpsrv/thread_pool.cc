@@ -128,7 +128,7 @@ struct ThreadPoolQueue {
     void stop(bool clear = false) {
         std::lock_guard<std::mutex> lock(mutex_);
         exit_ = true;
-        // Notify get() so that it can exit.
+        // Notify pop so that it can exit.
         cv_.notify_all();
         if (clear) {
             reset();
