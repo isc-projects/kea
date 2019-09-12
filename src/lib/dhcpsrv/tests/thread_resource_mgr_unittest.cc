@@ -37,8 +37,7 @@ public:
         Resource::count_++;
         // increase the total number of instances ever created
         Resource::created_count_++;
-        // check that this instance in new and should not be found in the
-        // verification set
+        // check that this instance is not found in the verification set
         EXPECT_TRUE(Resource::set_.find(&data_) == Resource::set_.end());
         // add this instance to the verification set
         Resource::set_.emplace(&data_);
@@ -107,7 +106,7 @@ private:
     /// @brief mutex used to keep the internal state consistent
     static std::mutex mutex_;
 
-    /// @brief set to fold
+    /// @brief set to hold the distinct identification data of each instance
     static std::set<T*> set_;
 };
 
@@ -151,12 +150,16 @@ public:
         wait_cv_.notify_all();
     }
 
-    /// @brief reset resource manager for the template class and perform sanity
-    /// checks
+    /// @brief reset resource manager for the specific class type and perform
+    /// sanity checks, then reset the wait flag so threads wait for the main
+    /// thread signal to exit
     template <typename T>
     void reset() {
+        // reset the resource manager
         get<T>() = make_shared<ThreadResourceMgr<Resource<T>>>();
+        // perform sanity checks
         sanityCheck<T>();
+        // reset the wait flag
         wait_ = true;
     }
 
@@ -177,17 +180,10 @@ public:
         ASSERT_EQ(Resource<T>::destroyedCount(), expected_destroyed);
     }
 
-    /// @brief sanity check that the number of created instances is equal to the
-    /// number of destroyed instances
-    template <typename T>
-    void sanityCheck() {
-        ASSERT_EQ(Resource<T>::createdCount(), Resource<T>::destroyedCount());
-    }
-
     /// @brief get the instance of the resource manager responsible for a
-    /// specific class
+    /// specific class type
     ///
-    /// @return the resource manager responsible for a specific class
+    /// @return the resource manager responsible for a specific class type
     template <typename T>
     shared_ptr<ThreadResourceMgr<Resource<T>>> &get() {
         static shared_ptr<ThreadResourceMgr<Resource<T>>> container;
@@ -229,6 +225,15 @@ public:
     }
 
 private:
+    /// @brief sanity check that the number of created instances is equal to the
+    /// number of destroyed instances
+    template <typename T>
+    void sanityCheck() {
+        // the number of created instances should match the number of destroyed
+        // instances
+        ASSERT_EQ(Resource<T>::createdCount(), Resource<T>::destroyedCount());
+    }
+
     /// @brief mutex used to keep the internal state consistent
     /// related to the control of the main thread over the working threads exit
     std::mutex wait_mutex_;
