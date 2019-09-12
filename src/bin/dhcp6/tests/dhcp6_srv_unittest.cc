@@ -780,6 +780,105 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeSolicit) {
     checkClientId(reply, clientid);
 }
 
+// This test verifies that ADVERTISE handle static leases.
+// the client adds an IAPREFIX sub option with infinite valid lifetime hint.
+TEST_F(Dhcpv6SrvTest, staticLeaseSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+    // Allow static leases
+    subnet_->setAllowStaticLeases(true);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iapd = generateIA(D6O_IA_PD, 234, 1500, 3000);
+    sol->addOption(iapd);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAPREFIX sub option with infinite valid lifetime.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    OptionPtr subopt(new Option6IAPrefix(D6O_IAPREFIX,  IOAddress("::"), 0,
+                                         4000, infinity_lft));
+    iapd->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_PD was returned and that there's an address included
+    boost::shared_ptr<Option6IAPrefix> prefix = checkIA_PD(reply, 234,
+                                                           subnet_->getT1(),
+                                                           subnet_->getT2());
+    ASSERT_TRUE(prefix);
+
+    // Check that the assigned prefix is indeed from the configured pool
+    checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD,
+                subnet_->getPreferred().getMax(),
+                infinity_lft);
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that ADVERTISE handle static leases.
+// the client adds an IAADDR sub option with infinite lifetime hints.
+TEST_F(Dhcpv6SrvTest, staticLeaseSolicit2) {
+    NakedDhcpv6Srv srv(0);
+
+    subnet_->setPreferred(Triplet<uint32_t>(2000, 3000, 4000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+    // Allow static leases
+    subnet_->setAllowStaticLeases(true);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iana = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    sol->addOption(iana);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAADDR sub option with infinite lifetime.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    OptionPtr subopt(new Option6IAAddr(D6O_IAADDR, IOAddress("::"),
+                                       infinity_lft, infinity_lft));
+    iana->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234,
+                                                       subnet_->getT1(),
+                                                       subnet_->getT2());
+    ASSERT_TRUE(addr);
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA,
+                infinity_lft, infinity_lft);
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
 // This test verifies that incoming SOLICIT can be handled properly, that an
 // ADVERTISE is generated, that the response has an address and that address
 // really belongs to the configured pool.
@@ -1293,10 +1392,30 @@ TEST_F(Dhcpv6SrvTest, minLifetimeRenew) {
 // This test verifies that a renewal returns max ifetimes when
 // the client adds an IAPREFIX sub option with too large lifetime hints.
 TEST_F(Dhcpv6SrvTest, maxLifetimeRenew) {
-    // Max  values are 4000 and 5000.
+    // Max values are 4000 and 5000.
     testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
                    "2001:db8:1:2::", pd_pool_->getLength(),
                    true, false, 5000, 6000, 4000, 5000);
+}
+
+// This test verifies that a renewal handles static leases when
+// the client adds an IAADDR sub option with infinite valid lifetime hint.
+TEST_F(Dhcpv6SrvTest, staticLeaseRenew) {
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, false, 4000, infinity_lft,
+                   4000, infinity_lft);
+}
+
+// This test verifies that a renewal handles static leases when
+// the client adds an IAPREFIX sub option with infinite lifetime hints.
+TEST_F(Dhcpv6SrvTest, staticLeaseRenew2) {
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
+                   "2001:db8:1:2::", pd_pool_->getLength(),
+                   true, false, infinity_lft, infinity_lft,
+                   infinity_lft, infinity_lft);
 }
 
 // This test is a mixed of FqdnDhcpv6SrvTest.processRequestReuseExpiredLease
@@ -1342,6 +1461,26 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeReuseExpired) {
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
                    "2001:db8:1:1::cafe:babe", 128,
                    true, true, 5000, 6000, 4000, 5000);
+}
+
+// This test verifies that an expired reuse handles static leases when
+// the client adds an IAADDR sub option with infinite lifetime hints.
+TEST_F(Dhcpv6SrvTest, staticLeaseReuseExpired) {
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, 4000, infinity_lft,
+                   4000, infinity_lft);
+}
+
+// This test verifies that an expired reuse handles static leases when
+// the client adds an IAADDR sub option with infinite valid lifetime hint.
+TEST_F(Dhcpv6SrvTest, staticLeaseReuseExpired2) {
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe", 128,
+                   true, true, infinity_lft, infinity_lft,
+                   infinity_lft, infinity_lft);
 }
 
 // This test verifies that incoming (positive) RELEASE with address can be
@@ -2937,6 +3076,84 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             checkIA_NA(reply, 234, (*test).t1_exp_value_, (*test).t2_exp_value_);
         }
     }
+}
+
+// Check that T1 and T2 values are set correctly for static leases.
+TEST_F(Dhcpv6SrvTest, staticLeaseTeeTimers) {
+    NakedDhcpv6Srv srv(0);
+
+    // Recreate subnet
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> preferred_lft(2000, 3000, 4000);
+    Triplet<uint32_t> valid_lft(3000, 4000, 5000);
+    subnet_.reset(new Subnet6(IOAddress("2001:db8:1::"), 48,
+                              unspecified,
+                              unspecified,
+                              preferred_lft,
+                              valid_lft));
+    subnet_->setIface("eth0");
+
+    pool_.reset(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+    subnet_->addPool(pool_);
+
+    // Allow static leases
+    subnet_->setAllowStaticLeases(true);
+    // Set inheritancea
+    subnet_->setFetchGlobalsFn([] () -> ConstElementPtr {
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+    });
+    // Set T1/T2 calculation (ignored for static leases)
+    subnet_->setCalculateTeeTimes(true);
+    subnet_->setT1Percent(.5);
+    subnet_->setT2Percent(1.);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
+
+    // Set bigger T1 and T2 defaults.
+    uint32_t t1 = 10*24*60*60;
+    ConstElementPtr t1_elem = Element::create(static_cast<long int>(t1));
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("renew-timer", t1_elem);
+    uint32_t t2 = 30*24*60*60;
+    ConstElementPtr t2_elem = Element::create(static_cast<long int>(t2));
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("rebind-timer", t2_elem);
+
+    CfgMgr::instance().commit();
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    OptionPtr iana = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    sol->addOption(iana);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Add an IAADDR sub option with infinite lifetime.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    OptionPtr subopt(new Option6IAAddr(D6O_IAADDR, IOAddress("::"),
+                                       infinity_lft, infinity_lft));
+    iana->addOption(subopt);
+
+    // Pass it to the server and get an advertise
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, t1, t2);
+    ASSERT_TRUE(addr);
+
+    // Check that the assigned address is indeed from the configured pool
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA,
+                infinity_lft, infinity_lft);
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

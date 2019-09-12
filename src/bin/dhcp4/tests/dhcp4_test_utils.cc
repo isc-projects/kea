@@ -287,6 +287,9 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
     if (!opt) {
         ADD_FAILURE() << "Lease time option missing in response or the"
             " option has unexpected type";
+    } else if ((expected_valid == Lease::INFINITY_LFT) &&
+               subnet->getAllowStaticLeases()) {
+        EXPECT_EQ(opt->getValue(), expected_valid);
     } else if (subnet->getValid().getMin() != subnet->getValid().getMax()) {
         EXPECT_GE(opt->getValue(), subnet->getValid().getMin());
         EXPECT_LE(opt->getValue(), subnet->getValid().getMax());
@@ -296,7 +299,7 @@ void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
 
     // Check expected value when wanted.
     if (opt && expected_valid) {
-      EXPECT_EQ(opt->getValue(), expected_valid);
+        EXPECT_EQ(opt->getValue(), expected_valid);
     }
 
     // Check T1 timer

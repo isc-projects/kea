@@ -279,6 +279,11 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
         subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
     }
 
+    // Allow static leases for infinite lifetime.
+    if (expected_valid == Lease::INFINITY_LFT) {
+        subnet_->setAllowStaticLeases(true);
+    }
+
     // Generate client-id also duid_
     OptionPtr clientid = generateClientId();
 

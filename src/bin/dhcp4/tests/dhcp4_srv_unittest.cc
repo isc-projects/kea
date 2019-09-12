@@ -1002,7 +1002,8 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
         { "default valid lifetime", 0, 1000 },
         { "specified valid lifetime", 1001, 1001 },
         { "too small valid lifetime", 100, 500 },
-        { "too large valid lifetime", 2000, 1500 }
+        { "too large valid lifetime", 2000, 1500 },
+        { "infinite valid lifetime", 0xffffffff, 1500 }
     };
 
     // Iterate over the test scenarios.
@@ -1326,6 +1327,77 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
             }
         }
     }
+}
+
+// This test verifies that OFFERs handle static leases.
+// (specialized version of previous test with some T1/T2 additions)
+TEST_F(Dhcpv4SrvTest, DiscoverStaticLease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    // Recreate subnet
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft));
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+    // Allow static leases
+    subnet_->setAllowStaticLeases(true);
+    // Set inheritance
+    subnet_->setFetchGlobalsFn([] () -> ConstElementPtr {
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+    });
+    // Set T1/T2 calculation (ignored for static leases)
+    subnet_->setCalculateTeeTimes(true);
+    subnet_->setT1Percent(.5);
+    subnet_->setT2Percent(1.);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set bigger T1 and T2 defaults.
+    uint32_t t1 = 10*24*60*60;
+    ConstElementPtr t1_elem = Element::create(static_cast<long int>(t1));
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("renew-timer", t1_elem);
+    uint32_t t2 = 30*24*60*60;
+    ConstElementPtr t2_elem = Element::create(static_cast<long int>(t2));
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("rebind-timer", t2_elem);
+
+    CfgMgr::instance().commit();
+
+    // Create a discover packet to use
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+
+    // Add dhcp-lease-time option.
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                         infinity_lft));
+    dis->addOption(opt);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Check that address was returned from proper range, that its lease
+    // lifetime is correct and infinite.
+    checkAddressParams(offer, subnet_, true, true, infinity_lft);
+
+    // Check identifiers
+    checkServerId(offer, srv->getServerID());
+    checkClientId(offer, clientid);
 }
 
 
@@ -1902,6 +1974,128 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
 }
 
 } // end of Renew*Lifetime
+
+// This test verifies that renewal handles static leases
+TEST_F(Dhcpv4SrvTest, RenewStaticLease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    // Recreate subnet
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft));
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+    // Allow static leases
+    subnet_->setAllowStaticLeases(true);
+    // Set inheritance
+    subnet_->setFetchGlobalsFn([] () -> ConstElementPtr {
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
+    });
+    // Set T1/T2 calculation (ignored for static leases)
+    subnet_->setCalculateTeeTimes(true);
+    subnet_->setT1Percent(.5);
+    subnet_->setT2Percent(1.);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Set bigger T1 and T2 defaults.
+    uint32_t t1 = 10*24*60*60;
+    ConstElementPtr t1_elem = Element::create(static_cast<long int>(t1));
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("renew-timer", t1_elem);
+    uint32_t t2 = 30*24*60*60;
+    ConstElementPtr t2_elem = Element::create(static_cast<long int>(t2));
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("rebind-timer", t2_elem);
+
+    CfgMgr::instance().commit();
+
+    const IOAddress& addr = IOAddress("192.0.2.106");
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    time_t timestamp = time(NULL) - 10;
+    Lease4Ptr used(new Lease4(addr, hwaddr,
+                              &client_id_->getDuid()[0],
+                              client_id_->getDuid().size(),
+                              infinity_lft, timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Check that valid and cltt really set.
+    // Constructed lease looks as if it was assigned 10 seconds ago
+    EXPECT_EQ(infinity_lft, l->valid_lft_);
+    EXPECT_EQ(timestamp, l->cltt_);
+
+    // Set the valid lifetime interval.
+    subnet_->setValid(Triplet<uint32_t>(2000, 3000, 4000));
+
+    // Allow static leases
+    subnet_->setAllowStaticLeases(true);
+
+    // Let's create a RENEW
+    Pkt4Ptr req(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
+    req->setHWAddr(hwaddr);
+
+    req->addOption(clientid);
+    req->addOption(srv->getServerID());
+
+    // Add a dhcp-lease-time with infinite valid lifetime hint.
+    OptionPtr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                   infinity_lft));
+    req->addOption(opt);
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv->processRequest(req);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+    EXPECT_EQ(addr, ack->getYiaddr());
+
+    // Check identifiers
+    checkServerId(ack, srv->getServerID());
+    checkClientId(ack, clientid);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that address was returned from proper range, that its lease
+    // lifetime is correct, that T1 and T2 are returned properly
+    checkAddressParams(ack, subnet_, true, true, infinity_lft);
+
+    // Check that valid and cltt were really updated
+    EXPECT_EQ(infinity_lft, l->valid_lft_);
+
+    // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
+    int32_t cltt = static_cast<int32_t>(l->cltt_);
+    int32_t expected = static_cast<int32_t>(time(NULL));
+    // Equality or difference by 1 between cltt and expected is ok.
+    EXPECT_GE(1, abs(cltt - expected));
+
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
 
 // This test verifies that the logic which matches server identifier in the
 // received message with server identifiers used by a server works correctly:

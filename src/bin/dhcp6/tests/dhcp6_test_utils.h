@@ -560,13 +560,19 @@ public:
         // an ostream, which means it can't be used in EXPECT_EQ.
         EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
-        if (subnet_->getPreferred().getMin() != subnet_->getPreferred().getMax()) {
+        if ((expected_pref == Lease::INFINITY_LFT) &&
+            subnet_->getAllowStaticLeases()) {
+            EXPECT_EQ(expected_pref, addr->getPreferred());
+        } else if (subnet_->getPreferred().getMin() != subnet_->getPreferred().getMax()) {
             EXPECT_LE(subnet_->getPreferred().getMin(), addr->getPreferred());
             EXPECT_GE(subnet_->getPreferred().getMax(), addr->getPreferred());
         } else {
             EXPECT_EQ(subnet_->getPreferred(), addr->getPreferred());
         }
-        if (subnet_->getValid().getMin() != subnet_->getValid().getMax()) {
+        if ((expected_valid == Lease::INFINITY_LFT) &&
+            subnet_->getAllowStaticLeases()) {
+            EXPECT_EQ(expected_valid, addr->getValid());
+        } else if (subnet_->getValid().getMin() != subnet_->getValid().getMax()) {
             EXPECT_LE(subnet_->getValid().getMin(), addr->getValid());
             EXPECT_GE(subnet_->getValid().getMax(), addr->getValid());
         } else {
