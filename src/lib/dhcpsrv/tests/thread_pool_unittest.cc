@@ -113,7 +113,7 @@ public:
         // clear the wait flag so that threads will no longer wait for the main
         // thread signal
         wait_ = false;
-        // wake all thread if waiting for main thread signal
+        // wake all threads if waiting for main thread signal
         wait_cv_.notify_all();
     }
 
