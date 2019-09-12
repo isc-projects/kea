@@ -125,20 +125,36 @@ std::set<T*> Resource<T>::set_;
 class ThreadResourceMgrTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    ThreadResourceMgrTest() : wait_(false) {
+    ThreadResourceMgrTest() : wait_thread_(false), wait_(false) {
     }
 
     /// @brief Destructor
     ~ThreadResourceMgrTest() {
     }
 
+    /// @brief flag which indicates if main thread should wait for the test
+    /// thread to start
+    ///
+    /// @return the wait flag
+    bool waitThread() {
+        return wait_thread_;
+    }
+
     /// @brief flag which indicates if working thread should wait for main
     /// thread signal
     ///
     /// @return the wait flag
-    bool wait() {
+    bool waitMain() {
         return wait_;
     }
+
+    /// @brief block main thread until testing thread has processed the task
+    void wait() {
+        unique_lock<mutex> lck(mutex_);
+        // wait for the testing thread to process
+        cv_.wait(lck, [&]{ return (waitThread() == false); });
+    }
+
 
     /// @brief function used by main thread to unblock processing threads
     void signalThreads() {
@@ -161,6 +177,11 @@ public:
         sanityCheck<T>();
         // reset the wait flag
         wait_ = true;
+    }
+
+    /// @brief reset wait thread flag
+    void resetWaitThread() {
+        wait_thread_ = true;
     }
 
     /// @brief check statistics
@@ -217,10 +238,19 @@ public:
         // sequential requests for the same resource
         checkInstances<T>(expected_count, expected_created, expected_destroyed);
 
+        {
+            // make sure this thread has started
+            lock_guard<mutex> lk(mutex_);
+            // reset wait thread flag
+            wait_thread_ = false;
+            // wake main thread if it is waiting for this thread to process
+            cv_.notify_all();
+        }
+
         if (signal) {
             unique_lock<std::mutex> lk(wait_mutex_);
             // if specified, wait for signal from main thread
-            wait_cv_.wait(lk, [&]{ return (wait() == false); });
+            wait_cv_.wait(lk, [&]{ return (waitMain() == false); });
         }
     }
 
@@ -235,11 +265,22 @@ private:
     }
 
     /// @brief mutex used to keep the internal state consistent
+    std::mutex mutex_;
+
+    /// @brief condition variable used to signal main thread that test thread
+    /// has started processing
+    condition_variable cv_;
+
+    /// @brief mutex used to keep the internal state consistent
     /// related to the control of the main thread over the working threads exit
     std::mutex wait_mutex_;
 
     /// @brief condition variable used to signal working threads to exit
     condition_variable wait_cv_;
+
+    /// @brief flag which indicates if main thread should wait for test thread
+    /// to start
+    bool wait_thread_;
 
     /// @brief flag which indicates if working thread should wait for main
     /// thread signal
@@ -260,12 +301,20 @@ TEST_F(ThreadResourceMgrTest, testThreadResources) {
     reset<uint32_t>();
     // call run function on main thread and verify statistics
     run<uint32_t>(1, 1, 0);
+    // configure wait for test thread
+    resetWaitThread();
     // call run on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
         &ThreadResourceMgrTest::run<uint32_t>, this, 2, 2, 0, true)));
+    // wait for the thread to process
+    wait();
+    // configure wait for test thread
+    resetWaitThread();
     // call run again on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
         &ThreadResourceMgrTest::run<uint32_t>, this, 3, 3, 0, true)));
+    // wait for the thread to process
+    wait();
     // signal all threads
     signalThreads();
     // wait for all threads to finish
@@ -283,12 +332,20 @@ TEST_F(ThreadResourceMgrTest, testThreadResources) {
     reset<bool>();
     // call run function on main thread and verify statistics
     run<bool>(1, 1, 0);
+    // configure wait for test thread
+    resetWaitThread();
     // call run on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
         &ThreadResourceMgrTest::run<bool>, this, 2, 2, 0, true)));
+    // wait for the thread to process
+    wait();
+    // configure wait for test thread
+    resetWaitThread();
     // call run again on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
         &ThreadResourceMgrTest::run<bool>, this, 3, 3, 0, true)));
+    // wait for the thread to process
+    wait();
     // signal all threads
     signalThreads();
     // wait for all threads to finish
