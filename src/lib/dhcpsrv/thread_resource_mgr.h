@@ -17,7 +17,7 @@ namespace dhcp {
 
 template <typename Resource>
 class ThreadResourceMgr {
-    typedef boost::shared_ptr<Resource> ResourcePtr;
+    typedef std::shared_ptr<Resource> ResourcePtr;
 public:
     /// @brief function to retrieve the specific resource of calling thread
     /// This function returns the resource of the calling thread from the map
@@ -26,7 +26,7 @@ public:
     ///
     /// @return the specific resource of the calling thread
     ResourcePtr resource() {
-        std::lock_guard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         auto id = std::this_thread::get_id();
         if (map_.find(id) != map_.end()) {
             return map_[id];
