@@ -2333,6 +2333,9 @@ Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr
     // If T2 is explicitly configured we'll use try value.
     if (!subnet->getT2().unspecified()) {
         t2_time = subnet->getT2();
+    } else if (lease->valid_lft_ == Lease::INFINITY_LFT) {
+        // Do not calculate with infinite values.
+        t2_time = subnet->getT2();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculated it.
         t2_time = static_cast<uint32_t>(round(subnet->getT2Percent() * (lease->valid_lft_)));
@@ -2351,6 +2354,9 @@ Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr
     uint32_t t1_time = 0;
     // If T1 is explicitly configured we'll use try value.
     if (!subnet->getT1().unspecified()) {
+        t1_time = subnet->getT1();
+    } else if (lease->valid_lft_== Lease::INFINITY_LFT) {
+        // Do not calculate with infinite values.
         t1_time = subnet->getT1();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.

@@ -168,11 +168,13 @@ public:
     /// @param exp_type expected lease type
     /// @param exp_pd_len expected prefix length
     /// @param expected_in_subnet whether the lease is expected to be in subnet
-    /// @param expected_in_pool whether the lease is expected to be in dynamic
+    /// @param expected_in_pool whether the lease is expected to be in pool
+    /// @param expected_static whether the lease is expected to be static
     void checkLease6(const DuidPtr& duid, const Lease6Ptr& lease,
                      Lease::Type exp_type, uint8_t exp_pd_len = 128,
                      bool expected_in_subnet = true,
-                     bool expected_in_pool = true) {
+                     bool expected_in_pool = true,
+                     bool expected_static = false) {
 
         // that is belongs to the right subnet
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
@@ -194,13 +196,17 @@ public:
         // that it have proper parameters
         EXPECT_EQ(exp_type, lease->type_);
         EXPECT_EQ(iaid_, lease->iaid_);
-        if (subnet_->getValid().getMin() == subnet_->getValid().getMax()) {
+        if (expected_static) {
+            EXPECT_EQ(0xffffffff, lease->valid_lft_);
+        } else if (subnet_->getValid().getMin() == subnet_->getValid().getMax()) {
             EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         } else {
             EXPECT_LE(subnet_->getValid().getMin(), lease->valid_lft_);
             EXPECT_GE(subnet_->getValid().getMax(), lease->valid_lft_);
         }
-        if (subnet_->getPreferred().getMin() == subnet_->getPreferred().getMax()) {
+        if (expected_static) {
+            EXPECT_EQ(0xffffffff, lease->preferred_lft_);
+        } else if (subnet_->getPreferred().getMin() == subnet_->getPreferred().getMax()) {
             EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
         } else {
             EXPECT_LE(subnet_->getPreferred().getMin(), lease->preferred_lft_);
@@ -324,10 +330,12 @@ public:
     /// @param pool pool from which the lease will be allocated from
     /// @param hints address to be used as a hint
     /// @param in_pool specifies whether the lease is expected to be in pool
+    /// @param is_static specifies whether the lease is expected to be static
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                                AllocEngine::HintContainer& hints,
-                               bool in_pool = true);
+                               bool in_pool = true,
+                               bool is_static = false);
 
     /// @brief Checks if the address allocation with a hint that is in range,
     ///        in pool, but is currently used, can succeed
@@ -478,14 +486,17 @@ public:
     /// @brief checks if Lease4 matches expected configuration
     ///
     /// @param lease lease to be checked
-    void checkLease4(const Lease4Ptr& lease) {
+    /// @param expected_static whether the lease is expected to be static
+    void checkLease4(const Lease4Ptr& lease, bool expected_static = false) {
         // Check that is belongs to the right subnet
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
         EXPECT_TRUE(subnet_->inRange(lease->addr_));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
 
         // Check that it has proper parameters
-        if (subnet_->getValid().getMin() == subnet_->getValid().getMax()) {
+        if (expected_static) {
+            EXPECT_EQ(0xffffffff, lease->valid_lft_);
+        } else if (subnet_->getValid().getMin() == subnet_->getValid().getMax()) {
             EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         } else {
             EXPECT_LE(subnet_->getValid().getMin(), lease->valid_lft_);

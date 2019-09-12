@@ -1626,7 +1626,13 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getPreferred()) {
         uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
-        expired->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+        if ((preferred == Lease::INFINITY_LFT) &&
+            ctx.subnet_->getAllowStaticLeases()) {
+            expired->preferred_lft_ = Lease::INFINITY_LFT;
+        } else {
+            expired->preferred_lft_ =
+                ctx.subnet_->getPreferred().get(preferred);
+        }
     } else {
         expired->preferred_lft_ = ctx.subnet_->getPreferred();
     }
@@ -1635,7 +1641,12 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();
-        expired->valid_lft_ = ctx.subnet_->getValid().get(valid);
+        if ((valid == Lease::INFINITY_LFT) &&
+            ctx.subnet_->getAllowStaticLeases()) {
+            expired->valid_lft_ = Lease::INFINITY_LFT;
+        } else {
+            expired->valid_lft_ = ctx.subnet_->getValid().get(valid);
+        }
     } else {
         expired->valid_lft_ = ctx.subnet_->getValid();
     }
@@ -1738,13 +1749,19 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getPreferred()) {
         preferred = ctx.currentIA().hints_[0].getPreferred();
-        preferred = ctx.subnet_->getPreferred().get(preferred);
+        if ((preferred != Lease::INFINITY_LFT) ||
+            !ctx.subnet_->getAllowStaticLeases()) {
+          preferred = ctx.subnet_->getPreferred().get(preferred);
+        }
     }
     uint32_t valid = ctx.subnet_->getValid();
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         valid = ctx.currentIA().hints_[0].getValid();
-        valid = ctx.subnet_->getValid().get(valid);
+        if ((valid != Lease::INFINITY_LFT) ||
+            !ctx.subnet_->getAllowStaticLeases()) {
+          valid = ctx.subnet_->getValid().get(valid);
+        }
     }
     Lease6Ptr lease(new Lease6(ctx.currentIA().type_, addr, ctx.duid_,
                                ctx.currentIA().iaid_, preferred,
@@ -1991,14 +2008,24 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getPreferred()) {
         uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
-        lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+        if ((preferred == Lease::INFINITY_LFT) &&
+            ctx.subnet_->getAllowStaticLeases()) {
+            lease->preferred_lft_ = Lease::INFINITY_LFT;
+        } else {
+            lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
+        }
     } else {
         lease->preferred_lft_ = ctx.subnet_->getPreferred();
     }
     if (!ctx.currentIA().hints_.empty() &&
         ctx.currentIA().hints_[0].getValid()) {
         uint32_t valid = ctx.currentIA().hints_[0].getValid();
-        lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
+        if ((valid == Lease::INFINITY_LFT) &&
+            ctx.subnet_->getAllowStaticLeases()) {
+            lease->valid_lft_ = Lease::INFINITY_LFT;
+        } else {
+            lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
+        }
     } else {
         lease->valid_lft_ = ctx.subnet_->getValid();
     }
@@ -3509,7 +3536,13 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
     }
     if (opt_lft) {
-        valid_lft = ctx.subnet_->getValid().get(opt_lft->getValue());
+        uint32_t valid = opt_lft->getValue();
+        if ((valid == Lease::INFINITY_LFT) &&
+            ctx.subnet_->getAllowStaticLeases()) {
+            valid_lft = Lease::INFINITY_LFT;
+        } else {
+            valid_lft = ctx.subnet_->getValid().get(valid);
+        }
     }
 
     time_t now = time(NULL);
@@ -3933,7 +3966,13 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         opt_lft = boost::dynamic_pointer_cast<OptionInt<uint32_t> >(opt);
     }
     if (opt_lft) {
-        lease->valid_lft_ = ctx.subnet_->getValid().get(opt_lft->getValue());
+        uint32_t valid = opt_lft->getValue();
+        if ((valid == Lease::INFINITY_LFT) &&
+            ctx.subnet_->getAllowStaticLeases()) {
+            lease->valid_lft_ = Lease::INFINITY_LFT;
+        } else {
+            lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
+        }
     } else {
         lease->valid_lft_ = ctx.subnet_->getValid();
     }

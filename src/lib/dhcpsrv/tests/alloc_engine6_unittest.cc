@@ -124,6 +124,13 @@ TEST_F(AllocEngine6Test, maxAlloc6) {
     simpleAlloc6Test(pd_pool_, IOAddress("::"), 500, 600, 400, 500);
 }
 
+// This test checks that simple allocation handles static leases.
+TEST_F(AllocEngine6Test, staticAlloc6) {
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    simpleAlloc6Test(pool_, IOAddress("::"), infinity_lft, infinity_lft,
+                     infinity_lft, infinity_lft);
+}
+
 // This test checks if the simple PD allocation (REQUEST) can succeed
 // and the stats counter is properly bumped by 1
 TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
@@ -1097,6 +1104,54 @@ TEST_F(AllocEngine6Test, maxReuseExpiredLease6) {
     EXPECT_EQ(500, lease->valid_lft_);
 }
 
+// This test checks if an expired lease can be reused using infinite lifetimes.
+TEST_F(AllocEngine6Test, staticReuseExpiredLease6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+
+    // Create one subnet with a pool holding one address.
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+    subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
+    subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+    subnet_->setAllowStaticLeases(true);
+
+    // Initialize FQDN data for the lease.
+    initFqdn("myhost.example.com", true, true);
+
+    // Just a different duid
+    DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t other_iaid = 3568;
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Make sure that we really created expired lease
+    ASSERT_TRUE(lease->expired());
+
+    // Asking specifically for this address with zero lifetimes
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
+                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+    ctx2.currentIA().iaid_ = iaid_;
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    ctx2.currentIA().addHint(addr, 128, infinity_lft, infinity_lft);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Check lifetimes: infinite values are expected.
+    EXPECT_EQ(infinity_lft, lease->preferred_lft_);
+    EXPECT_EQ(infinity_lft, lease->valid_lft_);
+}
+
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -1388,6 +1443,43 @@ TEST_F(AllocEngine6Test, maxRenewLeaseLifetime) {
     // Checks that max values are used for lifetimes.
     EXPECT_EQ(400, renewed[0]->preferred_lft_);
     EXPECT_EQ(500, renewed[0]->valid_lft_);
+}
+
+// Checks that a renewed lease handles static leases.
+TEST_F(AllocEngine6Test, staticRenewLeaseLifetime) {
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
+                               duid_, iaid_, 300, 400,
+                               subnet_->getID(), HWAddrPtr(), 128));
+
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(NULL) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100);
+    subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
+    subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+    subnet_->setAllowStaticLeases(true);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"),
+                                          128, infinity_lft, infinity_lft));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(engine, pool_, hints, true, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease_cltt)
+        << "Lease lifetime was not extended, but it should";
+
+    // Checks that infinite values are used for lifetimes.
+    EXPECT_EQ(infinity_lft, renewed[0]->preferred_lft_);
+    EXPECT_EQ(infinity_lft, renewed[0]->valid_lft_);
 }
 
 // Checks if the lease lifetime is extended when the client sends the

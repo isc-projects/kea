@@ -4002,6 +4002,9 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
     // If T2 is explicitly configured we'll use that value.
     if (!subnet->getT2().unspecified()) {
         t2_time = subnet->getT2();
+    } else if (preferred_lft == Lease::INFINITY_LFT) {
+        // Do not calculate with infinite values.
+        t2_time = subnet->getT2();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.
         t2_time = static_cast<uint32_t>(round(subnet->getT2Percent() * preferred_lft));
@@ -4015,6 +4018,9 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
 
     // If T1 is explicitly configured we'll use try value.
     if (!subnet->getT1().unspecified()) {
+        t1_time = subnet->getT1();
+    } else if (preferred_lft == Lease::INFINITY_LFT) {
+        // Do not calculate with infinite values.
         t1_time = subnet->getT1();
     } else if (subnet->getCalculateTeeTimes()) {
         // Calculating tee times is enabled, so calculate it.

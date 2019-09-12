@@ -2160,7 +2160,8 @@ However, there may be some rare business cases when this is desired
 Calculation of the values is controlled by the following three parameters:
 
 -  ``calculate-tee-times`` - when true, T1 and T2 will be calculated as
-   percentages of the valid lease time. It defaults to true.
+   percentages of the valid lease time. It defaults to true and is
+   ignored for infinite (0xFFFFFFFF) valid lease times.
 
 -  ``t1-percent`` - the percentage of the valid lease time to use for
    T1. It is expressed as a real number between 0.0 and 1.0 and must be

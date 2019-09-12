@@ -296,6 +296,8 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     ctx.currentIA().addHint(hint, expected_len, preferred, valid);
     subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
     subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    subnet_->setAllowStaticLeases(exp_valid == infinity_lft);
 
     // Set some non-standard callout status to make sure it doesn't affect the
     // allocation.
@@ -313,7 +315,8 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     }
 
     // Do all checks on the lease
-    checkLease6(duid_, lease, type, expected_len, true, true);
+    checkLease6(duid_, lease, type, expected_len, true, true,
+                exp_valid == infinity_lft);
 
     // Check expected preferred and valid lifetimes.
     EXPECT_EQ(exp_preferred, lease->preferred_lft_);
@@ -389,7 +392,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
 Lease6Collection
 AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                             AllocEngine::HintContainer& hints,
-                            bool in_pool) {
+                            bool in_pool, bool is_static) {
 
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
@@ -407,7 +410,8 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
 
         // Do all checks on the lease
-        checkLease6(duid_, *it, type, expected_len, in_pool, in_pool);
+        checkLease6(duid_, *it, type, expected_len,
+                    in_pool, in_pool, is_static);
 
         // Check that context has been updated with allocated addresses or
         // prefixes.

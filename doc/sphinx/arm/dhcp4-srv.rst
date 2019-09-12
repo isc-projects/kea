@@ -1227,7 +1227,8 @@ is not being sent and T1 is less than the valid lease time.
 Calculating the values is controlled by the following three parameters.
 
 -  ``calculate-tee-times`` - when true, T1 and T2 will be calculated as
-   percentages of the valid lease time. It defaults to false.
+   percentages of the valid lease time. It defaults to false and
+   is ignored for infinite (0xFFFFFFFF) valid lease times.
 
 -  ``t1-percent`` - the percentage of the valid lease time to use for
    T1. It is expressed as a real number between 0.0 and 1.0 and must be
