@@ -2121,6 +2121,12 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     transaction.commit();
 }
 
+size_t
+PgSqlHostDataSource::updateRuntimeInfo(const HostPtr& host) {
+    isc_throw(NotImplemented, "PgSqlHostDataSource::updateRuntimeInfo() is currently"
+              " not implemented");
+}
+
 bool
 PgSqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     // If operating in read-only mode, throw exception.

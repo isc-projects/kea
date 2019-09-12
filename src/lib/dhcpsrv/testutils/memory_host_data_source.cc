@@ -191,6 +191,20 @@ MemHostDataSource::add(const HostPtr& host) {
     store_.push_back(host);
 }
 
+size_t
+MemHostDataSource::updateRuntimeInfo(const HostPtr& host) {
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        if (((*h)->getIdentifierType() == host->getIdentifierType()) &&
+            ((*h)->getIdentifier() == host->getIdentifier())) {
+            (*h)->setKey(host->getKey());
+            (*h)->setContext(host->getContext());
+            return (1);
+        }
+    }
+
+    return (0);
+}
+
 bool
 MemHostDataSource::del(const SubnetID& subnet_id,
                        const asiolink::IOAddress& addr) {

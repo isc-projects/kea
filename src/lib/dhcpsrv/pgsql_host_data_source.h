@@ -99,6 +99,15 @@ public:
     /// violation
     virtual void add(const HostPtr& host);
 
+    /// @brief Attempts to update runtime information for a host.
+    ///
+    /// See the @c BaseHostDataSource::updateRuntimeInfo for details.
+    ///
+    /// @param host Pointer to the @c Host object including the modified
+    /// runtime information.
+    /// @return Number of updated host instances.
+    virtual size_t updateRuntimeInfo(const HostPtr& host);
+
     /// @brief Attempts to delete a host by (subnet-id, address)
     ///
     /// This method supports both v4 and v6.

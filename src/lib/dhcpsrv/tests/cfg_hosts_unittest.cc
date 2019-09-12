@@ -12,11 +12,13 @@
 #include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <set>
 
 using namespace isc;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
@@ -1012,6 +1014,123 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
                                              SUBNET_ID_UNUSED, SubnetID(2),
                                              IOAddress("0.0.0.0"),
                                              "foo.example.com"))));
+}
+
+// This test verifies that the hosts's runtime information is updated
+// when the host identifier and subnet identifiers are matching.
+TEST_F(CfgHostsTest, updateRuntimeInfo) {
+    // Create authentication keys for all hosts.
+    boost::scoped_ptr<AuthKey> auth1;
+    boost::scoped_ptr<AuthKey> auth2;
+    boost::scoped_ptr<AuthKey> auth3;
+    boost::scoped_ptr<AuthKey> auth4;
+
+    ASSERT_NO_THROW({
+        auth1.reset(new AuthKey("0102"));
+        auth2.reset(new AuthKey("0304"));
+        auth3.reset(new AuthKey("0506"));
+        auth4.reset(new AuthKey());
+    });
+
+    // Create user context for each host.
+    auto ctx1 = Element::createMap();
+    ctx1->set("host", Element::create("host1"));
+
+    auto ctx2 = Element::createMap();
+    ctx2->set("host", Element::create("host2"));
+
+    auto ctx3 = Element::createMap();
+    ctx3->set("host", Element::create("host3"));
+
+    auto ctx4 = Element::createMap();
+    ctx4->set("host", Element::create("host4"));
+
+    // Finally, create hosts and assign the authentication keys and
+    // the user context to them.
+    auto host1 = boost::make_shared<Host>(hwaddrs_[0]->toText(false),
+                                          "hw-address",
+                                          SubnetID(1), SUBNET_ID_UNUSED,
+                                          IOAddress::IPV4_ZERO_ADDRESS());
+    host1->setKey(*auth1);
+    host1->setContext(ctx1);
+
+    auto host2 = boost::make_shared<Host>(hwaddrs_[0]->toText(false),
+                                          "hw-address",
+                                          SubnetID(5), SUBNET_ID_UNUSED,
+                                          IOAddress("192.0.2.5"));
+    host2->setKey(*auth2);
+    host2->setContext(ctx2);
+
+    auto host3 = boost::make_shared<Host>(duids_[0]->toText(),
+                                          "duid",
+                                          SubnetID(3), SubnetID(1),
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          "host3");
+    host3->setKey(*auth3);
+    host3->setContext(ctx3);
+
+    auto host4 = boost::make_shared<Host>(duids_[0]->toText(),
+                                          "duid",
+                                          SubnetID(3), SubnetID(2),
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          "host4");
+    host4->setKey(*auth4);
+    host4->setContext(ctx4);
+
+    CfgHosts cfg;
+
+    // Add first and third host. The second and forth one will be used
+    // for an update.
+    ASSERT_NO_THROW({
+        cfg.add(host1);
+        cfg.add(host3);
+    });
+
+    // An attempt to update host1 runtime info with host2 runtime info
+    // should fail, because the subnet identifiers are not matching.
+    EXPECT_EQ(0, cfg.updateRuntimeInfo(host2));
+    auto returned_host = cfg.get4(SubnetID(1), host1->getIdentifierType(),
+                                  &host1->getIdentifier()[0],
+                                  host1->getIdentifier().size());
+    ASSERT_TRUE(returned_host);
+    // Make sure that host1 hasn't been modified.
+    EXPECT_EQ(host1->getKey().getAuthKey(), returned_host->getKey().getAuthKey());
+    EXPECT_TRUE(isEquivalent(returned_host->getContext(), host1->getContext()));
+    
+    // Adjust the host2 subnet id to match the host1.
+    host2->setIPv4SubnetID(host1->getIPv4SubnetID());
+
+    // This time the update should be successful.
+    EXPECT_EQ(1, cfg.updateRuntimeInfo(host2));
+    returned_host = cfg.get4(SubnetID(1), host1->getIdentifierType(),
+                             &host1->getIdentifier()[0],
+                             host1->getIdentifier().size());
+    ASSERT_TRUE(returned_host);
+    // The runtime info should have been modified.
+    EXPECT_EQ(host2->getKey().getAuthKey(), returned_host->getKey().getAuthKey());
+    EXPECT_TRUE(isEquivalent(returned_host->getContext(), host2->getContext()));
+    // But other information should not be changed.
+    EXPECT_NE(returned_host->getIPv4Reservation().toText(),
+              host2->getIPv4Reservation().toText());
+
+    // Repeate the same test for the DUID case in IPv6.
+    EXPECT_EQ(0, cfg.updateRuntimeInfo(host4));
+    returned_host = cfg.get6(SubnetID(1), host3->getIdentifierType(),
+                             &host3->getIdentifier()[0],
+                             host3->getIdentifier().size());
+    ASSERT_TRUE(returned_host);
+    EXPECT_EQ(host3->getKey().getAuthKey(), returned_host->getKey().getAuthKey());
+    EXPECT_TRUE(isEquivalent(returned_host->getContext(), host3->getContext()));
+
+    host4->setIPv6SubnetID(host3->getIPv6SubnetID());
+    EXPECT_EQ(1, cfg.updateRuntimeInfo(host4));
+    returned_host = cfg.get6(SubnetID(1), host3->getIdentifierType(),
+                             &host3->getIdentifier()[0],
+                             host3->getIdentifier().size());
+    ASSERT_TRUE(returned_host);
+    EXPECT_EQ(host4->getKey().getAuthKey(), returned_host->getKey().getAuthKey());
+    EXPECT_TRUE(isEquivalent(returned_host->getContext(), host4->getContext()));
+    EXPECT_NE(returned_host->getHostname(), host4->getHostname());
 }
 
 

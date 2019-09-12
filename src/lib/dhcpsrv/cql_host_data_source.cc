@@ -2986,6 +2986,12 @@ CqlHostDataSource::add(const HostPtr& host) {
     impl_->insertOrDelete(host, true);
 }
 
+size_t
+CqlHostDataSource::updateRuntimeInfo(const HostPtr& host) {
+    isc_throw(NotImplemented, "CqlHostDataSource::updateRuntimeInfo() is currently"
+              " not implemented");
+}
+
 bool
 CqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& address) {
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, address));

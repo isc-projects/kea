@@ -711,7 +711,9 @@ CfgHosts::add4(const HostPtr& host) {
         host->getCfgOption4()->empty() &&
         host->getCfgOption6()->empty() &&
         host->getClientClasses4().empty() &&
-        host->getClientClasses6().empty()) {
+        host->getClientClasses6().empty() &&
+        host->getKey().getAuthKey().empty() &&
+        !host->getContext()) {
         std::ostringstream s;
         if (hwaddr) {
             s << "for DUID: " << hwaddr->toText();
@@ -827,6 +829,25 @@ CfgHosts::add6(const HostPtr& host) {
         }
         hosts6_.insert(HostResrv6Tuple(it->second, host));
     }
+}
+
+size_t
+CfgHosts::updateRuntimeInfo(const HostPtr& host) {
+    HostCollection collection;
+    getAllInternal<HostCollection>(host->getIdentifierType(),
+                                   &host->getIdentifier()[0],
+                                   host->getIdentifier().size(),
+                                   collection);
+
+    for (auto i = 0; i < collection.size(); ++i) {
+        if ((collection[i]->getIPv4SubnetID() == host->getIPv4SubnetID()) &&
+            (collection[i]->getIPv6SubnetID() == host->getIPv6SubnetID())) {
+            collection[i]->setKey(host->getKey());
+            collection[i]->setContext(host->getContext());
+            return (1);
+        }
+    }
+    return (0);
 }
 
 bool

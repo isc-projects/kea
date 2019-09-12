@@ -650,6 +650,10 @@ public:
     void add(const HostPtr&) {
     }
 
+    size_t updateRuntimeInfo(const HostPtr&) {
+        return (0);
+    }
+
     bool del(const SubnetID&, const IOAddress&) {
         return (false);
     }

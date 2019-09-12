@@ -2801,6 +2801,12 @@ MySqlHostDataSource::add(const HostPtr& host) {
     transaction.commit();
 }
 
+size_t
+MySqlHostDataSource::updateRuntimeInfo(const HostPtr& host) {
+    isc_throw(NotImplemented, "MySqlHostDataSource::updateRuntimeInfo() is currently"
+              " not implemented");
+}
+
 bool
 MySqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     // If operating in read-only mode, throw exception.

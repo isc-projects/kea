@@ -428,6 +428,24 @@ HostMgr::add(const HostPtr& host) {
     }
 }
 
+size_t
+HostMgr::updateRuntimeInfo(const HostPtr& host) {
+    if (alternate_sources_.empty()) {
+        isc_throw(NoHostDataSourceManager, "Unable to update host runtime information "
+                  "because there is no hosts-database configured.");
+    }
+    size_t update_count = 0;
+    for (auto source : alternate_sources_) {
+        update_count += source->updateRuntimeInfo(host);
+    }
+
+    // If update was successful, cache the host.
+    if ((update_count > 0) && cache_ptr_) {
+        cache(host);
+    }
+    return (update_count);
+}
+
 bool
 HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     if (alternate_sources_.empty()) {

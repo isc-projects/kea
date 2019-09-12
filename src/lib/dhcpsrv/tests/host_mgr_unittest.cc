@@ -853,6 +853,21 @@ TEST_F(HostMgrTest, addNoDataSource) {
     EXPECT_THROW(HostMgr::instance().add(host), NoHostDataSourceManager);
 }
 
+// This test verifies that when attempting to update the host runtime information
+// when no data source is available, an exception is thrown.
+TEST_F(HostMgrTest, updateRuntimeInfoNoDataSource) {
+    // Remove all configuration.
+    CfgMgr::instance().clear();
+    // Recreate HostMgr instance.
+    HostMgr::create();
+
+    HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                          SubnetID(1), SUBNET_ID_UNUSED,
+                          isc::asiolink::IOAddress::IPV4_ZERO_ADDRESS()));
+    EXPECT_THROW(HostMgr::instance().updateRuntimeInfo(host),
+                 NoHostDataSourceManager);
+}
+
 class HostMgrDbLostCallbackTest : public ::testing::Test {
 public:
     HostMgrDbLostCallbackTest() : callback_called_(false) {};
