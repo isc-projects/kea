@@ -1,3 +1,8 @@
+1663.	[build]		fdupont
+	Dropped support for Botan 1.x crypto library in Kea as these
+	versions are now end of life.
+	(Gitlab #345,!498, git ba028eee986c0da963754c6fcb74790081557bec)
+
 1662.	[bug]		marcin
 	Prevent deadlock in the Kea DHCP servers caused by allocating
 	memory in the system signal handler. The issue was found on
