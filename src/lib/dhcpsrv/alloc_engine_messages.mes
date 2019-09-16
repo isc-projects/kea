@@ -40,6 +40,8 @@ consider reducing the lease lifetime.  In this way, addresses allocated
 to clients that are no longer active on the network will become available
 sooner.
 
+% ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES %1: Failed to allocate an IPv4 address for client with classes: %2
+
 % ALLOC_ENGINE_V4_DECLINED_RECOVERED IPv4 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported
 as duplicate (client sent DECLINE) and the server marked this address as

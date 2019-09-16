@@ -3964,6 +3964,13 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         .arg(ctx.query_->getLabel())
         .arg(total_attempts);
 
+    const ClientClasses& classes = ctx.query_->getClasses();
+    if (!classes.empty()) {
+        LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES)
+            .arg(ctx.query_->getLabel())
+            .arg(classes.toText());
+    }
+
     return (new_lease);
 }
 
