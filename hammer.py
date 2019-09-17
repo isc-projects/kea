@@ -40,17 +40,17 @@ import xml.etree.ElementTree as ET
 
 
 SYSTEMS = {
-    'fedora': ['27',  # EOLed
-               '28',  # EOLed
+    'fedora': [#'27',  # EOLed
+               #'28',  # EOLed
                '29',
                '30'],
     'centos': ['7'],
     'rhel': ['8'],
-    'ubuntu': ['16.04',
+    'ubuntu': [#'16.04',
                '18.04',
-               '18.10',  # EOLed
+               #'18.10',  # EOLed
                '19.04'],
-    'debian': ['8',
+    'debian': [#'8',
                '9',
                '10'],
     'freebsd': ['11.2',
@@ -1505,17 +1505,17 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         execute(cmd)
         frc = []
         if system == 'fedora' and revision == '28':
-            frc.append('freeradius-client-1.1.7-isc20190408125858.fc28')
-            frc.append('freeradius-client-devel-1.1.7-isc20190408125858.fc28')
+            frc.append('freeradius-client-1.1.7-isc20190916210635.fc28')
+            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc28')
         elif system == 'fedora' and revision == '29':
-            frc.append('freeradius-client-1.1.7-isc20190408101030.fc29')
-            frc.append('freeradius-client-devel-1.1.7-isc20190408101030.fc29')
+            frc.append('freeradius-client-1.1.7-isc20190916210635.fc29')
+            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc29')
         elif system == 'fedora' and revision == '30':
-            frc.append('freeradius-client-1.1.7-isc201906181200.fc30')
-            frc.append('freeradius-client-devel-1.1.7-isc201906181200.fc30')
+            frc.append('freeradius-client-1.1.7-isc20190916210635.fc30')
+            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc30')
         elif system == 'centos':
-            frc.append('freeradius-client-1.1.7-isc20190408140511.el7')
-            frc.append('freeradius-client-devel-1.1.7-isc20190408140511.el7')
+            frc.append('freeradius-client-1.1.7-isc20190916210635.el7')
+            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.el7')
         if frc:
             install_pkgs(frc, env=env, check_times=check_times)
 
@@ -1577,7 +1577,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
             if 'Bad header data' not in out:
                 break
             time.sleep(4)
-        install_pkgs('libfreeradius-client libfreeradius-client-dev', env=env, check_times=check_times)
+        install_pkgs('libfreeradius-client=1.1.7-isc20190916210635 libfreeradius-client-dev=1.1.7-isc20190916210635', env=env, check_times=check_times)
 
         # unpack tarball
         execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
