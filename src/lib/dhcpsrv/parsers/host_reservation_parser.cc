@@ -55,6 +55,7 @@ getSupportedParams4(const bool identifiers_only = false) {
         params_set.insert("boot-file-name");
         params_set.insert("client-classes");
         params_set.insert("user-context");
+        params_set.insert("key");
     }
     return (identifiers_only ? identifiers_set : params_set);
 }
@@ -89,6 +90,7 @@ getSupportedParams6(const bool identifiers_only = false) {
         params_set.insert("option-data");
         params_set.insert("client-classes");
         params_set.insert("user-context");
+        params_set.insert("key");
     }
     return (identifiers_only ? identifiers_set : params_set);
 }
@@ -111,6 +113,7 @@ HostReservationParser::parseInternal(const SubnetID&,
     std::string identifier_name;
     std::string hostname;
     ConstElementPtr user_context;
+    AuthKey auth_key("");
     HostPtr host;
 
     try {
@@ -136,6 +139,8 @@ HostReservationParser::parseInternal(const SubnetID&,
                 hostname = element.second->stringValue();
             } else if (element.first == "user-context") {
                 user_context = element.second;
+            } else if (element.first == "key") {
+                auth_key.setAuthKey(element.second->stringValue());
             }
         }
 
@@ -165,6 +170,12 @@ HostReservationParser::parseInternal(const SubnetID&,
         if (user_context) {
             host->setContext(user_context);
         }
+
+        // Add auth key.
+        if (!auth_key.getAuthKey().empty()) {
+            host->setKey(auth_key);
+        }
+
     } catch (const std::exception& ex) {
         // Append line number where the error occurred.
         isc_throw(DhcpConfigError, ex.what() << " ("

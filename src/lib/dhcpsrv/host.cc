@@ -31,7 +31,7 @@ AuthKey::AuthKey(const std::string& key) {
 }
 
 AuthKey::AuthKey() {
-    authKey_ = AuthKey::getRandomKeyString();
+    auth_key_ = AuthKey::getRandomKeyString();
 }
 
 std::vector<uint8_t>
@@ -41,24 +41,24 @@ AuthKey::getRandomKeyString() {
 
 std::string
 AuthKey::toText() const {
-    if (authKey_.empty()) {
+    if (auth_key_.empty()) {
         return ("");
     }
-    return (util::encode::encodeHex(authKey_));
+    return (util::encode::encodeHex(auth_key_));
 }
 
 void
 AuthKey::setAuthKey(const std::vector<uint8_t>& key) {
-    authKey_ = key;
-    if (authKey_.size() > AUTH_KEY_LEN) {
-        authKey_.resize(AUTH_KEY_LEN);
+    auth_key_ = key;
+    if (auth_key_.size() > AUTH_KEY_LEN) {
+        auth_key_.resize(AUTH_KEY_LEN);
     }
 }
 
 void
 AuthKey::setAuthKey(const std::string& key) {
     if (key.empty()) {
-        authKey_.clear();
+        auth_key_.clear();
         return;
     }
     try {
@@ -72,12 +72,12 @@ AuthKey::setAuthKey(const std::string& key) {
 
 bool
 AuthKey::operator==(const AuthKey& other) const {
-    return (authKey_ == other.authKey_);
+    return (auth_key_ == other.auth_key_);
 }
 
 bool
 AuthKey::operator!=(const AuthKey& other) const {
-    return (authKey_ != other.authKey_);
+    return (auth_key_ != other.auth_key_);
 }
 
 IPv6Resrv::IPv6Resrv(const Type& type,

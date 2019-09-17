@@ -124,7 +124,7 @@ public:
     ///
     /// @return auth key in binary.
     const std::vector<uint8_t>& getAuthKey() const {
-        return authKey_;
+        return auth_key_;
     }
 
     /// @brief Return text format for keys.
@@ -146,7 +146,7 @@ public:
     bool operator!=(const AuthKey& other) const;
 
 private:
-    std::vector<uint8_t> authKey_;
+    std::vector<uint8_t> auth_key_;
 };
 
 /// @brief IPv6 reservation for a host.

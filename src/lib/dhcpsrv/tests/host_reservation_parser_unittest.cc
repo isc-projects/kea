@@ -582,6 +582,25 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
+// This test verifies that the authentication key can be specified within the
+// host reservation.
+TEST_F(HostReservationParserTest, authKey) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"key\": \"05AA45BD56DA780917BCEF113687A299\" }";
+
+    std::vector<uint8_t> key = { 0x05, 0xAA, 0x45, 0xBD, 0x56, 0xDA, 0x78,
+                                 0x09, 0x17, 0xBC, 0xEF, 0x11, 0x36, 0x87,
+                                 0xA2, 0x99 };
+
+    auto config_element = Element::fromJSON(config);
+
+    HostPtr host;
+    HostReservationParser4 parser;
+    ASSERT_NO_THROW(host = parser.parse(SubnetID(1), config_element));
+
+    EXPECT_EQ(key, host->getKey().getAuthKey());
+}
+
 // This test verifies  that the configuration parser for host reservations
 // throws an exception when hostname is empty, and IP address is not
 // specified.
@@ -649,6 +668,12 @@ TEST_F(HostReservationParserTest, invalidParameterName) {
         "\"hostname\": \"foo.bar.isc.org\","
         "\"ip-addresses\": \"2001:db8:1::1\" }";
     testInvalidConfig<HostReservationParser4>(config);
+}
+
+// Invalid auth key should be rejected.
+TEST_F(HostReservationParserTest, invalidAuthKey) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"key\": \"hola!\" }";
 }
 
 // This test verifies that the parser can parse the IPv6 reservation entry for
