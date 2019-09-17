@@ -31,8 +31,8 @@ namespace dhcp {
 ///
 /// The main purpose is to safely manage thread pool tasks.
 /// The thread pool queue can be 'disabled', which means that no items can be
-/// added or removed from the queue, or 'enabled', which guarantees that
-/// inserting or removing items are thread safe.
+/// removed from the queue, or 'enabled', which guarantees that inserting or
+/// removing items are thread safe.
 /// In 'disabled' state, all threads waiting on the queue are unlocked and all
 /// operations are non blocking.
 template <typename WorkItem>
@@ -57,7 +57,7 @@ struct ThreadPoolQueue {
     /// waiting on the queue.
     ///
     /// @param item the new item to be added to the queue
-    void push(WorkItem item) {
+    void push(WorkItem& item) {
         std::lock_guard<std::mutex> lock(mutex_);
         queue_.push(item);
         // Notify pop function so that it can effectively remove a work item.
@@ -77,7 +77,7 @@ struct ThreadPoolQueue {
     ///
     /// @return true if there was a work item removed from the queue, false
     /// otherwise
-    bool pop(WorkItem& item) {
+    WorkItem pop(bool& found) {
         std::unique_lock<std::mutex> lock(mutex_);
         while (!exit_) {
             if (queue_.empty()) {
@@ -86,12 +86,14 @@ struct ThreadPoolQueue {
                 continue;
             }
 
-            item = queue_.front();
+            WorkItem item = queue_.front();
             queue_.pop();
-            return true;
+            found = true;
+            return item;
         }
 
-        return false;
+        found = false;
+        return WorkItem();
     }
 
     /// @brief count number of work items in the queue
@@ -213,7 +215,7 @@ void ThreadPool::stop(bool clear) {
     LOG_INFO(dhcpsrv_logger, "Thread pool stopped");
 }
 
-void ThreadPool::add(WorkItemCallBack call_back) {
+void ThreadPool::add(WorkItemCallBack& call_back) {
     queue_->push(call_back);
 }
 
@@ -230,8 +232,9 @@ void ThreadPool::run() {
     LOG_INFO(dhcpsrv_logger, "Thread pool thread started. id: %1").arg(th_id);
 
     while (!exit_) {
-        WorkItemCallBack item;
-        if (queue_->pop(item)) {
+        bool found = false;
+        WorkItemCallBack item = queue_->pop(found);
+        if (found) {
             item();
         }
     }
