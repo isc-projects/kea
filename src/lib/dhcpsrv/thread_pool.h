@@ -70,7 +70,7 @@ struct ThreadPool {
     /// @brief add a working item to the thread pool
     ///
     /// @param call_back the 'function' object to be added to the queue
-    void add(WorkItemCallBack call_back);
+    void add(WorkItemCallBack& call_back);
 
     /// @brief count number of work items in the queue
     ///
