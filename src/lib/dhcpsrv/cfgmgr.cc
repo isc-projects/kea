@@ -82,7 +82,8 @@ CfgMgr::clear() {
     }
     configs_.clear();
     external_configs_.clear();
-    ensureCurrentAllocated();
+    D2ClientConfigPtr d2_default_conf(new D2ClientConfig());
+    setD2ClientConfig(d2_default_conf);
 }
 
 void
