@@ -910,6 +910,32 @@ public:
         return (IPv6Resrv(IPv6Resrv::TYPE_PD, lease.addr_, lease.prefixlen_));
     }
 
+    /// @brief Attempts to update host with the information required to send
+    /// DHCPv6 Reconfigure message to the client.
+    ///
+    /// If the DHCPv6 server is configured to send Reconfigure messages to the
+    /// client and the client accepts such messages, the server must store
+    /// some information about the client needed to send the Reconfigure
+    /// message. This includes authentication key, outbound interface on
+    /// which the client can be reached and the link local address of the
+    /// client. This information is associated with the existing host
+    /// reservation or the new reservation is created if it doesn't exist
+    /// yet.
+    ///
+    /// If the host reservation backends are in use, then the server will
+    /// try to store this information in the backends. Otherwise, it will
+    /// store the information in the @c CfgHosts structure of the @c CfgMgr.
+    /// The server prefers storing this information in the database because
+    /// it is automatically persisted and is not lost across the server
+    /// restarts. If the database is unavailable it can be stored in the
+    /// @c CfgMgr but it is not persisted, unless the administrator explicitly
+    /// stores it using the "config-write" command.
+    ///
+    /// @param ctx Client context holding necessary information about the
+    /// client and current DHCP transaction.
+    /// @return true if the update is considered successul, false otherwise.
+    static bool updateReconfigureInfo(ClientContext6& ctx);
+
 private:
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary

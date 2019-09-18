@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Fri Feb 08 2019 20:31
+// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Tue Sep 17 2019 13:37
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -71,6 +71,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED = "ALLO
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA = "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE = "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE = "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE";
+extern const isc::log::MessageID ALLOC_ENGINE_V6_UPDATE_RECONFIGURE_INFO_FAILED = "ALLOC_ENGINE_V6_UPDATE_RECONFIGURE_INFO_FAILED";
 
 } // namespace dhcp
 } // namespace isc
@@ -142,6 +143,7 @@ const char* values[] = {
     "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA", "%1: reusing expired lease, updated lease information: %2",
     "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE", "address %1 was revoked from client %2 as it is reserved for client %3",
     "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE", "Prefix %1/%2 was revoked from client %3 as it is reserved for client %4",
+    "ALLOC_ENGINE_V6_UPDATE_RECONFIGURE_INFO_FAILED", "%1: unexpected error occurred while updating reconfiguration information for the client: %2",
     NULL
 };
 

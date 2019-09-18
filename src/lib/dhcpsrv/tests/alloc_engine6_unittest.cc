@@ -13,6 +13,7 @@
 #include <stats/stats_mgr.h>
 
 using namespace std;
+using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::asiolink;
 using namespace isc::stats;
@@ -3421,6 +3422,191 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
         << "Lease lifetime was not extended, but it should";
+}
+
+// This test verifies that the host reservation with reconfiguration information
+// is created dynamically in the configuration manager if it doesn't exist.
+TEST_F(AllocEngine6Test, updateReconfigureInfoNewReservation) {
+    // Create the client context without host reservations.
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(HostPtr(), ctx);
+
+    // This call should result in creation of the new host reservation.
+    EXPECT_TRUE(AllocEngine::updateReconfigureInfo(ctx));
+
+    auto cfg_hosts = CfgMgr::instance().getCurrentCfg()->getCfgHosts();
+    auto returned_host = cfg_hosts->get6(ctx.subnet_->getID(), Host::IDENT_DUID,
+                                         &duid_->getDuid()[0], duid_->getDuid().size());
+    ASSERT_TRUE(returned_host);
+
+    // Make sure that authentication key is initialized.
+    EXPECT_FALSE(returned_host->getKey().getAuthKey().empty());
+
+    // Make sure that the user context contains expected information about
+    // the client.
+    auto user_context = returned_host->getContext();
+    ASSERT_TRUE(user_context);
+
+    EXPECT_EQ(Element::map, user_context->getType());
+
+    auto reconfigure_info = user_context->get("reconfigure-info");
+    ASSERT_TRUE(reconfigure_info);
+    ASSERT_EQ(Element::map, reconfigure_info->getType());
+
+    auto iface_name = reconfigure_info->get("interface");
+    ASSERT_TRUE(iface_name);
+    EXPECT_EQ(Element::string, iface_name->getType());
+    EXPECT_EQ(ctx.query_->getIface(), iface_name->stringValue());
+
+    auto client_addr = reconfigure_info->get("client-address");
+    ASSERT_TRUE(client_addr);
+    EXPECT_EQ(Element::string, client_addr->getType());
+    EXPECT_EQ(ctx.query_->getRemoteAddr().toText(), client_addr->stringValue());
+}
+
+// This test verifies that the host reservation is updated with the reconfiguration
+// information when the reservation exists but lacks the reconfiguration information
+// or the existing information is not matching.
+TEST_F(AllocEngine6Test, updateReconfigureInfoExistingReservation) {
+    // Create the host reservation with a hostname.
+    auto host = boost::make_shared<Host>(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                                         Host::IDENT_HWADDR, SUBNET_ID_UNUSED,
+                                         subnet_->getID(),
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         "hostname.example.org");
+
+    // Create user context for the host which contains some dummy information.
+    // We want to make sure that this information is not tossed when the
+    // user context is updated by the function we're testing.
+    auto host_context = Element::createMap();
+    host_context->set("existing-info", Element::create(123));
+
+    // Insert some reconfiguration information, which should be replaced
+    // by the information gathered from the user context.
+    auto existing_reconfigure_info = Element::createMap();
+    existing_reconfigure_info->set("interface", Element::create("eth1"));
+    existing_reconfigure_info->set("client-address", Element::create("3001::1"));
+
+    host->setContext(host_context);
+
+    // Insert the host into the configuration manager.
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Create the context and associated the host reservation with it.
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(host, ctx);
+
+    // This should update the existing reservation with the reconfiguration
+    // information but the existing reservation information should be
+    // preserved.
+    EXPECT_TRUE(AllocEngine::updateReconfigureInfo(ctx));
+
+    auto cfg_hosts = CfgMgr::instance().getCurrentCfg()->getCfgHosts();
+    auto returned_host = cfg_hosts->get6(ctx.subnet_->getID(), Host::IDENT_HWADDR,
+                                         &hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size());
+    ASSERT_TRUE(returned_host);
+
+    // Make sure the auth key has been inserted.
+    EXPECT_FALSE(returned_host->getKey().getAuthKey().empty());
+
+    auto user_context = returned_host->getContext();
+    ASSERT_TRUE(user_context);
+
+    EXPECT_EQ(Element::map, user_context->getType());
+
+    // The data existing in the user context prior to the update should be
+    // preserved.
+    auto existing_info = user_context->get("existing-info");
+    ASSERT_TRUE(existing_info);
+    ASSERT_EQ(Element::integer, existing_info->getType());
+    EXPECT_EQ(123, existing_info->intValue());
+
+    // The reconfiguration information should be preserved.
+    auto reconfigure_info = user_context->get("reconfigure-info");
+    ASSERT_TRUE(reconfigure_info);
+    ASSERT_EQ(Element::map, reconfigure_info->getType());
+
+    auto iface_name = reconfigure_info->get("interface");
+    ASSERT_TRUE(iface_name);
+    EXPECT_EQ(Element::string, iface_name->getType());
+    EXPECT_EQ(ctx.query_->getIface(), iface_name->stringValue());
+
+    auto client_addr = reconfigure_info->get("client-address");
+    ASSERT_TRUE(client_addr);
+    EXPECT_EQ(Element::string, client_addr->getType());
+    EXPECT_EQ(ctx.query_->getRemoteAddr().toText(), client_addr->stringValue());
+}
+
+// This test verifies that reserved authentication key is not updated
+// when storing reconfiguration information for a client.
+TEST_F(AllocEngine6Test, updateReconfigureInfoPreserveAuthKey) {
+    // Create the host reservation with a hostname.
+    auto host = boost::make_shared<Host>(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                                         Host::IDENT_HWADDR, SUBNET_ID_UNUSED,
+                                         subnet_->getID(),
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         "hostname.example.org");
+
+    AuthKey host_key;
+    host->setKey(host_key);
+
+    // Insert the host into the configuration manager.
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Create the context and associated the host reservation with it.
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(host, ctx);
+
+    // This should update the existing reservation with the reconfiguration
+    // information but the existing reservation information should be
+    // preserved.
+    EXPECT_TRUE(AllocEngine::updateReconfigureInfo(ctx));
+
+    auto cfg_hosts = CfgMgr::instance().getCurrentCfg()->getCfgHosts();
+    auto returned_host = cfg_hosts->get6(ctx.subnet_->getID(), Host::IDENT_HWADDR,
+                                         &hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size());
+    ASSERT_TRUE(returned_host);
+
+    // Make sure that the authentication key was preserved.
+    EXPECT_EQ(host_key.getAuthKey(), returned_host->getKey().getAuthKey());
+}
+
+// This test verifies that the reconfiguration information is not updated
+// when the reconfiguration is not enabled.
+TEST_F(AllocEngine6Test, updateReconfigureInfoReconfigureNotEnabled) {
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(HostPtr(), ctx);
+    ctx.support_reconfig_ = false;
+    EXPECT_FALSE(AllocEngine::updateReconfigureInfo(ctx));
+}
+
+// This test verifies that the reconfiguration information is not updated
+// when the Solicit (without Rapid Commit) is received.
+TEST_F(AllocEngine6Test, updateReconfigureInfoReconfigureFakeAllocation) {
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(HostPtr(), ctx);
+    ctx.fake_allocation_ = true;
+    EXPECT_FALSE(AllocEngine::updateReconfigureInfo(ctx));
+}
+
+// This test verifies that the reconfiguration information is not updated
+// when the server is not configured to use any host identifiers.
+TEST_F(AllocEngine6Test, updateReconfigureInfoReconfigureNoHostIdentifiers) {
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(HostPtr(), ctx);
+    ctx.host_identifiers_.clear();
+    EXPECT_FALSE(AllocEngine::updateReconfigureInfo(ctx));
+}
+
+// This test verifies that the reconfiguration information is not updated
+// when no subnet was selected.
+TEST_F(AllocEngine6Test, updateReconfigureInfoReconfigureNoSubnet) {
+    AllocEngine::ClientContext6 ctx;
+    initReconfigureCtx(HostPtr(), ctx);
+    ctx.subnet_.reset();
+    EXPECT_FALSE(AllocEngine::updateReconfigureInfo(ctx));
 }
 
 }; // namespace test

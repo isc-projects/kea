@@ -412,6 +412,13 @@ This error message is issued when the deletion of "expired-reclaimed"
 leases from the database failed. The error message is appended to
 the log message.
 
+% ALLOC_ENGINE_V6_UPDATE_RECONFIGURE_INFO_FAILED %1: unexpected error occurred while updating reconfiguration information for the client: %2
+This error message is issued when an expected error occurred while
+updating the host database with the information required to send
+Reconfigure message to the client. The first argument includes the
+client identification information. The second argument includes
+the details about the error.
+
 % ALLOC_ENGINE_V6_RENEW_HR allocating leases reserved for the client %1 as a result of Renew
 This debug message is issued when the allocation engine tries to
 allocate reserved leases for the client sending a Renew message.

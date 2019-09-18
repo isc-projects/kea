@@ -581,6 +581,23 @@ AllocEngine6Test::generateDeclinedLease(const std::string& addr,
 }
 
 void
+AllocEngine6Test::initReconfigureCtx(const HostPtr& host,
+                                     AllocEngine::ClientContext6& ctx) {
+    ctx.support_reconfig_ = true;
+    ctx.fake_allocation_ = false;
+    ctx.host_identifiers_.push_back(std::make_pair(Host::IDENT_DUID, duid_->getDuid()));
+    ctx.host_identifiers_.push_back(std::make_pair(Host::IDENT_HWADDR, hwaddr_->hwaddr_));
+    ctx.subnet_ = subnet_;
+    ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+    ctx.query_->setRemoteAddr(IOAddress("2001:db8:1::2"));
+    ctx.query_->setIface("ethx");
+
+    if (host) {
+        ctx.hosts_[ctx.subnet_->getID()] = host;
+    }
+}
+
+void
 AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
                              const asiolink::IOAddress& pool_end) {
     CfgMgr& cfg_mgr = CfgMgr::instance();

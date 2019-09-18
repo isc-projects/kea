@@ -41,6 +41,7 @@
 #include <utility>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
@@ -644,6 +645,136 @@ AllocEngine::findGlobalReservation(ClientContext6& ctx) {
     return (host);
 }
 
+bool
+AllocEngine::updateReconfigureInfo(ClientContext6& ctx) {
+    // Do nothing if we don't support reconfigure, it is a Solicit (wihout
+    // Rapid Commit), there is no query (unexpected) or the server is not
+    // configured to use any host identifiers.
+    if (!ctx.support_reconfig_ || ctx.fake_allocation_ || !ctx.query_ ||
+        ctx.host_identifiers_.empty()) {
+        return (false);
+    }
+
+    // Since we have two cases, one that there is no host reservation and
+    // another one that we have one or more reservations, it is convenient
+    // to extract some common parts of the code into a function. Since this
+    // function is very specialized, it is not a bad idea to have lambda
+    // within this function that does what we need. It updates the
+    // user context with reconfiguration specific information.
+    auto update_context_fun = [&ctx](ConstElementPtr current_context =
+                                     ConstElementPtr()) -> ElementPtr {
+        ElementPtr user_context;
+        if (current_context) {
+            // There are some data in the user context so we should preserve
+            // this data. Let's copy the current context with preserving the
+            // data.
+            user_context = copy(current_context);
+
+        } else {
+            // The context doesn't exist, so create one.
+            user_context = Element::createMap();
+        }
+
+        // Set reconfiguration information.
+        auto reconfigure_info = Element::createMap();
+        user_context->set("reconfigure-info", reconfigure_info);
+        reconfigure_info->set("interface", Element::create(ctx.query_->getIface()));
+        reconfigure_info->set("client-address",
+                              Element::create(ctx.query_->getRemoteAddr().toText()));
+        return (user_context);
+    };
+
+
+    try {
+        // The client has no reservations, so let's create one.
+        if (ctx.hosts_.empty()) {
+            for (auto id_pair : ctx.host_identifiers_) {
+                // Let's be super careful and make sure that we haven't been given
+                // an empty identifier.
+                if (id_pair.second.empty() || !ctx.subnet_) {
+                    continue;
+                }
+                // Create the new reservation.
+                auto host = boost::make_shared<Host>(&id_pair.second[0], id_pair.second.size(),
+                                                     id_pair.first, SUBNET_ID_UNUSED,
+                                                     ctx.subnet_->getID(),
+                                                     IOAddress::IPV4_ZERO_ADDRESS());
+                // Auto-generate the authentication key.
+                host->setKey(AuthKey());
+
+                // User context contains information about the client required to send
+                // the Reconfigure.
+                auto user_context = update_context_fun();
+                host->setContext(user_context);
+
+                // We prefer to insert the host information into the database because
+                // the data will be persisted.
+                if (!HostMgr::instance().getHostDataSourceList().empty()) {
+                    HostMgr::instance().add(host);
+
+                } else {
+                    // The database is not configured so store the information in the
+                    // in-memory configuration. The data will be lost if the administrator
+                    // doesn't send config-write command. Note that we're using const cast
+                    // here because the configuration was not really designed to store
+                    // dynamic information.
+                    auto cfg_hosts = boost::const_pointer_cast<CfgHosts>
+                        (CfgMgr::instance().getCurrentCfg()->getCfgHosts());
+                    cfg_hosts->add(host);
+                }
+
+                // If there was no exception, we managed to store the data.
+                return (true);
+            }
+
+        } else {
+
+            size_t all_updates = 0;
+
+            // The client has host reservations. We have to update these reservations
+            // with the information required for reconfiguration.
+            for (auto host_pair : ctx.hosts_) {
+                auto host = boost::const_pointer_cast<Host>(host_pair.second);
+                // If the authentication key exists, do not modify it.
+                if (host->getKey().getAuthKey().empty()) {
+                    host->setKey(AuthKey());
+                }
+
+                auto user_context = update_context_fun(host->getContext());
+                host->setContext(user_context);
+
+                size_t updates_count = 0;
+                // We prefer to store the information in the database. Let's try to
+                // update the host information in the backend. If the update is
+                // unsuccessful, the host is probably defined in the configuration
+                // file.
+                if (!HostMgr::instance().getHostDataSourceList().empty()) {
+                    updates_count = HostMgr::instance().updateRuntimeInfo(host);
+                }
+
+                // Failed to update the host in the database. Update the host in the
+                // configuration manager.
+                if (updates_count == 0) {
+                    auto cfg_hosts = boost::const_pointer_cast<CfgHosts>
+                        (CfgMgr::instance().getCurrentCfg()->getCfgHosts());
+                    updates_count = cfg_hosts->updateRuntimeInfo(host);
+                }
+
+                all_updates += updates_count;
+            }
+
+            // If we managed to update the reconfiguration information for all
+            // hosts, then indicate success.
+            return (all_updates == ctx.hosts_.size());
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_UPDATE_RECONFIGURE_INFO_FAILED)
+            .arg(ctx.query_->getLabel())
+            .arg(ex.what());
+    }
+
+    return (false);
+}
 
 Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {

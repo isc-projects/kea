@@ -439,6 +439,16 @@ public:
                       HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
                       uint8_t prefix_len);
 
+    /// @brief Utility function which initializes client context used in the
+    /// tests for DHCPv6 Reconfigure.
+    ///
+    /// @param host pointer to the host to be assigned to the context. The
+    /// null pointer is acceptable in which case no host is assigned to
+    /// the context.
+    /// @param [out] ctx reference to client context to be initialized.
+    void initReconfigureCtx(const HostPtr& host,
+                            AllocEngine::ClientContext6& ctx);
+
     virtual ~AllocEngine6Test() {
         factory_.destroy();
     }

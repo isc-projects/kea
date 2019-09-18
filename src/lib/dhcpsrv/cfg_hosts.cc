@@ -714,11 +714,12 @@ CfgHosts::add4(const HostPtr& host) {
         host->getClientClasses6().empty() &&
         host->getKey().getAuthKey().empty() &&
         !host->getContext()) {
+
         std::ostringstream s;
         if (hwaddr) {
-            s << "for DUID: " << hwaddr->toText();
+            s << "for HW address: " << hwaddr->toText();
         } else if (duid) {
-            s << "for HW address: " << duid->toText();
+            s << "for DUID: " << duid->toText();
         }
         isc_throw(BadValue, "specified reservation " << s.str()
                   << " must include at least one resource, i.e. "
