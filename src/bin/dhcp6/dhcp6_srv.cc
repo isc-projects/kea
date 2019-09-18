@@ -2952,8 +2952,10 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
 
-    //check for reconfig options
-    updateReconfigInfo(request, ctx);
+    // Update and store reconfiguration information for the client
+    // if the Reconfiguration is enabled.
+    AllocEngine::updateReconfigureInfo(ctx);
+
     setReservedClientClasses(request, ctx);
     requiredClassify(request, ctx);
 
@@ -2980,8 +2982,9 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
 
-    //check for reconfig option
-    updateReconfigInfo(renew, ctx);
+    // Update and store reconfiguration information for the client
+    // if the Reconfiguration is enabled.
+    AllocEngine::updateReconfigureInfo(ctx);
 
     setReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
@@ -3009,8 +3012,9 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
 
-    //check for reconfig option
-    updateReconfigInfo(rebind, ctx);
+    // Update and store reconfiguration information for the client
+    // if the Reconfiguration is enabled.
+    AllocEngine::updateReconfigureInfo(ctx);
 
     setReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);
@@ -4040,99 +4044,11 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
     }
 }
 
-void Dhcpv6Srv::updateHostKey(AllocEngine::ClientContext6& ctx) {
-    // @todo: remove this code as it does not work. And when
-    // it will be possible to repair it move it to the allocEngine.
-
-    // Default arguments generates a random key
-    AuthKey default_key;
-
-    // Check if reservation is present for the client
-    if (ctx.hosts_.empty()) {
-        // Create and assign new reservation
-        HostPtr hptr(new Host(ctx.duid_->toText(), "duid",
-                     SubnetID(1), ctx.subnet_->getID(),
-                     IOAddress::IPV4_ZERO_ADDRESS()));
-
-        hptr->setKey(default_key);
-
-        // We are creating new host reservation
-        // Ensure to add only if a backend is configured
-        // We don't want to enforce enabling backend
-        if (!HostMgr::instance().getHostDataSourceList().empty()) {
-            HostMgr::instance().add(hptr);
-            ctx.hosts_[ctx.subnet_->getID()] = hptr;
-        }
-        // Now update the context with the new reservation
-    } else {
-        for (auto& host : ctx.hosts_) {
-            if (host.second->getKey().toText().empty()) {
-                HostPtr hostPtr = boost::const_pointer_cast<Host>(host.second);
-                // multiple host reservation are assigned the same key
-                // as they belong to the same client
-                hostPtr->setKey(default_key);
-                // Do not work at all because the entry is not updated
-                // in the database...
-            }
-        }
-   }
-}
-
 void Dhcpv6Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
     isc::dhcp::Pkt6Ptr pkt6ptr_empty;
     isc::dhcp::getCalloutHandle(pkt6ptr_empty);
     HooksManager::clearParkingLots();
-}
-
-// @todo: remove useless pkt (ctx is enough).
-// @todo: move this code to the alloc engine.
-void Dhcpv6Srv::storeClientIntfInfo(const Pkt6Ptr& pkt,
-                                    AllocEngine::ClientContext6& ctx) {
-    // extract interface and ip address of the client
-    // @todo: explain in the doc that interface names could be
-    // unstable on some systems (fortunately with a way to avoid this).
-    auto iface = pkt->getIface();
-    auto client_address = pkt->getRemoteAddr();
-
-    // fetch leases from the DUID
-    Lease6Collection leases =
-        LeaseMgrFactory::instance().getLeases6(ctx.duid_->getDuid());
-
-    for (auto &lease: leases) {
-        ConstElementPtr client_context = lease->getContext();
-        ElementPtr ctx;
-
-        if (client_context) {
-            ctx = copy(client_context, 0);
-        } else {
-            ctx = Element::createMap();
-        }
-
-        ctx->set("client-interface", Element::create(iface));
-        ctx->set("client-address", Element::create(client_address.toText()));
-
-        lease->setContext(ctx);
-
-        LeaseMgrFactory::instance().updateLease6(lease);
-    }
-}
-
-// @todo: remove useless pkt (ctx is enough).
-// @todo: move this code to the alloc engine.
-void Dhcpv6Srv::updateReconfigInfo(const Pkt6Ptr& msg,
-                                   AllocEngine::ClientContext6& ctx) {
-    if (ctx.support_reconfig_ &&
-        !ctx.fake_allocation_) {
-        // Check if key is configured, if not generate and
-        // store key in the backend
-        updateHostKey(ctx);
-
-        // Store the client interface and linklocal address in the
-        // client context. This infomation is needed while sending
-        // reconfigure message to the client
-        storeClientIntfInfo(msg, ctx);
-    }
 }
 
 };

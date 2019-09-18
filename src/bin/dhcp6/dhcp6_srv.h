@@ -199,36 +199,6 @@ public:
     /// of all packets.  Called during reconfigure and shutdown.
     void discardPackets();
 
-    /// @brief Updates information required for reconfiguration process
-    ///
-    /// Called while processing of individual client messages
-    ///
-    /// @param msg message
-    /// @param ctx Reference to client context
-    void updateReconfigInfo(const Pkt6Ptr& msg,
-                            AllocEngine::ClientContext6& ctx);
-
-    /// @brief update Auth key in the host backend
-    ///
-    /// Checks if auth keys are configured in the
-    /// host reservation for the client. If keys are not present
-    /// it shall generate and store them in the host reservation
-    /// If host reservation are not defined, it shall create
-    /// new host reservation and add it to the backend
-    ///
-    /// @param ctx Reference to client context
-    void updateHostKey(AllocEngine::ClientContext6& ctx);
-
-    /// @brief update client context in the backend
-    ///
-    /// Updates the clients link local and interface information in
-    /// user context of leases
-    ///
-    /// @param pkt packet
-    /// @param ctx Reference to client context
-    void storeClientIntfInfo(const Pkt6Ptr& pkt,
-                             AllocEngine::ClientContext6& ctx);
-
 protected:
 
     /// @brief This function sets statistics related to DHCPv6 packets processing
