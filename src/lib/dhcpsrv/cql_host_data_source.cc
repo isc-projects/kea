@@ -2987,9 +2987,8 @@ CqlHostDataSource::add(const HostPtr& host) {
 }
 
 size_t
-CqlHostDataSource::updateRuntimeInfo(const HostPtr& host) {
-    isc_throw(NotImplemented, "CqlHostDataSource::updateRuntimeInfo() is currently"
-              " not implemented");
+CqlHostDataSource::updateRuntimeInfo(const HostPtr&) {
+    return (0);
 }
 
 bool

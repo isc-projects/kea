@@ -2122,9 +2122,8 @@ PgSqlHostDataSource::add(const HostPtr& host) {
 }
 
 size_t
-PgSqlHostDataSource::updateRuntimeInfo(const HostPtr& host) {
-    isc_throw(NotImplemented, "PgSqlHostDataSource::updateRuntimeInfo() is currently"
-              " not implemented");
+PgSqlHostDataSource::updateRuntimeInfo(const HostPtr&) {
+    return (0);
 }
 
 bool

@@ -2802,9 +2802,8 @@ MySqlHostDataSource::add(const HostPtr& host) {
 }
 
 size_t
-MySqlHostDataSource::updateRuntimeInfo(const HostPtr& host) {
-    isc_throw(NotImplemented, "MySqlHostDataSource::updateRuntimeInfo() is currently"
-              " not implemented");
+MySqlHostDataSource::updateRuntimeInfo(const HostPtr&) {
+    return (0);
 }
 
 bool
