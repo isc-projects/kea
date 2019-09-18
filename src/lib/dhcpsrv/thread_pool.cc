@@ -58,6 +58,9 @@ struct ThreadPoolQueue {
     ///
     /// @param item the new item to be added to the queue
     void push(WorkItem& item) {
+        if (item == nullptr) {
+            return;
+        }
         std::lock_guard<std::mutex> lock(mutex_);
         queue_.push(item);
         // Notify pop function so that it can effectively remove a work item.
@@ -77,7 +80,7 @@ struct ThreadPoolQueue {
     ///
     /// @return true if there was a work item removed from the queue, false
     /// otherwise
-    WorkItem pop(bool& found) {
+    WorkItem pop() {
         std::unique_lock<std::mutex> lock(mutex_);
         while (!exit_) {
             if (queue_.empty()) {
@@ -88,12 +91,10 @@ struct ThreadPoolQueue {
 
             WorkItem item = queue_.front();
             queue_.pop();
-            found = true;
             return item;
         }
 
-        found = false;
-        return WorkItem();
+        return nullptr;
     }
 
     /// @brief count number of work items in the queue
@@ -232,9 +233,8 @@ void ThreadPool::run() {
     LOG_INFO(dhcpsrv_logger, "Thread pool thread started. id: %1").arg(th_id);
 
     while (!exit_) {
-        bool found = false;
-        WorkItemCallBack item = queue_->pop(found);
-        if (found) {
+        WorkItemCallBack item = queue_->pop();
+        if (item != nullptr) {
             item();
         }
     }
