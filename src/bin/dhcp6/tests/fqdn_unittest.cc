@@ -1277,6 +1277,9 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
     CfgMgr::instance().commit();
 
+    // Enable D2.
+    enableD2();
+
     // Allocate a lease.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
