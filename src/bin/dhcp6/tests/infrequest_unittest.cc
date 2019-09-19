@@ -59,6 +59,7 @@ const char* CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000,"
+        "\"host-reservation-identifiers\": [ \"duid\", \"hw-address\" ],"
         "\"enable-reconfiguration\": true"
     "}",
 
