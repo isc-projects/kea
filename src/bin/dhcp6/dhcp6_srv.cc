@@ -199,6 +199,16 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-receive-drop"
 };
 
+/// @brief Checks if both the server and the client support Reconfigure.
+///
+/// @param query Pointer to the query received from the client.
+/// @return true if both server and the client support Reconfigure.
+bool
+reconfigureAllowed(const Pkt6Ptr& query) {
+    return (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag() &&
+            query->getOption(D6O_RECONF_ACCEPT));
+}
+
 }; // anonymous namespace
 
 namespace isc {
@@ -358,19 +368,6 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     if (drop) {
         // Caller will immediately drop the packet so simply return now.
         return;
-    }
-
-    // Check if reconfiguration feature is supported
-    if (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag()) {
-        // Set ctx.support_reconfig_ to true only for
-        // requests, renews or rebinds (but e.g. not info-requests).
-        // Only for those client requests we store leases.
-        if (pkt->getOption(D6O_RECONF_ACCEPT) &&
-            (pkt->getType() == DHCPV6_REQUEST ||
-             pkt->getType() == DHCPV6_RENEW ||
-             pkt->getType() == DHCPV6_REBIND)) {
-            ctx.support_reconfig_ =  true;
-        }
     }
 
     // Collect host identifiers if host reservations enabled. The identifiers
@@ -1119,13 +1116,14 @@ Dhcpv6Srv::copyClientOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer,
+Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                 const CfgOptionList&) {
     // add server-id
     answer->addOption(getServerID());
 
     // add reconf accept flag if its enabled in the configuration
-    if (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag()) {
+    if (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag() &&
+        question->getOption(D6O_RECONF_ACCEPT)) {
         OptionPtr reconfig_opt(new Option(Option::V6, D6O_RECONF_ACCEPT));
         answer->addOption(reconfig_opt);
     }
@@ -2919,8 +2917,17 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     // allocation).
     ctx.fake_allocation_ = (response->getType() != DHCPV6_REPLY);
 
+    // Similarly, sending the authentication key will only take place if this
+    // is the case of Rapid Commit.
+    ctx.support_reconfig_ = (reconfigureAllowed(solicit) &&
+                             (response->getType() == DHCPV6_REPLY));
+
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
+
+    // Update and store reconfiguration information for the client
+    // if the Reconfiguration is enabled.
+    AllocEngine::updateReconfigureInfo(ctx);
 
     setReservedClientClasses(solicit, ctx);
     requiredClassify(solicit, ctx);
@@ -2948,6 +2955,8 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr request = ctx.query_;
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
+
+    ctx.support_reconfig_ = reconfigureAllowed(request);
 
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
@@ -2982,10 +2991,6 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
 
-    // Update and store reconfiguration information for the client
-    // if the Reconfiguration is enabled.
-    AllocEngine::updateReconfigureInfo(ctx);
-
     setReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
 
@@ -3011,10 +3016,6 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
 
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
-
-    // Update and store reconfiguration information for the client
-    // if the Reconfiguration is enabled.
-    AllocEngine::updateReconfigureInfo(ctx);
 
     setReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);
@@ -3448,6 +3449,11 @@ Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
+
+    // Update and store reconfiguration information for the client
+    // if the Reconfiguration is enabled.
+    ctx.support_reconfig_ = reconfigureAllowed(inf_request);
+    AllocEngine::updateReconfigureInfo(ctx);
 
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(inf_request, reply);

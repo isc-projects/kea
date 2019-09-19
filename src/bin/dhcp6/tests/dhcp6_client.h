@@ -670,6 +670,14 @@ public:
         use_rapid_commit_ = rapid_commit;
     }
 
+    /// @brief Enables or disables the use of Reconfigure Accept option.
+    ///
+    /// @param reconf_accept Boolean parameter controlling if the Reconfigure
+    /// Accept option should be included.
+    void useReconfAccept(const bool reconf_accept = true) {
+        use_reconf_accept_ = reconf_accept;
+    }
+
     /// @brief Specifies server-id to be used in send messages
     ///
     /// Overrides the server-id to be sent when server-id is expected to be
@@ -924,6 +932,7 @@ private:
     bool use_docsis_oro_;
     bool use_client_id_;
     bool use_rapid_commit_;
+    bool use_reconf_accept_;
 
     /// @brief List holding information to be sent in client's IAs.
     std::list<ClientIA> client_ias_;

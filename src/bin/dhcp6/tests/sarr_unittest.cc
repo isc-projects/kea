@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,6 +54,9 @@ namespace {
 ///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
 ///   - Excluded Prefix specified (RFC 6603).
 ///
+/// - Configuration 4:
+///   - single subnet 2001:db8:1::/48 available via interface eth0
+///   - server configured to send Reconfigure to the clients.
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -180,7 +183,26 @@ const char* CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+        "\"valid-lifetime\": 4000 }",
+
+// Configuration 4
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\","
+        "    \"rapid-commit\": true"
+        " } ],"
+        "\"valid-lifetime\": 4000,"
+        "\"host-reservation-identifiers\": [ \"duid\", \"hw-address\" ],"
+        "\"enable-reconfiguration\": true"
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -621,6 +643,94 @@ TEST_F(SARRTest, pkt6ReceiveDropStat3) {
     ASSERT_TRUE(pkt6_recv_drop);
 
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+}
+
+// This test verifies the scenario when the client accepts reconfiguration,
+// the server has reconfiguration enabled and the client has no host
+// reservation.
+TEST_F(SARRTest, reconfigureAccept) {
+    Dhcp6Client client;
+    ASSERT_NO_THROW(configure(CONFIGS[4], *client.getServer()));
+    client.setInterface("eth0");
+    client.requestAddress();
+
+    // Include the Reconfigure Accept option.
+    client.useReconfAccept();
+
+    ASSERT_NO_THROW(client.doSolicit());
+
+    // Per RFC8415, the server SHOULD include this option in the response
+    // to a Solicit if it is configured to send Reconfigure and the
+    // client supports it.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_RECONF_ACCEPT));
+
+    // The server should not create a host with the authentication key
+    // during processing the Solicit.
+    auto cfg_hosts = CfgMgr::instance().getCurrentCfg()->getCfgHosts();
+    auto returned_host = cfg_hosts->get6(SubnetID(1), Host::IDENT_DUID,
+                                         &client.getDuid()->getDuid()[0],
+                                         client.getDuid()->getDuid().size());
+    EXPECT_FALSE(returned_host);
+
+    // Do the 4-way exchange this time.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure the Reconfigure Accept option is still there.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_RECONF_ACCEPT));
+
+    returned_host = cfg_hosts->get6(SubnetID(1), Host::IDENT_DUID,
+                                    &client.getDuid()->getDuid()[0],
+                                    client.getDuid()->getDuid().size());
+
+    // The host containing the authentication key should be created while
+    // processing the Request message from the client.
+    ASSERT_TRUE(returned_host);
+    EXPECT_FALSE(returned_host->getKey().getAuthKey().empty());
+
+    /// @todo check that the auth option has been returned along with the
+    /// authentication key matching the one stored in the host.
+}
+
+
+// This test verifies the scenario when the client accepts reconfiguration,
+// the server has reconfiguration enabled and the Solicit/Reply exchange
+// takes place.
+TEST_F(SARRTest, reconfigureAcceptRapidCommit) {
+    Dhcp6Client client;
+    ASSERT_NO_THROW(configure(CONFIGS[4], *client.getServer()));
+    client.setInterface("eth0");
+    client.requestAddress();
+
+    // Make the client send the Rapid Commit option.
+    client.useRapidCommit(true);
+
+    // Include the Reconfigure Accept option.
+    client.useReconfAccept();
+
+    ASSERT_NO_THROW(client.doSolicit());
+
+    // Per RFC8415, the server SHOULD include this option in the response
+    // to a Solicit if it is configured to send Reconfigure and the
+    // client supports it.
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_RECONF_ACCEPT));
+
+    // The server should create a host with the authentication key
+    // during processing the Solicit message with Rapid Commit.
+    auto cfg_hosts = CfgMgr::instance().getCurrentCfg()->getCfgHosts();
+    auto returned_host = cfg_hosts->get6(SubnetID(1), Host::IDENT_DUID,
+                                         &client.getDuid()->getDuid()[0],
+                                         client.getDuid()->getDuid().size());
+
+    // The host containing the authentication key should be created while
+    // processing the Request message from the client.
+    ASSERT_TRUE(returned_host);
+    EXPECT_FALSE(returned_host->getKey().getAuthKey().empty());
+
+    /// @todo check that the auth option has been returned along with the
+    /// authentication key matching the one stored in the host.
 }
 
 

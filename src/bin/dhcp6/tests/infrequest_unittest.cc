@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,7 @@ namespace {
 ///   - one subnet used on eth0 interface
 ///     - with address and prefix pools
 ///     - dns-servers option
+///     - server accepts enables Reconfigure mechanism
 /// - Configuration 1:
 ///   - one subnet used on eth0 interface
 ///     - no addresses or prefixes
@@ -57,7 +58,9 @@ const char* CONFIGS[] = {
         "    \"subnet\": \"2001:db8::/32\", "
         "    \"interface\": \"eth0\""
         " } ],"
-        "\"valid-lifetime\": 4000 }",
+        "\"valid-lifetime\": 4000,"
+        "\"enable-reconfiguration\": true"
+    "}",
 
     // Configuration 1
     "{ \"interfaces-config\": {"
@@ -355,6 +358,38 @@ TEST_F(InfRequestTest, infRequestStats) {
     EXPECT_EQ(1, pkt6_infreq_rcvd->getInteger().first);
     EXPECT_EQ(1, pkt6_reply_sent->getInteger().first);
     EXPECT_EQ(1, pkt6_sent->getInteger().first);
+}
+
+// This test verifies the scenario when the client accepts reconfiguration,
+// the server has reconfiguration enabled and the Information-request is
+// sent.
+TEST_F(InfRequestTest, reconfigureAccept) {
+    Dhcp6Client client;
+    ASSERT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
+    client.setInterface("eth0");
+
+    // Include the Reconfigure Accept option.
+    client.useReconfAccept();
+
+    ASSERT_NO_THROW(client.doInfRequest());
+
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_TRUE(client.getContext().response_->getOption(D6O_RECONF_ACCEPT));
+
+    // The server should create a host with the authentication key
+    // during processing the Solicit message with Rapid Commit.
+    auto cfg_hosts = CfgMgr::instance().getCurrentCfg()->getCfgHosts();
+    auto returned_host = cfg_hosts->get6(SubnetID(1), Host::IDENT_DUID,
+                                         &client.getDuid()->getDuid()[0],
+                                         client.getDuid()->getDuid().size());
+  
+    // The host containing the authentication key should be created while
+    // processing the Request message from the client.
+    ASSERT_TRUE(returned_host);
+    EXPECT_FALSE(returned_host->getKey().getAuthKey().empty());
+
+    /// @todo check that the auth option has been returned along with the
+    /// authentication key matching the one stored in the host.
 }
 
 } // end of anonymous namespace

@@ -109,6 +109,7 @@ Dhcp6Client::Dhcp6Client() :
     use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
+    use_reconf_accept_(false),
     client_ias_(),
     fqdn_(),
     interface_id_() {
@@ -127,6 +128,7 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_docsis_oro_(false),
     use_client_id_(true),
     use_rapid_commit_(false),
+    use_reconf_accept_(false),
     client_ias_(),
     fqdn_(),
     interface_id_() {
@@ -451,8 +453,13 @@ Dhcp6Client::doSolicit(const bool always_apply_config) {
         context_.query_->addOption(OptionPtr(new Option(Option::V6,
                                                         D6O_RAPID_COMMIT)));
     }
+
     // Add Client FQDN if configured.
     appendFQDN();
+
+    if (use_reconf_accept_) {
+        context_.query_->addOption(boost::make_shared<Option>(Option::V6, D6O_RECONF_ACCEPT));
+    }
 
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -477,6 +484,7 @@ Dhcp6Client::doRequest() {
     } else {
         query->addOption(forced_server_id_);
     }
+
     copyIAs(context_.response_, query);
     appendRequestedIAs(query);
 
@@ -484,6 +492,10 @@ Dhcp6Client::doRequest() {
 
     // Add Client FQDN if configured.
     appendFQDN();
+
+    if (use_reconf_accept_) {
+        context_.query_->addOption(boost::make_shared<Option>(Option::V6, D6O_RECONF_ACCEPT));
+    }
 
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
@@ -500,6 +512,10 @@ Dhcp6Client::doRequest() {
 void
 Dhcp6Client::doInfRequest() {
     context_.query_ = createMsg(DHCPV6_INFORMATION_REQUEST);
+
+    if (use_reconf_accept_) {
+        context_.query_->addOption(boost::make_shared<Option>(Option::V6, D6O_RECONF_ACCEPT));
+    }
 
     // IA_NA, IA_TA and IA_PD options are not allowed in INF-REQUEST,
     // but hey! Let's test it.
@@ -527,6 +543,10 @@ Dhcp6Client::doRenew() {
     // Add Client FQDN if configured.
     appendFQDN();
 
+    if (use_reconf_accept_) {
+        context_.query_->addOption(boost::make_shared<Option>(Option::V6, D6O_RECONF_ACCEPT));
+    }
+
     context_.query_ = query;
 
     sendMsg(context_.query_);
@@ -550,6 +570,11 @@ Dhcp6Client::doRebind() {
 
     // Add Client FQDN if configured.
     appendFQDN();
+
+
+    if (use_reconf_accept_) {
+        context_.query_->addOption(boost::make_shared<Option>(Option::V6, D6O_RECONF_ACCEPT));
+    }
 
     context_.query_ = query;
     sendMsg(context_.query_);
