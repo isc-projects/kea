@@ -4,4 +4,4 @@ if HAVE_MYSQL
 SUBDIRS += mysql_cb
 endif
 
-SUBDIRS += stat_cmds user_chk
+SUBDIRS += scripts stat_cmds user_chk
