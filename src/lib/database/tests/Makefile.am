@@ -35,7 +35,6 @@ libdatabase_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutil
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdatabase_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdatabase_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)

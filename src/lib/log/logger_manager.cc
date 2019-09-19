@@ -206,9 +206,9 @@ LoggerManager::reset() {
     LoggerManagerImpl::reset(initSeverity(), initDebugLevel());
 }
 
-isc::util::thread::Mutex&
+std::mutex&
 LoggerManager::getMutex() {
-    static isc::util::thread::Mutex mutex;
+    static std::mutex mutex;
 
     return (mutex);
 }

@@ -54,7 +54,6 @@ mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 mysql_cb_unittests_LDADD += $(LOG4CPLUS_LIBS)

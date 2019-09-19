@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,13 +8,17 @@
 #define WATCHED_THREAD_H
 
 #include <util/watch_socket.h>
-#include <util/threads/thread.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+
+#include <thread>
 
 namespace isc {
 namespace util {
-namespace thread {
+
+/// @brief Thread pointer type.
+typedef boost::shared_ptr<std::thread> ThreadPtr;
 
 /// @brief Provides a thread and controls for monitoring its activities
 ///
@@ -116,13 +120,12 @@ public:
     WatchSocket sockets_[TERMINATE + 1];
 
     /// @brief Current thread instance
-    thread::ThreadPtr thread_ ;
+    ThreadPtr thread_ ;
 };
 
 /// @brief Defines a pointer to a WatchedThread
 typedef boost::shared_ptr<WatchedThread> WatchedThreadPtr;
 
-}; // namespace isc::util::thread
 }; // namespace isc::util
 }; // namespace isc
 

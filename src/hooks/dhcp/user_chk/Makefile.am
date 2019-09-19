@@ -42,7 +42,6 @@ libdhcp_user_chk_la_LDFLAGS  += -rpath /nowhere
 libdhcp_user_chk_la_LIBADD  = libduc.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_user_chk_la_LIBADD  += $(LOG4CPLUS_LIBS)

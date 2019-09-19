@@ -16,7 +16,6 @@ libkea_pgsql_la_LIBADD  = $(top_builddir)/src/lib/database/libkea-database.la
 libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_pgsql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_pgsql_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)

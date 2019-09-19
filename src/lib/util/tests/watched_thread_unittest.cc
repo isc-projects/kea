@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <util/threads/watched_thread.h>
+#include <util/watched_thread.h>
 
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
@@ -16,11 +16,10 @@
 using namespace std;
 using namespace isc;
 using namespace isc::util;
-using namespace isc::util::thread;
 
 namespace {
 
-/// @brief Test Fixture for testing isc:util::thread::WatchedThread
+/// @brief Test Fixture for testing isc:util::WatchedThread
 class WatchedThreadTest : public ::testing::Test {
 public:
     /// @brief Maximum number of passes allowed in worker event loop

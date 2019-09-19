@@ -8,11 +8,10 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 # Kea libraries against which the test user libraries are linked.
 HOOKS_LIB      = $(top_builddir)/src/lib/hooks/libkea-hooks.la
 LOG_LIB        = $(top_builddir)/src/lib/log/libkea-log.la
-THREADS_LIB    = $(top_builddir)/src/lib/util/threads/libkea-threads.la
 UTIL_LIB       = $(top_builddir)/src/lib/util/libkea-util.la
 EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(THREADS_LIB) $(UTIL_LIB) $(EXCEPTIONS_LIB) $(LOG4CPLUS_LIBS)
+ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(UTIL_LIB) $(EXCEPTIONS_LIB) $(LOG4CPLUS_LIBS)
 
 # Files to clean include the file created by testing.
 CLEANFILES = *.gcno *.gcda $(builddir)/marker_file.dat

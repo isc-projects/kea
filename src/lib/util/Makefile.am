@@ -30,6 +30,7 @@ libkea_util_la_SOURCES += strutil.h strutil.cc
 libkea_util_la_SOURCES += time_utilities.h time_utilities.cc
 libkea_util_la_SOURCES += versioned_csv_file.h versioned_csv_file.cc
 libkea_util_la_SOURCES += watch_socket.cc watch_socket.h
+libkea_util_la_SOURCES += watched_thread.cc watched_thread.h
 libkea_util_la_SOURCES += encode/base16_from_binary.h
 libkea_util_la_SOURCES += encode/base32hex.h encode/base64.h
 libkea_util_la_SOURCES += encode/base32hex_from_binary.h
@@ -71,7 +72,8 @@ libkea_util_include_HEADERS = \
 	strutil.h \
 	time_utilities.h \
 	versioned_csv_file.h \
-	watch_socket.h
+	watch_socket.h \
+	watched_thread.h
 
 libkea_util_encode_includedir = $(pkgincludedir)/util/encode
 libkea_util_encode_include_HEADERS = \
@@ -98,5 +100,4 @@ libkea_util_random_include_HEADERS = \
 libkea_util_threads_includedir = $(pkgincludedir)/util/threads
 libkea_util_threads_include_HEADERS = \
 	threads/sync.h \
-	threads/thread.h \
-	threads/watched_thread.h
+	threads/thread.h

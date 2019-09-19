@@ -1,15 +1,14 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <util/threads/watched_thread.h>
+#include <util/watched_thread.h>
 
 namespace isc {
 namespace util {
-namespace thread {
 
 void
 WatchedThread::start(const boost::function<void()>& thread_main) {
@@ -17,7 +16,7 @@ WatchedThread::start(const boost::function<void()>& thread_main) {
     clearReady(READY);
     clearReady(TERMINATE);
     last_error_ = "no error";
-    thread_.reset(new Thread(thread_main));
+    thread_.reset(new std::thread(thread_main));
 }
 
 int
@@ -54,7 +53,7 @@ void
 WatchedThread::stop() {
     if (thread_) {
         markReady(TERMINATE);
-        thread_->wait();
+        thread_->join();
         thread_.reset();
     }
 
@@ -73,6 +72,5 @@ std::string
 WatchedThread::getLastError() {
     return (last_error_);
 }
-} // end of namespace isc::util::thread
 } // end of namespace isc::util
 } // end of namespace isc

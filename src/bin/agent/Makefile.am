@@ -54,7 +54,6 @@ kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

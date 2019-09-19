@@ -42,7 +42,6 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::util;
-using namespace isc::util::thread;
 using namespace isc::util::io;
 using namespace isc::util::io::internal;
 

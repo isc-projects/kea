@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +8,11 @@
 #define LOGGER_MANAGER_H
 
 #include <exceptions/exceptions.h>
-#include <util/threads/sync.h>
 #include <log/logger_specification.h>
 
 #include <boost/noncopyable.hpp>
+
+#include <mutex>
 
 // Generated if, when updating the logging specification, an unknown
 // destination is encountered.
@@ -138,7 +139,7 @@ public:
     /// \brief Return a process-global mutex that's used for mutual
     /// exclusion among threads of a single process during logging
     /// calls.
-    static isc::util::thread::Mutex& getMutex();
+    static std::mutex& getMutex();
 
 private:
     /// \brief Initialize Processing

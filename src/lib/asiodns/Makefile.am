@@ -24,7 +24,6 @@ libkea_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiodns_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

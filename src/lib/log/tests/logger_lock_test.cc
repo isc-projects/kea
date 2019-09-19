@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,43 @@
 #include <log/interprocess/interprocess_sync.h>
 #include <log/tests/log_test_messages.h>
 
-#include <util/threads/sync.h>
+#include <mutex>
 #include <iostream>
+
+#include <boost/noncopyable.hpp>
 
 using namespace std;
 using namespace isc::log;
-using isc::util::thread::Mutex;
+
+/// \brief RAII safe mutex checker.
+class CheckMutex : boost::noncopyable {
+public:
+    /// \brief Exception thrown when the mutex is already locked.
+    struct AlreadyLocked : public isc::InvalidParameter {
+        AlreadyLocked(const char* file, size_t line, const char* what) :
+            isc::InvalidParameter(file, line, what)
+        {}
+    };
+
+    /// \brief Constructor.
+    ///
+    /// \throw AlreadyLocked if the mutex is already locked.
+    CheckMutex(mutex& mutex) : mutex_(mutex) {
+        if (!mutex.try_lock()) {
+            isc_throw(AlreadyLocked, "The mutex is already locked");
+        }
+    }
+
+    /// \brief Destructor.
+    ///
+    /// Unlocks the mutex.
+    ~CheckMutex() {
+        mutex_.unlock();
+    }
+
+private:
+    mutex& mutex_;
+};
 
 class MockLoggingSync : public isc::log::interprocess::InterprocessSync {
 public:
@@ -32,9 +63,8 @@ protected:
         // We first check if the logger acquired a lock on the
         // LoggerManager mutex.
         try {
-            // This lock attempt is non-blocking.
-            Mutex::Locker locker(LoggerManager::getMutex(), false);
-        } catch (Mutex::Locker::AlreadyLocked&) {
+            CheckMutex check(LoggerManager::getMutex());
+        } catch (const CheckMutex::AlreadyLocked&) {
             cout << "FIELD1 FIELD2 LOGGER_LOCK_TEST: MUTEXLOCK\n";
         }
 

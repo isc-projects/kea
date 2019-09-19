@@ -37,7 +37,6 @@ libeval_unittests_LDADD   += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/log/libkea-log.la
-libeval_unittests_LDADD   += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/util/libkea-util.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/testutils/libkea-testutils.la

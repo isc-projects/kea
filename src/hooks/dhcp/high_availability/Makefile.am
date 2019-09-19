@@ -54,7 +54,6 @@ libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 

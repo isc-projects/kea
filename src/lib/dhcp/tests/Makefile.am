@@ -112,7 +112,6 @@ libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

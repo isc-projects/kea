@@ -43,7 +43,6 @@ libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_stat_cmds_la_LIBADD  += $(LOG4CPLUS_LIBS)

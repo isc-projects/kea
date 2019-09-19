@@ -58,7 +58,6 @@ stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 stat_cmds_unittests_LDADD += $(LOG4CPLUS_LIBS)

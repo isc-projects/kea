@@ -45,7 +45,6 @@ libhttp_unittests_LDADD  = $(top_builddir)/src/lib/http/libkea-http.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libhttp_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libhttp_unittests_LDADD += $(LOG4CPLUS_LIBS)

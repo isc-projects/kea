@@ -48,7 +48,6 @@ libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_user_chk_unittests_LDADD += $(LOG4CPLUS_LIBS)

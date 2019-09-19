@@ -47,7 +47,6 @@ lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 lease_cmds_unittests_LDADD += $(LOG4CPLUS_LIBS)

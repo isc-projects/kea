@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,13 +10,13 @@
 #include <config.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
-#include <util/threads/thread.h>
-#include <util/threads/sync.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <list>
 #include <stdint.h>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 
 namespace isc {
 namespace asiolink {
@@ -151,14 +151,14 @@ private:
     /// Mutex is used in situations when server's IO service is being run in a
     /// thread to synchronize this thread with a main thread using
     /// @ref signalRunning and @ref waitForRunning.
-    isc::util::thread::Mutex mutex_;
+    std::mutex mutex_;
 
     /// @brief Conditional variable used by the server.
     ///
     /// Conditional variable is used in situations when server's IO service is
     /// being run in a thread to synchronize this thread with a main thread
     /// using @ref signalRunning and @ref waitForRunning.
-    isc::util::thread::CondVar condvar_;
+    std::condition_variable condvar_;
 };
 
 /// @brief Pointer to the @ref TestServerUnixSocket.

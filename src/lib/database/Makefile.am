@@ -25,7 +25,6 @@ libkea_database_la_SOURCES += server_selector.cc server_selector.h
 libkea_database_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_database_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_database_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)

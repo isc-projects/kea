@@ -18,7 +18,7 @@
 #include <dhcp/pkt_filter6.h>
 #include <util/optional.h>
 #include <util/watch_socket.h>
-#include <util/threads/watched_thread.h>
+#include <util/watched_thread.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -1385,7 +1385,7 @@ private:
     PacketQueueMgr6Ptr packet_queue_mgr6_;
 
     /// DHCP packet receiver.
-    isc::util::thread::WatchedThreadPtr dhcp_receiver_;
+    isc::util::WatchedThreadPtr dhcp_receiver_;
 };
 
 }; // namespace isc::dhcp

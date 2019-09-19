@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,7 +152,7 @@ void
 LoggerImpl::outputRaw(const Severity& severity, const string& message) {
     // Use a mutex locker for mutual exclusion from other threads in
     // this process.
-    isc::util::thread::Mutex::Locker mutex_locker(LoggerManager::getMutex());
+    std::lock_guard<std::mutex> mutex_locker(LoggerManager::getMutex());
 
     // Use an interprocess sync locker for mutual exclusion from other
     // processes to avoid log messages getting interspersed.

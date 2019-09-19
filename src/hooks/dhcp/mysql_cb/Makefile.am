@@ -49,7 +49,6 @@ libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 

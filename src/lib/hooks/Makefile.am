@@ -41,7 +41,6 @@ libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 7:3:0
 libkea_hooks_la_LIBADD  =
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

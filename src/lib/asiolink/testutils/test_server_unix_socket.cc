@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -300,17 +300,18 @@ TestServerUnixSocket::accept() {
 void
 TestServerUnixSocket::signalRunning() {
     {
-        isc::util::thread::Mutex::Locker lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         running_ = true;
     }
-    condvar_.signal();
+    condvar_.notify_one();
 }
 
 void
 TestServerUnixSocket::waitForRunning() {
-    isc::util::thread::Mutex::Locker lock(mutex_);
+    std::lock_guard<std::mutex> locker(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_, std::adopt_lock);
     while (!running_) {
-        condvar_.wait(mutex_);
+        condvar_.wait(lock);
     }
 }
 
