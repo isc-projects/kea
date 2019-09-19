@@ -363,6 +363,18 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     }
 }
 
+bool
+SrvConfig::getReconfigurationFlag() const {
+    auto flag = configured_globals_->get("enable-reconfiguration");
+    return (flag && (flag->getType() == Element::boolean) &&
+            flag->boolValue());
+}
+
+void
+SrvConfig::setReconfigurationFlag(const bool flag) {
+    addConfiguredGlobal("enable-reconfiguration", Element::create(flag));
+}
+
 ElementPtr
 SrvConfig::toElement() const {
     // Toplevel map
@@ -401,6 +413,7 @@ SrvConfig::toElement() const {
 
     // Set dhcp-ddns
     dhcp->set("dhcp-ddns", d2_client_config_->toElement());
+
     // Set interfaces-config
     dhcp->set("interfaces-config", cfg_iface_->toElement());
     // Set option-def

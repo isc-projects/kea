@@ -1062,6 +1062,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // Add some configured globals
     cfg_to.addConfiguredGlobal("decline-probation-period", Element::create(300));
     cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(888));
+    cfg_to.addConfiguredGlobal("enable-reconfiguration", Element::create(false));
 
     // Now we'll create the config we'll merge from.
     SrvConfig cfg_from;
@@ -1073,8 +1074,9 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.setServerTag("nor_this_server");
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
-    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_from.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
+    cfg_from.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_from.addConfiguredGlobal("enable-reconfiguration", Element::create(true));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1097,6 +1099,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
         "{ \n"
         "   \"decline-probation-period\": 300,  \n"
         "   \"dhcp4o6-port\": 999,  \n"
+        "   \"enable-reconfiguration\": true,  \n"
         "   \"server-tag\": \"use_this_server\"  \n"
         "} \n";
 

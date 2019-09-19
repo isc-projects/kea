@@ -589,17 +589,17 @@ public:
         return (dhcp4o6_port_);
     }
 
-    /// @brief Sets reconfigure feature flag
-    /// @todo: make it a generic global parameter
-    /// @param flag new value of the reconfigure feature flag.
-    void setReconfigurationFlag(bool flag) {
-        enable_reconfigure_ = flag;
-    }
+    /// @brief Enables or disables DHCPv6 Reconfigure mechanism.
+    ///
+    /// @param flag Boolean value indicating if the mechanism should be
+    /// enabled (if true) or disabled (if false);.
+    void setReconfigurationFlag(const bool flag);
 
-    /// @brief Returns reconfigure feature flag
-    bool getReconfigurationFlag() {
-        return enable_reconfigure_;
-    }
+    /// @brief Returns boolean value indicating if the DHCPv6 Reconfigure
+    /// mechanism is enabled or disabled.
+    ///
+    /// @return true if the Reconfigure is enabled, false otherwise.
+    bool getReconfigurationFlag() const;
 
     /// @brief Returns pointer to the D2 client configuration
     D2ClientConfigPtr getD2ClientConfig() {
@@ -790,9 +790,6 @@ private:
 
     /// @brief Stores D2 client configuration
     D2ClientConfigPtr d2_client_config_;
-
-    /// @brief enable reconfiguration support
-    bool enable_reconfigure_;
 
     /// @brief Stores the global parameters specified via configuration
     isc::data::ElementPtr configured_globals_;
