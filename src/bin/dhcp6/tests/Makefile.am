@@ -79,6 +79,18 @@ libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += dhcp6_unittests
 
+# This is a set of general purpose unit-tests that may be used outside of dhcp6.
+# In particular, it makes hook testing much easier if they need to do some basic
+# DHCPv6 operations.
+noinst_LTLIBRARIES += libdhcp6_tests.la
+
+libdhcp6_tests_la_SOURCES  =
+libdhcp6_tests_la_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
+libdhcp6_tests_la_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
+libdhcp6_tests_la_SOURCES += dhcp6_client.cc dhcp6_client.h
+
+libdhcp6_tests_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+
 # This list is ordered alphabetically. When adding new files, please maintain
 # this order.
 dhcp6_unittests_SOURCES  = classify_unittests.cc
@@ -88,10 +100,7 @@ dhcp6_unittests_SOURCES += confirm_unittest.cc
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += decline_unittest.cc
-dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
-dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
 dhcp6_unittests_SOURCES += fqdn_unittest.cc
@@ -126,6 +135,7 @@ endif
 dhcp6_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 dhcp6_unittests_LDADD = $(top_builddir)/src/bin/dhcp6/libdhcp6.la
+dhcp6_unittests_LDADD += libdhcp6_tests.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
