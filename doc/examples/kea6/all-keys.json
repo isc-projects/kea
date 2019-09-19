@@ -818,6 +818,9 @@
         // the hostname or Client FQDN.
         "hostname-char-set": "[^A-Za-z0-9.-]",
 
+        // Enables the server to use DHCPv6 Reconfigure.
+        "enable-reconfiguration": true,
+
         // List of loggers used by the servers using this configuration file.
         "loggers": [
             {

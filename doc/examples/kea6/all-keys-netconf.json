@@ -799,10 +799,6 @@
         // Data directory.
         "data-directory": "/tmp",
 
-	// Reconfigure feature flag.
-	"enable-reconfiguration": true
-
-
         // Global compute T1 and T2 timers.
         "calculate-tee-times": true,
 
