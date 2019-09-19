@@ -681,6 +681,7 @@ AllocEngine::updateReconfigureInfo(ClientContext6& ctx) {
         reconfigure_info->set("interface", Element::create(ctx.query_->getIface()));
         reconfigure_info->set("client-address",
                               Element::create(ctx.query_->getRemoteAddr().toText()));
+        reconfigure_info->set("client-message-type", Element::create(ctx.query_->getType()));
         return (user_context);
     };
 

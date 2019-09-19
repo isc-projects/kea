@@ -3536,6 +3536,11 @@ TEST_F(AllocEngine6Test, updateReconfigureInfoExistingReservation) {
     ASSERT_TRUE(client_addr);
     EXPECT_EQ(Element::string, client_addr->getType());
     EXPECT_EQ(ctx.query_->getRemoteAddr().toText(), client_addr->stringValue());
+
+    auto msg_type = reconfigure_info->get("client-message-type");
+    ASSERT_TRUE(msg_type);
+    EXPECT_EQ(Element::integer, msg_type->getType());
+    EXPECT_EQ(DHCPV6_REQUEST, msg_type->intValue());
 }
 
 // This test verifies that reserved authentication key is not updated
