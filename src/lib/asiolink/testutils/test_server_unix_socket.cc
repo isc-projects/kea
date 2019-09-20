@@ -308,8 +308,7 @@ TestServerUnixSocket::signalRunning() {
 
 void
 TestServerUnixSocket::waitForRunning() {
-    std::lock_guard<std::mutex> locker(mutex_);
-    std::unique_lock<std::mutex> lock(mutex_, std::adopt_lock);
+    std::unique_lock<std::mutex> lock(mutex_);
     while (!running_) {
         condvar_.wait(lock);
     }
