@@ -87,6 +87,24 @@ CB in the Kea 1.6.0 release:
 ..
 
 .. note::
+    Kea CB stores data in a MySQL schema that is public. It's possible to
+    insert configuration data into the MySQL tables manually, or automatically
+    using SQL scripts, but this requires a reasonably good knowledge of SQL and the
+    schema.  The supported method for managing the data is through our cb-cmds
+    hook library which provides management commands for config backends.
+    It simplifies many typical operations, such as listing, adding, retrieving,
+    and deleting of global parameters, shared networks, subnets, pools, options,
+    and option definitions.  In addition, it provides essential business logic
+    that ensures logical integrity of the data.  For a complete list, see commands
+    starting with "remote-" in Appendix A of the Kea Administrator Reference Manual.
+    The cb_cmds hooks library is available to subscribers only. If you are not a
+    subscriber and would like to subscribe, please contact info@isc.org and
+    our sales team will assist you.
+
+    The schema creation script can be found here `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>` and
+    we have some related design documents in gitlab `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`.
+
+.. note::
 
    We strongly recommend against duplication of the configuration information
    in the file and the database. For example, when specifying subnets
