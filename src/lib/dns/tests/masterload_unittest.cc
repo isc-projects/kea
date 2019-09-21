@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,7 @@ TEST_F(MasterLoadTest, loadWithFunctionCallback) {
     // object)
     rr_stream << txt_rr << a_rr1 << soa_rr;
     masterLoad(rr_stream, origin, zclass,
-               bind2nd(ptr_fun(testCallback), &results));
+               boost::bind(&testCallback, _1, &results));
     ASSERT_EQ(3, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(a_rr1, results[1]->toText());
@@ -292,7 +292,7 @@ TEST_F(MasterLoadTest, loadWithNoEOF) {
 TEST_F(MasterLoadTest, loadEmpty) {
     // an unusual case: empty input.  load must succeed with an empty result.
     masterLoad(rr_stream, origin, zclass, callback);
-    EXPECT_EQ(0, results.size());   
+    EXPECT_EQ(0, results.size());
 }
 
 TEST_F(MasterLoadTest, loadWithBeginningSpace) {

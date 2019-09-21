@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -268,8 +268,8 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     // all the matching elements.
     hook_vector_[hook_index].erase(remove_if(hook_vector_[hook_index].begin(),
                                              hook_vector_[hook_index].end(),
-                                             bind1st(equal_to<CalloutEntry>(),
-                                                     target)),
+                                             [&target] (CalloutEntry x) {
+                                                 return (x == target); }),
                                    hook_vector_[hook_index].end());
 
     // Return an indication of whether anything was removed.
@@ -306,8 +306,9 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     // Remove all callouts matching this library.
     hook_vector_[hook_index].erase(remove_if(hook_vector_[hook_index].begin(),
                                              hook_vector_[hook_index].end(),
-                                             bind1st(CalloutLibraryEqual(),
-                                                     target)),
+                                             [&target] (CalloutEntry x) {
+                                                 return (x.first == target.first);
+                                             }),
                                    hook_vector_[hook_index].end());
 
     // Return an indication of whether anything was removed.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,8 +27,7 @@ namespace util {
 template <typename Iterator>
 bool
 isRangeZero(Iterator begin, Iterator end) {
-    return (std::find_if(begin, end,
-                         std::bind1st(std::not_equal_to<int>(), 0))
+    return (std::find_if(begin, end, [] (int x) { return (0 != x); })
             == end);
 }
 

@@ -603,7 +603,7 @@ Name::concatenate(const Name& suffix) const {
     retname.offsets_.assign(&offsets_[0], &offsets_[0] + labelcount_ - 1);
     transform(suffix.offsets_.begin(), suffix.offsets_.end(),
               back_inserter(retname.offsets_),
-              bind2nd(plus<char>(), length_ - 1));
+              [this] (char x) { return (x + length_ - 1); });
     isc_throw_assert(retname.offsets_.size() == labels);
     retname.labelcount_ = labels;
 
@@ -657,7 +657,7 @@ Name::split(const unsigned int first, const unsigned int n) const {
     retname.offsets_.reserve(newlabels);
     transform(offsets_.begin() + first, offsets_.begin() + first + newlabels,
               back_inserter(retname.offsets_),
-              bind2nd(plus<char>(), -offsets_[first]));
+              [&](char x) { return (x - offsets_[first]); });
 
     //
     // Set up the new name.  At this point the tail of the new offsets specifies

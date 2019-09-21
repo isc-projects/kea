@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -406,25 +406,6 @@ private:
     ///
     /// @throw NoSuchLibrary Library index is not valid.
     void checkLibraryIndex(int library_index) const;
-
-    /// @brief Compare two callout entries for library equality
-    ///
-    /// This is used in callout removal code when all callouts on a hook for a
-    /// given library are being removed.  It checks whether two callout entries
-    /// have the same library index.
-    ///
-    /// @param ent1 First callout entry to check
-    /// @param ent2 Second callout entry to check
-    ///
-    /// @return bool true if the library entries are the same
-    class CalloutLibraryEqual :
-        public std::binary_function<CalloutEntry, CalloutEntry, bool> {
-    public:
-        bool operator()(const CalloutEntry& ent1,
-                        const CalloutEntry& ent2) const {
-            return (ent1.first == ent2.first);
-        }
-    };
 
     // Member variables
 
