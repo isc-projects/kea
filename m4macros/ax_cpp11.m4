@@ -173,10 +173,45 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_LANG_PROGRAM(
 			[],
 			[auto myincr = [[]](int x) { return x + 1; };])],
-		[AC_MSG_RESULT([yes])
-		 break],
+		[AC_MSG_RESULT([yes])],
 		[AC_MSG_RESULT([no])
 		 continue])
+
+	AC_MSG_CHECKING(thread support)
+	feature="thread"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <thread>
+			 std::shared_ptr<std::thread> th;],
+			[th.reset(new std::thread([[]]() { return; }));
+			 th->join();])],
+		[AC_MSG_RESULT([yes])],
+                [AC_MSG_RESULT([no])
+                 continue])
+
+	AC_MSG_CHECKING(mutex support)
+	feature="mutex"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <mutex>
+			 std::mutex mtx;],
+			[std::lock_guard<std::mutex> lock(mtx);])],
+		[AC_MSG_RESULT([yes])],
+                [AC_MSG_RESULT([no])
+                 continue])
+			 
+	AC_MSG_CHECKING(atomic support)
+	feature="atomic"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <atomic>
+			 std::atomic_flag flag;],
+			[])],
+		[AC_MSG_RESULT([yes])
+                 break],
+		[AC_MSG_RESULT([no])
+                 continue])
+
 done
 
 ])dnl AX_ISC_RPATH
