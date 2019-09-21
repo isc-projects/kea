@@ -27,7 +27,7 @@ Receiver::start() {
         run_flag_.clear();
         isc_throw(isc::Unexpected, "run_flag_ should be false.");
     }
-    recv_thread_.reset(new util::thread::Thread(boost::bind(&Receiver::run, this)));
+    recv_thread_.reset(new std::thread(boost::bind(&Receiver::run, this)));
 }
 
 void
@@ -40,7 +40,7 @@ Receiver::stop() {
     if (run_flag_.test_and_set()) {
         // Clear flags to order the thread to stop its main loop.
         run_flag_.clear();
-        recv_thread_->wait();
+        recv_thread_->join();
     }
 }
 
@@ -59,7 +59,7 @@ Receiver::getPkt() {
         return readPktFromSocket();
     } else {
         // In multi thread mode read packet from the queue which is feed by Receiver thread.
-        util::thread::Mutex::Locker lock(pkt_queue_mutex_);
+        std::lock_guard<std::mutex> lock(pkt_queue_mutex_);
         if (pkt_queue_.empty()) {
             if (ip_version_ == 4) {
                 return Pkt4Ptr();
@@ -133,7 +133,7 @@ Receiver::receivePackets() {
         if (pkt->getType() == DHCPOFFER || pkt->getType() == DHCPACK ||
             pkt->getType() == DHCPV6_ADVERTISE || pkt->getType() == DHCPV6_REPLY) {
             // Otherwise push the packet to the queue, to main thread.
-            util::thread::Mutex::Locker lock(pkt_queue_mutex_);
+            std::lock_guard<std::mutex> lock(pkt_queue_mutex_);
             pkt_queue_.push(pkt);
         }
     }

@@ -20,10 +20,9 @@
 #include <http/tests/response_test.h>
 #include <testutils/threaded_test.h>
 #include <testutils/sandbox.h>
-#include <util/threads/thread.h>
-#include <util/threads/sync.h>
 #include <gtest/gtest.h>
 #include <sstream>
+#include <thread>
 
 using namespace std;
 using namespace isc;
@@ -33,12 +32,11 @@ using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::test;
-using namespace isc::util::thread;
 
 namespace {
 
 /// @brief Type definition for the pointer to Thread objects.
-typedef boost::shared_ptr<Thread> ThreadPtr;
+typedef boost::shared_ptr<thread> ThreadPtr;
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -149,7 +147,7 @@ public:
     /// @brief Destructor.
     virtual ~UnixControlSocketTest() {
         if (thread_) {
-            thread_->wait();
+            thread_->join();
             thread_.reset();
         }
         // io_service must be stopped after the thread returns,
@@ -308,7 +306,7 @@ TEST_F(UnixControlSocketTest, configGet) {
     ASSERT_TRUE(ucs);
 
     // Run a reflecting server in a thread.
-    thread_.reset(new Thread([this]() { reflectServer(); }));
+    thread_.reset(new thread([this]() { reflectServer(); }));
 
     waitReady();
 
@@ -332,7 +330,7 @@ TEST_F(UnixControlSocketTest, configTest) {
     ASSERT_TRUE(ucs);
 
     // Run a reflecting server in a thread.
-    thread_.reset(new Thread([this]() { reflectServer(); }));
+    thread_.reset(new thread([this]() { reflectServer(); }));
 
     waitReady();
 
@@ -359,7 +357,7 @@ TEST_F(UnixControlSocketTest, configSet) {
     ASSERT_TRUE(ucs);
 
     // Run a reflecting server in a thread.
-    thread_.reset(new Thread([this]() { reflectServer(); }));
+    thread_.reset(new thread([this]() { reflectServer(); }));
 
     waitReady();
 
@@ -386,7 +384,7 @@ TEST_F(UnixControlSocketTest, timeout) {
     ASSERT_TRUE(ucs);
 
     // Run a timeout server in a thread.
-    thread_.reset(new Thread([this]() { waitReady(); }));
+    thread_.reset(new thread([this]() { waitReady(); }));
 
     // Try configGet: it should get a communication error,
     EXPECT_THROW(ucs->configGet("foo"), ControlSocketError);
@@ -513,7 +511,7 @@ public:
     /// @brief Destructor.
     virtual ~HttpControlSocketTest() {
         if (thread_) {
-            thread_->wait();
+            thread_->join();
             thread_.reset();
         }
         // io_service must be stopped after the thread returns,
@@ -546,7 +544,7 @@ public:
     ///
     /// Run IO in a thread.
     void start() {
-        thread_.reset(new Thread([this]() {
+        thread_.reset(new thread([this]() {
             // The thread is ready to go. Signal it to the main
             // thread so it can start the actual test.
             signalReady();

@@ -55,7 +55,6 @@ kea_netconf_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_netconf_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)

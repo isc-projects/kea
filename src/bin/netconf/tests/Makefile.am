@@ -66,7 +66,6 @@ netconf_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-netconf_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 netconf_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)

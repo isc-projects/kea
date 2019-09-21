@@ -1784,8 +1784,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/python/gen_wiredata.py
                  src/lib/util/tests/Makefile
                  src/lib/util/tests/process_spawn_app.sh
-                 src/lib/util/threads/Makefile
-                 src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  src/lib/yang/Makefile
                  src/lib/yang/pretests/Makefile

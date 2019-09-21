@@ -54,7 +54,6 @@ ha_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-ha_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 ha_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 ha_unittests_LDADD += $(LOG4CPLUS_LIBS)

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,15 +14,14 @@
 #include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
 #include <config/timeouts.h>
-#include <util/threads/thread.h>
 #include <boost/pointer_cast.hpp>
+#include <thread>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
-using namespace isc::util::thread;
 
 namespace isc {
 namespace netconf {
@@ -47,7 +46,7 @@ NetconfProcess::run() {
 
     try {
         // Initialize netconf agent in a thread.
-        Thread th([this]() {
+        std::thread th([this]() {
                 if (shouldShutdown()) {
                     return;
                 }
@@ -67,7 +66,9 @@ NetconfProcess::run() {
 
                 // Call init.
                 agent_.init(cfg_mgr);
-            });
+        });
+
+        th.detach();
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
@@ -75,6 +76,7 @@ NetconfProcess::run() {
             runIO();
         }
         stopIOService();
+
     } catch (const std::exception& ex) {
         LOG_FATAL(netconf_logger, NETCONF_FAILED).arg(ex.what());
         try {

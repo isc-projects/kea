@@ -45,7 +45,6 @@ perfdhcp_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

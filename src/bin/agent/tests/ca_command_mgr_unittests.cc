@@ -16,13 +16,13 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <process/testutils/d_test_stubs.h>
-#include <util/threads/thread.h>
 #include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <testutils/sandbox.h>
 #include <cstdlib>
 #include <vector>
+#include <thread>
 
 using namespace isc::agent;
 using namespace isc::asiolink;
@@ -228,8 +228,7 @@ public:
         // to this we need to run the server side socket at the same time as the
         // client. Running IO service in a thread guarantees that the server
         //responds as soon as it receives the control command.
-        isc::util::thread::Thread th(boost::bind(&IOService::run,
-                                                 getIOService().get()));
+        std::thread th(boost::bind(&IOService::run, getIOService().get()));
 
 
         // Wait for the IO service in thread to actually run.
@@ -243,7 +242,7 @@ public:
         getIOService()->stop();
 
         // Wait for the thread to finish.
-        th.wait();
+        th.join();
 
         // Cancel all asynchronous operations on the server.
         server_socket_->stopServer();
@@ -385,7 +384,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // to this we need to run the server side socket at the same time.
     // Running IO service in a thread guarantees that the server responds
     // as soon as it receives the control command.
-    isc::util::thread::Thread th(boost::bind(&IOService::run, getIOService().get()));
+    std::thread th(boost::bind(&IOService::run, getIOService().get()));
 
     // Wait for the IO service in thread to actually run.
     server_socket_->waitForRunning();
@@ -398,7 +397,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     getIOService()->stop();
 
     // Wait for the thread to finish.
-    th.wait();
+    th.join();
 
     // Cancel all asynchronous operations on the server.
     server_socket_->stopServer();

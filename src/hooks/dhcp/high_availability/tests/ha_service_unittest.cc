@@ -930,7 +930,7 @@ public:
 
         // Stop the IO service. This should cause the thread to terminate.
         io_service_->stop();
-        thread->wait();
+        thread->join();
         io_service_->get_io_service().reset();
         io_service_->poll();
     }
@@ -979,7 +979,7 @@ public:
 
         // Stop the IO service. This should cause the thread to terminate.
         io_service_->stop();
-        thread->wait();
+        thread->join();
         io_service_->get_io_service().reset();
         io_service_->poll();
     }

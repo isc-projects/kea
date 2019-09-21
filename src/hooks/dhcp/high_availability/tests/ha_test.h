@@ -15,14 +15,14 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/network_state.h>
 #include <hooks/libinfo.h>
-#include <util/threads/sync.h>
-#include <util/threads/thread.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
+#include <mutex>
+#include <thread>
 
 namespace isc {
 namespace ha {
@@ -115,8 +115,7 @@ public:
     /// @brief Runs IO service in a thread.
     ///
     /// @return Shared pointer to the thread.
-    boost::shared_ptr<util::thread::Thread>
-    runIOServiceInThread();
+    boost::shared_ptr<std::thread> runIOServiceInThread();
 
     /// @brief Executes commands while running IO service in a thread.
     ///
@@ -132,8 +131,8 @@ protected:
     /// IO service starts running and executes this function.
     /// @param mutex reference to the mutex used for synchronization.
     /// @param condvar reference to condition variable used for synchronization.
-    void signalServiceRunning(bool& running, util::thread::Mutex& mutex,
-                              util::thread::CondVar& condvar);
+    void signalServiceRunning(bool& running, std::mutex& mutex,
+                              std::condition_variable& condvar);
 
 public:
 

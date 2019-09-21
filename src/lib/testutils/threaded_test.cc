@@ -1,12 +1,10 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <testutils/threaded_test.h>
-
-using namespace isc::util::thread;
 
 namespace isc {
 namespace test {
@@ -19,10 +17,10 @@ ThreadedTest::ThreadedTest()
 void
 ThreadedTest::doSignal(bool& flag) {
     {
-        Mutex::Locker lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         flag = true;
     }
-    condvar_.signal();
+    condvar_.notify_one();
 }
 
 void
@@ -42,9 +40,9 @@ ThreadedTest::signalStopped() {
 
 void
 ThreadedTest::doWait(bool& flag) {
-    Mutex::Locker lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     while (!flag) {
-        condvar_.wait(mutex_);
+        condvar_.wait(lock);
     }
 }
 
@@ -65,7 +63,7 @@ ThreadedTest::waitStopped() {
 
 bool
 ThreadedTest::isStopping() {
-    Mutex::Locker lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     return (stopping_);
 }
 

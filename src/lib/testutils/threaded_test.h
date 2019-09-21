@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,10 +7,10 @@
 #ifndef THREADED_TEST_H
 #define THREADED_TEST_H
 
-#include <util/threads/thread.h>
-#include <util/threads/sync.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+#include <thread>
+#include <mutex>
 
 namespace isc {
 namespace test {
@@ -62,13 +62,13 @@ protected:
     bool isStopping();
 
     /// @brief Pointer to server thread.
-    boost::shared_ptr<util::thread::Thread> thread_;
+    boost::shared_ptr<std::thread> thread_;
 
     /// @brief Mutex used to synchronize threads.
-    util::thread::Mutex mutex_;
+    std::mutex mutex_;
 
     /// Condtional variable for thread waits.
-    util::thread::CondVar condvar_;
+    std::condition_variable condvar_;
 
     /// Flag indicating that the thread is ready.
     bool ready_;

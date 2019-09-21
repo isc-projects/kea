@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,22 +93,22 @@ HATest::runIOService(long ms, std::function<bool()> stop_condition) {
     timer.cancel();
 }
 
-boost::shared_ptr<util::thread::Thread>
+boost::shared_ptr<std::thread>
 HATest::runIOServiceInThread() {
     io_service_->get_io_service().reset();
 
     bool running = false;
-    util::thread::Mutex mutex;
-    util::thread::CondVar condvar;
+    std::mutex mutex;
+    std::condition_variable condvar;
 
     io_service_->post(boost::bind(&HATest::signalServiceRunning, this, boost::ref(running),
                                   boost::ref(mutex), boost::ref(condvar)));
-    boost::shared_ptr<util::thread::Thread>
-        th(new util::thread::Thread(boost::bind(&IOService::run, io_service_.get())));
+    boost::shared_ptr<std::thread>
+        th(new std::thread(boost::bind(&IOService::run, io_service_.get())));
 
-    util::thread::Mutex::Locker lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     while (!running) {
-        condvar.wait(mutex);
+        condvar.wait(lock);
     }
 
     return (th);
@@ -124,17 +124,17 @@ HATest::testSynchronousCommands(std::function<void()> commands) {
 
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
-    thread->wait();
+    thread->join();
 }
 
 void
-HATest::signalServiceRunning(bool& running, util::thread::Mutex& mutex,
-                             util::thread::CondVar& condvar) {
+HATest::signalServiceRunning(bool& running, std::mutex& mutex,
+                             std::condition_variable& condvar) {
     {
-        util::thread::Mutex::Locker lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
         running = true;
     }
-    condvar.signal();
+    condvar.notify_one();
 }
 
 void

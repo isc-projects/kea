@@ -11,11 +11,10 @@
 #include <perfdhcp/command_options.h>
 
 #include <dhcp/pkt.h>
-#include <util/threads/thread.h>
-#include <util/threads/sync.h>
 
 #include <queue>
 #include <thread>
+#include <mutex>
 #include <boost/atomic.hpp>
 
 namespace isc {
@@ -38,13 +37,13 @@ private:
     boost::atomic_flag run_flag_;
 
     /// \brief Thread for receiving packets.
-    std::unique_ptr<util::thread::Thread> recv_thread_;
+    std::unique_ptr<std::thread> recv_thread_;
 
     /// \brief Queue for passing packets from receiver thread to main thread.
     std::queue<dhcp::PktPtr> pkt_queue_;
 
     /// \brief Mutex for controlling access to the queue.
-    util::thread::Mutex pkt_queue_mutex_;
+    std::mutex pkt_queue_mutex_;
 
     BasePerfSocket &socket_;
 

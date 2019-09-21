@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-SUBDIRS = . io unittests tests python threads
+SUBDIRS = . io unittests tests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -96,8 +96,3 @@ libkea_util_random_includedir = $(pkgincludedir)/util/random
 libkea_util_random_include_HEADERS = \
 	random/qid_gen.h \
 	random/random_number_generator.h
-
-libkea_util_threads_includedir = $(pkgincludedir)/util/threads
-libkea_util_threads_include_HEADERS = \
-	threads/sync.h \
-	threads/thread.h
