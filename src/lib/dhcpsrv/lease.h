@@ -34,6 +34,9 @@ typedef boost::shared_ptr<Lease> LeasePtr;
 /// leases.
 struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
+    /// @brief Infinity (means static, i.e. never expire)
+    static const uint32_t INFINITY_LFT = 0xffffffff;
+
     /// @brief Type of lease or pool
     typedef enum {
         TYPE_NA = 0, ///< the lease contains non-temporary IPv6 address

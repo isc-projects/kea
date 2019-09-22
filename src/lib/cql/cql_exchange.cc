@@ -742,16 +742,9 @@ void
 CqlExchange::convertToDatabaseTime(const time_t& cltt,
                                    const uint32_t& valid_lifetime,
                                    cass_int64_t& expire) {
-    // Calculate expire time. Store it in the 64-bit value so as we can
-    // detect overflows.
+    // Calculate expire time.
     cass_int64_t expire_time = static_cast<cass_int64_t>(cltt) +
             static_cast<cass_int64_t>(valid_lifetime);
-
-    if (expire_time > DatabaseConnection::MAX_DB_TIME) {
-        isc_throw(BadValue,
-                  "CqlExchange(): convertToDatabaseTime(): time value "
-                      << expire_time << " is too large");
-    }
 
     expire = expire_time;
 }
@@ -760,11 +753,7 @@ void
 CqlExchange::convertFromDatabaseTime(const cass_int64_t& expire,
                                      const cass_int64_t& valid_lifetime,
                                      time_t& cltt) {
-    /// @todo: Although 2037 is still far away, there are people who use infinite
-    /// lifetimes. Cassandra doesn't have to support it right now, but at least
-    /// we should be able to detect a problem.
-
-    // Convert to local time
+    // Convert to local time.
     cltt = static_cast<time_t>(expire - valid_lifetime);
 }
 

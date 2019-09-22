@@ -60,7 +60,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
     }
 
     row.writeAt(getColumnIndex("valid_lifetime"), lease.valid_lft_);
-    row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_ + lease.valid_lft_));
+    row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_) + lease.valid_lft_);
     row.writeAt(getColumnIndex("subnet_id"), lease.subnet_id_);
     row.writeAt(getColumnIndex("fqdn_fwd"), lease.fqdn_fwd_);
     row.writeAt(getColumnIndex("fqdn_rev"), lease.fqdn_rev_);

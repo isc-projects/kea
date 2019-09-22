@@ -503,9 +503,9 @@ TEST_F(CqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
-/// @brief Check that Lease4 code safely handles invalid dates.
-TEST_F(CqlLeaseMgrTest, maxDate4) {
-    testMaxDate4();
+/// @brief checks that infinite lifetimes do not overflow.
+TEST_F(CqlLeaseMgrTest, infiniteLifeTime4) {
+    testInfiniteLifeTime4();
 }
 
 /// @brief Lease4 update tests
@@ -625,6 +625,12 @@ TEST_F(CqlLeaseMgrTest, getExpiredLeases4) {
     testCqlGetExpiredLeases4();
 }
 
+/// @brief Checks that the static (i.e. with infinite valid lifetime) DHCPv4
+/// leases will never expire.
+TEST_F(CqlLeaseMgrTest, staticLeases4) {
+    testStaticLeases4();
+}
+
 /// @brief Check that expired reclaimed DHCPv4 leases are removed.
 TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     testDeleteExpiredReclaimedLeases4();
@@ -648,9 +654,9 @@ TEST_F(CqlLeaseMgrTest, basicLease6) {
     testBasicLease6();
 }
 
-/// @brief Check that Lease6 code safely handles invalid dates.
-TEST_F(CqlLeaseMgrTest, maxDate6) {
-    testMaxDate6();
+/// @brief checks that infinite lifetimes do not overflow.
+TEST_F(CqlLeaseMgrTest, infiniteLifeTime6) {
+    testInfiniteLifeTime6();
 }
 
 /// @brief Verify that too long hostname for Lease6 is not accepted.
@@ -772,6 +778,12 @@ TEST_F(CqlLeaseMgrTest, testLease6HWTypeAndSource) {
 /// which is marked as 'reclaimed' is not returned.
 TEST_F(CqlLeaseMgrTest, getExpiredLeases6) {
     testCqlGetExpiredLeases6();
+}
+
+/// @brief Checks that the static (i.e. with infinite valid lifetime) DHCPv6
+/// leases will never expire.
+TEST_F(CqlLeaseMgrTest, staticLeases6) {
+    testStaticLeases6();
 }
 
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.
