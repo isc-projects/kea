@@ -152,6 +152,9 @@ server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
 be found in :ref:`high-availability-library`.
 
+The BOOTP hook uses the BOOTP class: when an incoming BOOTP query is
+recognized it is put in this class and built BOOTP response too.
+
 Other examples are the ALL class, which all incoming packets belong to,
 and the KNOWN class, assigned when host reservations exist for a
 particular client. By convention, built-in classes' names begin with all

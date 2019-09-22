@@ -382,7 +382,7 @@ private:
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
 
 /// @brief List of built-in client class names.
-/// i.e. ALL, KNOWN and UNKNOWN but not DROP.
+/// i.e. ALL, KNOWN, UNKNOWN and BOOTP but not DROP.
 extern std::list<std::string> builtinNames;
 
 /// @brief List of built-in client class prefixes

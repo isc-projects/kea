@@ -2758,13 +2758,17 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     // or even rebinding.
     assignLease(ex);
 
-    if (!ex.getResponse()) {
+    Pkt4Ptr response = ex.getResponse();
+    if (!response) {
         // The ack is empty so return it *now*!
         return (Pkt4Ptr());
+    } else if (request->inClass("BOOTP")) {
+        // Put BOOTP responses in the BOOTP class.
+        response->addClass("BOOTP");
     }
 
     // Adding any other options makes sense only when we got the lease.
-    if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+    if (!response->getYiaddr().isV4Zero()) {
         // Assign reserved classes.
         ex.setReservedClientClasses();
         // Required classification
