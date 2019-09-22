@@ -3560,6 +3560,11 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         valid_lft = ctx.subnet_->getValid().get(opt_lft->getValue());
     }
 
+    // BOOTP uses infinite valid lifetime.
+    if (ctx.query_->inClass("BOOTP")) {
+        valid_lft = Lease::INFINITY_LFT;
+    }
+
     time_t now = time(NULL);
 
     // @todo: remove this kludge?
@@ -3991,6 +3996,10 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         lease->valid_lft_ = ctx.subnet_->getValid().get(opt_lft->getValue());
     } else {
         lease->valid_lft_ = ctx.subnet_->getValid();
+    }
+    // BOOTP uses infinite valid lifetime.
+    if (ctx.query_->inClass("BOOTP")) {
+        lease->valid_lft_ = Lease::INFINITY_LFT;
     }
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;

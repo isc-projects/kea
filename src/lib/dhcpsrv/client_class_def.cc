@@ -345,7 +345,7 @@ builtinNames = {
     // In fact DROP is set from an expression as callouts can drop
     // directly the incoming packet. The expression must not depend on
     // KNOWN/UNKNOWN which are set far after the drop point.
-    "ALL", "KNOWN", "UNKNOWN"
+    "ALL", "KNOWN", "UNKNOWN", "BOOTP"
 };
 
 std::list<std::string>
