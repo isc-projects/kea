@@ -305,6 +305,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "FROM lease4 "
       "WHERE state = ? "
       "AND expire < ? "
+      "AND valid_lifetime < 4294967295 "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 
@@ -1019,6 +1020,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "FROM lease6 "
       "WHERE state = ? "
       "AND expire < ? "
+      "AND valid_lifetime < 4294967295 "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 

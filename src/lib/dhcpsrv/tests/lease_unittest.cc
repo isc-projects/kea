@@ -926,6 +926,11 @@ TEST(Lease6Test, Lease6Expired) {
     // Case 3: the lease is expired
     lease.cltt_ = time(NULL) - 102;
     EXPECT_TRUE(lease.expired());
+
+    // Case 4: the lease is static
+    lease.cltt_ = 1;
+    lease.valid_lft_ = Lease::INFINITY_LFT;
+    EXPECT_FALSE(lease.expired());
 }
 
 // Verify that the DUID can be returned as a vector object and if DUID is NULL

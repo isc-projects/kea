@@ -93,7 +93,7 @@ Lease::basicStatesToText(const uint32_t state) {
 
 bool
 Lease::expired() const {
-    return (getExpirationTime() < time(NULL));
+    return ((valid_lft_ != INFINITY_LFT) && (getExpirationTime() < time(NULL)));
 }
 
 bool
@@ -528,9 +528,13 @@ Lease6::toText() const {
            << "Address:       " << addr_ << "\n"
            << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
            << "IAID:          " << iaid_ << "\n"
-           << "Pref life:     " << preferred_lft_ << "\n"
-           << "Valid life:    " << valid_lft_ << "\n"
-           << "Cltt:          " << cltt_ << "\n"
+           << "Pref life:     " << preferred_lft_ << "\n";
+    if (valid_lft_ != INFINITY_LFT) {
+        stream << "Valid life:    " << valid_lft_ << "\n";
+    } else {
+        stream << "Valid life:    " << "infinity" << "\n";
+    }
+    stream << "Cltt:          " << cltt_ << "\n"
            << "DUID:          " << (duid_?duid_->toText():"(none)") << "\n"
            << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
@@ -547,9 +551,13 @@ std::string
 Lease4::toText() const {
     ostringstream stream;
 
-    stream << "Address:       " << addr_ << "\n"
-           << "Valid life:    " << valid_lft_ << "\n"
-           << "Cltt:          " << cltt_ << "\n"
+    stream << "Address:       " << addr_ << "\n";
+    if (valid_lft_ != INFINITY_LFT) {
+        stream << "Valid life:    " << valid_lft_ << "\n";
+    } else {
+        stream << "Valid life:    " << "infinity" << "\n";
+    }
+    stream << "Cltt:          " << cltt_ << "\n"
            << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"

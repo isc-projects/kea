@@ -277,6 +277,11 @@ TEST_F(MySqlLeaseMgrTest, maxDate4) {
     testMaxDate4();
 }
 
+/// @brief checks that infinite lifetimes do not overflow.
+TEST_F(MySqlLeaseMgrTest, infiniteLifeTime4) {
+    testInfiniteLifeTime4();
+}
+
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -414,6 +419,12 @@ TEST_F(MySqlLeaseMgrTest, getExpiredLeases4) {
     testGetExpiredLeases4();
 }
 
+/// @brief Checks that the static (i.e. with infinite valid lifetime) DHCPv4
+/// leases will never expire.
+TEST_F(MySqlLeaseMgrTest, staticLeases4) {
+    testStaticLeases4();
+}
+
 /// @brief Check that expired reclaimed DHCPv4 leases are removed.
 TEST_F(MySqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     testDeleteExpiredReclaimedLeases4();
@@ -440,6 +451,11 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
 /// @brief Check that Lease6 code safely handles invalid dates.
 TEST_F(MySqlLeaseMgrTest, maxDate6) {
     testMaxDate6();
+}
+
+/// @brief checks that infinite lifetimes do not overflow.
+TEST_F(MySqlLeaseMgrTest, infiniteLifeTime6) {
+    testInfiniteLifeTime6();
 }
 
 /// @brief Verify that too long hostname for Lease6 is not accepted.
@@ -551,6 +567,12 @@ TEST_F(MySqlLeaseMgrTest, testLease6HWTypeAndSource) {
 /// which is marked as 'reclaimed' is not returned.
 TEST_F(MySqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
+}
+
+/// @brief Checks that the static (i.e. with infinite valid lifetime) DHCPv6
+/// leases will never expire.
+TEST_F(MySqlLeaseMgrTest, staticLeases6) {
+    testStaticLeases6();
 }
 
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.
