@@ -51,7 +51,7 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_LANG_PROGRAM(
 			[class Foo {
 			 public:
-			 	virtual ~Foo() {};
+				virtual ~Foo() {};
 				virtual void bar() final;
 			 };],[])],
 		 [AC_MSG_RESULT([yes])],
@@ -64,12 +64,12 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_LANG_PROGRAM(
 			[class Foo {
 			 public:
-			 	virtual ~Foo() {};
+				virtual ~Foo() {};
 				virtual void foobar();
 			 };
 			 class Bar : public Foo {
-                         public:
-			 	virtual ~Bar() {};
+			 public:
+				virtual ~Bar() {};
 				virtual void foobar() override;
 			 };],[])],
 		 [AC_MSG_RESULT([yes])],
@@ -186,8 +186,8 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 			[th.reset(new std::thread([[]]() { return; }));
 			 th->join();])],
 		[AC_MSG_RESULT([yes])],
-                [AC_MSG_RESULT([no])
-                 continue])
+		[AC_MSG_RESULT([no])
+		 continue])
 
 	AC_MSG_CHECKING(mutex support)
 	feature="mutex"
@@ -197,8 +197,8 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 			 std::mutex mtx;],
 			[std::lock_guard<std::mutex> lock(mtx);])],
 		[AC_MSG_RESULT([yes])],
-                [AC_MSG_RESULT([no])
-                 continue])
+		[AC_MSG_RESULT([no])
+		 continue])
 			 
 	AC_MSG_CHECKING(atomic support)
 	feature="atomic"
@@ -208,9 +208,9 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 			 std::atomic_flag flag;],
 			[])],
 		[AC_MSG_RESULT([yes])
-                 break],
+		 break],
 		[AC_MSG_RESULT([no])
-                 continue])
+		 continue])
 
 done
 
