@@ -74,9 +74,7 @@ public:
                                   server_ip, server_port,
                                   sender_ip, D2ClientConfig::DFT_SENDER_PORT,
                                   D2ClientConfig::DFT_MAX_QUEUE_SIZE,
-                                  protocol, dhcp_ddns::FMT_JSON,
-                                  true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                                  "myhost", ".example.com.", "", "")));
+                                  protocol, dhcp_ddns::FMT_JSON)));
 
         ASSERT_NO_THROW(setD2ClientConfig(new_cfg));
         ASSERT_TRUE(ddnsEnabled());

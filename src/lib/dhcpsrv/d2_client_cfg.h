@@ -92,21 +92,7 @@ public:
     /// Currently only UDP is supported.
     /// @param ncr_format Format of the kea-dhcp-ddns requests.
     /// Currently only JSON format is supported.
-    /// @param override_no_update Enables updates, even if clients request no
-    /// updates.
-    /// @param override_client_update Perform updates, even if client requested
-    /// delegation.
-    /// @param replace_client_name_mode enables replacement of the domain-name
-    /// supplied by the client with a generated name.
-    /// @param generated_prefix Prefix to use when generating domain-names.
-    /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
-    /// @param hostname_char_set regular expression string which describes invalid
-    /// characters to be scrubbed from client host names
-    /// @param hostname_char_replacement string of zero or more characters to
-    /// replace invalid chars when sanitizing client host names
-    ///
-    /// @c enable_updates is mandatory, @c qualifying_suffix is mandatory
-    /// when updates are enabled, other parameters are optional.
+    /// @c enable_updates is mandatory, other parameters are optional.
     ///
     /// @throw D2ClientError if given an invalid protocol or format.
     D2ClientConfig(const bool enable_updates,
@@ -116,15 +102,7 @@ public:
                    const size_t sender_port,
                    const size_t max_queue_size,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns::NameChangeFormat& ncr_format,
-                   const bool override_no_update,
-                   const bool override_client_update,
-                   const ReplaceClientNameMode replace_client_name_mode,
-                   const std::string& generated_prefix,
-                   const std::string& qualifying_suffix,
-                   util::Optional<std::string> hostname_char_set,
-                   util::Optional<std::string> hostname_char_replacement);
-
+                   const dhcp_ddns::NameChangeFormat& ncr_format);
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -171,85 +149,6 @@ public:
     /// @brief Return the kea-dhcp-ddns request format.
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
         return(ncr_format_);
-    }
-
-    /// @brief Return if updates are done even if clients request no updates.
-    bool getOverrideNoUpdate() const {
-        return(override_no_update_);
-    }
-
-    /// @brief Return if updates are done even when clients request delegation.
-    bool getOverrideClientUpdate() const {
-        return(override_client_update_);
-    }
-
-    /// @brief Return mode of replacement to use regarding client's client's domain-name
-    ReplaceClientNameMode getReplaceClientNameMode() const {
-        return(replace_client_name_mode_);
-    }
-
-    /// @brief Return the prefix to use when generating domain-names.
-    const std::string& getGeneratedPrefix() const {
-        return(generated_prefix_);
-    }
-
-    /// @brief Return the suffix to use to qualify partial domain-names.
-    const std::string& getQualifyingSuffix() const {
-        return(qualifying_suffix_);
-    }
-
-    /// @brief Return the char set regexp used to sanitize client hostnames.
-    util::Optional<std::string> getHostnameCharSet() const {
-        if (hostname_char_set_.unspecified() && fetch_globals_fn_) {
-            data::ConstElementPtr globals = fetch_globals_fn_();
-            if (globals && (globals->getType() == data::Element::map)) {
-                data::ConstElementPtr global_param =
-                    globals->get("hostname-char-set");
-                if (global_param) {
-                    return (global_param->stringValue());
-                }
-            }
-        }
-
-        return (hostname_char_set_);
-        }
-
-    /// @brief Return the invalid char replacement used to sanitize client hostnames.
-    util::Optional<std::string> getHostnameCharReplacement() const {
-        if (hostname_char_replacement_.unspecified() && fetch_globals_fn_) {
-            data::ConstElementPtr globals = fetch_globals_fn_();
-            if (globals && (globals->getType() == data::Element::map)) {
-                data::ConstElementPtr global_param =
-                    globals->get("hostname-char-replacement");
-                if (global_param) {
-                    return (global_param->stringValue());
-                }
-            }
-        }
-
-        return (hostname_char_replacement_);
-    }
-
-    /// @brief Return pointer to compiled regular expression string sanitizer
-    /// Will be empty if hostname-char-set is empty.
-    util::str::StringSanitizerPtr getHostnameSanitizer() const {
-        return(hostname_sanitizer_);
-    }
-
-    /// @brief Sets the optional callback function used to fetch globally
-    /// configured parameters.
-    ///
-    /// @param fetch_globals_fn Pointer to the function.
-    void setFetchGlobalsFn(FetchNetworkGlobalsFn fetch_globals_fn) {
-        fetch_globals_fn_ = fetch_globals_fn;
-    }
-
-    /// @brief Checks if the D2 client config is associated with a function
-    /// used to fetch globally configured parameters.
-    ///
-    /// @return true if it is associated, false otherwise.
-    bool hasFetchGlobalsFn() const {
-        return (static_cast<bool>(fetch_globals_fn_));
     }
 
     /// @brief Compares two D2ClientConfigs for equality
@@ -330,37 +229,6 @@ private:
     /// @brief Format of the kea-dhcp-ddns requests.
     /// Currently only JSON format is supported.
     dhcp_ddns::NameChangeFormat ncr_format_;
-
-    /// @brief Should Kea perform updates, even if client requested no updates.
-    /// Overrides the client request for no updates via the N flag.
-    bool override_no_update_;
-
-    /// @brief Should Kea perform updates, even if client requested delegation.
-    bool override_client_update_;
-
-    /// @brief How Kea should handle the domain-name supplied by the client.
-    ReplaceClientNameMode replace_client_name_mode_;
-
-    /// @brief Prefix Kea should use when generating domain-names.
-    std::string generated_prefix_;
-
-    /// @brief Suffix Kea should use when to qualify partial domain-names.
-    std::string qualifying_suffix_;
-
-    /// @brief Regular expression describing invalid characters for client hostnames.
-    /// If empty, host name scrubbing is not done.
-    util::Optional<std::string> hostname_char_set_;
-
-    /// @brief A string to replace invalid characters when scrubbing hostnames.
-    /// Meaningful only if hostname_char_set_ is not empty.
-    util::Optional<std::string> hostname_char_replacement_;
-
-    /// @brief Pointer to compiled regular expression string sanitizer
-    util::str::StringSanitizerPtr hostname_sanitizer_;
-
-    /// @brief Pointer to the optional callback used to fetch globally
-    /// configured parameters inherited to the @c D2ClientConfig object.
-    FetchNetworkGlobalsFn fetch_globals_fn_;
 };
 
 std::ostream&

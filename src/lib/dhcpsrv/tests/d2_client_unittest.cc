@@ -95,14 +95,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                           sender_port,
                                                           max_queue_size,
                                                           ncr_protocol,
-                                                          ncr_format,
-                                                          override_no_update,
-                                                          override_client_update,
-                                                          replace_client_name_mode,
-                                                          generated_prefix,
-                                                          qualifying_suffix,
-                                                          hostname_char_set,
-                                                          hostname_char_replacement)));
+                                                          ncr_format)));
     ASSERT_TRUE(d2_client_config);
 
     // Add user context
@@ -120,19 +113,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getMaxQueueSize(), max_queue_size);
     EXPECT_EQ(d2_client_config->getNcrProtocol(), ncr_protocol);
     EXPECT_EQ(d2_client_config->getNcrFormat(), ncr_format);
-    EXPECT_EQ(d2_client_config->getOverrideNoUpdate(), override_no_update);
-    EXPECT_EQ(d2_client_config->getOverrideClientUpdate(),
-              override_client_update);
-    EXPECT_EQ(d2_client_config->getReplaceClientNameMode(), replace_client_name_mode);
-    EXPECT_EQ(d2_client_config->getGeneratedPrefix(), generated_prefix);
-    EXPECT_EQ(d2_client_config->getQualifyingSuffix(), qualifying_suffix);
-
-    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
-    EXPECT_EQ(d2_client_config->getHostnameCharSet(), hostname_char_set);
-    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
-    EXPECT_EQ(d2_client_config->getHostnameCharReplacement(), hostname_char_replacement);
-    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
-
     ASSERT_TRUE(d2_client_config->getContext());
     EXPECT_EQ(d2_client_config->getContext()->str(), user_context);
 
@@ -151,13 +131,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
         "\"max-queue-size\": 2048,\n"
         "\"ncr-protocol\": \"UDP\",\n"
         "\"ncr-format\": \"JSON\",\n"
-        "\"override-no-update\": true,\n"
-        "\"override-client-update\": true,\n"
-        "\"replace-client-name\": \"when-present\",\n"
-        "\"generated-prefix\": \"the_prefix\",\n"
-        "\"qualifying-suffix\": \"the.suffix.\",\n"
-        "\"hostname-char-set\": \"[^A-Z]\",\n"
-        "\"hostname-char-replacement\": \"*\",\n"
         "\"user-context\": { \"foo\": 1 }\n"
         "}\n";
     runToElementTest<D2ClientConfig>(expected, *d2_client_config);
@@ -172,14 +145,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        sender_port,
                                                        max_queue_size,
                                                        dhcp_ddns::NCR_TCP,
-                                                       ncr_format,
-                                                       override_no_update,
-                                                       override_client_update,
-                                                       replace_client_name_mode,
-                                                       generated_prefix,
-                                                       qualifying_suffix,
-                                                       hostname_char_set,
-                                                       hostname_char_replacement)),
+                                                       ncr_format)),
                  D2ClientError);
 
     Optional<std::string> opt_hostname_char_set("", true);
@@ -194,22 +160,8 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                           sender_port,
                                                           max_queue_size,
                                                           ncr_protocol,
-                                                          ncr_format,
-                                                          override_no_update,
-                                                          override_client_update,
-                                                          replace_client_name_mode,
-                                                          generated_prefix,
-                                                          qualifying_suffix,
-                                                          opt_hostname_char_set,
-                                                          opt_hostname_char_replacement)));
+                                                          ncr_format)));
     ASSERT_TRUE(d2_client_config);
-
-    // Verify that the accessors return the expected values.
-    EXPECT_TRUE(d2_client_config->getHostnameCharSet().unspecified());
-    EXPECT_EQ(d2_client_config->getHostnameCharSet(), opt_hostname_char_set);
-    EXPECT_TRUE(d2_client_config->getHostnameCharReplacement().unspecified());
-    EXPECT_EQ(d2_client_config->getHostnameCharReplacement(), opt_hostname_char_replacement);
-    EXPECT_FALSE(d2_client_config->getHostnameSanitizer());
 
     // Verify what toElement returns.
     expected = "{\n"
@@ -220,12 +172,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
         "\"sender-port\": 478,\n"
         "\"max-queue-size\": 2048,\n"
         "\"ncr-protocol\": \"UDP\",\n"
-        "\"ncr-format\": \"JSON\",\n"
-        "\"override-no-update\": true,\n"
-        "\"override-client-update\": true,\n"
-        "\"replace-client-name\": \"when-present\",\n"
-        "\"generated-prefix\": \"the_prefix\",\n"
-        "\"qualifying-suffix\": \"the.suffix.\"\n"
+        "\"ncr-format\": \"JSON\"\n"
         "}\n";
     runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 
@@ -244,17 +191,13 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Create an instance to use as a reference.
     ASSERT_NO_THROW(ref_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(ref_config);
 
     // Check a configuration that is identical to reference configuration.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_TRUE(*ref_config == *test_config);
     EXPECT_FALSE(*ref_config != *test_config);
@@ -262,9 +205,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Check a configuration that differs only by enable flag.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(false,
                     ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -272,9 +213,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Check a configuration that differs only by server ip.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     test_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -282,9 +221,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Check a configuration that differs only by server port.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 333, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -292,9 +229,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Check a configuration that differs only by sender ip.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, test_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -302,9 +237,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Check a configuration that differs only by sender port.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 333, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -312,79 +245,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     // Check a configuration that differs only by max queue size.
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477, ref_address, 478, 2048,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by override_no_update.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    false, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by override_client_update.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, false, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by replace_client_name.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_NEVER,
-                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by generated_prefix.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "bogus", "suf-fix", "[^A-Z]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by qualifying_suffix.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "bogus", "[^A-Z]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by hostname_char_set
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[abc]", "*")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by hostname_char_replacment
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477, ref_address, 478, 1024,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix", "[^A-Z]", "x")));
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -427,9 +288,7 @@ TEST(D2ClientMgr, validConfig) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
-                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                                  "pre-fix", "suf-fix", "", "")));
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
 
     // Verify that we can assign a new, non-empty configuration.
     ASSERT_NO_THROW(d2_client_mgr->setD2ClientConfig(new_cfg));
@@ -464,9 +323,7 @@ TEST(D2ClientMgr, ipv6Config) {
                                   isc::asiolink::IOAddress("::1"), 477,
                                   isc::asiolink::IOAddress("::1"), 478,
                                   1024,
-                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                                  "pre-fix", "suf-fix", "", "")));
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
 
     // Verify that we can assign a new, non-empty configuration.
     ASSERT_NO_THROW(d2_client_mgr->setD2ClientConfig(new_cfg));

@@ -405,9 +405,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
-                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, D2ClientConfig::RCM_ALWAYS,
-                                  "pre-fix", "suf-fix", "[^A-z]", "*")));
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
 
     // Verify that we can assign a new, non-empty configuration.
     ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg));

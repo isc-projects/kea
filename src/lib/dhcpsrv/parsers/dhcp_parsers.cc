@@ -1415,39 +1415,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     dhcp_ddns::NameChangeFormat ncr_format =
         getFormat(client_config, "ncr-format");
 
-    bool override_no_update =
-        getBoolean(client_config, "override-no-update");
-
-    bool override_client_update =
-        getBoolean(client_config, "override-client-update");
-
-    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode =
-        getMode(client_config, "replace-client-name");
-
-    std::string generated_prefix =
-        getString(client_config, "generated-prefix");
-
-    Optional<std::string> hostname_char_set(D2ClientConfig::DFT_HOSTNAME_CHAR_SET, true);
-    if (client_config->contains("hostname-char-set")) {
-        hostname_char_set = getString(client_config, "hostname-char-set");
-    }
-
-    Optional<std::string> hostname_char_replacement(D2ClientConfig::DFT_HOSTNAME_CHAR_REPLACEMENT, true);
-    if (client_config->contains("hostname-char-replacement")) {
-        hostname_char_replacement =
-            getString(client_config, "hostname-char-replacement");
-    }
-
-    // qualifying-suffix is the only parameter which has no default
-    std::string qualifying_suffix = "";
-#if 0
-    bool found_qualifying_suffix = false;
-    if (client_config->contains("qualifying-suffix")) {
-            qualifying_suffix = getString(client_config, "qualifying-suffix");
-            found_qualifying_suffix = true;
-    }
-#endif
-
     IOAddress sender_ip(0);
     if (sender_ip_str.empty()) {
         // The default sender IP depends on the server IP family
@@ -1462,16 +1429,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                       << getPosition("sender-ip", client_config) << ")");
         }
     }
-
-#if 0
-    // Qualifying-suffix is required when updates are enabled
-    if (enable_updates && !found_qualifying_suffix) {
-        isc_throw(DhcpConfigError,
-                  "parameter 'qualifying-suffix' is required when "
-                  "updates are enabled ("
-                  << client_config->getPosition() << ")");
-    }
-#endif
 
     // Now we check for logical errors. This repeats what is done in
     // D2ClientConfig::validate(), but doing it here permits us to
@@ -1517,14 +1474,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                                             sender_port,
                                             max_queue_size,
                                             ncr_protocol,
-                                            ncr_format,
-                                            override_no_update,
-                                            override_client_update,
-                                            replace_client_name_mode,
-                                            generated_prefix,
-                                            qualifying_suffix,
-                                            hostname_char_set,
-                                            hostname_char_replacement));
+                                            ncr_format));
     }  catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
@@ -1535,13 +1485,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     if (user_context) {
         new_config->setContext(user_context);
     }
-
-    // In order to take advantage of the dynamic inheritance of global
-    // parameters to a subnet we need to set a callback function for
-    // the d2 client config to allow for fetching global parameters.
-    new_config->setFetchGlobalsFn([]() -> ConstElementPtr {
-        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
-    });
 
     return(new_config);
 }
@@ -1557,13 +1500,7 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "sender-port", Element::integer, "0" },
     { "max-queue-size", Element::integer, "1024" },
     { "ncr-protocol", Element::string, "UDP" },
-    { "ncr-format", Element::string, "JSON" },
-    { "override-no-update", Element::boolean, "false" },
-    { "override-client-update", Element::boolean, "false" },
-    { "replace-client-name", Element::string, "never" },
-    { "generated-prefix", Element::string, "myhost" }
-    // hostname-char-set and hostname-char-replacement moved to global
-    // qualifying-suffix has no default
+    { "ncr-format", Element::string, "JSON" }
 };
 
 size_t

@@ -75,6 +75,12 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "t1-percent",                   Element::real },
     { "t2-percent",                   Element::real },
     { "loggers",                      Element::list },
+    { "ddns-send-updates",            Element::boolean },
+    { "ddns-override-no-update",      Element::boolean },
+    { "ddns-override-client-update",  Element::boolean },
+    { "ddns-replace-client-name",     Element::string },
+    { "ddns-generated-prefix",        Element::string },
+    { "ddns-qualifying-suffix",       Element::string }
     { "hostname-char-set",            Element::string },
     { "hostname-char-replacement",    Element::string }
 };
@@ -85,20 +91,27 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
 /// in Dhcp4) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
-    { "valid-lifetime",            Element::integer, "7200" },
-    { "decline-probation-period",  Element::integer, "86400" }, // 24h
-    { "dhcp4o6-port",              Element::integer, "0" },
-    { "echo-client-id",            Element::boolean, "true" },
-    { "match-client-id",           Element::boolean, "true" },
-    { "authoritative",             Element::boolean, "false" },
-    { "next-server",               Element::string,  "0.0.0.0" },
-    { "server-hostname",           Element::string,  "" },
-    { "boot-file-name",            Element::string,  "" },
-    { "server-tag",                Element::string,  "" },
-    { "reservation-mode",          Element::string,  "all" },
-    { "calculate-tee-times",       Element::boolean, "false" },
-    { "t1-percent",                Element::real,    ".50" },
-    { "t2-percent",                Element::real,    ".875" }
+    { "valid-lifetime",                 Element::integer, "7200" },
+    { "decline-probation-period",       Element::integer, "86400" }, // 24h
+    { "dhcp4o6-port",                   Element::integer, "0" },
+    { "echo-client-id",                 Element::boolean, "true" },
+    { "match-client-id",                Element::boolean, "true" },
+    { "authoritative",                  Element::boolean, "false" },
+    { "next-server",                    Element::string,  "0.0.0.0" },
+    { "server-hostname",                Element::string,  "" },
+    { "boot-file-name",                 Element::string,  "" },
+    { "server-tag",                     Element::string,  "" },
+    { "reservation-mode",               Element::string,  "all" },
+    { "calculate-tee-times",            Element::boolean, "false" },
+    { "t1-percent",                     Element::real,    ".50" },
+    { "t2-percent",                     Element::real,    ".875" },
+    { "ddns-send-updates",              Element::boolean, "false" },
+    { "ddns-override-no-update",        Element::boolean, "false" },
+    { "ddns-override-client-update",    Element::boolean, "false" },
+    { "ddns-replace-client-name",       Element::string, "never" },
+    { "ddns-generated-prefix",          Element::string, "myhost" }
+    // TKM should this still be true? qualifying-suffix has no default ??
+    { "ddns-generated-suffix",          Element::string, "" }
 };
 
 /// @brief This table defines all option definition parameters.

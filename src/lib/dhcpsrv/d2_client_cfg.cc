@@ -90,14 +90,7 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const dhcp_ddns::
                                      NameChangeProtocol& ncr_protocol,
                                const dhcp_ddns::
-                                     NameChangeFormat& ncr_format,
-                               const bool override_no_update,
-                               const bool override_client_update,
-                               const ReplaceClientNameMode replace_client_name_mode,
-                               const std::string& generated_prefix,
-                               const std::string& qualifying_suffix,
-                               Optional<std::string> hostname_char_set,
-                               Optional<std::string> hostname_char_replacement)
+                                     NameChangeFormat& ncr_format)
     : enable_updates_(enable_updates),
       server_ip_(server_ip),
       server_port_(server_port),
@@ -105,16 +98,7 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       sender_port_(sender_port),
       max_queue_size_(max_queue_size),
       ncr_protocol_(ncr_protocol),
-      ncr_format_(ncr_format),
-      override_no_update_(override_no_update),
-      override_client_update_(override_client_update),
-      replace_client_name_mode_(replace_client_name_mode),
-      generated_prefix_(generated_prefix),
-      qualifying_suffix_(qualifying_suffix),
-      hostname_char_set_(hostname_char_set),
-      hostname_char_replacement_(hostname_char_replacement),
-      hostname_sanitizer_(0),
-      fetch_globals_fn_(0) {
+      ncr_format_(ncr_format) {
     validateContents();
 }
 
@@ -126,16 +110,7 @@ D2ClientConfig::D2ClientConfig()
       sender_port_(DFT_SENDER_PORT),
       max_queue_size_(DFT_MAX_QUEUE_SIZE),
       ncr_protocol_(dhcp_ddns::stringToNcrProtocol(DFT_NCR_PROTOCOL)),
-      ncr_format_(dhcp_ddns::stringToNcrFormat(DFT_NCR_FORMAT)),
-      override_no_update_(DFT_OVERRIDE_NO_UPDATE),
-      override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
-      replace_client_name_mode_(stringToReplaceClientNameMode(DFT_REPLACE_CLIENT_NAME_MODE)),
-      generated_prefix_(DFT_GENERATED_PREFIX),
-      qualifying_suffix_(""),
-      hostname_char_set_(DFT_HOSTNAME_CHAR_SET, true),
-      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET, true),
-      hostname_sanitizer_(0),
-      fetch_globals_fn_(0) {
+      ncr_format_(dhcp_ddns::stringToNcrFormat(DFT_NCR_FORMAT)) {
     validateContents();
 }
 
@@ -174,16 +149,6 @@ D2ClientConfig::validateContents() {
                   << server_ip_.toText() << "/" << server_port_);
     }
 
-    if (!getHostnameCharSet().unspecified() && !getHostnameCharSet().empty()) {
-        try {
-            hostname_sanitizer_.reset(new isc::util::str::StringSanitizer(getHostnameCharSet(),
-                                                                          getHostnameCharReplacement()));
-        } catch (const std::exception& ex) {
-            isc_throw(D2ClientError, "D2ClientConfig: hostname-char-set"
-                      " is not a valid regular expression");
-        }
-    }
-
     /// @todo perhaps more validation we should do yet?
     /// Are there any invalid combinations of options we need to test against?
 }
@@ -197,14 +162,7 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (sender_port_ == other.sender_port_) &&
             (max_queue_size_ == other.max_queue_size_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
-            (ncr_format_ == other.ncr_format_) &&
-            (override_no_update_ == other.override_no_update_) &&
-            (override_client_update_ == other.override_client_update_) &&
-            (replace_client_name_mode_ == other.replace_client_name_mode_) &&
-            (generated_prefix_ == other.generated_prefix_) &&
-            (qualifying_suffix_ == other.qualifying_suffix_) &&
-            (hostname_char_set_ == other.hostname_char_set_) &&
-            (hostname_char_replacement_ == other.hostname_char_replacement_));
+            (ncr_format_ == other.ncr_format_));
 }
 
 bool
@@ -224,18 +182,9 @@ D2ClientConfig::toText() const {
                << ", sender-port: " << sender_port_
                << ", max-queue-size: " << max_queue_size_
                << ", ncr-protocol: " << ncrProtocolToString(ncr_protocol_)
-               << ", ncr-format: " << ncrFormatToString(ncr_format_)
-               << ", override-no-update: " << (override_no_update_ ?
-                                               "yes" : "no")
-               << ", override-client-update: " << (override_client_update_ ?
-                                                   "yes" : "no")
-               << ", replace-client-name: "
-               << replaceClientNameModeToString(replace_client_name_mode_)
-               << ", generated-prefix: [" << generated_prefix_ << "]"
-               << ", qualifying-suffix: [" << qualifying_suffix_ << "]"
-               << ", hostname-char-set: [" << getHostnameCharSet() << "]"
-               << ", hostname-char-replacement: [" << getHostnameCharReplacement() << "]";
+               << ", ncr-format: " << ncrFormatToString(ncr_format_);
     }
+
 
     return (stream.str());
 }
@@ -247,8 +196,6 @@ D2ClientConfig::toElement() const {
     contextToElement(result);
     // Set enable-updates
     result->set("enable-updates", Element::create(enable_updates_));
-    // Set qualifying-suffix
-    result->set("qualifying-suffix", Element::create(qualifying_suffix_));
     // Set server-ip
     result->set("server-ip", Element::create(server_ip_.toText()));
     // Set server-port
@@ -264,22 +211,6 @@ D2ClientConfig::toElement() const {
     // Set ncr-format
     result->set("ncr-format", Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
     // Set override-no-update
-    result->set("override-no-update", Element::create(override_no_update_));
-    // Set override-client-update
-    result->set("override-client-update", Element::create(override_client_update_));
-    // Set replace-client-name
-    result->set("replace-client-name",
-                Element::create(replaceClientNameModeToString(replace_client_name_mode_)));
-    // Set generated-prefix
-    result->set("generated-prefix", Element::create(generated_prefix_));
-    // Set hostname-char-set
-    if (!hostname_char_set_.unspecified()) {
-        result->set("hostname-char-set", Element::create(hostname_char_set_));
-    }
-    // Set hostname-char-replacement
-    if (!hostname_char_replacement_.unspecified()) {
-        result->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
-    }
     return (result);
 }
 
