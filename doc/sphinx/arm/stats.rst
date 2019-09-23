@@ -275,8 +275,10 @@ The statistic-sample-age-set Command
 ----------------------------------------
 
 The ``statistic-sample-age-set`` command sets time based limit
-for collecting samples for given statistic. An example command may look
-like this:
+for collecting samples for given statistic. It takes two parameters a string
+called ``name``, which specifies the statistic name and integer value called
+``duration``, which specifies the time limit for given statistic in seconds.
+An example command may look like this:
 
 ::
 
@@ -301,8 +303,9 @@ The statistic-sample-age-set-all Command
 --------------------------------------------
 
 The ``statistic-sample-age-set-all`` command sets time based limits
-for collecting samples for all statistics. An example command may look
-like this:
+for collecting samples for all statistics. It takes single-integer parameter
+called ``duration``, which specifies the time limit for given statistic
+in seconds. An example command may look like this:
 
 ::
 
