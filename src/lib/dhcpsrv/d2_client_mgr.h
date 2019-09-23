@@ -147,11 +147,12 @@ public:
     /// @param client_n  N Flag from the client's FQDN
     /// @param server_s [out] S Flag for the server's FQDN
     /// @param server_n [out] N Flag for the server's FQDN
+    /// @param ddns_params DDNS behaviorial configuration parameters
     ///
     /// @throw isc::BadValue if client_s and client_n are both 1 as this is
     /// an invalid combination per RFCs.
     void analyzeFqdn(const bool client_s, const bool client_n, bool& server_s,
-                     bool& server_n) const;
+                     bool& server_n, const DdnsParams& ddns_params) const;
 
     /// @brief Builds a FQDN based on the configuration and given IP address.
     ///
@@ -166,11 +167,13 @@ public:
     /// ('.' for IPv4 or ':' for IPv6) replaced with a hyphen, '-'.
     ///
     /// @param address IP address from which to derive the name (IPv4 or IPv6)
+    /// @param ddns_params DDNS behaviorial configuration parameters
     /// @param trailing_dot A boolean value which indicates whether trailing
     /// dot should be appended (if true) or not (false).
     ///
     /// @return std::string containing the generated name.
     std::string generateFqdn(const asiolink::IOAddress& address,
+                             const DdnsParams& ddns_params,
                              const bool trailing_dot = true) const;
 
     /// @brief Adds a qualifying suffix to a given domain name
@@ -181,6 +184,7 @@ public:
     ///     <partial_name>.<qualifying-suffix>.
     ///
     /// @param partial_name domain name to qualify
+    /// @param ddns_params DDNS behaviorial configuration parameters
     /// @param trailing_dot A boolean value which when true guarantees the
     /// result will end with a "." and when false that the result will not
     /// end with a "."   Note that this rule is applied even if the qualifying
@@ -188,6 +192,7 @@ public:
     ///
     /// @return std::string containing the qualified name.
     std::string qualifyName(const std::string& partial_name,
+                            const DdnsParams& ddns_params,
                             const bool trailing_dot) const;
 
     /// @brief Set server FQDN flags based on configuration and a given FQDN
@@ -199,10 +204,12 @@ public:
     ///
     /// @param fqdn FQDN option from which to read client (inbound) flags
     /// @param fqdn_resp FQDN option to update with the server (outbound) flags
+    /// @param ddns_params DDNS behaviorial configuration parameters
     /// @tparam T FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
-    void adjustFqdnFlags(const T& fqdn, T& fqdn_resp);
+    void adjustFqdnFlags(const T& fqdn, T& fqdn_resp, 
+                         const DdnsParams& ddns_params);
 
     /// @brief Get directional update flags based on server FQDN flags
     ///
@@ -248,10 +255,12 @@ public:
     ///
     /// @param fqdn FQDN option from which to get client (inbound) name
     /// @param fqdn_resp FQDN option to update with the adjusted name
+    /// @param ddns_params DDNS behaviorial configuration parameters
     /// @tparam T  FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
-    void adjustDomainName(const T& fqdn, T& fqdn_resp);
+    void adjustDomainName(const T& fqdn, T& fqdn_resp,
+                          const DdnsParams& ddns_params);
 
     /// @brief Enables sending NameChangeRequests to kea-dhcp-ddns
     ///
@@ -435,11 +444,11 @@ private:
 
 template <class T>
 void
-D2ClientMgr::adjustFqdnFlags(const T& fqdn, T& fqdn_resp) {
+D2ClientMgr::adjustFqdnFlags(const T& fqdn, T& fqdn_resp, const DdnsParams& ddns_params) {
     bool server_s = false;
     bool server_n = false;
     analyzeFqdn(fqdn.getFlag(T::FLAG_S), fqdn.getFlag(T::FLAG_N),
-                server_s, server_n);
+                server_s, server_n, ddns_params);
 
     // Reset the flags to zero to avoid triggering N and S both 1 check.
     fqdn_resp.resetFlags();
@@ -462,18 +471,18 @@ D2ClientMgr::getUpdateDirections(const T& fqdn_resp,
 
 template <class T>
 void
-D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
+D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddns_params) {
     // If we're configured to replace it or the supplied name is blank
     // set the response name to blank.
-    if ((d2_client_config_->getReplaceClientNameMode() == D2ClientConfig::RCM_ALWAYS ||
-         d2_client_config_->getReplaceClientNameMode() == D2ClientConfig::RCM_WHEN_PRESENT) ||
+    if ((ddns_params.replace_client_name_mode_ == D2ClientConfig::RCM_ALWAYS ||
+         ddns_params.replace_client_name_mode_ == D2ClientConfig::RCM_WHEN_PRESENT) ||
         fqdn.getDomainName().empty()) {
         fqdn_resp.setDomainName("", T::PARTIAL);
     } else {
         // Sanitize the name the client sent us, if we're configured to do so.
         std::string client_name = fqdn.getDomainName();
 
-        if (d2_client_config_->getHostnameSanitizer()) {
+        if (ddns_params.hostname_sanitizer_) {
             // We need the raw text form, so we can replace escaped chars
             dns::Name tmp(client_name);
             std::string raw_name = tmp.toRawText();
@@ -490,7 +499,7 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
                     ss << ".";
                 }
 
-                ss << d2_client_config_->getHostnameSanitizer()->scrub(*label);
+                ss << ddns_params.hostname_sanitizer_->scrub(*label);
             }
 
             client_name = ss.str();
@@ -498,13 +507,14 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
 
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == T::PARTIAL) {
-            fqdn_resp.setDomainName(qualifyName(client_name,true), T::FULL);
+            fqdn_resp.setDomainName(qualifyName(client_name, ddns_params, true), T::FULL);
         }
         else  {
             fqdn_resp.setDomainName(client_name, T::FULL);
         }
     }
 }
+
 
 /// @brief Defines a pointer for D2ClientMgr instances.
 typedef boost::shared_ptr<D2ClientMgr> D2ClientMgrPtr;

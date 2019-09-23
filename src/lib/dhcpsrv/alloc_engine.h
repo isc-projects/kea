@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/classify.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt4.h>
@@ -551,6 +552,9 @@ public:
 
         /// @brief Container holding IA specific contexts.
         std::vector<IAContext> ias_;
+
+        /// @brief Holds scoped DDNS behavioral parameters
+        DdnsParamsPtr ddns_params_;
 
         /// @brief Convenience method adding allocated prefix or address.
         ///
@@ -1318,6 +1322,9 @@ public:
         /// @brief A list holding host identifiers extracted from a message
         /// received by the server.
         IdentifierList host_identifiers_;
+
+        /// @brief Holds scoped DDNS behavioral parameters
+        DdnsParamsPtr ddns_params_;
 
         /// @brief Convenience function adding host identifier into
         /// @ref host_identifiers_ list.

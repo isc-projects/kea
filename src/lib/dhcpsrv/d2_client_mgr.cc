@@ -114,7 +114,8 @@ D2ClientMgr::getD2ClientConfig() const {
 
 void
 D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
-                         bool& server_s, bool& server_n) const {
+                         bool& server_s, bool& server_n, 
+                         const DdnsParams& ddns_params) const {
     // Per RFC 4702 & 4704, the client N and S flags allow the client to
     // request one of three options:
     //
@@ -132,27 +133,27 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 
     switch (mask) {
     case 0:
-        if (!d2_client_config_->getEnableUpdates()) {
+        if (!ddns_params.enable_updates_) {
             server_s = false;
             server_n = true;
         } else {
             // If updates are enabled and we are overriding client delegation
             // then S flag should be true.  N-flag should be false.
-            server_s = d2_client_config_->getOverrideClientUpdate();
+            server_s = ddns_params.override_client_update_;
             server_n = false;
         }
         break;
 
     case 1:
-        server_s = d2_client_config_->getEnableUpdates();
+        server_s = ddns_params.enable_updates_;
         server_n = !server_s;
         break;
 
     case 2:
         // If updates are enabled and we are overriding "no updates" then
         // S flag should be true.
-        server_s = (d2_client_config_->getEnableUpdates() &&
-                    d2_client_config_->getOverrideNoUpdate());
+        server_s = (ddns_params.enable_updates_ &&
+                    ddns_params.override_no_update_);
         server_n = !server_s;
         break;
 
@@ -166,31 +167,33 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 
 std::string
 D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
+                          const DdnsParams& ddns_params,
                           const bool trailing_dot) const {
     std::string hostname = address.toText();
     std::replace(hostname.begin(), hostname.end(),
                  (address.isV4() ? '.' : ':'), '-');
 
     std::ostringstream gen_name;
-    gen_name << d2_client_config_->getGeneratedPrefix() << "-" << hostname;
-    return (qualifyName(gen_name.str(), trailing_dot));
+    gen_name << ddns_params.generated_prefix_ << "-" << hostname;
+    return (qualifyName(gen_name.str(), ddns_params, trailing_dot));
 }
 
 
 std::string
 D2ClientMgr::qualifyName(const std::string& partial_name,
+                         const DdnsParams& ddns_params,
                          const bool trailing_dot) const {
     std::ostringstream gen_name;
 
     gen_name << partial_name;
-    if (!d2_client_config_->getQualifyingSuffix().empty()) {
+    if (!ddns_params.qualifying_suffix_.empty()) {
         std::string str = gen_name.str();
         size_t len = str.length();
         if ((len > 0) && (str[len - 1] != '.')) {
             gen_name << ".";
         }
 
-        gen_name << d2_client_config_->getQualifyingSuffix();
+        gen_name << ddns_params.qualifying_suffix_;
     }
 
     std::string str = gen_name.str();

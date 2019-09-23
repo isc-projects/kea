@@ -1440,11 +1440,13 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
 
     // qualifying-suffix is the only parameter which has no default
     std::string qualifying_suffix = "";
+#if 0
     bool found_qualifying_suffix = false;
     if (client_config->contains("qualifying-suffix")) {
             qualifying_suffix = getString(client_config, "qualifying-suffix");
             found_qualifying_suffix = true;
     }
+#endif
 
     IOAddress sender_ip(0);
     if (sender_ip_str.empty()) {
@@ -1461,6 +1463,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
         }
     }
 
+#if 0
     // Qualifying-suffix is required when updates are enabled
     if (enable_updates && !found_qualifying_suffix) {
         isc_throw(DhcpConfigError,
@@ -1468,6 +1471,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                   "updates are enabled ("
                   << client_config->getPosition() << ")");
     }
+#endif
 
     // Now we check for logical errors. This repeats what is done in
     // D2ClientConfig::validate(), but doing it here permits us to

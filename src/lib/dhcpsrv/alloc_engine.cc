@@ -430,7 +430,8 @@ namespace dhcp {
 AllocEngine::ClientContext6::ClientContext6()
     : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
       hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
-      rev_dns_update_(false), hostname_(), callout_handle_(), ias_() {
+      rev_dns_update_(false), hostname_(), callout_handle_(), ias_(),
+      ddns_params_(new DdnsParams()) {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
@@ -445,7 +446,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
       duid_(duid), hwaddr_(), host_identifiers_(), hosts_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns), hostname_(hostname),
       callout_handle_(callout_handle), allocated_resources_(), new_leases_(),
-      ias_() {
+      ias_(), ddns_params_(new DdnsParams()) {
 
     // Initialize host identifiers.
     if (duid) {
@@ -1156,7 +1157,8 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                             // the hostname as it is specified for the reservation.
                             OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                             ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                qualifyName(host->getHostname(), static_cast<bool>(fqdn));
+                                qualifyName(host->getHostname(), *ctx.ddns_params_,
+                                            static_cast<bool>(fqdn));
                         }
                     }
                 }
@@ -1228,7 +1230,8 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                         // the hostname as it is specified for the reservation.
                         OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                         ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                            qualifyName(host->getHostname(), static_cast<bool>(fqdn));
+                            qualifyName(host->getHostname(), *ctx.ddns_params_,
+                                        static_cast<bool>(fqdn));
                     }
                 }
 
@@ -1303,7 +1306,8 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                     // the hostname as it is specified for the reservation.
                     OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                     ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                    qualifyName(ghost->getHostname(), static_cast<bool>(fqdn));
+                                    qualifyName(ghost->getHostname(), *ctx.ddns_params_,
+                                                static_cast<bool>(fqdn));
             }
 
             // If this is a real allocation, we may need to extend the lease
@@ -1353,7 +1357,8 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                 // the hostname as it is specified for the reservation.
                 OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                 ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                qualifyName(ghost->getHostname(), static_cast<bool>(fqdn));
+                                qualifyName(ghost->getHostname(), *ctx.ddns_params_,
+                                            static_cast<bool>(fqdn));
             }
 
             // Ok, let's create a new lease...
@@ -3002,7 +3007,8 @@ AllocEngine::ClientContext4::ClientContext4()
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
       old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
-      query_(), host_identifiers_() {
+      query_(), host_identifiers_(),
+      ddns_params_(new DdnsParams()) {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -3018,7 +3024,8 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
       fake_allocation_(fake_allocation), old_lease_(), new_lease_(),
-      hosts_(), host_identifiers_() {
+      hosts_(), host_identifiers_(),
+      ddns_params_(new DdnsParams()) {
 
     // Initialize host identifiers.
     if (hwaddr) {

@@ -369,6 +369,41 @@ operator<<(std::ostream& os, const D2ClientConfig& config);
 /// @brief Defines a pointer for D2ClientConfig instances.
 typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 
+/// @Brief Convenience container for conveying DDNS behaviorial parameters
+/// It is intended to be populated per Packet exchange and passed into
+/// functions that require them
+struct DdnsParams {
+    DdnsParams() :
+        enable_updates_(false), override_no_update_(false), override_client_update_(false),
+        replace_client_name_mode_(D2ClientConfig::RCM_NEVER),
+        generated_prefix_(""), qualifying_suffix_("") {};
+
+    /// @brief Indicates whether or not DHCP DDNS updating is enabled.
+    bool enable_updates_;
+
+    /// @brief Should Kea perform updates, even if client requested no updates.
+    /// Overrides the client request for no updates via the N flag.
+    bool override_no_update_;
+
+    /// @brief Should Kea perform updates, even if client requested delegation.
+    bool override_client_update_;
+
+    /// @brief How Kea should handle the domain-name supplied by the client.
+    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode_;
+
+    /// @brief Prefix Kea should use when generating domain-names.
+    std::string generated_prefix_;
+
+    /// @brief Suffix Kea should use when to qualify partial domain-names.
+    std::string qualifying_suffix_;
+
+    /// @brief Pointer to compiled regular expression string sanitizer
+    util::str::StringSanitizerPtr hostname_sanitizer_;
+};
+
+/// @brief Defines a pointer for DdnsParams instances.
+typedef boost::shared_ptr<DdnsParams> DdnsParamsPtr;
+
 } // namespace isc
 } // namespace dhcp
 
