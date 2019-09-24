@@ -2,7 +2,7 @@ Kea 1.7.0 released on Sep 25, 2019
 
 1665.	[build]		tmark
 	Bumped up library version numbers for Kea 1.7.0 final release.
-	(Gitlab #924,!526, git TBD)
+	(Gitlab #924,!526, git c4061d0fdd660c8e375b4e1317603935ccc00b39)
 
 1664.	[build]		razvan
 	Make sysrepo_config detect installed sysrepo version.
