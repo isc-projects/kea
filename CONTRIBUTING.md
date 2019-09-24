@@ -240,12 +240,4 @@ Outstanding, select a small number of them and move them to whatever the current
 that in mind if you plan to submit a patch and forget about it. We may accept it eventually, but
 it's much, much faster process if you participate in it.
 
-## Extra steps
-
-If you are interested in knowing the results of more in-depth testing, you are welcome to visit the
-ISC Jenkins page: https://jenkins.isc.org This is a live result page with all tests being run on
-various systems. Besides basic unit-tests, we also have reports from valgrind (memory debugger),
-cppcheck and clang-analyzer (static code analyzers), Lettuce system tests and more. Although it is
-not possible for non ISC employees to run tests on that farm, it is possible that your contributed
-patch will end up there sooner or later. We also have ISC Forge tests running, but currently the
-test results are not publicly available.
+#### Thank you for contributing your time and experience to the Kea project!
