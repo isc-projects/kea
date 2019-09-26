@@ -814,7 +814,6 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/lib/util/encode \
                          ../../src/lib/util/io \
                          ../../src/lib/util/random \
-                         ../../src/lib/util/threads \
                          ../../src/lib/util/unittests \
                          ../../src/lib/yang \
                          .

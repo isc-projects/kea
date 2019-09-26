@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,8 +111,7 @@ isc::dhcp::PacketQueueRing6).  The most critical aspects to remember when
 developing your implementation are:
 
 -# It MUST be thread safe since queuing and dequeing packets are done by
-separate threads. (You might considering using isc::util::thread::Mutex and
-isc::util::thread::Mutex::Locker).
+separate threads. (You might considering using std::mutex and std::lock_guard).
 
 -# Its efficiency (or lack thereof) will have a direct impact on server
 performance.  You will have to consider the dynamics of your deployment
