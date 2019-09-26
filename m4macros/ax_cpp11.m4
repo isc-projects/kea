@@ -200,6 +200,19 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([no])
 		 continue])
 			 
+	AC_MSG_CHECKING(condition variable support)
+	feature="condition variable"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <condition_variable>
+			 std::mutex mtx;
+			 std::condition_variable cv;],
+			[std::lock_guard<std::mutex> lock(mtx);
+			 cv.notify_one();])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+			 
 	AC_MSG_CHECKING(atomic support)
 	feature="atomic"
 	AC_COMPILE_IFELSE(
