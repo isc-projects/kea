@@ -1,3 +1,8 @@
+1666.	[doc]		tmark
+	Added note in ARM about manually admining cb data being possible
+	but not supported.
+	(Gitlab #917,!518, git b9e8499456a82f2c1931e093ebd83de900392636)
+
 Kea 1.7.0 released on Sep 25, 2019
 
 1665.	[build]		tmark
