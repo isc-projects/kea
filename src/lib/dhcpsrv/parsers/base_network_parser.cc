@@ -18,11 +18,11 @@ namespace dhcp {
 const Triplet<uint32_t>
 BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
                                  const std::string& name) {
-    uint32_t value;
+    uint32_t value = 0;
     bool has_value = false;
-    uint32_t min_value;
+    uint32_t min_value = 0;
     bool has_min = false;
-    uint32_t max_value;
+    uint32_t max_value = 0;
     bool has_max = false;
     if (scope->contains(name)) {
         value = getInteger(scope, name);
@@ -164,6 +164,38 @@ BaseNetworkParser::parseHostReservationMode(const data::ConstElementPtr& network
                       << ex.what() << " (" << getPosition("reservation-mode",
                                                           network_data) << ")");
         }
+    }
+}
+
+void
+BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
+                                   NetworkPtr& network) {
+
+    if (network_data->contains("ddns-send-updates")) {
+        network->setDdnsSendUpdates(getBoolean(network_data, "ddns-send-updates"));
+    }
+
+    if (network_data->contains("ddns-override-no-update")) {
+        network->setDdnsOverrideNoUpdate(getBoolean(network_data, "ddns-override-no-update"));
+    }
+
+    if (network_data->contains("ddns-override-client-update")) {
+        network->setDdnsOverrideClientUpdate(getBoolean(network_data, "ddns-override-client-update"));
+    }
+
+    if (network_data->contains("ddns-replace-client-name")) {
+        network->setDdnsReplaceClientNameMode(getAndConvert<D2ClientConfig::ReplaceClientNameMode,
+                                                            D2ClientConfig::stringToReplaceClientNameMode>
+                                                            (network_data, "ddns-replace-client-name", 
+                                                             "ReplaceClientName mode"));
+    }
+
+    if (network_data->contains("ddns-generated-prefix")) {
+        network->setDdnsGeneratedPrefix(getString(network_data, "ddns-generated-prefix"));
+    }
+
+    if (network_data->contains("ddns-qualifying-suffix")) {
+        network->setDdnsQualifyingSuffix(getString(network_data, "ddns-qualifying-suffix"));
     }
 }
 

@@ -2763,6 +2763,24 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->get4o6().getSubnet4o6().unspecified());
     EXPECT_TRUE(subnet->get4o6().getSubnet4o6().get().first.isV6Zero());
     EXPECT_EQ(128, subnet->get4o6().getSubnet4o6().get().second);
+
+    EXPECT_TRUE(subnet->getDdnsSendUpdates().unspecified());
+    EXPECT_FALSE(subnet->getDdnsSendUpdates().get());
+
+    EXPECT_TRUE(subnet->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_FALSE(subnet->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_TRUE(subnet->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(subnet->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_TRUE(subnet->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, subnet->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_TRUE(subnet->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_TRUE(subnet->getDdnsGeneratedPrefix().empty());
+
+    EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().empty());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2816,6 +2834,24 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     EXPECT_TRUE(subnet->getRapidCommit().unspecified());
     EXPECT_FALSE(subnet->getRapidCommit().get());
+
+    EXPECT_TRUE(subnet->getDdnsSendUpdates().unspecified());
+    EXPECT_FALSE(subnet->getDdnsSendUpdates().get());
+
+    EXPECT_TRUE(subnet->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_FALSE(subnet->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_TRUE(subnet->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(subnet->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_TRUE(subnet->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, subnet->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_TRUE(subnet->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ("", subnet->getDdnsGeneratedPrefix().get());
+
+    EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().empty());
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -2870,6 +2906,24 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getAuthoritative().unspecified());
     EXPECT_FALSE(network->getAuthoritative().get());
+
+    EXPECT_TRUE(network->getDdnsSendUpdates().unspecified());
+    EXPECT_FALSE(network->getDdnsSendUpdates().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, network->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().empty());
+
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -2924,9 +2978,25 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getRapidCommit().unspecified());
     EXPECT_FALSE(network->getRapidCommit().get());
+
+    EXPECT_TRUE(network->getDdnsSendUpdates().unspecified());
+    EXPECT_FALSE(network->getDdnsSendUpdates().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, network->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().empty());
+
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
 }
-
-
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in

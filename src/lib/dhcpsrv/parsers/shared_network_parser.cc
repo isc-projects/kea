@@ -174,6 +174,8 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         parseTeePercents(shared_network_data, network);
 
+        // Parse DDNS parameters
+        parseDdnsParams(shared_network_data, network);
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;
@@ -326,6 +328,8 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         parseTeePercents(shared_network_data, network);
 
+        // Parse DDNS parameters
+        parseDdnsParams(shared_network_data, network);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");

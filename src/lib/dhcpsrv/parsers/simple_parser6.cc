@@ -76,7 +76,13 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "t2-percent",                   Element::real },
     { "loggers",                      Element::list },
     { "hostname-char-set",            Element::string },
-    { "hostname-char-replacement",    Element::string }
+    { "hostname-char-replacement",    Element::string },
+    { "ddns-send-updates",            Element::boolean },
+    { "ddns-override-no-update",      Element::boolean },
+    { "ddns-override-client-update",  Element::boolean },
+    { "ddns-replace-client-name",     Element::string },
+    { "ddns-generated-prefix",        Element::string },
+    { "ddns-qualifying-suffix",       Element::string }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -85,15 +91,22 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
 /// in Dhcp6) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
-    { "preferred-lifetime",       Element::integer, "3600" },
-    { "valid-lifetime",           Element::integer, "7200" },
-    { "decline-probation-period", Element::integer, "86400" }, // 24h
-    { "dhcp4o6-port",             Element::integer, "0" },
-    { "server-tag",               Element::string,  "" },
-    { "reservation-mode",         Element::string,  "all" },
-    { "calculate-tee-times",      Element::boolean, "true" },
-    { "t1-percent",               Element::real,    ".50" },
-    { "t2-percent",               Element::real,    ".80" }
+    { "preferred-lifetime",             Element::integer, "3600" },
+    { "valid-lifetime",                 Element::integer, "7200" },
+    { "decline-probation-period",       Element::integer, "86400" }, // 24h
+    { "dhcp4o6-port",                   Element::integer, "0" },
+    { "server-tag",                     Element::string,  "" },
+    { "reservation-mode",               Element::string,  "all" },
+    { "calculate-tee-times",            Element::boolean, "true" },
+    { "t1-percent",                     Element::real,    ".50" },
+    { "t2-percent",                     Element::real,    ".80" },
+    { "ddns-send-updates",              Element::boolean, "false" },
+    { "ddns-override-no-update",        Element::boolean, "false" },
+    { "ddns-override-client-update",    Element::boolean, "false" },
+    { "ddns-replace-client-name",       Element::string, "never" },
+    { "ddns-generated-prefix",          Element::string, "myhost" },
+    // TKM should this still be true? qualifying-suffix has no default ??
+    { "ddns-generated-suffix",          Element::string, "" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -159,33 +172,39 @@ const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
 /// list and map types for entries.
 /// Order follows subnet6_param rule in bison grammar.
 const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
-    { "preferred-lifetime",     Element::integer },
-    { "min-preferred-lifetime", Element::integer },
-    { "max-preferred-lifetime", Element::integer },
-    { "valid-lifetime",         Element::integer },
-    { "min-valid-lifetime",     Element::integer },
-    { "max-valid-lifetime",     Element::integer },
-    { "renew-timer",            Element::integer },
-    { "rebind-timer",           Element::integer },
-    { "option-data",            Element::list },
-    { "pools",                  Element::list },
-    { "pd-pools",               Element::list },
-    { "subnet",                 Element::string },
-    { "interface",              Element::string },
-    { "interface-id",           Element::string },
-    { "id",                     Element::integer },
-    { "rapid-commit",           Element::boolean },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "reservations",           Element::list },
-    { "reservation-mode",       Element::string },
-    { "relay",                  Element::map },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "calculate-tee-times",    Element::boolean },
-    { "t1-percent",             Element::real },
-    { "t2-percent",             Element::real },
-    { "metadata",               Element::map }
+    { "preferred-lifetime",             Element::integer },
+    { "min-preferred-lifetime",         Element::integer },
+    { "max-preferred-lifetime",         Element::integer },
+    { "valid-lifetime",                 Element::integer },
+    { "min-valid-lifetime",             Element::integer },
+    { "max-valid-lifetime",             Element::integer },
+    { "renew-timer",                    Element::integer },
+    { "rebind-timer",                   Element::integer },
+    { "option-data",                    Element::list },
+    { "pools",                          Element::list },
+    { "pd-pools",                       Element::list },
+    { "subnet",                         Element::string },
+    { "interface",                      Element::string },
+    { "interface-id",                   Element::string },
+    { "id",                             Element::integer },
+    { "rapid-commit",                   Element::boolean },
+    { "client-class",                   Element::string },
+    { "require-client-classes",         Element::list },
+    { "reservations",                   Element::list },
+    { "reservation-mode",               Element::string },
+    { "relay",                          Element::map },
+    { "user-context",                   Element::map },
+    { "comment",                        Element::string },
+    { "calculate-tee-times",            Element::boolean },
+    { "t1-percent",                     Element::real },
+    { "t2-percent",                     Element::real },
+    { "ddns-send-updates",              Element::boolean },
+    { "ddns-override-no-update",        Element::boolean },
+    { "ddns-override-client-update",    Element::boolean },
+    { "ddns-replace-client-name",       Element::string },
+    { "ddns-generated-prefix",          Element::string },
+    { "ddns-qualifying-suffix",         Element::string },
+    { "metadata",                       Element::map }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -231,7 +250,13 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "max-valid-lifetime",
     "calculate-tee-times",
     "t1-percent",
-    "t2-percent"
+    "t2-percent",
+    "ddns-send-updates",
+    "ddns-override-no-update",
+    "ddns-override-client-update",
+    "ddns-replace-client-name",
+    "ddns-generated-prefix",
+    "ddns-qualifying-suffix"
 };
 
 /// @brief This table defines all pool parameters.
@@ -274,30 +299,36 @@ const SimpleKeywords SimpleParser6::PD_POOL6_PARAMETERS = {
 /// list and map types for entries.
 /// Order follows shared_network_param rule in bison grammar.
 const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
-    { "name",                   Element::string },
-    { "subnet6",                Element::list },
-    { "interface",              Element::string },
-    { "interface-id",           Element::string },
-    { "renew-timer",            Element::integer },
-    { "rebind-timer",           Element::integer },
-    { "option-data",            Element::list },
-    { "relay",                  Element::map },
-    { "reservation-mode",       Element::string },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "preferred-lifetime",     Element::integer },
-    { "min-preferred-lifetime", Element::integer },
-    { "max-preferred-lifetime", Element::integer },
-    { "rapid-commit",           Element::boolean },
-    { "valid-lifetime",         Element::integer },
-    { "min-valid-lifetime",     Element::integer },
-    { "max-valid-lifetime",     Element::integer },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "calculate-tee-times",    Element::boolean },
-    { "t1-percent",             Element::real },
-    { "t2-percent",             Element::real },
-    { "metadata",               Element::map }
+    { "name",                           Element::string },
+    { "subnet6",                        Element::list },
+    { "interface",                      Element::string },
+    { "interface-id",                   Element::string },
+    { "renew-timer",                    Element::integer },
+    { "rebind-timer",                   Element::integer },
+    { "option-data",                    Element::list },
+    { "relay",                          Element::map },
+    { "reservation-mode",               Element::string },
+    { "client-class",                   Element::string },
+    { "require-client-classes",         Element::list },
+    { "preferred-lifetime",             Element::integer },
+    { "min-preferred-lifetime",         Element::integer },
+    { "max-preferred-lifetime",         Element::integer },
+    { "rapid-commit",                   Element::boolean },
+    { "valid-lifetime",                 Element::integer },
+    { "min-valid-lifetime",             Element::integer },
+    { "max-valid-lifetime",             Element::integer },
+    { "user-context",                   Element::map },
+    { "comment",                        Element::string },
+    { "calculate-tee-times",            Element::boolean },
+    { "t1-percent",                     Element::real },
+    { "t2-percent",                     Element::real },
+    { "ddns-send-updates",              Element::boolean },
+    { "ddns-override-no-update",        Element::boolean },
+    { "ddns-override-client-update",    Element::boolean },
+    { "ddns-replace-client-name",       Element::string },
+    { "ddns-generated-prefix",          Element::string },
+    { "ddns-qualifying-suffix",         Element::string },
+    { "metadata",                       Element::map }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.

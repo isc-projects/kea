@@ -192,17 +192,25 @@ TEST(CfgSharedNetworks4Test, unparse) {
     SharedNetwork4Ptr network1(new SharedNetwork4("frog"));
     SharedNetwork4Ptr network2(new SharedNetwork4("dog"));
     SharedNetwork4Ptr network3(new SharedNetwork4("cat"));
+
     network1->setIface("eth0");
     network1->addRelayAddress(IOAddress("198.16.1.1"));
     network1->addRelayAddress(IOAddress("198.16.1.2"));
     network1->setCalculateTeeTimes(true);
     network1->setT1Percent(.35);
     network1->setT2Percent(.655);
+    network1->setDdnsSendUpdates(true);
+    network1->setDdnsOverrideNoUpdate(true);
+    network1->setDdnsOverrideClientUpdate(true);
+    network1->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    network1->setDdnsGeneratedPrefix("prefix");
+    network1->setDdnsQualifyingSuffix("example.com.");
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
     network2->setT2(Triplet<uint32_t>(200));
     network2->setValid(Triplet<uint32_t>(200, 300, 400));
+    network2->setDdnsSendUpdates(false);
 
     network3->setIface("eth2");
     network3->setValid(Triplet<uint32_t>(100));
@@ -223,6 +231,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"valid-lifetime\": 100\n"
         "  },\n"
         "  {\n"
+        "    \"ddns-send-updates\": false,\n"
         "    \"interface\": \"eth1\",\n"
         "    \"name\": \"dog\",\n"
         "    \"rebind-timer\": 200,\n"
@@ -236,6 +245,12 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "  },\n"
         "  {\n"
         "    \"calculate-tee-times\": true,\n"
+        "    \"ddns-generated-prefix\": \"prefix\",\n"
+        "    \"ddns-override-no-update\": true,\n"
+        "    \"ddns-override-client-update\": true,\n"
+        "    \"ddns-qualifying-suffix\": \"example.com.\",\n"
+        "    \"ddns-replace-client-name\": \"always\",\n"
+        "    \"ddns-send-updates\": true,\n"
         "    \"interface\": \"eth0\",\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"

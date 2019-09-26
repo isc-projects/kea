@@ -62,13 +62,30 @@ protected:
                           NetworkPtr& network);
 
     /// @brief Parses host reservation mode.
-    //
+    ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
     void parseHostReservationMode(const data::ConstElementPtr& network_data,
                                   NetworkPtr& network);
+
+    /// @brief Parses parameters pertaining to DDNS behavior.
+    ///
+    /// The parsed parameters are:
+    /// - ddns-send-updates
+    /// - ddns-override-no-update
+    /// - ddns-override-client-update
+    /// - ddns-replace-client-name
+    /// - ddns-generated-prefix
+    /// - ddns-qualifying-suffix
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    void parseDdnsParams(const data::ConstElementPtr& network_data,
+                         NetworkPtr& network);
 };
 
 } // end of namespace isc::dhcp

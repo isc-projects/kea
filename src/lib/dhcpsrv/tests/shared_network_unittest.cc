@@ -66,6 +66,24 @@ TEST(SharedNetwork4Test, defaults) {
 
     EXPECT_TRUE(network->getAuthoritative().unspecified());
     EXPECT_FALSE(network->getAuthoritative().get());
+
+    EXPECT_TRUE(network->getDdnsSendUpdates().unspecified());
+    EXPECT_FALSE(network->getDdnsSendUpdates().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, network->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().empty());
+
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
 }
 
 // This test verifies that shared network can be given a name and that
@@ -679,6 +697,24 @@ TEST(SharedNetwork6Test, defaults) {
 
     EXPECT_TRUE(network->getRapidCommit().unspecified());
     EXPECT_FALSE(network->getRapidCommit().get());
+
+    EXPECT_TRUE(network->getDdnsSendUpdates().unspecified());
+    EXPECT_FALSE(network->getDdnsSendUpdates().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(network->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_TRUE(network->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, network->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_TRUE(network->getDdnsGeneratedPrefix().empty());
+
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
 }
 
 // This test verifies that shared network can be given a name and that

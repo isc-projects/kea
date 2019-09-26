@@ -128,7 +128,6 @@ public:
             EXPECT_EQ(global_value,
                       ((*net_child).*GetMethodPointer)(Network::Inheritance::GLOBAL).get());
 
-
             EXPECT_TRUE(((*net_child).*GetMethodPointer)(Network::Inheritance::NONE).unspecified());
             EXPECT_TRUE(((*net_child).*GetMethodPointer)(Network::Inheritance::PARENT_NETWORK).unspecified());
         }
@@ -174,6 +173,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("next-server", Element::create("192.0.2.3"));
     globals_->set("server-hostname", Element::create("g"));
     globals_->set("boot-file-name", Element::create("g"));
+    globals_->set("ddns-send-updates", Element::create(true));
+    globals_->set("ddns-override-no-update", Element::create(true));
+    globals_->set("ddns-override-client-update", Element::create(true));
+    globals_->set("ddns-replace-client-name", Element::create("always"));
+    globals_->set("ddns-generated-prefix", Element::create("gp"));
+    globals_->set("ddns-qualifying-suffix", Element::create("gs"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -260,6 +265,44 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network4::setFilename,
                                              "n", "g");
     }
+    {
+        SCOPED_TRACE("ddns-send-updates");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsSendUpdates,
+                                             &Network4::setDdnsSendUpdates,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-override-no-update");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideNoUpdate,
+                                             &Network4::setDdnsOverrideNoUpdate,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-override-client-update");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideClientUpdate,
+                                             &Network4::setDdnsOverrideClientUpdate,
+                                             false, true);
+    }
+
+    {
+        SCOPED_TRACE("ddns-replace-client-name");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
+                                             &Network4::setDdnsReplaceClientNameMode,
+                                             D2ClientConfig::RCM_WHEN_PRESENT,
+                                             D2ClientConfig::RCM_ALWAYS); 
+    }
+    {
+        SCOPED_TRACE("ddns-generated-prefix");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsGeneratedPrefix,
+                                             &Network4::setDdnsGeneratedPrefix,
+                                             "np", "gp");
+    }
+    {
+        SCOPED_TRACE("ddns-qualifying-suffix");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsQualifyingSuffix,
+                                             &Network4::setDdnsQualifyingSuffix,
+                                             "ns", "gs");
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -268,6 +311,12 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     // Set global values for each parameter.
     globals_->set("preferred-lifetime", Element::create(80));
     globals_->set("rapid-commit", Element::create(false));
+    globals_->set("ddns-send-updates", Element::create(true));
+    globals_->set("ddns-override-no-update", Element::create(true));
+    globals_->set("ddns-override-client-update", Element::create(true));
+    globals_->set("ddns-replace-client-name", Element::create("always"));
+    globals_->set("ddns-generated-prefix", Element::create("gp"));
+    globals_->set("ddns-qualifying-suffix", Element::create("gs"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -283,6 +332,44 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getRapidCommit,
                                              &Network6::setRapidCommit,
                                              true, false);
+    }
+    {
+        SCOPED_TRACE("ddns-send-updates");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsSendUpdates,
+                                             &Network4::setDdnsSendUpdates,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-override-no-update");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideNoUpdate,
+                                             &Network4::setDdnsOverrideNoUpdate,
+                                             false, true);
+    }
+    {
+        SCOPED_TRACE("ddns-override-client-update");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsOverrideClientUpdate,
+                                             &Network4::setDdnsOverrideClientUpdate,
+                                             false, true);
+    }
+
+    {
+        SCOPED_TRACE("ddns-replace-client-name");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReplaceClientNameMode,
+                                             &Network4::setDdnsReplaceClientNameMode,
+                                             D2ClientConfig::RCM_WHEN_PRESENT,
+                                             D2ClientConfig::RCM_ALWAYS); 
+    }
+    {
+        SCOPED_TRACE("ddns-generated-prefix");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsGeneratedPrefix,
+                                             &Network4::setDdnsGeneratedPrefix,
+                                             "np", "gp");
+    }
+    {
+        SCOPED_TRACE("ddns-qualifying-suffix");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsQualifyingSuffix,
+                                             &Network4::setDdnsQualifyingSuffix,
+                                             "ns", "gs");
     }
 
     // Interface-id requires special type of test.

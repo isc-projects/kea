@@ -242,6 +242,32 @@ Network::toElement() const {
         map->set("t2-percent", Element::create(t2_percent_));
     }
 
+    if (!ddns_send_updates_.unspecified()) {
+        map->set("ddns-send-updates", Element::create(ddns_send_updates_));
+    }
+
+    if (!ddns_override_no_update_.unspecified()) {
+        map->set("ddns-override-no-update", Element::create(ddns_override_no_update_));
+    }
+
+    if (!ddns_override_client_update_.unspecified()) {
+        map->set("ddns-override-client-update", Element::create(ddns_override_client_update_));
+    }
+
+    if (!ddns_replace_client_name_mode_.unspecified()) {
+        map->set("ddns-replace-client-name",
+                  Element::create(D2ClientConfig::
+                                  replaceClientNameModeToString(ddns_replace_client_name_mode_)));
+    }
+
+    if (!ddns_generated_prefix_.unspecified()) {
+        map->set("ddns-generated-prefix", Element::create(ddns_generated_prefix_));
+    }
+
+    if (!ddns_qualifying_suffix_.unspecified()) {
+        map->set("ddns-qualifying-suffix", Element::create(ddns_qualifying_suffix_));
+    }
+
     return (map);
 }
 

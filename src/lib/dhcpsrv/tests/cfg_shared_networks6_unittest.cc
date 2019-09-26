@@ -200,12 +200,19 @@ TEST(CfgSharedNetworks6Test, unparse) {
     network1->setCalculateTeeTimes(true);
     network1->setT1Percent(.35);
     network1->setT2Percent(.655);
+    network1->setDdnsSendUpdates(true);
+    network1->setDdnsOverrideNoUpdate(true);
+    network1->setDdnsOverrideClientUpdate(true);
+    network1->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    network1->setDdnsGeneratedPrefix("prefix");
+    network1->setDdnsQualifyingSuffix("example.com.");
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
     network2->setT2(Triplet<uint32_t>(200));
     network2->setPreferred(Triplet<uint32_t>(200));
     network2->setValid(Triplet<uint32_t>(300));
+    network2->setDdnsSendUpdates(false);
 
     network3->setIface("eth2");
     network3->setPreferred(Triplet<uint32_t>(100,200,300));
@@ -232,6 +239,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"max-valid-lifetime\": 400\n"
         "  },\n"
         "  {\n"
+        "    \"ddns-send-updates\": false,\n"
         "    \"interface\": \"eth1\",\n"
         "    \"name\": \"dog\",\n"
         "    \"option-data\": [ ],\n"
@@ -244,6 +252,12 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "  },\n"
         "  {\n"
         "    \"calculate-tee-times\": true,\n"
+        "    \"ddns-generated-prefix\": \"prefix\",\n"
+        "    \"ddns-override-no-update\": true,\n"
+        "    \"ddns-override-client-update\": true,\n"
+        "    \"ddns-qualifying-suffix\": \"example.com.\",\n"
+        "    \"ddns-replace-client-name\": \"always\",\n"
+        "    \"ddns-send-updates\": true,\n"
         "    \"interface\": \"eth0\",\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"

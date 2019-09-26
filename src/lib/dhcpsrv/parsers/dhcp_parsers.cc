@@ -925,6 +925,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
+
+    // Parse DDNS parameters
+    parseDdnsParams(params, network);
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1314,6 +1317,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse t1-percent and t2-percent
     parseTeePercents(params, network);
+
+    // Parse DDNS parameters
+    parseDdnsParams(params, network);
 }
 
 //**************************** Subnet6ListConfigParser ********************

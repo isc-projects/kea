@@ -16,6 +16,7 @@
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/triplet.h>
 #include <util/optional.h>
 #include <boost/shared_ptr.hpp>
@@ -203,7 +204,9 @@ public:
     Network()
         : iface_name_(), client_class_(), t1_(), t2_(), valid_(),
           host_reservation_mode_(HR_ALL, true), cfg_option_(new CfgOption()),
-          calculate_tee_times_(), t1_percent_(), t2_percent_() {
+          calculate_tee_times_(), t1_percent_(), t2_percent_(),
+          ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
+          ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_() {
     }
 
     /// @brief Virtual destructor.
@@ -517,6 +520,132 @@ public:
         t2_percent_ = t2_percent;
     }
 
+    /// @brief Returns ddns-send-updates
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsSendUpdates(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsSendUpdates, ddns_send_updates_,
+                                     inheritance, "ddns-send-updates"));
+    }
+
+    /// @brief Sets new ddns-send-updates  
+    ///
+    /// @param ddns_send_updates_ New value to use.
+    void setDdnsSendUpdates(const util::Optional<bool>& ddns_send_updates) {
+        ddns_send_updates_ = ddns_send_updates;
+    }
+
+    /// @brief Returns ddns-override-no-update 
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsOverrideNoUpdate(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsOverrideNoUpdate, ddns_override_no_update_,
+                                     inheritance, "ddns-override-no-update"));
+    }
+
+    /// @brief Sets new ddns-override-no-update 
+    ///
+    /// @param ddns_override_no_update New value to use.
+    void setDdnsOverrideNoUpdate(const util::Optional<bool>& ddns_override_no_update) {
+        ddns_override_no_update_ = ddns_override_no_update;
+    }
+
+    /// @brief Returns ddns-overridie-client-update 
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<bool>
+    getDdnsOverrideClientUpdate(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsOverrideClientUpdate, ddns_override_client_update_,
+                                     inheritance, "ddns-override-client-update"));
+    }
+
+    /// @brief Sets new ddns-override-client-update  
+    ///
+    /// @param ddns-override-client-update New value to use.
+    void setDdnsOverrideClientUpdate(const util::Optional<bool>& ddns_override_client_update) {
+        ddns_override_client_update_ = ddns_override_client_update;
+    }
+
+    /// @brief Returns ddns-replace-client-name-mode 
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<D2ClientConfig::ReplaceClientNameMode>
+    getDdnsReplaceClientNameMode(const Inheritance& inheritance = Inheritance::ALL) const {
+        // Inheritance for ddns-replace-client-name is a little different than for other
+        // parameters. The value at the global level is given as a string.
+        // Thus we call getProperty here without a global name to check if it
+        // is specified on network level only.
+        const util::Optional<D2ClientConfig::ReplaceClientNameMode>& mode
+            = getProperty<Network>(&Network::getDdnsReplaceClientNameMode, 
+                                   ddns_replace_client_name_mode_, inheritance);
+
+        // If it is not specified at network level we need this special
+        // case code to convert the global string value to an enum.
+        if (mode.unspecified() && (inheritance != Inheritance::NONE) &&
+            (inheritance != Inheritance::PARENT_NETWORK)) {
+            // Get global mode.
+            util::Optional<std::string> mode_label;
+            mode_label = getGlobalProperty(mode_label, "ddns-replace-client-name");
+            if (!mode_label.unspecified()) {
+                try {
+                    // If the mode is globally configured, convert it to an enum.
+                    return (D2ClientConfig::stringToReplaceClientNameMode(mode_label.get()));
+                } catch (...) {
+                    // This should not really happen because the configuration
+                    // parser should have already verified the globally configured
+                    // reservation mode. However, we want to be 100% sure that this
+                    // method doesn't throw. Let's just return unspecified.
+                    return (mode);
+                }
+            }
+        }
+        return (mode);
+    }
+
+    /// @brief Sets new ddns-replace-client-name-mode  
+    ///
+    /// @param ddns_replace_client_name_mode New value to use.
+    void setDdnsReplaceClientNameMode(const util::Optional<D2ClientConfig::ReplaceClientNameMode>& 
+                                          ddns_replace_client_name_mode) {
+        ddns_replace_client_name_mode_ = ddns_replace_client_name_mode;
+    }
+
+    /// @brief Returns ddns-generated-prefix 
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getDdnsGeneratedPrefix(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsGeneratedPrefix, ddns_generated_prefix_,
+                                     inheritance, "ddns-generated-prefix"));
+    }
+
+    /// @brief Sets new ddns-generated-prefix
+    ///
+    /// @param ddns_generated-prefix New value to use.
+    void setDdnsGeneratedPrefix(const util::Optional<std::string>& ddns_generated_prefix) {
+        ddns_generated_prefix_ = ddns_generated_prefix;
+    }
+
+    /// @brief Returns ddns-qualifying-suffix 
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getDdnsQualifyingSuffix(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsQualifyingSuffix, ddns_qualifying_suffix_,
+                                     inheritance, "ddns-qualifying-suffix"));
+    }
+
+    /// @brief Sets new ddns-qualifying-suffix  
+    ///
+    /// @param ddns_qualifying_suffix New value to use.
+    void setDdnsQualifyingSuffix(const util::Optional<std::string>& ddns_qualifying_suffix) {
+        ddns_qualifying_suffix_ = ddns_qualifying_suffix;
+    }
+
+
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -778,6 +907,26 @@ protected:
 
     /// @brief Percentage of the lease lifetime to use when calculating T2 timer
     util::Optional<double> t2_percent_;
+
+    /// @brief Should Kea perform DNS updates. Used to provide scoped enabling
+    /// and disabling of updates.
+    util::Optional<bool> ddns_send_updates_;
+
+    /// @brief Should Kea perform updates, even if client requested no updates.
+    /// Overrides the client request for no updates via the N flag.
+    util::Optional<bool> ddns_override_no_update_;
+
+    /// @brief Should Kea perform updates, even if client requested delegation.
+    util::Optional<bool> ddns_override_client_update_;
+
+    /// @brief How Kea should handle the domain-name supplied by the client.
+    util::Optional<D2ClientConfig::ReplaceClientNameMode> ddns_replace_client_name_mode_;
+
+    /// @brief Prefix Kea should use when generating domain-names.
+    util::Optional<std::string> ddns_generated_prefix_;
+
+    /// @brief Suffix Kea should use when to qualify partial domain-names.
+    util::Optional<std::string> ddns_qualifying_suffix_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

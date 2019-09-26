@@ -135,6 +135,12 @@ public:
                 "    \"calculate-tee-times\": true,"
                 "    \"t1-percent\": 0.345,"
                 "    \"t2-percent\": 0.721,"
+                "    \"ddns-send-updates\": true,"
+                "    \"ddns-override-no-update\": true,"
+                "    \"ddns-override-client-update\": true,"
+                "    \"ddns-replace-client-name\": \"always\","
+                "    \"ddns-generated-prefix\": \"prefix\","
+                "    \"ddns-qualifying-suffix\": \"example.com.\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -246,6 +252,12 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
     EXPECT_EQ("example.org", network->getSname().get());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, network->getHostReservationMode());
+    EXPECT_TRUE(network->getDdnsSendUpdates().get());
+    EXPECT_TRUE(network->getDdnsOverrideNoUpdate().get());
+    EXPECT_TRUE(network->getDdnsOverrideClientUpdate().get());
+    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, network->getDdnsReplaceClientNameMode().get());
+    EXPECT_EQ("prefix", network->getDdnsGeneratedPrefix().get());
+    EXPECT_EQ("example.com.", network->getDdnsQualifyingSuffix().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -445,6 +457,12 @@ public:
                 "    \"calculate-tee-times\": true,"
                 "    \"t1-percent\": 0.345,"
                 "    \"t2-percent\": 0.721,"
+                "    \"ddns-send-updates\": true,"
+                "    \"ddns-override-no-update\": true,"
+                "    \"ddns-override-client-update\": true,"
+                "    \"ddns-replace-client-name\": \"always\","
+                "    \"ddns-generated-prefix\": \"prefix\","
+                "    \"ddns-qualifying-suffix\": \"example.com.\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -537,6 +555,12 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
+    EXPECT_TRUE(network->getDdnsSendUpdates().get());
+    EXPECT_TRUE(network->getDdnsOverrideNoUpdate().get());
+    EXPECT_TRUE(network->getDdnsOverrideClientUpdate().get());
+    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, network->getDdnsReplaceClientNameMode().get());
+    EXPECT_EQ("prefix", network->getDdnsGeneratedPrefix().get());
+    EXPECT_EQ("example.com.", network->getDdnsQualifyingSuffix().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
