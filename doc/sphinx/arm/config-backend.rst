@@ -101,8 +101,8 @@ CB in the Kea 1.6.0 release:
     subscriber and would like to subscribe, please contact info@isc.org and
     our sales team will assist you.
 
-    The schema creation script can be found here `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>` and
-    we have some related design documents in gitlab `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`.
+    The schema creation script can be found here `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__ and
+    we have some related design documents in gitlab `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__.
 
 .. note::
 
