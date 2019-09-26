@@ -55,6 +55,7 @@ SYSTEMS = {
                '10'],
     'freebsd': ['11.2',
                 '12.0'],
+    'alpine': ['3.10']
 }
 
 # pylint: disable=C0326
@@ -86,6 +87,7 @@ IMAGE_TEMPLATES = {
     'debian-10-virtualbox':    {'bare': 'debian/buster64',             'kea': 'godfryd/kea-debian-10'},
     'freebsd-11.2-virtualbox': {'bare': 'generic/freebsd11',           'kea': 'godfryd/kea-freebsd-11.2'},
     'freebsd-12.0-virtualbox': {'bare': 'generic/freebsd12',           'kea': 'godfryd/kea-freebsd-12.0'},
+    'alpine-3.10-lxc':         {'bare': 'godfryd/lxc-alpine-3.10',     'kea': 'godfryd/kea-alpine-3.10'},
 }
 
 LXC_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
@@ -170,6 +172,18 @@ def get_system_revision():
             revision = revision[0]
         elif system == 'centos':
             revision = revision[0]
+        else:
+            if os.path.exists('/etc/os-release'):
+                vals = {}
+                with open('/etc/os-release') as f:
+                    for l in f.readlines():
+                        if '=' in l:
+                            key, val = l.split('=', 1)
+                            vals[key.strip()] = val.strip()
+                system = vals['ID']
+                revision = vals['VERSION_ID']
+                if system == 'alpine':
+                    revision = revision.rsplit('.', 1)[0]
     elif system == 'FreeBSD':
         system = system.lower()
         revision = platform.release()
@@ -308,6 +322,18 @@ def _prepare_installed_packages_cache_for_rpms():
     return pkg_cache
 
 
+def _prepare_installed_packages_cache_for_alpine():
+    pkg_cache = {}
+
+    _, out = execute("apk list -I\\n'", timeout=15, capture=True, quiet=True)
+
+    for line in out.splitlines():
+        name = line.strip()
+        pkg_cache[name] = dict(status='ii')
+
+    return pkg_cache
+
+
 def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
     """Install native packages in a system.
 
@@ -323,11 +349,13 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
         pkgs = pkgs.split()
 
     # prepare cache if needed
-    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu']:
+    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu']:#, 'alpine']: # TODO: complete caching support for alpine
         if system in ['centos', 'rhel', 'fedora']:
             pkg_cache.update(_prepare_installed_packages_cache_for_rpms())
         elif system in ['debian', 'ubuntu']:
             pkg_cache.update(_prepare_installed_packages_cache_for_debs())
+        elif system in ['alpine']:
+            pkg_cache.update(_prepare_installed_packages_cache_for_alpine())
 
     # check if packages actually need to be installed
     if pkg_cache:
@@ -355,8 +383,10 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache={}):
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
         cmd = 'sudo pkg install -y'
+    elif system == 'alpine':
+        cmd = 'sudo apk add'
     else:
-        raise NotImplementedError
+        raise NotImplementedError('no implementation for %s' % system)
 
     pkgs = ' '.join(pkgs)
     cmd += ' ' + pkgs
@@ -663,13 +693,14 @@ class VagrantEnv(object):
             os.makedirs(pkgs_dir)
 
             if self.system in ['ubuntu', 'debian']:
-                # TODO: change to pkgs folder
                 execute('scp -F %s -r default:/home/vagrant/kea-src/isc-kea_* .' % ssh_cfg_path, cwd=pkgs_dir)
                 execute('scp -F %s -r default:/home/vagrant/kea-src/*deb .' % ssh_cfg_path, cwd=pkgs_dir)
             elif self.system in ['fedora', 'centos', 'rhel']:
                 execute('scp -F %s -r default:/home/vagrant/pkgs/* .' % ssh_cfg_path, cwd=pkgs_dir)
+            elif self.system in ['alpine']:
+                execute('scp -F %s -r default:/home/vagrant/packages/vagrant/x86_64/* .' % ssh_cfg_path, cwd=pkgs_dir)
             else:
-                raise NotImplementedError
+                raise NotImplementedError('no implementation for %s' % self.system)
 
             if upload:
                 repo_url = _get_full_repo_url(repository_url, self.system, self.revision, pkg_version)
@@ -684,10 +715,15 @@ class VagrantEnv(object):
                     upload_cmd += ' --upload-file %s '
                     file_ext = '.rpm'
 
+                elif self.system == 'alpine':
+                    upload_cmd += ' --upload-file %s '
+                    file_ext = ''
+                    repo_url = urljoin(repo_url, '%s/v%s/x86_64/' % (pkg_isc_version, self.revision))
+
                 upload_cmd += ' ' + repo_url
 
                 for fn in os.listdir(pkgs_dir):
-                    if not fn.endswith(file_ext):
+                    if file_ext and not fn.endswith(file_ext):
                         continue
                     fp = os.path.join(pkgs_dir, fn)
                     cmd = upload_cmd % fp
@@ -819,6 +855,7 @@ def _install_gtest_sources():
         cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
         cmd += 'https://github.com/google/googletest/archive/release-1.8.0.tar.gz'
         execute(cmd)
+        execute('sudo mkdir -p /usr/src')
         execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
         os.unlink('/tmp/gtest.tar.gz')
 
@@ -830,10 +867,15 @@ def _configure_mysql(system, revision, features):
         execute('sudo systemctl start mariadb.service')
         time.sleep(5)
 
-    if system == 'freebsd':
+    elif system == 'freebsd':
         cmd = "echo 'SET PASSWORD = \"\";' "
         cmd += "| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '#')\" --connect-expired-password"
         execute(cmd, raise_error=False)
+
+    elif system == 'alpine':
+        execute('sudo rc-update add mariadb')
+        execute('sudo /etc/init.d/mariadb setup', raise_error=False)
+        execute('sudo /etc/init.d/mariadb start')
 
     cmd = "echo 'DROP DATABASE IF EXISTS keatest;' | sudo mysql -u root"
     execute(cmd)
@@ -894,6 +936,9 @@ def _configure_pgsql(system, features):
     if system == 'freebsd':
         # echo or redirection to stdout is needed otherwise the script will hang at "line = p.stdout.readline()"
         execute('sudo service postgresql start && echo "PostgreSQL started"')
+    elif system == 'alpine':
+        execute('sudo rc-update add postgresql')
+        execute('sudo /etc/init.d/postgresql start')
     else:
         execute('sudo systemctl enable postgresql.service')
         execute('sudo systemctl start postgresql.service')
@@ -1012,7 +1057,7 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     elif system in ['debian', 'ubuntu']:
         install_pkgs('nettle-dev', env=env, check_times=check_times)
     else:
-        raise NotImplementedError
+        raise NotImplementedError('no implementation for %s' % system)
 
     # checkout sources, build them and install
     execute('rm -rf freeradius-client')
@@ -1287,8 +1332,37 @@ def prepare_system_local(features, check_times):
             execute('sudo service mysql-server start', env=env, check_times=check_times,
                     raise_error=False)
 
+    # prepare alpine
+    elif system == 'alpine':
+
+        execute('sudo adduser vagrant abuild')
+
+        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
+                    'boost-libs', 'boost-dev']
+
+        if 'docs' in features:
+            packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
+
+        if 'unittest' in features:
+            _install_gtest_sources()
+
+        if 'mysql' in features:
+            packages.extend(['mariadb-dev', 'mariadb', 'mariadb-client'])
+
+        if 'pgsql' in features:
+            packages.extend(['postgresql-dev', 'postgresql'])
+
+        if 'native-pkg' in features:
+            packages.extend(['alpine-sdk'])
+
+        install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
+
+        # log4cplus needs to be taken from extra repository, edge testing
+        execute('sudo apk add log4cplus log4cplus-dev --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted',
+                env=env, timeout=60, check_times=check_times)
+
     else:
-        raise NotImplementedError
+        raise NotImplementedError('no implementation for %s' % system)
 
     if 'mysql' in features:
         _configure_mysql(system, revision, features)
@@ -1361,7 +1435,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-cql=/usr/bin/pkg-config'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
-        if system in ['centos', 'fedora', 'rhel', 'freebsd']:
+        if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine']:
             cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
         elif system == 'debian' and revision == '8':
             cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
@@ -1373,7 +1447,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             else:
                 cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
         else:
-            raise NotImplementedError
+            raise NotImplementedError('no implementation for %s' % system)
     if 'docs' in features and not (system == 'rhel' and revision == '8'):
         cmd += ' --enable-generate-docs'
         if system == 'debian' and revision == '8':
@@ -1408,7 +1482,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'distcheck' in features:
         cmd = 'make distcheck'
     else:
-        cmd = 'make -C doc/sphinx -j%s' % cpus
+        cmd = 'make -j%s' % cpus
     execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
@@ -1474,7 +1548,8 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'install' in features:
         execute('sudo make install', timeout=2 * 60,
                 cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
-        execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
+        if system != 'alpine':
+            execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
 
         if 'forge' in features:
             if 'mysql' in features:
@@ -1483,9 +1558,139 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
                 execute('kea-admin db-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
 
 
+def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
+               pkg_version, pkg_isc_version, repo_url):
+    # install our freeradius-client but now from rpm
+    cmd = 'bash -c "cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
+    cmd += '[nexus]\n'
+    cmd += 'name=ISC Repo\n'
+    cmd += 'baseurl=%s\n' % repo_url
+    cmd += 'enabled=1\n'
+    cmd += 'gpgcheck=0\n'
+    cmd += "EOF\n\""
+    execute(cmd)
+    frc = []
+    if system == 'fedora' and revision == '28':
+        frc.append('freeradius-client-1.1.7-isc20190916210635.fc28')
+        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc28')
+    elif system == 'fedora' and revision == '29':
+        frc.append('freeradius-client-1.1.7-isc20190916210635.fc29')
+        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc29')
+    elif system == 'fedora' and revision == '30':
+        frc.append('freeradius-client-1.1.7-isc20190916210635.fc30')
+        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc30')
+    elif system == 'centos':
+        frc.append('freeradius-client-1.1.7-isc20190916210635.el7')
+        frc.append('freeradius-client-devel-1.1.7-isc20190916210635.el7')
+    if frc:
+        install_pkgs(frc, env=env, check_times=check_times)
+
+    # unpack kea sources tarball
+    execute('sudo rm -rf kea-src', dry_run=dry_run)
+    os.mkdir('kea-src')
+    execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
+    src_path = glob.glob('kea-src/*')[0]
+
+    # prepare folder for all pkgs
+    if os.path.exists('pkgs'):
+        execute('rm -rf pkgs')
+    os.mkdir('pkgs')
+
+    # prepare RPM environment
+    execute('rm -rf rpm-root')
+    os.mkdir('rpm-root')
+    os.mkdir('rpm-root/BUILD')
+    os.mkdir('rpm-root/BUILDROOT')
+    os.mkdir('rpm-root/RPMS')
+    os.mkdir('rpm-root/SOURCES')
+    os.mkdir('rpm-root/SPECS')
+    os.mkdir('rpm-root/SRPMS')
+
+    # get rpm.spec from tarball
+    rpm_dir = os.path.join(src_path, 'rpm')
+    for f in os.listdir(rpm_dir):
+        if f == 'kea.spec':
+            continue
+        execute('cp %s rpm-root/SOURCES' % os.path.join(rpm_dir, f), check_times=check_times, dry_run=dry_run)
+    execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times, dry_run=dry_run)
+    execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
+
+    # do rpm build
+    cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
+    cmd += " -D'_topdir /home/vagrant/rpm-root'"
+    cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
+    cmd = cmd % (pkg_version, pkg_isc_version)
+    execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
+
+    if 'install' in features:
+        execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
+        execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
+
+    execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
+
+
+def _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
+               pkg_version, pkg_isc_version, repo_url):
+    if system == 'debian' and revision == '9':
+        # debian 9 does not support apt-installing over https, so install proper transport
+        install_pkgs('apt-transport-https', env=env, check_times=check_times)
+    # install our freeradius-client but now from deb
+    execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
+    key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
+    execute('wget -qO- %s | sudo apt-key add -' % key_url,
+            env=env, check_times=check_times)
+    # try apt update for up to 10 times if there is an error
+    for _ in range(10):
+        _, out = _apt_update(system, revision, capture=True)
+        if 'Bad header data' not in out:
+            break
+        time.sleep(4)
+    install_pkgs('libfreeradius-client=1.1.7-isc20190916210635 libfreeradius-client-dev=1.1.7-isc20190916210635', env=env, check_times=check_times)
+
+    # unpack tarball
+    execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
+    os.mkdir('kea-src')
+    execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
+    src_path = glob.glob('kea-src/*')[0]
+
+    # update version, etc
+    execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+    execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+
+    # do deb build
+    env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
+    env['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
+    cmd = 'debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR --prepend-path=/usr/lib/ccache -i -us -uc -b'
+    execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
+
+    if 'install' in features:
+        execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
+
+
+def _build_alpine_apk(system, revision, features, tarball_path, env, check_times, dry_run,
+                      pkg_version, pkg_isc_version, repo_url):
+    # unpack tarball
+    execute('sudo rm -rf kea-src packages', check_times=check_times, dry_run=dry_run)
+    os.makedirs('kea-src/src')
+    execute('tar -zxf %s' % tarball_path, check_times=check_times, dry_run=dry_run)
+    execute('mv kea-%s/alpine/* kea-src' % pkg_version, check_times=check_times, dry_run=dry_run)
+    execute('rm -rf kea-%s' % pkg_version, check_times=check_times, dry_run=dry_run)
+    cmd = 'export kea_chks=`sha512sum kea-%s.tar.gz`; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % pkg_version
+    execute(cmd, check_times=check_times, dry_run=dry_run)
+    cmd = 'sed -i -e s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
+    execute(cmd, check_times=check_times, dry_run=dry_run)
+    cmd = 'sed -i -e s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version
+    execute(cmd, check_times=check_times, dry_run=dry_run)
+    execute('mv kea-%s.tar.gz kea-src' % pkg_version, check_times=check_times, dry_run=dry_run)
+    execute('abuild-keygen -n -a -i', check_times=check_times, dry_run=dry_run)
+    execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
+
+    if 'install' in features:
+        execute('sudo apk add *.apk', cwd='packages/vagrant/x86_64', check_times=check_times, dry_run=dry_run)
+
 def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
                       pkg_version, pkg_isc_version, repository_url):
-    """Build native (RPM or DEB) packages."""
+    """Build native (RPM or DEB or Alpine APK) packages."""
 
     # enable ccache if requested
     env = _prepare_ccache_if_needed(system, ccache_dir, env)
@@ -1494,112 +1699,19 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     assert repo_url is not None
 
     if system in ['fedora', 'centos', 'rhel']:
-        # install our freeradius-client but now from rpm
-        cmd = 'bash -c "cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
-        cmd += '[nexus]\n'
-        cmd += 'name=ISC Repo\n'
-        cmd += 'baseurl=%s\n' % repo_url
-        cmd += 'enabled=1\n'
-        cmd += 'gpgcheck=0\n'
-        cmd += "EOF\n\""
-        execute(cmd)
-        frc = []
-        if system == 'fedora' and revision == '28':
-            frc.append('freeradius-client-1.1.7-isc20190916210635.fc28')
-            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc28')
-        elif system == 'fedora' and revision == '29':
-            frc.append('freeradius-client-1.1.7-isc20190916210635.fc29')
-            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc29')
-        elif system == 'fedora' and revision == '30':
-            frc.append('freeradius-client-1.1.7-isc20190916210635.fc30')
-            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc30')
-        elif system == 'centos':
-            frc.append('freeradius-client-1.1.7-isc20190916210635.el7')
-            frc.append('freeradius-client-devel-1.1.7-isc20190916210635.el7')
-        if frc:
-            install_pkgs(frc, env=env, check_times=check_times)
-
-        # unpack kea sources tarball
-        execute('sudo rm -rf kea-src', dry_run=dry_run)
-        os.mkdir('kea-src')
-        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
-        src_path = glob.glob('kea-src/*')[0]
-
-        # prepare folder for all pkgs
-        if os.path.exists('pkgs'):
-            execute('rm -rf pkgs')
-        os.mkdir('pkgs')
-
-        # prepare RPM environment
-        execute('rm -rf rpm-root')
-        os.mkdir('rpm-root')
-        os.mkdir('rpm-root/BUILD')
-        os.mkdir('rpm-root/BUILDROOT')
-        os.mkdir('rpm-root/RPMS')
-        os.mkdir('rpm-root/SOURCES')
-        os.mkdir('rpm-root/SPECS')
-        os.mkdir('rpm-root/SRPMS')
-
-        # get rpm.spec from tarball
-        rpm_dir = os.path.join(src_path, 'rpm')
-        for f in os.listdir(rpm_dir):
-            if f == 'kea.spec':
-                continue
-            execute('cp %s rpm-root/SOURCES' % os.path.join(rpm_dir, f), check_times=check_times, dry_run=dry_run)
-        execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times, dry_run=dry_run)
-        execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
-
-        # do rpm build
-        cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba rpm-root/SPECS/kea.spec"
-        cmd += " -D'_topdir /home/vagrant/rpm-root'"
-        cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
-        cmd = cmd % (pkg_version, pkg_isc_version)
-        execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
-
-        if 'install' in features:
-            execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
-            execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
-
-        execute('mv rpm-root/RPMS/x86_64/*rpm pkgs', check_times=check_times, dry_run=dry_run)
+        _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
+                   pkg_version, pkg_isc_version, repo_url)
 
     elif system in ['ubuntu', 'debian']:
-        if system == 'debian' and revision == '9':
-            # debian 9 does not support apt-installing over https, so install proper transport
-            install_pkgs('apt-transport-https', env=env, check_times=check_times)
-        # install our freeradius-client but now from deb
-        execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
-        key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
-        execute('wget -qO- %s | sudo apt-key add -' % key_url,
-                env=env, check_times=check_times)
-        # try apt update for up to 10 times if there is an error
-        for _ in range(10):
-            _, out = _apt_update(system, revision, capture=True)
-            if 'Bad header data' not in out:
-                break
-            time.sleep(4)
-        install_pkgs('libfreeradius-client=1.1.7-isc20190916210635 libfreeradius-client-dev=1.1.7-isc20190916210635', env=env, check_times=check_times)
+        _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
+                   pkg_version, pkg_isc_version, repo_url)
 
-        # unpack tarball
-        execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
-        os.mkdir('kea-src')
-        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
-        src_path = glob.glob('kea-src/*')[0]
-
-        # update version, etc
-        execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
-        execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
-
-        # do deb build
-        env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
-        env['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
-        cmd = 'debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR --prepend-path=/usr/lib/ccache -i -us -uc -b'
-        execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
-
-        if 'install' in features:
-            execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
+    elif system in ['alpine']:
+        _build_alpine_apk(system, revision, features, tarball_path, env, check_times, dry_run,
+                          pkg_version, pkg_isc_version, repo_url)
 
     else:
-        raise NotImplementedError
+        raise NotImplementedError('no implementation for %s' % system)
 
 
 def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, pkg_version, pkg_isc_version,
@@ -1718,7 +1830,7 @@ def _install_vagrant(ver='2.2.4', upgrade=False):
         os.unlink('/tmp/%s' % deb)
     else:
         # TODO: check for packages here: https://www.vagrantup.com/downloads.html
-        raise NotImplementedError
+        raise NotImplementedError('no implementation for %s' % system)
 
 
 def ensure_hammer_deps():
@@ -1740,6 +1852,10 @@ def ensure_hammer_deps():
     exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
     if exitcode != 0:
         execute('vagrant plugin install vagrant-lxc')
+
+    exitcode = execute('vagrant plugin list | grep vagrant-alpine', raise_error=False)
+    if exitcode != 0:
+        execute('vagrant plugin install vagrant-alpine')
 
 
 class CollectCommaSeparatedArgsAction(argparse.Action):
