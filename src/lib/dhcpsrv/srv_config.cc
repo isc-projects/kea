@@ -578,5 +578,20 @@ SrvConfig::toElement() const {
     return (result);
 }
 
+DdnsParamsPtr SrvConfig::getDdnsParams(const Subnet& subnet) const {
+    DdnsParamsPtr params(new DdnsParams());
+
+    params->enable_updates_ = (getD2ClientConfig()->getEnableUpdates() &&
+                                  subnet.getDdnsSendUpdates().get());
+
+    params->override_no_update_ = subnet.getDdnsOverrideNoUpdate().get();
+    params->override_client_update_ = subnet.getDdnsOverrideClientUpdate().get();
+    params->replace_client_name_mode_= subnet.getDdnsReplaceClientNameMode().get();
+    params->generated_prefix_ = subnet.getDdnsGeneratedPrefix().get();
+    params->qualifying_suffix_ = subnet.getDdnsQualifyingSuffix().get();
+
+    return params;
+}
+
 }
 }

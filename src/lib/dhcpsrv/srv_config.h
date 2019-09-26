@@ -405,6 +405,23 @@ public:
         return (hooks_config_);
     }
 
+    /// @brief Fetches the DDNS parameters for the given subnet
+    ///
+    /// Creates a DdnsParams structure populated with the scoped
+    /// values for DDNS behaviorial parameters. The scope mode used
+    /// is Network::ALL.
+    ///
+    /// - enable_updates_ = (DhcpDdns.enable-updates && scoped ddns-enable-updates)
+    /// - override_no_update_ = scoped ddns-override-no-update
+    /// - override_client_update_ = scoped ddns-override-no-update
+    /// - replace_client_name_mode_  = scoped ddns-replace-client-name
+    /// - generated_prefix_ =  scoped ddns-generated-prefix
+    /// - qualifying_suffix_ = scoped ddns-qualifying-suffix
+    ///
+    /// @parm subnet Subnet for which DDNS parameters are desired.
+    /// @return pointer to DddnParams instance
+    DdnsParamsPtr getDdnsParams(const Subnet& subnet) const;
+
     /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to

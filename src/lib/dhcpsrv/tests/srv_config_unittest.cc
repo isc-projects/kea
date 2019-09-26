@@ -47,7 +47,7 @@ public:
           ref_dictionary_(new ClientClassDictionary()) {
 
         // Disable DDNS.
-        enableDDNS(false);
+        enableD2Client(false);
 
         // Create IPv4 subnets.
         for (int i = 0; i < TEST_SUBNETS_NUM; ++i) {
@@ -120,7 +120,7 @@ public:
     ///
     /// @param enable A boolean value indicating if the DDNS should be
     /// enabled (true) or disabled (false).
-    void enableDDNS(const bool enable);
+    void enableD2Client(const bool enable);
 
     /// @brief Stores configuration.
     SrvConfig conf_;
@@ -154,7 +154,7 @@ SrvConfigTest::addSubnet6(const unsigned int index) {
 }
 
 void
-SrvConfigTest::enableDDNS(const bool enable) {
+SrvConfigTest::enableD2Client(const bool enable) {
     const D2ClientConfigPtr& d2_config = conf_.getD2ClientConfig();
     ASSERT_TRUE(d2_config);
     d2_config->enableUpdates(enable);
@@ -197,11 +197,11 @@ TEST_F(SrvConfigTest, summaryDDNS) {
     EXPECT_EQ("DDNS: disabled",
               conf_.getConfigSummary(SrvConfig::CFGSEL_DDNS));
 
-    enableDDNS(true);
+    enableD2Client(true);
     EXPECT_EQ("DDNS: enabled",
               conf_.getConfigSummary(SrvConfig::CFGSEL_DDNS));
 
-    enableDDNS(false);
+    enableD2Client(false);
     EXPECT_EQ("no IPv4 subnets!; no IPv6 subnets!; DDNS: disabled",
               conf_.getConfigSummary(SrvConfig::CFGSEL_ALL));
 }
@@ -1106,6 +1106,188 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     EXPECT_TRUE(isEquivalent(expected_globals, cfg_to.getConfiguredGlobals()));
 
+}
+
+TEST_F(SrvConfigTest, getDdnsParamsTest4) {
+    DdnsParamsPtr params;
+
+    CfgMgr::instance().setFamily(AF_INET);
+    SrvConfig conf(32);
+
+    // This disables D2 connectivity. When it is false, updates
+    // are off at all scopes, regardless of ddns-send-updates values.
+    enableD2Client(false);
+
+    // Disable sending updates globally.
+    conf.addConfiguredGlobal("ddns-send-updates", Element::create(false));
+
+    // Add a plain subnet
+    Triplet<uint32_t> def_triplet;
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"), 24,
+                                    def_triplet, def_triplet, 4000, SubnetID(1)));
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a subnet we need to set a callback function for each
+    // subnet to allow for fetching global parameters.
+    subnet1->setFetchGlobalsFn([conf]() -> ConstElementPtr {
+        return (conf.getConfiguredGlobals());
+    });
+
+    conf.getCfgSubnets4()->add(subnet1);
+
+    // Add a shared network
+    SharedNetwork4Ptr frognet(new SharedNetwork4("frog"));
+    conf.getCfgSharedNetworks4()->add(frognet);
+
+    // Add a shared subnet
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24,
+                                    def_triplet, def_triplet, 4000, SubnetID(2)));
+
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a subnet we need to set a callback function for each
+    // subnet to allow for fetching global parameters.
+    subnet2->setFetchGlobalsFn([conf]() -> ConstElementPtr {
+        return (conf.getConfiguredGlobals());
+    });
+
+    frognet->add(subnet2);
+    subnet2->setDdnsSendUpdates(true);
+    subnet2->setDdnsOverrideNoUpdate(true);
+    subnet2->setDdnsOverrideClientUpdate(true);
+    subnet2->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    subnet2->setDdnsGeneratedPrefix("prefix");
+    subnet2->setDdnsQualifyingSuffix("example.com.");
+
+    // Get DDNS params for subnet1.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+
+    // Verify subnet1 values are right. Note, updates should be disabled.
+    EXPECT_FALSE(params->enable_updates_);
+    EXPECT_FALSE(params->override_no_update_);
+    EXPECT_FALSE(params->override_client_update_);
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->replace_client_name_mode_);
+    EXPECT_TRUE(params->generated_prefix_.empty());
+    EXPECT_TRUE(params->qualifying_suffix_.empty());
+
+    // Get DDNS params for subnet2.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
+
+    // Verify subnet1 values are right. Note, updates should be disabled,
+    // because D2Client is disabled.
+    EXPECT_FALSE(params->enable_updates_);
+    EXPECT_TRUE(params->override_no_update_);
+    EXPECT_TRUE(params->override_client_update_);
+    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->replace_client_name_mode_);
+    EXPECT_EQ("prefix", params->generated_prefix_);
+    EXPECT_EQ("example.com.", params->qualifying_suffix_);
+
+    // Enable D2Client.
+    enableD2Client(true);
+
+    // Make sure subnet1 udpates are still disabled.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+    EXPECT_FALSE(params->enable_updates_);
+
+    // Make sure subnet2 udpates are now enabled.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
+    EXPECT_TRUE(params->enable_updates_);
+
+    // Enable sending updates globally.  This should inherit down subnet1.
+    conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
+
+    // Make sure subnet1 udpates are now enabled.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+    EXPECT_TRUE(params->enable_updates_);
+}
+
+TEST_F(SrvConfigTest, getDdnsParamsTest6) {
+    DdnsParamsPtr params;
+
+    CfgMgr::instance().setFamily(AF_INET);
+    SrvConfig conf(32);
+
+    // This disables D2 connectivity. When it is false, updates
+    // are off at all scopes, regardless of ddns-send-updates values.
+    enableD2Client(false);
+
+    // Disable sending updates globally.
+    conf.addConfiguredGlobal("ddns-send-updates", Element::create(false));
+
+    // Add a plain subnet
+    Triplet<uint32_t> def_triplet;
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64,
+                                   1000, 2000, 3000, 4000, SubnetID(1)));
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a subnet we need to set a callback function for each
+    // subnet to allow for fetching global parameters.
+    subnet1->setFetchGlobalsFn([conf]() -> ConstElementPtr {
+        return (conf.getConfiguredGlobals());
+    });
+
+    conf.getCfgSubnets6()->add(subnet1);
+
+    // Add a shared network
+    SharedNetwork6Ptr frognet(new SharedNetwork6("frog"));
+    conf.getCfgSharedNetworks6()->add(frognet);
+
+    // Add a shared subnet
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 64,
+                                   1000, 2000, 3000, 4000, SubnetID(2)));
+
+    // In order to take advantage of the dynamic inheritance of global
+    // parameters to a subnet we need to set a callback function for each
+    // subnet to allow for fetching global parameters.
+    subnet2->setFetchGlobalsFn([conf]() -> ConstElementPtr {
+        return (conf.getConfiguredGlobals());
+    });
+
+    frognet->add(subnet2);
+    subnet2->setDdnsSendUpdates(true);
+    subnet2->setDdnsOverrideNoUpdate(true);
+    subnet2->setDdnsOverrideClientUpdate(true);
+    subnet2->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    subnet2->setDdnsGeneratedPrefix("prefix");
+    subnet2->setDdnsQualifyingSuffix("example.com.");
+
+    // Get DDNS params for subnet1.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+
+    // Verify subnet1 values are right. Note, updates should be disabled.
+    EXPECT_FALSE(params->enable_updates_);
+    EXPECT_FALSE(params->override_no_update_);
+    EXPECT_FALSE(params->override_client_update_);
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->replace_client_name_mode_);
+    EXPECT_TRUE(params->generated_prefix_.empty());
+    EXPECT_TRUE(params->qualifying_suffix_.empty());
+
+    // Get DDNS params for subnet2.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
+
+    // Verify subnet1 values are right. Note, updates should be disabled,
+    // because D2Client is disabled.
+    EXPECT_FALSE(params->enable_updates_);
+    EXPECT_TRUE(params->override_no_update_);
+    EXPECT_TRUE(params->override_client_update_);
+    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->replace_client_name_mode_);
+    EXPECT_EQ("prefix", params->generated_prefix_);
+    EXPECT_EQ("example.com.", params->qualifying_suffix_);
+
+    // Enable D2Client.
+    enableD2Client(true);
+
+    // Make sure subnet1 udpates are still disabled.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+    EXPECT_FALSE(params->enable_updates_);
+
+    // Make sure subnet2 udpates are now enabled.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
+    EXPECT_TRUE(params->enable_updates_);
+
+    // Enable sending updates globally.  This should inherit down subnet1.
+    conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
+
+    // Make sure subnet1 udpates are now enabled.
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+    EXPECT_TRUE(params->enable_updates_);
 }
 
 } // end of anonymous namespace
