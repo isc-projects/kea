@@ -1,3 +1,7 @@
+1668.	[build]		fdupont
+	The Kea util thread library was removed.
+	(Gitlab #907,!519, git 1b27dc52aae23753643461086f0950b125bf9c93)
+
 1667.	[build]		fdupont
 	The availability of C++11 thead, mutex, condition variable and
 	atomic librairies is now checked by ./configure.
