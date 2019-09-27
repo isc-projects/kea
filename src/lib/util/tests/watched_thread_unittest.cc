@@ -19,7 +19,7 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Test Fixture for testing isc:util::WatchedThread
+/// @brief Test Fixture for testing @c isc::util::WatchedThread
 class WatchedThreadTest : public ::testing::Test {
 public:
     /// @brief Maximum number of passes allowed in worker event loop
