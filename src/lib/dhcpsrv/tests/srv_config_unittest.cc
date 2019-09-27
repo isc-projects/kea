@@ -1120,6 +1120,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
 
     // Disable sending updates globally.
     conf.addConfiguredGlobal("ddns-send-updates", Element::create(false));
+    // Configure global host sanitizing.
+    conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
+    conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1156,6 +1159,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     subnet2->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
     subnet2->setDdnsGeneratedPrefix("prefix");
     subnet2->setDdnsQualifyingSuffix("example.com.");
+    subnet2->setHostnameCharSet("");
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
@@ -1167,11 +1171,19 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->replace_client_name_mode_);
     EXPECT_TRUE(params->generated_prefix_.empty());
     EXPECT_TRUE(params->qualifying_suffix_.empty());
+    EXPECT_EQ("[^A-Z]", params->hostname_char_set_);
+    EXPECT_EQ("x", params->hostname_char_replacement_);
+
+    // We inherited a non-blank hostname_char_set so we
+    // should get a sanitizer instance.
+    isc::util::str::StringSanitizerPtr sanitizer;
+    ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
+    EXPECT_TRUE(sanitizer);
 
     // Get DDNS params for subnet2.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
 
-    // Verify subnet1 values are right. Note, updates should be disabled,
+    // Verify subnet2 values are right. Note, updates should be disabled,
     // because D2Client is disabled.
     EXPECT_FALSE(params->enable_updates_);
     EXPECT_TRUE(params->override_no_update_);
@@ -1179,6 +1191,12 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->replace_client_name_mode_);
     EXPECT_EQ("prefix", params->generated_prefix_);
     EXPECT_EQ("example.com.", params->qualifying_suffix_);
+    EXPECT_EQ("", params->hostname_char_set_);
+    EXPECT_EQ("x", params->hostname_char_replacement_);
+
+    // We have a blank hostname-char-set so we should not get a sanitizer instance.
+    ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
+    ASSERT_FALSE(sanitizer);
 
     // Enable D2Client.
     enableD2Client(true);
@@ -1211,6 +1229,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
 
     // Disable sending updates globally.
     conf.addConfiguredGlobal("ddns-send-updates", Element::create(false));
+    // Configure global host sanitizing.
+    conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
+    conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1247,6 +1268,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     subnet2->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
     subnet2->setDdnsGeneratedPrefix("prefix");
     subnet2->setDdnsQualifyingSuffix("example.com.");
+    subnet2->setHostnameCharSet("");
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
@@ -1258,6 +1280,14 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->replace_client_name_mode_);
     EXPECT_TRUE(params->generated_prefix_.empty());
     EXPECT_TRUE(params->qualifying_suffix_.empty());
+    EXPECT_EQ("[^A-Z]", params->hostname_char_set_);
+    EXPECT_EQ("x", params->hostname_char_replacement_);
+
+    // We inherited a non-blank hostname_char_set so we
+    // should get a sanitizer instance.
+    isc::util::str::StringSanitizerPtr sanitizer;
+    ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
+    EXPECT_TRUE(sanitizer);
 
     // Get DDNS params for subnet2.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
@@ -1270,6 +1300,12 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->replace_client_name_mode_);
     EXPECT_EQ("prefix", params->generated_prefix_);
     EXPECT_EQ("example.com.", params->qualifying_suffix_);
+    EXPECT_EQ("", params->hostname_char_set_);
+    EXPECT_EQ("x", params->hostname_char_replacement_);
+
+    // We have a blank hostname-char-set so we should not get a sanitizer instance.
+    ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
+    ASSERT_FALSE(sanitizer);
 
     // Enable D2Client.
     enableD2Client(true);

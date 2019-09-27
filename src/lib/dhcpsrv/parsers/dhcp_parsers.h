@@ -796,7 +796,6 @@ public:
     /// The elements currently supported are (see isc::dhcp::D2ClientConfig
     /// for details on each):
     /// -# enable-updates
-    /// -# qualifying-suffix
     /// -# server-ip
     /// -# server-port
     /// -# sender-ip
@@ -804,10 +803,6 @@ public:
     /// -# max-queue-size
     /// -# ncr-protocol
     /// -# ncr-format
-    /// -# override-no-update
-    /// -# override-client-update
-    /// -# replace-client-name
-    /// -# generated-prefix
     ///
     /// @return returns a pointer to newly created D2ClientConfig.
     D2ClientConfigPtr parse(isc::data::ConstElementPtr d2_client_cfg);

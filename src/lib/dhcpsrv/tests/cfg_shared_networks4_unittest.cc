@@ -205,6 +205,8 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network1->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
     network1->setDdnsGeneratedPrefix("prefix");
     network1->setDdnsQualifyingSuffix("example.com.");
+    network1->setHostnameCharSet("[^A-Z]");
+    network1->setHostnameCharReplacement("x");
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -257,7 +259,9 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"relay\": { \"ip-addresses\": [ \"198.16.1.1\", \"198.16.1.2\" ] },\n"
         "    \"subnet4\": [ ],\n"
         "    \"t1-percent\": .35,\n"
-        "    \"t2-percent\": .655\n"
+        "    \"t2-percent\": .655,\n"
+        "    \"hostname-char-replacement\": \"x\",\n"
+        "    \"hostname-char-set\": \"[^A-Z]\"\n"
         "  }\n"
         "]\n";
 

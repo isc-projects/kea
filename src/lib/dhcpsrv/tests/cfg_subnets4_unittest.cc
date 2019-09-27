@@ -20,6 +20,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/doubles.h>
 
@@ -1034,6 +1035,14 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet3->setSname("frog");
     subnet3->setFilename("/dev/null");
     subnet3->setValid(Triplet<uint32_t>(100, 200, 300));
+    subnet3->setDdnsSendUpdates(true);
+    subnet3->setDdnsOverrideNoUpdate(true);
+    subnet3->setDdnsOverrideClientUpdate(true);
+    subnet3->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    subnet3->setDdnsGeneratedPrefix("prefix");
+    subnet3->setDdnsQualifyingSuffix("example.com.");
+    subnet3->setHostnameCharSet("[^A-Z]");
+    subnet3->setHostnameCharReplacement("x");
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -1100,8 +1109,17 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"t1-percent\": 0.50,\n"
-        "    \"t2-percent\": 0.65\n"
+        "    \"t2-percent\": 0.65,\n"
+        "    \"ddns-generated-prefix\": \"prefix\",\n"
+        "    \"ddns-override-client-update\": true,\n"
+        "    \"ddns-override-no-update\": true,\n"
+        "    \"ddns-qualifying-suffix\": \"example.com.\",\n"
+        "    \"ddns-replace-client-name\": \"always\",\n"
+        "    \"ddns-send-updates\": true,\n"
+        "    \"hostname-char-replacement\": \"x\",\n"
+        "    \"hostname-char-set\": \"[^A-Z]\"\n"
         "} ]\n";
+
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
 
@@ -1538,6 +1556,63 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         EXPECT_EQ("100", value->str());
         EXPECT_FALSE(repr->get("min-valid-lifetime"));
         EXPECT_FALSE(repr->get("max-valid-lifetime"));
+    }
+}
+
+// This test verifies the Subnet4 parser's validation logic for
+// hostname sanitizer values.
+TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
+
+    // First we create a set of elements that provides all
+    // required for a Subnet4.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"match-client-id\": false, \n"
+        "            \"authoritative\": false, \n"
+        "            \"next-server\": \"\", \n"
+        "            \"server-hostname\": \"\", \n"
+        "            \"boot-file-name\": \"\", \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\", \n"
+        "            \"4o6-interface\": \"\", \n"
+        "            \"4o6-interface-id\": \"\", \n"
+        "            \"4o6-subnet\": \"\" \n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    {
+        SCOPED_TRACE("invalid regular expression");
+
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("hostname-char-set", data::Element::create("^[A-"));
+        copied->set("hostname-char-replacement", data::Element::create("x"));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        EXPECT_THROW_MSG(subnet = parser.parse(copied), DhcpConfigError,
+                         "subnet configuration failed: hostname-char-set "
+                         "'^[A-' is not a valid regular expression");
+
+    }
+    {
+        SCOPED_TRACE("valid regular expression");
+
+        data::ElementPtr copied = data::copy(elems);
+        copied->set("hostname-char-set", data::Element::create("^[A-Z]"));
+        copied->set("hostname-char-replacement", data::Element::create("x"));
+        Subnet4Ptr subnet;
+        Subnet4ConfigParser parser;
+        ASSERT_NO_THROW(subnet = parser.parse(copied));
+        EXPECT_EQ("^[A-Z]", subnet->getHostnameCharSet().get());
+        EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
     }
 }
 

@@ -8,6 +8,7 @@
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
 #include <util/optional.h>
+#include <util/strutil.h>
 
 using namespace isc::data;
 using namespace isc::util;
@@ -186,7 +187,7 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
     if (network_data->contains("ddns-replace-client-name")) {
         network->setDdnsReplaceClientNameMode(getAndConvert<D2ClientConfig::ReplaceClientNameMode,
                                                             D2ClientConfig::stringToReplaceClientNameMode>
-                                                            (network_data, "ddns-replace-client-name", 
+                                                            (network_data, "ddns-replace-client-name",
                                                              "ReplaceClientName mode"));
     }
 
@@ -196,6 +197,31 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
 
     if (network_data->contains("ddns-qualifying-suffix")) {
         network->setDdnsQualifyingSuffix(getString(network_data, "ddns-qualifying-suffix"));
+    }
+
+    std::string hostname_char_set;
+    if (network_data->contains("hostname-char-set")) {
+        hostname_char_set = getString(network_data, "hostname-char-set");
+        network->setHostnameCharSet(hostname_char_set);
+    }
+
+    std::string hostname_char_replacement;
+    if (network_data->contains("hostname-char-replacement")) {
+        hostname_char_replacement = getString(network_data, "hostname-char-replacement");
+        network->setHostnameCharReplacement(hostname_char_replacement);
+    }
+
+    // We need to validate santizer values here so we can detect problems and
+    // cause a configuration.  We dont' retain the compilation because it's not
+    // something we can inherit.
+    if (!hostname_char_set.empty()) {
+        try {
+            str::StringSanitizerPtr sanitizer(new str::StringSanitizer(hostname_char_set,
+                                                                       hostname_char_replacement));
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "hostname-char-set '" << hostname_char_set
+                      << "' is not a valid regular expression");
+        }
     }
 }
 

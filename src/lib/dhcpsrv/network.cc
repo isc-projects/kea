@@ -268,6 +268,14 @@ Network::toElement() const {
         map->set("ddns-qualifying-suffix", Element::create(ddns_qualifying_suffix_));
     }
 
+    if (!hostname_char_set_.unspecified()) {
+        map->set("hostname-char-set", Element::create(hostname_char_set_));
+    }
+
+    if (!hostname_char_replacement_.unspecified()) {
+        map->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
+    }
+
     return (map);
 }
 

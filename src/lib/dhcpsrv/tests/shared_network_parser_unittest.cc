@@ -141,6 +141,8 @@ public:
                 "    \"ddns-replace-client-name\": \"always\","
                 "    \"ddns-generated-prefix\": \"prefix\","
                 "    \"ddns-qualifying-suffix\": \"example.com.\","
+                "    \"hostname-char-set\": \"[^A-Z]\","
+                "    \"hostname-char-replacement\": \"x\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -171,7 +173,8 @@ public:
                 "            \"reservation-mode\": \"all\","
                 "            \"calculate-tee-times\": true,"
                 "            \"t1-percent\": .45,"
-                "            \"t2-percent\": .65"
+                "            \"t2-percent\": .65,"
+                "            \"hostname-char-set\": \"\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -258,6 +261,8 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, network->getDdnsReplaceClientNameMode().get());
     EXPECT_EQ("prefix", network->getDdnsGeneratedPrefix().get());
     EXPECT_EQ("example.com.", network->getDdnsQualifyingSuffix().get());
+    EXPECT_EQ("[^A-Z]", network->getHostnameCharSet().get());
+    EXPECT_EQ("x", network->getHostnameCharReplacement().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -275,20 +280,24 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(context->get("comment"));
 
     // Subnet with id 1
-    Subnet4Ptr subnet1 = network->getSubnet(SubnetID(1));
-    ASSERT_TRUE(subnet1);
-    EXPECT_EQ("10.1.2.0", subnet1->get().first.toText());
-    EXPECT_EQ(300, subnet1->getValid());
-    EXPECT_EQ(200, subnet1->getValid().getMin());
-    EXPECT_EQ(400, subnet1->getValid().getMax());
+    Subnet4Ptr subnet = network->getSubnet(SubnetID(1));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("10.1.2.0", subnet->get().first.toText());
+    EXPECT_EQ(300, subnet->getValid());
+    EXPECT_EQ(200, subnet->getValid().getMin());
+    EXPECT_EQ(400, subnet->getValid().getMax());
+    EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
+    EXPECT_EQ("", subnet->getHostnameCharSet().get());
 
     // Subnet with id 2
-    Subnet4Ptr subnet2 = network->getSubnet(SubnetID(2));
-    ASSERT_TRUE(subnet2);
-    EXPECT_EQ("192.0.2.0", subnet2->get().first.toText());
-    EXPECT_EQ(30, subnet2->getValid());
-    EXPECT_EQ(30, subnet2->getValid().getMin());
-    EXPECT_EQ(30, subnet2->getValid().getMax());
+    subnet = network->getSubnet(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
+    EXPECT_EQ(30, subnet->getValid());
+    EXPECT_EQ(30, subnet->getValid().getMin());
+    EXPECT_EQ(30, subnet->getValid().getMax());
+    EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -463,6 +472,8 @@ public:
                 "    \"ddns-replace-client-name\": \"always\","
                 "    \"ddns-generated-prefix\": \"prefix\","
                 "    \"ddns-qualifying-suffix\": \"example.com.\","
+                "    \"hostname-char-set\": \"[^A-Z]\","
+                "    \"hostname-char-replacement\": \"x\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -486,7 +497,8 @@ public:
                 "            \"client-class\": \"\","
                 "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
-                "            \"rapid-commit\": false"
+                "            \"rapid-commit\": false,"
+                "            \"hostname-char-set\": \"\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -561,6 +573,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, network->getDdnsReplaceClientNameMode().get());
     EXPECT_EQ("prefix", network->getDdnsGeneratedPrefix().get());
     EXPECT_EQ("example.com.", network->getDdnsQualifyingSuffix().get());
+    EXPECT_EQ("[^A-Z]", network->getHostnameCharSet().get());
+    EXPECT_EQ("x", network->getHostnameCharReplacement().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -578,26 +592,30 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(0, context->size());
 
     // Subnet with id 1
-    Subnet6Ptr subnet1 = network->getSubnet(SubnetID(1));
-    ASSERT_TRUE(subnet1);
-    EXPECT_EQ("3000::", subnet1->get().first.toText());
-    EXPECT_EQ(300, subnet1->getPreferred());
-    EXPECT_EQ(200, subnet1->getPreferred().getMin());
-    EXPECT_EQ(400, subnet1->getPreferred().getMax());
-    EXPECT_EQ(400, subnet1->getValid());
-    EXPECT_EQ(300, subnet1->getValid().getMin());
-    EXPECT_EQ(500, subnet1->getValid().getMax());
+    Subnet6Ptr subnet = network->getSubnet(SubnetID(1));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("3000::", subnet->get().first.toText());
+    EXPECT_EQ(300, subnet->getPreferred());
+    EXPECT_EQ(200, subnet->getPreferred().getMin());
+    EXPECT_EQ(400, subnet->getPreferred().getMax());
+    EXPECT_EQ(400, subnet->getValid());
+    EXPECT_EQ(300, subnet->getValid().getMin());
+    EXPECT_EQ(500, subnet->getValid().getMax());
+    EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
+    EXPECT_EQ("", subnet->getHostnameCharSet().get());
 
     // Subnet with id 2
-    Subnet6Ptr subnet2 = network->getSubnet(SubnetID(2));
-    ASSERT_TRUE(subnet2);
-    EXPECT_EQ("2001:db8:1::", subnet2->get().first.toText());
-    EXPECT_EQ(30, subnet2->getPreferred());
-    EXPECT_EQ(30, subnet2->getPreferred().getMin());
-    EXPECT_EQ(30, subnet2->getPreferred().getMax());
-    EXPECT_EQ(40, subnet2->getValid());
-    EXPECT_EQ(40, subnet2->getValid().getMin());
-    EXPECT_EQ(40, subnet2->getValid().getMax());
+    subnet = network->getSubnet(SubnetID(2));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("2001:db8:1::", subnet->get().first.toText());
+    EXPECT_EQ(30, subnet->getPreferred());
+    EXPECT_EQ(30, subnet->getPreferred().getMin());
+    EXPECT_EQ(30, subnet->getPreferred().getMax());
+    EXPECT_EQ(40, subnet->getValid());
+    EXPECT_EQ(40, subnet->getValid().getMin());
+    EXPECT_EQ(40, subnet->getValid().getMax());
+    EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();

@@ -206,7 +206,8 @@ public:
           host_reservation_mode_(HR_ALL, true), cfg_option_(new CfgOption()),
           calculate_tee_times_(), t1_percent_(), t2_percent_(),
           ddns_send_updates_(), ddns_override_no_update_(), ddns_override_client_update_(),
-          ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_() {
+          ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
+          hostname_char_set_(), hostname_char_replacement_() {
     }
 
     /// @brief Virtual destructor.
@@ -529,14 +530,14 @@ public:
                                      inheritance, "ddns-send-updates"));
     }
 
-    /// @brief Sets new ddns-send-updates  
+    /// @brief Sets new ddns-send-updates
     ///
     /// @param ddns_send_updates_ New value to use.
     void setDdnsSendUpdates(const util::Optional<bool>& ddns_send_updates) {
         ddns_send_updates_ = ddns_send_updates;
     }
 
-    /// @brief Returns ddns-override-no-update 
+    /// @brief Returns ddns-override-no-update
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<bool>
@@ -545,14 +546,14 @@ public:
                                      inheritance, "ddns-override-no-update"));
     }
 
-    /// @brief Sets new ddns-override-no-update 
+    /// @brief Sets new ddns-override-no-update
     ///
     /// @param ddns_override_no_update New value to use.
     void setDdnsOverrideNoUpdate(const util::Optional<bool>& ddns_override_no_update) {
         ddns_override_no_update_ = ddns_override_no_update;
     }
 
-    /// @brief Returns ddns-overridie-client-update 
+    /// @brief Returns ddns-overridie-client-update
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<bool>
@@ -561,14 +562,14 @@ public:
                                      inheritance, "ddns-override-client-update"));
     }
 
-    /// @brief Sets new ddns-override-client-update  
+    /// @brief Sets new ddns-override-client-update
     ///
     /// @param ddns-override-client-update New value to use.
     void setDdnsOverrideClientUpdate(const util::Optional<bool>& ddns_override_client_update) {
         ddns_override_client_update_ = ddns_override_client_update;
     }
 
-    /// @brief Returns ddns-replace-client-name-mode 
+    /// @brief Returns ddns-replace-client-name-mode
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<D2ClientConfig::ReplaceClientNameMode>
@@ -578,7 +579,7 @@ public:
         // Thus we call getProperty here without a global name to check if it
         // is specified on network level only.
         const util::Optional<D2ClientConfig::ReplaceClientNameMode>& mode
-            = getProperty<Network>(&Network::getDdnsReplaceClientNameMode, 
+            = getProperty<Network>(&Network::getDdnsReplaceClientNameMode,
                                    ddns_replace_client_name_mode_, inheritance);
 
         // If it is not specified at network level we need this special
@@ -604,15 +605,15 @@ public:
         return (mode);
     }
 
-    /// @brief Sets new ddns-replace-client-name-mode  
+    /// @brief Sets new ddns-replace-client-name-mode
     ///
     /// @param ddns_replace_client_name_mode New value to use.
-    void setDdnsReplaceClientNameMode(const util::Optional<D2ClientConfig::ReplaceClientNameMode>& 
+    void setDdnsReplaceClientNameMode(const util::Optional<D2ClientConfig::ReplaceClientNameMode>&
                                           ddns_replace_client_name_mode) {
         ddns_replace_client_name_mode_ = ddns_replace_client_name_mode;
     }
 
-    /// @brief Returns ddns-generated-prefix 
+    /// @brief Returns ddns-generated-prefix
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<std::string>
@@ -628,7 +629,7 @@ public:
         ddns_generated_prefix_ = ddns_generated_prefix;
     }
 
-    /// @brief Returns ddns-qualifying-suffix 
+    /// @brief Returns ddns-qualifying-suffix
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<std::string>
@@ -637,14 +638,40 @@ public:
                                      inheritance, "ddns-qualifying-suffix"));
     }
 
-    /// @brief Sets new ddns-qualifying-suffix  
+    /// @brief Sets new ddns-qualifying-suffix
     ///
     /// @param ddns_qualifying_suffix New value to use.
     void setDdnsQualifyingSuffix(const util::Optional<std::string>& ddns_qualifying_suffix) {
         ddns_qualifying_suffix_ = ddns_qualifying_suffix;
     }
 
+    /// @brief Return the char set regexp used to sanitize client hostnames.
+    util::Optional<std::string>
+    getHostnameCharSet(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getHostnameCharSet, hostname_char_set_,
+                                     inheritance, "hostname-char-set"));
+    }
 
+    /// @brief Sets new hostname-char-set
+    ///
+    /// @param hostname_char_set New value to use.
+    void setHostnameCharSet(const util::Optional<std::string>& hostname_char_set) {
+        hostname_char_set_ = hostname_char_set;
+    }
+
+    /// @brief Return the invalid char replacement used to sanitize client hostnames.
+    util::Optional<std::string>
+    getHostnameCharReplacement(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getHostnameCharReplacement, hostname_char_replacement_,
+                                     inheritance, "hostname-char-replacement"));
+    }
+
+    /// @brief Sets new hostname-char-replacement
+    ///
+    /// @param hostname_char_replacement New value to use.
+    void setHostnameCharReplacement(const util::Optional<std::string>& hostname_char_replacement) {
+        hostname_char_replacement_ = hostname_char_replacement;
+    }
 
     /// @brief Unparses network object.
     ///
@@ -927,6 +954,14 @@ protected:
 
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     util::Optional<std::string> ddns_qualifying_suffix_;
+
+    /// @brief Regular expression describing invalid characters for client
+    /// hostnames.
+    util::Optional<std::string> hostname_char_set_;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    util::Optional<std::string> hostname_char_replacement_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///

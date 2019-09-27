@@ -197,8 +197,6 @@ public:
     /// @brief Validates member values.
     ///
     /// Method is used by the constructor to validate member contents.
-    /// Should be called when parsing is complete to (re)compute
-    /// the hostname sanitizer.
     ///
     /// @throw D2ClientError if given an invalid protocol or format.
     virtual void validateContents();
@@ -244,7 +242,8 @@ struct DdnsParams {
     DdnsParams() :
         enable_updates_(false), override_no_update_(false), override_client_update_(false),
         replace_client_name_mode_(D2ClientConfig::RCM_NEVER),
-        generated_prefix_(""), qualifying_suffix_("") {};
+        generated_prefix_(""), qualifying_suffix_(""), hostname_char_set_(""),
+        hostname_char_replacement_("") {};
 
     /// @brief Indicates whether or not DHCP DDNS updating is enabled.
     bool enable_updates_;
@@ -265,8 +264,24 @@ struct DdnsParams {
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     std::string qualifying_suffix_;
 
-    /// @brief Pointer to compiled regular expression string sanitizer
-    util::str::StringSanitizerPtr hostname_sanitizer_;
+    /// @brief Regular expression describing invalid characters for client hostnames.
+    /// If empty, host name scrubbing should not be done.
+    std::string hostname_char_set_;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    std::string hostname_char_replacement_;
+
+    /// @brief Returns a regular expression string sanitizer
+    ///
+    /// If hostname_char_set_ is not empty, then it is used in conjunction
+    /// hostname_char_replacment_ (which may be empty) to create and
+    /// return a StringSanitizer instance.  Otherwise it will return
+    /// an empty pointer.
+    ///
+    /// @return pointer to the StringSanitizer instance or an empty pointer
+    /// @throw BadValue if the compilation fails.
+    isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
 };
 
 /// @brief Defines a pointer for DdnsParams instances.

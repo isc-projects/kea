@@ -214,6 +214,23 @@ D2ClientConfig::toElement() const {
     return (result);
 }
 
+str::StringSanitizerPtr
+DdnsParams::getHostnameSanitizer() const {
+    str::StringSanitizerPtr sanitizer;
+    // If we have a local char_set we need to create the sanitizer.
+    if (!hostname_char_set_.empty()) {
+        try {
+            sanitizer.reset(new str::StringSanitizer(hostname_char_set_,
+                                                     hostname_char_replacement_));
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "hostname_char_set_: '" << hostname_char_set_ <<
+                      "' is not a valid regular expression");
+        }
+    }
+
+    return (sanitizer);
+}
+
 std::ostream&
 operator<<(std::ostream& os, const D2ClientConfig& config) {
     os << config.toText();

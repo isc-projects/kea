@@ -1000,10 +1000,13 @@ TEST(D2ClientMgr, sanitizeFqdnV4) {
     ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
     ddns_params.generated_prefix_ = "prefix";
     ddns_params.qualifying_suffix_ = "suffix.com";
+    ddns_params.hostname_char_set_ = "[^A-Za-z0-9-]";
+    ddns_params.hostname_char_replacement_ = "x";
 
-    // Create and assign the sanitizer.
-    ASSERT_NO_THROW(ddns_params.hostname_sanitizer_.reset(new
-                    isc::util::str::StringSanitizer("[^A-Za-z0-9-]", "x")));
+    // Get the sanitizer.
+    str::StringSanitizerPtr hostname_sanitizer;
+    ASSERT_NO_THROW(hostname_sanitizer = ddns_params.getHostnameSanitizer());
+    ASSERT_TRUE(hostname_sanitizer);
 
     struct Scenario {
         std::string description_;
@@ -1081,10 +1084,13 @@ TEST(D2ClientMgr, sanitizeFqdnV6) {
     ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
     ddns_params.generated_prefix_ = "prefix";
     ddns_params.qualifying_suffix_ = "suffix.com";
+    ddns_params.hostname_char_set_ = "[^A-Za-z0-9-]";
+    ddns_params.hostname_char_replacement_ = "x";
 
-    // Create and assign the sanitizer.
-    ASSERT_NO_THROW(ddns_params.hostname_sanitizer_.reset(new
-                    isc::util::str::StringSanitizer("[^A-Za-z0-9-]", "x")));
+    // Get the sanitizer.
+    str::StringSanitizerPtr hostname_sanitizer;
+    ASSERT_NO_THROW(hostname_sanitizer = ddns_params.getHostnameSanitizer());
+    ASSERT_TRUE(hostname_sanitizer);
 
     struct Scenario {
         std::string description_;

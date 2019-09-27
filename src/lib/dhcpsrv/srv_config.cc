@@ -589,6 +589,8 @@ DdnsParamsPtr SrvConfig::getDdnsParams(const Subnet& subnet) const {
     params->replace_client_name_mode_= subnet.getDdnsReplaceClientNameMode().get();
     params->generated_prefix_ = subnet.getDdnsGeneratedPrefix().get();
     params->qualifying_suffix_ = subnet.getDdnsQualifyingSuffix().get();
+    params->hostname_char_set_ = subnet.getHostnameCharSet().get();
+    params->hostname_char_replacement_ = subnet.getHostnameCharReplacement().get();
 
     return params;
 }

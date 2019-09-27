@@ -111,7 +111,9 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-replace-client-name",       Element::string, "never" },
     { "ddns-generated-prefix",          Element::string, "myhost" },
     // TKM should this still be true? qualifying-suffix has no default ??
-    { "ddns-generated-suffix",          Element::string, "" }
+    { "ddns-generated-suffix",          Element::string, "" },
+    { "hostname-char-set",            Element::string, "" },
+    { "hostname-char-replacement",    Element::string, "" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -211,6 +213,8 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "ddns-replace-client-name",       Element::string },
     { "ddns-generated-prefix",          Element::string },
     { "ddns-qualifying-suffix",         Element::string },
+    { "hostname-char-set",              Element::string },
+    { "hostname-char-replacement",      Element::string },
     { "metadata",                       Element::map },
 };
 
@@ -275,7 +279,9 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "ddns-override-client-update",
     "ddns-replace-client-name",
     "ddns-generated-prefix",
-    "ddns-qualifying-suffix"
+    "ddns-qualifying-suffix",
+    "hostname-char-set",
+    "hostname-char-replacement"
 };
 
 /// @brief This table defines all pool parameters.
@@ -328,6 +334,8 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "ddns-replace-client-name",       Element::string },
     { "ddns-generated-prefix",          Element::string },
     { "ddns-qualifying-suffix",         Element::string },
+    { "hostname-char-set",              Element::string },
+    { "hostname-char-replacement",      Element::string },
     { "metadata",                       Element::map },
 };
 

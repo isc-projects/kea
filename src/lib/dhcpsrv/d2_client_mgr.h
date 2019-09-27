@@ -482,7 +482,8 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
         // Sanitize the name the client sent us, if we're configured to do so.
         std::string client_name = fqdn.getDomainName();
 
-        if (ddns_params.hostname_sanitizer_) {
+        isc::util::str::StringSanitizerPtr sanitizer = ddns_params.getHostnameSanitizer();
+        if (sanitizer) {
             // We need the raw text form, so we can replace escaped chars
             dns::Name tmp(client_name);
             std::string raw_name = tmp.toRawText();
@@ -499,7 +500,7 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
                     ss << ".";
                 }
 
-                ss << ddns_params.hostname_sanitizer_->scrub(*label);
+                ss << sanitizer->scrub(*label);
             }
 
             client_name = ss.str();

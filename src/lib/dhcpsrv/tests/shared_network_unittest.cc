@@ -84,6 +84,12 @@ TEST(SharedNetwork4Test, defaults) {
 
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
+
+    EXPECT_TRUE(network->getHostnameCharSet().unspecified());
+    EXPECT_TRUE(network->getHostnameCharSet().empty());
+
+    EXPECT_TRUE(network->getHostnameCharReplacement().unspecified());
+    EXPECT_TRUE(network->getHostnameCharReplacement().empty());
 }
 
 // This test verifies that shared network can be given a name and that
@@ -715,6 +721,12 @@ TEST(SharedNetwork6Test, defaults) {
 
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(network->getDdnsQualifyingSuffix().empty());
+
+    EXPECT_TRUE(network->getHostnameCharSet().unspecified());
+    EXPECT_TRUE(network->getHostnameCharSet().empty());
+
+    EXPECT_TRUE(network->getHostnameCharReplacement().unspecified());
+    EXPECT_TRUE(network->getHostnameCharReplacement().empty());
 }
 
 // This test verifies that shared network can be given a name and that

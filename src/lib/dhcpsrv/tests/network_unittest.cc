@@ -179,6 +179,8 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("ddns-replace-client-name", Element::create("always"));
     globals_->set("ddns-generated-prefix", Element::create("gp"));
     globals_->set("ddns-qualifying-suffix", Element::create("gs"));
+    globals_->set("hostname-char-set", Element::create("gc"));
+    globals_->set("hostname-char-replacement", Element::create("gr"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -303,6 +305,18 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network4::setDdnsQualifyingSuffix,
                                              "ns", "gs");
     }
+    {
+        SCOPED_TRACE("hostname-char-set");
+        testNetworkInheritance<TestNetwork4>(&Network4::getHostnameCharSet,
+                                             &Network4::setHostnameCharSet,
+                                             "nc", "gc");
+    }
+    {
+        SCOPED_TRACE("hostname-char-replacement");
+        testNetworkInheritance<TestNetwork4>(&Network4::getHostnameCharReplacement,
+                                             &Network4::setHostnameCharReplacement,
+                                             "nr", "gr");
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -317,6 +331,8 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("ddns-replace-client-name", Element::create("always"));
     globals_->set("ddns-generated-prefix", Element::create("gp"));
     globals_->set("ddns-qualifying-suffix", Element::create("gs"));
+    globals_->set("hostname-char-set", Element::create("gc"));
+    globals_->set("hostname-char-replacement", Element::create("gr"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -370,6 +386,18 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork4>(&Network4::getDdnsQualifyingSuffix,
                                              &Network4::setDdnsQualifyingSuffix,
                                              "ns", "gs");
+    }
+    {
+        SCOPED_TRACE("hostname-char-set");
+        testNetworkInheritance<TestNetwork6>(&Network6::getHostnameCharSet,
+                                             &Network6::setHostnameCharSet,
+                                             "nc", "gc");
+    }
+    {
+        SCOPED_TRACE("hostname-char-replacement");
+        testNetworkInheritance<TestNetwork6>(&Network6::getHostnameCharReplacement,
+                                             &Network6::setHostnameCharReplacement,
+                                             "nr", "gr");
     }
 
     // Interface-id requires special type of test.

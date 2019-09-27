@@ -2781,6 +2781,12 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().empty());
+
+    EXPECT_TRUE(subnet->getHostnameCharSet().unspecified());
+    EXPECT_TRUE(subnet->getHostnameCharSet().empty());
+
+    EXPECT_TRUE(subnet->getHostnameCharReplacement().unspecified());
+    EXPECT_TRUE(subnet->getHostnameCharReplacement().empty());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2852,6 +2858,12 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().unspecified());
     EXPECT_TRUE(subnet->getDdnsQualifyingSuffix().empty());
+
+    EXPECT_TRUE(subnet->getHostnameCharSet().unspecified());
+    EXPECT_TRUE(subnet->getHostnameCharSet().empty());
+
+    EXPECT_TRUE(subnet->getHostnameCharReplacement().unspecified());
+    EXPECT_TRUE(subnet->getHostnameCharReplacement().empty());
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
