@@ -1,3 +1,8 @@
+1667.	[build]		fdupont
+	The availability of C++11 thead, mutex, condition variable and
+	atomic librairies is now checked by ./configure.
+	(Gitlab #918,!520, git baf4097520c1cd38366ee4f33a95dde040906e9e)
+
 1666.	[doc]		tmark
 	Added note in ARM about manually admining cb data being possible
 	but not supported.
