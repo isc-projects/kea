@@ -58,6 +58,26 @@ public:
     virtual ConstHostCollection
     getAll6(const SubnetID& subnet_id) const;
 
+    /// @brief Return all hosts with a hostname.
+    ///
+    /// @param hostname The lower case hostname.
+    virtual ConstHostCollection
+    getAllbyHostname(const std::string& hostname) const;
+
+    /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
+
     /// @brief Return range of hosts in a DHCPv4 subnet.
     ///
     /// @param subnet_id Subnet identifier.

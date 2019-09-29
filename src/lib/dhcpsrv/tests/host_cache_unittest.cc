@@ -611,6 +611,20 @@ public:
         return (getCollection());
     }
 
+    ConstHostCollection getAllbyHostname(const std::string&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getAllbyHostname4(const std::string&,
+                                          const SubnetID&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getAllbyHostname6(const std::string&,
+                                          const SubnetID&) const {
+        return (getCollection());
+    }
+
     ConstHostCollection getPage4(const SubnetID&, size_t&, uint64_t,
                                  const HostPageSize&) const {
         return (getCollection());

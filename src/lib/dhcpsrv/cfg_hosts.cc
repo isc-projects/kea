@@ -83,6 +83,64 @@ CfgHosts::getAll6(const SubnetID& subnet_id) {
 }
 
 ConstHostCollection
+CfgHosts::getAllbyHostname(const std::string& hostname) const {
+    // Do not issue logging message here because it will be logged by
+    // the getAllbyHostnameInternal method.
+    ConstHostCollection collection;
+    getAllbyHostnameInternal<ConstHostCollection>(hostname, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAllbyHostname(const std::string& hostname) {
+    // Do not issue logging message here because it will be logged by
+    // the getAllbyHostnameInternal method.
+    HostCollection collection;
+    getAllbyHostnameInternal<HostCollection>(hostname, collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getAllbyHostname4(const std::string& hostname,
+                            const SubnetID& subnet_id) const {
+    // Do not issue logging message here because it will be logged by
+    // the getAllbyHostnameInternal4 method.
+    ConstHostCollection collection;
+    getAllbyHostnameInternal4<ConstHostCollection>(hostname, subnet_id, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAllbyHostname4(const std::string& hostname,
+                            const SubnetID& subnet_id) {
+    // Do not issue logging message here because it will be logged by
+    // the getAllbyHostnameInternal4 method.
+    HostCollection collection;
+    getAllbyHostnameInternal4<HostCollection>(hostname, subnet_id, collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getAllbyHostname6(const std::string& hostname,
+                            const SubnetID& subnet_id) const {
+    // Do not issue logging message here because it will be logged by
+    // the getAllbyHostnameInternal6 method.
+    ConstHostCollection collection;
+    getAllbyHostnameInternal6<ConstHostCollection>(hostname, subnet_id, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAllbyHostname6(const std::string& hostname,
+                            const SubnetID& subnet_id) {
+    // Do not issue logging message here because it will be logged by
+    // the getAllbyHostnameInternal6 method.
+    HostCollection collection;
+    getAllbyHostnameInternal6<HostCollection>(hostname, subnet_id, collection);
+    return (collection);
+}
+
+ConstHostCollection
 CfgHosts::getPage4(const SubnetID& subnet_id,
                    size_t& /*source_index*/,
                    uint64_t lower_host_id,
@@ -269,6 +327,106 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
 
     // Log how many hosts have been found.
     LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT)
+        .arg(subnet_id)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllbyHostnameInternal(const std::string& hostname,
+                                   Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_HOSTNAME)
+        .arg(hostname);
+
+    // Use try hostname.
+    const HostContainerIndex5& idx = hosts_.get<5>();
+
+    // Append each Host object to the storage.
+    for (HostContainerIndex5::iterator host = idx.lower_bound(hostname);
+         host != idx.upper_bound(hostname);
+         ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_HOSTNAME_HOST)
+            .arg(hostname)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_HOSTNAME_COUNT)
+        .arg(hostname)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllbyHostnameInternal4(const std::string& hostname,
+                                    const SubnetID& subnet_id,
+                                    Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+              HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4)
+        .arg(hostname);
+
+    // Use try hostname.
+    const HostContainerIndex5& idx = hosts_.get<5>();
+
+    // Append each Host object to the storage.
+    for (HostContainerIndex5::iterator host = idx.lower_bound(hostname);
+         host != idx.upper_bound(hostname);
+         ++host) {
+        if ((*host)->getIPv4SubnetID() != subnet_id) {
+            continue;
+        }
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST)
+            .arg(hostname)
+            .arg(subnet_id)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+              HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT)
+        .arg(hostname)
+        .arg(subnet_id)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllbyHostnameInternal6(const std::string& hostname,
+                                    const SubnetID& subnet_id,
+                                    Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
+              HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6)
+        .arg(hostname);
+
+    // Use try hostname.
+    const HostContainerIndex5& idx = hosts_.get<5>();
+
+    // Append each Host object to the storage.
+    for (HostContainerIndex5::iterator host = idx.lower_bound(hostname);
+         host != idx.upper_bound(hostname);
+         ++host) {
+        if ((*host)->getIPv6SubnetID() != subnet_id) {
+            continue;
+        }
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST)
+            .arg(hostname)
+            .arg(subnet_id)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+              HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT)
+        .arg(hostname)
         .arg(subnet_id)
         .arg(storage.size());
 }

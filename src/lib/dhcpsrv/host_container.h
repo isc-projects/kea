@@ -88,6 +88,13 @@ typedef boost::multi_index_container<
             // Index using values returned by the @c Host::getHostId
             boost::multi_index::const_mem_fun<Host, uint64_t,
                                               &Host::getHostId>
+        >,
+
+        // Sixth index is used to search for the host using hostname
+        boost::multi_index::ordered_non_unique<
+            // Index using values returned by the @c Host::getLowerHostname
+            boost::multi_index::const_mem_fun<Host, std::string,
+                                              &Host::getLowerHostname>
         >
     >
 > HostContainer;
@@ -140,6 +147,11 @@ typedef HostContainer::nth_index<4>::type HostContainerIndex4;
 /// @brief Results range returned using the @c HostContainerIndex4.
 typedef std::pair<HostContainerIndex4::iterator,
                   HostContainerIndex4::iterator> HostContainerIndex4Range;
+
+/// @brief Sixth index type in the @c HostContainer.
+///
+/// This index allows for searching for @c Host objects using a hostname.
+typedef HostContainer::nth_index<5>::type HostContainerIndex5;
 
 /// @brief Defines one entry for the Host Container for v6 hosts
 ///

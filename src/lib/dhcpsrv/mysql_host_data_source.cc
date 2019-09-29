@@ -1915,6 +1915,9 @@ public:
         GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
         GET_HOST_SUBID4,        // Get hosts by IPv4 SubnetID
         GET_HOST_SUBID6,        // Get hosts by IPv6 SubnetID
+        GET_HOST_HOSTNAME,      // Get host by hostname
+        GET_HOST_HOSTNAME_SUBID4, // Get host by hostname and IPv4 SubnetID
+        GET_HOST_HOSTNAME_SUBID6, // Get host by hostname and IPv6 SubnetID
         GET_HOST_SUBID4_PAGE,   // Get hosts by IPv4 SubnetID beginning by HID
         GET_HOST_SUBID6_PAGE,   // Get hosts by IPv6 SubnetID beginning by HID
         INSERT_HOST,            // Insert new host to collection
@@ -2306,6 +2309,73 @@ TaggedStatementArray tagged_statements = { {
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
             "WHERE h.dhcp6_subnet_id = ? "
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
+
+    // Retrieves host information, IPv6 reservations and both DHCPv4 and
+    // DHCPv6 options associated with the host. The LEFT JOIN clause is used
+    // to retrieve information from 4 different tables using a single query.
+    // Hence, this query returns multiple rows for a single host.
+    {MySqlHostDataSourceImpl::GET_HOST_HOSTNAME,
+            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
+                "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
+                "h.user_context, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
+                "o4.persistent, o4.user_context, "
+                "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
+                "o6.persistent, o6.user_context, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp4_options AS o4 "
+                "ON h.host_id = o4.host_id "
+            "LEFT JOIN dhcp6_options AS o6 "
+                "ON h.host_id = o6.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.hostname = ? "
+            "ORDER BY h.host_id, o4.option_id, o6.option_id, r.reservation_id"},
+
+    // Retrieves host information and DHCPv4 options using hostname and
+    // subnet identifier. Left joining the dhcp4_options table results in
+    // multiple rows being returned for the same host.
+    {MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4,
+            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp4_options AS o "
+                "ON h.host_id = o.host_id "
+            "WHERE h.hostname = ? AND h.dhcp4_subnet_id = ? "
+            "ORDER BY h.host_id, o.option_id"},
+
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // using hostname and subnet identifier. The number of rows returned
+    // is a multiplication of number of IPv6 reservations and DHCPv6 options.
+    {MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID6,
+            "SELECT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp6_options AS o "
+                "ON h.host_id = o.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.hostname = ? AND h.dhcp6_subnet_id = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
     // Retrieves host information along with the DHCPv4 options associated with
@@ -2967,6 +3037,86 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6,
+                             inbind, impl_->host_ipv6_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Hostname
+    char hostname_[HOSTNAME_MAX_LEN];
+    strncpy(hostname_, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
+    unsigned long length = hostname.length();
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = reinterpret_cast<char*>(hostname_);
+    inbind[0].buffer_length = length;
+    inbind[0].length = &length;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME,
+                             inbind, impl_->host_ipv46_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAllbyHostname4(const std::string& hostname,
+                                       const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Hostname
+    char hostname_[HOSTNAME_MAX_LEN];
+    strncpy(hostname_, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
+    unsigned long length = hostname.length();
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = reinterpret_cast<char*>(hostname_);
+    inbind[0].buffer_length = length;
+    inbind[0].length = &length;
+
+    // Subnet ID
+    uint32_t subnet = subnet_id;
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4,
+                             inbind, impl_->host_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAllbyHostname6(const std::string& hostname,
+                                       const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Hostname
+    char hostname_[HOSTNAME_MAX_LEN];
+    strncpy(hostname_, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
+    unsigned long length = hostname.length();
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = reinterpret_cast<char*>(hostname_);
+    inbind[0].buffer_length = length;
+    inbind[0].length = &length;
+
+    // Subnet ID
+    uint32_t subnet = subnet_id;
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4,
                              inbind, impl_->host_ipv6_exchange_,
                              result, false);
     return (result);

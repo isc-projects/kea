@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Fri Feb 08 2019 20:31
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Sun Sep 29 2019 01:57
 
 #ifndef HOSTS_MESSAGES_H
 #define HOSTS_MESSAGES_H
@@ -22,6 +22,15 @@ extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4_HOST;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_HOST;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_COUNT;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_HOST;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT;
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_IDENTIFIER;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT;
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_IDENTIFIER_HOST;

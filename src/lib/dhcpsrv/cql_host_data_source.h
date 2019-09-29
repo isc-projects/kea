@@ -193,6 +193,41 @@ public:
     virtual ConstHostCollection
     getAll6(const SubnetID& subnet_id) const override;
 
+    /// @brief Return all hosts with a hostname.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname.
+    ///
+    /// @param hostname The lower case hostname.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAllbyHostname(const std::string& hostname) const override;
+
+    /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname in a specified subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const override;
+
+    /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname in a specified subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const override;
+
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
     /// Not implemented.

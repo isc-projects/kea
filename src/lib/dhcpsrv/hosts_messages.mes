@@ -73,6 +73,49 @@ This debug message is issued when found host with the reservation
 for the specified IPv6 address. The arguments specify the IPv6 address
 and the detailed description of the host found.
 
+% HOSTS_CFG_GET_ALL_HOSTNAME get all hosts with reservations for hostname %1
+This debug message is issued when starting to retrieve all hosts with
+the specific hostname. The argument specifies hostname.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_COUNT using hostname %1, found %2 host(s)
+This debug message include the details of the host found using the
+hostname. The arguments specify hostname and the number of hosts found
+respectively.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_HOST using hostname %1, found host: %2
+This debug message includes the details of the host found using the hostname.
+The arguments specify hostname and found host details respectively.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4 get all hosts with reservations for hostname %1 and IPv4 subnet %2
+This debug message is issued when starting to retrieve all hosts with
+the specific hostname connected to the specific DHCPv4 subnet. The argument
+specifies hostname and subnet id.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT using hostname %1 and IPv4 subnet %2, found %3 host(s)
+This debug message include the details of the host found using the
+hostname and the DHCPv4 subnet id. The arguments specify hostname,
+subnet id and the number of hosts found respectively.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST using hostname %1 and IPv4 subnet %2, found host: %3
+This debug message includes the details of the host found using the
+hostname and the DHCPv4 subnet id. The arguments specify hostname,
+subnet id and found host details respectively.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6 get all hosts with reservations for hostname %1 and IPv6 subnet %2
+This debug message is issued when starting to retrieve all hosts with
+the specific hostname connected to the specific DHCPv6 subnet. The argument
+specifies hostname and subnet id.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT using hostname %1 and IPv6 subnet %2, found %3 host(s)
+This debug message include the details of the host found using the
+hostname and the DHCPv6 subnet id. The arguments specify hostname,
+subnet id and the number of hosts found respectively.
+
+% HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST using hostname %1 and IPv6 subnet %2, found host: %3
+This debug message includes the details of the host found using the
+hostname and the DHCPv6 subnet id. The arguments specify hostname,
+subnet id and found host details respectively.
+
 % HOSTS_CFG_GET_ALL_IDENTIFIER get all hosts with reservations using identifier: %1
 This debug message is issued when starting to retrieve reservations for all hosts
 identified by HW address or DUID. The argument holds both the identifier

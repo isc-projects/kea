@@ -119,6 +119,76 @@ public:
     virtual HostCollection
     getAll6(const SubnetID& subnet_id);
 
+    /// @brief Return all hosts with a hostname.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname.
+    ///
+    /// @param hostname The lower case hostname.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAllbyHostname(const std::string& hostname) const;
+
+    /// @brief Return all hosts with a hostname.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname.
+    ///
+    /// @param hostname The lower case hostname.
+    ///
+    /// @return Collection of @c Host objects.
+    virtual HostCollection
+    getAllbyHostname(const std::string& hostname);
+
+    /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname in a specified subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname in a specified subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of @c Host objects.
+    virtual HostCollection
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id);
+
+    /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname in a specified subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// using a specified hostname in a specified subnet.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of @c Host objects.
+    virtual HostCollection
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id);
+
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
     /// This method returns a page of @c Host objects which represent
@@ -475,6 +545,52 @@ private:
     template<typename Storage>
     void getAllInternal6(const SubnetID& subnet_id,
                          Storage& storage) const;
+
+    /// @brief Return all hosts with a hostname.
+    ///
+    /// This private method is called by the @c CfgHosts::getAllbyHostname
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getAllbyHostnameInternal(const std::string& hostname,
+                                  Storage& storage) const;
+
+    /// @brief Return all hosts with a hostname and a DHCPv4 subnet.
+    ///
+    /// This private method is called by the @c CfgHosts::getAllbyHostname4
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getAllbyHostnameInternal4(const std::string& hostname,
+                                   const SubnetID& subnet_id,
+                                   Storage& storage) const;
+
+    /// @brief Return all hosts with a hostname and a DHCPv6 subnet.
+    ///
+    /// This private method is called by the @c CfgHosts::getAllbyHostname6
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getAllbyHostnameInternal6(const std::string& hostname,
+                                   const SubnetID& subnet_id,
+                                   Storage& storage) const;
 
     /// @brief Returns a page of @c Host objects in a DHCPv4 subnet.
     ///

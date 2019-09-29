@@ -136,6 +136,42 @@ HostMgr::getAll6(const SubnetID& subnet_id) const {
 }
 
 ConstHostCollection
+HostMgr::getAllbyHostname(const std::string& hostname) const {
+    ConstHostCollection hosts = getCfgHosts()->getAllbyHostname(hostname);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAllbyHostname(hostname);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getAllbyHostname4(const std::string& hostname,
+                           const SubnetID& subnet_id) const {
+    ConstHostCollection hosts = getCfgHosts()->getAllbyHostname4(hostname,
+                                                                 subnet_id);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAllbyHostname4(hostname,
+                                                                   subnet_id);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getAllbyHostname6(const std::string& hostname,
+                           const SubnetID& subnet_id) const {
+    ConstHostCollection hosts = getCfgHosts()->getAllbyHostname6(hostname,
+                                                                 subnet_id);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAllbyHostname6(hostname,
+                                                                   subnet_id);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+ConstHostCollection
 HostMgr::getPage4(const SubnetID& subnet_id,
                   size_t& source_index,
                   uint64_t lower_host_id,

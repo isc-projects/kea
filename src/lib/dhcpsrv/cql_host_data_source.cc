@@ -259,7 +259,7 @@ public:
     // Inserts all parameters belonging to any reservation from a single host.
     static constexpr StatementTag INSERT_HOST = "INSERT_HOST";
 
-    // Retrieves hosts information, IPv6 reservations and both IPv4 and IPv6
+    // Retrieves host information, IPv6 reservations and both IPv4 and IPv6
     // options associated with it.
     static constexpr StatementTag GET_HOST = "GET_HOST";
 
@@ -313,6 +313,21 @@ public:
     // associated with a host using subnet identifier.
     static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID =
         "GET_HOST_BY_IPV6_SUBNET_ID";
+
+    // Retrieves host information, IPv6 reservations and both IPv4 and IPv6
+    // options associated with it using hostname.
+    static constexpr StatementTag GET_HOST_BY_HOST_NAME =
+        "GET_HOST_BY_HOST_NAME";
+
+    // Retrieves host information along with the IPv4 options associated
+    // with it using hostname and subnet identifier.
+    static constexpr StatementTag GET_HOST_BY_HOST_NAME_AND_IPV4_SUBNET_ID =
+        "GET_HOST_BY_HOST_NAME_AND_IPV4_SUBNET_ID";
+
+    // Retrieves host information; IPv6 reservations and IPv6 options
+    // associated with it using hostname and subnet identifier.
+    static constexpr StatementTag GET_HOST_BY_HOST_NAME_AND_IPV6_SUBNET_ID =
+        "GET_HOST_BY_HOST_NAME_AND_IPV6_SUBNET_ID";
 
     // Retrieves host information along with the IPv4 options associated
     // with it using a subnet identifier from first host (paging).
@@ -469,6 +484,9 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_PREFIX;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_HOST_NAME;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_HOST_NAME_AND_IPV4_SUBNET_ID;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_HOST_NAME_AND_IPV6_SUBNET_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_LIMIT;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_LIMIT;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_NEXT_KEY;
@@ -898,6 +916,119 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_scope_id "
       "FROM hosts "
       "WHERE host_ipv6_subnet_id = ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_HOST_NAME,
+     {GET_HOST_BY_HOST_NAME,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "WHERE hostname = ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_HOST_NAME_AND_IPV4_SUBNET_ID,
+     {GET_HOST_BY_HOST_NAME_AND_IPV4_SUBNET_ID,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "WHERE hostname = ? "
+      "AND host_ipv4_subnet_id = ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_HOST_NAME_AND_IPV6_SUBNET_ID,
+     {GET_HOST_BY_HOST_NAME_AND_IPV6_SUBNET_ID,
+      "SELECT "
+      "key, "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM hosts "
+      "WHERE hostname = ? "
+      "AND host_ipv6_subnet_id = ? "
       "ALLOW FILTERING "
      }},
 
@@ -1914,6 +2045,32 @@ public:
     /// @param subnet_id identifier of the subnet to which hosts belong
     virtual ConstHostCollection getAll6(const SubnetID& subnet_id) const;
 
+    /// @brief Implementation of @ref CqlHostDataSource::getAllbyHostname()
+    ///
+    /// See @ref CqlHostDataSource::getAllbyHostname() for parameter details.
+    ///
+    /// @param hostname The lower case hostname.
+    virtual ConstHostCollection
+    getAllbyHostname(const std::string& hostname) const;
+
+    /// @brief Implementation of @ref CqlHostDataSource::getAllbyHostname4()
+    ///
+    /// See @ref CqlHostDataSource::getAllbyHostname4() for parameter details.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
+
+    /// @brief Implementation of @ref CqlHostDataSource::getAllbyHostname6()
+    ///
+    /// See @ref CqlHostDataSource::getAllbyHostname6() for parameter details.
+    ///
+    /// @param hostname The lower case hostname.
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
+
     /// @brief Implementation of @ref CqlHostDataSource::getPage4()
     ///
     /// See @ref CqlHostDataSource::getPage4() for parameter details.
@@ -2444,6 +2601,63 @@ CqlHostDataSourceImpl::getAll6(const SubnetID& subnet_id) const {
     // Run statement.
     ConstHostCollection result =
         getHostCollection(CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID,
+                          where_values);
+
+    return (result);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getAllbyHostname(const std::string& hostname) const {
+    // Convert to CQL data types.
+    std::string hostname_ = hostname;
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&hostname_);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(CqlHostExchange::GET_HOST_BY_HOST_NAME,
+                          where_values);
+
+    return (result);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getAllbyHostname4(const std::string& hostname,
+                                         const SubnetID& subnet_id) const {
+    // Convert to CQL data types.
+    std::string hostname_ = hostname;
+    cass_int32_t host_ipv4_subnet_id = static_cast<cass_int32_t>(subnet_id);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&hostname_);
+    where_values.add(&host_ipv4_subnet_id);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(CqlHostExchange::GET_HOST_BY_HOST_NAME_AND_IPV4_SUBNET_ID,
+                          where_values);
+
+    return (result);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getAllbyHostname6(const std::string& hostname,
+                                         const SubnetID& subnet_id) const {
+    // Convert to CQL data types.
+    std::string hostname_ = hostname;
+    cass_int32_t host_ipv6_subnet_id = static_cast<cass_int32_t>(subnet_id);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&hostname_);
+    where_values.add(&host_ipv6_subnet_id);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(CqlHostExchange::GET_HOST_BY_HOST_NAME_AND_IPV6_SUBNET_ID,
                           where_values);
 
     return (result);
@@ -3032,6 +3246,29 @@ CqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
 
     return (impl_->getAll6(subnet_id));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getAllbyHostname(hostname));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAllbyHostname4(const std::string& hostname,
+                                     const SubnetID& subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getAllbyHostname4(hostname, subnet_id));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAllbyHostname6(const std::string& hostname,
+                                     const SubnetID& subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getAllbyHostname6(hostname, subnet_id));
 }
 
 ConstHostCollection

@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 #include <list>
 #include <map>
 #include <string>
@@ -567,6 +568,11 @@ public:
     /// @brief Returns reserved hostname.
     const std::string& getHostname() const {
         return (hostname_);
+    }
+
+    /// @brief Returns reserved hostname in lower case.
+    std::string getLowerHostname() const {
+        return (boost::algorithm::to_lower_copy(hostname_));
     }
 
     /// @brief Adds new client class for DHCPv4.

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Fri Feb 08 2019 20:31
+// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes on Sun Sep 29 2019 01:57
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -21,6 +21,15 @@ extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS4_HOST = "HOSTS_CFG_GE
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6 = "HOSTS_CFG_GET_ALL_ADDRESS6";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_COUNT = "HOSTS_CFG_GET_ALL_ADDRESS6_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_ADDRESS6_HOST = "HOSTS_CFG_GET_ALL_ADDRESS6_HOST";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME = "HOSTS_CFG_GET_ALL_HOSTNAME";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_COUNT = "HOSTS_CFG_GET_ALL_HOSTNAME_COUNT";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_HOST = "HOSTS_CFG_GET_ALL_HOSTNAME_HOST";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4 = "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT = "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST = "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6 = "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT = "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT";
+extern const isc::log::MessageID HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST = "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_IDENTIFIER = "HOSTS_CFG_GET_ALL_IDENTIFIER";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT = "HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL_IDENTIFIER_HOST = "HOSTS_CFG_GET_ALL_IDENTIFIER_HOST";
@@ -75,6 +84,15 @@ const char* values[] = {
     "HOSTS_CFG_GET_ALL_ADDRESS6", "get all hosts with reservations for IPv6 address %1",
     "HOSTS_CFG_GET_ALL_ADDRESS6_COUNT", "using address %1, found %2 host(s)",
     "HOSTS_CFG_GET_ALL_ADDRESS6_HOST", "using address %1 found host: %2",
+    "HOSTS_CFG_GET_ALL_HOSTNAME", "get all hosts with reservations for hostname %1",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_COUNT", "using hostname %1, found %2 host(s)",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_HOST", "using hostname %1, found host: %2",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4", "get all hosts with reservations for hostname %1 and IPv4 subnet %2",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT", "using hostname %1 and IPv4 subnet %2, found %3 host(s)",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST", "using hostname %1 and IPv4 subnet %2, found host: %3",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6", "get all hosts with reservations for hostname %1 and IPv6 subnet %2",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT", "using hostname %1 and IPv6 subnet %2, found %3 host(s)",
+    "HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST", "using hostname %1 and IPv6 subnet %2, found host: %3",
     "HOSTS_CFG_GET_ALL_IDENTIFIER", "get all hosts with reservations using identifier: %1",
     "HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT", "using identifier %1, found %2 host(s)",
     "HOSTS_CFG_GET_ALL_IDENTIFIER_HOST", "using identifier: %1, found host: %2",
