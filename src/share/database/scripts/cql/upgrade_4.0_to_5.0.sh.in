@@ -1,0 +1,197 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh" ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+# Need a path for temporary files created during data update
+# Use the state directory in the install path directory if it exists, otherwise
+# use the build tree
+if [ -e "@localstatedir@/lib/@PACKAGE_NAME@" ]; then
+    temp_file_dir="@localstatedir@/lib/@PACKAGE_NAME@"
+else
+    temp_file_dir="@abs_top_builddir@/src/share/database/scripts/cql"
+fi
+
+cqlargs=$@
+
+# Ensures the current schema version is 4.0. If not it exits.
+check_version() {
+    version=$(cql_version $cqlargs)
+
+    if [ "${version}" != "4.0" ]; then
+        printf "This script upgrades 4.0 to 5.0. Reported version is %s. Skipping upgrade.\n" "${version}"
+        exit 0
+    fi
+}
+
+# Peforms the schema changes from 4.0 to 5.0
+update_schema() {
+    cqlsh $cqlargs <<EOF
+-- This line starts database upgrade to version 5.0
+
+-- Add the lower case hostname column to reservations.
+ALTER TABLE hosts ADD lower_case_hostname VARCHAR;
+
+-- Make the lower case hostname an index.
+CREATE INDEX IF NOT EXISTS hostsindex8 ON hosts (lower_case_hostname);
+
+DELETE FROM schema_version WHERE version=4;
+INSERT INTO schema_version (version, minor) VALUES(5, 0);
+
+-- This line concludes database upgrade to version 5.0
+EOF
+
+    if [ "$?" -ne 0 ]
+    then
+        echo Schema udpate FAILED!
+        exit 1
+    fi
+}
+
+# Function to delete temporary update files
+clean_up() {
+    # clean up the files
+    if [ -e "$export_file" ]
+    then
+        rm $export_file
+    fi
+
+    if [ -e "$update_file" ]
+    then
+        rm $update_file
+    fi
+}
+
+# Function to clean up and exit the script gracefully
+#
+# Called by update_host_data()
+#
+# Parameters:
+# status - integer value to pass to sh:exit
+# explanation - "quoted" text message to emit to stdout
+exit_now() {
+    status=$1;shift
+    explanation=$1
+
+    clean_up
+    if [ "$status" -eq 0 ]
+    then
+        echo "Data Update SUCCESS! $explanation"
+    else
+        echo "Data Update FAILURE! $explanation"
+    fi
+
+    exit $status
+}
+
+# This function adds host 'lower_case_hostname' column.
+#
+# After exhausting the export file, the update file is submitted to
+# cqlsh for execution.
+#
+# No parameters.
+update_host_data() {
+    export_file="$temp_file_dir/cql_export.csv"
+    update_file="$temp_file_dir/cql_update.cql"
+
+    clean_up
+
+    # Fetch hosts data so we have primary key components and hostname.
+    echo "Exporting hostnames to $export_file ..."
+    query="COPY hosts (key, id, hostname) TO '$export_file'"
+
+    cqlsh $cqlargs -e "$query"
+    if [ "$?" -ne 0 ]
+    then
+        exit_now 1 "Cassandra get hostname failed! Could not update data!"
+    fi
+
+    # Strip the carriage returns that CQL insists on adding.
+    if [ -e "$export_file" ]
+    then
+        cat $export_file | tr -d '\015' > $export_file.2
+        mv $export_file.2 $export_file
+    else
+        # Shouldn't happen but then again we're talking about CQL here
+        exit_now 1 "Cassandra export file $export_file is missing?"
+    fi
+
+    # Iterate through the exported data, accumulating update statements,
+    # one for each reservation that needs updating.  We should have one
+    # host per line.
+    line_cnt=0;
+    update_cnt=0;
+
+    while read -r line
+    do
+        line_cnt=$((line_cnt + 1));
+        xIFS="$IFS"
+        IFS=$','
+
+        i=1
+        hostname=
+        # Parse the column values
+        for val in $line
+        do
+            case $i in
+            1)
+                key="$val"
+                ;;
+            2)
+                host_id="$val"
+                ;;
+            3)
+                hostname="$val"
+                ;;
+            *)
+                # We're going to assume that since any error is fatal
+                exit_now 1 "Line# $line_cnt, too many values, wrong or corrupt file"
+                ;;
+            esac
+            i=$((i + 1))
+        done
+
+        if [ "$i" -lt 3 ]
+        then
+            # We're going to assume that since any error is fatal
+            exit_now 1 "Line# $line_cnt, too few values, wrong or corrupt file"
+        fi
+
+        # If the hostname was not null set the lower case value
+        if [ "$hostname" != "" ]
+        then
+            lower=$(echo $hostname | tr '[:upper:]' '[:lower:]')
+            echo "update hosts set lower_case_hostname = '$lower' where key = $key and id = $host_id;" >> $update_file
+            update_cnt=$((update_cnt + 1))
+        fi
+
+        IFS="$xIFS"
+    done <  $export_file
+
+    # If we didn't record any updates, then hey, we're good to go!
+    if [ "$update_cnt" -eq 0 ]
+    then
+        exit_now 0 "Completed successfully: No updates were needed"
+    fi
+
+    # We have at least one update in the update file, so submit it # to cqlsh.
+    echo "$update_cnt update statements written to $update_file"
+    echo "Running the updates..."
+    cqlsh $cqlargs -f "$update_file"
+    if [ "$?" -ne 0 ]
+    then
+        exit_now 1 "Cassandra updates failed"
+    fi
+
+    exit_now 0 "Updated $update_cnt of $line_cnt records"
+}
+
+check_version
+update_schema
+update_host_data

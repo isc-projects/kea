@@ -120,7 +120,7 @@ pgsql_db_version_test() {
 
     # Verify that kea-admin db-version returns the correct version
     version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "5.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "6.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -230,10 +230,10 @@ pgsql_upgrade_2_0_to_3_0() {
     assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 }
 
-pgsql_upgrade_3_0_to_5_1() {
-    # Verify upgraded schema reports version 5.1.
+pgsql_upgrade_3_0_to_6_0() {
+    # Verify upgraded schema reports version 6.0.
     version=$(${keaadmin} db-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "5.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "6.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Added user_context to lease4
     output=`pgsql_execute "select user_context from lease4;"`
@@ -270,8 +270,8 @@ pgsql_upgrade_test() {
     # Check 2.0 to 3.0 upgrade
     pgsql_upgrade_2_0_to_3_0
 
-    # Check 3.0 to 5.1 upgrade
-    pgsql_upgrade_3_0_to_5_1
+    # Check 3.0 to 6.0 upgrade
+    pgsql_upgrade_3_0_to_6_0
 
     # Let's wipe the whole database
     pgsql_wipe

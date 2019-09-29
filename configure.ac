@@ -1796,6 +1796,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/cql/upgrade_3.0_to_4.0.sh
+                 src/share/database/scripts/cql/upgrade_4.0_to_5.0.sh
                  src/share/database/scripts/cql/wipe_data.sh
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
@@ -1810,6 +1811,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
                  src/share/database/scripts/mysql/upgrade_8.0_to_8.1.sh
                  src/share/database/scripts/mysql/upgrade_8.1_to_8.2.sh
+                 src/share/database/scripts/mysql/upgrade_8.2_to_9.0.sh
                  src/share/database/scripts/mysql/wipe_data.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
@@ -1820,6 +1822,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
                  src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
                  src/share/database/scripts/pgsql/upgrade_5.0_to_5.1.sh
+                 src/share/database/scripts/pgsql/upgrade_5.1_to_6.0.sh
                  src/share/database/scripts/pgsql/wipe_data.sh
                  src/share/yang/Makefile
                  src/share/yang/modules/Makefile

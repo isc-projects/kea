@@ -85,7 +85,7 @@ cql_db_version_test() {
 
     # Verify that kea-admin db-version returns the correct version.
     version=$($keaadmin db-version cql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "4.0" $version "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "5.0" $version "Expected kea-admin to return %s, returned value was %s"
 
     # Wipe the database.
     cql_wipe
@@ -315,16 +315,16 @@ cql_unused_subnet_id_test() {
 
     # Now we need insert some hosts to "migrate" for both v4 and v6
     qry="\
-  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id) \
-    VALUES (1, 0, textAsBlob('0123456'), 0, 0, 0);\
-  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id) \
-    VALUES (2, 0, textAsBlob('1123456'), 4, 0, 4);\
-  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id) \
-    VALUES (3, 0, textAsBlob('2123456'), 0, 6, 6);\
-  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id) \
-    VALUES (4, 0, textAsBlob('3123456'), 4, 6, 0);\
-  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id) \
-    VALUES (5, 0, textAsBlob('3123456'), -1, 6, 6);"
+  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, option_subnet_id) \
+    VALUES (1, 0, textAsBlob('0123456'), 0, 0, 'host0', 0);\
+  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, option_subnet_id) \
+    VALUES (2, 0, textAsBlob('1123456'), 4, 0, 'Host1', 4);\
+  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, option_subnet_id) \
+    VALUES (3, 0, textAsBlob('2123456'), 0, 6, 'host2', 6);\
+  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, option_subnet_id) \
+    VALUES (4, 0, textAsBlob('3123456'), 4, 6, 'Host3', 0);\
+  INSERT INTO host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, option_subnet_id) \
+    VALUES (5, 0, textAsBlob('3123456'), -1, 6, 'host3', 6);"
 
     cql_execute "$qry"
     assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
@@ -347,7 +347,7 @@ cql_unused_subnet_id_test() {
     echo "Exporting host_reservation data to $export_file ..."
 
     qry="\
-  SELECT id, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id\
+  SELECT id, host_ipv4_subnet_id, host_ipv6_subnet_id, hostname, lower_case_hostname, option_subnet_id\
     FROM hosts WHERE id IN (1,2,3,4,5) ALLOW FILTERING;"
 
     cql_execute "$qry" > $export_file
@@ -433,7 +433,8 @@ cql_upgrade_hosts_test() {
         (id, key, host_identifier, host_identifier_type, host_ipv4_subnet_id, \
          host_ipv6_subnet_id, host_ipv4_address, host_ipv4_next_server, \
          host_ipv4_server_hostname, host_ipv4_boot_file_name, hostname, \
-         auth_key, user_context, host_ipv4_client_classes, \
+         lower_case_hostname, auth_key, user_context, \
+         host_ipv4_client_classes, \
          host_ipv6_client_classes, reserved_ipv6_prefix_address, \
          reserved_ipv6_prefix_length, reserved_ipv6_prefix_address_type, \
          iaid, option_universe, option_code, option_value, \

@@ -2782,6 +2782,15 @@ SET version = '8', minor = '2';
 
 # This line concludes database upgrade to version 8.2.
 
+# Create hostname index for host reservations
+CREATE INDEX hosts_by_hostname ON hosts (hostname);
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '0';
+
+# This line concludes database upgrade to version 9.0.
+
 
 # Notes:
 #

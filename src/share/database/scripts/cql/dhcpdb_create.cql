@@ -365,3 +365,16 @@ DELETE FROM schema_version WHERE version=3;
 INSERT INTO schema_version (version, minor) VALUES(4, 0);
 
 -- This line concludes database upgrade to version 4.0
+
+-- This line starts database upgrade to version 5.0
+
+-- Add the lower case hostname column to reservations.
+ALTER TABLE hosts ADD lower_case_hostname VARCHAR;
+
+-- Make the lower case hostname an index.
+CREATE INDEX IF NOT EXISTS hostsindex8 ON hosts (lower_case_hostname);
+
+DELETE FROM schema_version WHERE version=4;
+INSERT INTO schema_version (version, minor) VALUES(5, 0);
+
+-- This line concludes database upgrade to version 5.0

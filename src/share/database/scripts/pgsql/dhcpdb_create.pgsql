@@ -887,7 +887,21 @@ UPDATE schema_version
 
 -- Schema 5.1 specification ends here.
 
--- Commit the script transaction.
+-- Upgrade to schema 6.0 begins here:
+
+START TRANSACTION;
+
+-- Create a lower case hostname index.
+CREATE INDEX hosts_by_hostname ON hosts (lower(hostname))
+WHERE hostname IS NOT NULL;
+
+-- Set 6.0 schema version.
+UPDATE schema_version
+    SET version = '6', minor = '0';
+
+-- Schema 5.1a specification ends here.
+
+-- Commit the script transaction
 COMMIT;
 
 -- Notes:

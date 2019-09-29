@@ -1,0 +1,39 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`pgsql_version "$@"`
+
+if [ "$VERSION" != "5.1" ]; then
+    printf "This script upgrades 5.1 to 6.0. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+
+START TRANSACTION;
+
+-- Create a lower case hostname index.
+CREATE INDEX hosts_by_hostname ON hosts (lower(hostname))
+WHERE hostname IS NOT NULL;
+
+-- Set 6.0 schema version.
+UPDATE schema_version
+    SET version = '6', minor = '0';
+
+-- Schema 5.1a specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
+EOF
+
+exit $RESULT
+

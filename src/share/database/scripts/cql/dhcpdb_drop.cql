@@ -48,5 +48,6 @@ DROP INDEX IF EXISTS hostsindex4;
 DROP INDEX IF EXISTS hostsindex5;
 DROP INDEX IF EXISTS hostsindex6;
 DROP INDEX IF EXISTS hostsindex7;
+DROP INDEX IF EXISTS hostsindex8;
 
 DROP INDEX IF EXISTS logsindex;

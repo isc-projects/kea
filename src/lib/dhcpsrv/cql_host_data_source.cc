@@ -419,6 +419,9 @@ private:
     /// @brief Name reserved for the host
     std::string hostname_;
 
+    /// @brief Lower case name reserved for the host
+    std::string lower_case_hostname_;
+
     /// @brief User context
     std::string user_context_;
 
@@ -513,6 +516,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_boot_file_name, "
       "auth_key, "
       "hostname, "
+      "lower_case_hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
@@ -536,7 +540,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       // id
       "?, "
       // host
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
       // denormalized reservation, option
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
@@ -952,7 +956,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_user_context, "
       "option_scope_id "
       "FROM hosts "
-      "WHERE hostname = ? "
+      "WHERE lower_case_hostname = ? "
       "ALLOW FILTERING "
      }},
 
@@ -989,7 +993,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_user_context, "
       "option_scope_id "
       "FROM hosts "
-      "WHERE hostname = ? "
+      "WHERE lower_case_hostname = ? "
       "AND host_ipv4_subnet_id = ? "
       "ALLOW FILTERING "
      }},
@@ -1027,7 +1031,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_user_context, "
       "option_scope_id "
       "FROM hosts "
-      "WHERE hostname = ? "
+      "WHERE lower_case_hostname = ? "
       "AND host_ipv6_subnet_id = ? "
       "ALLOW FILTERING "
      }},
@@ -1496,6 +1500,15 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
                       << " is greater than allowed of " << HOSTNAME_MAX_LEN);
         }
 
+        // lower_case_hostname: text
+        lower_case_hostname_ = host->getLowerHostname();
+        if (lower_case_hostname_.size() > HOSTNAME_MAX_LEN) {
+            isc_throw(BadValue, "CqlHostExchange::prepareExchange(): lower "
+                      "case hostname " << lower_case_hostname_ << " of length "
+                      << lower_case_hostname_.size()
+                      << " is greater than allowed of " << HOSTNAME_MAX_LEN);
+        }
+
         // user_context: text
         ConstElementPtr ctx = host->getContext();
         if (ctx) {
@@ -1656,6 +1669,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             data.add(&host_ipv4_boot_file_name_);
             data.add(&auth_key_);
             data.add(&hostname_);
+            data.add(&lower_case_hostname_);
             data.add(&user_context_);
             data.add(&host_ipv4_client_classes_);
             data.add(&host_ipv6_client_classes_);
