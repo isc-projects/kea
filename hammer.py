@@ -1630,7 +1630,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
 
 
 def _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
-               pkg_version, pkg_isc_version, repo_url):
+               pkg_version, pkg_isc_version, repository_url, repo_url):
     if system == 'debian' and revision == '9':
         # debian 9 does not support apt-installing over https, so install proper transport
         install_pkgs('apt-transport-https', env=env, check_times=check_times)
@@ -1704,7 +1704,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
 
     elif system in ['ubuntu', 'debian']:
         _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
-                   pkg_version, pkg_isc_version, repo_url)
+                   pkg_version, pkg_isc_version, repository_url, repo_url)
 
     elif system in ['alpine']:
         _build_alpine_apk(system, revision, features, tarball_path, env, check_times, dry_run,
