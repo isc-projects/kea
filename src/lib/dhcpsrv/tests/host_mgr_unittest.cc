@@ -123,6 +123,45 @@ protected:
                              BaseHostDataSource& data_source2);
 
     /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified hostname.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAllbyHostname(BaseHostDataSource& data_source1,
+                              BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified hostname and DHCPv4 subnet.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAllbyHostname4(BaseHostDataSource& data_source1,
+                               BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified hostname and DHCPv6 subnet.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAllbyHostname6(BaseHostDataSource& data_source1,
+                               BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
     /// specified DHCPv4 subnet by pages.
     ///
     /// If reservations are added to different host data sources, it is expected
@@ -374,6 +413,150 @@ HostMgrTest::testGetAll6BySubnet(BaseHostDataSource& data_source1,
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     EXPECT_TRUE(hosts[1]->hasReservation(
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+}
+
+void
+HostMgrTest::testGetAllbyHostname(BaseHostDataSource& data_source1,
+                                  BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAllbyHostname("host");
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations with the same hostname.
+    HostPtr host1(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                           SubnetID(1), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.2.5")));
+    host1->setHostname("Host");
+    data_source1.add(host1);
+    HostPtr host2(new Host(hwaddrs_[1]->toText(false), "hw-address",
+                           SubnetID(10), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.3.10")));
+    host2->setHostname("hosT");
+    data_source2.add(host2);
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching hostname is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname("foobar");
+    EXPECT_TRUE(hosts.empty());
+
+    // For the correct hostname, there should be two reservations.
+    hosts = HostMgr::instance().getAllbyHostname("host");
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(10, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that hostname is correct including its case.
+    EXPECT_EQ("Host", hosts[0]->getHostname());
+    EXPECT_EQ("hosT", hosts[1]->getHostname());
+}
+
+void
+HostMgrTest::testGetAllbyHostname4(BaseHostDataSource& data_source1,
+                                   BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAllbyHostname4("host", SubnetID(1));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations with the same hostname.
+    HostPtr host1(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                           SubnetID(1), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.2.5")));
+    host1->setHostname("Host");
+    data_source1.add(host1);
+    HostPtr host2(new Host(hwaddrs_[1]->toText(false), "hw-address",
+                           SubnetID(1), SUBNET_ID_UNUSED,
+                           IOAddress("192.0.2.6")));
+    host2->setHostname("hosT");
+    data_source2.add(host2);
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching hostname is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname4("foobar", SubnetID(1));
+    EXPECT_TRUE(hosts.empty());
+
+    // If there non-matching subnet is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(10));
+    EXPECT_TRUE(hosts.empty());
+
+    // For the correct hostname, there should be two reservations.
+    hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
+    EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
+
+    // Make sure that hostname is correct including its case.
+    EXPECT_EQ("Host", hosts[0]->getHostname());
+    EXPECT_EQ("hosT", hosts[1]->getHostname());
+}
+
+void
+HostMgrTest::testGetAllbyHostname6(BaseHostDataSource& data_source1,
+                                   BaseHostDataSource& data_source2) {
+    // Initially, no reservations should be present.
+    ConstHostCollection hosts =
+        HostMgr::instance().getAllbyHostname6("host", SubnetID(1));
+    ASSERT_TRUE(hosts.empty());
+
+    // Add two reservations with the same hostname.
+    HostPtr host1(new Host(duids_[0]->toText(), "duid",
+                           SubnetID(1), SubnetID(1),
+                           IOAddress::IPV4_ZERO_ADDRESS()));
+    host1->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8:1::5"), 128));
+    host1->setHostname("Host");
+    data_source1.add(host1);
+    HostPtr host2(new Host(duids_[1]->toText(), "duid",
+                           SubnetID(1), SubnetID(1),
+                           IOAddress::IPV4_ZERO_ADDRESS()));
+    host2->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                    IOAddress("2001:db8:1::6"), 128));
+    host2->setHostname("hosT");
+    data_source2.add(host2);
+
+    CfgMgr::instance().commit();
+
+    // If there non-matching hostname is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname6("foobar", SubnetID(1));
+    EXPECT_TRUE(hosts.empty());
+
+    // If there non-matching subnet is specified, nothing should be
+    // returned.
+    hosts = HostMgr::instance().getAllbyHostname6("host", SubnetID(10));
+    EXPECT_TRUE(hosts.empty());
+
+    // For the correct hostname, there should be two reservations.
+    hosts = HostMgr::instance().getAllbyHostname6("host", SubnetID(1));
+    ASSERT_EQ(2, hosts.size());
+
+    // Make sure that subnet is correct.
+    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+
+    // Make sure that two different hosts were returned.
+    EXPECT_TRUE(hosts[0]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
+    EXPECT_TRUE(hosts[1]->hasReservation(
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
+
+    // Make sure that hostname is correct including its case.
+    EXPECT_EQ("Host", hosts[0]->getHostname());
+    EXPECT_EQ("hosT", hosts[1]->getHostname());
 }
 
 void
@@ -790,6 +973,26 @@ TEST_F(HostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), *getCfgHosts());
 }
 
+// This test verifies that HostMgr returns all reservations for the specified
+// hostname. The reservations are defined in the server's configuration.
+TEST_F(HostMgrTest, getAllbyHostname) {
+    testGetAllbyHostname(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// hostname and DHCPv4 subnet. The reservations are defined in the server's
+// configuration.
+TEST_F(HostMgrTest, getAllbyHostname4) {
+    testGetAllbyHostname4(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// hostname and DHCPv6 subnet. The reservations are defined in the server's
+// configuration.
+TEST_F(HostMgrTest, getAllbyHostname6) {
+    testGetAllbyHostname4(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that HostMgr returns all reservations for the
 // specified DHCPv4 subnet by pages. The reservations are defined in
 // the server's configuration.
@@ -1034,6 +1237,26 @@ TEST_F(MySQLHostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that reservations for a particular hostname can be
+// retrieved from the configuration file and a database simultaneously.
+TEST_F(MySQLHostMgrTest, getAllbyHostname) {
+    testGetAllbyHostname(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv4 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(MySQLHostMgrTest, getAllbyHostname4) {
+    testGetAllbyHostname4(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv6 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(MySQLHostMgrTest, getAllbyHostname6) {
+    testGetAllbyHostname6(*getCfgHosts(), HostMgr::instance());
+}
+
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
@@ -1159,6 +1382,26 @@ TEST_F(PostgreSQLHostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that reservations for a particular hostname can be
+// retrieved from the configuration file and a database simultaneously.
+TEST_F(PostgreSQLHostMgrTest, getAllbyHostname) {
+    testGetAllbyHostname(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv4 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(PostgreSQLHostMgrTest, getAllbyHostname4) {
+    testGetAllbyHostname4(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv6 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(PostgreSQLHostMgrTest, getAllbyHostname6) {
+    testGetAllbyHostname6(*getCfgHosts(), HostMgr::instance());
+}
+
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
@@ -1263,6 +1506,26 @@ TEST_F(CQLHostMgrTest, getAll4BySubnet) {
 // be retrieved from the configuration file and a database simultaneously.
 TEST_F(CQLHostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname can be
+// retrieved from the configuration file and a database simultaneously.
+TEST_F(CQLHostMgrTest, getAllbyHostname) {
+    testGetAllbyHostname(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv4 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(CQLHostMgrTest, getAllbyHostname4) {
+    testGetAllbyHostname4(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that reservations for a particular hostname and
+// DHCPv6 subnet can be retrieved from the configuration file and a
+// database simultaneously.
+TEST_F(CQLHostMgrTest, getAllbyHostname6) {
+    testGetAllbyHostname6(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that reservations for a particular subnet can

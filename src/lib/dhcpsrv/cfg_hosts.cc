@@ -367,7 +367,8 @@ CfgHosts::getAllbyHostnameInternal4(const std::string& hostname,
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
               HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4)
-        .arg(hostname);
+        .arg(hostname)
+        .arg(subnet_id);
 
     // Use try hostname.
     const HostContainerIndex5& idx = hosts_.get<5>();
@@ -403,7 +404,8 @@ CfgHosts::getAllbyHostnameInternal6(const std::string& hostname,
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
               HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6)
-        .arg(hostname);
+        .arg(hostname)
+        .arg(subnet_id);
 
     // Use try hostname.
     const HostContainerIndex5& idx = hosts_.get<5>();

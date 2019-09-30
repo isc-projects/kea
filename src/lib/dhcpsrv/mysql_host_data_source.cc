@@ -3116,7 +3116,7 @@ MySqlHostDataSource::getAllbyHostname6(const std::string& hostname,
     inbind[1].is_unsigned = MLM_TRUE;
 
     ConstHostCollection result;
-    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4,
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID6,
                              inbind, impl_->host_ipv6_exchange_,
                              result, false);
     return (result);

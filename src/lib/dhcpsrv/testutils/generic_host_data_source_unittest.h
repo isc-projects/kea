@@ -202,6 +202,24 @@ public:
     /// Uses gtest macros to report failures.
     void testGetAll6();
 
+    /// @brief Test that Verifies that host reservations with the same
+    /// hostname can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetAllbyHostname();
+
+    /// @brief Test that Verifies that IPv4 host reservations with the same
+    /// hostname and in the same subnet can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetAllbyHostname4();
+
+    /// @brief Test that Verifies that IPv6 host reservations with the same
+    /// hostname and in the same subnet can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetAllbyHostname6();
+
     /// @brief Test that Verifies that pages of host reservations in the
     /// same subnet can be retrieved properly.
     ///

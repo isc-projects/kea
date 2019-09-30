@@ -464,6 +464,229 @@ GenericHostDataSourceTest::testGetAll6() {
 }
 
 void
+GenericHostDataSourceTest::testGetAllbyHostname() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    Host::IdentifierType id = Host::IDENT_HWADDR;
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
+    host1->setHostname("host");
+
+    id = Host::IDENT_DUID;
+    HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", id);
+    host2->setHostname("Host");
+
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, false);
+    host3->setHostname("hOSt");
+
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, false);
+    host4->setHostname("host.example.com");
+
+    // Now add them all to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    // Retrieve unknown name.
+    ConstHostCollection from_hds = hdsptr_->getAllbyHostname("foo");
+    EXPECT_TRUE(from_hds.empty());
+
+    // Retrieve one reservation.
+    from_hds = hdsptr_->getAllbyHostname("host.example.com");
+    ASSERT_EQ(1, from_hds.size());
+    HostDataSourceUtils::compareHosts(host4, from_hds[0]);
+
+    // Retrieve all reservations with host hostname.
+    from_hds = hdsptr_->getAllbyHostname("host");
+    EXPECT_EQ(3, from_hds.size());
+    bool got1 = false;
+    bool got2 = false;
+    bool got3 = false;
+    for (auto host : from_hds) {
+        if (host->getIdentifierType() == Host::IDENT_HWADDR) {
+            EXPECT_FALSE(got1);
+            got1 = true;
+            HostDataSourceUtils::compareHosts(host1, host);
+        } else if (host->getIPv4Reservation().isV4Zero()) {
+            EXPECT_FALSE(got3);
+            got3 = true;
+            HostDataSourceUtils::compareHosts(host3, host);
+        } else {
+            EXPECT_FALSE(got2);
+            got2 = true;
+            HostDataSourceUtils::compareHosts(host2, host);
+        }
+    }
+    EXPECT_TRUE(got1);
+    EXPECT_TRUE(got2);
+    EXPECT_TRUE(got3);
+}
+
+void
+GenericHostDataSourceTest::testGetAllbyHostname4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    Host::IdentifierType id = Host::IDENT_HWADDR;
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
+    host1->setHostname("host");
+
+    id = Host::IDENT_DUID;
+    HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", id);
+    host2->setHostname("Host");
+    CfgOptionPtr opts = host2->getCfgOption4();
+    OptionDescriptor desc =
+        createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                   true, false, "my-boot-file");
+    opts->add(desc, DHCP4_OPTION_SPACE);
+
+    HostPtr host3 = HostDataSourceUtils::initializeHost4("192.0.2.3", id);
+    host3->setHostname("hOSt");
+
+    HostPtr host4 = HostDataSourceUtils::initializeHost4("192.0.2.4", id);
+    host4->setHostname("host.example.com");
+
+    // Set them in the same subnets.
+    SubnetID subnet4 = host1->getIPv4SubnetID();
+    host2->setIPv4SubnetID(subnet4);
+    host3->setIPv4SubnetID(subnet4);
+    host4->setIPv4SubnetID(subnet4);
+    SubnetID subnet6 = host1->getIPv6SubnetID();
+    host2->setIPv6SubnetID(subnet6);
+    host3->setIPv6SubnetID(subnet6);
+    host4->setIPv6SubnetID(subnet6);
+
+    // Now add them all to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    // Retrieve unknown name.
+    ConstHostCollection from_hds = hdsptr_->getAllbyHostname4("foo", subnet4);
+    EXPECT_TRUE(from_hds.empty());
+
+    // Retrieve one reservation.
+    from_hds = hdsptr_->getAllbyHostname4("host.example.com", subnet4);
+    ASSERT_EQ(1, from_hds.size());
+    HostDataSourceUtils::compareHosts(host4, from_hds[0]);
+
+    // Check that the subnet is checked.
+    from_hds = hdsptr_->getAllbyHostname4("host.example.com", subnet4 + 1);
+    EXPECT_TRUE(from_hds.empty());
+
+    // Retrieve all reservations with host hostname.
+    from_hds = hdsptr_->getAllbyHostname4("host", subnet4);
+    EXPECT_EQ(3, from_hds.size());
+    bool got1 = false;
+    bool got2 = false;
+    bool got3 = false;
+    bool got4 = false;
+    for (auto host : from_hds) {
+        if (host->getIdentifierType() == Host::IDENT_HWADDR) {
+            EXPECT_FALSE(got1);
+            got1 = true;
+            HostDataSourceUtils::compareHosts(host1, host);
+        } else if (!host->getCfgOption4()->empty()) {
+            EXPECT_FALSE(got2);
+            got2 = true;
+            HostDataSourceUtils::compareHosts(host2, host);
+        } else {
+            EXPECT_FALSE(got3);
+            got3 = true;
+            HostDataSourceUtils::compareHosts(host3, host);
+        }
+    }
+    EXPECT_TRUE(got1);
+    EXPECT_TRUE(got2);
+    EXPECT_TRUE(got3);
+}
+
+void
+GenericHostDataSourceTest::testGetAllbyHostname6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    Host::IdentifierType id = Host::IDENT_HWADDR;
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, false);
+    host1->setHostname("host");
+
+    id = Host::IDENT_DUID;
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, false);
+    host2->setHostname("Host");
+    CfgOptionPtr opts = host2->getCfgOption6();
+    OptionDescriptor desc =
+        createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
+                                   true, true, "my-boot-file");
+    opts->add(desc, DHCP6_OPTION_SPACE);
+
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, false);
+    host3->setHostname("hOSt");
+
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, false);
+    host4->setHostname("host.example.com");
+
+    // Set them in the same subnets.
+    SubnetID subnet4 = host1->getIPv4SubnetID();
+    host2->setIPv4SubnetID(subnet4);
+    host3->setIPv4SubnetID(subnet4);
+    host4->setIPv4SubnetID(subnet4);
+    SubnetID subnet6 = host1->getIPv6SubnetID();
+    host2->setIPv6SubnetID(subnet6);
+    host3->setIPv6SubnetID(subnet6);
+    host4->setIPv6SubnetID(subnet6);
+
+    // Now add them all to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    // Retrieve unknown name.
+    ConstHostCollection from_hds = hdsptr_->getAllbyHostname6("foo", subnet6);
+    EXPECT_TRUE(from_hds.empty());
+
+    // Retrieve one reservation.
+    from_hds = hdsptr_->getAllbyHostname6("host.example.com", subnet6);
+    ASSERT_EQ(1, from_hds.size());
+    HostDataSourceUtils::compareHosts(host4, from_hds[0]);
+
+    // Check that the subnet is checked.
+    from_hds = hdsptr_->getAllbyHostname6("host.example.com", subnet6 + 1);
+    EXPECT_TRUE(from_hds.empty());
+
+    // Retrieve all reservations with host hostname.
+    from_hds = hdsptr_->getAllbyHostname6("host", subnet6);
+    EXPECT_EQ(3, from_hds.size());
+    bool got1 = false;
+    bool got2 = false;
+    bool got3 = false;
+    bool got4 = false;
+    for (auto host : from_hds) {
+        if (host->getIdentifierType() == Host::IDENT_HWADDR) {
+            EXPECT_FALSE(got1);
+            got1 = true;
+            HostDataSourceUtils::compareHosts(host1, host);
+        } else if (!host->getCfgOption6()->empty()) {
+            EXPECT_FALSE(got2);
+            got2 = true;
+            HostDataSourceUtils::compareHosts(host2, host);
+        } else {
+            EXPECT_FALSE(got3);
+            got3 = true;
+            HostDataSourceUtils::compareHosts(host3, host);
+        }
+    }
+    EXPECT_TRUE(got1);
+    EXPECT_TRUE(got2);
+    EXPECT_TRUE(got3);
+}
+
+void
 GenericHostDataSourceTest::testGetPage4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);

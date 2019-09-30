@@ -321,6 +321,23 @@ TEST_F(MySqlHostDataSourceTest, getAll6BySubnet) {
     testGetAll6();
 }
 
+// Verifies that host reservations with the same hostname can be retrieved
+TEST_F(MySqlHostDataSourceTest, getAllbyHostname) {
+    testGetAllbyHostname();
+}
+
+// Verifies that IPv4 host reservations with the same hostname and in
+// the same subnet can be retrieved
+TEST_F(MySqlHostDataSourceTest, getAllbyHostname4) {
+    testGetAllbyHostname4();
+}
+
+// Verifies that IPv6 host reservations with the same hostname and in
+// the same subnet can be retrieved
+TEST_F(MySqlHostDataSourceTest, getAllbyHostname6) {
+    testGetAllbyHostname6();
+}
+
 // Verifies that IPv4 host reservations in the same subnet can be retrieved
 // by pages.
 TEST_F(MySqlHostDataSourceTest, getPage4) {
