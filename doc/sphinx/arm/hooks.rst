@@ -1184,12 +1184,14 @@ contract.
    This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
    process.
 
-Currently, five commands are supported: reservation-add (which adds a new
+Currently, six commands are supported: reservation-add (which adds a new
 host reservation), reservation-get (which returns an existing reservation
 if specified criteria are matched), reservation-get-all (which returns
 all reservations in a specified subnet), reservation-get-page (a variant
 of reservation-get-all which returns all reservations in a specified
-subnet by pages), and reservation-del (which attempts to delete a
+subnet by pages), reservation-get-by-hostname (which returns all reservations
+with a specified hostname and optionally in a subnet) since Kea version
+1.7.1, and reservation-del (which attempts to delete a
 reservation matching specified criteria). To use commands that change
 the reservation information (currently these are reservation-add and
 reservation-del, but this rule applies to other commands that may be
@@ -1229,7 +1231,9 @@ The subnet-id Parameter
 
 Prior to diving into the individual commands, it is worth discussing the
 parameter, ``subnet-id``. Currently this parameter is mandatory for all of the
-commands supplied by this library. In previous versions of Kea, reservations had
+commands supplied by this library at the exception of
+reservation-get-by-hostname where it is optional.
+In previous versions of Kea, reservations had
 to belong to a specific subnet; as of Kea 1.5.0, reservations may
 be specified globally. In other words, they are not specific to any
 subnet. When reservations are supplied via the configuration file, the
@@ -1626,6 +1630,70 @@ small deployments with few reservations, it is easier to use
 
    Currently ``reservation-get-page`` is not supported by the Cassandra
    host backend.
+
+.. _command-reservation-get-by-hostname:
+
+The reservation-get-by-hostname Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``reservation-get-by-hostname`` can be used to query the host database and
+retrieve all reservations with a specified hostname and optionally in
+a specified subnet. This command uses parameters providing the mandatory
+hostname and the optional subnet-id. Global host reservations
+can be retrieved by using a subnet-id value of zero (0).
+Hostname matching is case-insensitive. This command is available since
+Kea version 1.7.1.
+
+For instance, retrieving host reservations for "foobar" in the subnet 1:
+
+::
+
+   {
+       "command": "reservation-get-by-hostname",
+       "arguments": {
+           "hostname": "foobar.example.org",
+           "subnet-id": 1
+        }
+   }
+
+returns some IPv4 hosts:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "boot-file-name": "bootfile.efi",
+                   "client-classes": [ ],
+                   "hostname": "foobar.example.org",
+                   "hw-address": "01:02:03:04:05:06",
+                   "ip-address": "192.0.2.100",
+                   "next-server": "192.0.0.2",
+                   "option-data": [ ],
+                   "server-hostname": "server-hostname.example.org"
+               },
+               ...
+               {
+                   "boot-file-name": "bootfile.efi",
+                   "client-classes": [ ],
+                   "hostname": "foobar.example.org",
+                   "hw-address": "01:02:03:04:05:ff",
+                   "ip-address": "192.0.2.200",
+                   "next-server": "192.0.0.2",
+                   "option-data": [ ],
+                   "server-hostname": "server-hostname.example.org"
+               }
+           ]
+       },
+       "result": 0,
+       "text": "72 IPv4 host(s) found."
+   }
+
+The response returned by ``reservation-get-by-hostname`` can be long
+in particular when responses are not limited to a subnet.
+
+For a reference, see :ref:`command-reservation-get-by-hostname`.
 
 .. _command-reservation-del:
 

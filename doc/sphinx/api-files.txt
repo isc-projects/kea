@@ -121,6 +121,7 @@ api/reservation-add.json
 api/reservation-del.json
 api/reservation-get.json
 api/reservation-get-all.json
+api/reservation-get-by-hostname.json
 api/reservation-get-page.json
 api/server-tag-get.json
 api/shutdown.json
