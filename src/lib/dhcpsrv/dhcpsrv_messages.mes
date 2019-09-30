@@ -54,6 +54,25 @@ there is a good reason for it, to avoid increased number of renewals and
 a need for rebinding (increase of multicast traffic, which may be received
 by multiple servers).
 
+% DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED dhpd-ddns:%1 is deprecated, using existing global:%2
+This is an informational message issued during configuration parsing when
+the server detects that a deprecated parameter has been specified in the
+"dhcp-ddns" element which conflicts with its corresponding global parameter.
+When this occurs the server simply ignores the value from dhcp-ddns.
+The log message shows be the deprecated and the supported parameter names.
+Note the configuration change only affects the in memory configuration.
+You should modify your configuration to comply the supported parameters.
+
+% DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED dhcp-ddns:%1 is deprecated, moving it to global:%2
+This is an informational message issued during configuration parsing when
+the server detects that a deprecated parameter has been specified in the
+"dhcp-ddns" element for which no corresponding global value exists. When
+this occurs the server removes the parameter from dhcp-ddns and inserts the
+parameter into the global scope. The log message shows be the deprecated
+and the supported parameter names.  Note the configuration change only affects
+the in memory configuration.  You should modify your configuration to comply
+the supported parameters.
+
 % DHCPSRV_CFGMGR_DEL_SUBNET4 IPv4 subnet %1 removed
 This debug message is issued when a subnet is successfully removed from the
 server configuration. The argument identifies the subnet removed.

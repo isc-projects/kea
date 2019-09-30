@@ -648,6 +648,8 @@ public:
         configured_globals_->set(name, value);
     }
 
+    void moveDdnsParams(isc::data::ElementPtr d2_cfg);
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration

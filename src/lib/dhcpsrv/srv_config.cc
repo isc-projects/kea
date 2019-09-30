@@ -10,6 +10,7 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/cfg_hosts_util.h>
 #include <process/logging_info.h>
 #include <log/logger_manager.h>
@@ -578,7 +579,8 @@ SrvConfig::toElement() const {
     return (result);
 }
 
-DdnsParamsPtr SrvConfig::getDdnsParams(const Subnet& subnet) const {
+DdnsParamsPtr
+SrvConfig::getDdnsParams(const Subnet& subnet) const {
     DdnsParamsPtr params(new DdnsParams());
 
     params->enable_updates_ = (getD2ClientConfig()->getEnableUpdates() &&
@@ -595,5 +597,45 @@ DdnsParamsPtr SrvConfig::getDdnsParams(const Subnet& subnet) const {
     return params;
 }
 
+void
+SrvConfig::moveDdnsParams(isc::data::ElementPtr d2_cfg) {
+    if (!d2_cfg || (d2_cfg->getType() != Element::map)) {
+        isc_throw(BadValue, "moveDdnsParams must be given a map element");
+    }
+
+    struct Param {
+        std::string from_name;
+        std::string to_name;
+    };
+
+    std::vector<Param> params {
+        { "override-no-update", "ddns-override-no-update" },
+        { "override-client-update", "ddns-override-client-update" },
+        { "replace-client-name", "ddns-replace-client-name" },
+        { "generated-prefix", "ddns-generated-prefix" },
+        { "qualifying-suffix", "ddns-qualifying-suffix" },
+        { "hostname-char-set", "hostname-char-set" },
+        { "hostname-char-replacement", "hostname-char-replacement" }
+    };
+
+    for (auto param : params) {
+        if (d2_cfg->contains(param.from_name)) {
+            if (!configured_globals_->contains(param.to_name)) {
+                // No global value for it already, so let's add it.
+                addConfiguredGlobal(param.to_name, d2_cfg->get(param.from_name));
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED)
+                        .arg(param.from_name).arg(param.to_name);
+            } else {
+                // Already a global value, we'll use it and ignore this one.
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED)
+                        .arg(param.from_name).arg(param.to_name);
+            }
+
+            // Now remove it from d2_data, so D2ClientCfg won't complain.
+            d2_cfg->remove(param.from_name);
+        }
+    }
 }
-}
+
+} // namespace dhcp
+} // namespace isc

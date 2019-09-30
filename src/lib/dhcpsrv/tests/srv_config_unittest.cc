@@ -1108,6 +1108,181 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
 }
 
+// Verifies that parameters formerly in dhcp-ddns{} are correctly moved
+// to configured globals.
+TEST_F(SrvConfigTest, moveDdnsParamsTest) {
+    DdnsParamsPtr params;
+
+    CfgMgr::instance().setFamily(AF_INET);
+
+    struct Scenario {
+        std::string description;
+        std::string d2_input;
+        std::string d2_output;
+        std::string input_globals;
+        std::string exp_globals;
+    };
+
+    std::vector<Scenario> scenarios {
+        {
+        "scenario 1, move with no global conflicts",
+        // d2_input
+        "{\n"
+        "    \"enable-updates\": true, \n"
+        "    \"server-ip\" : \"192.0.2.0\",\n"
+        "    \"server-port\" : 3432,\n"
+        "    \"sender-ip\" : \"192.0.2.1\",\n"
+        "    \"sender-port\" : 3433,\n"
+        "    \"max-queue-size\" : 2048,\n"
+        "    \"ncr-protocol\" : \"UDP\",\n"
+        "    \"ncr-format\" : \"JSON\",\n"
+        "    \"user-context\": { \"foo\": \"bar\" },\n"
+        "    \"override-no-update\": true,\n"
+        "    \"override-client-update\": false,\n"
+        "    \"replace-client-name\": \"always\",\n"
+        "    \"generated-prefix\": \"prefix\",\n"
+        "    \"qualifying-suffix\": \"suffix.com.\",\n"
+        "    \"hostname-char-set\": \"[^A-Z]\",\n"
+        "    \"hostname-char-replacement\": \"x\"\n"
+        "}\n",
+        // d2_output
+        "{\n"
+        "    \"enable-updates\": true,\n"
+        "    \"server-ip\" : \"192.0.2.0\",\n"
+        "    \"server-port\" : 3432,\n"
+        "    \"sender-ip\" : \"192.0.2.1\",\n"
+        "    \"sender-port\" : 3433,\n"
+        "    \"max-queue-size\" : 2048,\n"
+        "    \"ncr-protocol\" : \"UDP\",\n"
+        "    \"ncr-format\" : \"JSON\",\n"
+        "    \"user-context\": { \"foo\": \"bar\" }\n"
+        "}\n",
+        // input_globals - no globals to start with
+        "{\n"
+        "}\n",
+        // exp_globals
+        "{\n"
+        "    \"ddns-override-no-update\": true,\n"
+        "    \"ddns-override-client-update\": false,\n"
+        "    \"ddns-replace-client-name\": \"always\",\n"
+        "    \"ddns-generated-prefix\": \"prefix\",\n"
+        "    \"ddns-qualifying-suffix\": \"suffix.com.\",\n"
+        "    \"hostname-char-set\": \"[^A-Z]\",\n"
+        "    \"hostname-char-replacement\": \"x\"\n"
+        "}\n"
+        },
+
+        {
+        "scenario 2, globals already exist for all movable params",
+        // d2_input
+        "{\n"
+        "    \"enable-updates\": true, \n"
+        "    \"override-no-update\": true,\n"
+        "    \"override-client-update\": true,\n"
+        "    \"replace-client-name\": \"always\",\n"
+        "    \"generated-prefix\": \"prefix\",\n"
+        "    \"qualifying-suffix\": \"suffix.com.\",\n"
+        "    \"hostname-char-set\": \"[^A-Z]\",\n"
+        "    \"hostname-char-replacement\": \"x\"\n"
+        "}\n",
+        // d2_output
+        "{\n"
+        "    \"enable-updates\": true \n"
+        "}\n",
+        // input_globals
+        "{\n"
+        "    \"ddns-override-no-update\": false,\n"
+        "    \"ddns-override-client-update\": false,\n"
+        "    \"ddns-replace-client-name\": \"when-present\",\n"
+        "    \"ddns-generated-prefix\": \"org_prefix\",\n"
+        "    \"ddns-qualifying-suffix\": \"org_suffix.com.\",\n"
+        "    \"hostname-char-set\": \"[^a-z]\",\n"
+        "    \"hostname-char-replacement\": \"y\"\n"
+        "}\n",
+        // exp_globals
+        "{\n"
+        "    \"ddns-override-no-update\": false,\n"
+        "    \"ddns-override-client-update\": false,\n"
+        "    \"ddns-replace-client-name\": \"when-present\",\n"
+        "    \"ddns-generated-prefix\": \"org_prefix\",\n"
+        "    \"ddns-qualifying-suffix\": \"org_suffix.com.\",\n"
+        "    \"hostname-char-set\": \"[^a-z]\",\n"
+        "    \"hostname-char-replacement\": \"y\"\n"
+        "}\n"
+        },
+
+        {
+        "scenario 3, nothing to move",
+        // d2_input
+        "{\n"
+        "    \"enable-updates\": true, \n"
+        "    \"server-ip\" : \"192.0.2.0\",\n"
+        "    \"server-port\" : 3432,\n"
+        "    \"sender-ip\" : \"192.0.2.1\"\n"
+        "}\n",
+        // d2_output
+        "{\n"
+        "    \"enable-updates\": true,\n"
+        "    \"server-ip\" : \"192.0.2.0\",\n"
+        "    \"server-port\" : 3432,\n"
+        "    \"sender-ip\" : \"192.0.2.1\"\n"
+        "}\n",
+        // input_globals
+        "{\n"
+        "    \"hostname-char-set\": \"[^A-Z]\",\n"
+        "    \"hostname-char-replacement\": \"x\"\n"
+        "}\n",
+        // exp_globals
+        "{\n"
+        "    \"hostname-char-set\": \"[^A-Z]\",\n"
+        "    \"hostname-char-replacement\": \"x\"\n"
+        "}\n"
+        },
+
+    };
+
+    for (auto scenario : scenarios) {
+        SrvConfig conf(32);
+        ConstElementPtr d2_input;
+        ConstElementPtr exp_d2_output;
+        ConstElementPtr input_globals;
+        ConstElementPtr exp_globals;
+
+        {
+            SCOPED_TRACE(scenario.description);
+            ASSERT_NO_THROW(d2_input = Element::fromJSON(scenario.d2_input))
+                            << "d2_input didn't parse, test is broken";
+
+            ASSERT_NO_THROW(exp_d2_output = Element::fromJSON(scenario.d2_output))
+                            << "d2_output didn't parse, test is broken";
+
+            ASSERT_NO_THROW(input_globals = Element::fromJSON(scenario.input_globals))
+                            << "input_globals didn't parse, test is broken";
+
+            ASSERT_NO_THROW(exp_globals = Element::fromJSON(scenario.exp_globals))
+                            << "exp_globals didn't parse, test is broken";
+
+            // Create the original set of configured globals.
+            for (auto input_global : input_globals->mapValue()) {
+                conf.addConfiguredGlobal(input_global.first, input_global.second);
+            }
+
+            // We need a mutable copy of d2_input to pass into the move function.
+            ElementPtr mutable_d2 = boost::const_pointer_cast<Element>(d2_input);
+            // NOw call moveDdnsParams.
+            ASSERT_NO_THROW(conf.moveDdnsParams(mutable_d2));
+
+            // Make sure the content of mutable_d2 is correct.
+            EXPECT_TRUE(mutable_d2->equals(*exp_d2_output));
+
+            // Make sure the content of configured globals.
+            EXPECT_TRUE(conf.getConfiguredGlobals()->equals(*exp_globals));
+        }
+    }
+}
+
+// Verifies that the scoped values for DDNS parameters can be fetched
+// for a given Subnet4.
 TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     DdnsParamsPtr params;
 
@@ -1217,6 +1392,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_TRUE(params->enable_updates_);
 }
 
+// Verifies that the scoped values for DDNS parameters can be fetched
+// for a given Subnet6.
 TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     DdnsParamsPtr params;
 
