@@ -1694,6 +1694,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/shell/tests/shell_unittest.py
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/flex_option/Makefile
+                 src/hooks/dhcp/flex_option/tests/Makefile
                  src/hooks/dhcp/high_availability/Makefile
                  src/hooks/dhcp/high_availability/tests/Makefile
                  src/hooks/dhcp/lease_cmds/Makefile

@@ -1,0 +1,17 @@
+# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+
+% FLEX_OPTION_LOAD_ERROR loading Flex Option hooks library failed: %1
+This error message indicates an error during loading the Flex Option
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% FLEX_OPTION_PROCESS_ERROR An error occurred processing query %1: %2
+This error message indicates an error during processing of a query
+by the Flex Option hooks library. The client identification information
+from the query and the details of the error are provided as arguments
+of the log message.
+
+% FLEX_OPTION_UNLOAD Flex Option hooks library has been unloaded
+This info message indicates that the Flex Option hooks library has been
+unloaded.
+

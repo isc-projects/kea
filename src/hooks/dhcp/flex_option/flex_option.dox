@@ -1,0 +1,32 @@
+// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_flex_option Kea Flexible Option Hooks Library
+
+@section libdhcp_flex_optionIntro Introduction
+
+Welcome to Kea Flexible Option Hooks Library. This documentation is
+addressed to developers who are interested in the internal operation
+of the Flexible Option library. This file provides information needed
+to understand and perhaps extend this library.
+
+This documentation is stand-alone: you should have read and understood
+the <a href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea
+Developer's Guide</a> and in particular its section about hooks.
+
+@section flex_option Flexible Option Overview
+
+Flexible Option (or flex_option) is a Hook library that can be loaded by
+either kea-dhcp4 and kea-dhcp6 servers to extend them with additional
+option value setting mechanisms.
+
+@section flex_optionCode Flexible Option Code Overview
+
+Todo
+
+*/
