@@ -24,7 +24,8 @@ using namespace std;
 namespace isc {
 namespace flex_option {
 
-FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code) : code_(code) {
+FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code)
+    : code_(code), action_(NONE) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -217,6 +218,11 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
                       << remove << "] error: " << ex.what());
         }
     }
+
+    if (opt_cfg->getAction() == NONE) {
+        isc_throw(BadValue, "no action: " << option->str());
+    }
+    option_config_map_[code] = opt_cfg;
 }
 
 } // end of namespace flex_option

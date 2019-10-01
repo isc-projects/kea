@@ -194,6 +194,14 @@ public:
         }
     }
 
+protected:
+    /// @brief Get a mutable reference to the option config map
+    ///
+    /// @return The option config map.
+    OptionConfigMap& getMutableOptionConfigMap() {
+        return (option_config_map_);
+    }
+
 private:
     /// @brief The option config map (code and pointer to option config).
     OptionConfigMap option_config_map_;

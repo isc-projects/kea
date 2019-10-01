@@ -1695,6 +1695,7 @@ AC_CONFIG_FILES([Makefile
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/flex_option/Makefile
+                 src/hooks/dhcp/flex_option/libloadtests/Makefile
                  src/hooks/dhcp/flex_option/tests/Makefile
                  src/hooks/dhcp/high_availability/Makefile
                  src/hooks/dhcp/high_availability/tests/Makefile
@@ -1702,11 +1703,11 @@ AC_CONFIG_FILES([Makefile
                  src/hooks/dhcp/lease_cmds/tests/Makefile
                  src/hooks/dhcp/mysql_cb/Makefile
                  src/hooks/dhcp/mysql_cb/tests/Makefile
+                 src/hooks/dhcp/stat_cmds/Makefile
+                 src/hooks/dhcp/stat_cmds/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h
-                 src/hooks/dhcp/stat_cmds/Makefile
-                 src/hooks/dhcp/stat_cmds/tests/Makefile
                  src/lib/Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile

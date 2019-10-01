@@ -12,20 +12,21 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
+#include <flex_option.h>
 #include <hooks/hooks_manager.h>
+
 #include <gtest/gtest.h>
-#include <cc/data.h>
 #include <errno.h>
 
 using namespace std;
 using namespace isc;
-using namespace hooks;
+using namespace isc::hooks;
 using namespace isc::data;
+using namespace isc::dhcp;
 
 namespace {
 
-/// @brief Test fixture for testing loading and unloading the flex-id library
+/// @brief Test fixture for testing loading and unloading the flex-option library
 class LibLoadTest : public ::testing::Test {
 public:
     /// @brief Constructor

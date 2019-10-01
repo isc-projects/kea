@@ -26,7 +26,7 @@ if HAVE_GTEST
 TESTS += flex_option_unittests
 
 flex_option_unittests_SOURCES = run_unittests.cc
-flex_option_unittests_SOURCES += flex_option_unittests.cc
+flex_option_unittests_SOURCES += load_unload_unittests.cc
 
 flex_option_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
@@ -34,8 +34,7 @@ flex_option_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS
 
 flex_option_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-flex_option_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/flex_option/libflex_option.la
-flex_option_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+flex_option_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 flex_option_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
