@@ -1355,6 +1355,9 @@ def prepare_system_local(features, check_times):
         if 'native-pkg' in features:
             packages.extend(['alpine-sdk'])
 
+        if 'ccache' in features:
+            packages.extend(['ccache'])
+
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
         # log4cplus needs to be taken from extra repository, edge testing
@@ -1406,6 +1409,9 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
             ccache_bin_path = '/usr/lib64/ccache'
             env['CC'] = 'ccache gcc'
             env['CXX'] = 'ccache g++'
+        elif system == 'alpine':
+            # TODO: it doesn't work yet, new abuild is needed and add 'USE_CCACHE=1' to /etc/abuild.conf
+            ccache_bin_path = '/usr/lib/ccache/bin'
         env['PATH'] = ccache_bin_path + ':' + env['PATH']
         env['CCACHE_DIR'] = ccache_dir
     return env
