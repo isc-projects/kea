@@ -17,6 +17,7 @@
 #include <hooks/hooks.h>
 
 #include <gtest/gtest.h>
+#include <sstream>
 
 using namespace std;
 using namespace isc;
@@ -36,7 +37,32 @@ namespace {
 /// @brief Test class derived from FlexOptionImpl
 class TestFlexOptionImpl : public FlexOptionImpl {
 public:
+    /// Export getMutableOptionConfigMap.
     using FlexOptionImpl::getMutableOptionConfigMap;
+
+    /// @brief Configure clone which records the error.
+    ///
+    /// @param options The element with option config list.
+    void testConfigure(ConstElementPtr options) {
+        err_msg_.clear();
+        try {
+            configure(options);
+        } catch (const std::exception& ex) {
+            err_msg_ = string(ex.what());
+            throw;
+        }
+    }
+
+    /// @brief Get the last error message.
+    ///
+    /// @return The last error message.
+    const string& getErrMsg() const {
+        return (err_msg_);
+    }
+
+private:
+    /// @brief Last error message.
+    string err_msg_;
 };
 
 /// @brief The type of shared pointers to TestFlexOptionImpl
@@ -64,19 +90,22 @@ public:
 // Verify that the configuration must exist.
 TEST_F(FlexOptionTest, noConfig) {
     ElementPtr options;
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'options' parameter is mandatory", impl_->getErrMsg());
 }
 
 // Verify that the configuration must be a list.
 TEST_F(FlexOptionTest, configNotList) {
     ElementPtr options = Element::createMap();
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'options' parameter must be a list", impl_->getErrMsg());
 }
 
 // Verify that the configuration can be the empty list.
 TEST_F(FlexOptionTest, configEmpty) {
     ElementPtr options = Element::createList();
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 }
 
 // Verify that an option configuration must exist.
@@ -84,7 +113,8 @@ TEST_F(FlexOptionTest, noOptionConfig) {
     ElementPtr options = Element::createList();
     ElementPtr option;
     options->add(option);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("null option element", impl_->getErrMsg());
 }
 
 // Verify that an option configuration must be a map.
@@ -92,7 +122,8 @@ TEST_F(FlexOptionTest, optionConfigNotMap) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createList();
     options->add(option);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("option element is not a map", impl_->getErrMsg());
 }
 
 // Verify that an option configuration must have code or name.
@@ -100,7 +131,10 @@ TEST_F(FlexOptionTest, optionConfigNoCodeName) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    ostringstream errmsg;
+    errmsg << "'code' or 'name' must be specified: " << option->str();
+    EXPECT_EQ(errmsg.str(), impl_->getErrMsg());
 }
 
 // Verify that the v4 option code must be in [1..254].
@@ -110,29 +144,40 @@ TEST_F(FlexOptionTest, optionConfigBadCode4) {
     options->add(option);
     ElementPtr add = Element::create(string("'ab'"));
     option->set("add", add);
-    ElementPtr code = Element::create(-1);
+    ElementPtr code = Element::create(false);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), OutOfRange);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'code' must be an integer: false", impl_->getErrMsg());
+
+    code = Element::create(-1);
+    option->set("code", code);
+    EXPECT_THROW(impl_->testConfigure(options), OutOfRange);
+    EXPECT_EQ("invalid 'code' value -1 not in [0..255]", impl_->getErrMsg());
 
     code = Element::create(DHO_PAD);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("invalid 'code' value 0: reserved for PAD", impl_->getErrMsg());
 
     code = Element::create(DHO_END);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("invalid 'code' value 255: reserved for END", impl_->getErrMsg());
 
     code = Element::create(256);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), OutOfRange);
+    EXPECT_THROW(impl_->testConfigure(options), OutOfRange);
+    EXPECT_EQ("invalid 'code' value 256 not in [0..255]", impl_->getErrMsg());
 
     code = Element::create(1);
     option->set("code", code);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     code = Element::create(254);
     option->set("code", code);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 }
 
 // Verify that the v6 option code must be in [1..65535].
@@ -144,25 +189,35 @@ TEST_F(FlexOptionTest, optionConfigBadCode6) {
     options->add(option);
     ElementPtr add = Element::create(string("'ab'"));
     option->set("add", add);
-    ElementPtr code = Element::create(-1);
+    ElementPtr code = Element::create(false);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), OutOfRange);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'code' must be an integer: false", impl_->getErrMsg());
+
+    code = Element::create(-1);
+    option->set("code", code);
+    EXPECT_THROW(impl_->testConfigure(options), OutOfRange);
+    EXPECT_EQ("invalid 'code' value -1 not in [0..65535]", impl_->getErrMsg());
 
     code = Element::create(0);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("invalid 'code' value 0: reserved", impl_->getErrMsg());
 
     code = Element::create(65536);
     option->set("code", code);
-    EXPECT_THROW(impl_->configure(options), OutOfRange);
+    EXPECT_THROW(impl_->testConfigure(options), OutOfRange);
+    EXPECT_EQ("invalid 'code' value 65536 not in [0..65535]", impl_->getErrMsg());
 
     code = Element::create(1);
     option->set("code", code);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     code = Element::create(65535);
     option->set("code", code);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 }
 
 // Verify that the name must be a string.
@@ -174,7 +229,8 @@ TEST_F(FlexOptionTest, optionConfigBadName) {
     option->set("add", add);
     ElementPtr name = Element::create(true);
     option->set("name", name);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'name' must be a string: true", impl_->getErrMsg());
 }
 
 // Verify that the name must not be empty.
@@ -186,7 +242,8 @@ TEST_F(FlexOptionTest, optionConfigEmptyName) {
     option->set("add", add);
     ElementPtr name = Element::create(string());
     option->set("name",name);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'name' must not be empty", impl_->getErrMsg());
 }
 
 // Verify that the name must be a known option.
@@ -198,7 +255,8 @@ TEST_F(FlexOptionTest, optionConfigUnknownName) {
     option->set("add", add);
     ElementPtr name = Element::create(string("foobar"));
     option->set("name",name);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("no known 'foobar' option in 'dhcp4' space", impl_->getErrMsg());
 }
 
 // Verify that the name can be a standard option.
@@ -210,7 +268,8 @@ TEST_F(FlexOptionTest, optionConfigStandardName) {
     option->set("add", add);
     ElementPtr name = Element::create(string("host-name"));
     option->set("name", name);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_HOST_NAME));
@@ -230,7 +289,8 @@ TEST_F(FlexOptionTest, optionConfigDefinedName) {
     option->set("add", add);
     ElementPtr name = Element::create(string("my-option"));
     option->set("name", name);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(1, map.count(222));
@@ -249,7 +309,8 @@ TEST_F(FlexOptionTest, optionConfigCodeNameMismatch) {
     option->set("code", code);
     ElementPtr name = Element::create(string("host-name"));
     option->set("name", name);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("option 'host-name' has code 12 but 'code' is 13", impl_->getErrMsg());
 }
 
 // Verify that an option can be configured only once.
@@ -263,7 +324,8 @@ TEST_F(FlexOptionTest, optionConfigTwice) {
     option->set("code", code);
 
     options->add(option);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("option 12 was already specified", impl_->getErrMsg());
 }
 
 // Verify that the add value must be a string.
@@ -275,7 +337,8 @@ TEST_F(FlexOptionTest, optionConfigAddNotString) {
     option->set("code", code);
     ElementPtr add = Element::create(true);
     option->set("add", add);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'add' must be a string: true", impl_->getErrMsg());
 }
 
 // Verify that the add value must not be empty.
@@ -287,7 +350,8 @@ TEST_F(FlexOptionTest, optionConfigEmptyAdd) {
     option->set("code", code);
     ElementPtr add = Element::create(string());
     option->set("add", add);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'add' must not be empty", impl_->getErrMsg());
 }
 
 // Verify that the add value must parse.
@@ -299,7 +363,10 @@ TEST_F(FlexOptionTest, optionConfigBadAdd) {
     option->set("code", code);
     ElementPtr add = Element::create(string("if"));
     option->set("add", add);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("can't parse add expression [if] error: "
+              "<string>:1.1: Invalid character: i",
+              impl_->getErrMsg());
 }
 
 // Verify that a valid v4 add value is accepted.
@@ -311,7 +378,8 @@ TEST_F(FlexOptionTest, optionConfigAdd4) {
     option->set("code", code);
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigPtr opt_cfg;
@@ -342,7 +410,8 @@ TEST_F(FlexOptionTest, optionConfigAdd6) {
     option->set("code", code);
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigPtr opt_cfg;
@@ -369,9 +438,10 @@ TEST_F(FlexOptionTest, optionConfigSupersedeNotString) {
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
-    ElementPtr supersede = Element::create(true);
+    ElementPtr supersede = Element::create(123);
     option->set("supersede", supersede);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'supersede' must be a string: 123", impl_->getErrMsg());
 }
 
 // Verify that the supersede value must not be empty.
@@ -383,7 +453,8 @@ TEST_F(FlexOptionTest, optionConfigEmptySupersede) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string());
     option->set("supersede", supersede);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'supersede' must not be empty", impl_->getErrMsg());
 }
 
 // Verify that the supersede value must parse.
@@ -395,7 +466,10 @@ TEST_F(FlexOptionTest, optionConfigBadSupersede) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("if"));
     option->set("supersede", supersede);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "can't parse supersede expression [if] error: ";
+    expected += "<string>:1.1: Invalid character: i";
+    EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
 // Verify that a valid v4 supersede value is accepted.
@@ -407,7 +481,8 @@ TEST_F(FlexOptionTest, optionConfigSupersede4) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigPtr opt_cfg;
@@ -438,7 +513,8 @@ TEST_F(FlexOptionTest, optionConfigSupersede6) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigPtr opt_cfg;
@@ -465,9 +541,10 @@ TEST_F(FlexOptionTest, optionConfigRemoveNotString) {
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
-    ElementPtr remove = Element::create(true);
+    ElementPtr remove = Element::createMap();
     option->set("remove", remove);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'remove' must be a string: {  }", impl_->getErrMsg());
 }
 
 // Verify that the remove value must not be empty.
@@ -479,7 +556,8 @@ TEST_F(FlexOptionTest, optionConfigEmptyRemove) {
     option->set("code", code);
     ElementPtr remove = Element::create(string());
     option->set("remove", remove);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    EXPECT_EQ("'remove' must not be empty", impl_->getErrMsg());
 }
 
 // Verify that the remove value must parse.
@@ -491,7 +569,11 @@ TEST_F(FlexOptionTest, optionConfigBadRemove) {
     option->set("code", code);
     ElementPtr remove = Element::create(string("'abc'"));
     option->set("remove", remove);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "can't parse remove expression ['abc'] error: ";
+    expected += "<string>:1.6: syntax error, unexpected end of file, ";
+    expected += "expecting ==";
+    EXPECT_EQ(expected,impl_->getErrMsg());
 }
 
 // Verify that a valid v4 remove value is accepted.
@@ -503,7 +585,8 @@ TEST_F(FlexOptionTest, optionConfigRemove4) {
     option->set("code", code);
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigPtr opt_cfg;
@@ -539,7 +622,8 @@ TEST_F(FlexOptionTest, optionConfigRemove6) {
     option->set("code", code);
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     FlexOptionImpl::OptionConfigPtr opt_cfg;
@@ -577,18 +661,27 @@ TEST_F(FlexOptionTest, optionConfigMultipleAction) {
     option->set("add", add);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    ostringstream errmsg;
+    errmsg << "multiple actions: " << option->str();
+    EXPECT_EQ(errmsg.str(), impl_->getErrMsg());
 
     // supersede and remove.
     option->remove("add");
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
-    EXPECT_THROW(impl_->configure(options), BadValue);
-
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    errmsg.str("");
+    errmsg << "multiple actions: " << option->str();
+    EXPECT_EQ(errmsg.str(), impl_->getErrMsg());
+    
     // add and remove.
     option->remove("supersede");
     option->set("add", add);
-    EXPECT_THROW(impl_->configure(options), BadValue);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    errmsg.str("");
+    errmsg << "multiple actions: " << option->str();
+    EXPECT_EQ(errmsg.str(), impl_->getErrMsg());
 }
 
 // Verify that multiple options are accepted.
@@ -609,7 +702,8 @@ TEST_F(FlexOptionTest, optionConfigList) {
     ElementPtr supersede2 = Element::create(string("'/'"));
     option2->set("supersede", supersede2);
 
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     auto map = impl_->getOptionConfigMap();
     EXPECT_EQ(2, map.size());
@@ -668,7 +762,8 @@ TEST_F(FlexOptionTest, processAdd) {
     option->set("code", code);
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -693,7 +788,8 @@ TEST_F(FlexOptionTest, processAddExisting) {
     option->set("code", code);
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -717,7 +813,8 @@ TEST_F(FlexOptionTest, processAddEmpty) {
     option->set("code", code);
     ElementPtr add = Element::create(string("''"));
     option->set("add", add);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -739,7 +836,8 @@ TEST_F(FlexOptionTest, processSupersede) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -764,7 +862,8 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -790,7 +889,8 @@ TEST_F(FlexOptionTest, processSupersedeEmpty) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("''"));
     option->set("supersede", supersede);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -825,7 +925,8 @@ TEST_F(FlexOptionTest, processRemove) {
     option->set("code", code);
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
@@ -846,7 +947,8 @@ TEST_F(FlexOptionTest, processRemoveNoOption) {
     option->set("code", code);
     ElementPtr remove = Element::create(string("'abc' == 'abc'"));
     option->set("remove", remove);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
@@ -868,7 +970,8 @@ TEST_F(FlexOptionTest, processRemoveFalse) {
     option->set("code", code);
     ElementPtr remove = Element::create(string("'abc' == 'xyz'"));
     option->set("remove", remove);
-    EXPECT_NO_THROW(impl_->configure(options));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
