@@ -156,6 +156,7 @@ of the libraries can be verified with this command:
    $ ls -l /usr/local/lib/kea/hooks/*.so
    /usr/local/lib/kea/hooks/libdhcp_class_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_flex_id.so
+   /usr/local/lib/kea/hooks/libdhcp_flex_option.so
    /usr/local/lib/kea/hooks/libdhcp_host_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_lease_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_legal_log.so
@@ -328,6 +329,12 @@ loaded by the correct process per the table below.
    |                 |               |e.g. substring(relay6[0].option[37],0,6). Each incoming     |
    |                 |               |packet is evaluated against that expression and its value is|
    |                 |               |then searched in the reservations database.                 |
+   +-----------------+---------------+------------------------------------------------------------+
+   | Flexible        | Kea sources   |This library provides hooks that compute option values      |
+   | Option          | (since 1.7.1) |instead of static configured values. An expression is       |
+   |                 |               |evaluated on the query packet. Defined add, supersede and   |
+   |                 |               |remove actions are applied on the response packet before    |
+   |                 |               |it is sent using the evaluation result.                     |
    +-----------------+---------------+------------------------------------------------------------+
    | Host Commands   | Support       |Kea provides a way to store host reservations in a          |
    |                 | customers     |database. In many larger deployments it is useful to be able|
@@ -1157,6 +1164,75 @@ In the DHCPv6 case, the corresponding query will look similar to this:
            "subnet-id": 10
        }
    }
+
+.. _flex-option:
+
+flex_option Flexible Option for Option value settings
+=====================================================
+
+This sectiom describes a hook application dedicated to generate flexible
+option values in response packets. The Kea software provides a way to
+configure  option values of response packets based on global configuration,
+client classes, shared networks, subnets, pools and host reservations but
+in all cases values are static. However, there are sometimes scenarios
+where the value should be computed from elements from the query packet.
+These scenarios are addressed by the Flexible Option hook application.
+
+This hook is available since Kea 1.7.1.
+
+.. note::
+
+   This library may only be loaded by the ``kea-dhp4`` or ``kea-dhp6``
+   process.
+
+The library allows the definition of an action per option using an
+expression on the query packer as for the Flex Indentifier hook library
+(See :ref:`flex-id`) or for client classification (See
+:ref:`classification-using-expressions` for a detailed description of
+the syntax available.) The ``add`` and ``supersede`` actions use an
+expression returning a string, doing nothing when it evaluates to
+the empty string. The ``remove`` application uses an expression returning
+true or false, doing nothing on false. When it is necessary to set
+an option to the empty value this mechanism does not work but a client
+class can be used instead.
+
+The ``add`` action adds an option only when the option does not already
+exist and the expression does not evaluate to the empty string.
+The ``supersede`` action does the same but it overwrites the option value
+if it already exists. The ``remove`` action removes the option from
+the response packet if it already exists and the expression evaluates to
+true.
+
+The option where an action applies is specified by its code point or
+by its name. At least the code or the name must be specified. The option
+space is the DHCPv4 or DHCPv6 spaces depending of the server where the
+hook library is loaded. Other spaces as vendor spaces could be supported
+in a further version.
+
+The library can be loaded in a similar way as other hook libraries. It takes
+a mandatory ``options`` parameter holding a list of per option parameter
+maps with code, name, add, supersede and remove actions. Action entries
+take a string value representing an expression.
+
+::
+
+    "Dhcp6": {
+        "hook_libraries": [
+            {   "library": "/usr/local/lib/libdhcp_flex_option.so",
+                "parameters": {
+                    "options": [
+          		    {
+                            "code": 100,
+                            "add": "concat(relay6[0].option[37].hex, 'abc')"
+                        }
+                    ]
+                }
+            },
+            ...
+        ]
+    }
+
+The flexible option library supports both DHCPv4 and DHCPv6.
 
 .. _host-cmds:
 

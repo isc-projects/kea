@@ -19,14 +19,96 @@ This documentation is stand-alone: you should have read and understood
 the <a href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea
 Developer's Guide</a> and in particular its section about hooks.
 
-@section flex_option Flexible Option Overview
+@section libdhcp_flex_optionUser Now To Use libdhcp_flex_option
+## Introduction
+libdhcp_flex_option is a hooks library which customize the option value
+setting mechanism by introducing values from expression evaluation.
+Instead of relying on static configured values, it allows user to define
+expressions and use values of that expressions computed for options
+added to response packets.
 
-Flexible Option (or flex_option) is a Hook library that can be loaded by
-either kea-dhcp4 and kea-dhcp6 servers to extend them with additional
-option value setting mechanisms.
+## Configuring the DHCP Modules
 
-@section flex_optionCode Flexible Option Code Overview
+It must be configured as a hook library for the desired DHCP server
+modules. Note that the flex_option library is installed alongside the
+Kea libraries in "<install-dir>/lib" where <install-dir> is determined
+by the --prefix option of the configure script.  It defaults to
+"/usr/local". Assuming the default value then, configuring kea-dhcp4
+to load the flex_option library could be done with the following Kea4
+configuration:
 
-Todo
+@code
+"Dhcp4": {
+    "hook_libraries": [
+        {   "library": "/usr/local/lib/libdhcp_flex_option.so",
+            "parameters": {
+                "options": [
+                    {
+                        "code": 100,
+                        "add": "concat(relay4[2].hex, 'abc')"
+                    }
+                ]
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+To configure it for kea-dhcp6, the commands are simply as shown below:
+
+@code
+"Dhcp6": {
+    "hook_libraries": [
+        {   "library": "/usr/local/lib/libdhcp_flex_option.so",
+            "parameters": {
+                "options": [
+      		    {
+                        "code": 100,
+                        "add": "concat(relay6[0].option[37].hex, 'abc')"
+                    }
+                ]
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+The parameter is rge options list of option configuration maps with:
+ - @b code - Specifies the option code.
+ - @b name - Speficies the option name, at least the option code or name
+   must be given.
+ - @b add -  Specifies the add action: it takes a string expression on
+   the query packet. If the option does not already exist in the response
+   packet and the expression evaluates to a not empty value, the option
+   with the value is added to the response.
+ - @supersede - Specifies the supersede action: it takes a string expression
+   on the query packet. If the expression evaluates to a not empty value,
+   the option with the value is added to the response. If it already exists
+   it is overwritten.
+ - @remove - Specifies the remove action: it takes a boolean expression
+   on the query packet. If the expression evaluates to true and the option
+   already exists in the response packet, the option is removed from the
+   response. Only one action can be specified.
+
+Note for the rare options which can be empty this mechanism does not work.
+The proposed solution in this case is to use a client class.
+
+## Internal operation
+
+The first function called in @ref load() located in the
+flex_option_callouts.cc. It checks if the necessary parameter is passed and
+decodes the option configurations. @ref unload() free the configuration.
+
+Kea engine checks if the library has functions that match known hook point
+names. This library has two such functions: @ref pkt4_send and @ref pkt6_send,
+all located in flex_option_callouts.cc.
+
+kea-dhcp4 server calls @ref pkt4_send (and kea-dhcp6 @ref pkt6_send) with
+the query and response packets. For each configured option the action is
+applied by the template @ref process located in flex_option.h. When
+required the expression is evaluated on the query packet and the result
+is used by the action for instance to add a new option.
 
 */
