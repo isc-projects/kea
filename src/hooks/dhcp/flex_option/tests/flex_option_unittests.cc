@@ -674,7 +674,7 @@ TEST_F(FlexOptionTest, optionConfigMultipleAction) {
     errmsg.str("");
     errmsg << "multiple actions: " << option->str();
     EXPECT_EQ(errmsg.str(), impl_->getErrMsg());
-    
+
     // add and remove.
     option->remove("supersede");
     option->set("add", add);
@@ -860,7 +860,7 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     options->add(option);
     ElementPtr code = Element::create(D6O_BOOTFILE_URL);
     option->set("code", code);
-    ElementPtr supersede = Element::create(string("'abc'"));
+    ElementPtr supersede = Element::create(string("0xabcdef"));
     option->set("supersede", supersede);
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
@@ -877,7 +877,8 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     EXPECT_EQ(D6O_BOOTFILE_URL, opt->getType());
     const OptionBuffer& buffer = opt->getData();
     ASSERT_EQ(3, buffer.size());
-    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+    uint8_t expected[] = { 0xab, 0xcd, 0xef };
+    EXPECT_EQ(0, memcmp(&buffer[0], expected, 3));
 }
 
 // Verify that SUPERSEDE action does not supersede an empty value.

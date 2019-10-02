@@ -9,6 +9,7 @@
 
 #include <log/logger_support.h>
 #include <log/macros.h>
+#include <log/log_dbglevels.h>
 #include <flex_option_messages.h>
 
 namespace isc {

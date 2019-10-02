@@ -41,6 +41,11 @@ extern "C" {
 ///
 /// @return 0 upon success, non-zero otherwise
 int pkt4_send(CalloutHandle& handle) {
+    // Sanity.
+    if (!impl) {
+        return (0);
+    }
+
     // Get the parameters.
     Pkt4Ptr query;
     Pkt4Ptr response;
@@ -68,6 +73,11 @@ int pkt4_send(CalloutHandle& handle) {
 ///
 /// @return 0 upon success, non-zero otherwise
 int pkt6_send(CalloutHandle& handle) {
+    // Sanity.
+    if (!impl) {
+        return (0);
+    }
+
     // Get the parameters.
     Pkt6Ptr query;
     Pkt6Ptr response;

@@ -163,6 +163,7 @@ public:
                 opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                 buffer));
                 response->addOption(opt);
+                logAction(ADD, opt_cfg->getCode(), value);
                 break;
             case SUPERSEDE:
                 value = isc::dhcp::evaluateString(*opt_cfg->getExpr(), *query);
@@ -177,6 +178,7 @@ public:
                 opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                 buffer));
                 response->addOption(opt);
+                logAction(SUPERSEDE, opt_cfg->getCode(), value);
                 break;
             case REMOVE:
                 if (!opt) {
@@ -189,10 +191,18 @@ public:
                     response->delOption(opt_cfg->getCode());
                     opt = response->getOption(opt_cfg->getCode());
                 }
+                logAction(REMOVE, opt_cfg->getCode(), "");
                 break;
             }
         }
     }
+
+    /// @brief Log the action.
+    ///
+    /// @param action The action.
+    /// @param code The option code.
+    /// @param value The option value ("" for remove).
+    void logAction(Action action, uint16_t code, const std::string& value) const;
 
 protected:
     /// @brief Get a mutable reference to the option config map

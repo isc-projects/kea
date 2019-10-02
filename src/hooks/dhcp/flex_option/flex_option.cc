@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <flex_option.h>
+#include <flex_option_log.h>
 #include <cc/simple_parser.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -19,6 +20,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::eval;
+using namespace isc::log;
 using namespace std;
 
 namespace isc {
@@ -223,6 +225,47 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         isc_throw(BadValue, "no action: " << option->str());
     }
     option_config_map_[code] = opt_cfg;
+}
+
+void
+FlexOptionImpl::logAction(Action action, uint16_t code,
+                          const string& value) const {
+    if (action == NONE) {
+        return;
+    }
+    if (action == REMOVE) {
+        LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
+                  FLEX_OPTION_PROCESS_REMOVE)
+            .arg(code);
+        return;
+    }
+    bool printable = true;
+    for (const unsigned char& ch : value) {
+        if (isprint(ch) == 0) {
+            printable = false;
+            break;
+        }
+    }
+    ostringstream repr;
+    if (printable) {
+        repr << "'" << value << "'";
+    } else {
+        repr << "0x" << hex;
+        for (const unsigned char& ch : value) {
+            repr << setw(2) << setfill('0') << static_cast<unsigned>(ch);
+        }
+    }
+    if (action == SUPERSEDE) {
+        LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
+                  FLEX_OPTION_PROCESS_SUPERSEDE)
+            .arg(code)
+            .arg(repr.str());
+    } else {
+        LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
+                  FLEX_OPTION_PROCESS_ADD)
+            .arg(code)
+            .arg(repr.str());
+    }
 }
 
 } // end of namespace flex_option
