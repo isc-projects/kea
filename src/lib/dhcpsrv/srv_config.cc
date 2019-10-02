@@ -273,6 +273,16 @@ SrvConfig::updateStatistics() {
     }
 }
 
+isc::data::ConstElementPtr 
+SrvConfig::getConfiguredGlobal(std::string name) const {
+    isc::data::ConstElementPtr global;
+    if (configured_globals_->contains(name)) {
+        global = configured_globals_->get(name);
+    }
+
+    return (global);
+}
+
 void
 SrvConfig::clearConfiguredGlobals() {
     configured_globals_ = isc::data::Element::createMap();
@@ -598,9 +608,19 @@ SrvConfig::getDdnsParams(const Subnet& subnet) const {
 }
 
 void
-SrvConfig::moveDdnsParams(isc::data::ElementPtr d2_cfg) {
-    if (!d2_cfg || (d2_cfg->getType() != Element::map)) {
-        isc_throw(BadValue, "moveDdnsParams must be given a map element");
+SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
+    if (!srv_elem || (srv_elem->getType() != Element::map)) {
+        isc_throw(BadValue, "moveDdnsParams server config must be given a map element");
+    }
+
+    if (!srv_elem->contains("dhcp-ddns")) {
+        /* nothing to do */
+        return;
+    }
+
+    ElementPtr d2_elem = boost::const_pointer_cast<Element>(srv_elem->get("dhcp-ddns"));
+    if (!d2_elem || (d2_elem->getType() != Element::map)) {
+        isc_throw(BadValue, "moveDdnsParams dhcp-ddns is not a map");
     }
 
     struct Param {
@@ -619,10 +639,10 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr d2_cfg) {
     };
 
     for (auto param : params) {
-        if (d2_cfg->contains(param.from_name)) {
-            if (!configured_globals_->contains(param.to_name)) {
+        if (d2_elem->contains(param.from_name)) {
+            if (!srv_elem->contains(param.to_name)) {
                 // No global value for it already, so let's add it.
-                addConfiguredGlobal(param.to_name, d2_cfg->get(param.from_name));
+                srv_elem->set(param.to_name, d2_elem->get(param.from_name));
                 LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED)
                         .arg(param.from_name).arg(param.to_name);
             } else {
@@ -632,7 +652,7 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr d2_cfg) {
             }
 
             // Now remove it from d2_data, so D2ClientCfg won't complain.
-            d2_cfg->remove(param.from_name);
+            d2_elem->remove(param.from_name);
         }
     }
 }

@@ -627,6 +627,12 @@ public:
         return (isc::data::ConstElementPtr(configured_globals_));
     }
 
+    /// @brief Returns pointer to a given configured global parameter
+    /// @param name name of the parameter to fetch
+    /// @return Pointer to the parameter if it exists, otherwise an
+    /// empty pointer.
+    isc::data::ConstElementPtr getConfiguredGlobal(std::string name) const;
+
     /// @brief Removes all configured global parameters.
     /// @note This removes the default values too so either
     /// @c applyDefaultsConfiguredGlobals and @c mergeGlobals,
@@ -648,7 +654,30 @@ public:
         configured_globals_->set(name, value);
     }
 
-    void moveDdnsParams(isc::data::ElementPtr d2_cfg);
+    /// @brief Moves deprecated parameters from dhcp-ddns element to global element
+    ///
+    /// Given a server configuration element map, the following parameters are moved
+    /// from dhcp-ddns to top-level (i.e. global) element if they do not already
+    /// exist there:
+    ///
+    /// @code
+    /// From dhcp-ddns:            To (global):
+    /// ------------------------------------------------------
+    /// override-no-update         ddns-override-no-update
+    /// override-client-update     ddns-override-client-update
+    /// replace-client-name        ddns-replace-client-name
+    /// generated-prefix           ddns-generated-prefix
+    /// qualifying-suffix          ddns-qualifying-suffix
+    /// hostname-char-set          hostname-char-set
+    /// hostname-char-replacement  hostname-char-replacement
+    /// @endcode
+    ///
+    /// Note that the whether or not the deprecated parameters are added
+    /// to the global element, they are always removed from the dhcp-ddns
+    /// element.
+    ///
+    /// @param srv_elem server top level map to alter
+    static void moveDdnsParams(isc::data::ElementPtr srv_elem);
 
     /// @brief Unparse a configuration object
     ///
