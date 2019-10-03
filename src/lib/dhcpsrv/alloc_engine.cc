@@ -446,7 +446,7 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
       duid_(duid), hwaddr_(), host_identifiers_(), hosts_(),
       fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns), hostname_(hostname),
       callout_handle_(callout_handle), allocated_resources_(), new_leases_(),
-      ias_(), ddns_params_(new DdnsParams()) {
+      ias_(), ddns_params_() {
 
     // Initialize host identifiers.
     if (duid) {
@@ -536,6 +536,26 @@ bool
 AllocEngine::ClientContext6::hasGlobalReservation(const IPv6Resrv& resv) const {
     ConstHostPtr ghost = globalHost();
     return (ghost && ghost->hasReservation(resv));
+}
+
+DdnsParamsPtr
+AllocEngine::ClientContext6::getDdnsParams() {
+    // We already have it, return it.
+    if (ddns_params_) {
+        return (ddns_params_);
+    }
+
+    // Haven't created it, so this is the first time we've needed it
+    // since being given a subnet.
+    if (subnet_) {
+        ddns_params_ = CfgMgr::instance().getCurrentCfg()->getDdnsParams(*subnet_);
+        return (ddns_params_);
+    }
+
+    // Asked for it without a subnet? This case really shouldn't occur but
+    // for now let's an instance with default values.
+    std::cout << "ClientContext6, Hey we're accessing this without a subnet!" << std::endl;
+    return (DdnsParamsPtr(new DdnsParams()));
 }
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
@@ -1157,7 +1177,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                             // the hostname as it is specified for the reservation.
                             OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                             ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                qualifyName(host->getHostname(), *ctx.ddns_params_,
+                                qualifyName(host->getHostname(), *ctx.getDdnsParams(),
                                             static_cast<bool>(fqdn));
                         }
                     }
@@ -1230,7 +1250,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                         // the hostname as it is specified for the reservation.
                         OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                         ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                            qualifyName(host->getHostname(), *ctx.ddns_params_,
+                            qualifyName(host->getHostname(), *ctx.getDdnsParams(),
                                         static_cast<bool>(fqdn));
                     }
                 }
@@ -1306,7 +1326,7 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                     // the hostname as it is specified for the reservation.
                     OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                     ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                    qualifyName(ghost->getHostname(), *ctx.ddns_params_,
+                                    qualifyName(ghost->getHostname(), *ctx.getDdnsParams(),
                                                 static_cast<bool>(fqdn));
             }
 
@@ -1357,7 +1377,7 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                 // the hostname as it is specified for the reservation.
                 OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                 ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                qualifyName(ghost->getHostname(), *ctx.ddns_params_,
+                                qualifyName(ghost->getHostname(), *ctx.getDdnsParams(),
                                             static_cast<bool>(fqdn));
             }
 
@@ -3008,7 +3028,7 @@ AllocEngine::ClientContext4::ClientContext4()
       hostname_(""), callout_handle_(), fake_allocation_(false),
       old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
       query_(), host_identifiers_(),
-      ddns_params_(new DdnsParams()) {
+      ddns_params_() {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -3045,6 +3065,26 @@ AllocEngine::ClientContext4::currentHost() const {
         }
     }
     return (ConstHostPtr());
+}
+
+DdnsParamsPtr
+AllocEngine::ClientContext4::getDdnsParams() {
+    // We already have it, return it.
+    if (ddns_params_) {
+        return (ddns_params_);
+    }
+
+    // Haven't created it, so this is the first time we've needed it
+    // since being given a subnet.
+    if (subnet_) {
+        ddns_params_ = CfgMgr::instance().getCurrentCfg()->getDdnsParams(*subnet_);
+        return (ddns_params_);
+    }
+
+    // Asked for it without a subnet? This case really shouldn't occur but
+    // for now let's an instance with default values.
+    std::cout << "ClientContext4, Hey we're accessing this without a subnet!" << std::endl;
+    return (DdnsParamsPtr(new DdnsParams()));
 }
 
 Lease4Ptr

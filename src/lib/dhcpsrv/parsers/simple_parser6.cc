@@ -106,9 +106,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "ddns-replace-client-name",       Element::string, "never" },
     { "ddns-generated-prefix",          Element::string, "myhost" },
     // TKM should this still be true? qualifying-suffix has no default ??
-    { "ddns-qualifying-suffix",         Element::string, "" },
-    { "hostname-char-set",              Element::string, "" },
-    { "hostname-char-replacement",      Element::string, "" }
+    { "ddns-qualifying-suffix",         Element::string, "" }
 };
 
 /// @brief This table defines all option definition parameters.

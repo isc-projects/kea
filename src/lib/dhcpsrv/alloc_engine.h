@@ -553,8 +553,14 @@ public:
         /// @brief Container holding IA specific contexts.
         std::vector<IAContext> ias_;
 
-        /// @brief Holds scoped DDNS behavioral parameters
-        DdnsParamsPtr ddns_params_;
+        /// @brief Returns the set of DDNS behavioral parameters based on
+        /// the selected subnet.
+        ///
+        /// If there is no selected subnet (i.e. subnet_ is empty), the
+        /// returned set will cotain default values.
+        ///
+        /// @return pointer to a DdnsParams instance
+        DdnsParamsPtr getDdnsParams();
 
         /// @brief Convenience method adding allocated prefix or address.
         ///
@@ -652,6 +658,12 @@ public:
                        const Pkt6Ptr& query,
                        const hooks::CalloutHandlePtr& callout_handle =
                        hooks::CalloutHandlePtr());
+
+        private:
+            /// @brief Contains a pointer to the DDNS parameters for selected
+            /// subnet.  Set by the first call to getDdnsParams() made when
+            /// the context has a selected subnet (i.e. subnet_ is not empty).
+            DdnsParamsPtr ddns_params_;
     };
 
     /// @brief Allocates IPv6 leases for a given IA container
@@ -1323,8 +1335,14 @@ public:
         /// received by the server.
         IdentifierList host_identifiers_;
 
-        /// @brief Holds scoped DDNS behavioral parameters
-        DdnsParamsPtr ddns_params_;
+        /// @brief Returns the set of DDNS behavioral parameters based on
+        /// the selected subnet.
+        ///
+        /// If there is no selected subnet (i.e. subnet_ is empty), the
+        /// returned set will cotain default values.
+        ///
+        /// @return pointer to a DdnsParams instance
+        DdnsParamsPtr getDdnsParams();
 
         /// @brief Convenience function adding host identifier into
         /// @ref host_identifiers_ list.
@@ -1364,6 +1382,11 @@ public:
                        const bool fwd_dns_update, const bool rev_dns_update,
                        const std::string& hostname, const bool fake_allocation);
 
+        private:
+            /// @brief Contains a pointer to the DDNS parameters for selected
+            /// subnet.  Set by the first call to getDdnsParams() made when
+            /// the context has a selected subnet (i.e. subnet_ is not empty).
+            DdnsParamsPtr ddns_params_;
     };
 
     /// @brief Pointer to the @c ClientContext4.

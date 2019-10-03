@@ -594,7 +594,7 @@ SrvConfig::getDdnsParams(const Subnet& subnet) const {
     DdnsParamsPtr params(new DdnsParams());
 
     params->enable_updates_ = (getD2ClientConfig()->getEnableUpdates() &&
-                                  subnet.getDdnsSendUpdates().get());
+                               subnet.getDdnsSendUpdates().get());
 
     params->override_no_update_ = subnet.getDdnsOverrideNoUpdate().get();
     params->override_client_update_ = subnet.getDdnsOverrideClientUpdate().get();
