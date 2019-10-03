@@ -1370,6 +1370,10 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().get().toText());
     EXPECT_EQ("foo", subnet->getSname().get());
     EXPECT_EQ("bar", subnet->getFilename().get());
@@ -1634,10 +1638,18 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_TRUE(subnet1->getMatchClientId());
 
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_FALSE(subnet2->getMatchClientId());
 }
 
@@ -1672,10 +1684,18 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_FALSE(subnet1->getMatchClientId());
 
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_TRUE(subnet2->getMatchClientId());
 }
 
@@ -1709,10 +1729,18 @@ TEST_F(Dhcp4ParserTest, authoritativeNoGlobal) {
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_TRUE(subnet1->getAuthoritative());
 
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_FALSE(subnet2->getAuthoritative());
 }
 
@@ -1747,10 +1775,18 @@ TEST_F(Dhcp4ParserTest, authoritativeGlobal) {
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet1->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_FALSE(subnet1->getAuthoritative());
 
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    subnet2->setFetchGlobalsFn([]() -> ConstElementPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
     EXPECT_TRUE(subnet2->getAuthoritative());
 }
 

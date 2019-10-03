@@ -237,11 +237,9 @@ const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
 const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "client-class",
     "interface",
-    "interface-id",
     "preferred-lifetime",
     "min-preferred-lifetime",
     "max-preferred-lifetime",
-    "rapid-commit",
     "rebind-timer",
     "relay",
     "renew-timer",
