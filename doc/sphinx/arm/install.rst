@@ -279,15 +279,7 @@ developers, or people who want to extend Kea code or send patches:
    documentation for each release; however, in some cases you may want
    to rebuild it. For example, if you want to change something in the
    docs, or want to generate new ones from git sources that are not
-   released yet. The build procedure uses the xsltproc tool with the
-   nonet argument which disables fetching missing sources, e.g
-   docbook.xsl, from the Internet. If you want to use the
-   Internet anyway, please set the XSLTPROC_NET environment variable in
-   configure to any non-empty value, e.g.
-
-   .. code-block:: console
-
-      $ ./configure XSLTPROC_NET=yes --enable-generate-docs
+   released yet.
 
 --enable-generate-parser
    Many Kea components have parsers implemented using flex (.ll files)
