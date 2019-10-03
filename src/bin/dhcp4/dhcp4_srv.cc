@@ -1710,8 +1710,8 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     // Set the server S, N, and O flags based on client's flags and
     // current configuration.
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-    d2_mgr.adjustFqdnFlags<Option4ClientFqdn>(*fqdn, *fqdn_resp);
-
+    d2_mgr.adjustFqdnFlags<Option4ClientFqdn>(*fqdn, *fqdn_resp,
+                                              *(ex.getContext()->getDdnsParams()));
     // Carry over the client's E flag.
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_E,
                        fqdn->getFlag(Option4ClientFqdn::FLAG_E));
@@ -1720,12 +1720,14 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
         !ex.getContext()->currentHost()->getHostname().empty()) {
         D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
         fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->currentHost()->getHostname(),
-                                                    true), Option4ClientFqdn::FULL);
+                                                    *(ex.getContext()->getDdnsParams()), true),
+                                 Option4ClientFqdn::FULL);
 
     } else {
         // Adjust the domain name based on domain name value and type sent by the
         // client and current configuration.
-        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp);
+        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp,
+                                                   *(ex.getContext()->getDdnsParams()));
     }
 
     // Add FQDN option to the response message. Note that, there may be some
@@ -1797,9 +1799,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // send back a hostname option, send this option with a reserved
         // name for this client.
         if (should_send_hostname) {
-            std::string hostname =
-                d2_mgr.qualifyName(ctx->currentHost()->getHostname(), false);
-
+            std::string hostname = d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
+                                                      *(ex.getContext()->getDdnsParams()), false);
             // Convert hostname to lower case.
             boost::algorithm::to_lower(hostname);
 
@@ -1822,9 +1823,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // hostname option to this client if the client has included hostname option
     // but there is no reservation, or the configuration of the server requires
     // that we send the option regardless.
-
-    D2ClientConfig::ReplaceClientNameMode replace_name_mode =
-            d2_mgr.getD2ClientConfig()->getReplaceClientNameMode();
+    D2ClientConfig::ReplaceClientNameMode replace_name_mode
+        = ex.getContext()->getDdnsParams()->replace_client_name_mode_;
 
     // If we don't have a hostname then either we'll supply it or do nothing.
     if (!opt_hostname) {
@@ -1898,8 +1898,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, "."));
     } else {
         // Sanitize the name the client sent us, if we're configured to do so.
-        isc::util::str::StringSanitizerPtr sanitizer = d2_mgr.getD2ClientConfig()
-                                                       ->getHostnameSanitizer();
+        isc::util::str::StringSanitizerPtr sanitizer
+            = ex.getContext()->getDdnsParams()->getHostnameSanitizer();
+
         if (sanitizer) {
             hostname = sanitizer->scrub(hostname);
         }
@@ -1915,8 +1916,10 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             // hostname. We don't want to append the trailing dot because
             // we don't know whether the hostname is partial or not and some
             // clients do not handle the hostnames with the trailing dot.
-            opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME,
-                                                     d2_mgr.qualifyName(hostname, false)));
+            opt_hostname_resp.reset(
+                new OptionString(Option::V4, DHO_HOST_NAME,
+                                 d2_mgr.qualifyName(hostname, *(ex.getContext()->getDdnsParams()),
+                                                    false)));
         } else {
             opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, hostname));
         }
@@ -2222,7 +2225,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
                 lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
                     .qualifyName(ctx->currentHost()->getHostname(),
-                                 static_cast<bool>(fqdn));
+                                 *(ex.getContext()->getDdnsParams()), static_cast<bool>(fqdn));
                 should_update = true;
 
             // If there has been Client FQDN or Hostname option sent, but the
@@ -2237,7 +2240,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 // the hostname. Whether the trailing dot is appended or not is
                 // controlled by the second argument to the generateFqdn().
                 lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
-                    .generateFqdn(lease->addr_, static_cast<bool>(fqdn));
+                    .generateFqdn(lease->addr_, *(ex.getContext()->getDdnsParams()),
+                                  static_cast<bool>(fqdn));
 
                 LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_RESPONSE_HOSTNAME_GENERATE)
                     .arg(query->getLabel())
@@ -2288,9 +2292,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Set T1 and T2 per configuration.
         setTeeTimes(lease, subnet, resp);
 
+
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
-        if (!fake_allocation && CfgMgr::instance().ddnsEnabled()) {
+        if (!fake_allocation && (ex.getContext()->getDdnsParams()->enable_updates_)) {
             try {
                 LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
                     .arg(query->getLabel());

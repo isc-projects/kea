@@ -132,9 +132,9 @@ Dhcp4SrvD2Test::configure(const std::string& config, bool exp_result) {
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     if (exp_result == SHOULD_PASS) {
-        ASSERT_EQ(0, rcode);
+        ASSERT_EQ(0, rcode) << "parse comment: " << comment->stringValue();
     } else {
-        ASSERT_EQ(1, rcode);
+        ASSERT_EQ(1, rcode) << "parse comment: " << comment->stringValue();
     }
 
     if (rcode == 0) {

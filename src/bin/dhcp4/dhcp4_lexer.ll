@@ -663,6 +663,72 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"ddns-send-updates\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_SEND_UPDATES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-send-updates", driver.loc_);
+    }
+}
+
+\"ddns-override-no-update\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_OVERRIDE_NO_UPDATE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-override-no-update", driver.loc_);
+    }
+}
+
+\"ddns-override-client-update\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_OVERRIDE_CLIENT_UPDATE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-override-client-update", driver.loc_);
+    }
+}
+
+\"ddns-replace-client-name\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_REPLACE_CLIENT_NAME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-replace-client-name", driver.loc_);
+    }
+}
+
+\"ddns-generated-prefix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_GENERATED_PREFIX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-generated-prefix", driver.loc_);
+    }
+}
+
+\"ddns-qualifying-suffix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_QUALIFYING_SUFFIX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-qualifying-suffix", driver.loc_);
+    }
+}
+
 \"subnet4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1489,6 +1555,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::DHCP_DDNS:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("hostname-char-set", driver.loc_);
@@ -1499,6 +1567,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::DHCP_DDNS:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("hostname-char-replacement", driver.loc_);

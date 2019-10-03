@@ -796,6 +796,19 @@ public:
         EXPECT_TRUE(pool);
     }
 
+    template <typename ValueType>
+    void checkGlobal(const std::string name, ValueType value) {
+        ConstElementPtr param;
+        ConstElementPtr exp_value;
+        param = CfgMgr::instance().getStagingCfg()->getConfiguredGlobal(name);
+        ASSERT_TRUE(param) << "global: " << name << ", expected but not found";
+        ASSERT_NO_THROW(exp_value = Element::create(value));
+        EXPECT_TRUE(param->equals(*exp_value)) << "global: " << name
+                                               << isc::data::prettyPrint(param)
+                                               << " does not match expected: "
+                                               << isc::data::prettyPrint(exp_value);
+    }
+
     boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
     ConstElementPtr comment_;           ///< Reason for parse fail
@@ -4212,10 +4225,75 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
     EXPECT_FALSE(test_config.socketOpen("eth1", "192.0.2.5"));
 }
 
+// This test verifies that valid d2CliengConfig works correctly.
+TEST_F(Dhcp4ParserTest, d2ClientConfigValid) {
+    ConstElementPtr status;
 
-// This test checks the ability of the server to parse a configuration
-// containing a full, valid dhcp-ddns (D2ClientConfig) entry.
-TEST_F(Dhcp4ParserTest, d2ClientConfig) {
+    // Verify that the D2 configuration can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"192.168.2.2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\"}, "
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP4(config_str, true));
+    extractConfig(config_str);
+
+    // Pass the configuration in for parsing.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("192.168.2.2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+
+    // The following, deprecated dhcp-ddns parameters,
+    // should all have global default values.
+    checkGlobal("ddns-send-updates", true);
+    checkGlobal("ddns-override-no-update", false);
+    checkGlobal("ddns-override-client-update", false);
+    checkGlobal("ddns-replace-client-name", "never");
+    checkGlobal("ddns-generated-prefix", "myhost");
+    checkGlobal("ddns-qualifying-suffix", "");
+}
+
+// This test verifies that valid but deprecated dhcp-ddns parameters
+// get moved to the global scope when they do not already exist there.
+TEST_F(Dhcp4ParserTest, d2ClientConfigMoveToGlobal) {
     ConstElementPtr status;
 
     // Verify that the D2 configuration can be fetched and is set to disabled.
@@ -4245,7 +4323,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\", "
-        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
         "     \"hostname-char-replacement\" : \"x\" }, "
         "\"valid-lifetime\": 4000 }";
 
@@ -4276,97 +4354,22 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
-    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
-    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
-    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
-    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
-    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
-    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
-    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
-    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    // ddns-send-updates should be global default
+    checkGlobal("ddns-send-updates", true);
+
+    // The following should all have been moved from dhcp-ddns.
+    checkGlobal("ddns-override-no-update", true);
+    checkGlobal("ddns-override-client-update", true);
+    checkGlobal("ddns-replace-client-name", "when-present");
+    checkGlobal("ddns-generated-prefix", "test.prefix");
+    checkGlobal("ddns-qualifying-suffix", "test.suffix.");
+    checkGlobal("hostname-char-set", "[^A-Z]");
+    checkGlobal("hostname-char-replacement", "x");
 }
 
-// This test checks the ability of the server to parse a configuration
-// containing a full, valid dhcp-ddns (D2ClientConfig) entry with
-// hostname-char-* at the global scope.
-TEST_F(Dhcp4ParserTest, d2ClientConfigGlobal) {
-    ConstElementPtr status;
-
-    // Verify that the D2 configuration can be fetched and is set to disabled.
-    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    EXPECT_FALSE(d2_client_config->getEnableUpdates());
-
-    // Verify that the convenience method agrees.
-    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
-
-    string config_str = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-        "    \"subnet\": \"192.0.2.0/24\" } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 777, "
-        "     \"sender-ip\" : \"192.168.2.2\", "
-        "     \"sender-port\" : 778, "
-        "     \"max-queue-size\" : 2048, "
-        "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
-        "\"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
-        "\"hostname-char-replacement\" : \"x\", "
-        "\"valid-lifetime\": 4000 }";
-
-    // Convert the JSON string to configuration elements.
-    ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCP4(config_str, true));
-    extractConfig(config_str);
-
-    // Pass the configuration in for parsing.
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
-
-    // check if returned status is OK
-    checkResult(status, 0);
-
-    // Verify that DHCP-DDNS updating is enabled.
-    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
-
-    // Verify that the D2 configuration can be retrieved.
-    d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    ASSERT_TRUE(d2_client_config);
-
-    // Verify that the configuration values are correct.
-    EXPECT_TRUE(d2_client_config->getEnableUpdates());
-    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(777, d2_client_config->getServerPort());
-    EXPECT_EQ("192.168.2.2", d2_client_config->getSenderIp().toText());
-    EXPECT_EQ(778, d2_client_config->getSenderPort());
-    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
-    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
-    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
-    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
-    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
-    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
-    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
-    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
-    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
-    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
-    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
-}
-
-// This test checks the ability of the server to parse a configuration
-// containing a full, valid dhcp-ddns (D2ClientConfig) entry with
-// hostname-char-* at the local and global scopes (local has the priority).
+// This test verifies that explicit global values override deprecated
+// dhcp-ddns parameters (i.e. global scope wins)
 TEST_F(Dhcp4ParserTest, d2ClientConfigBoth) {
     ConstElementPtr status;
 
@@ -4392,15 +4395,21 @@ TEST_F(Dhcp4ParserTest, d2ClientConfigBoth) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
+        "     \"override-no-update\" : false, "
+        "     \"override-client-update\" : false, "
         "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\", "
-        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
-        "     \"hostname-char-replacement\" : \"x\" }, "
-        "\"hostname-char-set\" : \"[^A-Z]\", "
-        "\"hostname-char-replacement\" : \"z\", "
+        "     \"generated-prefix\" : \"d2.prefix\", "
+        "     \"qualifying-suffix\" : \"d2.suffix.\", "
+        "     \"hostname-char-set\" : \"[^0-9]\", "
+        "     \"hostname-char-replacement\" : \"z\" }, "
+        " \"ddns-send-updates\" : false, "
+        " \"ddns-override-no-update\" : true, "
+        " \"ddns-override-client-update\" : true, "
+        " \"ddns-replace-client-name\" : \"always\", "
+        " \"ddns-generated-prefix\" : \"global.prefix\", "
+        " \"ddns-qualifying-suffix\" : \"global.suffix.\", "
+        " \"hostname-char-set\" : \"[^A-Z]\", "
+        " \"hostname-char-replacement\" : \"x\", "
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
@@ -4430,16 +4439,16 @@ TEST_F(Dhcp4ParserTest, d2ClientConfigBoth) {
     EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
-    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
-    EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
-    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
-    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
-    EXPECT_FALSE(d2_client_config->getHostnameCharSet().unspecified());
-    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet().get());
-    EXPECT_FALSE(d2_client_config->getHostnameCharReplacement().unspecified());
-    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement().get());
-    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    // Verify all global values won.
+    checkGlobal("ddns-send-updates", false);
+    checkGlobal("ddns-override-no-update", true);
+    checkGlobal("ddns-override-client-update", true);
+    checkGlobal("ddns-replace-client-name", "always");
+    checkGlobal("ddns-generated-prefix", "global.prefix");
+    checkGlobal("ddns-qualifying-suffix", "global.suffix.");
+    checkGlobal("hostname-char-set", "[^A-Z]");
+    checkGlobal("hostname-char-replacement", "x");
 }
 
 // This test checks the ability of the server to handle a configuration

@@ -198,8 +198,8 @@ const char* CONFIGS[] = {
         "}"
     "}",
     // 7
-    // Configuration which enables DNS updates and hostname sanitization.
-    // the second at the global scope.
+    // Configuration with disabled DNS updates (default) and
+    // hostname sanitization defined at global scope.
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -221,6 +221,33 @@ const char* CONFIGS[] = {
         " }],"
         "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
         "\"hostname-char-replacement\" : \"x\""
+    "}",
+    // 8
+    // D2 enabled
+    // global ddns-send-updates is false
+    // one subnet does not enable updates
+    // one subnet does enables updates
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"dhcp-ddns\": {\n"
+            "\"enable-updates\": true\n"
+        "},\n"
+        "\"ddns-send-updates\": false,\n"
+        "\"subnet4\": [ {\n"
+        "       \"subnet\": \"192.0.2.0/24\",\n"
+        "       \"id\": 1,\n"
+        "       \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.100\" } ],\n"
+        "       \"interface\": \"eth0\"\n"
+        "   },\n"
+        "   {\n"
+        "       \"subnet\": \"192.0.3.0/24\", \n"
+        "       \"id\": 2,\n"
+        "       \"pools\": [ { \"pool\": \"192.0.3.10-192.0.3.100\" } ],\n"
+        "       \"interface\": \"eth1\",\n"
+        "       \"ddns-send-updates\": true\n"
+        "   }\n"
+        "]\n"
     "}"
 };
 
@@ -294,15 +321,34 @@ public:
         ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 53001,
                                   isc::asiolink::IOAddress("0.0.0.0"), 0, 1024,
-                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  (mask & OVERRIDE_NO_UPDATE),
-                                  (mask & OVERRIDE_CLIENT_UPDATE),
-                                  ((mask & REPLACE_CLIENT_NAME) ?
-                                    D2ClientConfig::RCM_WHEN_PRESENT
-                                   : D2ClientConfig::RCM_NEVER),
-                                  "myhost", "example.com", "", "")));
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON)));
+
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
+
+        // Now we'll set the DDNS parameters at the subnet level.
+        // These should get fetched when getDdnsParams() is invoked.
+        ASSERT_TRUE(subnet_) << "enableD2 called without subnet_ set";
+        subnet_->setDdnsSendUpdates(true);
+        subnet_->setDdnsOverrideNoUpdate(mask & OVERRIDE_NO_UPDATE);
+        subnet_->setDdnsOverrideClientUpdate(mask & OVERRIDE_CLIENT_UPDATE);
+        subnet_->setDdnsReplaceClientNameMode((mask & REPLACE_CLIENT_NAME) ?
+                                    D2ClientConfig::RCM_WHEN_PRESENT
+                                   : D2ClientConfig::RCM_NEVER);
+        subnet_->setDdnsGeneratedPrefix("myhost");
+        subnet_->setDdnsQualifyingSuffix("example.com");
+
         ASSERT_NO_THROW(srv_->startD2());
+    }
+
+    // Fetch DDNS parameter set scoped to the current subnet_.
+    DdnsParamsPtr getDdnsParams() {
+        ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+        if (!subnet_) {
+            ADD_FAILURE() << "getDdnsParams() - subnet_ is empty!";
+            return (DdnsParamsPtr(new DdnsParams()));
+        }
+
+        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(*subnet_));
     }
 
     // Create a lease to be used by various tests.
@@ -362,7 +408,7 @@ public:
     std::string generatedNameFromAddress(const IOAddress& addr,
                                          const bool trailing_dot = true) {
         return(CfgMgr::instance().getD2ClientMgr()
-               .generateFqdn(addr, trailing_dot));
+               .generateFqdn(addr, *getDdnsParams(), trailing_dot));
     }
 
     // Get the Client FQDN Option from the given message.
@@ -523,9 +569,9 @@ public:
             "},"
             "\"valid-lifetime\": 3000,"
             "\"subnet4\": [ { "
-            "    \"subnet\": \"10.0.0.0/24\", "
+            "    \"subnet\": \"192.0.2.0/24\", "
             "    \"id\": 1,"
-            "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
+            "    \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.10\" } ]"
             " }],"
             "\"dhcp-ddns\": {"
             "  \"enable-updates\": true,"
@@ -621,7 +667,12 @@ public:
             answer.reset(new Pkt4(DHCPACK, 1234));
 
         }
+
         Dhcpv4Exchange ex = createExchange(query);
+        if (!ex.getContext()->subnet_) {
+            ADD_FAILURE() << "createExchange did not select a subnet";
+        }
+
         srv_->processClientName(ex);
 
         OptionStringPtr hostname = getHostnameOption(ex.getResponse());
@@ -2053,6 +2104,64 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
         EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
         }
     }
+}
+
+// Verifies that socped ddns-parameter handling.
+// Specifically that D2 can be enabled with sending updates
+// disabled globally, and enabled at the subnet level.
+TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth0");
+
+    // Load a configuration with D2 enabled
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[8], *client1.getServer()));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client1.includeFQDN((Option4ClientFqdn::FLAG_S
+                                        | Option4ClientFqdn::FLAG_E),
+                                       "client1.example.org.", Option4ClientFqdn::FULL));
+
+    // Now send the DHCPREQUEST with including the FQDN option.
+    ASSERT_NO_THROW(client1.doDORA());
+    Pkt4Ptr resp = client1.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the response FQDN is as expected.
+    Option4ClientFqdnPtr fqdn;
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client1.example.org.", fqdn->getDomainName());
+
+    // ddns-send-udpates for subnet 1 should be off, so we should NOT have an NRC.
+    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+
+    // Now let's try with a client on subnet 2.
+    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client2.includeFQDN((Option4ClientFqdn::FLAG_S
+                                        | Option4ClientFqdn::FLAG_E),
+                                       "two.example.org.", Option4ClientFqdn::FULL));
+
+    ASSERT_NO_THROW(client2.doDORA());
+    resp = client2.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the response FQDN is as expected.
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("two.example.org.", fqdn->getDomainName());
+
+    // ddns-send-udpates for subnet 2 are enabled, verify the NCR is correct.
+    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            resp->getYiaddr().toText(),
+                            "two.example.org.", "",
+                            time(NULL), 7200, true);
 }
 
 } // end of anonymous namespace
