@@ -8,8 +8,8 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt_filter.h>
 
-#include <sys/fcntl.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 namespace isc {
 namespace dhcp {

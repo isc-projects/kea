@@ -20,7 +20,7 @@
 
 #include <errno.h>
 #include <netinet/in.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <string>
 
 using namespace isc::asiolink;
