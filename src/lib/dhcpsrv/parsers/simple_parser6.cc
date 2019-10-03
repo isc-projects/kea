@@ -235,15 +235,12 @@ const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
 /// This list is also used for inheriting from global to shared networks
 /// and from shared networks to subnets within it.
 const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
-    "client-class",
-    "interface",
     "preferred-lifetime",
     "min-preferred-lifetime",
     "max-preferred-lifetime",
     "rebind-timer",
     "relay",
     "renew-timer",
-    "reservation-mode",
     "valid-lifetime",
     "min-valid-lifetime",
     "max-valid-lifetime",
