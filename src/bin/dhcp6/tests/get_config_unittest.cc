@@ -8210,7 +8210,6 @@ const char* UNPARSED_CONFIGS[] = {
 "                            }\n"
 "                        ],\n"
 "                        \"preferred-lifetime\": 3600,\n"
-"                        \"rapid-commit\": false,\n"
 "                        \"relay\": {\n"
 "                            \"ip-addresses\": [ ]\n"
 "                        },\n"

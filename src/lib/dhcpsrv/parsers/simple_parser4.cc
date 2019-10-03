@@ -254,17 +254,12 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
 /// This list is also used for inheriting from global to shared networks
 /// and from shared networks to subnets within it.
 const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
-    "boot-file-name",
     "client-class",
     "interface",
-    "match-client-id",
-    "authoritative",
-    "next-server",
     "rebind-timer",
     "relay",
     "renew-timer",
     "reservation-mode",
-    "server-hostname",
     "valid-lifetime",
     "min-valid-lifetime",
     "max-valid-lifetime",
