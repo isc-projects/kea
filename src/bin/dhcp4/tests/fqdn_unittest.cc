@@ -332,8 +332,8 @@ public:
         subnet_->setDdnsOverrideNoUpdate(mask & OVERRIDE_NO_UPDATE);
         subnet_->setDdnsOverrideClientUpdate(mask & OVERRIDE_CLIENT_UPDATE);
         subnet_->setDdnsReplaceClientNameMode((mask & REPLACE_CLIENT_NAME) ?
-                                    D2ClientConfig::RCM_WHEN_PRESENT
-                                   : D2ClientConfig::RCM_NEVER);
+                                              D2ClientConfig::RCM_WHEN_PRESENT
+                                              : D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
 

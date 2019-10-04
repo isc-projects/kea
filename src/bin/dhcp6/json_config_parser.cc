@@ -451,6 +451,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // Get the staging configuration.
         srv_config = CfgMgr::instance().getStagingCfg();
 
+        // Relocate dhcp-ddns parameters that have moved to global scope.
+        // Rule is that a global value overrides the dhcp-ddns value, so
+        // we need to do this before we apply global defaults.
+        // Note this is done for backward compatibilty.
+        srv_config->moveDdnsParams(mutable_cfg);
+
         // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
 
@@ -682,8 +688,13 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "t2-percent") ||
                  (config_pair.first == "loggers") ||
                  (config_pair.first == "hostname-char-set") ||
-                 (config_pair.first == "hostname-char-replacement")) {
-
+                 (config_pair.first == "hostname-char-replacement") ||
+                 (config_pair.first == "ddns-send-updates") ||
+                 (config_pair.first == "ddns-override-no-update") ||
+                 (config_pair.first == "ddns-override-client-update") ||
+                 (config_pair.first == "ddns-replace-client-name") ||
+                 (config_pair.first == "ddns-generated-prefix") ||
+                 (config_pair.first == "ddns-qualifying-suffix")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;
@@ -717,9 +728,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // Validate D2 client confuguration.
         if (!d2_client_cfg) {
             d2_client_cfg.reset(new D2ClientConfig());
-            d2_client_cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
-                return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
-             });
         }
         d2_client_cfg->validateContents();
         srv_config->setD2ClientConfig(d2_client_cfg);

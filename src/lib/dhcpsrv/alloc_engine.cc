@@ -431,7 +431,7 @@ AllocEngine::ClientContext6::ClientContext6()
     : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
       hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
       rev_dns_update_(false), hostname_(), callout_handle_(), ias_(),
-      ddns_params_(new DdnsParams()) {
+      ddns_params_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,

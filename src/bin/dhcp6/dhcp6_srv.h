@@ -938,7 +938,7 @@ private:
     ///
     /// @throw isc::Unexpected if specified message is NULL. This is treated
     /// as a programmatic error.
-    void updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
+    void updateReservedFqdn(AllocEngine::ClientContext6& ctx,
                             const Pkt6Ptr& answer);
 
     /// @private

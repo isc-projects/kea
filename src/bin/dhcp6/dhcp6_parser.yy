@@ -99,6 +99,12 @@ using namespace std;
   T2_PERCENT "t2-percent"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
+  DDNS_SEND_UPDATES "ddns-send-updates"
+  DDNS_OVERRIDE_NO_UPDATE "ddns-override-no-update"
+  DDNS_OVERRIDE_CLIENT_UPDATE "ddns-override-client-update"
+  DDNS_REPLACE_CLIENT_NAME "ddns-replace-client-name"
+  DDNS_GENERATED_PREFIX "ddns-generated-prefix"
+  DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -257,7 +263,7 @@ using namespace std;
 %type <ElementPtr> hr_mode
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
-%type <ElementPtr> replace_client_name_value
+%type <ElementPtr> ddns_replace_client_name_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -491,6 +497,12 @@ global_param: data_directory
             | loggers
             | hostname_char_set
             | hostname_char_replacement
+            | ddns_send_updates
+            | ddns_override_no_update
+            | ddns_override_client_update
+            | ddns_replace_client_name
+            | ddns_generated_prefix
+            | ddns_qualifying_suffix
             | unknown_map_entry
             ;
 
@@ -560,6 +572,79 @@ t2_percent: T2_PERCENT COLON FLOAT {
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
+};
+
+ddns_send_updates: DDNS_SEND_UPDATES COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-send-updates", b);
+};
+
+ddns_override_no_update: DDNS_OVERRIDE_NO_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-override-no-update", b);
+};
+
+ddns_override_client_update: DDNS_OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-override-client-update", b);
+};
+
+ddns_replace_client_name: DDNS_REPLACE_CLIENT_NAME {
+    ctx.enter(ctx.REPLACE_CLIENT_NAME);
+} COLON ddns_replace_client_name_value {
+    ctx.stack_.back()->set("ddns-replace-client-name", $4);
+    ctx.leave();
+};
+
+ddns_replace_client_name_value:
+    WHEN_PRESENT {
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
+      }
+  | NEVER {
+      $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
+      }
+  | ALWAYS {
+      $$ = ElementPtr(new StringElement("always", ctx.loc2pos(@1)));
+      }
+  | WHEN_NOT_PRESENT {
+      $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
+      }
+  | BOOLEAN  {
+      error(@1, "boolean values for the replace-client-name are "
+                "no longer supported");
+      }
+  ;
+
+ddns_generated_prefix: DDNS_GENERATED_PREFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ddns-generated-prefix", s);
+    ctx.leave();
+};
+
+ddns_qualifying_suffix: DDNS_QUALIFYING_SUFFIX {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ddns-qualifying-suffix", s);
+    ctx.leave();
+};
+
+hostname_char_set: HOSTNAME_CHAR_SET {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname-char-set", s);
+    ctx.leave();
+};
+
+hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname-char-replacement", s);
+    ctx.leave();
 };
 
 server_tag: SERVER_TAG {
@@ -1142,6 +1227,14 @@ subnet6_param: preferred_lifetime
              | calculate_tee_times
              | t1_percent
              | t2_percent
+             | hostname_char_set
+             | hostname_char_replacement
+             | ddns_send_updates
+             | ddns_override_no_update
+             | ddns_override_client_update
+             | ddns_replace_client_name
+             | ddns_generated_prefix
+             | ddns_qualifying_suffix
              | unknown_map_entry
              ;
 
@@ -1268,6 +1361,14 @@ shared_network_param: name
                     | calculate_tee_times
                     | t1_percent
                     | t2_percent
+                    | hostname_char_set
+                    | hostname_char_replacement
+                    | ddns_send_updates
+                    | ddns_override_no_update
+                    | ddns_override_client_update
+                    | ddns_replace_client_name
+                    | ddns_generated_prefix
+                    | ddns_qualifying_suffix
                     | unknown_map_entry
                     ;
 
@@ -2108,12 +2209,12 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | override_no_update
-               | override_client_update
-               | replace_client_name
-               | generated_prefix
-               | hostname_char_set
-               | hostname_char_replacement
+               | dep_override_no_update
+               | dep_override_client_update
+               | dep_replace_client_name
+               | dep_generated_prefix
+               | dep_hostname_char_set
+               | dep_hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry
@@ -2183,43 +2284,28 @@ ncr_format: NCR_FORMAT {
     ctx.leave();
 };
 
-override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("override-no-update", b);
 };
 
-override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("override-client-update", b);
 };
 
-replace_client_name: REPLACE_CLIENT_NAME {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_replace_client_name: REPLACE_CLIENT_NAME {
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
-} COLON replace_client_name_value {
+} COLON ddns_replace_client_name_value {
     ctx.stack_.back()->set("replace-client-name", $4);
     ctx.leave();
 };
 
-replace_client_name_value:
-    WHEN_PRESENT {
-      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
-      }
-  | NEVER {
-      $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
-      }
-  | ALWAYS {
-      $$ = ElementPtr(new StringElement("always", ctx.loc2pos(@1)));
-      }
-  | WHEN_NOT_PRESENT {
-      $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
-      }
-  | BOOLEAN  {
-      error(@1, "boolean values for the replace-client-name are "
-                "no longer supported");
-      }
-  ;
-
-generated_prefix: GENERATED_PREFIX {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_generated_prefix: GENERATED_PREFIX {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2227,7 +2313,8 @@ generated_prefix: GENERATED_PREFIX {
     ctx.leave();
 };
 
-hostname_char_set: HOSTNAME_CHAR_SET {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_hostname_char_set: HOSTNAME_CHAR_SET {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
@@ -2235,7 +2322,8 @@ hostname_char_set: HOSTNAME_CHAR_SET {
     ctx.leave();
 };
 
-hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
+// Deprecated, moved to global/network scopes. Eventually it should be removed.
+dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));

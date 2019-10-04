@@ -375,13 +375,6 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     isc::config::parseAnswer(rcode, result);
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-        // Update the fetch globals callback.
-        auto cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
-        cfg->setFetchGlobalsFn([]() -> ConstElementPtr {
-            return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
-        });
-
         // Use new configuration.
         CfgMgr::instance().commit();
     } else {

@@ -796,6 +796,9 @@ public:
         EXPECT_TRUE(pool);
     }
 
+    /// @brief Tests if the current config has a given global parameter value
+    /// @param name name of the global parameter expected to exist
+    /// @param value expected value of the global parameter
     template <typename ValueType>
     void checkGlobal(const std::string name, ValueType value) {
         ConstElementPtr param;
@@ -4280,6 +4283,9 @@ TEST_F(Dhcp4ParserTest, d2ClientConfigValid) {
     EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+
+    // ddns-send-updates should be global default
+    checkGlobal("ddns-send-updates", true);
 
     // The following, deprecated dhcp-ddns parameters,
     // should all have global default values.

@@ -1595,17 +1595,16 @@ void
 Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
                              AllocEngine::ClientContext6& ctx) {
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    DdnsParamsPtr ddns_params = ctx.getDdnsParams();
 
     // Get Client FQDN Option from the client's message. If this option hasn't
     // been included, do nothing.
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
     if (!fqdn) {
-        D2ClientConfig::ReplaceClientNameMode replace_name_mode =
-            d2_mgr.getD2ClientConfig()->getReplaceClientNameMode();
-        if (d2_mgr.ddnsEnabled() &&
-            (replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
-             replace_name_mode == D2ClientConfig::RCM_WHEN_NOT_PRESENT)) {
+        if (ddns_params->enable_updates_ &&
+            (ddns_params->replace_client_name_mode_ == D2ClientConfig::RCM_ALWAYS ||
+             ddns_params->replace_client_name_mode_ == D2ClientConfig::RCM_WHEN_NOT_PRESENT)) {
             // Fabricate an empty "client" FQDN with flags requesting
             // the server do all the updates.  The flags will get modified
             // below according the configuration options, the name will
@@ -1635,19 +1634,19 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
 
     // Set the server S, N, and O flags based on client's flags and
     // current configuration.
-    d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp);
+    d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
 
     // If there's a reservation and it has a hostname specified, use it!
     if (ctx.currentHost() && !ctx.currentHost()->getHostname().empty()) {
         // Add the qualifying suffix.
         // After #3765, this will only occur if the suffix is not empty.
         fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.currentHost()->getHostname(),
-                                                    true),
+                                                    *ddns_params, true),
                                                     Option6ClientFqdn::FULL);
     } else {
         // Adjust the domain name based on domain name value and type sent by
         // the client and current configuration.
-        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp);
+        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
     }
 
     // Once we have the FQDN setup to use it for the lease hostname.  This
@@ -1668,7 +1667,7 @@ void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                     AllocEngine::ClientContext6& ctx) {
     // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!CfgMgr::instance().ddnsEnabled()) {
+    if (!(ctx.getDdnsParams()->enable_updates_)) {
         return;
     }
 
@@ -3651,7 +3650,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
 }
 
 void
-Dhcpv6Srv::updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
+Dhcpv6Srv::updateReservedFqdn(AllocEngine::ClientContext6& ctx,
                               const Pkt6Ptr& answer) {
     if (!answer) {
         isc_throw(isc::Unexpected, "an instance of the object encapsulating"
@@ -3676,7 +3675,7 @@ Dhcpv6Srv::updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
    if (ctx.currentHost() &&
        !ctx.currentHost()->getHostname().empty()) {
        std::string new_name = CfgMgr::instance().getD2ClientMgr().
-           qualifyName(ctx.currentHost()->getHostname(), true);
+           qualifyName(ctx.currentHost()->getHostname(), *ctx.getDdnsParams(), true);
 
        if (new_name != name) {
            fqdn->setDomainName(new_name, Option6ClientFqdn::FULL);
@@ -3723,7 +3722,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
     // Get the IPv6 address acquired by the client.
     IOAddress addr = iaaddr->getAddress();
     std::string generated_name =
-        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr);
+        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr, *ctx.getDdnsParams());
 
     LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_DDNS_FQDN_GENERATED)
         .arg(answer->getLabel())
