@@ -26,6 +26,7 @@ if HAVE_GTEST
 TESTS += flex_option_unittests
 
 flex_option_unittests_SOURCES = run_unittests.cc
+flex_option_unittests_SOURCES += callout_unittests.cc
 flex_option_unittests_SOURCES += load_unload_unittests.cc
 
 flex_option_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)

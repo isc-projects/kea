@@ -27,11 +27,6 @@ using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::flex_option;
 
-extern "C" {
-extern int pkt4_send(CalloutHandle& handle);
-extern int pkt6_send(CalloutHandle& handle);
-}
-
 namespace {
 
 /// @brief Test class derived from FlexOptionImpl
@@ -361,12 +356,13 @@ TEST_F(FlexOptionTest, optionConfigBadAdd) {
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
-    ElementPtr add = Element::create(string("if"));
+    ElementPtr add = Element::create(string("ifelse('a','b','c')"));
     option->set("add", add);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
-    EXPECT_EQ("can't parse add expression [if] error: "
-              "<string>:1.1: Invalid character: i",
-              impl_->getErrMsg());
+    string expected = "can't parse add expression [ifelse('a','b','c')] ";
+    expected += "error: <string>:1.11: syntax error, ";
+    expected += "unexpected \",\", expecting ==";
+    EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
 // Verify that a valid v4 add value is accepted.
@@ -464,11 +460,12 @@ TEST_F(FlexOptionTest, optionConfigBadSupersede) {
     options->add(option);
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
-    ElementPtr supersede = Element::create(string("if"));
+    ElementPtr supersede = Element::create(string("ifelse('a','b','c')"));
     option->set("supersede", supersede);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
-    string expected = "can't parse supersede expression [if] error: ";
-    expected += "<string>:1.1: Invalid character: i";
+    string expected = "can't parse supersede expression [ifelse('a','b','c')] ";
+    expected += "error: <string>:1.11: syntax error, ";
+    expected += "unexpected \",\", expecting ==";
     EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
