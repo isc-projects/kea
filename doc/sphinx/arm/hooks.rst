@@ -1216,14 +1216,15 @@ take a string value representing an expression.
 
 ::
 
-    "Dhcp6": {
+    "Dhcp4": {
         "hook_libraries": [
             {   "library": "/usr/local/lib/libdhcp_flex_option.so",
                 "parameters": {
                     "options": [
           		    {
-                            "code": 100,
-                            "add": "concat(relay6[0].option[37].hex, 'abc')"
+                            "code": 67,
+                            "add":
+  "ifelse(option[host-name].exists,concat(option[host-name].text,'.boot'),'')"
                         }
                     ]
                 }
@@ -1232,7 +1233,13 @@ take a string value representing an expression.
         ]
     }
 
+If (and only if) the query includes a host-name option (code 12),
+a boot-file-name option (code 67) is added to the response with the host
+name followed by .boot for content.
+
 The flexible option library supports both DHCPv4 and DHCPv6.
+
+
 
 .. _host-cmds:
 

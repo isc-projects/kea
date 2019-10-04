@@ -63,7 +63,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
         {   "library": "/usr/local/lib/libdhcp_flex_option.so",
             "parameters": {
                 "options": [
-      		    {
+                    {
                         "code": 100,
                         "add": "concat(relay6[0].option[37].hex, 'abc')"
                     }

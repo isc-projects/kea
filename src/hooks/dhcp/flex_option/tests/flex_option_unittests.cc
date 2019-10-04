@@ -778,6 +778,8 @@ TEST_F(FlexOptionTest, processAdd) {
 
 // Verify that ADD action does not add an already existing option.
 TEST_F(FlexOptionTest, processAddExisting) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
@@ -852,6 +854,8 @@ TEST_F(FlexOptionTest, processSupersede) {
 
 // Verify that SUPERSEDE action supersedes an already existing option.
 TEST_F(FlexOptionTest, processSupersedeExisting) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
@@ -916,6 +920,8 @@ TEST_F(FlexOptionTest, processSupersedeEmpty) {
 
 // Verify that REMOVE action removes an already existing option.
 TEST_F(FlexOptionTest, processRemove) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
@@ -961,6 +967,8 @@ TEST_F(FlexOptionTest, processRemoveNoOption) {
 
 // Verify that REMOVE action does nothing when the expression evaluates to false.
 TEST_F(FlexOptionTest, processRemoveFalse) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     options->add(option);
@@ -971,16 +979,46 @@ TEST_F(FlexOptionTest, processRemoveFalse) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty());
 
-    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
-    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
     OptionStringPtr str(new OptionString(Option::V6, D6O_BOOTFILE_URL, "http"));
     response->addOption(str);
     string response_txt = response->toText();
 
-    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V6, query, response));
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
 
     EXPECT_EQ(response_txt, response->toText());
     EXPECT_TRUE(response->getOption(D6O_BOOTFILE_URL));
+}
+
+// A more complex check...
+TEST_F(FlexOptionTest, processFullTest) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_BOOT_FILE_NAME);
+    option->set("code", code);
+    string expr = "ifelse(option[host-name].exists,";
+    expr += "concat(option[host-name].text,'.boot'),'')";
+    ElementPtr add = Element::create(expr);
+    option->set("add", add);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty());
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionStringPtr str(new OptionString(Option::V4, DHO_HOST_NAME, "foo"));
+    query->addOption(str);
+    EXPECT_FALSE(response->getOption(DHO_BOOT_FILE_NAME));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_BOOT_FILE_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(8, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "foo.boot", 8));
 }
 
 } // end of anonymous namespace
