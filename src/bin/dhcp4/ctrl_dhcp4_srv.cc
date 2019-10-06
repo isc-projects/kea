@@ -545,6 +545,34 @@ ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandServerUpdateHandler(const std::string&,
+                                                      ConstElementPtr) {
+    auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
+    if (!ctl_info) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
+    }
+
+    // Reschedule the periodic CB fetch.
+    if (TimerMgr::instance()->isTimerRegistered("Dhcp4CBFetchTimer")) {
+        TimerMgr::instance()->cancel("Dhcp4CBFetchTimer");
+        TimerMgr::instance()->setup("Dhcp4CBFetchTimer");
+    }
+
+    // Code from cbFetchUpdates.
+    try {
+        auto srv_cfg = CfgMgr::instance().getStagingCfg();
+        auto mode = CBControlDHCPv4::FetchMode::FETCH_UPDATE;
+        server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
+            .arg(ex.what());
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Server update failed: " + string(ex.what())));
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Server update successful."));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -600,6 +628,9 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "server-tag-get") {
             return (srv->commandServerTagGetHandler(command, args));
+
+        } else if (command == "server-update") {
+            return (srv->commandServerUpdateHandler(command, args));
 
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
@@ -838,6 +869,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("server-update",
+        boost::bind(&ControlledDhcpv4Srv::commandServerUpdateHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
@@ -898,14 +932,15 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("build-report");
         CommandMgr::instance().deregisterCommand("config-get");
         CommandMgr::instance().deregisterCommand("config-reload");
+        CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-test");
         CommandMgr::instance().deregisterCommand("config-write");
-        CommandMgr::instance().deregisterCommand("leases-reclaim");
-        CommandMgr::instance().deregisterCommand("libreload");
-        CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
+        CommandMgr::instance().deregisterCommand("leases-reclaim");
+        CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("server-tag-get");
+        CommandMgr::instance().deregisterCommand("server-update");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

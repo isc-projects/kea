@@ -159,8 +159,6 @@ the list of supported configuration parameters, can be found in
 
 .. _cb-sharing:
 
-.. _command-server-tag-get:
-
 Configuration Sharing and Server Tags
 -------------------------------------
 

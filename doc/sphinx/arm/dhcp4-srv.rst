@@ -5891,6 +5891,10 @@ server's performance, because the server needs to make at least one query
 to the database to discover the pending configuration updates. The
 default value of the ``config-fetch-wait-time`` is 30 seconds.
 
+To trigger an immediate polling the ``server-update`` command is
+available for both DHCPv4 and DHCPv6 servers since the 1.7.1 Kea
+release.
+
 Finally, in the configuration example above, two hooks libraries are
 loaded. The first, ``libdhcp_mysql_cb.so``, is the implementation of
 the Configuration Backend for MySQL. It must be always present when the

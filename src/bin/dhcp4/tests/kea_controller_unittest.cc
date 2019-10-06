@@ -217,7 +217,8 @@ public:
     /// @brief This test verifies that the timer used to fetch the configuration
     /// updates from the database works as expected.
     void testConfigBackendTimer(const int config_wait_fetch_time,
-                                const bool throw_during_fetch = false) {
+                                const bool throw_during_fetch = false,
+                                const bool call_command = false) {
         std::ostringstream config;
         config <<
             "{ \"Dhcp4\": {"
@@ -261,7 +262,40 @@ public:
         EXPECT_EQ(1, cb_control->getDatabaseConfigFetchCalls());
 
 
-        if ((config_wait_fetch_time > 0) && (!throw_during_fetch)) {
+        if (call_command) {
+            // The case where there is no backend is tested in the
+            // controlled server tests so we have only to verify
+            // that the command calls the database config fetch.
+
+            // Count the startup.
+            EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 1);
+
+            ConstElementPtr result =
+                ControlledDhcpv4Srv::processCommand("server-update",
+                                                    ConstElementPtr());
+            EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 2);
+            std::string expected;
+
+            if (throw_during_fetch) {
+                expected = "{ \"result\": 1, \"text\": ";
+                expected += "\"Server update failed: ";
+                expected += "testing if exceptions are corectly handled\" }";
+            } else {
+                expected = "{ \"result\": 0, \"text\": ";
+                expected += "\"Server update successful.\" }";
+            }
+            EXPECT_EQ(expected, result->str());
+
+            // No good way to check the rescheduling...
+            ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 15));
+
+            if (config_wait_fetch_time > 0) {
+                EXPECT_GE(cb_control->getDatabaseConfigFetchCalls(), 12);
+            } else {
+                EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 2);
+            }
+
+        } else if ((config_wait_fetch_time > 0) && (!throw_during_fetch)) {
             // If we're configured to run the timer, we expect that it was
             // invoked at least 3 times. This is sufficient to verify that
             // the timer was scheduled and that the timer continued to run
@@ -855,6 +889,24 @@ TEST_F(JSONFileBackendTest, configBackendTimerDisabled) {
 TEST_F(JSONFileBackendTest, configBackendTimerWithThrow) {
     // The true value instructs the test to throw during the fetch.
     testConfigBackendTimer(1, true);
+}
+
+// This test verifies that the server will be updated by the server-update
+// command.
+TEST_F(JSONFileBackendTest, configBackendCommand) {
+    testConfigBackendTimer(0, false, true);
+}
+
+// This test verifies that the server will be updated by the server-update
+// command even when updates fail.
+TEST_F(JSONFileBackendTest, configBackendCommandWithThrow) {
+    testConfigBackendTimer(0, true, true);
+}
+
+// This test verifies that the server will be updated by the server-update
+// command and the timer rescheduled.
+TEST_F(JSONFileBackendTest, configBackendCommandWithTimer) {
+    testConfigBackendTimer(1, false, true);
 }
 
 // Starting tests which require MySQL backend availability. Those tests

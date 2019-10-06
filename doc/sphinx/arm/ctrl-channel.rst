@@ -538,6 +538,23 @@ The ``dhcp-enable`` command globally enables the DHCP service.
        "command": "dhcp-enable"
    }
 
+.. _command-server-tag-get:
+
+The server-tag-get Command:
+---------------------------
+
+The ``server-tag-get`` command returns the configured server tag of
+the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept)
+
+.. _command-server-update:
+
+The server-update Command:
+--------------------------
+
+The ``server-update`` command triggers the polling of Config Backends
+(which should be configured for this command to do something)
+explained in :ref:`dhcp4-cb-json`.
+
 .. _command-version-get:
 
 The version-get Command

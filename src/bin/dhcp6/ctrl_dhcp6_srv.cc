@@ -544,6 +544,34 @@ ControlledDhcpv6Srv::commandServerTagGetHandler(const std::string&,
     return (createAnswer(CONTROL_RESULT_SUCCESS, response));
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandServerUpdateHandler(const std::string&,
+                                                      ConstElementPtr) {
+    auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
+    if (!ctl_info) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
+    }
+
+    // Reschedule the periodic CB fetch.
+    if (TimerMgr::instance()->isTimerRegistered("Dhcp6CBFetchTimer")) {
+        TimerMgr::instance()->cancel("Dhcp6CBFetchTimer");
+        TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
+    }
+
+    // Code from cbFetchUpdates.
+    try {
+        auto srv_cfg = CfgMgr::instance().getStagingCfg();
+        auto mode = CBControlDHCPv6::FetchMode::FETCH_UPDATE;
+        server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_CB_FETCH_UPDATES_FAIL)
+            .arg(ex.what());
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             "Server update failed: " + string(ex.what())));
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Server update successful."));
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -600,6 +628,9 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
 
         } else if (command == "server-tag-get") {
             return (srv->commandServerTagGetHandler(command, args));
+
+        } else if (command == "server-update") {
+            return (srv->commandServerUpdateHandler(command, args));
 
         }
 
@@ -851,6 +882,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("server-update",
+        boost::bind(&ControlledDhcpv6Srv::commandServerUpdateHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
@@ -925,6 +959,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("server-tag-get");
+        CommandMgr::instance().deregisterCommand("server-update");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

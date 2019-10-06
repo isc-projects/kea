@@ -504,6 +504,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"server-update\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -937,6 +938,19 @@ TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
     expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
 }
 
+// This test verifies that the DHCP server handles server-update command
+TEST_F(CtrlChannelDhcpv6SrvTest, serverUpdate) {
+    createUnixChannelServer();
+
+    std::string response;
+    std::string expected;
+
+    // Send the server-update command. Note there is no configured backed.
+    sendUnixCommand("{ \"command\": \"server-update\" }", response);
+    expected = "{ \"result\": 3, \"text\": \"No config backend.\" }";
+    EXPECT_EQ(expected, response);
+}
+
 // This test verifies that the DHCP server immediately reclaims expired
 // leases on leases-reclaim command
 TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {
@@ -1176,6 +1190,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "libreload");
     checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "server-tag-get");
+    checkListCommands(rsp, "server-update");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
