@@ -79,6 +79,8 @@ AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync
 
 AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
 
+AC_CHECK_HEADERS(boost/integer/common_factor.hpp)
+
 # Verify that the path does not include standard headers by mistake.
 # There are two regex.h headers: one is a standard system header (usually
 # in /usr/include) and the second one is provided by boost. If you specify the

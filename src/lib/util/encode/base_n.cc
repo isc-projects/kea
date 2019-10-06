@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,11 @@
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
+#ifdef HAVE_BOOST_INTEGER_COMMON_FACTOR_HPP
+#include <boost/integer/common_factor.hpp>
+#else
 #include <boost/math/common_factor.hpp>
+#endif
 
 #include <stdint.h>
 #include <stdexcept>
@@ -68,7 +72,7 @@ class IncompleteBaseInput : public std::exception {
 //
 // Its dereference operator
 //   retrieves BitsIn bits from the result of "*Base" (if necessary it
-//   internally calls ++Base) 
+//   internally calls ++Base)
 //
 // A conceptual description of how the encoding and decoding work is as
 // follows:
@@ -93,7 +97,7 @@ namespace {
 // Common constants used for all baseN encoding.
 const char BASE_PADDING_CHAR = '=';
 const uint8_t BINARY_ZERO_CODE = 0;
-  
+
 // EncodeNormalizer is an input iterator intended to be used as a filter
 // between the binary stream and baseXX_from_binary translator (via
 // transform_width).  An EncodeNormalizer object is configured with two
@@ -267,7 +271,11 @@ struct BaseNTransformer {
     // without padding.  It's the least common multiple of 8 and BitsPerChunk,
     // e.g. 24 for base64.
     static const int BITS_PER_GROUP =
+#ifdef HAVE_BOOST_INTEGER_COMMON_FACTOR_HPP
+        boost::integer::static_lcm<BitsPerChunk, 8>::value;
+#else
         boost::math::static_lcm<BitsPerChunk, 8>::value;
+#endif
 
     // MAX_PADDING_CHARS is the maximum number of padding characters
     // that can appear in a valid baseN encoded text.
@@ -281,7 +289,7 @@ struct BaseNTransformer {
     static const int MAX_PADDING_CHARS =
         BITS_PER_GROUP / BitsPerChunk -
         (8 / BitsPerChunk + ((8 % BitsPerChunk) == 0 ? 0 : 1));
-}; 
+};
 
 template <int BitsPerChunk, char BaseZeroCode,
           typename Encoder, typename Decoder>
@@ -341,7 +349,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     // 0000...0 0......0 000...
     // 0      7 8     15 16.... (bits)
     // The number of bits for the '==...' part is padchars * BitsPerChunk.
-    // So the total number of padding bits is the smallest multiple of 8 
+    // So the total number of padding bits is the smallest multiple of 8
     // that is >= padchars * BitsPerChunk.
     // (Below, note the common idiom of the bitwise AND with ~7.  It clears the
     // lowest three bits, so has the effect of rounding the result down to the
