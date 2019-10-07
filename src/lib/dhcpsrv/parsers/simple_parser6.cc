@@ -105,7 +105,6 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "ddns-override-client-update",    Element::boolean, "false" },
     { "ddns-replace-client-name",       Element::string, "never" },
     { "ddns-generated-prefix",          Element::string, "myhost" },
-    // TKM should this still be true? qualifying-suffix has no default ??
     { "ddns-qualifying-suffix",         Element::string, "" }
 };
 
@@ -252,15 +251,7 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "max-valid-lifetime",
     "calculate-tee-times",
     "t1-percent",
-    "t2-percent",
-    "ddns-send-updates",
-    "ddns-override-no-update",
-    "ddns-override-client-update",
-    "ddns-replace-client-name",
-    "ddns-generated-prefix",
-    "ddns-qualifying-suffix",
-    "hostname-char-set",
-    "hostname-char-replacement"
+    "t2-percent"
 };
 
 /// @brief This table defines all pool parameters.
