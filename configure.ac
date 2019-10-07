@@ -1698,6 +1698,7 @@ AC_CONFIG_FILES([Makefile
                  src/hooks/dhcp/flex_option/libloadtests/Makefile
                  src/hooks/dhcp/flex_option/tests/Makefile
                  src/hooks/dhcp/high_availability/Makefile
+                 src/hooks/dhcp/high_availability/libloadtests/Makefile
                  src/hooks/dhcp/high_availability/tests/Makefile
                  src/hooks/dhcp/lease_cmds/Makefile
                  src/hooks/dhcp/lease_cmds/tests/Makefile
