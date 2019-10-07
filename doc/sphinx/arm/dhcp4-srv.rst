@@ -5661,6 +5661,12 @@ The following standards are currently supported:
    6842 <https://tools.ietf.org/html/rfc6842>`__: Server by default sends
    back client-id option. That capability may be disabled. See :ref:`dhcp4-echo-client-id` for details.
 
+-  *Generalized UDP Source Port for DHCP Relay*, `RFC 8357
+   <https://tools.ietf.org/html/rfc8357>`__: The Kea server is able
+   to handle Relay Agent Information Source Port suboption in a received
+   message, remembers the UDP port  and sends back reply to the same relay
+   agent using this UDP port.
+
 .. _dhcp4-limit:
 
 DHCPv4 Server Limitations

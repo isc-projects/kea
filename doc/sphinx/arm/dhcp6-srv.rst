@@ -5722,6 +5722,12 @@ The following standards are currently supported:
    options indicated in this specification are supported by the DHCPv6
    server.
 
+-  *Generalized UDP Source Port for DHCP Relay*, `RFC 8357
+   <https://tools.ietf.org/html/rfc8357>`__: The Kea server is able
+   to handle Relay Source Port option in a received Relay-Forward
+   message, remembers the UDP port and sends back Relay-Reply with a
+   copy of the option to the relay agent using this UDP port.
+
 -  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC 8415
    <https://tools.ietf.org/html/rfc8415>`__: New DHCPv6 protocol specification
    which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283,
