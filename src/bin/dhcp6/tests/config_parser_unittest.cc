@@ -7599,14 +7599,16 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControlInvalid) {
         "{ \n"
         "   \"enable-type\": \"some-type\" \n"
         "} \n",
-        "<string>:2.2-21: 'enable-queue' is required: (<string>:2:24)"
+        "missing parameter 'enable-queue' (<string>:2:2) "
+        "[dhcp-queue-control map between <string>:2:24 and <string>:4:1]"
         },
         {
         "enable-queue not boolean",
         "{ \n"
         "   \"enable-queue\": \"always\" \n"
         "} \n",
-        "<string>:2.2-21: 'enable-queue' must be boolean: (<string>:2:24)"
+        "<string>:3.20-27: syntax error, unexpected constant string, "
+        "expecting boolean"
         },
         {
         "queue type not a string",
@@ -7614,7 +7616,8 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControlInvalid) {
         "   \"enable-queue\": true, \n"
         "   \"queue-type\": 7777 \n"
         "} \n",
-        "<string>:2.2-21: 'queue-type' must be a string: (<string>:2:24)"
+        "<string>:4.18-21: syntax error, unexpected integer, "
+        "expecting constant string"
         }
     };
 
