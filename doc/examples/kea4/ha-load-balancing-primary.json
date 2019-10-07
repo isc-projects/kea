@@ -127,7 +127,7 @@
                              // Control Agent must run along with our DHCPv4 server
                              // instance and the "http-host" and "http-port" must be
                              // set to the corresponding values.
-                             "url": "http://192.168.56.33:8080/",
+                             "url": "http://192.168.56.33:8000/",
                              // This server is primary. The other one must be
                              // secondary.
                              "role": "primary"
@@ -139,7 +139,7 @@
                              // channel can be reached. The Control Agent is required
                              // to run on the partner's machine with "http-host" and
                              // "http-port" values set to the corresponding values.
-                             "url": "http://192.168.56.66:8080/",
+                             "url": "http://192.168.56.66:8000/",
                              // The partner is a secondary. Our is primary.
                              "role": "secondary"
                          }

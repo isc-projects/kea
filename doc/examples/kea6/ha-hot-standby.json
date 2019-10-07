@@ -80,7 +80,7 @@
                              // channel can be reached. The Control Agent is required
                              // to run on the partner's machine with "http-host" and
                              // "http-port" values set to the corresponding values.
-                             "url": "http://192.168.56.33:8080/",
+                             "url": "http://192.168.56.33:8000/",
                              // Th partner is primary. Our is standby.
                              "role": "primary"
                          },
@@ -91,7 +91,7 @@
                              // Control Agent must run along with our DHCPv6 server
                              // instance and the "http-host" and "http-port" must be
                              // set to the corresponding values.
-                             "url": "http://192.168.56.66:8080/",
+                             "url": "http://192.168.56.66:8000/",
                              // Out server is standby. The partner is primary.
                              "role": "standby"
                          }
