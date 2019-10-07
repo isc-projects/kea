@@ -49,7 +49,7 @@ The following example demonstrates the basic CA configuration.
    {
        "Control-agent": {
            "http-host": "10.20.30.40",
-           "http-port": 8080,
+           "http-port": 8000,
 
            "control-sockets": {
                "dhcp4": {
@@ -86,7 +86,7 @@ The following example demonstrates the basic CA configuration.
 The ``http-host`` and ``http-port`` parameters specify an IP address and
 port to which HTTP service will be bound. In the example configuration
 provided above, the RESTful service will be available under the URL of
-``http://10.20.30.40:8080/``. If these parameters are not specified, the
+``http://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
 
 As mentioned in :ref:`agent-overview`, the CA can forward
@@ -231,9 +231,9 @@ server enables authentication of the clients using certificates.
            ssl_verify_client on;
 
            # For URLs such as https://kea.example.org/kea, forward the
-           # requests to http://127.0.0.1:8080.
+           # requests to http://127.0.0.1:8000.
            location /kea {
-               proxy_pass http://127.0.0.1:8080;
+               proxy_pass http://127.0.0.1:8000;
            }
        }
    }

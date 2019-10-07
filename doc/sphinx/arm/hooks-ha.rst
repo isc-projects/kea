@@ -360,17 +360,17 @@ with the only difference that ``this-server-name`` should be set to
                    "max-unacked-clients": 5,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8080/",
+                       "url": "http://192.168.56.33:8000/",
                        "role": "primary",
                        "auto-failover": true
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8080/",
+                       "url": "http://192.168.56.66:8000/",
                        "role": "secondary",
                        "auto-failover": true
                    }, {
                        "name": "server3",
-                       "url": "http://192.168.56.99:8080/",
+                       "url": "http://192.168.56.99:8000/",
                        "role": "backup",
                        "auto-failover": false
                    }]
@@ -645,17 +645,17 @@ hot-standby configuration:
                    "max-unacked-clients": 5,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8080/",
+                       "url": "http://192.168.56.33:8000/",
                        "role": "primary",
                        "auto-failover": true
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8080/",
+                       "url": "http://192.168.56.66:8000/",
                        "role": "standby",
                        "auto-failover": true
                    }, {
                        "name": "server3",
-                       "url": "http://192.168.56.99:8080/",
+                       "url": "http://192.168.56.99:8000/",
                        "role": "backup",
                        "auto-failover": false
                    }]
@@ -751,12 +751,12 @@ controlled by the two boolean parameters ``send-lease-updates`` and
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8080/",
+                               "url": "http://192.168.56.33:8000/",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8080/",
+                               "url": "http://192.168.56.66:8000/",
                                "role": "secondary"
                            }
                        ]
@@ -853,12 +853,12 @@ page of leases from 60 seconds to 90 seconds:
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8080/",
+                               "url": "http://192.168.56.33:8000/",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8080/",
+                               "url": "http://192.168.56.66:8000/",
                                "role": "secondary"
                            }
                        ]
@@ -940,12 +940,12 @@ following configuration causes the HA state machine to pause in the
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8080/",
+                               "url": "http://192.168.56.33:8000/",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8080/",
+                               "url": "http://192.168.56.66:8000/",
                                "role": "secondary"
                            }
                        ],
@@ -1001,12 +1001,12 @@ state. Consider the following configuration:
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8080/",
+                               "url": "http://192.168.56.33:8000/",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8080/",
+                               "url": "http://192.168.56.66:8000/",
                                "role": "secondary"
                            }
                        ],
@@ -1084,7 +1084,7 @@ load-balancing and the hot-standby cases presented in previous sections.
    {
    "Control-agent": {
        "http-host": "192.168.56.33",
-       "http-port": 8080,
+       "http-port": 8000,
 
        "control-sockets": {
            "dhcp4": {

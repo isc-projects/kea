@@ -15,10 +15,10 @@
 {
 
 // This is a basic configuration for the Kea Control Agent.
-// RESTful interface to be available at http://127.0.0.1:8080/
+// RESTful interface to be available at http://127.0.0.1:8000/
 "Control-agent": {
     "http-host": "127.0.0.1",
-    "http-port": 8080,
+    "http-port": 8000,
 
     // Specify location of the files to which the Control Agent
     // should connect to forward commands to the DHCPv4, DHCPv6
