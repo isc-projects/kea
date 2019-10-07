@@ -681,7 +681,7 @@ public:
         scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
         if (use_queue) {
-            bool queue_enabled;
+            bool queue_enabled = false;
             data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500);
             ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, config));
             ASSERT_TRUE(queue_enabled);
@@ -764,7 +764,7 @@ public:
         scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
         if (use_queue) {
-            bool queue_enabled;
+            bool queue_enabled = false;
             data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500);
             ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, config));
             ASSERT_TRUE(queue_enabled);
