@@ -1425,6 +1425,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"enable-queue\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
+        return isc::dhcp::Dhcp4Parser::make_ENABLE_QUEUE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("enable-queue", driver.loc_);
+    }
+}
+
+\"queue-type\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
+        return isc::dhcp::Dhcp4Parser::make_QUEUE_TYPE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("queue-type", driver.loc_);
+    }
+}
+
 \"dhcp-ddns\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

@@ -189,6 +189,8 @@ using namespace std;
   SOCKET_NAME "socket-name"
 
   DHCP_QUEUE_CONTROL "dhcp-queue-control"
+  ENABLE_QUEUE "enable-queue"
+  QUEUE_TYPE "queue-type"
 
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
@@ -2019,38 +2021,38 @@ control_socket_name: SOCKET_NAME {
 // --- dhcp-queue-control ---------------------------------------------
 
 dhcp_queue_control: DHCP_QUEUE_CONTROL {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON map_value {
-    ElementPtr qc = $4;
+    ElementPtr qc(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("dhcp-queue-control", qc);
+    ctx.stack_.push_back(qc);
+    ctx.enter(ctx.DHCP_QUEUE_CONTROL);
+} COLON LCURLY_BRACKET queue_control_params RCURLY_BRACKET {
+    // The enable queue parameter is required.
+    ctx.require("enable-queue", ctx.loc2pos(@4), ctx.loc2pos(@6));
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
 
-    // Doing this manually, because dhcp-queue-control
-    // content is otherwise arbitrary
-    if (!qc->contains("enable-queue")) {
-        std::stringstream msg;
-        msg << "'enable-queue' is required: ";
-        msg  << "(" << qc->getPosition().str() << ")";
-        error(@1, msg.str());
-    }
+queue_control_params: queue_control_param
+                    | queue_control_params COMMA queue_control_param
+                    ;
 
-    ConstElementPtr enable_queue = qc->get("enable-queue");
-    if (enable_queue->getType() != Element::boolean) {
-        std::stringstream msg;
-        msg << "'enable-queue' must be boolean: ";
-        msg  << "(" << qc->getPosition().str() << ")";
-        error(@1, msg.str());
-    }
+queue_control_param: enable_queue
+                   | queue_type
+                   | user_context
+                   | comment
+                   | unknown_map_entry
+                   ;
 
-    if (qc->contains("queue-type")) {
-        ConstElementPtr queue_type = qc->get("queue-type");
-        if (queue_type->getType() != Element::string) {
-            std::stringstream msg;
-            msg << "'queue-type' must be a string: ";
-            msg  << "(" << qc->getPosition().str() << ")";
-            error(@1, msg.str());
-        }
-    }
+enable_queue: ENABLE_QUEUE COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-queue", b);
+};
 
+queue_type: QUEUE_TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr qt(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("queue-type", qt);
     ctx.leave();
 };
 

@@ -1125,6 +1125,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::POOLS:
     case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
@@ -1146,6 +1147,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
     case isc::dhcp::Parser6Context::POOLS:
     case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::DHCP_DDNS:
@@ -1812,6 +1814,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_DHCP_QUEUE_CONTROL(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("dhcp-queue-control", driver.loc_);
+    }
+}
+
+\"enable-queue\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
+        return isc::dhcp::Dhcp6Parser::make_ENABLE_QUEUE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("enable-queue", driver.loc_);
+    }
+}
+
+\"queue-type\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
+        return isc::dhcp::Dhcp6Parser::make_QUEUE_TYPE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("queue-type", driver.loc_);
     }
 }
 
