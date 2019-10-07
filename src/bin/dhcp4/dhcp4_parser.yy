@@ -191,6 +191,7 @@ using namespace std;
   DHCP_QUEUE_CONTROL "dhcp-queue-control"
   ENABLE_QUEUE "enable-queue"
   QUEUE_TYPE "queue-type"
+  CAPACITY "capacity"
 
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
@@ -2038,9 +2039,10 @@ queue_control_params: queue_control_param
 
 queue_control_param: enable_queue
                    | queue_type
+                   | capacity
                    | user_context
                    | comment
-                   | unknown_map_entry
+                   | arbitrary_map_entry
                    ;
 
 enable_queue: ENABLE_QUEUE COLON BOOLEAN {
@@ -2053,6 +2055,18 @@ queue_type: QUEUE_TYPE {
 } COLON STRING {
     ElementPtr qt(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("queue-type", qt);
+    ctx.leave();
+};
+
+capacity: CAPACITY COLON INTEGER {
+    ElementPtr c(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("capacity", c);
+};
+
+arbitrary_map_entry: STRING {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->set($1, $4);
     ctx.leave();
 };
 
