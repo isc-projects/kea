@@ -1892,11 +1892,6 @@ Package:
   Extended version:  ${EXTENDED_VERSION}
   OS Family:         ${OS_TYPE}
 
-Configure arguments:
-$ac_configure_args
-END
-cat >> config.report << END
-
   Prefix:            ${prefix}
   Hooks directory:   ${libdir_real}/kea/hooks
 END
@@ -1910,6 +1905,13 @@ cat >> config.report << END
   Premium hooks:     no
 END
 fi
+
+cat >> config.report << END
+
+Configure arguments:
+$ac_configure_args
+END
+
 cat >> config.report << END
 
 C++ Compiler:
