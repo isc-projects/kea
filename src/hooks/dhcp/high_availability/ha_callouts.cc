@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,8 +14,11 @@
 #include <ha_log.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/network_state.h>
+#include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
+#include <process/daemon.h>
 
 namespace isc {
 namespace ha {
@@ -27,8 +30,10 @@ HAImplPtr impl;
 
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::hooks;
+using namespace isc::process;
 
 extern "C" {
 
@@ -215,6 +220,21 @@ int load(LibraryHandle& handle) {
     }
 
     try {
+        // Make the hook library not loadable by d2 or ca.
+        uint16_t family = CfgMgr::instance().getFamily();
+        const std::string& proc_name = Daemon::getProcName();
+        if (family == AF_INET) {
+            if (proc_name != "kea-dhcp4") {
+                isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                          << ", expected kea-dhcp4");
+            }
+        } else {
+            if (proc_name != "kea-dhcp6") {
+                isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                          << ", expected kea-dhcp6");
+            }
+        }
+
         impl = boost::make_shared<HAImpl>();
         impl->configure(config);
 
