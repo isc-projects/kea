@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -250,6 +250,16 @@ with "load", a zero value must be returned on success and a non-zero value
 on an error.  The hooks framework will record a non-zero status return
 as an error in the current Kea log but otherwise ignore it.
 - As before, the function definitions are enclosed in 'extern "C"' braces.
+
+In some cases to restrict the library loading to DHCP servers so it
+cannot be loaded by the DDNS server or the Control Agent.
+The best way to perform this is to check the process name returned
+by @c isc::dhcp::Daemon::getProcName() static / class method declared
+in process/daemon.h header against "kea-dhcp4" and "kea-dhcp6"
+(other values are "kea-dhcp-ddns", "kea-ctrl-agent" and "kea-netconf").
+If you'd like to check the address family too it is returned in DHCP servers
+by isc::dhcp::CfgMgr::instance().getFamily() declared in dhcpsrv/cfgmgr.h
+with AF_INET and AF_INET6 values.
 
 @subsection hooksdgCallouts Callouts
 
