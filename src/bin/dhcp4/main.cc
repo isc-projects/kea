@@ -220,7 +220,7 @@ main(int argc, char* argv[]) {
         server.setVerbose(verbose_mode);
 
         // Create our PID file.
-        server.setProcName(DHCP4_NAME);
+	server.setProcName(DHCP4_NAME);
         server.setConfigFile(config_file);
         server.createPIDFile();
 

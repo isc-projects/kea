@@ -31,10 +31,12 @@ namespace process {
 
 bool Daemon::verbose_ = false;
 
+std::string Daemon::proc_name_("");
+
 std::string Daemon::default_logger_name_("kea");
 
 Daemon::Daemon()
-    : signal_set_(), signal_handler_(), config_file_(""), proc_name_(""),
+    : signal_set_(), signal_handler_(), config_file_(""),
       pid_file_dir_(DATA_DIR), pid_file_(), am_file_author_(false) {
 
     // The pid_file_dir can be overridden via environment variable
@@ -154,7 +156,7 @@ Daemon::checkConfigFile() const {
 }
 
 std::string
-Daemon::getProcName() const {
+Daemon::getProcName() {
     return (proc_name_);
 };
 
