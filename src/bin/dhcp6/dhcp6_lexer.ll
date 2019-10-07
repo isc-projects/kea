@@ -1835,6 +1835,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"capacity\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
+        return isc::dhcp::Dhcp6Parser::make_CAPACITY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("capacity", driver.loc_);
+    }
+}
+
 \"dhcp-ddns\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
