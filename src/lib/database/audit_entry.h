@@ -241,6 +241,9 @@ typedef boost::multi_index_container<
     >
 > AuditEntryCollection;
 
+//// @brief Pointer to the @c AuditEntryCollection object.
+typedef boost::shared_ptr<AuditEntryCollection> AuditEntryCollectionPtr;
+
 } // end of namespace isc::db
 } // end of namespace isc
 

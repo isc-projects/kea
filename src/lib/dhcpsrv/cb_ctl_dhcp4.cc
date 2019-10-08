@@ -9,10 +9,33 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
+#include <hooks/callout_handle.h>
+#include <hooks/hooks_manager.h>
 
 using namespace isc::db;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::hooks;
+
+namespace {
+
+/// Structure that holds registered hook indexes.
+struct CbCtlHooks {
+    int hook_index_cb4_updated_; ///< index for "cb4_updated" hook point.
+
+    /// Constructor that registers hook points for CBControlDHCPv4.
+    CbCtlHooks() {
+        hook_index_cb4_updated_ = HooksManager::registerHook("cb4_updated");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+CbCtlHooks hooks_;
+
+}; // anonymous namespace
 
 namespace isc {
 namespace dhcp {
@@ -184,8 +207,27 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
         CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_CONFIG4_MERGED);
-}
 
+    if (!audit_entries.empty() &&
+        HooksManager::getHooksManager().calloutsPresent(hooks_.hook_index_cb4_updated_)) {
+        CalloutHandlePtr callout_handle =  HooksManager::createCalloutHandle();
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
+        // Pass a shared pointer to audit entries.
+        AuditEntryCollectionPtr ptr(new AuditEntryCollection(audit_entries));
+        callout_handle->setArgument("audit_entries", ptr);
+
+        // Call the callouts
+        HooksManager::callCallouts(hooks_.hook_index_cb4_updated_, *callout_handle);
+
+        // Ignore the result.
+    }
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
