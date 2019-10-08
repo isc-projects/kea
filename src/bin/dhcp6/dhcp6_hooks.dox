@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,18 @@ to the end of this list.
    provided pointer until the library is unloaded. The NetworkState object
    provides access to the DHCP service state of the server and allows for
    enabling and disabling the DHCP service from the hooks libraries.
+
+ - <b>Next step status</b>: Status codes retured by the callouts installed on
+   this hook point are ignored.
+
+ @subsection dhcpv6HooksCb6Update cb6_updated
+ - @b Arguments:
+   - name: audit_entries, type isc::db::AuditEntryCollectionPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has completed
+   a configuration update using the Config Backend. The server provides
+   the audit entries as a never null pointer to a not empty collection
+   copied from the update apply method argument.
 
  - <b>Next step status</b>: Status codes retured by the callouts installed on
    this hook point are ignored.

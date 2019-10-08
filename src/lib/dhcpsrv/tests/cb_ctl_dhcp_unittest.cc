@@ -15,6 +15,9 @@
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
+#include <hooks/server_hooks.h>
+#include <hooks/callout_manager.h>
+#include <hooks/hooks_manager.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 #include <map>
@@ -26,6 +29,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::process;
+using namespace isc::hooks;
 
 namespace {
 
@@ -38,6 +42,8 @@ public:
         : timestamp_(), object_timestamp_(), audit_entries_() {
         CfgMgr::instance().clear();
         initTimestamps();
+        callback_name_ = std::string("");
+        callback_audit_entries_.reset();
     }
 
     /// @brief Destructor.
@@ -45,6 +51,9 @@ public:
         // Unregister the factory to be tidy.
         ConfigBackendDHCPv4Mgr::instance().unregisterBackendFactory("memfile");
         CfgMgr::instance().clear();
+        // Unregister hooks.
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("cb4_updated");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("cb6_updated");
     }
 
     /// @brief Creates new CREATE audit entry.
@@ -160,6 +169,26 @@ public:
         return (false);
     }
 
+    /// @brief Callback that stores received callout name and received value.
+    ///
+    /// @param callout_handle Callout handle.
+    static int
+    cb4_updated_callout(CalloutHandle& callout_handle) {
+        callback_name_ = std::string("cb4_updated");
+        callout_handle.getArgument("audit_entries", callback_audit_entries_);
+        return (0);
+    }
+
+    /// @brief Callback that stores received callout name and received value.
+    ///
+    /// @param callout_handle Callout handle.
+    static int
+    cb6_updated_callout(CalloutHandle& callout_handle) {
+        callback_name_ = std::string("cb6_updated");
+        callout_handle.getArgument("audit_entries", callback_audit_entries_);
+        return (0);
+    }
+
     /// @brief Holds test timestamps.
     std::map<int, boost::posix_time::ptime> timestamp_;
 
@@ -168,7 +197,16 @@ public:
 
     /// @brief Collection of audit entries used in the unit tests.
     AuditEntryCollection audit_entries_;
+
+    /// @brief Callback name.
+    static std::string callback_name_;
+
+    /// @brief Callback value.
+    static AuditEntryCollectionPtr callback_audit_entries_;
 };
+
+std::string CBControlDHCPTest::callback_name_;
+AuditEntryCollectionPtr CBControlDHCPTest::callback_audit_entries_;
 
 // ************************ V4 tests *********************
 
@@ -762,6 +800,32 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteSubnet) {
 TEST_F(CBControlDHCPv4Test, databaseConfigApplySubnetNotFetched) {
     addCreateAuditEntry("dhcp4_subnet");
     testDatabaseConfigApply(getTimestamp(-3));
+}
+
+// This test verifies that the configuration updates calls the hook.
+TEST_F(CBControlDHCPv4Test, databaseConfigApplyHook) {
+
+    // Initialize Hooks Manager.
+    HooksManager::loadLibraries(HookLibsCollection());
+
+    // Install cb4_updated.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "cb4_updated", cb4_updated_callout));
+
+    // Create audit entries.
+    addCreateAuditEntry("dhcp4_global_parameter");
+    addCreateAuditEntry("dhcp4_option_def");
+    addCreateAuditEntry("dhcp4_options");
+    addCreateAuditEntry("dhcp4_shared_network");
+    addCreateAuditEntry("dhcp4_subnet");
+
+    // Run the test.
+    testDatabaseConfigApply(getTimestamp(-5));
+
+    // Checks the callout.
+    EXPECT_EQ("cb4_updated", callback_name_);
+    ASSERT_TRUE(callback_audit_entries_);
+    EXPECT_TRUE(audit_entries_ == *callback_audit_entries_);
 }
 
 // ************************ V6 tests *********************
@@ -1360,6 +1424,32 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyDeleteSubnet) {
 TEST_F(CBControlDHCPv6Test, databaseConfigApplySubnetNotFetched) {
     addCreateAuditEntry("dhcp6_subnet");
     testDatabaseConfigApply(getTimestamp(-3));
+}
+
+// This test verifies that the configuration updates calls the hook.
+TEST_F(CBControlDHCPv6Test, databaseConfigApplyHook) {
+
+    // Initialize Hooks Manager.
+    HooksManager::loadLibraries(HookLibsCollection());
+
+    // Install cb6_updated.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "cb6_updated", cb6_updated_callout));
+
+    // Create audit entries.
+    addCreateAuditEntry("dhcp6_global_parameter");
+    addCreateAuditEntry("dhcp6_option_def");
+    addCreateAuditEntry("dhcp6_options");
+    addCreateAuditEntry("dhcp6_shared_network");
+    addCreateAuditEntry("dhcp6_subnet");
+
+    // Run the test.
+    testDatabaseConfigApply(getTimestamp(-5));
+
+    // Checks the callout.
+    EXPECT_EQ("cb6_updated", callback_name_);
+    ASSERT_TRUE(callback_audit_entries_);
+    EXPECT_TRUE(audit_entries_ == *callback_audit_entries_);
 }
 
 }
