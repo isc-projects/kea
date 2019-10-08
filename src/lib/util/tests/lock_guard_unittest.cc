@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <util/threads/lock_guard.h>
+#include <util/lock_guard.h>
 #include <exceptions/exceptions.h>
 
 #include <exceptions/exceptions.h>
