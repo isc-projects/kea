@@ -63,6 +63,46 @@
             "socket-type": "unix"
         },
 
+        // Specifies a prefix to be prepended to the generated Client FQDN.
+        "ddns-generated-prefix": "myhost",
+
+        // Boolean flag indicating that server should ignore DHCP client
+        // wishes to update DNS on its own. With that flag set to true
+        // the server will send DNS updates for both forward and
+        // reverse DNS data. The default value is false, which indicates
+        // that the server will delegate DNS update to the client when
+        // requested.
+        "ddns-override-client-update": false,
+
+        // Boolean flag indicating that the server should override DHCP
+        // client's wish to not update the DNS. With this parameter
+        // set to true the server will send DNS update even when
+        // the client requested no update.
+        "ddns-override-no-update": false,
+
+        // Suffix appended to the partial name sent to the DNS. The
+        // default value is an empty string which indicates that no
+        // suffix is appended.
+        "ddns-qualifying-suffix": "",
+
+        // Enumeration specifying whether the server should honor
+        // hostname or Client FQDN sent by the client or replace
+        // this name. The acceptable values are: "never" (use the
+        // name the client sent), "always" (replace the name the
+        // client sent), "when-present" (replace the name the client
+        // sent, but do not generate one when the client didn't sent
+        // the name), "when-not-present" (generate the name when
+        // client didn't send one, otherwise leave the name the
+        // client sent). The default value is "never".
+        "ddns-replace-client-name": "never",
+
+        // Boolean flag which enables or disables the DDNS updating. It
+        // defaults to true.  It may be specified at the global, shared-
+        // network and subnet levels. It works in conjunction with
+        // dhcp-ddns:enable-updates which must be true enable connectivity
+        // kea-dhcp-ddns..
+        "ddns-send-updates": true,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -75,19 +115,6 @@
             // By default NCRs are not generated.
             "enable-updates": false,
 
-            // Specifies a prefix to be prepended to the generated Client FQDN.
-            "generated-prefix": "myhost",
-
-            // String of zero or more characters with which to replace each
-            // invalid character in the hostname or Client FQDN. The default
-            // value is an empty string which will cause invalid characters
-            // to be omitted rather than replaced.
-            "hostname-char-replacement": "x",
-
-            // Regular expression describing the invalid character set in
-            // the hostname or Client FQDN.
-            "hostname-char-set": "[^A-Za-z0-9.-]",
-
             // Specifies maximum number of NCRs to queue waiting to be sent
             // to Kea D2 server.
             "max-queue-size": 1024,
@@ -99,36 +126,6 @@
             // Socket protocol to use when sending NCRs to D2. Currently,
             // only UDP is supported.
             "ncr-protocol": "UDP",
-
-            // Boolean flag indicating that server should ignore DHCP client
-            // wishes to update DNS on its own. With that flag set to true
-            // the server will send DNS updates for both forward and
-            // reverse DNS data. The default value is false, which indicates
-            // that the server will delegate DNS update to the client when
-            // requested.
-            "override-client-update": false,
-
-            // Boolean flag indicating that the server should override DHCP
-            // client's wish to not update the DNS. With this parameter
-            // set to true the server will send DNS update even when
-            // the client requested no update.
-            "override-no-update": false,
-
-            // Suffix appended to the partial name sent to the DNS. The
-            // default value is an empty string which indicates that no
-            // suffix is appended.
-            "qualifying-suffix": "",
-
-            // Enumeration specifying whether the server should honor
-            // hostname or Client FQDN sent by the client or replace
-            // this name. The acceptable values are: "never" (use the
-            // name the client sent), "always" (replace the name the
-            // client sent), "when-present" (replace the name the client
-            // sent, but do not generate one when the client didn't sent
-            // the name), "when-not-present" (generate the name when
-            // client didn't send one, otherwise leave the name the
-            // client sent). The default value is "never".
-            "replace-client-name": "never",
 
             // IP address that Kea DHCPv6 server should use to send
             // NCRs to D2. Default value of zero indicates that Kea
@@ -476,6 +473,55 @@
                 // empty string is provided, no restriction is applied.
                 "client-class": "",
 
+                // Specifies a prefix to be prepended to the generated Client FQDN.
+                "ddns-generated-prefix": "myhost",
+
+                // Boolean flag indicating that server should ignore DHCP client
+                // wishes to update DNS on its own. With that flag set to true
+                // the server will send DNS updates for both forward and
+                // reverse DNS data. The default value is false, which indicates
+                // that the server will delegate DNS update to the client when
+                // requested.
+                "ddns-override-client-update": false,
+
+                // Boolean flag indicating that the server should override DHCP
+                // client's wish to not update the DNS. With this parameter
+                // set to true the server will send DNS update even when
+                // the client requested no update.
+                "ddns-override-no-update": false,
+
+                // Suffix appended to the partial name sent to the DNS. The
+                // default value is an empty string which indicates that no
+                // suffix is appended.
+                "ddns-qualifying-suffix": "",
+
+                // Enumeration specifying whether the server should honor
+                // hostname or Client FQDN sent by the client or replace
+                // this name. The acceptable values are: "never" (use the
+                // name the client sent), "always" (replace the name the
+                // client sent), "when-present" (replace the name the client
+                // sent, but do not generate one when the client didn't sent
+                // the name), "when-not-present" (generate the name when
+                // client didn't send one, otherwise leave the name the
+                // client sent). The default value is "never".
+                "ddns-replace-client-name": "never",
+
+                // Boolean flag which enables or disables DDNS updating for
+                // subnets in this network.  It works in conjunction with
+                // dhcp-ddns:enable-updates which must be true enable connectivity
+                // kea-dhcp-ddns.  The default value is "true".
+                "ddns-send-updates": true,
+
+                // String of zero or more characters with which to replace each
+                // invalid character in the Client FQDN. The default
+                // value is an empty string which will cause invalid characters
+                // to be omitted rather than replaced.
+                "hostname-char-replacement": "x",
+
+                // Regular expression describing the invalid character set in
+                // the Client FQDN.
+                "hostname-char-set": "[^A-Za-z0-9.-]",
+
                 // Specifies that this shared network is selected for the
                 // requests received on the particular interface.
                 "interface": "ethX",
@@ -541,6 +587,55 @@
                         // to the particular client class. If an empty string is
                         // provided, no restriction is applied.
                         "client-class": "",
+
+                        // Specifies a prefix to be prepended to the generated Client FQDN.
+                        "ddns-generated-prefix": "myhost",
+
+                        // Boolean flag indicating that server should ignore DHCP client
+                        // wishes to update DNS on its own. With that flag set to true
+                        // the server will send DNS updates for both forward and
+                        // reverse DNS data. The default value is false, which indicates
+                        // that the server will delegate DNS update to the client when
+                        // requested.
+                        "ddns-override-client-update": false,
+
+                        // Boolean flag indicating that the server should override DHCP
+                        // client's wish to not update the DNS. With this parameter
+                        // set to true the server will send DNS update even when
+                        // the client requested no update.
+                        "ddns-override-no-update": false,
+
+                        // Suffix appended to the partial name sent to the DNS. The
+                        // default value is an empty string which indicates that no
+                        // suffix is appended.
+                        "ddns-qualifying-suffix": "",
+
+                        // Enumeration specifying whether the server should honor
+                        // hostname or Client FQDN sent by the client or replace
+                        // this name. The acceptable values are: "never" (use the
+                        // name the client sent), "always" (replace the name the
+                        // client sent), "when-present" (replace the name the client
+                        // sent, but do not generate one when the client didn't sent
+                        // the name), "when-not-present" (generate the name when
+                        // client didn't send one, otherwise leave the name the
+                        // client sent). The default value is "never".
+                        "ddns-replace-client-name": "never",
+
+                        // Boolean flag which enables or disables DDNS updating for
+                        // subnets in this network.  It works in conjunction with
+                        // dhcp-ddns:enable-updates which must be true enable connectivity
+                        // kea-dhcp-ddns.  The default value is "true".
+                        "ddns-send-updates": true,
+
+                        // String of zero or more characters with which to replace each
+                        // invalid character in the Client FQDN. The default
+                        // value is an empty string which will cause invalid characters
+                        // to be omitted rather than replaced.
+                        "hostname-char-replacement": "x",
+
+                        // Regular expression describing the invalid character set in
+                        // the or Client FQDN.
+                        "hostname-char-set": "[^A-Za-z0-9.-]",
 
                         // Subnet unique identifier.
                         "id": 1,
@@ -809,13 +904,13 @@
         "t2-percent": .75,
 
         // String of zero or more characters with which to replace each
-        // invalid character in the hostname or Client FQDN. The default
+        // invalid character in the Client FQDN. The default
         // value is an empty string which will cause invalid characters
         // to be omitted rather than replaced.
         "hostname-char-replacement": "x",
 
         // Regular expression describing the invalid character set in
-        // the hostname or Client FQDN.
+        // the Client FQDN.
         "hostname-char-set": "[^A-Za-z0-9.-]",
 
         // List of loggers used by the servers using this configuration file.

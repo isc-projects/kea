@@ -1,3 +1,10 @@
+1669.	[func]		tmark
+	Rather than within the 'dhcp-ddns' section, DDNS behavioral
+	parameters may now be specifed at global, shared-network,
+	and subnet scopes.  Implemented for both kea-dhcp4 and
+	kea-dhcp6.  Not yet supported by Config Backend or Netconf.
+	(Gitlab #35,!517, git TBD)
+
 1668.	[build]		fdupont
 	The Kea util thread library was removed.
 	(Gitlab #907,!519, git 1b27dc52aae23753643461086f0950b125bf9c93)

@@ -2799,9 +2799,9 @@ DDNS for DHCPv4
 ---------------
 
 As mentioned earlier, kea-dhcp4 can be configured to generate requests
-to the DHCP-DDNS server (referred to here as "D2") to update DNS
-entries. These requests are known as Name Change Requests or NCRs. Each
-NCR contains the following information:
+to the DHCP-DDNS server, kea-dhcp-ddns, (referred to herein as "D2") to
+update DNS entries. These requests are known as Name Change Requests or
+NCRs. Each NCR contains the following information:
 
 1. Whether it is a request to add (update) or remove DNS entries
 
@@ -2811,62 +2811,108 @@ NCR contains the following information:
 3. The Fully Qualified Domain Name (FQDN), lease address, and DHCID
    (information identifying the client associated with the FQDN)
 
-The parameters for controlling the generation of NCRs for submission to
-D2 are contained in the ``dhcp-ddns`` section of the kea-dhcp4 server
-configuration. The mandatory parameters for the DHCP DDNS configuration
-are ``enable-updates``, which is unconditionally required, and
-``qualifying-suffix``, which has no default value and is required when
-``enable-updates`` is set to ``true``. The two (disabled and enabled)
-minimal DHCP DDNS configurations are:
+Prior to Kea 1.7.1, all parameters for controlling DDNS were within the
+global, ``dhcp-ddns`` section of the kea-dhcp4.  Beginning with Kea 1.7.1
+DDNS related parameters were split into two groups:
+
+1. Connectivity Parameters
+    These are parameters which specify where and how kea-dhcp4 connects to
+    and communicates with D2.  These parameters can only be specified
+    within the top-level ``dhcp-ddns`` section in the kea-dhcp4
+    configuration.  The connectivity parameters are listed below:
+
+    -  ``enable-updates``
+    -  ``server-ip``
+    -  ``server-port``
+    -  ``sender-ip``
+    -  ``sender-port``
+    -  ``max-queue-size``
+    -  ``ncr-protocol``
+    -  ``ncr-format"``
+
+2. Behavioral Parameters
+    These parameters influence behavior such as how client host names and
+    FQDN options are handled.  They have been moved out of the ``dhcp-ddns``
+    section so that they may be specified at the global, shared-network,
+    and/or subnet levels.  Furthermore, they are inherited downward from global to
+    shared-network to subnet.  In other words, if a parameter is not specified at
+    a given level, the value for that level comes from the level above it.
+    The behavioral parameter as follows:
+
+    -  ``ddns-send-updates``
+    -  ``ddns-override-no-update``
+    -  ``ddns-override-client-update``
+    -  ``ddns-replace-client-name"``
+    -  ``ddns-generated-prefix``
+    -  ``ddns-qualifying-suffix``
+    -  ``hostname-char-set``
+    -  ``hostname-char-replacement``
+
+.. note::
+
+    For backward compatibility, configuration parsing will still recognize
+    the original behavioral parameters specified in ``dhcp-ddns``.  It will
+    do so by translating the parameter into its global equivalent.  If a
+    parameter is specified both globally and in ``dhcp-ddns``, the latter
+    value will be ignored.  In either case, a log will be emitted explaining
+    what has occurred.  Specifying these values within ``dhcp-ddns`` is
+    deprecated and support for it may be removed at some future date.
+
+The default configuration would appear as follows:
 
 ::
 
    "Dhcp4": {
-       "dhcp-ddns": {
-           "enable-updates": false
-       },
-       ...
+        "dhcp-ddns": {
+           // Connectivity parameters
+           "enable-updates": false,
+            "server-ip": "127.0.0.1",
+            "server-port":53001,
+            "sender-ip":"",
+            "sender-port":0,
+            "max-queue-size":1024,
+            "ncr-protocol":"UDP",
+            "ncr-format":"JSON"
+        },
+
+        // Behavioral parameters (global)
+        "ddns-send-updates": true,
+        "ddns-override-no-update": false,
+        "ddns-override-client-update": false,
+        "ddns-replace-client-name": "never",
+        "ddns-generated-prefix": "myhost",
+        "ddns-qualifying-suffix": "",
+        "hostname-char-set": "",
+        "hostname-char-replacement": ""
+        ...
    }
 
-and for example:
+As of Kea 1.7.1, there are two parameters which determine if kea-dhcp4
+can generate DDNS requests to D2.  The existing, ``dhcp-ddns:enable-updates``
+parameter which now only controls whether kea-dhcp4 connects to D2.
+And the new behavioral parameter, ``ddns-send-updates``, which determines
+if DDNS updates are enabled at a given level (i.e global, shared-network,
+or subnet).  The following table shows how the two parameters function
+together:
 
-::
+.. table:: Enabling and Disabling DDNS Updates
 
-   "Dhcp4": {
-       "dhcp-ddns": {
-           "enable-updates": true,
-           "qualifying-suffix": "example."
-       },
-       ...
-   }
-
-The default values for the "dhcp-ddns" section are as follows:
-
--  ``"server-ip": "127.0.0.1"``
-
--  ``"server-port": 53001``
-
--  ``"sender-ip": ""``
-
--  ``"sender-port": 0``
-
--  ``"max-queue-size": 1024``
-
--  ``"ncr-protocol": "UDP"``
-
--  ``"ncr-format": "JSON"``
-
--  ``"override-no-update": false``
-
--  ``"override-client-update": false``
-
--  ``"replace-client-name": "never"``
-
--  ``"generated-prefix": "myhost"``
-
--  ``"hostname-char-set": ""``
-
--  ``"hostname-char-replacement": ""``
+   +-----------------+--------------------+------------------------------+
+   | dhcp-ddns:      | Global             | Outcome                      |
+   | enable-updates  | ddns-send-udpates  |                              |
+   +=================+====================+==============================+
+   | false (default) | false              | no updates at any scope      |
+   +-----------------+--------------------+------------------------------+
+   | false           | true (default)     | no updates at any scope      |
+   +-----------------+--------------------+------------------------------+
+   | true            | false              | updates only at scopes with  |
+   |                 |                    | a local value of true for    |
+   |                 |                    | ddns-enable-updates          |
+   +-----------------+--------------------+------------------------------+
+   | true            | true               | updates at all scopes except |
+   |                 |                    | those with a local value of  |
+   |                 |                    | false for ddns-enble-updates |
+   +-----------------+--------------------+------------------------------+
 
 .. _dhcpv4-d2-io-config:
 
@@ -2877,9 +2923,10 @@ For NCRs to reach the D2 server, kea-dhcp4 must be able to communicate
 with it. kea-dhcp4 uses the following configuration parameters to
 control this communication:
 
--  ``enable-updates`` - this determines whether kea-dhcp4 will generate NCRs.
-   By default, this value is false, so DDNS updates are disabled. To
-   enable DDNS updates set this value to true.
+-  ``enable-updates`` - As of Kea 1.7.1, this parameter only enables
+    connectivity to kea-dhcp-ddns such that DDNS updates can be constructed
+    and sent.  It must be true for NCRs to be generated and sent to D2.
+    It defaults to false.
 
 -  ``server-ip`` - the IP address on which D2 listens for requests. The
    default is the local loopback interface at address 127.0.0.1.
@@ -2942,8 +2989,9 @@ out the actual DNS updates and dealing with such things as conflict
 resolution are within the purview of D2 itself
 (see :ref:`dhcp-ddns-server`). This section describes when kea-dhcp4
 will generate NCRs and the configuration parameters that can be used to
-influence this decision. It assumes that the ``enable-updates``
-parameter is true.
+influence this decision. It assumes that both the connectivity parameter,
+``enable-updates`` and the behavioral parameter ``ddns-send-updates``,
+are true.
 
 In general, kea-dhcp4 will generate DDNS update requests when:
 
@@ -2995,7 +3043,7 @@ the DHCP client states that it intends to do the forward DNS updates and
 the server should do the reverse updates. By default, kea-dhcp4 will
 honor the client's wishes and generate a DDNS request to the D2 server
 to update only reverse DNS data. The parameter
-``override-client-update`` can be used to instruct the server to
+``ddns-override-client-update`` can be used to instruct the server to
 override client delegation requests. When this parameter is "true",
 kea-dhcp4 will disregard requests for client delegation and generate a
 DDNS request to update both forward and reverse DNS data. In this case,
@@ -3011,17 +3059,15 @@ configuration file:
 
 ::
 
-   "Dhcp4": {
-       "dhcp-ddns": {
-           "override-client-update": true,
-           ...
-       },
-       ...
-   }
+    "Dhcp4": {
+        ...
+        "ddns-override-client-update": true,
+        ...
+    }
 
 The third row in the table above describes the case in which the client
 requests that no DNS updates be done. The parameter,
-``override-no-update``, can be used to instruct the server to disregard
+``ddns-override-no-update``, can be used to instruct the server to disregard
 the client's wishes. When this parameter is true, kea-dhcp4 will
 generate DDNS update requests to kea-dhcp-ddns even if the client
 requests that no updates be done. The N-S-O flags in the server's
@@ -3032,10 +3078,8 @@ To override client delegation, issue the following commands:
 ::
 
    "Dhcp4": {
-       "dhcp-ddns": {
-           "override-no-update": true,
-           ...
-       },
+       ...
+       "ddns-override-no-update": true,
        ...
    }
 
@@ -3070,7 +3114,7 @@ entries are:
 
 4. If the client provides neither option, then take no DNS action.
 
-These rules can be amended by setting the ``replace-client-name``
+These rules can be amended by setting the ``ddns-replace-client-name``
 parameter, which provides the following modes of behavior:
 
 -  ``never`` - use the name the client sent. If the client sent no name,
@@ -3096,17 +3140,15 @@ parameter, which provides the following modes of behavior:
    maps to ``"when-present"``, while ``false`` maps to ``"never"``.
 
 For example, to instruct kea-dhcp4 to always generate the FQDN for a
-client, set the parameter ``replace-client-name`` to ``always`` as
+client, set the parameter ``ddns-replace-client-name`` to ``always`` as
 follows:
 
 ::
 
    "Dhcp4": {
-       "dhcp-ddns": {
-           "replace-client-name": "always",
-           ...
-       },
-       ...
+        ...
+        "ddns-replace-client-name": "always",
+        ...
    }
 
 The prefix used in the generation of an FQDN is specified by the
@@ -3116,36 +3158,33 @@ its value, simply set it to the desired string:
 ::
 
    "Dhcp4": {
-       "dhcp-ddns": {
-           "generated-prefix": "another.host",
-           ...
-       },
+       ...
+        "ddns-generated-prefix": "another.host",
        ...
    }
 
 The suffix used when generating an FQDN, or when qualifying a partial
-name, is specified by the ``qualifying-suffix`` parameter. This
-parameter has no default value; thus, it is mandatory when DDNS updates
-are enabled. To set its value simply set it to the desired string:
+name, is specified by the ``ddns-qualifying-suffix`` parameter.  It is
+strongly recommended that you supply a value for qualifying prefix when
+DDNS updates are enabled.  For obvious reasons, we cannot supply a
+meaningful default.
 
 ::
 
-   "Dhcp4": {
-       "dhcp-ddns": {
-           "qualifying-suffix": "foo.example.org",
-           ...
-       },
-       ...
-   }
+    "Dhcp4": {
+        ...
+        "ddns-qualifying-suffix": "foo.example.org",
+        ...
+    }
 
 When generating a name, kea-dhcp4 will construct the name in the format:
 
-[**generated-prefix**]-[**address-text**].[**qualifying-suffix**].
+[**ddns-generated-prefix**]-[**address-text**].[**ddns-qualifying-suffix**].
 
 where **address-text** is simply the lease IP address converted to a
 hyphenated string. For example, if the lease address is 172.16.1.10, the
 qualifying suffix "example.com", and the default value is used for
-``generated-prefix``, the generated FQDN is:
+``ddns-generated-prefix``, the generated FQDN is:
 
 **myhost-172-16-1-10.example.com.**
 
@@ -3178,12 +3217,10 @@ digit, hyphen, or dot with the letter 'x':
 ::
 
    "Dhcp4": {
-       "dhcp-ddns": {
-           "hostname-char-set": "[^A-Za-z0-9.-]",
-           "hostname-char-replacement": "x",
-           ...
-       },
-       ...
+        ...
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
+        ...
    }
 
 Thus, a client-supplied value of "myhost-$[123.org" would become
@@ -3828,7 +3865,7 @@ over the hostname supplied by the client or the autogenerated (from the
 IPv4 address) hostname.
 
 The server qualifies the reserved hostname with the value of the
-``qualifying-suffix`` parameter. For example, the following subnet
+``ddns-qualifying-suffix`` parameter. For example, the following subnet
 configuration:
 
 ::
@@ -3837,6 +3874,7 @@ configuration:
            "subnet4": [ {
                "subnet": "10.0.0.0/24",
                "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ],
+               "ddns-qualifying-suffix": "example.isc.org.",
                "reservations": [
                   {
                     "hw-address": "aa:bb:cc:dd:ee:ff",
@@ -3846,16 +3884,15 @@ configuration:
             }],
            "dhcp-ddns": {
                "enable-updates": true,
-               "qualifying-suffix": "example.isc.org."
            }
        }
 
 will result in assigning the "alice-laptop.example.isc.org." hostname to
 the client using the MAC address "aa:bb:cc:dd:ee:ff". If the
-``qualifying-suffix`` is not specified, the default (empty) value will
+``ddns-qualifying-suffix`` is not specified, the default (empty) value will
 be used, and in this case the value specified as a ``hostname`` will be
 treated as a fully qualified name. Thus, by leaving the
-``qualifying-suffix`` empty it is possible to qualify hostnames for
+``ddns-qualifying-suffix`` empty it is possible to qualify hostnames for
 different clients with different domain names:
 
 ::
@@ -5612,7 +5649,7 @@ The following standards are currently supported:
    Qualified Domain Name (FQDN) Option*, `RFC 4702
    <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to
    handle the Client FQDN option. Also, it is able to use
-   kea-dhcp-ddns compontent do initiate appropriate DNS Update
+   kea-dhcp-ddns component do initiate appropriate DNS Update
    operations.
 
 -  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
