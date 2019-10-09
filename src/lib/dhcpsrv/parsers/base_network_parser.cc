@@ -19,6 +19,7 @@ namespace dhcp {
 const Triplet<uint32_t>
 BaseNetworkParser::parseLifetime(const ConstElementPtr& scope,
                                  const std::string& name) {
+    // Initialize as some compilers complain otherwise.
     uint32_t value = 0;
     bool has_value = false;
     uint32_t min_value = 0;
@@ -212,7 +213,7 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
     }
 
     // We need to validate santizer values here so we can detect problems and
-    // cause a configuration.  We dont' retain the compilation because it's not
+    // cause a configuration.  We don't retain the compilation because it's not
     // something we can inherit.
     if (!hostname_char_set.empty()) {
         try {

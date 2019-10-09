@@ -554,7 +554,6 @@ AllocEngine::ClientContext6::getDdnsParams() {
 
     // Asked for it without a subnet? This case really shouldn't occur but
     // for now let's an instance with default values.
-    std::cout << "ClientContext6, Hey we're accessing this without a subnet!" << std::endl;
     return (DdnsParamsPtr(new DdnsParams()));
 }
 
@@ -3083,7 +3082,6 @@ AllocEngine::ClientContext4::getDdnsParams() {
 
     // Asked for it without a subnet? This case really shouldn't occur but
     // for now let's an instance with default values.
-    std::cout << "ClientContext4, Hey we're accessing this without a subnet!" << std::endl;
     return (DdnsParamsPtr(new DdnsParams()));
 }
 

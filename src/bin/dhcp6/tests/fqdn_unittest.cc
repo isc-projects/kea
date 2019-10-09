@@ -17,7 +17,6 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp6/tests/dhcp6_client.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -1587,7 +1586,7 @@ TEST_F(FqdnDhcpv6SrvTest, sanitizeFqdn) {
              "mxyxhost.example.com.", false);
 }
 
-// Verifies that socped ddns-parameter handling.
+// Verifies that scoped ddns-parameter handling.
 // Specifically that D2 can be enabled with sending updates
 // disabled globally, and enabled at the subnet level.
 TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {

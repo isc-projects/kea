@@ -2106,7 +2106,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
     }
 }
 
-// Verifies that socped ddns-parameter handling.
+// Verifies that scoped ddns-parameter handling.
 // Specifically that D2 can be enabled with sending updates
 // disabled globally, and enabled at the subnet level.
 TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
@@ -2120,7 +2120,8 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     // Include the Client FQDN option.
     ASSERT_NO_THROW(client1.includeFQDN((Option4ClientFqdn::FLAG_S
                                         | Option4ClientFqdn::FLAG_E),
-                                       "client1.example.org.", Option4ClientFqdn::FULL));
+                                        "client1.example.org.",
+                                        Option4ClientFqdn::FULL));
 
     // Now send the DHCPREQUEST with including the FQDN option.
     ASSERT_NO_THROW(client1.doDORA());
@@ -2144,7 +2145,8 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     // Include the Client FQDN option.
     ASSERT_NO_THROW(client2.includeFQDN((Option4ClientFqdn::FLAG_S
                                         | Option4ClientFqdn::FLAG_E),
-                                       "two.example.org.", Option4ClientFqdn::FULL));
+                                        "two.example.org.",
+                                        Option4ClientFqdn::FULL));
 
     ASSERT_NO_THROW(client2.doDORA());
     resp = client2.getContext().response_;

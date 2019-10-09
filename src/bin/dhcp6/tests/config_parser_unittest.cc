@@ -4781,9 +4781,8 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
     EXPECT_TRUE (pools.at(3)->clientSupported(classes));
 }
 
-// This test checks the ability of the server to parse a configuration
-// containing a full, valid dhcp-ddns (D2ClientConfig) entry.
-TEST_F(Dhcp6ParserTest, d2ClientConfig) {
+// This test verifies that valid d2CliengConfig works correctly.
+TEST_F(Dhcp6ParserTest, d2ClientConfigValid) {
     // Verify that the D2 configuration can be fetched and is set to disabled.
     D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
@@ -4808,15 +4807,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\"}, "
-#if 0
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\", "
-        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
-        "     \"hostname-char-replacement\" : \"x\" }, "
-#endif
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
@@ -4853,7 +4843,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
 
     // The following, deprecated dhcp-ddns parameters,
     // should all have global default values.
-    checkGlobal("ddns-send-updates", true);
     checkGlobal("ddns-override-no-update", false);
     checkGlobal("ddns-override-client-update", false);
     checkGlobal("ddns-replace-client-name", "never");

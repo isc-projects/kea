@@ -1799,8 +1799,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // send back a hostname option, send this option with a reserved
         // name for this client.
         if (should_send_hostname) {
-            std::string hostname = d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
-                                                      *(ex.getContext()->getDdnsParams()), false);
+            std::string hostname =
+                d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
+                                   *(ex.getContext()->getDdnsParams()), false);
             // Convert hostname to lower case.
             boost::algorithm::to_lower(hostname);
 
@@ -1823,8 +1824,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // hostname option to this client if the client has included hostname option
     // but there is no reservation, or the configuration of the server requires
     // that we send the option regardless.
-    D2ClientConfig::ReplaceClientNameMode replace_name_mode
-        = ex.getContext()->getDdnsParams()->replace_client_name_mode_;
+    D2ClientConfig::ReplaceClientNameMode replace_name_mode =
+        ex.getContext()->getDdnsParams()->replace_client_name_mode_;
 
     // If we don't have a hostname then either we'll supply it or do nothing.
     if (!opt_hostname) {
@@ -1898,8 +1899,8 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, "."));
     } else {
         // Sanitize the name the client sent us, if we're configured to do so.
-        isc::util::str::StringSanitizerPtr sanitizer
-            = ex.getContext()->getDdnsParams()->getHostnameSanitizer();
+        isc::util::str::StringSanitizerPtr sanitizer =
+            ex.getContext()->getDdnsParams()->getHostnameSanitizer();
 
         if (sanitizer) {
             hostname = sanitizer->scrub(hostname);
@@ -2291,7 +2292,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         // Set T1 and T2 per configuration.
         setTeeTimes(lease, subnet, resp);
-
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.

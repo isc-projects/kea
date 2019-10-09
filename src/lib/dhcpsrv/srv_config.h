@@ -405,7 +405,7 @@ public:
         return (hooks_config_);
     }
 
-    /// @brief Fetches the DDNS parameters for the given subnet
+    /// @brief Fetches the DDNS parameters for a given subnet.
     ///
     /// Creates a DdnsParams structure populated with the scoped
     /// values for DDNS behaviorial parameters. The scope mode used

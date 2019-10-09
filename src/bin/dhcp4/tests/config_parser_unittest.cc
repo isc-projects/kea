@@ -4289,7 +4289,6 @@ TEST_F(Dhcp4ParserTest, d2ClientConfigValid) {
 
     // The following, deprecated dhcp-ddns parameters,
     // should all have global default values.
-    checkGlobal("ddns-send-updates", true);
     checkGlobal("ddns-override-no-update", false);
     checkGlobal("ddns-override-client-update", false);
     checkGlobal("ddns-replace-client-name", "never");

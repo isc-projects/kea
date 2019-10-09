@@ -64,6 +64,7 @@
         },
 
         // Specifies a prefix to be prepended to the generated Client FQDN.
+        // It may be specified at the global, shared-network and subnet levels.
         "ddns-generated-prefix": "myhost",
 
         // Boolean flag indicating that server should ignore DHCP client
@@ -71,18 +72,21 @@
         // the server will send DNS updates for both forward and
         // reverse DNS data. The default value is false, which indicates
         // that the server will delegate DNS update to the client when
-        // requested.
+        // requested.  It may be specified at the global, shared-network
+        // and subnet levels.
         "ddns-override-client-update": false,
 
         // Boolean flag indicating that the server should override DHCP
         // client's wish to not update the DNS. With this parameter
         // set to true the server will send DNS update even when
-        // the client requested no update.
+        // the client requested no update.  It may be specified at the
+        // global, shared-network and subnet levels.
         "ddns-override-no-update": false,
 
         // Suffix appended to the partial name sent to the DNS. The
         // default value is an empty string which indicates that no
-        // suffix is appended.
+        // suffix is appended.  It may be specified at the global,
+        // shared-network and subnet levels.
         "ddns-qualifying-suffix": "",
 
         // Enumeration specifying whether the server should honor
@@ -93,14 +97,15 @@
         // sent, but do not generate one when the client didn't sent
         // the name), "when-not-present" (generate the name when
         // client didn't send one, otherwise leave the name the
-        // client sent). The default value is "never".
+        // client sent). The default value is "never".  It may be
+        // specified at the global, shared-network and subnet levels.
         "ddns-replace-client-name": "never",
 
         // Boolean flag which enables or disables the DDNS updating. It
         // defaults to true.  It may be specified at the global, shared-
         // network and subnet levels. It works in conjunction with
-        // dhcp-ddns:enable-updates which must be true enable connectivity
-        // kea-dhcp-ddns..
+        // dhcp-ddns:enable-updates which must be true to enable connectivity
+        // to kea-dhcp-ddns.
         "ddns-send-updates": true,
 
         // Time in seconds specifying how long a declined lease should be
@@ -141,7 +146,20 @@
             "server-ip": "::1",
 
             // Port number on which D2 listens for NCRs.
-            "server-port": 53001
+            "server-port": 53001,
+
+            // The follow parameters are DEPRECATED.  They have been
+            // replaced with parameters that may be set at the global,
+            // shared-network, and subnet6 scopes.  They are listed here
+            // as configuration parsing still accepts them.  Eventually
+            // support for them will be removed.
+            "generated-prefix": "myhost",
+            "hostname-char-replacement": "x",
+            "hostname-char-set": "[^A-Za-z0-9.-]",
+            "override-client-update": false,
+            "override-no-update": false,
+            "qualifying-suffix": "",
+            "replace-client-name": "never"
         },
 
         // Specifies the first of the two consecutive ports of the UDP
@@ -473,53 +491,28 @@
                 // empty string is provided, no restriction is applied.
                 "client-class": "",
 
-                // Specifies a prefix to be prepended to the generated Client FQDN.
+                // Shared network level value. See description at the global level.
                 "ddns-generated-prefix": "myhost",
 
-                // Boolean flag indicating that server should ignore DHCP client
-                // wishes to update DNS on its own. With that flag set to true
-                // the server will send DNS updates for both forward and
-                // reverse DNS data. The default value is false, which indicates
-                // that the server will delegate DNS update to the client when
-                // requested.
+                // Shared network level value. See description at the global level.
                 "ddns-override-client-update": false,
 
-                // Boolean flag indicating that the server should override DHCP
-                // client's wish to not update the DNS. With this parameter
-                // set to true the server will send DNS update even when
-                // the client requested no update.
+                // Shared network level value. See description at the global level.
                 "ddns-override-no-update": false,
 
-                // Suffix appended to the partial name sent to the DNS. The
-                // default value is an empty string which indicates that no
-                // suffix is appended.
+                // Shared network level value. See description at the global level.
                 "ddns-qualifying-suffix": "",
 
-                // Enumeration specifying whether the server should honor
-                // hostname or Client FQDN sent by the client or replace
-                // this name. The acceptable values are: "never" (use the
-                // name the client sent), "always" (replace the name the
-                // client sent), "when-present" (replace the name the client
-                // sent, but do not generate one when the client didn't sent
-                // the name), "when-not-present" (generate the name when
-                // client didn't send one, otherwise leave the name the
-                // client sent). The default value is "never".
+                // Shared network level value. See description at the global level.
                 "ddns-replace-client-name": "never",
 
-                // Boolean flag which enables or disables DDNS updating for
-                // subnets in this network.  It works in conjunction with
-                // dhcp-ddns:enable-updates which must be true enable connectivity
-                // kea-dhcp-ddns.  The default value is "true".
+                // Shared network level value. See description at the global level.
                 "ddns-send-updates": true,
 
-                // String of zero or more characters with which to replace each
-                // invalid character in the Client FQDN. The default
-                // value is an empty string which will cause invalid characters
-                // to be omitted rather than replaced.
+                // Shared network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
-                // Regular expression describing the invalid character set in
-                // the Client FQDN.
+                // Shared network level value. See description at the global level.
                 "hostname-char-set": "[^A-Za-z0-9.-]",
 
                 // Specifies that this shared network is selected for the
@@ -588,53 +581,28 @@
                         // provided, no restriction is applied.
                         "client-class": "",
 
-                        // Specifies a prefix to be prepended to the generated Client FQDN.
+                        // Subnet level value. See description at the global level.
                         "ddns-generated-prefix": "myhost",
 
-                        // Boolean flag indicating that server should ignore DHCP client
-                        // wishes to update DNS on its own. With that flag set to true
-                        // the server will send DNS updates for both forward and
-                        // reverse DNS data. The default value is false, which indicates
-                        // that the server will delegate DNS update to the client when
-                        // requested.
+                        // Subnet level value. See description at the global level.
                         "ddns-override-client-update": false,
 
-                        // Boolean flag indicating that the server should override DHCP
-                        // client's wish to not update the DNS. With this parameter
-                        // set to true the server will send DNS update even when
-                        // the client requested no update.
+                        // Subnet level value. See description at the global level.
                         "ddns-override-no-update": false,
 
-                        // Suffix appended to the partial name sent to the DNS. The
-                        // default value is an empty string which indicates that no
-                        // suffix is appended.
+                        // Subnet level value. See description at the global level.
                         "ddns-qualifying-suffix": "",
 
-                        // Enumeration specifying whether the server should honor
-                        // hostname or Client FQDN sent by the client or replace
-                        // this name. The acceptable values are: "never" (use the
-                        // name the client sent), "always" (replace the name the
-                        // client sent), "when-present" (replace the name the client
-                        // sent, but do not generate one when the client didn't sent
-                        // the name), "when-not-present" (generate the name when
-                        // client didn't send one, otherwise leave the name the
-                        // client sent). The default value is "never".
+                        // Subnet level value. See description at the global level.
                         "ddns-replace-client-name": "never",
 
-                        // Boolean flag which enables or disables DDNS updating for
-                        // subnets in this network.  It works in conjunction with
-                        // dhcp-ddns:enable-updates which must be true enable connectivity
-                        // kea-dhcp-ddns.  The default value is "true".
+                        // Subnet level value. See description at the global level.
                         "ddns-send-updates": true,
 
-                        // String of zero or more characters with which to replace each
-                        // invalid character in the Client FQDN. The default
-                        // value is an empty string which will cause invalid characters
-                        // to be omitted rather than replaced.
+                        // Subnet level value. See description at the global level.
                         "hostname-char-replacement": "x",
 
-                        // Regular expression describing the invalid character set in
-                        // the or Client FQDN.
+                        // Subnet level value. See description at the global level.
                         "hostname-char-set": "[^A-Za-z0-9.-]",
 
                         // Subnet unique identifier.

@@ -2566,13 +2566,13 @@ NCR contains the following information:
    (information identifying the client associated with the FQDN)
 
 Prior to Kea 1.7.1, all parameters for controlling DDNS were within the
-global, ``dhcp-ddns`` section of the kea-dhcp6.  Beginning with Kea 1.7.1
+global ``dhcp-ddns`` section of the kea-dhcp6.  Beginning with Kea 1.7.1
 DDNS related parameters were split into two groups:
 
 1. Connectivity Parameters
-    These are parameters which specify where and how kea-dhcp4 connects to
+    These are parameters which specify where and how kea-dhcp6 connects to
     and communicates with D2.  These parameters can only be specified
-    within the top-level ``dhcp-ddns`` section in the kea-dhcp4
+    within the top-level ``dhcp-ddns`` section in the kea-dhcp6
     configuration.  The connectivity parameters are listed below:
 
     -  ``enable-updates``
@@ -2608,9 +2608,9 @@ DDNS related parameters were split into two groups:
     the original behavioral parameters specified in ``dhcp-ddns``.  It will
     do so by translating the parameter into its global equivalent.  If a
     parameter is specified both globally and in ``dhcp-ddns``, the latter
-    value will be ignored.  In either case, a log will be emitted explaining what
-    has occurred.  Specifying these values within ``dhcp-ddns`` is deprecated
-    and support for it may be removed at some future date.
+    value will be ignored.  In either case, a log will be emitted explaining
+    what has occurred.  Specifying these values within ``dhcp-ddns`` is
+    deprecated and support for it will be removed at some future date.
 
 The default configuration and values would appear as follows:
 
@@ -2651,22 +2651,22 @@ together:
 
 .. table:: Enabling and Disabling DDNS Updates
 
-   +-----------------+--------------------+------------------------------+
-   | dhcp-ddns:      | Global             | Outcome                      |
-   | enable-updates  | ddns-send-udpates  |                              |
-   +=================+====================+==============================+
-   | false (default) | false              | no updates at any scope      |
-   +-----------------+--------------------+------------------------------+
-   | false           | true (default)     | no updates at any scope      |
-   +-----------------+--------------------+------------------------------+
-   | true            | false              | updates only at scopes with  |
-   |                 |                    | a local value of true for    |
-   |                 |                    | ddns-enable-updates          |
-   +-----------------+--------------------+------------------------------+
-   | true            | true               | updates at all scopes except |
-   |                 |                    | those with a local value of  |
-   |                 |                    | false for ddns-enble-updates |
-   +-----------------+--------------------+------------------------------+
+   +-----------------+--------------------+-------------------------------+
+   | dhcp-ddns:      | Global             | Outcome                       |
+   | enable-updates  | ddns-send-udpates  |                               |
+   +=================+====================+===============================+
+   | false (default) | false              | no updates at any scope       |
+   +-----------------+--------------------+-------------------------------+
+   | false           | true (default)     | no updates at any scope       |
+   +-----------------+--------------------+-------------------------------+
+   | true            | false              | updates only at scopes with   |
+   |                 |                    | a local value of true for     |
+   |                 |                    | ddns-enable-updates           |
+   +-----------------+--------------------+-------------------------------+
+   | true            | true               | updates at all scopes except  |
+   |                 |                    | those with a local value of   |
+   |                 |                    | false for ddns-enable-updates |
+   +-----------------+--------------------+-------------------------------+
 
 .. _dhcpv6-d2-io-config:
 
@@ -2674,7 +2674,7 @@ DHCP-DDNS Server Connectivity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For NCRs to reach the D2 server, kea-dhcp6 must be able to communicate
-with it. kea-dhcp4 uses the following configuration parameters to
+with it. kea-dhcp6 uses the following configuration parameters to
 control this communication:
 
 -  ``enable-updates`` - As of Kea 1.7.1, this parameter only enables

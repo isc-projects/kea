@@ -9,7 +9,6 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/classify.h>
-#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt4.h>
@@ -17,6 +16,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -557,7 +557,7 @@ public:
         /// the selected subnet.
         ///
         /// If there is no selected subnet (i.e. subnet_ is empty), the
-        /// returned set will cotain default values.
+        /// returned set will contain default values.
         ///
         /// @return pointer to a DdnsParams instance
         DdnsParamsPtr getDdnsParams();
@@ -1339,7 +1339,7 @@ public:
         /// the selected subnet.
         ///
         /// If there is no selected subnet (i.e. subnet_ is empty), the
-        /// returned set will cotain default values.
+        /// returned set will contain default values.
         ///
         /// @return pointer to a DdnsParams instance
         DdnsParamsPtr getDdnsParams();

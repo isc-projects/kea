@@ -242,7 +242,7 @@ struct DdnsParams {
     DdnsParams() :
         enable_updates_(false), override_no_update_(false), override_client_update_(false),
         replace_client_name_mode_(D2ClientConfig::RCM_NEVER),
-        generated_prefix_(""), qualifying_suffix_(""), hostname_char_set_(""),
+        generated_prefix_("myhost"), qualifying_suffix_(""), hostname_char_set_(""),
         hostname_char_replacement_("") {};
 
     /// @brief Indicates whether or not DHCP DDNS updating is enabled.

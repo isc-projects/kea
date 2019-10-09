@@ -2812,7 +2812,7 @@ NCRs. Each NCR contains the following information:
    (information identifying the client associated with the FQDN)
 
 Prior to Kea 1.7.1, all parameters for controlling DDNS were within the
-global, ``dhcp-ddns`` section of the kea-dhcp4.  Beginning with Kea 1.7.1
+global ``dhcp-ddns`` section of the kea-dhcp4.  Beginning with Kea 1.7.1
 DDNS related parameters were split into two groups:
 
 1. Connectivity Parameters
@@ -2856,7 +2856,7 @@ DDNS related parameters were split into two groups:
     parameter is specified both globally and in ``dhcp-ddns``, the latter
     value will be ignored.  In either case, a log will be emitted explaining
     what has occurred.  Specifying these values within ``dhcp-ddns`` is
-    deprecated and support for it may be removed at some future date.
+    deprecated and support for it will be removed at some future date.
 
 The default configuration would appear as follows:
 
@@ -2897,22 +2897,22 @@ together:
 
 .. table:: Enabling and Disabling DDNS Updates
 
-   +-----------------+--------------------+------------------------------+
-   | dhcp-ddns:      | Global             | Outcome                      |
-   | enable-updates  | ddns-send-udpates  |                              |
-   +=================+====================+==============================+
-   | false (default) | false              | no updates at any scope      |
-   +-----------------+--------------------+------------------------------+
-   | false           | true (default)     | no updates at any scope      |
-   +-----------------+--------------------+------------------------------+
-   | true            | false              | updates only at scopes with  |
-   |                 |                    | a local value of true for    |
-   |                 |                    | ddns-enable-updates          |
-   +-----------------+--------------------+------------------------------+
-   | true            | true               | updates at all scopes except |
-   |                 |                    | those with a local value of  |
-   |                 |                    | false for ddns-enble-updates |
-   +-----------------+--------------------+------------------------------+
+   +-----------------+--------------------+-------------------------------+
+   | dhcp-ddns:      | Global             | Outcome                       |
+   | enable-updates  | ddns-send-udpates  |                               |
+   +=================+====================+===============================+
+   | false (default) | false              | no updates at any scope       |
+   +-----------------+--------------------+-------------------------------+
+   | false           | true (default)     | no updates at any scope       |
+   +-----------------+--------------------+-------------------------------+
+   | true            | false              | updates only at scopes with   |
+   |                 |                    | a local value of true for     |
+   |                 |                    | ddns-enable-updates           |
+   +-----------------+--------------------+-------------------------------+
+   | true            | true               | updates at all scopes except  |
+   |                 |                    | those with a local value of   |
+   |                 |                    | false for ddns-enable-updates |
+   +-----------------+--------------------+-------------------------------+
 
 .. _dhcpv4-d2-io-config:
 
