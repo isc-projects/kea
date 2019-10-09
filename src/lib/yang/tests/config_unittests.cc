@@ -354,7 +354,7 @@ TEST_F(ConfigTest, examples4) {
         "several-subnets.json",
         "shared-network.json",
         "single-subnet.json",
-        "with-ddns.json"
+        // "with-ddns.json" removed for #35
     };
     for (string file : examples) {
         resetSession();
@@ -399,7 +399,7 @@ TEST_F(ConfigTest, examples6) {
         "softwire46.json",
         "stateless.json",
         "tee-times.json",
-        "with-ddns.json"
+        // "with-ddns.json" removed for #35
     };
     for (string file : examples) {
         resetSession();
