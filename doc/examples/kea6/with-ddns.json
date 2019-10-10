@@ -41,7 +41,8 @@
     }
   ],
 
-// Enable dynamic DNS updates
+// Enable connectivity with kea-dhcp-ddns
+// (Required for dynamic DNS updates)    
   "dhcp-ddns" : {
         "enable-updates" : true,
         "server-ip" : "3001::1",
@@ -50,16 +51,19 @@
         "sender-port" : 3433,
         "max-queue-size" : 2048,
         "ncr-protocol" : "UDP",
-        "ncr-format" : "JSON",
-        "override-no-update" : true,
-        "override-client-update" : true,
-        "replace-client-name" : "when-present",
-        "generated-prefix" : "test.prefix",
-        "qualifying-suffix" : "test.suffix.",
-        "hostname-char-set": "[^A-Za-z0-9.-]",
-        "hostname-char-replacement": "x"
+        "ncr-format" : "JSON"
   },
 
+
+// Enable DDNS updates and configure DDNS update behavior
+  "ddns-send-updates" : true,
+  "ddns-override-no-update" : true,
+  "ddns-override-client-update" : true,
+  "ddns-replace-client-name" : "when-present",
+  "ddns-generated-prefix" : "test.prefix",
+  "ddns-qualifying-suffix" : "test.suffix.",
+  "hostname-char-set": "[^A-Za-z0-9.-]",
+  "hostname-char-replacement": "x",
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
