@@ -3463,7 +3463,7 @@ Kea offers the ability to specify options on a per-host basis. These
 options follow the same rules as any other options. These can be
 standard options (see :ref:`dhcp6-std-options`),
 custom options (see :ref:`dhcp6-custom-options`),
-or vendor-specific options (see :ref:`dhcp4-vendor-opts`). The following
+or vendor-specific options (see :ref:`dhcp6-vendor-opts`). The following
 example demonstrates how standard options can be defined.
 
 ::
