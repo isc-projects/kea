@@ -116,8 +116,9 @@
         // NCRs are sent to Kea D2 module to update DNS upon allocation of the
         // DHCP leases.
         "dhcp-ddns": {
-            // Boolean flag indicating if Kea DHCPv6 server must generate NCRs.
-            // By default NCRs are not generated.
+            // Boolean flag indicating if Kea DHCPv6 server should connect to
+            // kea-dhcp-ddns.  This must be true for NCRs to be created and
+            // sent to kea-dhcp-ddns. By default NCRs are not generated.
             "enable-updates": false,
 
             // Specifies maximum number of NCRs to queue waiting to be sent
