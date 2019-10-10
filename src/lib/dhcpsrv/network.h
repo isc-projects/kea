@@ -578,9 +578,9 @@ public:
         // parameters. The value at the global level is given as a string.
         // Thus we call getProperty here without a global name to check if it
         // is specified on network level only.
-        const util::Optional<D2ClientConfig::ReplaceClientNameMode>& mode
-            = getProperty<Network>(&Network::getDdnsReplaceClientNameMode,
-                                   ddns_replace_client_name_mode_, inheritance);
+        const util::Optional<D2ClientConfig::ReplaceClientNameMode>& mode =
+            getProperty<Network>(&Network::getDdnsReplaceClientNameMode,
+                                 ddns_replace_client_name_mode_, inheritance);
 
         // If it is not specified at network level we need this special
         // case code to convert the global string value to an enum.
