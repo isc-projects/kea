@@ -17,6 +17,11 @@ namespace isc {
 namespace flex_option {
 
 /// @brief Flex Option implementation.
+///
+/// The implementation can be divided into two parts:
+///  - the configuration parsed and stored by load()
+///  - the response packet processing performed by the process method
+///
 class FlexOptionImpl {
 public:
 
@@ -152,13 +157,16 @@ public:
             case NONE:
                 break;
             case ADD:
+                // Don't add if option is already there.
                 if (opt) {
                     break;
                 }
                 value = isc::dhcp::evaluateString(*opt_cfg->getExpr(), *query);
+                // Do nothing is the expression evaluates to empty.
                 if (value.empty()) {
                     break;
                 }
+                // Add the option.
                 buffer.assign(value.begin(), value.end());
                 opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                 buffer));
@@ -166,14 +174,17 @@ public:
                 logAction(ADD, opt_cfg->getCode(), value);
                 break;
             case SUPERSEDE:
+                // Do nothing is the expression evaluates to empty.
                 value = isc::dhcp::evaluateString(*opt_cfg->getExpr(), *query);
                 if (value.empty()) {
                     break;
                 }
+                // Remove the option if already there.
                 while (opt) {
                     response->delOption(opt_cfg->getCode());
                     opt = response->getOption(opt_cfg->getCode());
                 }
+                // Add the option.
                 buffer.assign(value.begin(), value.end());
                 opt.reset(new isc::dhcp::Option(universe, opt_cfg->getCode(),
                                                 buffer));
@@ -181,12 +192,15 @@ public:
                 logAction(SUPERSEDE, opt_cfg->getCode(), value);
                 break;
             case REMOVE:
+                // Nothing to remove if option is not present.
                 if (!opt) {
                     break;
                 }
+                // Do nothing is the expression evaluates to false.
                 if (!isc::dhcp::evaluateBool(*opt_cfg->getExpr(), *query)) {
                     break;
                 }
+                // Remove the option.
                 while (opt) {
                     response->delOption(opt_cfg->getCode());
                     opt = response->getOption(opt_cfg->getCode());

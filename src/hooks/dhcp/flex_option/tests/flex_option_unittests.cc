@@ -305,7 +305,9 @@ TEST_F(FlexOptionTest, optionConfigCodeNameMismatch) {
     ElementPtr name = Element::create(string("host-name"));
     option->set("name", name);
     EXPECT_THROW(impl_->testConfigure(options), BadValue);
-    EXPECT_EQ("option 'host-name' has code 12 but 'code' is 13", impl_->getErrMsg());
+    string expected = "option 'host-name' is defined as code: 12, ";
+    expected += "not the specified code: 13";
+    EXPECT_EQ(expected, impl_->getErrMsg());
 }
 
 // Verify that an option can be configured only once.

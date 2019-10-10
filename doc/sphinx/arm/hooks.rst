@@ -1170,31 +1170,23 @@ In the DHCPv6 case, the corresponding query will look similar to this:
 flex_option Flexible Option for Option value settings
 =====================================================
 
-This sectiom describes a hook application dedicated to generate flexible
-option values in response packets. The Kea software provides a way to
-configure  option values of response packets based on global configuration,
-client classes, shared networks, subnets, pools and host reservations but
-in all cases values are static. However, there are sometimes scenarios
-where the value should be computed from elements from the query packet.
-These scenarios are addressed by the Flexible Option hook application.
+This library allows you to define an action to take, for a given option,
+based upon on the result of an expression.  These actions are carried
+out during the final stages of constructing a query response packet,
+just before it is sent to the client. The three actions currently
+supported are  ``add``, ``supersede``, and ``remove``.
 
-This hook is available since Kea 1.7.1.
+The syntax used for the action expressions is the same syntax used
+for client classification and the Flex Identifier hook library
+(See either :ref:`classification-using-expressions` or :ref:`flex-id`
+for detailed description of the syntax).
 
-.. note::
-
-   This library may only be loaded by the ``kea-dhp4`` or ``kea-dhp6``
-   process.
-
-The library allows the definition of an action per option using an
-expression on the query packer as for the Flex Indentifier hook library
-(See :ref:`flex-id`) or for client classification (See
-:ref:`classification-using-expressions` for a detailed description of
-the syntax available.) The ``add`` and ``supersede`` actions use an
-expression returning a string, doing nothing when it evaluates to
-the empty string. The ``remove`` application uses an expression returning
-true or false, doing nothing on false. When it is necessary to set
-an option to the empty value this mechanism does not work but a client
-class can be used instead.
+The ``add`` and ``supersede`` actions use an expression returning a 
+string, doing nothing when it evaluates to the empty string. The 
+``remove`` application uses an expression returning true or false, 
+doing nothing on false. When it is necessary to set an option to the 
+empty value this mechanism does not work but a client class can be 
+used instead.
 
 The ``add`` action adds an option only when the option does not already
 exist and the expression does not evaluate to the empty string.
@@ -1203,16 +1195,18 @@ if it already exists. The ``remove`` action removes the option from
 the response packet if it already exists and the expression evaluates to
 true.
 
-The option where an action applies is specified by its code point or
-by its name. At least the code or the name must be specified. The option
-space is the DHCPv4 or DHCPv6 spaces depending of the server where the
-hook library is loaded. Other spaces as vendor spaces could be supported
-in a further version.
+The option to which an action applies may be specified by either its
+numeric code or its name.. At least the code or the name must be
+specified. The option space is the DHCPv4 or DHCPv6 spaces depending
+of the server where the hook library is loaded. Other spaces as vendor
+spaces could be supported in a further version.
 
-The library can be loaded in a similar way as other hook libraries. It takes
-a mandatory ``options`` parameter holding a list of per option parameter
-maps with code, name, add, supersede and remove actions. Action entries
-take a string value representing an expression.
+The library is available since Kea 1.7.1 and can be loaded in a
+similar way as other hook libraries by the ``kea-dhp4`` or `kea-dhp6``
+process.. It takes a mandatory ``options`` parameter holding a list of
+per option parameter maps with code, name, add, supersede and remove
+actions. Action entries take a string value representing an
+expression.
 
 ::
 

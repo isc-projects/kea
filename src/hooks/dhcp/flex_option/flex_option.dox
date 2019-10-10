@@ -75,7 +75,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
 }
 @endcode
 
-The parameter is rge options list of option configuration maps with:
+The sole parameter is a options list of options with:
  - @b code - Specifies the option code.
  - @b name - Speficies the option name, at least the option code or name
    must be given.
@@ -93,7 +93,8 @@ The parameter is rge options list of option configuration maps with:
    response. Only one action can be specified.
 
 Note for the rare options which can be empty this mechanism does not work.
-The proposed solution in this case is to use a client class.
+The proposed solution in this case is to use a client class to set the
+empty value to the option in a option-data clause.
 
 ## Internal operation
 

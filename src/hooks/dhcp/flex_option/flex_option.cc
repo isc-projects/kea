@@ -20,8 +20,54 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::eval;
+using namespace isc::flex_option;
 using namespace isc::log;
 using namespace std;
+
+namespace {
+
+/// @brief Parse an action.
+///
+/// @param option The option element.
+/// @param opt_cfg The option configuration.
+/// @param name The action name.
+/// @param action The action.
+/// @param parser_type The type of the parser of the expression.
+void
+parseAction(ConstElementPtr option,
+            FlexOptionImpl::OptionConfigPtr opt_cfg,
+            Option::Universe universe,
+            const string& name,
+            FlexOptionImpl::Action action,
+            EvalContext::ParserType parser_type) {
+    ConstElementPtr elem = option->get(name);
+    if (elem) {
+        if (elem->getType() != Element::string) {
+            isc_throw(BadValue, "'" << name << "' must be a string: "
+                      << elem->str());
+        }
+        string expr_text = elem->stringValue();
+        if (expr_text.empty()) {
+            isc_throw(BadValue, "'" << name << "' must not be empty");
+        }
+        if (opt_cfg->getAction() != FlexOptionImpl::NONE) {
+            isc_throw(BadValue, "multiple actions: " << option->str());
+        }
+        opt_cfg->setAction(action);
+        opt_cfg->setText(expr_text);
+        try {
+            EvalContext eval_ctx(universe);
+            eval_ctx.parseString(expr_text, parser_type);
+            ExpressionPtr expr(new Expression(eval_ctx.expression));
+            opt_cfg->setExpr(expr);
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "can't parse " << name << " expression ["
+                      << expr_text << "] error: " << ex.what());
+        }
+    }
+}
+
+} // end of anonymous namespace
 
 namespace isc {
 namespace flex_option {
@@ -130,8 +176,9 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
                       << space << "' space");
         }
         if (code_elem && (def->getCode() != code)) {
-            isc_throw(BadValue, "option '" << name << "' has code "
-                      << def->getCode() << " but 'code' is " << code);
+            isc_throw(BadValue, "option '" << name << "' is defined as code: "
+                      << def->getCode() << ", not the specified code: "
+                      << code);
         }
         code = def->getCode();
     }
@@ -148,78 +195,13 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     }
 
     OptionConfigPtr opt_cfg(new OptionConfig(code));
-    ConstElementPtr add_elem = option->get("add");
-    if (add_elem) {
-        if (add_elem->getType() != Element::string) {
-            isc_throw(BadValue, "'add' must be a string: "
-                      << add_elem->str());
-        }
-        string add = add_elem->stringValue();
-        if (add.empty()) {
-            isc_throw(BadValue, "'add' must not be empty");
-        }
-        opt_cfg->setAction(ADD);
-        opt_cfg->setText(add);
-        try {
-            EvalContext eval_ctx(universe);
-            eval_ctx.parseString(add, EvalContext::PARSER_STRING);
-            ExpressionPtr expr(new Expression(eval_ctx.expression));
-            opt_cfg->setExpr(expr);
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "can't parse add expression ["
-                      << add << "] error: " << ex.what());
-        }
-    }
-    ConstElementPtr supersede_elem = option->get("supersede");
-    if (supersede_elem) {
-        if (supersede_elem->getType() != Element::string) {
-            isc_throw(BadValue, "'supersede' must be a string: "
-                      << supersede_elem->str());
-        }
-        string supersede = supersede_elem->stringValue();
-        if (supersede.empty()) {
-            isc_throw(BadValue, "'supersede' must not be empty");
-        }
-        if (opt_cfg->getAction() != NONE) {
-            isc_throw(BadValue, "multiple actions: " << option->str());
-        }
-        opt_cfg->setAction(SUPERSEDE);
-        opt_cfg->setText(supersede);
-        try {
-            EvalContext eval_ctx(universe);
-            eval_ctx.parseString(supersede, EvalContext::PARSER_STRING);
-            ExpressionPtr expr(new Expression(eval_ctx.expression));
-            opt_cfg->setExpr(expr);
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "can't parse supersede expression ["
-                      << supersede << "] error: " << ex.what());
-        }
-    }
-    ConstElementPtr remove_elem = option->get("remove");
-    if (remove_elem) {
-        if (remove_elem->getType() != Element::string) {
-            isc_throw(BadValue, "'remove' must be a string: "
-                      << remove_elem->str());
-        }
-        string remove = remove_elem->stringValue();
-        if (remove.empty()) {
-            isc_throw(BadValue, "'remove' must not be empty");
-        }
-        if (opt_cfg->getAction() != NONE) {
-            isc_throw(BadValue, "multiple actions: " << option->str());
-        }
-        opt_cfg->setAction(REMOVE);
-        opt_cfg->setText(remove);
-        try {
-            EvalContext eval_ctx(universe);
-            eval_ctx.parseString(remove, EvalContext::PARSER_BOOL);
-            ExpressionPtr expr(new Expression(eval_ctx.expression));
-            opt_cfg->setExpr(expr);
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "can't parse remove expression ["
-                      << remove << "] error: " << ex.what());
-        }
-    }
+    // opt_cfg initial action is NONE.
+    parseAction(option, opt_cfg, universe,
+                "add", ADD, EvalContext::PARSER_STRING);
+    parseAction(option, opt_cfg, universe,
+                "supersede", SUPERSEDE, EvalContext::PARSER_STRING);
+    parseAction(option, opt_cfg, universe,
+                "remove", REMOVE, EvalContext::PARSER_BOOL);
 
     if (opt_cfg->getAction() == NONE) {
         isc_throw(BadValue, "no action: " << option->str());
