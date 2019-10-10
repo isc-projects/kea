@@ -3,7 +3,7 @@
 	parameters may now be specifed at global, shared-network,
 	and subnet scopes.  Implemented for both kea-dhcp4 and
 	kea-dhcp6.  Not yet supported by Config Backend or Netconf.
-	(Gitlab #35,!517, git TBD)
+	(Gitlab #35,!517, git 49ce6286f5d00f99c1c890f12cbc0fd633c9dbf6)
 
 1668.	[build]		fdupont
 	The Kea util thread library was removed.
