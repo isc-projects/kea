@@ -1231,7 +1231,7 @@ The subnet-id Parameter
 
 Prior to diving into the individual commands, it is worth discussing the
 parameter, ``subnet-id``. Currently this parameter is mandatory for all of the
-commands supplied by this library at the exception of
+commands supplied by this library with the exception of
 reservation-get-by-hostname where it is optional.
 In previous versions of Kea, reservations had
 to belong to a specific subnet; as of Kea 1.5.0, reservations may
@@ -1687,7 +1687,7 @@ returns some IPv4 hosts:
            ]
        },
        "result": 0,
-       "text": "72 IPv4 host(s) found."
+       "text": "5 IPv4 host(s) found."
    }
 
 The response returned by ``reservation-get-by-hostname`` can be long

@@ -339,14 +339,14 @@ TEST_F(CqlHostDataSourceTest, getAllbyHostname) {
 
 // Verifies that IPv4 host reservations with the same hostname and in
 // the same subnet can be retrieved
-TEST_F(CqlHostDataSourceTest, getAllbyHostname4) {
-    testGetAllbyHostname4();
+TEST_F(CqlHostDataSourceTest, getAllbyHostnameSubnet4) {
+    testGetAllbyHostnameSubnet4();
 }
 
 // Verifies that IPv6 host reservations with the same hostname and in
 // the same subnet can be retrieved
-TEST_F(CqlHostDataSourceTest, getAllbyHostname6) {
-    testGetAllbyHostname6();
+TEST_F(CqlHostDataSourceTest, getAllbyHostnameSubnet6) {
+    testGetAllbyHostnameSubnet6();
 }
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved

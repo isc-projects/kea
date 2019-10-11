@@ -1503,6 +1503,7 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
         // lower_case_hostname: text
         lower_case_hostname_ = host->getLowerHostname();
         if (lower_case_hostname_.size() > HOSTNAME_MAX_LEN) {
+            // Should never happen...
             isc_throw(BadValue, "CqlHostExchange::prepareExchange(): lower "
                       "case hostname " << lower_case_hostname_ << " of length "
                       << lower_case_hostname_.size()

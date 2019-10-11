@@ -314,14 +314,14 @@ TEST_F(PgSqlHostDataSourceTest, getAllbyHostname) {
 
 // Verifies that IPv4 host reservations with the same hostname and in
 // the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostname4) {
-    testGetAllbyHostname4();
+TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameSubnet4) {
+    testGetAllbyHostnameSubnet4();
 }
 
 // Verifies that IPv6 host reservations with the same hostname and in
 // the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostname6) {
-    testGetAllbyHostname6();
+TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameSubnet6) {
+    testGetAllbyHostnameSubnet6();
 }
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved

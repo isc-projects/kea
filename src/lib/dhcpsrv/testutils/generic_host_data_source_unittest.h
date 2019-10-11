@@ -212,13 +212,13 @@ public:
     /// hostname and in the same subnet can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    void testGetAllbyHostname4();
+    void testGetAllbyHostnameSubnet4();
 
     /// @brief Test that Verifies that IPv6 host reservations with the same
     /// hostname and in the same subnet can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    void testGetAllbyHostname6();
+    void testGetAllbyHostnameSubnet6();
 
     /// @brief Test that Verifies that pages of host reservations in the
     /// same subnet can be retrieved properly.

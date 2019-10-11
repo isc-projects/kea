@@ -525,7 +525,7 @@ GenericHostDataSourceTest::testGetAllbyHostname() {
 }
 
 void
-GenericHostDataSourceTest::testGetAllbyHostname4() {
+GenericHostDataSourceTest::testGetAllbyHostnameSubnet4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -549,7 +549,9 @@ GenericHostDataSourceTest::testGetAllbyHostname4() {
     HostPtr host4 = HostDataSourceUtils::initializeHost4("192.0.2.4", id);
     host4->setHostname("host.example.com");
 
-    // Set them in the same subnets.
+    HostPtr host5 = HostDataSourceUtils::initializeHost4("192.0.2.5", id);
+
+    // Set them in the same subnet at the exception of host5.
     SubnetID subnet4 = host1->getIPv4SubnetID();
     host2->setIPv4SubnetID(subnet4);
     host3->setIPv4SubnetID(subnet4);
@@ -564,6 +566,7 @@ GenericHostDataSourceTest::testGetAllbyHostname4() {
     ASSERT_NO_THROW(hdsptr_->add(host2));
     ASSERT_NO_THROW(hdsptr_->add(host3));
     ASSERT_NO_THROW(hdsptr_->add(host4));
+    ASSERT_NO_THROW(hdsptr_->add(host5));
 
     // Retrieve unknown name.
     ConstHostCollection from_hds = hdsptr_->getAllbyHostname4("foo", subnet4);
@@ -606,7 +609,7 @@ GenericHostDataSourceTest::testGetAllbyHostname4() {
 }
 
 void
-GenericHostDataSourceTest::testGetAllbyHostname6() {
+GenericHostDataSourceTest::testGetAllbyHostnameSubnet6() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -630,7 +633,9 @@ GenericHostDataSourceTest::testGetAllbyHostname6() {
     HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, false);
     host4->setHostname("host.example.com");
 
-    // Set them in the same subnets.
+    HostPtr host5 = HostDataSourceUtils::initializeHost6("2001:db8::5", id, false);
+
+    // Set them in the same subnet at the exception of host5.
     SubnetID subnet4 = host1->getIPv4SubnetID();
     host2->setIPv4SubnetID(subnet4);
     host3->setIPv4SubnetID(subnet4);
@@ -645,6 +650,7 @@ GenericHostDataSourceTest::testGetAllbyHostname6() {
     ASSERT_NO_THROW(hdsptr_->add(host2));
     ASSERT_NO_THROW(hdsptr_->add(host3));
     ASSERT_NO_THROW(hdsptr_->add(host4));
+    ASSERT_NO_THROW(hdsptr_->add(host5));
 
     // Retrieve unknown name.
     ConstHostCollection from_hds = hdsptr_->getAllbyHostname6("foo", subnet6);
