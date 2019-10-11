@@ -1968,6 +1968,36 @@ TEST_F(Dhcpv6SrvTest, portsClientPort) {
 }
 
 // Checks if server responses are sent to the proper port.
+TEST_F(Dhcpv6SrvTest, portsServerPort) {
+
+    // Create the test server in test mode.
+    NakedDhcpv6Srv srv(0);
+
+    // Enforce a specific server port value.
+    EXPECT_EQ(0, srv.server_port_);
+    srv.server_port_ = 1234;
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = PktCaptures::captureSimpleSolicit();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Get Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Verify the local port: it must be the server port.
+    EXPECT_EQ(srv.server_port_, adv->getLocalPort());
+}
+
+// Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
 
     NakedDhcpv6Srv srv(0);

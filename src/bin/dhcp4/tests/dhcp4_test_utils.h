@@ -229,6 +229,7 @@ public:
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
     using Dhcpv4Srv::shutdown_;
     using Dhcpv4Srv::alloc_engine_;
+    using Dhcpv4Srv::server_port_;
     using Dhcpv4Srv::client_port_;
 };
 

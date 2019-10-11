@@ -200,8 +200,9 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     // Clear remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    // Set the client port.
+    // Set the client and server ports.
     srv_.client_port_ = 1234;
+    srv_.server_port_ = 2345;
 
     ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
@@ -210,6 +211,9 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
 
     // Remote port was enforced to the client port.
     EXPECT_EQ(srv_.client_port_, resp->getRemotePort());
+
+    // Local port was enforced to the server port.
+    EXPECT_EQ(srv_.server_port_, resp->getLocalPort());
 }
 
 // This test verifies that the remote port is adjusted when
@@ -2123,6 +2127,48 @@ TEST_F(Dhcpv4SrvTest, portsClientPort) {
 
     // Get Relay Agent Info from query...
     EXPECT_EQ(srv.client_port_, offer->getRemotePort());
+}
+
+// Checks if server port can be overridden in packets being sent.
+TEST_F(Dhcpv4SrvTest, portsServerPort) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
+    NakedDhcpv4Srv srv(0);
+    EXPECT_EQ(0, srv.server_port_);
+
+    // Use of the captured DHCPDISCOVER packet requires that
+    // subnet 10.254.226.0/24 is in use, because this packet
+    // contains the giaddr which belongs to this subnet and
+    // this giaddr is used to select the subnet
+    configure(CONFIGS[0]);
+    srv.server_port_ = 1234;
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a response
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    EXPECT_EQ(srv.server_port_, offer->getLocalPort());
 }
 
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:

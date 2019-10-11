@@ -984,13 +984,13 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
-    /// UDP port number on which server listens.
-    uint16_t server_port_;
-
     /// Should broadcast be enabled on sockets (if true).
     bool use_bcast_;
 
 protected:
+
+    /// UDP port number on which server listens.
+    uint16_t server_port_;
 
     /// UDP port number to which server sends responses.
     uint16_t client_port_;

@@ -835,7 +835,11 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         rsp->setRemotePort(relay_port ? relay_port : DHCP6_SERVER_PORT);
     }
 
-    rsp->setLocalPort(DHCP6_SERVER_PORT);
+    if (server_port_) {
+        rsp->setLocalPort(server_port_);
+    } else {
+        rsp->setLocalPort(DHCP6_SERVER_PORT);
+    }
     rsp->setIndex(query->getIndex());
     rsp->setIface(query->getIface());
 

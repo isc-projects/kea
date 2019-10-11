@@ -3,7 +3,7 @@ kea-dhcp6
 Kea
 kea-dhcp6
 DHCPv6 server in Kea
-2011-2018
+2011-2019
 Internet Systems Consortium, Inc. ("ISC")
 kea-dhcp6
 -v
@@ -16,6 +16,8 @@ config-file
 config-file
 -p
 server-port-number
+-P
+client-port-number
 DESCRIPTION
 ===========
 
@@ -50,6 +52,10 @@ The arguments are as follows:
 
 ``-p``
    Server port number (1-65535) on which the server listens. This is
+   useful for testing purposes only.
+
+``-P``
+   Client port number (1-65535) to which the server responds. This is
    useful for testing purposes only.
 
 DOCUMENTATION

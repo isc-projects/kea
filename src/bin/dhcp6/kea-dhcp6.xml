@@ -9,8 +9,8 @@
 
   <info>
     <productname>ISC Kea</productname>
-    <date>Aug 28, 2019</date>
-    <edition>1.6.0</edition>
+    <date>Oct 11, 2019</date>
+    <edition>1.7.1</edition>
     <author>
       <contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
@@ -49,6 +49,7 @@
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">config-file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">server-port-number</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-P <replaceable class="parameter">client-port-number</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -119,6 +120,14 @@
         <term><option>-p</option></term>
         <listitem><para>
           Server port number (1-65535) on which the server listens.
+          This is useful for testing purposes only.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-P</option></term>
+        <listitem><para>
+          Client port number (1-65535) to which the server responds.
           This is useful for testing purposes only.
         </para></listitem>
       </varlistentry>
