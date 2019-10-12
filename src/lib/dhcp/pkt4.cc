@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -205,7 +205,7 @@ Pkt4::unpack() {
     // a vector as an input.
     buffer_in.readVector(opts_buffer, opts_len);
 
-    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_, deferred_options_);
+    size_t offset = LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE, options_, deferred_options_, false);
 
     // If offset is not equal to the size and there is no DHO_END,
     // then something is wrong here. We either parsed past input

@@ -780,7 +780,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred);
+        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred, false);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -925,7 +925,7 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
     OptionCollection options;
     list<uint16_t> deferred;
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                            options, deferred));
+                                            options, deferred, false));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
@@ -984,7 +984,7 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
     OptionCollection options;
     list<uint16_t> deferred;
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar",
-                                            options, deferred));
+                                            options, deferred, false));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());
@@ -1058,7 +1058,7 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
     list<uint16_t> deferred;
     size_t offset = 0;
     ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                                     options, deferred));
+                                                     options, deferred, false));
 
     // Returned offset should point to the END.
     EXPECT_EQ(0xff, buf[offset]);
@@ -1098,6 +1098,176 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
     EXPECT_EQ("foo", sub->getValue());
 }
 
+// Verfies that option 0 (PAD) is handled as PAD in option 43 (so when
+// flexible pad end flag is true) only when option 0 (PAD) is not defined.
+TEST_F(LibDhcpTest, option43Pad) {
+    string space = "my-option43-space";
+
+    // Create option definition for option 1.
+    OptionDefinitionPtr opt_def1(new OptionDefinition("one", 1, "binary"));
+
+    // Create option definition for option 2.
+    OptionDefinitionPtr opt_def2(new OptionDefinition("two", 2, "uint8"));
+
+    // Register created option definitions as runtime option definitions.
+    OptionDefSpaceContainer defs;
+    ASSERT_NO_THROW(defs.addItem(opt_def1, space));
+    ASSERT_NO_THROW(defs.addItem(opt_def2, space));
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Create the buffer holding an option 43 content.
+    OptionBuffer buf = {
+        // Suboption 0,
+        0x00, 0x01, 0x00,             // code = 0, length = 1, content = 0
+                                      // or option code = 0 (PAD) followed by
+                                      // code = 1, length = 0
+        // Suboption 2.
+        0x02, 0x01, 0x01,             // code = 2, length = 1, content = 1
+    };
+
+    // Parse options.
+    OptionCollection options;
+    list<uint16_t> deferred;
+    size_t offset = 0;
+    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
+                                                     options, deferred, true));
+
+    // There should be 2 suboptions (1 and 2).
+    ASSERT_EQ(2, options.size());
+
+    // Get suboption 1.
+    OptionPtr sub1 = options.begin()->second;
+    ASSERT_TRUE(sub1);
+    EXPECT_EQ(1, sub1->getType());
+    EXPECT_EQ(0, sub1->len() - sub1->getHeaderLen());
+
+    // Get suboption 2.
+    boost::shared_ptr<OptionInt<uint8_t> > sub2 =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >
+            (options.rbegin()->second);
+    ASSERT_TRUE(sub2);
+    EXPECT_EQ(2, sub2->getType());
+    EXPECT_EQ(1, sub2->getValue());
+
+    // Create option definition for option 0 and register it.
+    OptionDefinitionPtr opt_def0(new OptionDefinition("zero", 0, "uint8"));
+    ASSERT_NO_THROW(defs.addItem(opt_def0, space));
+    LibDHCP::clearRuntimeOptionDefs();
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    options.clear();
+    offset = 0;
+    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
+                                                     options, deferred, true));
+
+    // There should be 2 suboptions (0 and 1).
+    EXPECT_EQ(2, options.size());
+
+    // Get suboption 0
+    boost::shared_ptr<OptionInt<uint8_t> > sub0 =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >
+            (options.begin()->second);
+    ASSERT_TRUE(sub0);
+    EXPECT_EQ(0, sub0->getType());
+    EXPECT_EQ(0, sub0->getValue());
+
+    // Get suboption 2.
+    sub2 =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >
+            (options.rbegin()->second);
+    ASSERT_TRUE(sub2);
+    EXPECT_EQ(2, sub2->getType());
+    EXPECT_EQ(1, sub2->getValue());
+}
+
+// Verfies that option 255 (END) is handled as END in option 43 (so when
+//flexible pad end flag is true) only when option 255 (END) is not defined.
+TEST_F(LibDhcpTest, option43End) {
+    string space = "my-option43-space";
+
+    // Create the buffer holding an option 43 content.
+    OptionBuffer buf = {
+        // Suboption 255,
+        0xff, 0x01, 0x02              // code = 255, length = 1, content = 2
+    };
+
+    // Parse options.
+    OptionCollection options;
+    list<uint16_t> deferred;
+    size_t offset = 0;
+    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
+                                                     options, deferred, true));
+
+    // Parsing should stop at the first byte.
+    EXPECT_EQ(0, offset);
+
+    // There should be 0 suboptions.
+    EXPECT_EQ(0, options.size());
+
+
+    // Create option definition for option 255.
+    OptionDefinitionPtr opt_def255(new OptionDefinition("max", 255, "uint8"));
+
+    // Register created option definition as runtime option definitions.
+    OptionDefSpaceContainer defs;
+    ASSERT_NO_THROW(defs.addItem(opt_def255, space));
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    options.clear();
+    offset = 0;
+    ASSERT_NO_THROW(offset = LibDHCP::unpackOptions4(buf, space,
+                                                     options, deferred, true));
+
+    // There should be 1 suboption.
+    ASSERT_EQ(1, options.size());
+
+    // Get suboption 255.
+    boost::shared_ptr<OptionInt<uint8_t> > sub255 =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >
+            (options.begin()->second);
+    ASSERT_TRUE(sub255);
+    EXPECT_EQ(255, sub255->getType());
+    EXPECT_EQ(2, sub255->getValue());
+}
+
+// Verify the option 43 DEND bug is fixed.
+TEST_F(LibDhcpTest, option32Factory) {
+    // Create the buffer holding the structure of option 43 content.
+    OptionBuffer buf = {
+        // Suboption 1.
+        0x01, 0x00,                     // option code = 1, option length = 0
+        // END
+        0xff
+    };
+
+    // Get last resort definition.
+    OptionDefinitionPtr def =
+        LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(def);
+
+    // Apply the definition.
+    OptionPtr option;
+    ASSERT_NO_THROW(option = def->optionFactory(Option::V4, 43, buf));
+    ASSERT_TRUE(option);
+    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, option->getType());
+    EXPECT_EQ(def->getEncapsulatedSpace(), option->getEncapsulatedSpace());
+
+    // There should be 1 suboption.
+    EXPECT_EQ(1, option->getOptions().size());
+
+    // Get suboption 1.
+    OptionPtr sub1 = option->getOption(1);
+    ASSERT_TRUE(sub1);
+    EXPECT_EQ(1, sub1->getType());
+    EXPECT_EQ(0, sub1->len() - sub1->getHeaderLen());
+
+    // Of course no suboption 255.
+    EXPECT_FALSE(option->getOption(255));
+}
+
 // Verifies that an Host Name (option 12), will be dropped when empty,
 // while subsequent options will still be unpacked.
 TEST_F(LibDhcpTest, emptyHostName) {
@@ -1112,7 +1282,7 @@ TEST_F(LibDhcpTest, emptyHostName) {
     list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(packed, "dhcp4", options, deferred);
+        LibDHCP::unpackOptions4(packed, "dhcp4", options, deferred, false);
     );
 
     // Host Name should not exist, we quietly drop it when empty.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -260,6 +260,8 @@ public:
     ///        put here.
     /// @param deferred Reference to an option code list. Options which
     ///        processing is deferred will be put here.
+    /// @param flexible_pad_end Parse options 0 and 255 as PAD and END
+    ///        when they are not defined in the option space.
     /// @return offset to the first byte after the last successfully
     /// parsed option or the offset of the DHO_END option type.
     ///
@@ -267,7 +269,8 @@ public:
     static size_t unpackOptions4(const OptionBuffer& buf,
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options,
-                                 std::list<uint16_t>& deferred);
+                                 std::list<uint16_t>& deferred,
+                                 bool flexible_pad_end);
 
     /// Registers factory method that produces options of specific option types.
     ///

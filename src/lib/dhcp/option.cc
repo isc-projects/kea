@@ -5,8 +5,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
@@ -165,7 +167,8 @@ Option::unpackOptions(const OptionBuffer& buf) {
     switch (universe_) {
     case V4:
         LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(),
-                                options_, deferred);
+                                options_, deferred,
+                                getType() == DHO_VENDOR_ENCAPSULATED_OPTIONS);
         return;
     case V6:
         LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_);
