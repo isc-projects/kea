@@ -3572,14 +3572,28 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         OptionPtr opt = query->getOption(code);
         if (!opt) {
             // should not happen but do not crash anyway
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_PACKET_OPTION_UNPACK_FAIL)
+                .arg(code)
+                .arg("can't find the option in the query");
             continue;
         }
         const OptionBuffer buf = opt->getData();
+        try {
+            // Unpack the option
+            opt = def->optionFactory(Option::V4, code, buf);
+        } catch (const std::exception& e) {
+            // Failed to parse the option.
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_PACKET_OPTION_UNPACK_FAIL)
+                .arg(code)
+                .arg(e.what());
+            continue;
+        }
         while (query->delOption(code)) {
             // continue
         }
-        // Unpack the option and add it
-        opt = def->optionFactory(Option::V4, code, buf.cbegin(), buf.cend());
+        // Add the unpacked option.
         query->addOption(opt);
     }
 }

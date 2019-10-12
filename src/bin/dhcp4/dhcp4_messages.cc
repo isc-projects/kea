@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Jul 10 2019 15:10
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Sat Oct 12 2019 22:27
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -100,6 +100,7 @@ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002 = "DHCP4_PACKET_NAK_0002"
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003 = "DHCP4_PACKET_NAK_0003";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0004 = "DHCP4_PACKET_NAK_0004";
 extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED = "DHCP4_PACKET_OPTIONS_SKIPPED";
+extern const isc::log::MessageID DHCP4_PACKET_OPTION_UNPACK_FAIL = "DHCP4_PACKET_OPTION_UNPACK_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_PACK = "DHCP4_PACKET_PACK";
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL = "DHCP4_PACKET_PACK_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION = "DHCP4_PACKET_PROCESS_EXCEPTION";
@@ -236,7 +237,8 @@ const char* values[] = {
     "DHCP4_PACKET_NAK_0002", "%1: invalid address %2 requested by INIT-REBOOT",
     "DHCP4_PACKET_NAK_0003", "%1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3",
     "DHCP4_PACKET_NAK_0004", "%1: failed to grant a lease, client sent ciaddr %2, requested-ip-address %3",
-    "DHCP4_PACKET_OPTIONS_SKIPPED", "An error upacking an option, caused subsequent options to be skipped: %1",
+    "DHCP4_PACKET_OPTIONS_SKIPPED", "An error unpacking an option, caused subsequent options to be skipped: %1",
+    "DHCP4_PACKET_OPTION_UNPACK_FAIL", "An error unpacking the option %1: %2",
     "DHCP4_PACKET_PACK", "%1: preparing on-wire format of the packet to be sent",
     "DHCP4_PACKET_PACK_FAIL", "%1: preparing on-wire-format of the packet to be sent failed %2",
     "DHCP4_PACKET_PROCESS_EXCEPTION", "exception occurred during packet processing",

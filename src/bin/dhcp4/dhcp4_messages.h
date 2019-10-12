@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Jul 10 2019 15:10
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Sat Oct 12 2019 22:27
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -101,6 +101,7 @@ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0004;
 extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED;
+extern const isc::log::MessageID DHCP4_PACKET_OPTION_UNPACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PACK;
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION;

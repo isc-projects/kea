@@ -684,7 +684,7 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     // The vendor-encapsulated-options has an incompatible data
     // so won't have the expected content. Here the processing
     // of suboptions tries to unpack the uitn32 foo suboption and
-    // raises an exception.
+    // raises an exception which is caught so the option stays unpacked.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
@@ -742,7 +742,9 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    EXPECT_THROW(srv.deferredUnpack(query), InvalidOptionValue);
+    EXPECT_NO_THROW(srv.deferredUnpack(query));
+    ASSERT_TRUE(query->getOption(vopt->getType()));
+    EXPECT_EQ(vopt, query->getOption(vopt->getType()));
 }
 
 // Verifies raw option 43 can be handled (global)
@@ -1321,7 +1323,7 @@ TEST_F(VendorOptsTest, clientOption43FailRaw) {
     // The vendor-encapsulated-options has an incompatible data
     // so won't have the expected content. Here the processing
     // of suboptions tries to unpack the uint32 foo suboption and
-    // raises an exception.
+    // raises an exception which is caught.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"subnet4\": [ "
@@ -1346,9 +1348,9 @@ TEST_F(VendorOptsTest, clientOption43FailRaw) {
     client.addExtraOption(vopt);
 
     // Let's check whether the server is not able to process this packet
-    // and raises an exception so the response is empty.
+    // and raises an exception which is caught so the response is not empty.
     EXPECT_NO_THROW(client.doDiscover());
-    EXPECT_FALSE(client.getContext().response_);
+    EXPECT_TRUE(client.getContext().response_);
 }
 
 // Verifies raw option 43 sent by a client can be handled (global)
