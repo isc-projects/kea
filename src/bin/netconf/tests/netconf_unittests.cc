@@ -24,6 +24,7 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <thread>
+#include <atomic>
 
 using namespace std;
 using namespace isc;
@@ -425,10 +426,10 @@ public:
     }
 
     // To know when the callback was called.
-    static bool finished;
+    static atomic<bool> finished;
 };
 
-bool TestCallback::finished = false;
+atomic<bool> TestCallback::finished(false);
 
 /// Verifies the logChanges method handles correctly changes.
 TEST_F(NetconfAgentLogTest, logChanges) {

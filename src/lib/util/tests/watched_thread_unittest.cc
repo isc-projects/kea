@@ -12,6 +12,7 @@
 #include <gtest/gtest.h>
 
 #include <unistd.h>
+#include <atomic>
 
 using namespace std;
 using namespace isc;
@@ -84,7 +85,7 @@ public:
 
     /// @brief Counter used to track the number of passes made
     /// within the thread worker function.
-    int passes_;
+    std::atomic<int> passes_;
 };
 
 const int WatchedThreadTest::WORKER_MAX_PASSES = 10;

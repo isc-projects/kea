@@ -15,7 +15,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
-#include <boost/atomic.hpp>
+#include <atomic>
 
 namespace isc {
 namespace perfdhcp {
@@ -34,7 +34,7 @@ namespace perfdhcp {
 class Receiver {
 private:
     /// \brief Flag indicating if thread should run (true) or not (false).
-    boost::atomic_flag run_flag_;
+    std::atomic_flag run_flag_;
 
     /// \brief Thread for receiving packets.
     std::unique_ptr<std::thread> recv_thread_;
@@ -62,6 +62,7 @@ public:
         socket_(socket),
         single_threaded_(single_threaded),
         ip_version_(ip_version) {
+        run_flag_.clear();
     }
 
     /// \brief Destructor.

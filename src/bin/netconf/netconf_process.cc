@@ -26,7 +26,7 @@ using namespace isc::process;
 namespace isc {
 namespace netconf {
 
-bool NetconfProcess::shut_down = false;
+std::atomic<bool> NetconfProcess::shut_down(false);
 
 NetconfProcess::NetconfProcess(const char* name,
                                const asiolink::IOServicePtr& io_service)

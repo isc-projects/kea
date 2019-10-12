@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <netconf/netconf.h>
 #include <process/d_process.h>
 #include <vector>
+#include <atomic>
 
 namespace isc {
 namespace netconf {
@@ -85,7 +86,7 @@ public:
     NetconfCfgMgrPtr getNetconfCfgMgr();
 
     /// @brief Global (globally visible) shutdown flag.
-    static bool shut_down;
+    static std::atomic<bool> shut_down;
 
 private:
 

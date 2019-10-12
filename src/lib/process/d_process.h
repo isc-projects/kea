@@ -15,6 +15,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <atomic>
+
 namespace isc {
 namespace process {
 
@@ -203,7 +205,7 @@ private:
     asiolink::IOServicePtr io_service_;
 
     /// @brief Boolean flag set when shutdown has been requested.
-    bool shut_down_flag_;
+    std::atomic<bool> shut_down_flag_;
 
     /// @brief  Pointer to the configuration manager.
     DCfgMgrBasePtr cfg_mgr_;
