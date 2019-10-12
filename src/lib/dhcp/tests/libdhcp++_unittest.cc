@@ -1233,8 +1233,8 @@ TEST_F(LibDhcpTest, option43End) {
     EXPECT_EQ(2, sub255->getValue());
 }
 
-// Verify the option 43 DEND bug is fixed.
-TEST_F(LibDhcpTest, option32Factory) {
+// Verify the option 43 END bug is fixed.
+TEST_F(LibDhcpTest, option43Factory) {
     // Create the buffer holding the structure of option 43 content.
     OptionBuffer buf = {
         // Suboption 1.
