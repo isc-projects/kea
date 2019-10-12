@@ -102,6 +102,7 @@ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003;
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0004;
 extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED;
+extern const isc::log::MessageID DHCP4_PACKET_OPTION_UNPACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PACK;
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL;
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION;
