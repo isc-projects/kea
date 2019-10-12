@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
+
+#include <atomic>
 
 namespace isc {
 namespace asiolink {
@@ -50,7 +52,7 @@ private:
     // a function to call back when timer_ expires
     IntervalTimer::Callback cbfunc_;
     // interval in milliseconds
-    long interval_;
+    std::atomic<long> interval_;
     // asio timer
     boost::asio::deadline_timer timer_;
 
@@ -99,7 +101,7 @@ void
 IntervalTimerImpl::update() {
     try {
         // Update expire time to (current time + interval_).
-        timer_.expires_from_now(boost::posix_time::millisec(interval_));
+        timer_.expires_from_now(boost::posix_time::millisec(long(interval_)));
         // Reset timer.
         // Pass a function bound with a shared_ptr to this.
         timer_.async_wait(boost::bind(&IntervalTimerImpl::callback,
