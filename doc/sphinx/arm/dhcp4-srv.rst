@@ -2152,6 +2152,16 @@ The definition used to decode a VSI option is:
 
 .. note::
 
+   In the Vendor-Specific Information option (code 43) sub-option code 0
+   and 255 mean PAD and END respectively according to
+   `RFC 2132 <https://tools.ietf.org/html/rfc2132>`_. Kea allows to
+   configured sub-options with codes from 0 to 255: when an VSI option
+   is parsed in an incoming query and the sub-option 0 is configured
+   sub-option code 0 is no longer parsed as a PAD. Same for sub-option 255
+   and END.
+
+.. note::
+
    Option definitions in client classes are allowed only for this
    limited option set (codes 43 and from 224 to 254), and only for
    DHCPv4.
