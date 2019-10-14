@@ -70,7 +70,7 @@ IMAGE_TEMPLATES = {
     'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
-    #'centos-8-lxc':            {'bare': 'centos8',             'kea': 'centos8'},
+    'centos-8-lxc':            {'bare': 'isc/centos8',                 'kea': 'isc/centos8'},
     'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'generic/centos8'},
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
     'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
