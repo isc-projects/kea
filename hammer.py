@@ -70,8 +70,8 @@ IMAGE_TEMPLATES = {
     'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
-    'centos-8-lxc':            {'bare': 'isc/centos8',                 'kea': 'isc/centos8'},
-    'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'generic/centos8'},
+    'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
+    'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'isc/kea-centos-8'},
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
     'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
     'ubuntu-16.04-virtualbox': {'bare': 'ubuntu/xenial64',             'kea': 'godfryd/kea-ubuntu-16.04'},
@@ -801,7 +801,6 @@ class VagrantEnv(object):
 
         # install python3 for centos 8
         if self.system == 'centos' and self.revision == '8':
-            # self.execute("sudo dnf clean all")
             # we need log4cplus that is in the nexus
             cmd = 'bash -c \'cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
             cmd += '[nexus]\n'
