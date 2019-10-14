@@ -44,7 +44,7 @@ SYSTEMS = {
                #'28',  # EOLed
                '29',
                '30'],
-    'centos': ['7'],
+    'centos': ['7', '8'],
     'rhel': ['8'],
     'ubuntu': [#'16.04',
                '18.04',
@@ -70,6 +70,8 @@ IMAGE_TEMPLATES = {
     'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
+    #'centos-8-lxc':            {'bare': 'centos8',             'kea': 'centos8'},
+    'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'generic/centos8'},
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
     'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
     'ubuntu-16.04-virtualbox': {'bare': 'ubuntu/xenial64',             'kea': 'godfryd/kea-ubuntu-16.04'},
@@ -797,6 +799,21 @@ class VagrantEnv(object):
         else:
             self.nofeatures_arg = ''
 
+        # install python3 for centos 8
+        if self.system == 'centos' and self.revision == '8':
+            # self.execute("sudo dnf clean all")
+            # we need log4cplus that is in the nexus
+            cmd = 'bash -c \'cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
+            cmd += '[nexus]\n'
+            cmd += 'name=ISC Repo\n'
+            cmd += 'baseurl=https://packages.isc.org/repository/kea-1.7-centos-8-ci/\n'
+            cmd += 'enabled=1\n'
+            cmd += 'gpgcheck=0\n'
+            cmd += "EOF\n\'"
+            self.execute(cmd)
+            self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv")
+            self.python = 'python3'
+
         # select proper python version for running Hammer inside Vagrant system
         if (self.system == 'centos' and self.revision == '7' or
             (self.system == 'debian' and self.revision == '8' and self.provider != 'lxc')):
@@ -1126,13 +1143,20 @@ def prepare_system_local(features, check_times):
             packages.extend(['rpm-build', 'python2-devel'])
 
         if 'docs' in features:
-            packages.extend(['python-virtualenv'])
+            if revision == '8':
+                packages.extend(['python3-virtualenv'])
+            else:
+                packages.extend(['python-virtualenv'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-devel', 'postgresql-server'])
+            packages.extend(['postgresql-server'])
+            if revision == '7':
+                packages.extend(['postgresql-devel'])
+            else:
+                packages.extend(['postgresql-server-devel'])
 
         if 'radius' in features:
             packages.extend(['git'])
@@ -1432,6 +1456,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
 
     # prepare switches for ./configure
     cmd = './configure'
+    log.info('OS: %s Revision: %s', system, revision)
     if 'mysql' in features:
         cmd += ' --with-mysql'
     if 'pgsql' in features:
@@ -1458,7 +1483,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --enable-generate-docs'
         if system == 'debian' and revision == '8':
             cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
-        elif system == 'centos' and revision == '7':
+        elif system == 'centos' and revision in ['7', '8']:
             cmd += ' --with-sphinx=$HOME/venv/bin/sphinx-build'
     if 'radius' in features:
         cmd += ' --with-freeradius=/usr/local'
@@ -1585,9 +1610,12 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     elif system == 'fedora' and revision == '30':
         frc.append('freeradius-client-1.1.7-isc20190916210635.fc30')
         frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc30')
-    elif system == 'centos':
+    elif system == 'centos' and revision == '7':
         frc.append('freeradius-client-1.1.7-isc20190916210635.el7')
         frc.append('freeradius-client-devel-1.1.7-isc20190916210635.el7')
+    elif system == 'centos' and revision == '8':
+        frc.append('freeradius-client-1.1.7-isc20191010071948.el8')
+        frc.append('freeradius-client-devel-1.1.7-isc20191010071948.el8')
     if frc:
         install_pkgs(frc, env=env, check_times=check_times)
 
@@ -1636,7 +1664,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
 
 
 def _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
-               pkg_version, pkg_isc_version, repository_url, repo_url):
+               pkg_version, pkg_isc_version, repo_url):
     if system == 'debian' and revision == '9':
         # debian 9 does not support apt-installing over https, so install proper transport
         install_pkgs('apt-transport-https', env=env, check_times=check_times)
@@ -1710,7 +1738,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
 
     elif system in ['ubuntu', 'debian']:
         _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
-                   pkg_version, pkg_isc_version, repository_url, repo_url)
+                   pkg_version, pkg_isc_version, repo_url)
 
     elif system in ['alpine']:
         _build_alpine_apk(system, revision, features, tarball_path, env, check_times, dry_run,
