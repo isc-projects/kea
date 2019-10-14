@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,7 +77,11 @@ protected:
 
 // Instantiate specific typed tests
 typedef ::testing::Types<generic::NSEC3, generic::NSEC3PARAM> TestRdataTypes;
+#ifdef TYPED_TEST_SUITE
+TYPED_TEST_SUITE(NSEC3PARAMLikeTest, TestRdataTypes);
+#else
 TYPED_TEST_CASE(NSEC3PARAMLikeTest, TestRdataTypes);
+#endif
 
 template <>
 RRType

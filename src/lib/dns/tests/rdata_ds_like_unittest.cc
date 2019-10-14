@@ -55,7 +55,11 @@ protected:
 // The list of types we want to test.
 typedef testing::Types<generic::DS, generic::DLV> Implementations;
 
+#ifdef TYPED_TEST_SUITE
+TYPED_TEST_SUITE(Rdata_DS_LIKE_Test, Implementations);
+#else
 TYPED_TEST_CASE(Rdata_DS_LIKE_Test, Implementations);
+#endif
 
 TYPED_TEST(Rdata_DS_LIKE_Test, createFromText) {
     // It's valid for the digest's presentation format to contain

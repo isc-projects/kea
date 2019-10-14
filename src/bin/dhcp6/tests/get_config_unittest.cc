@@ -8728,8 +8728,15 @@ public:
 };
 
 /// Define the parameterized test loop.
+#ifdef INSTANTIATE_TEST_SUITE_P
+INSTANTIATE_TEST_SUITE_P(Dhcp6GetConfigTest, Dhcp6GetConfigTest,
+                         ::testing::Range(static_cast<size_t>(0),
+                                          max_config_counter),
+                         IntToString());
+#else
 INSTANTIATE_TEST_CASE_P(Dhcp6GetConfigTest, Dhcp6GetConfigTest,
                         ::testing::Range(static_cast<size_t>(0),
                                          max_config_counter),
                         IntToString());
+#endif
 }  // namespace
