@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,11 @@ protected:
 
 // Instantiate specific typed tests
 typedef ::testing::Types<generic::NSEC, generic::NSEC3> TestRdataTypes;
+#ifdef TYPED_TEST_SUITE
+TYPED_TEST_SUITE(NSECLikeBitmapTest, TestRdataTypes);
+#else
 TYPED_TEST_CASE(NSECLikeBitmapTest, TestRdataTypes);
+#endif
 
 // NSEC and NSEC3 bitmaps have some subtle differences, in which case we
 // need to test them separately.  Using these typedef type names with TEST_F
