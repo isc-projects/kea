@@ -158,6 +158,8 @@ public:
     /// This method returns all @c Host objects which represent reservations
     /// using a specified hostname.
     ///
+    /// MySQL uses the case-insensitive hosts_by_hostname index on hostname.
+    ///
     /// @param hostname The lower case hostname.
     ///
     /// @return Collection of const @c Host objects.

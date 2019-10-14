@@ -198,6 +198,8 @@ public:
     /// This method returns all @c Host objects which represent reservations
     /// using a specified hostname.
     ///
+    /// Cassandra uses the new indexed lower_case_hostname column.
+    ///
     /// @param hostname The lower case hostname.
     ///
     /// @return Collection of const @c Host objects.

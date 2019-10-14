@@ -91,6 +91,7 @@ typedef boost::multi_index_container<
         >,
 
         // Sixth index is used to search for the host using hostname
+        // (case-sensitive compare so the key is in lower case).
         boost::multi_index::ordered_non_unique<
             // Index using values returned by the @c Host::getLowerHostname
             boost::multi_index::const_mem_fun<Host, std::string,

@@ -141,6 +141,10 @@ public:
     /// This method returns all @c Host objects which represent reservations
     /// using a specified hostname.
     ///
+    /// @note: as hostnames are case-insensitive the search key is given
+    /// in lower cases, search indexes should either be case-insensitive
+    /// or be case-sensitive using the lower case version of hostnames.
+    ///
     /// @param hostname The lower case hostname.
     ///
     /// @return Collection of const @c Host objects.

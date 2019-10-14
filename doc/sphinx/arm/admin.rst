@@ -321,6 +321,25 @@ earlier version. To perform an upgrade, issue the following command:
 
    $ kea-admin db-upgrade mysql -u database-user -p database-password -n database-name
 
+.. note::
+
+    To search host reservations by hostname it is critical the collation of
+    the hostname column in the host table to be case-insensitive. Fortunately
+    the default collation in MySQL is case-insensitive. You can verify this
+    on your MySQL installation by:
+
+    .. code-block:: mysql
+
+      mysql> SELECT COLLATION('');
+      +-----------------+
+      | COLLATION('')   |
+      +-----------------+
+      | utf8_general_ci |
+      +-----------------+
+
+    According to the naming of collations when the name finishes by ``_ci``
+    the collation is case-insensitive.
+
 .. _pgsql-database:
 
 PostgreSQL

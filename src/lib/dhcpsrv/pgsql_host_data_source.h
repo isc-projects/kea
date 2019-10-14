@@ -187,6 +187,8 @@ public:
     /// This method returns all @c Host objects which represent reservations
     /// using a specified hostname.
     ///
+    /// PostgreSQL uses the hosts_by_hostname index on LOWER(hostname).
+    ///
     /// @param hostname The lower case hostname.
     ///
     /// @return Collection of const @c Host objects.
