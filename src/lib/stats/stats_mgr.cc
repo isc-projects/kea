@@ -10,14 +10,14 @@
 #include <stats/stats_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <util/threads/lock_guard.h>
+#include <util/lock_guard.h>
 #include <util/boost_time_utils.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace isc::data;
 using namespace isc::config;
-using namespace isc::util::thread;
+using namespace isc::util;
 
 namespace isc {
 namespace stats {

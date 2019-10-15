@@ -21,7 +21,6 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <hooks/callout_handle.h>
-#include <util/threads/lock_guard.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -96,7 +95,7 @@ protected:
                     const ClientClasses& client_classes,
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) {
-            isc::util::thread::LockGuard<std::mutex> lock(&mutex_);
+            std::lock_guard<std::mutex> lock(&mutex_);
             return pickAddressInternal(subnet, client_classes, duid, hint);
         }
 

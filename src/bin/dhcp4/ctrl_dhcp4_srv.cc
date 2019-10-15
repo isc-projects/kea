@@ -23,7 +23,7 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
-#include <util/threads/lock_guard.h>
+#include <util/lock_guard.h>
 
 #include <signal.h>
 
@@ -36,7 +36,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::stats;
-using namespace isc::util::thread;
+using namespace isc::util;
 using namespace std;
 
 namespace {

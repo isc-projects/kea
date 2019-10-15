@@ -5,7 +5,6 @@
 
 namespace isc {
 namespace util {
-namespace thread {
 
 template <typename Lock>
 class LockGuard {
@@ -32,7 +31,6 @@ private:
     Lock* lk_;
 };
 
-}  // namespace thread
 }  // namespace util
 }  // namespace isc
 

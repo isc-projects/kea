@@ -49,7 +49,7 @@
 #include <util/io_utilities.h>
 #include <util/pointer_util.h>
 #include <util/range_utilities.h>
-#include <util/threads/lock_guard.h>
+#include <util/lock_guard.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <cfgrpt/config_report.h>
@@ -91,7 +91,7 @@ using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 
-using isc::util::thread::LockGuard;
+using isc::util::LockGuard;
 
 namespace {
 

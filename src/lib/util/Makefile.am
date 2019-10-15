@@ -14,6 +14,7 @@ libkea_util_la_SOURCES += doubles.h
 libkea_util_la_SOURCES += filename.h filename.cc
 libkea_util_la_SOURCES += hash.h
 libkea_util_la_SOURCES += labeled_value.h labeled_value.cc
+libkea_util_la_SOURCES += lock_guard.h
 libkea_util_la_SOURCES += memory_segment.h
 libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 libkea_util_la_SOURCES += multi_threading_mgr.h multi_threading_mgr.cc
