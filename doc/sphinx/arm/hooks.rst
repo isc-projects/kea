@@ -1695,6 +1695,13 @@ in particular when responses are not limited to a subnet.
 
 For a reference, see :ref:`command-reservation-get-by-hostname`.
 
+.. note::
+
+   When the host backend is MySQL this commands relies on the fact
+   the hostname column in the hosts table uses a case-insensitive
+   collation as explained in the :ref:`mysql-database` section of
+   :ref:`admin`.
+
 .. _command-reservation-del:
 
 The reservation-del Command
