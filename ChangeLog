@@ -1,3 +1,8 @@
+1670.	[func]		fdupont
+	Added searches for host reservations by hostname and by hostname
+	and subnet.
+	(Gitlan #392,!529, git 50068ada6b277c9251de9062501d8c478a8f5529)
+
 1669.	[func]		tmark
 	Rather than within the 'dhcp-ddns' section, DDNS behavioral
 	parameters may now be specifed at global, shared-network,
