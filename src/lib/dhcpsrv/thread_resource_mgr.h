@@ -20,7 +20,7 @@ class ThreadResourceMgr {
     typedef boost::shared_ptr<Resource> ResourcePtr;
 public:
     ResourcePtr resource() {
-        std::lock_guard<std::mutex> lock(&mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
         auto id = std::this_thread::get_id();
         if (map_.find(id) != map_.end()) {
             return map_[id];

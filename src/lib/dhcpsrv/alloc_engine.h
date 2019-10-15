@@ -95,7 +95,7 @@ protected:
                     const ClientClasses& client_classes,
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) {
-            std::lock_guard<std::mutex> lock(&mutex_);
+            std::lock_guard<std::mutex> lock(mutex_);
             return pickAddressInternal(subnet, client_classes, duid, hint);
         }
 

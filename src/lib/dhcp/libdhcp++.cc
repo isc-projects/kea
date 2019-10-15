@@ -89,7 +89,7 @@ void initOptionSpace(OptionDefContainerPtr& defs,
 const OptionDefContainerPtr&
 LibDHCP::getOptionDefs(const std::string& space) {
     static mutex local_mutex;
-    std::lock_guard<std::mutex> lock(&local_mutex);
+    std::lock_guard<std::mutex> lock(local_mutex);
     // If any of the containers is not initialized, it means that we haven't
     // initialized option definitions at all.
     if (option_defs_.end() == option_defs_.find(space)) {

@@ -46,7 +46,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::stats;
-using namespace isc::util::thread;
+using namespace isc::util;
 
 namespace {
 /// Structure that holds registered hook indexes
