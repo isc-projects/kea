@@ -29,9 +29,9 @@ Lease::Lease(const isc::asiolink::IOAddress& addr,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
-    :addr_(addr), valid_lft_(valid_lft), cltt_(cltt),
-     subnet_id_(subnet_id), hostname_(hostname), fqdn_fwd_(fqdn_fwd),
-    fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
+    :addr_(addr), valid_lft_(valid_lft), cltt_(cltt), subnet_id_(subnet_id),
+     hostname_(boost::algorithm::to_lower_copy(hostname)), fqdn_fwd_(fqdn_fwd),
+     fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
 
 
@@ -237,6 +237,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     }
 
     lease->hostname_ = hostname->stringValue();
+    boost::algorithm::to_lower(lease->hostname_);
 
     // state
     ConstElementPtr state = element->get("state");

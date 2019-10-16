@@ -374,6 +374,12 @@ ALTER TABLE hosts ADD lower_case_hostname VARCHAR;
 -- Make the lower case hostname an index.
 CREATE INDEX IF NOT EXISTS hostsindex8 ON hosts (lower_case_hostname);
 
+-- Create a new hostname index on lease4.
+CREATE INDEX IF NOT EXISTS lease4index6 ON lease4 (hostname);
+
+-- Create a new hostname index on lease6.
+CREATE INDEX IF NOT EXISTS lease6index7 ON lease6 (hostname);
+
 DELETE FROM schema_version WHERE version=4;
 INSERT INTO schema_version (version, minor) VALUES(5, 0);
 

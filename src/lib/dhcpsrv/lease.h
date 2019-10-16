@@ -117,7 +117,7 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Client hostname
     ///
-    /// This field may be empty
+    /// This field is in lower case and may be empty.
     std::string hostname_;
 
     /// @brief Forward zone updated?

@@ -126,7 +126,7 @@ TEST_F(Lease4Test, constructor) {
         // Create the lease
         Lease4 lease(ADDRESS[i], hwaddr_, clientid_, VALID_LIFETIME,
                      current_time, SUBNET_ID, true, true,
-                     "hostname.example.com.");
+                     "Hostname.Example.Com.");
 
         EXPECT_EQ(ADDRESS[i], lease.addr_.toUint32());
         EXPECT_TRUE(util::equalValues(hwaddr_, lease.hwaddr_));
@@ -370,7 +370,7 @@ TEST_F(Lease4Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.hostname_ += std::string("Something random");
+    lease1.hostname_ += std::string("something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.hostname_ = lease2.hostname_;
@@ -493,7 +493,7 @@ TEST_F(Lease4Test, toElement) {
 
     const time_t current_time = 12345678;
     Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600,
-                 current_time, 789, true, true, "urania.example.org");
+                 current_time, 789, true, true, "URANIA.example.org");
     lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
     std::string expected = "{"
@@ -556,7 +556,7 @@ TEST_F(Lease4Test, fromElement) {
         "\"cltt\": 12345678,"
         "\"fqdn-fwd\": true,"
         "\"fqdn-rev\": true,"
-        "\"hostname\": \"urania.example.org\","
+        "\"hostname\": \"urania.example.ORG\","
         "\"hw-address\": \"08:00:2b:02:3f:4e\","
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
@@ -634,7 +634,7 @@ TEST_F(Lease4Test, decline) {
     const time_t current_time = 12345678;
     Lease4 lease(IOAddress("192.0.2.3"), hwaddr_, clientid_, 3600,
                  current_time, 789);
-    lease.hostname_="foo.example.org";
+    lease.hostname_ = "foo.example.org";
     lease.fqdn_fwd_ = true;
     lease.fqdn_rev_ = true;
 
@@ -746,7 +746,7 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                    duid, iaid, 100, 200, subnet_id,
-                                   true, true, "host.example.com."));
+                                   true, true, "Host.Example.Com."));
 
         EXPECT_TRUE(lease->addr_ == addr);
         EXPECT_TRUE(*lease->duid_ == *duid);
@@ -862,7 +862,7 @@ TEST(Lease6Test, operatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.hostname_ += std::string("Something random");
+    lease1.hostname_ += std::string("something random");
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.hostname_ = lease2.hostname_;
@@ -1220,7 +1220,7 @@ TEST(Lease6Test, fromElementNA) {
         "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
         "\"fqdn-fwd\": false,"
         "\"fqdn-rev\": false,"
-        "\"hostname\": \"urania.example.org\","
+        "\"hostname\": \"urania.EXAMPLE.org\","
         "\"hw-address\": \"08:00:2b:02:3f:4e\","
         "\"iaid\": 123456,"
         "\"ip-address\": \"2001:db8::1\","
@@ -1266,7 +1266,7 @@ TEST(Lease6Test, fromElementPD) {
         "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
         "\"fqdn-fwd\": false,"
         "\"fqdn-rev\": false,"
-        "\"hostname\": \"urania.example.org\","
+        "\"hostname\": \"uraniA.exaMple.orG\","
         "\"hw-address\": \"08:00:2b:02:3f:4e\","
         "\"iaid\": 123456,"
         "\"ip-address\": \"3000::\","

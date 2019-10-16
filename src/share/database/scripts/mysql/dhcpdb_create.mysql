@@ -2785,6 +2785,12 @@ SET version = '8', minor = '2';
 # Create hostname index for host reservations
 CREATE INDEX hosts_by_hostname ON hosts (hostname);
 
+# Create hostname index for lease4
+CREATE INDEX lease4_by_hostname ON lease4 (hostname);
+
+# Create hostname index for lease6
+CREATE INDEX lease6_by_hostname ON lease6 (hostname);
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '9', minor = '0';
