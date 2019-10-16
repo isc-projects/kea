@@ -27,6 +27,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 #include <string>
 #include <sstream>
 
@@ -173,6 +174,51 @@ public:
     /// error occurs, 3 if no leases are returned.
     int
     leaseGetPageHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease4-get-by-hw-address command handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByHwAddressHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByHwAddressHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease4-get-by-client-id command handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByClientIdHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByClientIdHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease6-get-by-duid command handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByDuidHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByDuidHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease4-get-by-hostname and lease6-get-by-hostname commands
+    /// handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByHostnameHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByHostnameHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///
@@ -749,6 +795,230 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
 }
 
 int
+LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
+    try {
+        extractCommand(handle);
+
+        // arguments must always be present
+        if (!cmd_args_) {
+            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
+                      << " command");
+        }
+
+        // the hw-address parameter is mandatory.
+        ConstElementPtr hw_address = cmd_args_->get("hw-address");
+        if (!hw_address) {
+            isc_throw(BadValue, "'hw-address' parameter not specified");
+        }
+
+        // The 'hw-address' argument is a string.
+        if (hw_address->getType() != Element::string) {
+            isc_throw(BadValue, "'hw-address'parameter must be a string");
+        }
+
+        HWAddr hwaddr = HWAddr::fromText(hw_address->stringValue());
+
+        Lease4Collection leases =
+            LeaseMgrFactory::instance().getLease4(hwaddr);
+        ElementPtr leases_json = Element::createList();
+        for (auto lease : leases) {
+            ElementPtr lease_json = lease->toElement();
+            leases_json->add(lease_json);
+        }
+
+        std::ostringstream s;
+        s << leases_json->size() << " IPv4 lease(s) found.";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
+LeaseCmdsImpl::leaseGetByClientIdHandler(CalloutHandle& handle) {
+    try {
+        extractCommand(handle);
+
+        // arguments must always be present
+        if (!cmd_args_) {
+            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
+                      << " command");
+        }
+
+        // the client-id parameter is mandatory.
+        ConstElementPtr client_id = cmd_args_->get("client-id");
+        if (!client_id) {
+            isc_throw(BadValue, "'client-id' parameter not specified");
+        }
+
+        // The 'client-id' argument is a string.
+        if (client_id->getType() != Element::string) {
+            isc_throw(BadValue, "'client-id'parameter must be a string");
+        }
+
+        ClientIdPtr clientid = ClientId::fromText(client_id->stringValue());
+
+        Lease4Collection leases =
+            LeaseMgrFactory::instance().getLease4(*clientid);
+        ElementPtr leases_json = Element::createList();
+        for (auto lease : leases) {
+            ElementPtr lease_json = lease->toElement();
+            leases_json->add(lease_json);
+        }
+
+        std::ostringstream s;
+        s << leases_json->size() << " IPv4 lease(s) found.";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
+LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
+    try {
+        extractCommand(handle);
+
+        // arguments must always be present
+        if (!cmd_args_) {
+            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
+                      << " command");
+        }
+
+        // the duid parameter is mandatory.
+        ConstElementPtr duid = cmd_args_->get("duid");
+        if (!duid) {
+            isc_throw(BadValue, "'duid' parameter not specified");
+        }
+
+        // The 'duid' argument is a string.
+        if (duid->getType() != Element::string) {
+            isc_throw(BadValue, "'duid'parameter must be a string");
+        }
+
+        DUID duid_ = DUID::fromText(duid->stringValue());
+
+        Lease6Collection leases =
+            LeaseMgrFactory::instance().getLeases6(duid_);
+        ElementPtr leases_json = Element::createList();
+        for (auto lease : leases) {
+            ElementPtr lease_json = lease->toElement();
+            leases_json->add(lease_json);
+        }
+
+        std::ostringstream s;
+        s << leases_json->size() << " IPv4 lease(s) found.";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
+LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
+    bool v4;
+    try {
+        extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-by-hostname");
+
+        // arguments must always be present
+        if (!cmd_args_) {
+            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
+                      << " command");
+        }
+
+        // the hostname parameter is mandatory.
+        ConstElementPtr hostname = cmd_args_->get("hostname");
+        if (!hostname) {
+            isc_throw(BadValue, "'hostname' parameter not specified");
+        }
+
+        // The 'hostname' argument is a string.
+        if (hostname->getType() != Element::string) {
+            isc_throw(BadValue, "'hostname'parameter must be a string");
+        }
+
+        std::string hostname_ = hostname->stringValue();
+        /// The 'hostname' argument should not be empty.
+        if (hostname_.empty()) {
+            isc_throw(BadValue, "'hostname' parameter  is empty");
+        }
+        boost::algorithm::to_lower(hostname_);
+
+        ElementPtr leases_json = Element::createList();
+        if (v4) {
+            Lease4Collection leases =
+                LeaseMgrFactory::instance().getLeases4(hostname_);
+
+            for (auto lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        } else {
+            Lease6Collection leases =
+                LeaseMgrFactory::instance().getLeases6(hostname_);
+
+            for (auto lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        }
+
+        std::ostringstream s;
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found.";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
 LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
@@ -1264,7 +1534,7 @@ LeaseCmdsImpl::getIPv6AddressForDelete(const Parameters& parameters) const {
         if (lease6) {
             addr = lease6->addr_;
         }
- 
+
        break;
 
     default:
@@ -1321,6 +1591,26 @@ LeaseCmds::leaseGetAllHandler(hooks::CalloutHandle& handle) {
 int
 LeaseCmds::leaseGetPageHandler(hooks::CalloutHandle& handle) {
     return (impl_->leaseGetPageHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetByHwAddressHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetByHwAddressHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetByClientIdHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetByClientIdHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetByDuidHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetByDuidHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetByHostnameHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetByHostnameHandler(handle));
 }
 
 int

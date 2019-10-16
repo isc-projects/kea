@@ -258,6 +258,87 @@ public:
     int
     leaseGetPageHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4-get-by-hw-address command handler
+    ///
+    /// This command attempts to retrieve all IPv4 leases with a particular
+    /// hardware address.
+    ///
+    /// Example command:
+    /// {
+    ///     "command": "lease4-get-by-hw-address",
+    ///     "arguments": {
+    ///         "hwaddr": "00:01:02:03:04:05"
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByHwAddressHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease4-get-by-client-id command handler
+    ///
+    /// This command attempts to retrieve all IPv4 leases with a particular
+    /// Client Id.
+    ///
+    /// Example command:
+    /// {
+    ///     "command": "lease4-get-by-client-id",
+    ///     "arguments": {
+    ///         "client-id": "this-is-a-client"
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByClientIdHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease6-get-by-duid command handler
+    ///
+    /// This command attempts to retrieve all IPv6 leases with a particular
+    /// DUID.
+    ///
+    /// Example command:
+    /// {
+    ///     "command": "lease6-get-by-duid",
+    ///     "arguments": {
+    ///         "duid": "01:02:03:04:05:06:07:08"
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByDuidHandler(hooks::CalloutHandle& handle);
+
+    /// @brief lease4-get-by-hostname and lease6-get-by-hostname commands
+    /// handler
+    ///
+    /// Thesecommands attempt to retrieve all IPv4 or Ipv6 leases with
+    /// a particular hostname.
+    ///
+    /// Example command for v4:
+    /// {
+    ///     "command": "lease4-get-by-hostname",
+    ///     "arguments": {
+    ///         "hostname": "urania.example.org"
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByHostnameHandler(hooks::CalloutHandle& handle);
+
     /// @brief lease4-del command handler
     ///
     /// This command attempts to delete an IPv4 lease that match selected

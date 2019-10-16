@@ -121,6 +121,61 @@ int lease6_get_page(CalloutHandle& handle) {
     return (lease_cmds.leaseGetPageHandler(handle));
 }
 
+/// @brief This is a command callout for 'lease4-get-by-hw-address' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease4_get_by_hw_address(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByHwAddressHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease4-get-by-client-id' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease4_get_by_client_id(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByClientIdHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-get-by-duid' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease6_get_by_duid(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByDuidHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease4-get-by-hostname' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease4_get_by_hostname(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByHostnameHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-get-by-hostname' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease6_get_by_hostname(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByHostnameHandler(handle));
+}
+
 /// @brief This is a command callout for 'lease4-del' command.
 ///
 /// @param handle Callout handle used to retrieve a command and
@@ -201,6 +256,15 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease6-get-all", lease6_get_all);
     handle.registerCommandCallout("lease4-get-page", lease4_get_page);
     handle.registerCommandCallout("lease6-get-page", lease6_get_page);
+    handle.registerCommandCallout("lease4-get-by-hw-address",
+                                  lease4_get_by_hw_address);
+    handle.registerCommandCallout("lease4-get-by-client-id",
+                                  lease4_get_by_client_id);
+    handle.registerCommandCallout("lease6-get-by-duid", lease6_get_by_duid);
+    handle.registerCommandCallout("lease4-get-by-hostname",
+                                  lease4_get_by_hostname);
+    handle.registerCommandCallout("lease6-get-by-hostname",
+                                  lease6_get_by_hostname);
     handle.registerCommandCallout("lease4-del", lease4_del);
     handle.registerCommandCallout("lease6-del", lease6_del);
     handle.registerCommandCallout("lease4-update", lease4_update);
