@@ -926,7 +926,7 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
         }
 
         std::ostringstream s;
-        s << leases_json->size() << " IPv4 lease(s) found.";
+        s << leases_json->size() << " IPv6 lease(s) found.";
         ElementPtr args = Element::createMap();
         args->set("leases", leases_json);
         ConstElementPtr response =
@@ -970,7 +970,7 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
         std::string hostname_ = hostname->stringValue();
         /// The 'hostname' argument should not be empty.
         if (hostname_.empty()) {
-            isc_throw(BadValue, "'hostname' parameter  is empty");
+            isc_throw(BadValue, "'hostname' parameter is empty");
         }
         boost::algorithm::to_lower(hostname_);
 

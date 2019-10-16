@@ -551,13 +551,18 @@ public:
 // Simple test that checks the library really registers the commands.
 TEST_F(LeaseCmdsTest, commands) {
 
-    vector<string> cmds = { "lease4-add",      "lease6-add",
-                            "lease4-get",      "lease6-get",
-                            "lease4-get-all",  "lease6-get-all",
-                            "lease4-get-page", "lease6-get-page",
-                            "lease4-del",      "lease6-del",
-                            "lease4-update",   "lease6-update",
-                            "lease4-wipe",     "lease6-wipe" };
+    vector<string> cmds = {
+        "lease4-add",               "lease6-add",
+        "lease4-get",               "lease6-get",
+        "lease4-get-all",           "lease6-get-all",
+        "lease4-get-page",          "lease6-get-page",
+        "lease4-get-by-hw-address",
+        "lease4-get-by-client-id",  "lease6-get-by-duid",
+        "lease4-get-by-hostname",   "lease6-get-by-hostname",
+        "lease4-del",               "lease6-del",
+        "lease4-update",            "lease6-update",
+        "lease4-wipe",              "lease6-wipe"
+    };
     testCommands(cmds);
 }
 
@@ -2568,6 +2573,454 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedLimitIsZero) {
 
     string exp_rsp = "page size of retrieved leases must not be 0";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-get-by-hw-address can handle a situation when
+// the query is broken (required parameter is missing).
+TEST_F(LeaseCmdsTest, LeaseGetByHwAddressParams) {
+
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'hw-address' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // hw-address must be a string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hw-address'parameter must be a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Simply bad value.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"00::01:00:bc:0d:67\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp += " '00::01:00:bc:0d:67'";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-get-by-hw-address works as expected (find no lease).
+TEST_F(LeaseCmdsTest, LeaseGetByHwAddressFind0) {
+    // Initialize lease manager (false = v4, false = don't add a lease)
+    initLeaseMgr(false, false);
+
+    // No such leasea.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"01:02:03:04:05:06\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-get-by-hw-address works as expected (find two leases).
+TEST_F(LeaseCmdsTest, LeaseGetByHwAddressFind2) {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"08:08:08:08:08:08\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(2, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    lease = leases->get(1);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
+}
+
+// Checks that lease4-get-by-client-id can handle a situation when
+// the query is broken (required parameter is missing).
+TEST_F(LeaseCmdsTest, LeaseGetByClientIdParams) {
+
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-client-id\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'client-id' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // client-id must be a string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-client-id\",\n"
+        "    \"arguments\": {"
+        "        \"client-id\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'client-id'parameter must be a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Simply bad value.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-client-id\",\n"
+        "    \"arguments\": {"
+        "        \"client-id\": \"00::01:00:bc:0d:67\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp += " '00::01:00:bc:0d:67'";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-get-by-client-id works as expected (find no lease).
+TEST_F(LeaseCmdsTest, LeaseGetByClientIdFind0) {
+    // Initialize lease manager (false = v4, false = don't add a lease)
+    initLeaseMgr(false, false);
+
+    // No such leasea.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-client-id\",\n"
+        "    \"arguments\": {"
+        "        \"client-id\": \"01:02:03:04\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-get-by-client-id works as expected (find two leases).
+TEST_F(LeaseCmdsTest, LeaseGetByClientIdFind2) {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-client-id\",\n"
+        "    \"arguments\": {"
+        "        \"client-id\": \"42:42:42:42:42:42:42:42\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(2, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    lease = leases->get(1);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
+}
+
+// Checks that lease6-get-by-duid can handle a situation when
+// the query is broken (required parameter is missing).
+TEST_F(LeaseCmdsTest, LeaseGetByDuidParams) {
+
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-duid\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'duid' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // duid must be a string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-duid\",\n"
+        "    \"arguments\": {"
+        "        \"duid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'duid'parameter must be a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Simply bad value.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-duid\",\n"
+        "    \"arguments\": {"
+        "        \"duid\": \"00::01:00:bc:0d:67\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp += " '00::01:00:bc:0d:67'";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease6-get-by-duid works as expected (find no lease).
+TEST_F(LeaseCmdsTest, LeaseGetByDuidFind0) {
+    // Initialize lease manager (true = v6, false = don't add a lease)
+    initLeaseMgr(true, false);
+
+    // No such leasea.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-duid\",\n"
+        "    \"arguments\": {"
+        "        \"duid\": \"00:01:02:03:04:05:06:07\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv6 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease6-get-by-duid works as expected (find two leases).
+TEST_F(LeaseCmdsTest, LeaseGetByDuidFind2) {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-duid\",\n"
+        "    \"arguments\": {"
+        "        \"duid\": \"42:42:42:42:42:42:42:42\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(2, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    lease = leases->get(1);
+    ASSERT_TRUE(lease);
+    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
+}
+
+// Checks that lease4-get-by-hostname can handle a situation when
+// the query is broken (required parameter is missing).
+TEST_F(LeaseCmdsTest, Lease4GetByHostnameParams) {
+
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'hostname' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // hostname must be a string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hostname'parameter must be a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // hostname must be not empty.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hostname' parameter is empty";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease4-get-by-hostname works as expected (find no lease).
+TEST_F(LeaseCmdsTest, Lease4GetByHostnameFind0) {
+    // Initialize lease manager (false = v4, false = don't add a lease)
+    initLeaseMgr(false, false);
+
+    // No such leasea.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": \"foo.bar\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-get-by-hostname works as expected (find two leases).
+TEST_F(LeaseCmdsTest, Lease4GetByHostnameFind2) {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": \"Myhost.Example.Com.\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(4, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    lease = leases->get(2);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
+}
+
+// Checks that lease6-get-by-hostname can handle a situation when
+// the query is broken (required parameter is missing).
+TEST_F(LeaseCmdsTest, Lease6GetByHostnameParams) {
+
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'hostname' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // hostname must be a string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hostname'parameter must be a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // hostname must be not empty.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hostname' parameter is empty";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease6-get-by-hostname works as expected (find no lease).
+TEST_F(LeaseCmdsTest, Lease6GetByHostnameFind0) {
+    // Initialize lease manager (true = v6, false = don't add a lease)
+    initLeaseMgr(true, false);
+
+    // No such leasea.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": \"foo.bar\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv6 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease6-get-by-hostname works as expected (find two leases).
+TEST_F(LeaseCmdsTest, Lease6GetByHostnameFind2) {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hostname\",\n"
+        "    \"arguments\": {"
+        "        \"hostname\": \"Myhost.Example.Com.\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(4, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    lease = leases->get(2);
+    ASSERT_TRUE(lease);
+    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
 }
 
 // Test checks if lease4-update handler refuses calls with missing parameters.
