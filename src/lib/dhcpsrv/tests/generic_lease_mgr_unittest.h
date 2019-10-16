@@ -201,6 +201,9 @@ public:
     /// @brief Test method which returns all IPv4 leases for Subnet ID.
     void testGetLeases4SubnetId();
 
+    /// @brief Test method which returns all IPv4 leases for Hostname.
+    void testGetLeases4Hostname();
+
     /// @brief Test method which returns all IPv4 leases.
     void testGetLeases4();
 
@@ -209,6 +212,9 @@ public:
 
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
+
+    /// @brief Test method which returns all IPv6 leases for Hostname.
+    void testGetLeases6Hostname();
 
     /// @brief Test making/fetching leases with IAIDs > signed 32-bit max.
     void testLease6LargeIaidCheck();

@@ -926,6 +926,12 @@ TEST_F(MemfileLeaseMgrTest, getLeases4SubnetId) {
     testGetLeases4SubnetId();
 }
 
+// This test checks that all IPv4 leases with a specified hostname are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4Hostname) {
+    startBackend(V4);
+    testGetLeases4Hostname();
+}
+
 // This test checks that all IPv4 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4) {
     startBackend(V4);
@@ -942,6 +948,12 @@ TEST_F(MemfileLeaseMgrTest, getLeases4Paged) {
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     startBackend(V6);
     testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases with a specified hostname are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6Hostname) {
+    startBackend(V6);
+    testGetLeases6Hostname();
 }
 
 // This test adds 3 leases  and verifies fetch by DUID.

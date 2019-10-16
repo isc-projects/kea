@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Mon Sep 30 2019 13:41
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Oct 16 2019 17:52
 
 #ifndef DHCPSRV_MESSAGES_H
 #define DHCPSRV_MESSAGES_H
@@ -64,6 +64,8 @@ extern const isc::log::MessageID DHCPSRV_CQL_GET_CLIENTID;
 extern const isc::log::MessageID DHCPSRV_CQL_GET_CLIENTID_HWADDR_SUBID;
 extern const isc::log::MessageID DHCPSRV_CQL_GET_EXPIRED4;
 extern const isc::log::MessageID DHCPSRV_CQL_GET_EXPIRED6;
+extern const isc::log::MessageID DHCPSRV_CQL_GET_HOSTNAME4;
+extern const isc::log::MessageID DHCPSRV_CQL_GET_HOSTNAME6;
 extern const isc::log::MessageID DHCPSRV_CQL_GET_HWADDR;
 extern const isc::log::MessageID DHCPSRV_CQL_GET_IAID_DUID;
 extern const isc::log::MessageID DHCPSRV_CQL_GET_IAID_SUBID_DUID;
@@ -120,6 +122,8 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_CLIENTID;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_EXPIRED4;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_EXPIRED6;
+extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HOSTNAME4;
+extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HOSTNAME6;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HWADDR;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_IAID_DUID;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID;
@@ -170,6 +174,8 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_CLIENTID;
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_DUID;
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_EXPIRED4;
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_EXPIRED6;
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HOSTNAME4;
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HOSTNAME6;
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HWADDR;
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_IAID_DUID;
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_IAID_SUBID_DUID;
@@ -208,6 +214,8 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_CLIENTID;
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_DUID;
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_EXPIRED4;
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_EXPIRED6;
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HOSTNAME4;
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HOSTNAME6;
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HWADDR;
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_IAID_DUID;
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_IAID_SUBID_DUID;

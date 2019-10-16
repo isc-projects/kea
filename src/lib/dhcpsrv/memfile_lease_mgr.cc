@@ -872,6 +872,24 @@ Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
+Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_HOSTNAME4)
+        .arg(hostname);
+
+    Lease4Collection collection;
+    const Lease4StorageHostnameIndex& idx = storage4_.get<HostnameIndexTag>();
+    std::pair<Lease4StorageHostnameIndex::const_iterator,
+              Lease4StorageHostnameIndex::const_iterator> l =
+        idx.equal_range(hostname);
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+
+    return (collection);
+}
+
+Lease4Collection
 Memfile_LeaseMgr::getLeases4() const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET4);
 
@@ -994,6 +1012,24 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
     std::pair<Lease6StorageSubnetIdIndex::const_iterator,
               Lease6StorageSubnetIdIndex::const_iterator> l =
         idx.equal_range(subnet_id);
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+
+    return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_HOSTNAME6)
+        .arg(hostname);
+
+    Lease6Collection collection;
+    const Lease6StorageHostnameIndex& idx = storage6_.get<HostnameIndexTag>();
+    std::pair<Lease6StorageHostnameIndex::const_iterator,
+              Lease6StorageHostnameIndex::const_iterator> l =
+        idx.equal_range(hostname);
 
     for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));

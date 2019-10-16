@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -183,6 +183,13 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv4 leases for the particular hostname.
+    ///
+    /// @param hostname hostname in lower case.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(const std::string& hostname) const;
+
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
@@ -277,6 +284,13 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv6 leases for the particular hostname.
+    ///
+    /// @param hostname hostname in lower case.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(const std::string& hostname) const;
+
     /// @brief Returns all IPv6 leases.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
@@ -288,7 +302,7 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found)
     /// for the DUID
     virtual Lease6Collection getLeases6(const DUID& duid) const;
-    
+
     /// @brief Returns range of IPv6 leases using paging.
     ///
     /// This method implements paged browsing of the lease database. The first
@@ -549,6 +563,7 @@ public:
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
         GET_LEASE4_PAGE,            // Get page of leases beginning with an address
         GET_LEASE4_SUBID,           // Get IPv4 leases by subnet ID
+        GET_LEASE4_HOSTNAME,        // Get IPv4 leases by hostname
         GET_LEASE4_EXPIRE,          // Get expired lease4
         GET_LEASE6,                 // Get all IPv6 leases
         GET_LEASE6_ADDR,            // Get lease6 by address
@@ -557,6 +572,7 @@ public:
         GET_LEASE6_PAGE,            // Get page of IPv6 leases beginning with an address
         GET_LEASE6_SUBID,           // Get IPv6 leases by subnet ID
         GET_LEASE6_DUID,           // Get IPv6 leases by DUID
+        GET_LEASE6_HOSTNAME,        // Get IPv6 leases by hostname
         GET_LEASE6_EXPIRE,          // Get expired lease6
         INSERT_LEASE4,              // Add entry to lease4 table
         INSERT_LEASE6,              // Add entry to lease6 table

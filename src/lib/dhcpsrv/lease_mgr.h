@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -344,6 +344,13 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     virtual Lease4Collection getLeases4(SubnetID subnet_id) const = 0;
 
+    /// @brief Returns all IPv4 leases for the particular hostname.
+    ///
+    /// @param hostname hostname in lower case.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(const std::string& hostname) const = 0;
+
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
@@ -452,6 +459,13 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6(SubnetID subnet_id) const = 0;
 
+    /// @brief Returns all IPv6 leases for the particular hostname.
+    ///
+    /// @param hostname hostname in lower case.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(const std::string& hostname) const = 0;
+
     /// @brief Returns all IPv6 leases.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
@@ -459,9 +473,9 @@ public:
 
     /// @brief Returns collection of leases for matching DUID
     ///
-    /// @return Lease collection 
+    /// @return Lease collection
     /// (may be empty if no IPv6 lease found for the DUID).
-    virtual Lease6Collection getLeases6(const DUID& duid) const = 0; 
+    virtual Lease6Collection getLeases6(const DUID& duid) const = 0;
 
     /// @brief Returns range of IPv6 leases using paging.
     ///

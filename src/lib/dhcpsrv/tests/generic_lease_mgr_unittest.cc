@@ -1247,6 +1247,29 @@ GenericLeaseMgrTest::testGetLeases4SubnetId() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases4Hostname() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // There should be no lease for hostname foobar.
+    Lease4Collection returned = lmptr_->getLeases4(string("foobar"));
+    EXPECT_TRUE(returned.empty());
+
+    // There should be exactly 4 leases for the hostname of the second lease.
+    ASSERT_FALSE(leases[1]->hostname_.empty());
+    returned = lmptr_->getLeases4(leases[1]->hostname_);
+    EXPECT_EQ(4, returned.size());
+
+    // And 3 for the forth lease.
+    ASSERT_FALSE(leases[3]->hostname_.empty());
+    returned = lmptr_->getLeases4(leases[3]->hostname_);
+    EXPECT_EQ(3, returned.size());
+}
+
+void
 GenericLeaseMgrTest::testGetLeases4() {
     // Get the leases to be used for the test and add to the database
     vector<Lease4Ptr> leases = createLeases4();
@@ -1333,6 +1356,34 @@ GenericLeaseMgrTest::testGetLeases6SubnetId() {
     // lease belongs to.
     Lease6Collection returned = lmptr_->getLeases6(leases[1]->subnet_id_);
     EXPECT_EQ(2, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases6Hostname() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // There should be no lease for hostname foobar.
+    Lease6Collection returned = lmptr_->getLeases6(string("foobar"));
+    EXPECT_TRUE(returned.empty());
+
+    // There should be exactly 4 leases for the hostname of the second lease.
+    ASSERT_FALSE(leases[1]->hostname_.empty());
+    returned = lmptr_->getLeases6(leases[1]->hostname_);
+    EXPECT_EQ(4, returned.size());
+
+    // One for the fifth lease.
+    ASSERT_FALSE(leases[4]->hostname_.empty());
+    returned = lmptr_->getLeases6(leases[4]->hostname_);
+    EXPECT_EQ(1, returned.size());
+
+    // And 3 for the sixth lease.
+    ASSERT_FALSE(leases[5]->hostname_.empty());
+    returned = lmptr_->getLeases6(leases[5]->hostname_);
+    EXPECT_EQ(3, returned.size());
 }
 
 void

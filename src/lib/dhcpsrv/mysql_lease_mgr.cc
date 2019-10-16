@@ -159,6 +159,13 @@ tagged_statements = { {
                         "state, user_context "
                             "FROM lease4 "
                             "WHERE subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_HOSTNAME,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state, user_context "
+                            "FROM lease4 "
+                            "WHERE hostname = ?"},
     {MySqlLeaseMgr::GET_LEASE4_EXPIRE,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -233,6 +240,15 @@ tagged_statements = { {
                         "state, user_context "
                             "FROM lease6 "
                             "WHERE duid = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_HOSTNAME,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context "
+                            "FROM lease6 "
+                            "WHERE hostname = ?"},
     {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -2097,6 +2113,27 @@ MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
+MySqlLeaseMgr::getLeases4(const string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HOSTNAME4)
+        .arg(hostname);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Hostname
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(hostname.c_str());
+    inbind[0].buffer_length = hostname.length();
+
+    // ... and get the data
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_HOSTNAME, inbind, result);
+
+    return (result);
+}
+
+Lease4Collection
 MySqlLeaseMgr::getLeases4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET4);
 
@@ -2312,7 +2349,7 @@ Lease6Collection
 MySqlLeaseMgr::getLeases6(const DUID& duid) const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID)
              .arg(duid.toText());
-   
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -2325,12 +2362,33 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
             const_cast<uint8_t*>(&duid_vector[0]));
     inbind[0].buffer_length = duid_length;
     inbind[0].length = &duid_length;
-    
+
     Lease6Collection result;
-    
+
     getLeaseCollection(GET_LEASE6_DUID, inbind, result);
 
     return result;
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6(const string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HOSTNAME6)
+        .arg(hostname);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Hostname
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(hostname.c_str());
+    inbind[0].buffer_length = hostname.length();
+
+    // ... and get the data
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_HOSTNAME, inbind, result);
+
+    return (result);
 }
 
 Lease6Collection

@@ -341,6 +341,11 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4SubnetId) {
     testGetLeases4SubnetId();
 }
 
+// This test checks that all IPv4 leases with a specified hostname are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases4Hostname) {
+    testGetLeases4Hostname();
+}
+
 // This test checks that all IPv4 leases are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
@@ -354,6 +359,11 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4Paged) {
 // This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetId) {
     testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases with a specified hostname are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6Hostname) {
+    testGetLeases6Hostname();
 }
 
 // This test checks that all IPv6 leases are returned.

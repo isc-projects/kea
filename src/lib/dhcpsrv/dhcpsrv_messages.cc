@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Mon Sep 30 2019 13:41
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Oct 16 2019 17:52
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -63,6 +63,8 @@ extern const isc::log::MessageID DHCPSRV_CQL_GET_CLIENTID = "DHCPSRV_CQL_GET_CLI
 extern const isc::log::MessageID DHCPSRV_CQL_GET_CLIENTID_HWADDR_SUBID = "DHCPSRV_CQL_GET_CLIENTID_HWADDR_SUBID";
 extern const isc::log::MessageID DHCPSRV_CQL_GET_EXPIRED4 = "DHCPSRV_CQL_GET_EXPIRED4";
 extern const isc::log::MessageID DHCPSRV_CQL_GET_EXPIRED6 = "DHCPSRV_CQL_GET_EXPIRED6";
+extern const isc::log::MessageID DHCPSRV_CQL_GET_HOSTNAME4 = "DHCPSRV_CQL_GET_HOSTNAME4";
+extern const isc::log::MessageID DHCPSRV_CQL_GET_HOSTNAME6 = "DHCPSRV_CQL_GET_HOSTNAME6";
 extern const isc::log::MessageID DHCPSRV_CQL_GET_HWADDR = "DHCPSRV_CQL_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_CQL_GET_IAID_DUID = "DHCPSRV_CQL_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_CQL_GET_IAID_SUBID_DUID = "DHCPSRV_CQL_GET_IAID_SUBID_DUID";
@@ -119,6 +121,8 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_CLIENTID = "DHCPSRV_MEMFILE
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID = "DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_EXPIRED4 = "DHCPSRV_MEMFILE_GET_EXPIRED4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_EXPIRED6 = "DHCPSRV_MEMFILE_GET_EXPIRED6";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HOSTNAME4 = "DHCPSRV_MEMFILE_GET_HOSTNAME4";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HOSTNAME6 = "DHCPSRV_MEMFILE_GET_HOSTNAME6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HWADDR = "DHCPSRV_MEMFILE_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_IAID_DUID = "DHCPSRV_MEMFILE_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID = "DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID";
@@ -169,6 +173,8 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_CLIENTID = "DHCPSRV_MYSQL_GET
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_DUID = "DHCPSRV_MYSQL_GET_DUID";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_EXPIRED4 = "DHCPSRV_MYSQL_GET_EXPIRED4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_EXPIRED6 = "DHCPSRV_MYSQL_GET_EXPIRED6";
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HOSTNAME4 = "DHCPSRV_MYSQL_GET_HOSTNAME4";
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HOSTNAME6 = "DHCPSRV_MYSQL_GET_HOSTNAME6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HWADDR = "DHCPSRV_MYSQL_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_IAID_DUID = "DHCPSRV_MYSQL_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_IAID_SUBID_DUID = "DHCPSRV_MYSQL_GET_IAID_SUBID_DUID";
@@ -207,6 +213,8 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_CLIENTID = "DHCPSRV_PGSQL_GET
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_DUID = "DHCPSRV_PGSQL_GET_DUID";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_EXPIRED4 = "DHCPSRV_PGSQL_GET_EXPIRED4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_EXPIRED6 = "DHCPSRV_PGSQL_GET_EXPIRED6";
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HOSTNAME4 = "DHCPSRV_PGSQL_GET_HOSTNAME4";
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HOSTNAME6 = "DHCPSRV_PGSQL_GET_HOSTNAME6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HWADDR = "DHCPSRV_PGSQL_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_IAID_DUID = "DHCPSRV_PGSQL_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_IAID_SUBID_DUID = "DHCPSRV_PGSQL_GET_IAID_SUBID_DUID";
@@ -299,6 +307,8 @@ const char* values[] = {
     "DHCPSRV_CQL_GET_CLIENTID_HWADDR_SUBID", "obtaining IPv4 lease for client ID %1, hardware address %2 and subnet ID %3",
     "DHCPSRV_CQL_GET_EXPIRED4", "obtaining maximum %1 of expired IPv4 leases",
     "DHCPSRV_CQL_GET_EXPIRED6", "obtaining maximum %1 of expired IPv6 leases",
+    "DHCPSRV_CQL_GET_HOSTNAME4", "obtaining IPv4 leases for hostname %1",
+    "DHCPSRV_CQL_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
     "DHCPSRV_CQL_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_CQL_GET_IAID_DUID", "obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3",
     "DHCPSRV_CQL_GET_IAID_SUBID_DUID", "obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4",
@@ -355,6 +365,8 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID", "obtaining IPv4 lease for client ID %1, hardware address %2 and subnet ID %3",
     "DHCPSRV_MEMFILE_GET_EXPIRED4", "obtaining maximum %1 of expired IPv4 leases",
     "DHCPSRV_MEMFILE_GET_EXPIRED6", "obtaining maximum %1 of expired IPv6 leases",
+    "DHCPSRV_MEMFILE_GET_HOSTNAME4", "obtaining IPv4 leases for hostname %1",
+    "DHCPSRV_MEMFILE_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
     "DHCPSRV_MEMFILE_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_MEMFILE_GET_IAID_DUID", "obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3",
     "DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID", "obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4",
@@ -405,6 +417,8 @@ const char* values[] = {
     "DHCPSRV_MYSQL_GET_DUID", "obtaining IPv6 lease for duid %1,",
     "DHCPSRV_MYSQL_GET_EXPIRED4", "obtaining maximum %1 of expired IPv4 leases",
     "DHCPSRV_MYSQL_GET_EXPIRED6", "obtaining maximum %1 of expired IPv6 leases",
+    "DHCPSRV_MYSQL_GET_HOSTNAME4", "obtaining IPv4 leases for hostname %1",
+    "DHCPSRV_MYSQL_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
     "DHCPSRV_MYSQL_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_MYSQL_GET_IAID_DUID", "obtaining IPv6 leases for IAID %1, DUID %2, lease type %3",
     "DHCPSRV_MYSQL_GET_IAID_SUBID_DUID", "obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4",
@@ -443,6 +457,8 @@ const char* values[] = {
     "DHCPSRV_PGSQL_GET_DUID", "obtaining IPv6 leases for DUID %1,",
     "DHCPSRV_PGSQL_GET_EXPIRED4", "obtaining maximum %1 of expired IPv4 leases",
     "DHCPSRV_PGSQL_GET_EXPIRED6", "obtaining maximum %1 of expired IPv6 leases",
+    "DHCPSRV_PGSQL_GET_HOSTNAME4", "obtaining IPv4 leases for hostname %1",
+    "DHCPSRV_PGSQL_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
     "DHCPSRV_PGSQL_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_PGSQL_GET_IAID_DUID", "obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3",
     "DHCPSRV_PGSQL_GET_IAID_SUBID_DUID", "obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4",

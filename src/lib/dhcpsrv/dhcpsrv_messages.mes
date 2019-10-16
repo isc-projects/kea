@@ -303,6 +303,16 @@ A debug message issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
+% DHCPSRV_CQL_GET_HOSTNAME4 obtaining IPv4 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the Cassandra database for a client with the specified
+hostname.
+
+% DHCPSRV_CQL_GET_HOSTNAME6 obtaining IPv6 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set of
+IPv6 leases from the Cassandra database for a client with the specified
+hostname.
+
 % DHCPSRV_CQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the Cassandra database for a client with the specified
@@ -579,6 +589,16 @@ A debug message issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
+% DHCPSRV_MEMFILE_GET_HOSTNAME4 obtaining IPv4 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the memory file database for a client with the specified
+hostname.
+
+% DHCPSRV_MEMFILE_GET_HOSTNAME6 obtaining IPv6 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set of
+IPv6 leases from the memory file database for a client with the specified
+hostname.
+
 % DHCPSRV_MEMFILE_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
@@ -830,6 +850,16 @@ A debug message issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
+% DHCPSRV_MYSQL_GET_HOSTNAME4 obtaining IPv4 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+hostname.
+
+% DHCPSRV_MYSQL_GET_HOSTNAME6 obtaining IPv6 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database for a client with the specified
+hostname.
+
 % DHCPSRV_MYSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
@@ -1013,6 +1043,16 @@ is logged in the message.
 A debug message issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
+
+% DHCPSRV_PGSQL_GET_HOSTNAME4 obtaining IPv4 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+hostname.
+
+% DHCPSRV_PGSQL_GET_HOSTNAME6 obtaining IPv6 leases for hostname %1
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database for a client with the specified
+hostname.
 
 % DHCPSRV_PGSQL_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set

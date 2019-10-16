@@ -231,6 +231,8 @@ public:
     static constexpr StatementTag GET_LEASE4_PAGE = "GET_LEASE4_PAGE";
     // Get lease4 by subnet ID
     static constexpr StatementTag GET_LEASE4_SUBID = "GET_LEASE4_SUBID";
+    // Get lease4 by hostname
+    static constexpr StatementTag GET_LEASE4_HOSTNAME = "GET_LEASE4_HOSTNAME";
     /// @}
 
 private:
@@ -255,6 +257,7 @@ constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR_SUBID;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_LIMIT;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_PAGE;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_SUBID;
+constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HOSTNAME;
 
 StatementMap CqlLease4Exchange::tagged_statements_{
 
@@ -393,6 +396,16 @@ StatementMap CqlLease4Exchange::tagged_statements_{
        "fqdn_fwd, fqdn_rev, hostname, state, user_context "
        "FROM lease4 "
        "WHERE subnet_id = ? "
+       "ALLOW FILTERING "}},
+
+     // Gets an IPv4 lease(s) with specified hostname
+     {GET_LEASE4_HOSTNAME,
+      {GET_LEASE4_HOSTNAME,
+       "SELECT "
+       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
+       "fqdn_fwd, fqdn_rev, hostname, state, user_context "
+       "FROM lease4 "
+       "WHERE hostname = ? "
        "ALLOW FILTERING "}}
 };
 
@@ -908,6 +921,7 @@ public:
     static constexpr StatementTag GET_LEASE6_DUID_IAID_SUBID = "GET_LEASE6_DUID_IAID_SUBID";
     static constexpr StatementTag GET_LEASE6_LIMIT = "GET_LEASE6_LIMIT";
     static constexpr StatementTag GET_LEASE6_PAGE = "GET_LEASE6_PAGE";
+    static constexpr StatementTag GET_LEASE6_HOSTNAME = "GET_LEASE6_HOSTNAME";
     // @}
 
 private:
@@ -949,6 +963,7 @@ constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_LIMIT;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_PAGE;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_HOSTNAME;
 
 StatementMap CqlLease6Exchange::tagged_statements_ = {
 
@@ -1076,7 +1091,20 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "FROM lease6 "
       "WHERE TOKEN(address) > TOKEN(?) "
       "LIMIT ? "
-      "ALLOW FILTERING "}}
+      "ALLOW FILTERING "}},
+
+    // Gets an IPv6 lease(s) with specified hostname
+    {GET_LEASE6_HOSTNAME,
+     {GET_LEASE6_HOSTNAME,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state, user_context "
+      "FROM lease6 "
+      "WHERE hostname = ? "
+      "ALLOW FILTERING "}},
+
+
 };
 
 CqlLease6Exchange::CqlLease6Exchange(const CqlConnection &connection)
@@ -2217,6 +2245,25 @@ CqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
+CqlLeaseMgr::getLeases4(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_HOSTNAME4)
+        .arg(hostname);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+
+    std::string hostname_data(hostname);
+    data.add(&hostname_data);
+
+    // Get the data.
+    Lease4Collection result;
+    std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
+    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_HOSTNAME, data, result);
+
+    return (result);
+}
+
+Lease4Collection
 CqlLeaseMgr::getLeases4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET4);
 
@@ -2311,7 +2358,7 @@ CqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     // Set up the WHERE clause value
     AnyArray data;
-    
+
     CassBlob duid_data(duid.getDuid());
 
     data.add(&duid_data);
@@ -2387,6 +2434,25 @@ CqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID &duid, uint32_t iaid,
 Lease6Collection
 CqlLeaseMgr::getLeases6(SubnetID) const {
     isc_throw(NotImplemented, "getLeases6(subnet_id) is not implemented");
+}
+
+Lease6Collection
+CqlLeaseMgr::getLeases6(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_HOSTNAME6)
+        .arg(hostname);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+
+    std::string hostname_data(hostname);
+    data.add(&hostname_data);
+
+    // Get the data.
+    Lease6Collection result;
+    std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
+    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_HOSTNAME, data, result);
+
+    return (result);
 }
 
 Lease6Collection

@@ -137,6 +137,16 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease4 "
       "WHERE subnet_id = $1"},
 
+    // GET_LEASE4_HOSTNAME
+    { 1, { OID_VARCHAR },
+      "get_lease4_hostname",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+      "state, user_context "
+      "FROM lease4 "
+      "WHERE hostname = $1"},
+
     // GET_LEASE4_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
       "get_lease4_expire",
@@ -227,6 +237,17 @@ PgSqlTaggedStatement tagged_statements[] = {
         "state, user_context "
       "FROM lease6 "
       "WHERE duid = $1"},
+
+    // GET_LEASE6_HOSTNAME
+    { 1, { OID_VARCHAR },
+      "get_lease6_hostname",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE hostname = $1"},
 
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -1383,6 +1404,24 @@ PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
+PgSqlLeaseMgr::getLeases4(const string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME4)
+        .arg(hostname);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // Hostname
+    bind_array.add(hostname);
+
+    // ... and get the data
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_HOSTNAME, bind_array, result);
+
+    return (result);
+}
+
+Lease4Collection
 PgSqlLeaseMgr::getLeases4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET4);
 
@@ -1546,6 +1585,24 @@ PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     // query to fetch the data
     getLeaseCollection(GET_LEASE6_DUID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(const string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME6)
+        .arg(hostname);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // Hostname
+    bind_array.add(hostname);
+
+    // ... and get the data
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_HOSTNAME, bind_array, result);
 
     return (result);
 }

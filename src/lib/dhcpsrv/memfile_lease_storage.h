@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,11 @@ struct ClientIdHWAddressSubnetIdIndexTag { };
 struct SubnetIdIndexTag { };
 
 /// @brief Tag for index using DUID.
-struct DuidIndexTag { }; 
+struct DuidIndexTag { };
+
+/// @brief Tag for index using hostname.
+struct HostnameIndexTag { };
+
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -125,6 +129,13 @@ typedef boost::multi_index_container<
             boost::multi_index::const_mem_fun<Lease6,
                                               const std::vector<uint8_t>&,
                                               &Lease6::getDuidVector>
+        >,
+
+        // Specification of the sixth index starts here
+        // This index is used to retrieve leases for matching hostname.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<HostnameIndexTag>,
+            boost::multi_index::member<Lease, std::string, &Lease::hostname_>
         >
     >
 > Lease6Storage; // Specify the type name of this container.
@@ -239,8 +250,15 @@ typedef boost::multi_index_container<
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetIdIndexTag>,
             boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
-        >
+        >,
 
+
+        // Specification of the seventh index starts here
+        // This index is used to retrieve leases for matching hostname.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<HostnameIndexTag>,
+            boost::multi_index::member<Lease, std::string, &Lease::hostname_>
+        >
     >
 > Lease4Storage; // Specify the type name for this container.
 
@@ -265,6 +283,9 @@ typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;
 /// @brief DHCPv6 lease storage index by Subnet-id.
 typedef Lease6Storage::index<DuidIndexTag>::type Lease6StorageDuidIndex;
 
+/// @brief DHCPv6 lease storage index by hostname.
+typedef Lease6Storage::index<HostnameIndexTag>::type Lease6StorageHostnameIndex;
+
 /// @brief DHCPv4 lease storage index by address.
 typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
 
@@ -285,6 +306,9 @@ Lease4StorageClientIdHWAddressSubnetIdIndex;
 
 /// @brief DHCPv4 lease storage index by client id, HW address and subnet id.
 typedef Lease4Storage::index<SubnetIdIndexTag>::type Lease4StorageSubnetIdIndex;
+
+/// @brief DHCPv4 lease storage index by hostname.
+typedef Lease4Storage::index<HostnameIndexTag>::type Lease4StorageHostnameIndex;
 
 //@}
 } // end of isc::dhcp namespace

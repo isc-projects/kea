@@ -582,6 +582,11 @@ TEST_F(CqlLeaseMgrTest, getLeases4SubnetId) {
     testGetLeases4SubnetId();
 }
 
+// This test checks that all IPv4 leases with a specified hostname are returned.
+TEST_F(CqlLeaseMgrTest, getLeases4Hostname) {
+    testGetLeases4Hostname();
+}
+
 // This test checks that all IPv4 leases are returned.
 TEST_F(CqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
@@ -706,6 +711,11 @@ TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
 // Test checks that getLease6() works with different DUID sizes
 TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
+}
+
+// This test checks that all IPv6 leases with a specified hostname are returned.
+TEST_F(CqlLeaseMgrTest, getLeases6Hostname) {
+    testGetLeases6Hostname();
 }
 
 // Test that a range of IPv6 leases is returned with paging.
