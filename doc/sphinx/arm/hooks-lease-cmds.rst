@@ -59,6 +59,20 @@ This library provides the following commands:
    of all IPv6 leases in the database. By iterating through the pages it
    is possible to retrieve all the leases.
 
+-  ``lease4-get-by-hw-address`` - return all IPv4 leases with the specified
+   hardware address.
+
+-  ``lease4-get-by-client-id`` - return all IPv4 leases with the specified
+   client id.
+
+-  ``lease6-get-by-duid`` - returns all IPv6 leases with the specified duid.
+
+-  ``lease4-get-by-hostname`` - return all IPv4 leases with the specified
+   hostname.
+
+-  ``lease6-get-by-hostname`` - return all IPv6 leases with the specified
+   hostname.
+
 -  ``lease4-del`` - deletes an IPv4 lease with the specified parameters.
 
 -  ``lease6-del`` - deletes an IPv6 lease with the specified parameters.
@@ -685,6 +699,50 @@ The client may assume that it has reached the last page when the
 ``count`` value is lower than that specified in the command; this
 includes the case when the ``count`` is equal to 0, meaning that no
 leases were found.
+
+.. _command-lease4-get-by-hw-address:
+
+.. _command-lease4-get-by-client-id:
+
+.. _command-lease6-get-by-duid:
+
+.. _command-lease4-get-by-hostname:
+
+.. _command-lease6-get-by-hostname:
+
+The lease4-get-by-*, lease6-get-by-* Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``leaseX-get-by-Y`` can be used to query the lease database and
+retrieve all existing leases with a specified hardware address (IPv4
+only), client id IPv4 only), duid (IPv6 only) identifiers or hostname.
+
+An example ``lease4-get-by-hw-address`` command for getting IPv4 leases
+with a given hardware address is:
+
+::
+
+    {
+        "command": "lease4-get-by-hw-address",
+        "arguments": {
+            "hw-address": "08:08:08:08:08:08"
+        }
+    }
+
+An example of the ``lease6-get-by-hostname`` is:
+
+::
+
+    {
+        "command": "lease6-get-by-hostname",
+        "arguments": {
+            "hostname": "myhost.example.org"
+        }
+    }
+
+The by key is the only parameter. The returned response contains a detailed
+list of leases in the same format than ``leaseX-get-all``. This list can be
+empty and usually is never large.
 
 .. _command-lease4-del:
 

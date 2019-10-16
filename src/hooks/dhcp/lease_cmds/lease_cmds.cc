@@ -800,9 +800,8 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
         extractCommand(handle);
 
         // arguments must always be present
-        if (!cmd_args_) {
-            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
-                      << " command");
+        if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
+            isc_throw(BadValue, "Command arguments missing or a not a map.");
         }
 
         // the hw-address parameter is mandatory.
@@ -851,9 +850,8 @@ LeaseCmdsImpl::leaseGetByClientIdHandler(CalloutHandle& handle) {
         extractCommand(handle);
 
         // arguments must always be present
-        if (!cmd_args_) {
-            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
-                      << " command");
+        if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
+            isc_throw(BadValue, "Command arguments missing or a not a map.");
         }
 
         // the client-id parameter is mandatory.
@@ -902,9 +900,8 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
         extractCommand(handle);
 
         // arguments must always be present
-        if (!cmd_args_) {
-            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
-                      << " command");
+        if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
+            isc_throw(BadValue, "Command arguments missing or a not a map.");
         }
 
         // the duid parameter is mandatory.
@@ -955,9 +952,8 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
         v4 = (cmd_name_ == "lease4-get-by-hostname");
 
         // arguments must always be present
-        if (!cmd_args_) {
-            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
-                      << " command");
+        if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
+            isc_throw(BadValue, "Command arguments missing or a not a map.");
         }
 
         // the hostname parameter is mandatory.

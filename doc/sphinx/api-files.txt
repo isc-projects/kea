@@ -26,6 +26,9 @@ api/ha-sync.json
 api/lease4-add.json
 api/lease4-del.json
 api/lease4-get-all.json
+api/lease4-get-by-client-id.json
+api/lease4-get-by-hostname.json
+api/lease4-get-by-hw-address.json
 api/lease4-get.json
 api/lease4-update.json
 api/lease4-wipe.json
@@ -33,6 +36,8 @@ api/lease6-add.json
 api/lease6-bulk-apply.json
 api/lease6-del.json
 api/lease6-get-all.json
+api/lease6-get-by-duid.json
+api/lease6-get-by-hostname.json
 api/lease6-get.json
 api/lease6-update.json
 api/lease6-wipe.json

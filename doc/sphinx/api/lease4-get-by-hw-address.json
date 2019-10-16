@@ -1,0 +1,20 @@
+{
+    "avail": "1.7.1",
+    "brief": [
+        "This command retrieves all IPv4 leases with the specified hardware address."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-get-by-hw-address\",",
+        "    \"arguments\": {",
+        "        \"hw-address\": \"08:08:08:08:08:08\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-lease4-get-by-hw-address\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-get-by-hw-address",
+    "support": [
+        "kea-dhcp4"
+    ]
+}
