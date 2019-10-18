@@ -1,8 +1,8 @@
-1670.	[bug]		tmark
+1671.	[bug]		tmark
 	Corrected an issue in kea-dhcp6 where the server would fail
 	to extend the expiry of a existing dynamic lease assigned to
 	client with host reservation.
-	(Gitlab #754)
+	(Gitlab #754,!558, git c223380012b82c93292528b593002c2b80b5361b)
 
 1670.	[func]		fdupont
 	Added searches for host reservations by hostname and by hostname
