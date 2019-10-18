@@ -109,6 +109,12 @@ namespace {
     "  p.client_class," \
     "  p.require_client_classes," \
     "  p.user_context," \
+    "  s.ddns_send_updates," \
+    "  s.ddns_override_no_update," \
+    "  s.ddns_override_client_update," \
+    "  s.ddns_replace_client_name," \
+    "  s.ddns_generated_prefix," \
+    "  s.ddns_qualifying_suffix," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -228,6 +234,12 @@ namespace {
     "  d.client_class," \
     "  d.require_client_classes," \
     "  d.user_context," \
+    "  s.ddns_send_updates," \
+    "  s.ddns_override_no_update," \
+    "  s.ddns_override_client_update," \
+    "  s.ddns_replace_client_name," \
+    "  s.ddns_generated_prefix," \
+    "  s.ddns_qualifying_suffix," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -427,6 +439,12 @@ namespace {
     "  n.server_hostname," \
     "  n.min_valid_lifetime," \
     "  n.max_valid_lifetime," \
+    "  n.ddns_send_updates," \
+    "  n.ddns_override_no_update," \
+    "  n.ddns_override_client_update," \
+    "  n.ddns_replace_client_name," \
+    "  n.ddns_generated_prefix," \
+    "  n.ddns_qualifying_suffix," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -498,6 +516,12 @@ namespace {
     "  n.max_preferred_lifetime," \
     "  n.min_valid_lifetime," \
     "  n.max_valid_lifetime," \
+    "  n.ddns_send_updates," \
+    "  n.ddns_override_no_update," \
+    "  n.ddns_override_client_update," \
+    "  n.ddns_replace_client_name," \
+    "  n.ddns_generated_prefix," \
+    "  n.ddns_qualifying_suffix," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \
