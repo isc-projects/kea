@@ -71,7 +71,13 @@ fi
 # Check the path with some specific headers.
 CPPFLAGS_SAVED="$CPPFLAGS"
 if test "${boost_include_path}" ; then
-	BOOST_INCLUDES="-isystem ${boost_include_path}"
+	# -isystem silents warnings for boost headers but messes the include
+	# order too so uses it when all warnings are made into errors.
+        if test "$with_werror" = 1; then
+		BOOST_INCLUDES="-isystem ${boost_include_path}"
+	else
+		BOOST_INCLUDES="-I${boost_include_path}"
+	fi
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp boost/atomic.hpp boost/circular_buffer.hpp],,
