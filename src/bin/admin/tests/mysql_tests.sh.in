@@ -729,6 +729,26 @@ EOF
     qry="select is_array from dhcp6_option_def"
     run_statement "dhcp6_option_def verify is_array column" "$qry"
 
+    # Schema upgrade from 8.2 to 9.0
+
+    # New DDNS columns.
+
+    # table: dhcp4_shared_network (should include six new columns)
+    qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp4_shared_network"
+    run_statement "dhcp4_shared_network" "$qry"
+    
+    # table: dhcp6_shared_network (should include six new columns)
+    qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp6_shared_network"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp4_subnet (should include six new columns)
+    qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp4_subnet"
+    run_statement "dhcp4_subnet" "$qry"
+    
+    # table: dhcp6_subnet (should include six new columns)
+    qry="select ddns_send_updates, ddns_override_no_update, ddns_override_client_update, ddns_replace_client_name, ddns_generated_prefix, ddns_qualifying_suffix from dhcp6_subnet"
+    run_statement "dhcp6_subnet" "$qry"
+
     # Verify upgraded schema reports version 9.0
     version=$(${keaadmin} db-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "9.0" ${version} "Expected kea-admin to return %s, returned value was %s"
