@@ -439,6 +439,35 @@ public:
                       HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
                       uint8_t prefix_len);
 
+    /// @brief Utility function that decrements cltt of a persisted lease
+    /// 
+    /// This function is used to simulate the passage of time by decrementing
+    /// the lease's cltt, currently by 1.  It fetches the desired lease from the
+    /// lease manager, decrements the cltt, then updates the lease in the lease
+    /// manager.  Next, it refetches the lease and verifies the update took place.
+    ///
+    /// @param[in][out] lease pointer reference to the lease to modify.  Upon
+    /// return it will point to the newly updated lease.
+    void 
+    rollbackPersistedCltt(Lease6Ptr& lease) {
+        ASSERT_TRUE(lease) << "rollbackCltt lease is empty";
+       
+        // Fetch it, so we can update it. 
+        Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                                   lease->addr_);
+        ASSERT_TRUE(from_mgr) << "rollbackCltt: lease not found?";
+
+        // Decrement cltt then update it in the manager.
+        --from_mgr->cltt_;
+        ASSERT_NO_THROW(LeaseMgrFactory::instance().updateLease6(from_mgr));
+
+        // Fetch it fresh.
+        lease = LeaseMgrFactory::instance().getLease6(lease->type_, lease->addr_);
+
+        // Make sure it stuck.
+        ASSERT_EQ(lease->cltt_, from_mgr->cltt_);
+    }
+
     virtual ~AllocEngine6Test() {
         factory_.destroy();
     }

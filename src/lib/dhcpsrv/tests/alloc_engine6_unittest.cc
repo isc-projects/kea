@@ -3132,7 +3132,10 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
     EXPECT_TRUE(leases.empty());
 }
 
-// Verifies that client with a hostname reservation can get and
+// Verifies that client with a hostname reservation can
+// 1. Get a dynamic lease
+// 2. Renew the same lease via REQUEST (calls allocateLease6)
+// 3. Renew the same lease via RENEW/REBIND (calls renewLeases6)
 // renew a dynamic lease from their selected subnet.
 TEST_F(AllocEngine6Test, hostDynamicAddress) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -3157,6 +3160,7 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
 
     // Look up the reservation.
     findReservation(*engine, ctx);
+
     // Make sure we found our host.
     ConstHostPtr current = ctx.currentHost();
     ASSERT_TRUE(current);
@@ -3169,13 +3173,7 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
     EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We verify the "time" change in case the lease returned to us
-    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
-    --lease->cltt_;
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+    ASSERT_NO_FATAL_FAILURE(rollbackPersistedCltt(lease));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -3189,11 +3187,20 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
     Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
     ASSERT_EQ(1, renewed.size());
 
+    Lease6Ptr renewed_lease = renewed[0];
+    EXPECT_EQ("2001:db8:1::10", renewed_lease->addr_.toText());
+
     // And the lease lifetime should be extended.
-    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+    EXPECT_GT(renewed_lease->cltt_, lease->cltt_)
         << "Lease lifetime was not extended, but it should";
 
-    // Now let's verify that if the client returns via SARR, they get the same lease.
+    // Now let's verify that if the client returns via SARR, they get the same
+    // lease and the cltt gets extended.
+
+    // First, we're going to rollback the clock again so we can verify the
+    // allocation updates the expiry.
+    ASSERT_NO_FATAL_FAILURE(rollbackPersistedCltt(renewed_lease));
+
     // Create a new context which will be used to try to allocate leases
     query.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", false, query);
@@ -3208,13 +3215,20 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
     ASSERT_EQ("host1", current->getHostname());
 
     // Check that we have been allocated the original dynamic address.
-    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
-    ASSERT_TRUE(lease);
-    EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
+    Lease6Ptr lease2;
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease2);
+    EXPECT_EQ("2001:db8:1::10", lease2->addr_.toText());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(lease2->cltt_, renewed_lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
 }
 
-// Verifies that client with a global hostname reservation can get and
-// renew a dynamic lease from their selected subnet.
+// Verifies that client with a global hostname reservation can:
+// 1. Get a dynamic lease
+// 2. Renew the same lease via REQUEST (calls allocateLease6)
+// 3. Renew the same lease via RENEW/REBIND (calls renewLeases6)
 TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
@@ -3249,13 +3263,7 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
 
     // We're going to rollback the clock a little so we can verify a renewal.
-    // We verify the "time" change in case the lease returned to us
-    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
-    --lease->cltt_;
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+    ASSERT_NO_FATAL_FAILURE(rollbackPersistedCltt(lease));
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -3270,11 +3278,17 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
-    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+    ASSERT_GT(renewed[0]->cltt_, lease->cltt_)
         << "Lease lifetime was not extended, but it should";
 
-    // Now let's verify that if the client returns via SARR, they get the same lease.
-    // Create a new context which will be used to try to allocate leases
+    // Now let's verify that if the client returns via SARR, they get the same
+    // lease. Create a new context which will be used to try to allocate leases
+
+    // First, we're going to rollback the clock again so we can verify the
+    // allocation updates the expiry.
+    Lease6Ptr renewed_lease = renewed[0];
+    ASSERT_NO_FATAL_FAILURE(rollbackPersistedCltt(renewed_lease));
+
     query.reset(new Pkt6(DHCPV6_REQUEST, 1234));
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", false, query);
     ctx2.currentIA().iaid_ = iaid_;
@@ -3288,9 +3302,14 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     ASSERT_EQ("ghost1", current->getHostname());
 
     // Check that we have been allocated a dynamic address.
-    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
-    ASSERT_TRUE(lease);
-    EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
+    Lease6Ptr lease2;
+    ASSERT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease2);
+    EXPECT_EQ("2001:db8:1::10", lease2->addr_.toText());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(lease2->cltt_, renewed_lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
 }
 
 // Verifies that client with a global address reservation can get and

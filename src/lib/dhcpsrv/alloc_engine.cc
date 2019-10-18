@@ -790,6 +790,9 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
 
             // All checks are done. Let's hope we have some leases left.
 
+            // Update any leases we have left.
+            leases = updateLeaseData(ctx, leases);
+
             // If we don't have any leases at this stage, it means that we hit
             // one of the following cases:
             // - we have a reservation, but it's not for this IAID/ia-type and
