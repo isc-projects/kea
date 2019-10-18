@@ -1,4 +1,4 @@
-16xx.	[bug]		tmark
+1670.	[bug]		tmark
 	Corrected an issue in kea-dhcp6 where the server would fail
 	to extend the expiry of a existing dynamic lease assigned to
 	client with host reservation.
