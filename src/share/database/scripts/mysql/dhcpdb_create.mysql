@@ -2791,6 +2791,39 @@ CREATE INDEX lease4_by_hostname ON lease4 (hostname);
 # Create hostname index for lease6
 CREATE INDEX lease6_by_hostname ON lease6 (hostname);
 
+# Add new ddns columns to shared networks and subnets
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '9', minor = '0';
