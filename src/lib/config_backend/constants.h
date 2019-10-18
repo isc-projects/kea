@@ -70,6 +70,8 @@ constexpr unsigned long SERVER_TAG_BUF_LENGTH = 256;
 
 constexpr unsigned long SERVER_DESCRIPTION_BUF_LENGTH = 65536;
 
+constexpr unsigned long DNS_NAME_BUF_LENGTH = 255;
+
 //*}
 
 } // end of namespace isc::cb

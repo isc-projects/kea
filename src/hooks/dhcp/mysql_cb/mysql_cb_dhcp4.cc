@@ -310,6 +310,12 @@ public:
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
             MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pool: require_client_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
+            MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_client_update
+            MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -425,6 +431,7 @@ public:
                         last_subnet->addRelayAddress(IOAddress(relay_element->get(i)->stringValue()));
                     }
                 }
+
                 // require_client_classes
                 ElementPtr require_element = out_bindings[14]->getJSON();
                 if (require_element) {
@@ -488,7 +495,38 @@ public:
 
                 // pool client_class, require_client_classes and user_context
 
-                // server_tag at 58
+                // ddns_send_updates at 58
+                if (!out_bindings[58]->amNull()) {
+                    last_subnet->setDdnsSendUpdates(out_bindings[58]->getBool());
+                }
+
+                // ddns_override_no_update at 59
+                if (!out_bindings[59]->amNull()) {
+                    last_subnet->setDdnsOverrideNoUpdate(out_bindings[59]->getBool());
+                }
+
+                // ddns_override_client_update at 60
+                if (!out_bindings[60]->amNull()) {
+                    last_subnet->setDdnsOverrideClientUpdate(out_bindings[60]->getBool());
+                }
+
+                // ddns_replace_client_name at 61
+                if (!out_bindings[61]->amNull()) {
+                    last_subnet->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
+                        (out_bindings[61]->getInteger<uint8_t>()));
+                }
+
+                // ddns_generated_prefix at 62
+                if (!out_bindings[62]->amNull()) {
+                    last_subnet->setDdnsGeneratedPrefix(out_bindings[62]->getString());
+                }
+
+                // ddns_qualifying_suffix at 63
+                if (!out_bindings[63]->amNull()) {
+                    last_subnet->setDdnsQualifyingSuffix(out_bindings[63]->getString());
+                }
+
+                // server_tag at 64
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.push_back(last_subnet);
@@ -502,9 +540,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[58]->amNull() &&
-                (last_tag != out_bindings[58]->getString())) {
-                last_tag = out_bindings[58]->getString();
+            if (!out_bindings[64]->amNull() &&
+                (last_tag != out_bindings[64]->getString())) {
+                last_tag = out_bindings[64]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -908,6 +946,16 @@ public:
             hr_mode_binding = MySqlBinding::createNull();
         }
 
+        // Create binding for DDNS replace client name mode.
+        MySqlBindingPtr ddns_rcn_mode_binding;
+        auto ddns_rcn_mode = subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+        if (!ddns_rcn_mode.unspecified()) {
+            ddns_rcn_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                                         (ddns_rcn_mode.get()));
+        } else {
+            ddns_rcn_mode_binding = MySqlBinding::createNull();
+        }
+
         // Create binding with shared network name if the subnet belongs to a
         // shared network.
         MySqlBindingPtr shared_network_binding;
@@ -962,7 +1010,13 @@ public:
             MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT1Percent(Network::Inheritance::NONE)),
             MySqlBinding::condCreateFloat(subnet->getT2Percent(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateBool(subnet->getAuthoritative(Network::Inheritance::NONE))
+            MySqlBinding::condCreateBool(subnet->getAuthoritative(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getDdnsSendUpdates(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getDdnsOverrideNoUpdate(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getDdnsOverrideClientUpdate(Network::Inheritance::NONE)),
+            ddns_rcn_mode_binding,
+            MySqlBinding::condCreateString(subnet->getDdnsGeneratedPrefix(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getDdnsQualifyingSuffix(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1200,6 +1254,12 @@ public:
             MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
             MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
             MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
+            MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_client_update
+            MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1346,6 +1406,37 @@ public:
 
                 // {min,max}_valid_lifetime
 
+                // ddns_send_updates at 34
+                if (!out_bindings[34]->amNull()) {
+                    last_network->setDdnsSendUpdates(out_bindings[34]->getBool());
+                }
+
+                // ddns_override_no_update at 35
+                if (!out_bindings[35]->amNull()) {
+                    last_network->setDdnsOverrideNoUpdate(out_bindings[35]->getBool());
+                }
+
+                // ddns_override_client_update at 36
+                if (!out_bindings[36]->amNull()) {
+                    last_network->setDdnsOverrideClientUpdate(out_bindings[36]->getBool());
+                }
+
+                // ddns_replace_client_name at 37
+                if (!out_bindings[37]->amNull()) {
+                    last_network->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
+                        (out_bindings[37]->getInteger<uint8_t>()));
+                }
+
+                // ddns_generated_prefix at 38
+                if (!out_bindings[38]->amNull()) {
+                    last_network->setDdnsGeneratedPrefix(out_bindings[38]->getString());
+                }
+
+                // ddns_qualifying_suffix at 39
+                if (!out_bindings[39]->amNull()) {
+                    last_network->setDdnsQualifyingSuffix(out_bindings[39]->getString());
+                }
+
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
 
@@ -1358,9 +1449,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[34]->amNull() &&
-                (last_tag != out_bindings[34]->getString())) {
-                last_tag = out_bindings[34]->getString();
+            if (!out_bindings[40]->amNull() &&
+                (last_tag != out_bindings[40]->getString())) {
+                last_tag = out_bindings[40]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -1486,6 +1577,16 @@ public:
             hr_mode_binding = MySqlBinding::createNull();
         }
 
+        // Create binding for DDNS replace client name mode.
+        MySqlBindingPtr ddns_rcn_mode_binding;
+        auto ddns_rcn_mode = shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+        if (!ddns_rcn_mode.unspecified()) {
+            ddns_rcn_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                                         (ddns_rcn_mode.get()));
+        } else {
+            ddns_rcn_mode_binding = MySqlBinding::createNull();
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
             MySqlBinding::condCreateString(shared_network->getClientClass(Network::Inheritance::NONE)),
@@ -1507,7 +1608,13 @@ public:
             MySqlBinding::condCreateBool(shared_network->getAuthoritative(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getFilename(Network::Inheritance::NONE)),
             MySqlBinding::condCreateIPv4Address(shared_network->getSiaddr(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(shared_network->getSname(Network::Inheritance::NONE))
+            MySqlBinding::condCreateString(shared_network->getSname(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getDdnsSendUpdates(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getDdnsOverrideNoUpdate(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getDdnsOverrideClientUpdate(Network::Inheritance::NONE)),
+            ddns_rcn_mode_binding,
+            MySqlBinding::condCreateString(shared_network->getDdnsGeneratedPrefix(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getDdnsQualifyingSuffix(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -2348,9 +2455,15 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
-      "  authoritative"
+      "  authoritative,"
+      "  ddns_send_updates,"
+      "  ddns_override_no_update,"
+      "  ddns_override_client_update,"
+      "  ddns_replace_client_name,"
+      "  ddns_generated_prefix,"
+      "  ddns_qualifying_suffix"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -2385,9 +2498,15 @@ TaggedStatementArray tagged_statements = { {
       "  authoritative,"
       "  boot_file_name,"
       "  next_server,"
-      "  server_hostname"
+      "  server_hostname,"
+      "  ddns_send_updates,"
+      "  ddns_override_no_update,"
+      "  ddns_override_client_update,"
+      "  ddns_replace_client_name,"
+      "  ddns_generated_prefix,"
+      "  ddns_qualifying_suffix"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2452,7 +2571,13 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
-      "  authoritative = ? "
+      "  authoritative = ?,"
+      "  ddns_send_updates = ?,"
+      "  ddns_override_no_update = ?,"
+      "  ddns_override_client_update = ?,"
+      "  ddns_replace_client_name = ?,"
+      "  ddns_generated_prefix = ?,"
+      "  ddns_qualifying_suffix = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -2478,7 +2603,13 @@ TaggedStatementArray tagged_statements = { {
       "  authoritative = ?,"
       "  boot_file_name = ?,"
       "  next_server = ?,"
-      "  server_hostname = ? "
+      "  server_hostname = ?,"
+      "  ddns_send_updates = ?,"
+      "  ddns_override_no_update = ?,"
+      "  ddns_override_client_update = ?,"
+      "  ddns_replace_client_name = ?,"
+      "  ddns_generated_prefix = ?,"
+      "  ddns_qualifying_suffix = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.
