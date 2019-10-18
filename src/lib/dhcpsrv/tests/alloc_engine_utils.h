@@ -440,7 +440,7 @@ public:
                       uint8_t prefix_len);
 
     /// @brief Utility function that decrements cltt of a persisted lease
-    /// 
+    ///
     /// This function is used to simulate the passage of time by decrementing
     /// the lease's cltt, currently by 1.  It fetches the desired lease from the
     /// lease manager, decrements the cltt, then updates the lease in the lease
@@ -448,14 +448,14 @@ public:
     ///
     /// @param[in][out] lease pointer reference to the lease to modify.  Upon
     /// return it will point to the newly updated lease.
-    void 
+    void
     rollbackPersistedCltt(Lease6Ptr& lease) {
-        ASSERT_TRUE(lease) << "rollbackCltt lease is empty";
-       
-        // Fetch it, so we can update it. 
+        ASSERT_TRUE(lease) << "rollbackPersistedCltt lease is empty";
+
+        // Fetch it, so we can update it.
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
                                                                    lease->addr_);
-        ASSERT_TRUE(from_mgr) << "rollbackCltt: lease not found?";
+        ASSERT_TRUE(from_mgr) << "rollbackPersistedCltt: lease not found?";
 
         // Decrement cltt then update it in the manager.
         --from_mgr->cltt_;
