@@ -33,7 +33,6 @@ StatsMgr::StatsMgr() :
 }
 
 void StatsMgr::setValue(const std::string& name, const int64_t value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -43,7 +42,6 @@ void StatsMgr::setValue(const std::string& name, const int64_t value, bool lock)
 }
 
 void StatsMgr::setValue(const std::string& name, const double value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -53,7 +51,6 @@ void StatsMgr::setValue(const std::string& name, const double value, bool lock) 
 }
 
 void StatsMgr::setValue(const std::string& name, const StatsDuration& value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -63,7 +60,6 @@ void StatsMgr::setValue(const std::string& name, const StatsDuration& value, boo
 }
 
 void StatsMgr::setValue(const std::string& name, const std::string& value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -73,7 +69,6 @@ void StatsMgr::setValue(const std::string& name, const std::string& value, bool 
 }
 
 void StatsMgr::addValue(const std::string& name, const int64_t value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -83,7 +78,6 @@ void StatsMgr::addValue(const std::string& name, const int64_t value, bool lock)
 }
 
 void StatsMgr::addValue(const std::string& name, const double value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -93,7 +87,6 @@ void StatsMgr::addValue(const std::string& name, const double value, bool lock) 
 }
 
 void StatsMgr::addValue(const std::string& name, const StatsDuration& value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -103,7 +96,6 @@ void StatsMgr::addValue(const std::string& name, const StatsDuration& value, boo
 }
 
 void StatsMgr::addValue(const std::string& name, const std::string& value, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -113,7 +105,6 @@ void StatsMgr::addValue(const std::string& name, const std::string& value, bool 
 }
 
 ObservationPtr StatsMgr::getObservation(const std::string& name, bool lock) const {
-    return ObservationPtr(); // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -125,7 +116,6 @@ ObservationPtr StatsMgr::getObservation(const std::string& name, bool lock) cons
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat, bool lock) {
-    return; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -137,7 +127,6 @@ void StatsMgr::addObservation(const ObservationPtr& stat, bool lock) {
 }
 
 bool StatsMgr::deleteObservation(const std::string& name, bool lock) {
-    return true; // to use rw locks
     std::mutex* mlock = nullptr;
     if (lock) {
         mlock = mutex_.get();
@@ -150,7 +139,6 @@ bool StatsMgr::deleteObservation(const std::string& name, bool lock) {
 
 bool StatsMgr::setMaxSampleAge(const std::string& name,
                                const StatsDuration& duration) {
-    return true; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     ObservationPtr obs = getObservation(name, false);
     if (obs) {
@@ -163,7 +151,6 @@ bool StatsMgr::setMaxSampleAge(const std::string& name,
 
 bool StatsMgr::setMaxSampleCount(const std::string& name,
                                  uint32_t max_samples) {
-    return true; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     ObservationPtr obs = getObservation(name, false);
     if (obs) {
@@ -175,7 +162,6 @@ bool StatsMgr::setMaxSampleCount(const std::string& name,
 }
 
 void StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
-    return; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
@@ -187,7 +173,6 @@ void StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
 }
 
 void StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
-    return; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
@@ -199,7 +184,6 @@ void StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
 }
 
 bool StatsMgr::reset(const std::string& name) {
-    return true; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     ObservationPtr obs = getObservation(name, false);
     if (obs) {
@@ -211,19 +195,16 @@ bool StatsMgr::reset(const std::string& name) {
 }
 
 bool StatsMgr::del(const std::string& name) {
-    return true; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     return (global_->del(name));
 }
 
 void StatsMgr::removeAll() {
-    return; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     global_->stats_.clear();
 }
 
 isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
-    return ConstElementPtr(); // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
     ObservationPtr obs = getObservation(name, false);
@@ -234,7 +215,6 @@ isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
 }
 
 isc::data::ConstElementPtr StatsMgr::getAll() const {
-    return ConstElementPtr(); // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     isc::data::ElementPtr map = isc::data::Element::createMap(); // a map
 
@@ -249,7 +229,6 @@ isc::data::ConstElementPtr StatsMgr::getAll() const {
 }
 
 void StatsMgr::resetAll() {
-    return; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
@@ -261,7 +240,6 @@ void StatsMgr::resetAll() {
 }
 
 size_t StatsMgr::getSize(const std::string& name) const {
-    return 0; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     ObservationPtr obs = getObservation(name, false);
     size_t size = 0;
@@ -272,7 +250,6 @@ size_t StatsMgr::getSize(const std::string& name) const {
 }
 
 size_t StatsMgr::count() const {
-    return 0; // to use rw locks
     LockGuard<std::mutex> lock(mutex_.get());
     return (global_->stats_.size());
 }
