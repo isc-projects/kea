@@ -88,7 +88,7 @@ OptionString::unpack(OptionBufferConstIter begin,
     // Trim off trailing null(s)
     end = util::str::seekTrimmed(begin, end, 0x0);
     if (std::distance(begin, end) == 0) {
-        isc_throw(isc::OutOfRange, "failed to parse an option '"
+        isc_throw(isc::dhcp::SkipThisOptionError, "failed to parse an option '"
                   << getType() << "' holding string value"
                   << "' was empty or contained only NULLs");
     }

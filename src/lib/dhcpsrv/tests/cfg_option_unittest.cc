@@ -15,6 +15,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcpsrv/cfg_option.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
@@ -552,16 +553,9 @@ TEST_F(CfgOptionTest, mergeInvalid) {
 
     // When we attempt to merge, it should fail, recognizing that
     // option 2, which has a formatted value,  has no definition.
-    try {
-        this_cfg.merge(defs, other_cfg);
-        GTEST_FAIL() << "merge should have thrown";
-    } catch (const InvalidOperation& ex) {
-        std::string exp_msg = "option: isc.2 has a formatted value: "
-                              "'one,two,three' but no option definition";
-        EXPECT_EQ(std::string(exp_msg), std::string(ex.what()));
-    } catch (const std::exception& ex) {
-        GTEST_FAIL() << "wrong exception thrown:" << ex.what();
-    }
+    ASSERT_THROW_MSG(this_cfg.merge(defs, other_cfg), InvalidOperation,
+                     "option: isc.2 has a formatted value: "
+                     "'one,two,three' but no option definition");
 
     // Now let's add an option definition that will force data truncated
     // error for option 1.
@@ -569,17 +563,10 @@ TEST_F(CfgOptionTest, mergeInvalid) {
 
     // When we attempt to merge, it should fail because option 1's data
     // is not valid per its definition.
-    try {
-        this_cfg.merge(defs, other_cfg);
-        GTEST_FAIL() << "merge should have thrown";
-    } catch (const InvalidOperation& ex) {
-        std::string exp_msg = "could not create option: isc.1"
-                              " from data specified, reason:"
-                              " Option 1 truncated";
-        EXPECT_EQ(std::string(exp_msg), std::string(ex.what()));
-    } catch (const std::exception& ex) {
-        GTEST_FAIL() << "wrong exception thrown:" << ex.what();
-    }
+    EXPECT_THROW_MSG(this_cfg.merge(defs, other_cfg), InvalidOperation,
+                     "could not create option: isc.1"
+                     " from data specified, reason:"
+                     " OptionInt 1 truncated");
 }
 
 // This test verifies the all of the valid option cases

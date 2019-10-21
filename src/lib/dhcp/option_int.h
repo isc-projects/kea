@@ -146,7 +146,7 @@ public:
     /// because it is checked in a constructor.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
         if (distance(begin, end) < sizeof(T)) {
-            isc_throw(OutOfRange, "Option " << getType() << " truncated");
+            isc_throw(OutOfRange, "OptionInt " << getType() << " truncated");
         }
         // @todo consider what to do if buffer is longer than data type.
 

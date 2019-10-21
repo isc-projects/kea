@@ -71,14 +71,14 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     // an exception.
     EXPECT_THROW(
         OptionString(Option::V4, 234, buf_.begin(), buf_.begin()),
-        isc::OutOfRange
+        isc::dhcp::SkipThisOptionError
     );
 
     // NULLs should result in an exception.
     std::vector<uint8_t>nulls = { 0, 0, 0 };
     EXPECT_THROW(
         OptionString(Option::V4, 234, nulls.begin(), nulls.begin()),
-        isc::OutOfRange
+        isc::dhcp::SkipThisOptionError
     );
 
     // Declare option as a scoped pointer here so as its scope is
@@ -211,7 +211,7 @@ TEST_F(OptionStringTest, unpackNullsHandling) {
 
     // Only nulls should throw.
     OptionBuffer buffer = { 0, 0 };
-    ASSERT_THROW(optv4.unpack(buffer.begin(), buffer.end()), isc::OutOfRange);
+    ASSERT_THROW(optv4.unpack(buffer.begin(), buffer.end()), isc::dhcp::SkipThisOptionError);
 
     // One trailing null should trim off.
     buffer = {'o', 'n', 'e', 0 };

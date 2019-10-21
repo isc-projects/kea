@@ -55,6 +55,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+class SkipThisOptionError : public Exception {
+public:
+    SkipThisOptionError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+
 class Option {
 public:
     /// length of the usual DHCPv4 option header (there are exceptions)

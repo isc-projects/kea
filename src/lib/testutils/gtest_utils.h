@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef GTEST_UTIL_H
-#define GTEST_UTIL_H
+#ifndef GTEST_UTILS_H
+#define GTEST_UTILS_H
 
 #include <gtest/gtest.h>
 
@@ -54,7 +54,37 @@ namespace test {
     } \
 } \
 
+/// @brief Adds a non-fatal failure with exception info, if the given 
+/// expression throws
+/// 
+/// @param statement - statement block to execute
+#define EXPECT_NO_THROW_LOG(statement) \
+{ \
+    try { \
+        statement; \
+    } catch (const std::exception& ex)  { \
+        ADD_FAILURE() << #statement <<  "threw: " << ex.what(); \
+    } catch (...) { \
+        ADD_FAILURE() << #statement <<  "threw non-std::exception"; \
+    } \
+} \
+
+/// @brief Generates a fatal failure with exception info, if the given 
+/// expression throws
+/// 
+/// @param statement - statement block to execute
+#define ASSERT_NO_THROW_LOG(statement) \
+{ \
+    try { \
+        statement; \
+    } catch (const std::exception& ex)  { \
+        GTEST_FAIL() << #statement <<  "threw: " << ex.what(); \
+    } catch (...) { \
+        GTEST_FAIL() << #statement <<  "threw non-std::exception"; \
+    } \
+} \
+
 }; // end of isc::test namespace
 }; // end of isc namespace
 
-#endif // GTEST_UTIL_H
+#endif // GTEST_UTILS_H

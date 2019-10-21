@@ -186,7 +186,7 @@ public:
             isc_throw(OutOfRange, "option " << getType() << " empty");
         }
         if (distance(begin, end) % sizeof(T) != 0) {
-            isc_throw(OutOfRange, "option " << getType() << " truncated");
+            isc_throw(OutOfRange, "OptionIntArray " << getType() << " truncated");
         }
         // @todo consider what to do if buffer is longer than data type.
 

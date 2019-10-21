@@ -264,6 +264,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             ;
         }
         return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+    } catch (const SkipThisOptionError& ex) {
+        // We need to throw this one as is.
+        throw ex;
     } catch (const SkipRemainingOptionsError& ex) {
         // We need to throw this one as is.
         throw ex;
