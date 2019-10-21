@@ -169,6 +169,7 @@ public:
         subnet->setCalculateTeeTimes(true);
         subnet->setT1Percent(0.345);
         subnet->setT2Percent(0.444);
+        subnet->setDdnsSendUpdates(false);
 
         Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"), IOAddress("192.0.2.20")));
         subnet->addPool(pool1);
@@ -225,6 +226,12 @@ public:
         subnet->setT1(null_timer);
         subnet->setT2(null_timer);
         subnet->setValid(null_timer);
+        subnet->setDdnsSendUpdates(true);
+        subnet->setDdnsOverrideNoUpdate(true);
+        subnet->setDdnsOverrideClientUpdate(false);
+        subnet->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
+        subnet->setDdnsGeneratedPrefix("myhost");
+        subnet->setDdnsQualifyingSuffix("example.org");
 
         subnet->getCfgOption()->add(test_options_[0]->option_,
                                     test_options_[0]->persistent_,
@@ -263,6 +270,7 @@ public:
         shared_network->setSname("frog");
         shared_network->setFilename("/dev/null");
         shared_network->setAuthoritative(true);
+        shared_network->setDdnsSendUpdates(false);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
@@ -291,6 +299,12 @@ public:
         shared_network->setT1(null_timer);
         shared_network->setT2(null_timer);
         shared_network->setValid(null_timer);
+        shared_network->setDdnsSendUpdates(true);
+        shared_network->setDdnsOverrideNoUpdate(true);
+        shared_network->setDdnsOverrideClientUpdate(false);
+        shared_network->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
+        shared_network->setDdnsGeneratedPrefix("myhost");
+        shared_network->setDdnsQualifyingSuffix("example.org");
 
         shared_network->getCfgOption()->add(test_options_[0]->option_,
                                             test_options_[0]->persistent_,
@@ -1334,6 +1348,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithOptionalUnspecified) {
     EXPECT_TRUE(returned_subnet->get4o6().getSubnet4o6().get().first.isV6Zero());
     EXPECT_EQ(128, returned_subnet->get4o6().getSubnet4o6().get().second);
 
+    EXPECT_FALSE(returned_subnet->getDdnsSendUpdates().unspecified());
+    EXPECT_TRUE(returned_subnet->getDdnsSendUpdates().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_TRUE(returned_subnet->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(returned_subnet->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT,
+              returned_subnet->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ("myhost", returned_subnet->getDdnsGeneratedPrefix().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_EQ("example.org", returned_subnet->getDdnsQualifyingSuffix().get());
+
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
@@ -2312,6 +2345,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithOptionalUnspecified) {
 
     EXPECT_TRUE(returned_network->getAuthoritative().unspecified());
     EXPECT_FALSE(returned_network->getAuthoritative().get());
+
+    EXPECT_FALSE(returned_network->getDdnsSendUpdates().unspecified());
+    EXPECT_TRUE(returned_network->getDdnsSendUpdates().get());
+
+    EXPECT_FALSE(returned_network->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_TRUE(returned_network->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_FALSE(returned_network->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(returned_network->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_FALSE(returned_network->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT,
+              returned_network->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_FALSE(returned_network->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ("myhost", returned_network->getDdnsGeneratedPrefix().get());
+
+    EXPECT_FALSE(returned_network->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_EQ("example.org", returned_network->getDdnsQualifyingSuffix().get());
 }
 
 // Test that deleteSharedNetworkSubnets4 with not ANY selector throw.
