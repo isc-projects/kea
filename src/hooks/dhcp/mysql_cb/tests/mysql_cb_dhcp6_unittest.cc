@@ -164,6 +164,7 @@ public:
         subnet->setCalculateTeeTimes(true);
         subnet->setT1Percent(0.345);
         subnet->setT2Percent(0.444);
+        subnet->setDdnsSendUpdates(false);
 
         Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
                                  IOAddress("2001:db8::10"),
@@ -264,6 +265,12 @@ public:
         subnet->setT2(null_timer);
         subnet->setValid(null_timer);
         subnet->setPreferred(null_timer);
+        subnet->setDdnsSendUpdates(true);
+        subnet->setDdnsOverrideNoUpdate(true);
+        subnet->setDdnsOverrideClientUpdate(false);
+        subnet->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
+        subnet->setDdnsGeneratedPrefix("myhost");
+        subnet->setDdnsQualifyingSuffix("example.org");
 
         subnet->getCfgOption()->add(test_options_[0]->option_,
                                     test_options_[0]->persistent_,
@@ -307,6 +314,7 @@ public:
         shared_network->setCalculateTeeTimes(true);
         shared_network->setT1Percent(0.345);
         shared_network->setT2Percent(0.444);
+        shared_network->setDdnsSendUpdates(false);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
@@ -337,6 +345,12 @@ public:
         shared_network->setT2(null_timer);
         shared_network->setValid(null_timer);
         shared_network->setPreferred(null_timer);
+        shared_network->setDdnsSendUpdates(true);
+        shared_network->setDdnsOverrideNoUpdate(true);
+        shared_network->setDdnsOverrideClientUpdate(false);
+        shared_network->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
+        shared_network->setDdnsGeneratedPrefix("myhost");
+        shared_network->setDdnsQualifyingSuffix("example.org");
 
         shared_network->getCfgOption()->add(test_options_[0]->option_,
                                             test_options_[0]->persistent_,
@@ -1361,6 +1375,25 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSubnet6WithOptionalUnspecified) {
     EXPECT_TRUE(returned_subnet->getRapidCommit().unspecified());
     EXPECT_FALSE(returned_subnet->getRapidCommit().get());
 
+    EXPECT_FALSE(returned_subnet->getDdnsSendUpdates().unspecified());
+    EXPECT_TRUE(returned_subnet->getDdnsSendUpdates().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_TRUE(returned_subnet->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(returned_subnet->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT,
+              returned_subnet->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ("myhost", returned_subnet->getDdnsGeneratedPrefix().get());
+
+    EXPECT_FALSE(returned_subnet->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_EQ("example.org", returned_subnet->getDdnsQualifyingSuffix().get());
+
     // The easiest way to verify whether the returned subnet matches the inserted
     // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
@@ -2347,6 +2380,25 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getSharedNetwork6WithOptionalUnspecified) {
 
     EXPECT_TRUE(returned_network->getRapidCommit().unspecified());
     EXPECT_FALSE(returned_network->getRapidCommit().get());
+
+    EXPECT_FALSE(returned_network->getDdnsSendUpdates().unspecified());
+    EXPECT_TRUE(returned_network->getDdnsSendUpdates().get());
+
+    EXPECT_FALSE(returned_network->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_TRUE(returned_network->getDdnsOverrideNoUpdate().get());
+
+    EXPECT_FALSE(returned_network->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_FALSE(returned_network->getDdnsOverrideClientUpdate().get());
+
+    EXPECT_FALSE(returned_network->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT,
+              returned_network->getDdnsReplaceClientNameMode().get());
+
+    EXPECT_FALSE(returned_network->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ("myhost", returned_network->getDdnsGeneratedPrefix().get());
+
+    EXPECT_FALSE(returned_network->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_EQ("example.org", returned_network->getDdnsQualifyingSuffix().get());
 }
 
 // Test that deleteSharedNetworkSubnets6 with not ANY selector throw.
