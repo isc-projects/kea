@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,10 +69,10 @@
     && defined(BOOST_ERROR_CODE_HEADER_ONLY))
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
-#include <boost/asio.hpp>
+#include <asiolink/asio_no_warnings.h>
 #pragma GCC pop_options
 #else
-#include <boost/asio.hpp>
+#include <asiolink/asio_no_warnings.h>
 #endif
 
 #endif // ASIO_WRAPPER_H
