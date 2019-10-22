@@ -21,7 +21,7 @@ namespace util {
 ///
 /// The standard way to use it is:
 /// @code
-/// if (MultiThreadingMgr::instance().getMode) {
+/// if (MultiThreadingMgr::instance().getMode()) {
 ///     multi-threaded code
 /// } else {
 ///     single-threaded code
@@ -35,7 +35,7 @@ namespace util {
 /// } // end of locked namespace
 ///
 /// void foo() {
-///     if (MultiThreadingMgr::instance().getMode) {
+///     if (MultiThreadingMgr::instance().getMode()) {
 ///         lock_guard<mutex> lock(mutex_);
 ///         locked::foo();
 ///     } else {
