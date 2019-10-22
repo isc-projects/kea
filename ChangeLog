@@ -1,3 +1,8 @@
+1672.	[build]		fdupont
+	Deprecated bind1st and bind2nd templates were replaced with
+	lambda expressions or plain bind templates.
+	(Gitlab #919,!521, git b12fa3374454c9c0d749557d5532aab55dbc58d9)
+
 1671.	[bug]		tmark
 	Corrected an issue in kea-dhcp6 where the server would fail
 	to extend the expiry of a existing dynamic lease assigned to
