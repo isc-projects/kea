@@ -44,6 +44,7 @@ run_unittests_SOURCES += labeled_value_unittest.cc
 run_unittests_SOURCES += memory_segment_local_unittest.cc
 run_unittests_SOURCES += memory_segment_common_unittest.h
 run_unittests_SOURCES += memory_segment_common_unittest.cc
+run_unittests_SOURCES += multi_threading_mgr_unittest.cc
 run_unittests_SOURCES += optional_unittest.cc
 run_unittests_SOURCES += pid_file_unittest.cc
 run_unittests_SOURCES += process_spawn_unittest.cc
