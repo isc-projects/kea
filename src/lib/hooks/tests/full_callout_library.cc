@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,10 @@
 ///
 /// The characteristics of this library are:
 ///
-/// - All three framework functions are supplied (version(), load() and
-///   unload()), with unload() creating a marker file.  The test code checks
-///   for the presence of this file, so verifying that unload() has been run.
+/// - All four framework functions are supplied (version(), load(),
+///   unload() and multi_threading_compatible()), with unload()
+///   creating a marker file.  The test code checks for the presence
+///   of this file, so verifying that unload() has been run.
 ///
 /// - One standard and two non-standard callouts are supplied, with the latter
 ///   being registered by the load() function.
@@ -165,6 +166,11 @@ unload() {
     marker.close();
 
     return (0);
+}
+
+int
+multi_threading_compatible() {
+    return (1);
 }
 
 };

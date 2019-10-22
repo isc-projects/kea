@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,9 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#if 0
+#include <util/multi_threading_mgr.h>
+#endif
 #include <hooks/hooks.h>
 #include <hooks/hooks_log.h>
 #include <hooks/callout_manager.h>
@@ -53,7 +56,7 @@ LibraryManager::LibraryManager(const std::string& name)
         : dl_handle_(NULL), index_(-1), manager_(), library_name_(name)
 {}
 
-// Destructor.  
+// Destructor.
 LibraryManager::~LibraryManager() {
     if (manager_) {
         // LibraryManager instantiated to load a library, so ensure that
@@ -132,6 +135,42 @@ LibraryManager::checkVersion() const {
     }
 
     return (false);
+}
+
+// Check the multi-threading compatibility of the library
+
+bool
+LibraryManager::checkMultiThreadingCompatible() const {
+
+    // Compatible with single-threaded.
+#if 0
+    if (!MultiThreadingMgr::instance().getMode()) {
+        return (true);
+    }
+#endif
+
+    // Get the pointer to the "multi_threading_compatible" function.
+    PointerConverter pc(dlsym(dl_handle_, MULTI_THREADING_COMPATIBLE_FUNCTION_NAME));
+    int compatible = 0;
+    if (pc.multiThreadingCompatiblePtr()) {
+        try {
+            compatible = (*pc.multiThreadingCompatiblePtr())();
+        } catch (...) {
+            LOG_ERROR(hooks_logger, HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION)
+                .arg(library_name_);
+            return (false);
+        }
+
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS,
+                  HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE)
+            .arg(library_name_)
+            .arg(compatible);
+    }
+    if (compatible == 0) {
+        LOG_ERROR(hooks_logger, HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE)
+            .arg(library_name_);
+    }
+    return (compatible != 0);
 }
 
 // Register the standard callouts
@@ -275,9 +314,12 @@ LibraryManager::loadLibrary() {
         isc::log::LoggerManager::logDuplicatedMessages();
 
         // Library opened OK, see if a version function is present and if so,
-        // check what value it returns.
+        // check what value it returns. Check multi-threading compatibility.
+#if 0
+        if (checkVersion() && checkMultiThreadingCompatible()) {
+#else
         if (checkVersion()) {
-
+#endif
             // Version OK, so now register the standard callouts and call the
             // library's load() function if present.
             registerStandardCallouts();
@@ -360,7 +402,12 @@ LibraryManager::validateLibrary(const std::string& name) {
     LibraryManager manager(name);
 
     // Try to open it and, if we succeed, check the version.
+#if 0
+    bool validated = manager.openLibrary() && manager.checkVersion() &&
+        checkMultiThreadingCompatible();
+#else
     bool validated = manager.openLibrary() && manager.checkVersion();
+#endif
 
     // Regardless of whether the version checked out, close the library. (This
     // is a no-op if the library failed to open.)
