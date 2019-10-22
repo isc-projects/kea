@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,10 @@
 
 #include <log/message_dictionary.h>
 #include <log/message_initializer.h>
+
+#if 0
+#include <util/multi_threading_mgr.h>
+#endif
 
 #include <gtest/gtest.h>
 
@@ -135,6 +139,7 @@ public:
     using LibraryManager::openLibrary;
     using LibraryManager::closeLibrary;
     using LibraryManager::checkVersion;
+    using LibraryManager::checkMultiThreadingCompatible;
     using LibraryManager::registerStandardCallouts;
     using LibraryManager::runLoad;
     using LibraryManager::runUnload;
@@ -231,6 +236,96 @@ TEST_F(LibraryManagerTest, CorrectVersionReturned) {
 
     // Version check should succeed.
     EXPECT_TRUE(lib_manager.checkVersion());
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Checks that the code handles the case of a library with no
+// multi_threading_compatible function.
+
+TEST_F(LibraryManagerTest, NoMultiThreadingCompatible) {
+    PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+#if 0
+    // Not multi-threading compatible: does not matter without MT.
+    EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
+
+    // Not multi-threading compatible: does matter with MT.
+    //// set MT
+    EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
+#endif
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Checks that the code handles the case of a library with a
+// multi_threading_compatible function returning 0 (not compatible).
+
+TEST_F(LibraryManagerTest, multiThreadingNotCompatible) {
+    PublicLibraryManager lib_manager(std::string(LOAD_ERROR_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+#if 0
+    // Not multi-threading compatible: does not matter without MT.
+    EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
+
+    // Not multi-threading compatible: does matter with MT.
+    //// set MT
+    EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
+#endif
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Checks that the code handles the case of a library with a
+// multi_threading_compatible function returning 1 (compatible)
+
+TEST_F(LibraryManagerTest, multiThreadingCompatible) {
+    PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY),
+                                     0, callout_manager_);
+
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+    // Multi-threading compatible: does not matter without MT.
+    EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
+
+    // Multi-threading compatible: does matter with MT.
+    //// set MT
+    EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
+
+    // Tidy up.
+    EXPECT_TRUE(lib_manager.closeLibrary());
+}
+
+// Checks that the code handles the case of a library with a
+// multi_threading_compatible function returning 1 (compatible)
+
+TEST_F(LibraryManagerTest, multiThreadingCompatibleException) {
+    PublicLibraryManager lib_manager(std::string(FRAMEWORK_EXCEPTION_LIBRARY),
+                                     0, callout_manager_);
+
+    // Open should succeed.
+    EXPECT_TRUE(lib_manager.openLibrary());
+
+#if 0
+    // Throw exception: does not matter without MT.
+    EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
+#endif
+
+    // Throw exception: does matter with MT.
+    //// set MT
+    EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
 
     // Tidy up.
     EXPECT_TRUE(lib_manager.closeLibrary());

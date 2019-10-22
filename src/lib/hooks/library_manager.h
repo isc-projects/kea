@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,7 +99,7 @@ public:
     ///
     /// A static method that is used to validate a library.  Validation checks
     /// that the library can be opened, that "version" exists, and that it
-    /// returns the right number.
+    /// returns the right number, and the multi-threading compatibility.
     ///
     /// @param name Name of the library to validate
     ///
@@ -109,15 +109,17 @@ public:
 
     /// @brief Loads a library
     ///
-    /// Open the library and check the version.  If all is OK, load all standard
-    /// symbols then call "load" if present.
+    /// Open the library, check the version and the multi-threading
+    /// compatibility.  If all is OK, load all standard symbols then
+    /// call "load" if present.
     ///
-    /// It also calls the @c isc::log::MessageInitializer::loadDictionary, prior
-    /// to invoking the @c version function of the library, to update the global
-    /// logging dictionary with the log messages registered by the loaded library.
+    /// It also calls the @c isc::log::MessageInitializer::loadDictionary,
+    /// prior to invoking the @c version function of the library, to
+    /// update the global logging dictionary with the log messages
+    /// registered by the loaded library.
     ///
-    /// @return true if the library loaded successfully, false otherwise. In the
-    ///         latter case, the library will be unloaded if possible.
+    /// @return true if the library loaded successfully, false otherwise.
+    /// In the latter case, the library will be unloaded if possible.
     bool loadLibrary();
 
     /// @brief Unloads a library
@@ -175,6 +177,16 @@ protected:
     ///
     /// @return bool true if the check succeeded
     bool checkVersion() const;
+
+    /// @brief Check multi-threading compatibility
+    ///
+    /// If the multi-threading mode is false returns true, else with
+    /// the library open, accesses the "multi_threading_compatible()"
+    /// function and returns false if not exists or has value 0, returns
+    /// true otherwise.
+    ///
+    /// @return bool true if the check succeeded
+    bool checkMultiThreadingCompatible() const;
 
     /// @brief Register standard callouts
     ///

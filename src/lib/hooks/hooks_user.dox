@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -113,8 +113,10 @@ of three (user-supplied) functions:
 is built
 - load - called when the library is loaded by the server.
 - unload - called when the library is unloaded by the server.
+- multi_threading_compatible - defines the compatibility (or not) of
+the user-library and a multi-threaded DHCP service.
 
-Of these, only "version" is mandatory, although in our example, all three
+Of these, only "version" is mandatory, although in our example, all four
 are used.
 
 @subsubsection hooksdgVersionFunction The "version" Function
@@ -250,6 +252,40 @@ with "load", a zero value must be returned on success and a non-zero value
 on an error.  The hooks framework will record a non-zero status return
 as an error in the current Kea log but otherwise ignore it.
 - As before, the function definitions are enclosed in 'extern "C"' braces.
+
+@subsubsection hooksdgMultiThreadingCompatibleFuntion The
+"multi_threading_compatible" function
+
+"multi_threading_compatible" is used by the hooks framework to check
+if the libraries it is loading are compatible with the DHCPv4 or DHCPv6
+erver multi-threading configuration. The value 0 means not compatible
+and is the default when the function is not implemented. not 0 values
+mean compatible.
+
+To be compatible means:
+- the code associated with DHCP packet processing callouts e.g.
+pkt4_receive or pkt6_send must be reentrant so the multi-threaded DHCP service
+can simultaneously calls more than once on of these callouts.
+- commands a library registers must be reentrant
+- when a library implements a backend API (e.g. host data source) the service
+methods must be reentrant
+- (shall be modified later) a library must not modify the internal
+configuration of the server, e.g. create or delete a subnet.
+
+In the tutoral, we'll put "multi_threading_compatible" in its own file,
+multi_threading_compatible.cc. The contents are:
+
+@code
+// multi_threading_compatible.cc
+
+extern "C" {
+
+int multi_threading_compatible() {
+    return (0);
+}
+
+}
+@endcode
 
 @subsection hooksdgCallouts Callouts
 

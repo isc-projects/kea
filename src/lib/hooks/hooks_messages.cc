@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/hooks/hooks_messages.mes on Fri Feb 08 2019 20:16
+// File created from ../../../src/lib/hooks/hooks_messages.mes on Wed Oct 23 2019 00:13
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -21,6 +21,8 @@ extern const isc::log::MessageID HOOKS_HOOK_LIST_RESET = "HOOKS_HOOK_LIST_RESET"
 extern const isc::log::MessageID HOOKS_INCORRECT_VERSION = "HOOKS_INCORRECT_VERSION";
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADED = "HOOKS_LIBRARY_LOADED";
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADING = "HOOKS_LIBRARY_LOADING";
+extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE = "HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE";
+extern const isc::log::MessageID HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE = "HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE";
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADED = "HOOKS_LIBRARY_UNLOADED";
 extern const isc::log::MessageID HOOKS_LIBRARY_UNLOADING = "HOOKS_LIBRARY_UNLOADING";
 extern const isc::log::MessageID HOOKS_LIBRARY_VERSION = "HOOKS_LIBRARY_VERSION";
@@ -28,6 +30,7 @@ extern const isc::log::MessageID HOOKS_LOAD_ERROR = "HOOKS_LOAD_ERROR";
 extern const isc::log::MessageID HOOKS_LOAD_EXCEPTION = "HOOKS_LOAD_EXCEPTION";
 extern const isc::log::MessageID HOOKS_LOAD_FRAMEWORK_EXCEPTION = "HOOKS_LOAD_FRAMEWORK_EXCEPTION";
 extern const isc::log::MessageID HOOKS_LOAD_SUCCESS = "HOOKS_LOAD_SUCCESS";
+extern const isc::log::MessageID HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION = "HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION";
 extern const isc::log::MessageID HOOKS_NO_LOAD = "HOOKS_NO_LOAD";
 extern const isc::log::MessageID HOOKS_NO_UNLOAD = "HOOKS_NO_UNLOAD";
 extern const isc::log::MessageID HOOKS_NO_VERSION = "HOOKS_NO_VERSION";
@@ -59,6 +62,8 @@ const char* values[] = {
     "HOOKS_INCORRECT_VERSION", "hook library %1 is at version %2, require version %3",
     "HOOKS_LIBRARY_LOADED", "hooks library %1 successfully loaded",
     "HOOKS_LIBRARY_LOADING", "loading hooks library %1",
+    "HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE", "hooks library %1 reports its multi-threading compatibility as %2",
+    "HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE", "hooks library %1 is not compatible with multi-threading",
     "HOOKS_LIBRARY_UNLOADED", "hooks library %1 successfully unloaded",
     "HOOKS_LIBRARY_UNLOADING", "unloading library %1",
     "HOOKS_LIBRARY_VERSION", "hooks library %1 reports its version as %2",
@@ -66,6 +71,7 @@ const char* values[] = {
     "HOOKS_LOAD_EXCEPTION", "'load' function in hook library %1 threw an exception",
     "HOOKS_LOAD_FRAMEWORK_EXCEPTION", "'load' function in hook library %1 threw an exception: reason %2",
     "HOOKS_LOAD_SUCCESS", "'load' function in hook library %1 returned success",
+    "HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION", "'multi_threading_compatible' function in hook library %1 threw an exception",
     "HOOKS_NO_LOAD", "no 'load' function found in hook library %1",
     "HOOKS_NO_UNLOAD", "no 'unload' function found in hook library %1",
     "HOOKS_NO_VERSION", "no 'version' function found in hook library %1",

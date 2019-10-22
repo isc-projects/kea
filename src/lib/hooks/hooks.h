@@ -19,11 +19,14 @@ const int KEA_HOOKS_VERSION = 11;
 const char* const LOAD_FUNCTION_NAME = "load";
 const char* const UNLOAD_FUNCTION_NAME = "unload";
 const char* const VERSION_FUNCTION_NAME = "version";
+const char* const MULTI_THREADING_COMPATIBLE_FUNCTION_NAME =
+    "multi_threading_compatible";
 
 // Typedefs for pointers to the framework functions.
 typedef int (*version_function_ptr)();
 typedef int (*load_function_ptr)(isc::hooks::LibraryHandle&);
 typedef int (*unload_function_ptr)();
+typedef int (*multi_threading_compatible_function_ptr)();
 
 } // Anonymous namespace
 

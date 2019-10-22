@@ -88,6 +88,17 @@ This is a debug message output just before the specified library is loaded.
 If the action is successfully, it will be followed by the
 HOOKS_LIBRARY_LOADED informational message.
 
+% HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE hooks library %1 reports its multi-threading compatibility as %2
+A debug message issued when the "multi_threading_compatible" function was
+called. The returned value (0 means not compatible, others compatible)
+is displayed.
+
+% HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE hooks library %1 is not compatible with multi-threading
+When multi-threading is enabled and the library is not compatible (either
+because the "multi_threading_compatible" function returned 0 or was not
+implemented) this error message is issued. The library must be removed
+from the configuration or the multi-threading disabled.
+
 % HOOKS_LIBRARY_UNLOADED hooks library %1 successfully unloaded
 This information message is issued when a user-supplied hooks library
 has been successfully unloaded.
@@ -124,6 +135,11 @@ installed.
 % HOOKS_LOAD_SUCCESS 'load' function in hook library %1 returned success
 This is a debug message issued when the "load" function has been found
 in a hook library and has been successfully called.
+
+% HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION 'multi_threading_compatible' function in hook library %1 threw an exception
+This error message is issued if the multi_threading_compatible()
+function in the specified hooks library was called and generated an
+exception.  The library is considered unusable and will not be loaded.
 
 % HOOKS_NO_LOAD no 'load' function found in hook library %1
 This is a debug message saying that the specified library was loaded

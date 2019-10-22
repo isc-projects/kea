@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,6 +92,13 @@ public:
         return (pointers_.version_ptr);
     }
 
+    /// @brief Return pointer to multi_threading_compatible function
+    ///
+    /// @return Pointer to the multi_threading_compatible function
+    multi_threading_compatible_function_ptr multiThreadingCompatiblePtr() const {
+        return (pointers_.multi_threading_compatible_ptr);
+    }
+
     ///@}
 
 private:
@@ -103,6 +110,8 @@ private:
         load_function_ptr       load_ptr;       // Pointer to load function
         unload_function_ptr     unload_ptr;     // Pointer to unload function
         version_function_ptr    version_ptr;    // Pointer to version function
+        multi_threading_compatible_function_ptr multi_threading_compatible_ptr;
+        // Pointer to multi_threading_compatible function
     } pointers_;
 };
 
