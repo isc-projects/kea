@@ -307,19 +307,19 @@ tagged_statements = { {
 
     {MySqlLeaseMgr::ALL_LEASE6_STATS,
      "SELECT subnet_id, lease_type, state, leases as state_count"
-     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state"},
 
     {MySqlLeaseMgr::SUBNET_LEASE6_STATS,
      "SELECT subnet_id, lease_type, state, leases as state_count"
      "  FROM lease6_stat "
      "  WHERE subnet_id = ? "
-     "  ORDER BY lease_type, state" },
+     "  ORDER BY lease_type, state"},
 
     {MySqlLeaseMgr::SUBNET_RANGE_LEASE6_STATS,
      "SELECT subnet_id, lease_type, state, leases as state_count"
      "  FROM lease6_stat "
      "  WHERE subnet_id >= ? and subnet_id <= ? "
-     "  ORDER BY subnet_id, lease_type, state" }
+     "  ORDER BY subnet_id, lease_type, state"}
     }
 };
 
@@ -529,7 +529,7 @@ public:
                 bind_[2].buffer_length = client_id_length_;
                 bind_[2].length = &client_id_length_;
                 // bind_[2].is_null = &MLM_FALSE; // commented out for performance
-                                                 // reasons, see memset() above
+                                                  // reasons, see memset() above
             } else {
                 bind_[2].buffer_type = MYSQL_TYPE_NULL;
                 // According to http://dev.mysql.com/doc/refman/5.5/en/
@@ -595,7 +595,7 @@ public:
             // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
-            // state: uint32_t.
+            // state: uint32_t
             bind_[9].buffer_type = MYSQL_TYPE_LONG;
             bind_[9].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[9].is_unsigned = MLM_TRUE;
@@ -721,7 +721,7 @@ public:
         // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // state:  uint32_t
+        // state: uint32_t
         bind_[9].buffer_type = MYSQL_TYPE_LONG;
         bind_[9].buffer = reinterpret_cast<char*>(&state_);
         bind_[9].is_unsigned = MLM_TRUE;
@@ -1126,7 +1126,7 @@ public:
                 bind_[14].is_null = &hwaddr_null_;
             }
 
-            // state:  uint32_t
+            // state: uint32_t
             bind_[15].buffer_type = MYSQL_TYPE_LONG;
             bind_[15].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[15].is_unsigned = MLM_TRUE;
@@ -1293,7 +1293,7 @@ public:
         bind_[14].buffer = reinterpret_cast<char*>(&hwaddr_source_);
         bind_[14].is_unsigned = MLM_TRUE;
 
-        // state:  uint32_t
+        // state: uint32_t
         bind_[15].buffer_type = MYSQL_TYPE_LONG;
         bind_[15].buffer = reinterpret_cast<char*>(&state_);
         bind_[15].is_unsigned = MLM_TRUE;
@@ -1683,8 +1683,8 @@ private:
 
 // MySqlLeaseMgr Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
-    : conn_(parameters) {
+MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters) :
+    conn_(parameters) {
 
     // Open the database.
     conn_.openDatabase();
@@ -1694,11 +1694,10 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
                                                MYSQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "MySQL schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
-                      << db_version.second);
+        isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << "."
+                  << db_version.second);
     }
 
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
@@ -1713,11 +1712,6 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
 
     // Prepare all statements likely to be used.
     conn_.prepareStatements(tagged_statements.begin(), tagged_statements.end());
-
-    // Create the exchange objects for use in exchanging data between the
-    // program and the database.
-    exchange4_.reset(new MySqlLease4Exchange());
-    exchange6_.reset(new MySqlLease6Exchange());
 }
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
@@ -1765,11 +1759,14 @@ MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 
 bool
 MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
+    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+        std::make_shared<MySqlLease4Exchange>());
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_ADD_ADDR4).arg(lease->addr_.toText());
 
     // Create the MYSQL_BIND array for the lease
-    std::vector<MYSQL_BIND> bind = exchange4_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = exchange4->createBindForSend(lease);
 
     // ... and drop to common code.
     return (addLeaseCommon(INSERT_LEASE4, bind));
@@ -1777,12 +1774,15 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+        std::make_shared<MySqlLease6Exchange>());
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText())
               .arg(lease->type_);
 
     // Create the MYSQL_BIND array for the lease
-    std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = exchange6->createBindForSend(lease);
 
     // ... and drop to common code.
     return (addLeaseCommon(INSERT_LEASE6, bind));
@@ -1877,15 +1877,32 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     }
 }
 
+void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+                                       Lease4Collection& result) const {
+    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+        std::make_shared<MySqlLease4Exchange>());
+    getLeaseCollection(stindex, bind, exchange4, result);
+}
+
+void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+                                       Lease6Collection& result) const {
+    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+        std::make_shared<MySqlLease6Exchange>());
+    getLeaseCollection(stindex, bind, exchange6, result);
+}
+
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
+    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+        std::make_shared<MySqlLease4Exchange>());
+
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease4Collection collection;
-    getLeaseCollection(stindex, bind, exchange4_, collection, true);
+    getLeaseCollection(stindex, bind, exchange4, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1897,13 +1914,16 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
 
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
+    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+        std::make_shared<MySqlLease6Exchange>());
+
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease6Collection collection;
-    getLeaseCollection(stindex, bind, exchange6_, collection, true);
+    getLeaseCollection(stindex, bind, exchange6, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -2520,13 +2540,16 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
 
 void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
+    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+        std::make_shared<MySqlLease4Exchange>());
+
     const StatementIndex stindex = UPDATE_LEASE4;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_UPDATE_ADDR4).arg(lease->addr_.toText());
 
     // Create the MYSQL_BIND array for the data being updated
-    std::vector<MYSQL_BIND> bind = exchange4_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = exchange4->createBindForSend(lease);
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
     MYSQL_BIND where;
@@ -2544,6 +2567,9 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
+    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+        std::make_shared<MySqlLease6Exchange>());
+
     const StatementIndex stindex = UPDATE_LEASE6;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -2551,7 +2577,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
               .arg(lease->type_);
 
     // Create the MYSQL_BIND array for the data being updated
-    std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = exchange6->createBindForSend(lease);
 
     // Set up the WHERE clause value
     MYSQL_BIND where;
@@ -2775,12 +2801,14 @@ MySqlLeaseMgr::getVersion() const {
     const char* version_sql = "SELECT version, minor FROM schema_version";
     int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
     if (status != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
                   << version_sql << ">, reason: " << mysql_error(conn_.mysql_));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "cannot execute schema version query <"
                   << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
     }

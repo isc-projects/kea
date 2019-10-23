@@ -679,9 +679,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
-                            Lease4Collection& result) const {
-        getLeaseCollection(stindex, bind, exchange4_, result);
-    }
+                            Lease4Collection& result) const;
 
     /// @brief Get Lease Collection
     ///
@@ -699,9 +697,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
-                            Lease6Collection& result) const {
-        getLeaseCollection(stindex, bind, exchange6_, result);
-    }
+                            Lease6Collection& result) const;
 
     /// @brief Get Lease4 Common Code
     ///
@@ -808,15 +804,6 @@ private:
     ///        failed.
     void checkError(int status, StatementIndex index,
                     const char* what) const;
-
-    // Members
-
-    /// The exchange objects are used for transfer of data to/from the database.
-    /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
-    /// declare them as "mutable".)
-    boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
-    boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
 
     /// @brief MySQL connection
     db::MySqlConnection conn_;
