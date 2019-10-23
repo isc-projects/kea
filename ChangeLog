@@ -1,3 +1,7 @@
+1674.	[perf]		fdupont
+	Added a Multi Threading Manager singleton class in the util library.
+	(Gitlab #962,!566, git 66b090e54b45bdeefda266ddd62e42b46ed48d1d)
+
 1673.	[bug]		tmark
 	Fixed a bug introduced in Kea 1.6.0 (see #539) that caused
 	kea-dhcp4 and kea-dhcp6 to discard inbound packets containing
