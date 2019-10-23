@@ -1027,10 +1027,26 @@ private:
             // processing.
             most_recent_option_id_ = 0;
 
+            option_id_ = 0;
+            code_ = 0;
+            persistent_ = false;
+            option_id_null_ = MLM_FALSE;
+            code_null_ = MLM_FALSE;
+            value_null_ = MLM_FALSE;
+            formatted_value_null_ = MLM_FALSE;
+            space_null_ = MLM_FALSE;
+            user_context_null_ = MLM_FALSE;
+
+            memset(value_, 0, sizeof(value_));
+            memset(formatted_value_, 0, sizeof(formatted_value_));
+            memset(space_, 0, sizeof(space_));
+            memset(user_context_, 0, sizeof(user_context_));
+
             // option_id : INT UNSIGNED NOT NULL AUTO_INCREMENT,
             bind[option_id_index_].buffer_type = MYSQL_TYPE_LONG;
             bind[option_id_index_].buffer = reinterpret_cast<char*>(&option_id_);
             bind[option_id_index_].is_unsigned = MLM_TRUE;
+            bind[option_id_index_].is_null = &option_id_null_;
 
             // code : TINYINT OR SHORT UNSIGNED NOT NULL
             bind[code_index_].buffer_type = MYSQL_TYPE_SHORT;
