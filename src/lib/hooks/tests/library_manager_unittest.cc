@@ -18,9 +18,7 @@
 #include <log/message_dictionary.h>
 #include <log/message_initializer.h>
 
-#if 0
 #include <util/multi_threading_mgr.h>
-#endif
 
 #include <gtest/gtest.h>
 
@@ -34,6 +32,7 @@
 using namespace isc;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -53,6 +52,8 @@ public:
 
         // Ensure the marker file is not present at the start of a test.
         static_cast<void>(remove(MARKER_FILE));
+
+        // Disable multi-threading.
     }
 
     /// @brief Destructor
@@ -60,6 +61,7 @@ public:
     /// Ensures a marker file is removed after each test.
     ~LibraryManagerTest() {
         static_cast<void>(remove(MARKER_FILE));
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Marker file present
@@ -251,14 +253,12 @@ TEST_F(LibraryManagerTest, NoMultiThreadingCompatible) {
     // Open should succeed.
     EXPECT_TRUE(lib_manager.openLibrary());
 
-#if 0
     // Not multi-threading compatible: does not matter without MT.
     EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
     // Not multi-threading compatible: does matter with MT.
-    //// set MT
+    MultiThreadingMgr::instance().setMode(true);
     EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
-#endif
 
     // Tidy up.
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -274,14 +274,12 @@ TEST_F(LibraryManagerTest, multiThreadingNotCompatible) {
     // Open should succeed.
     EXPECT_TRUE(lib_manager.openLibrary());
 
-#if 0
     // Not multi-threading compatible: does not matter without MT.
     EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
     // Not multi-threading compatible: does matter with MT.
-    //// set MT
+    MultiThreadingMgr::instance().setMode(true);
     EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
-#endif
 
     // Tidy up.
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -301,7 +299,7 @@ TEST_F(LibraryManagerTest, multiThreadingCompatible) {
     EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
     // Multi-threading compatible: does matter with MT.
-    //// set MT
+    MultiThreadingMgr::instance().setMode(true);
     EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
     // Tidy up.
@@ -318,13 +316,11 @@ TEST_F(LibraryManagerTest, multiThreadingCompatibleException) {
     // Open should succeed.
     EXPECT_TRUE(lib_manager.openLibrary());
 
-#if 0
     // Throw exception: does not matter without MT.
-    EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
-#endif
+    EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
     // Throw exception: does matter with MT.
-    //// set MT
+    MultiThreadingMgr::instance().setMode(true);
     EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
 
     // Tidy up.
@@ -694,6 +690,19 @@ TEST_F(LibraryManagerTest, validateLibraries) {
     EXPECT_FALSE(LibraryManager::validateLibrary(NO_VERSION_LIBRARY));
     EXPECT_TRUE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
     EXPECT_TRUE(LibraryManager::validateLibrary(CALLOUT_PARAMS_LIBRARY));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    EXPECT_FALSE(LibraryManager::validateLibrary(BASIC_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(FULL_CALLOUT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(FRAMEWORK_EXCEPTION_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(INCORRECT_VERSION_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(LOAD_CALLOUT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(LOAD_ERROR_CALLOUT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(NOT_PRESENT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(NO_VERSION_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(CALLOUT_PARAMS_LIBRARY));
 }
 
 // Check that log messages are properly registered and unregistered.
