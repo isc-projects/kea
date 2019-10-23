@@ -17,6 +17,8 @@
 #include <mysql.h>
 
 #include <time.h>
+#include <vector>
+#include <mutex>
 
 namespace isc {
 namespace dhcp {
@@ -25,6 +27,47 @@ namespace dhcp {
 // in the .cc file.
 class MySqlLease4Exchange;
 class MySqlLease6Exchange;
+
+/// @brief MySQL Lease Context
+///
+/// This class stores the per thread context for the manager pool.
+class MySqlLeaseContext {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @param parameters See MySqlLeaseMgr contructor.
+    MySqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters);
+
+    /// The exchange objects are used for transfer of data to/from the database.
+    /// They are pointed-to objects as the contents may change in "const" calls,
+    /// while the rest of this object does not.  (At alternative would be to
+    /// declare them as "mutable".)
+    boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
+    boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
+
+    /// @brief MySQL connection
+    db::MySqlConnection conn_;
+};
+
+/// @brief Type of pointers to contexts.
+typedef boost::shared_ptr<MySqlLeaseContext> MySqlLeaseContextPtr;
+
+/// @brief MySQL Lease Context Pool
+///
+/// This class provides a pool of contexts.
+class MySqlLeaseContextPool {
+public:
+
+    /// @brief The vector of available contexts.
+    std::vector<MySqlLeaseContextPtr> pool_;
+
+    /// @brief The mjutex to protect pool access.
+    std::mutex mutex_;
+};
+
+/// @brief Type of pointers to context pools.
+typedef boost::shared_ptr<MySqlLeaseContextPool> MySqlLeaseContextPoolPtr;
 
 /// @brief MySQL Lease Manager
 ///
@@ -44,11 +87,7 @@ public:
     /// - user - Username under which to connect (optional)
     /// - password - Password for "user" on the database (optional)
     ///
-    /// If the database is successfully opened, the version number in the
-    /// schema_version table will be checked against hard-coded value in
-    /// the implementation file.
-    ///
-    /// Finally, all the SQL commands are pre-compiled.
+    /// Create an initial context checking the schema version.
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
@@ -62,6 +101,18 @@ public:
 
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
+
+    /// #brief Create a new context.
+    ///
+    /// The database in opened.
+    /// If wanted the version number in the schema_version table will be
+    /// checked against hard-coded value in the implementation file.
+    /// Finally, all the SQL commands are pre-compiled.
+    ///
+    /// @param check_version If true and the database successfully opened
+    /// check the schema version.
+    /// @return A new context.
+    MySqlLeaseContextPtr createContext(bool check_version = false) const;
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();
@@ -551,11 +602,6 @@ public:
 
     /// @brief Returns backend version.
     ///
-    /// The method is called by the constructor after opening the database
-    /// but prior to preparing SQL statements, to verify that the schema version
-    /// is correct. Thus it must not rely on a pre-prepared statement or
-    /// formal statement execution error checking.
-    ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
@@ -568,7 +614,7 @@ public:
     /// Commits all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     ///
-    /// @throw DbOperationError If the commit failed.
+    /// MySQL supports transactions but this manager does not use them.
     virtual void commit();
 
     /// @brief Rollback Transactions
@@ -576,7 +622,7 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     ///
-    /// @throw DbOperationError If the rollback failed.
+    /// MySQL supports transactions but this manager does not use them.
     virtual void rollback();
 
     /// @brief Statement Tags
@@ -620,12 +666,28 @@ public:
     };
 
 private:
+    /// @brief Returns backend version.
+    ///
+    /// The method is called by the constructor after opening the database
+    /// but prior to preparing SQL statements, to verify that the schema version
+    /// is correct. Thus it must not rely on a pre-prepared statement or
+    /// formal statement execution error checking.
+    ///
+    /// @param conn Initial connecion.
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
+    ///
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    ///        failed.
+    virtual std::pair<uint32_t, uint32_t> getVersion(db::MySqlConnection& conn) const;
+
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
     /// of the addLease method.  It binds the contents of the lease object to
     /// the prepared statement and adds it to the database.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array that has been created for the type
     ///        of lease in question.
@@ -635,13 +697,15 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
+    bool addLeaseCommon(MySqlLeaseContextPtr ctx,
+                        StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
     /// @brief Get Lease Collection Common Code
     ///
     /// This method performs the common actions for obtaining multiple leases
     /// from the database.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param exchange Exchange object to use
@@ -658,7 +722,8 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLeaseCollection(MySqlLeaseContextPtr ctx,
+                            StatementIndex stindex, MYSQL_BIND* bind,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -667,6 +732,7 @@ private:
     /// Gets a collection of Lease4 objects.  This is just an interface to
     /// the get lease collection common code.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param lease LeaseCollection object returned.  Note that any leases in
@@ -678,9 +744,10 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLeaseCollection(MySqlLeaseContextPtr ctx,
+                            StatementIndex stindex, MYSQL_BIND* bind,
                             Lease4Collection& result) const {
-        getLeaseCollection(stindex, bind, exchange4_, result);
+        getLeaseCollection(ctx, stindex, bind, ctx->exchange4_, result);
     }
 
     /// @brief Get Lease Collection
@@ -688,6 +755,7 @@ private:
     /// Gets a collection of Lease6 objects.  This is just an interface to
     /// the get lease collection common code.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param lease LeaseCollection object returned.  Note that any existing
@@ -698,9 +766,10 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLeaseCollection(MySqlLeaseContextPtr ctx,
+                            StatementIndex stindex, MYSQL_BIND* bind,
                             Lease6Collection& result) const {
-        getLeaseCollection(stindex, bind, exchange6_, result);
+        getLeaseCollection(ctx, stindex, bind, ctx->exchange6_, result);
     }
 
     /// @brief Get Lease4 Common Code
@@ -709,10 +778,12 @@ private:
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
+    void getLease(MySqlLeaseContextPtr ctx,
+                  StatementIndex stindex, MYSQL_BIND* bind,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -721,11 +792,13 @@ private:
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, MYSQL_BIND* bind,
-                   Lease6Ptr& result) const;
+    void getLease(MySqlLeaseContextPtr ctx,
+                  StatementIndex stindex, MYSQL_BIND* bind,
+                  Lease6Ptr& result) const;
 
 
     /// @brief Get expired leases common code.
@@ -753,6 +826,7 @@ private:
     /// to the prepared statement, executes it, then checks how many rows
     /// were affected.
     ///
+    /// @param ctx Context
     /// @param stindex Index of prepared statement to be executed
     /// @param bind Array of MYSQL_BIND objects representing the parameters.
     ///        (Note that the number is determined by the number of parameters
@@ -764,7 +838,8 @@ private:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
+    void updateLeaseCommon(MySqlLeaseContextPtr ctx,
+                           StatementIndex stindex, MYSQL_BIND* bind,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
@@ -800,26 +875,54 @@ private:
     ///
     /// This method invokes @ref MySqlConnection::checkError.
     ///
+    /// @param ctx Context
     /// @param status Status code: non-zero implies an error
     /// @param index Index of statement that caused the error
     /// @param what High-level description of the error
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    void checkError(int status, StatementIndex index,
+    void checkError(MySqlLeaseContextPtr ctx,
+                    int status, StatementIndex index,
                     const char* what) const;
+
+    /// @brief Context RAII Allocator.
+    class MySqlLeaseContextAlloc {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// This constructor takes a context of the pool if one is available
+        /// or creates a new one.
+        ///
+        /// @param mgr A parent instance
+        MySqlLeaseContextAlloc(const MySqlLeaseMgr& mgr);
+
+        /// @brief Destructor
+        ///
+        /// This destructor puts back the context to the pool.
+        ~MySqlLeaseContextAlloc();
+
+        /// @brief The context
+        MySqlLeaseContextPtr ctx_;
+
+        private:
+        /// @brief The manager
+        const MySqlLeaseMgr& mgr_;
+    };
 
     // Members
 
-    /// The exchange objects are used for transfer of data to/from the database.
-    /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
-    /// declare them as "mutable".)
-    boost::scoped_ptr<MySqlLease4Exchange> exchange4_; ///< Exchange object
-    boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
+    /// @brief The context
+    MySqlLeaseContextPtr ctx_;
 
-    /// @brief MySQL connection
-    db::MySqlConnection conn_;
+private:
+
+    /// @brief The parameters
+    db::DatabaseConnection::ParameterMap parameters_;
+
+    /// @brief The pool of contexts
+    MySqlLeaseContextPoolPtr pool_;
 };
 
 }  // namespace dhcp
