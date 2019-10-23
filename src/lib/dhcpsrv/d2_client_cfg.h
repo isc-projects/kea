@@ -235,7 +235,7 @@ operator<<(std::ostream& os, const D2ClientConfig& config);
 /// @brief Defines a pointer for D2ClientConfig instances.
 typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 
-/// @Brief Convenience container for conveying DDNS behaviorial parameters
+/// @brief Convenience container for conveying DDNS behaviorial parameters
 /// It is intended to be populated per Packet exchange and passed into
 /// functions that require them
 struct DdnsParams {

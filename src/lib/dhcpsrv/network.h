@@ -532,7 +532,7 @@ public:
 
     /// @brief Sets new ddns-send-updates
     ///
-    /// @param ddns_send_updates_ New value to use.
+    /// @param ddns_send_updates New value to use.
     void setDdnsSendUpdates(const util::Optional<bool>& ddns_send_updates) {
         ddns_send_updates_ = ddns_send_updates;
     }
@@ -564,7 +564,7 @@ public:
 
     /// @brief Sets new ddns-override-client-update
     ///
-    /// @param ddns-override-client-update New value to use.
+    /// @param ddns_override_client_update New value to use.
     void setDdnsOverrideClientUpdate(const util::Optional<bool>& ddns_override_client_update) {
         ddns_override_client_update_ = ddns_override_client_update;
     }
@@ -624,7 +624,7 @@ public:
 
     /// @brief Sets new ddns-generated-prefix
     ///
-    /// @param ddns_generated-prefix New value to use.
+    /// @param ddns_generated_prefix New value to use.
     void setDdnsGeneratedPrefix(const util::Optional<std::string>& ddns_generated_prefix) {
         ddns_generated_prefix_ = ddns_generated_prefix;
     }

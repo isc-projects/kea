@@ -418,7 +418,7 @@ public:
     /// - generated_prefix_ =  scoped ddns-generated-prefix
     /// - qualifying_suffix_ = scoped ddns-qualifying-suffix
     ///
-    /// @parm subnet Subnet for which DDNS parameters are desired.
+    /// @param subnet Subnet for which DDNS parameters are desired.
     /// @return pointer to DddnParams instance
     DdnsParamsPtr getDdnsParams(const Subnet& subnet) const;
 
