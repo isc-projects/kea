@@ -12,6 +12,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <mysql/mysql_connection.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/array.hpp>
 #include <boost/static_assert.hpp>
@@ -29,6 +30,7 @@ using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::util;
 using namespace std;
 
 /// @file
@@ -1690,21 +1692,30 @@ MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& par
 
 MySqlLeaseMgr::MySqlLeaseContextAlloc::MySqlLeaseContextAlloc(const MySqlLeaseMgr& mgr)
     : ctx_(), mgr_(mgr) {
-    {
-        lock_guard<mutex> lock(mgr_.pool_->mutex_);
-        if (!mgr_.pool_->pool_.empty()) {
-            ctx_ = mgr_.pool_->pool_.back();
-            mgr_.pool_->pool_.pop_back();
+    if (MultiThreadingMgr::instance().getMode()) {
+        {
+            lock_guard<mutex> lock(mgr_.pool_->mutex_);
+            if (!mgr_.pool_->pool_.empty()) {
+                ctx_ = mgr_.pool_->pool_.back();
+                mgr_.pool_->pool_.pop_back();
+            }
         }
-    }
-    if (!ctx_) {
-        ctx_ = mgr_.createContext();
+        if (!ctx_) {
+            ctx_ = mgr_.createContext();
+        }
+    } else {
+        if (mgr_.pool_->pool_.empty()) {
+            isc_throw(Unexpected, "No available MySQL lease context?!");
+        }
+        ctx_ = mgr_.pool_->pool_[0];
     }
 }
 
 MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
-    lock_guard<mutex> lock(mgr_.pool_->mutex_);
-    mgr_.pool_->pool_.push_back(ctx_);
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(mgr_.pool_->mutex_);
+        mgr_.pool_->pool_.push_back(ctx_);
+    }
 }
 
 // MySqlLeaseMgr Constructor and Destructor
