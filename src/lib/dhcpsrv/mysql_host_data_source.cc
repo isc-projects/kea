@@ -2040,7 +2040,7 @@ public:
     /// @param single A boolean value indicating if a single host is
     /// expected to be returned, or multiple hosts.
     void getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
-                           boost::shared_ptr<MySqlHostExchange> exchange,
+                           std::shared_ptr<MySqlHostExchange> exchange,
                            ConstHostCollection& result, bool single) const;
 
     /// @brief Retrieves a host by subnet and client's unique identifier.
@@ -2064,7 +2064,7 @@ public:
                          const uint8_t* identifier_begin,
                          const size_t identifier_len,
                          StatementIndex stindex,
-                         boost::shared_ptr<MySqlHostExchange> exchange) const;
+                         std::shared_ptr<MySqlHostExchange> exchange) const;
 
     /// @brief Throws exception if database is read only.
     ///
@@ -2074,28 +2074,6 @@ public:
     ///
     /// @throw DbReadOnly if backend is operating in read only mode.
     void checkReadOnly() const;
-
-    /// @brief Pointer to the object representing an exchange which
-    /// can be used to retrieve hosts and DHCPv4 options.
-    boost::shared_ptr<MySqlHostWithOptionsExchange> host_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to retrieve hosts, DHCPv6 options and IPv6 reservations.
-    boost::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to retrieve hosts, DHCPv4 and DHCPv6 options, and
-    /// IPv6 reservations using a single query.
-    boost::shared_ptr<MySqlHostIPv6Exchange> host_ipv46_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to insert new IPv6 reservation.
-    boost::shared_ptr<MySqlIPv6ReservationExchange> host_ipv6_reservation_exchange_;
-
-    /// @brief Pointer to an object representing an exchange which can
-    /// be used to insert DHCPv4 or DHCPv6 option into dhcp4_options
-    /// or dhcp6_options table.
-    boost::shared_ptr<MySqlOptionExchange> host_option_exchange_;
 
     /// @brief MySQL connection
     MySqlConnection conn_;
@@ -2255,7 +2233,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2296,7 +2273,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2409,7 +2385,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2474,15 +2449,8 @@ TaggedStatementArray tagged_statements = { {
 }; // anonymous namespace
 
 MySqlHostDataSourceImpl::
-MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
-    : host_exchange_(new MySqlHostWithOptionsExchange(MySqlHostWithOptionsExchange::DHCP4_ONLY)),
-      host_ipv6_exchange_(new MySqlHostIPv6Exchange(MySqlHostWithOptionsExchange::DHCP6_ONLY)),
-      host_ipv46_exchange_(new MySqlHostIPv6Exchange(MySqlHostWithOptionsExchange::
-                                                     DHCP4_AND_DHCP6)),
-      host_ipv6_reservation_exchange_(new MySqlIPv6ReservationExchange()),
-      host_option_exchange_(new MySqlOptionExchange()),
-      conn_(parameters),
-      is_readonly_(false) {
+MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters) :
+    conn_(parameters), is_readonly_(false) {
 
     // Open the database.
     conn_.openDatabase();
@@ -2562,12 +2530,14 @@ MySqlHostDataSourceImpl::getVersion() const {
     const char* version_sql = "SELECT version, minor FROM schema_version";
     int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
     if (status != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
                   << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "cannot execute schema version query <"
                   << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
     }
@@ -2605,7 +2575,6 @@ MySqlHostDataSourceImpl::getVersion() const {
 
     return (std::make_pair(major, minor));
 }
-
 
 void
 MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
@@ -2649,8 +2618,11 @@ MySqlHostDataSourceImpl::delStatement(StatementIndex stindex,
 void
 MySqlHostDataSourceImpl::addResv(const IPv6Resrv& resv,
                                  const HostID& id) {
+    thread_local std::shared_ptr<MySqlIPv6ReservationExchange> host_ipv6_reservation_exchange(
+        std::make_shared<MySqlIPv6ReservationExchange>());
+
     std::vector<MYSQL_BIND> bind =
-        host_ipv6_reservation_exchange_->createBindForSend(resv, id);
+        host_ipv6_reservation_exchange->createBindForSend(resv, id);
 
     addStatement(INSERT_V6_RESRV, bind);
 }
@@ -2661,9 +2633,11 @@ MySqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const std::string& opt_space,
                                    const Optional<SubnetID>& subnet_id,
                                    const HostID& id) {
+    thread_local std::shared_ptr<MySqlOptionExchange> host_option_exchange(
+        std::make_shared<MySqlOptionExchange>());
+
     std::vector<MYSQL_BIND> bind =
-        host_option_exchange_->createBindForSend(opt_desc, opt_space,
-                                                 subnet_id, id);
+        host_option_exchange->createBindForSend(opt_desc, opt_space, subnet_id, id);
 
     addStatement(stindex, bind);
 }
@@ -2704,7 +2678,7 @@ checkError(const int status, const StatementIndex index,
 void
 MySqlHostDataSourceImpl::
 getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
-                  boost::shared_ptr<MySqlHostExchange> exchange,
+                  std::shared_ptr<MySqlHostExchange> exchange,
                   ConstHostCollection& result, bool single) const {
 
     // Bind the selection parameters to the statement
@@ -2770,7 +2744,7 @@ getHost(const SubnetID& subnet_id,
         const uint8_t* identifier_begin,
         const size_t identifier_len,
         StatementIndex stindex,
-        boost::shared_ptr<MySqlHostExchange> exchange) const {
+        std::shared_ptr<MySqlHostExchange> exchange) const {
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
@@ -2801,8 +2775,9 @@ getHost(const SubnetID& subnet_id,
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -2829,6 +2804,9 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
 
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Initiate MySQL transaction as we will have to make multiple queries
     // to insert host information into multiple tables. If that fails on
     // any stage, the transaction will be rolled back by the destructor of
@@ -2836,7 +2814,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
     MySqlTransaction transaction(impl_->conn_);
 
     // Create the MYSQL_BIND array for the host
-    std::vector<MYSQL_BIND> bind = impl_->host_exchange_->createBindForSend(host);
+    std::vector<MYSQL_BIND> bind = host_ipv4_exchange->createBindForSend(host);
 
     // ... and insert the host.
     impl_->addStatement(MySqlHostDataSourceImpl::INSERT_HOST, bind);
@@ -2896,7 +2874,7 @@ MySqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& a
     }
 
     // v6
-    ConstHostPtr host = get6(subnet_id, addr);
+    ConstHostPtr host(get6(subnet_id, addr));
     if (!host) {
         return (false);
     }
@@ -2982,6 +2960,9 @@ ConstHostCollection
 MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                             const uint8_t* identifier_begin,
                             const size_t identifier_len) const {
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv46_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
@@ -3002,14 +2983,16 @@ MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     inbind[0].length = &length;
 
     ConstHostCollection result;
-    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_DHCPID, inbind,
-                             impl_->host_ipv46_exchange_,
-                             result, false);
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_DHCPID,
+                             inbind, host_ipv46_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 MySqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -3020,13 +3003,15 @@ MySqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID4,
-                             inbind, impl_->host_exchange_,
-                             result, false);
+                             inbind, host_ipv4_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 MySqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP6_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -3037,13 +3022,15 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6,
-                             inbind, impl_->host_ipv6_exchange_,
-                             result, false);
+                             inbind, host_ipv6_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 MySqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv46_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
@@ -3059,14 +3046,16 @@ MySqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME,
-                             inbind, impl_->host_ipv46_exchange_,
-                             result, false);
+                             inbind, host_ipv46_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 MySqlHostDataSource::getAllbyHostname4(const std::string& hostname,
                                        const SubnetID& subnet_id) const {
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
@@ -3088,14 +3077,16 @@ MySqlHostDataSource::getAllbyHostname4(const std::string& hostname,
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID4,
-                             inbind, impl_->host_exchange_,
-                             result, false);
+                             inbind, host_ipv4_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 MySqlHostDataSource::getAllbyHostname6(const std::string& hostname,
                                        const SubnetID& subnet_id) const {
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP6_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
@@ -3117,8 +3108,7 @@ MySqlHostDataSource::getAllbyHostname6(const std::string& hostname,
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_HOSTNAME_SUBID6,
-                             inbind, impl_->host_ipv6_exchange_,
-                             result, false);
+                             inbind, host_ipv6_exchange, result, false);
     return (result);
 }
 
@@ -3127,6 +3117,9 @@ MySqlHostDataSource::getPage4(const SubnetID& subnet_id,
                               size_t& /*source_index*/,
                               uint64_t lower_host_id,
                               const HostPageSize& page_size) const {
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
     memset(inbind, 0, sizeof(inbind));
@@ -3151,8 +3144,7 @@ MySqlHostDataSource::getPage4(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
-                             inbind, impl_->host_exchange_,
-                             result, false);
+                             inbind, host_ipv4_exchange, result, false);
     return (result);
 }
 
@@ -3161,6 +3153,9 @@ MySqlHostDataSource::getPage6(const SubnetID& subnet_id,
                               size_t& /*source_index*/,
                               uint64_t lower_host_id,
                               const HostPageSize& page_size) const {
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP6_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
     memset(inbind, 0, sizeof(inbind));
@@ -3185,13 +3180,14 @@ MySqlHostDataSource::getPage6(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
-                             inbind, impl_->host_ipv6_exchange_,
-                             result, false);
+                             inbind, host_ipv6_exchange, result, false);
     return (result);
 }
 
 ConstHostCollection
 MySqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -3203,8 +3199,8 @@ MySqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     inbind[0].is_unsigned = MLM_TRUE;
 
     ConstHostCollection result;
-    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_ADDR, inbind,
-                             impl_->host_exchange_, result, false);
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_ADDR,
+                             inbind, host_ipv4_exchange, result, false);
 
     return (result);
 }
@@ -3214,20 +3210,24 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
                    identifier_len, MySqlHostDataSourceImpl::GET_HOST_SUBID4_DHCPID,
-                   impl_->host_exchange_));
+                   host_ipv4_exchange));
 }
 
 ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
-    // Check that address is IPv4, not IPv6.
     if (!address.isV4()) {
-        isc_throw(BadValue, "MySqlHostDataSource::get4(2): wrong address type, "
-                            "address supplied is not an IPv4 address");
+        isc_throw(BadValue, "MySqlHostDataSource::get4(id, address): "
+                  "wrong address type, address supplied is an IPv6 address");
     }
+
+    thread_local std::shared_ptr<MySqlHostWithOptionsExchange> host_ipv4_exchange(
+        std::make_shared<MySqlHostWithOptionsExchange>(MySqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -3244,12 +3244,13 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID_ADDR,
-                             inbind, impl_->host_exchange_, collection, true);
+                             inbind, host_ipv4_exchange, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -3259,16 +3260,24 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP6_ONLY));
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
                    identifier_len, MySqlHostDataSourceImpl::GET_HOST_SUBID6_DHCPID,
-                   impl_->host_ipv6_exchange_));
+                   host_ipv6_exchange));
 }
 
 ConstHostPtr
 MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
                           const uint8_t prefix_len) const {
-    /// @todo: Check that prefix is v6 address, not v4.
+    if (!prefix.isV6()) {
+        isc_throw(BadValue, "MySqlHostDataSource::get6(prefix, prefix_len): "
+                  "wrong address type, address supplied is an IPv4 address");
+    }
+
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -3290,8 +3299,7 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 
     ConstHostCollection collection;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_PREFIX,
-                             inbind, impl_->host_ipv6_exchange_,
-                             collection, true);
+                             inbind, host_ipv6_exchange, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
@@ -3305,6 +3313,14 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
 ConstHostPtr
 MySqlHostDataSource::get6(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
+    if (!address.isV6()) {
+        isc_throw(BadValue, "MySqlHostDataSource::get6(id, address): "
+                  "wrong address type, address supplied is an IPv4 address");
+    }
+
+    thread_local std::shared_ptr<MySqlHostIPv6Exchange> host_ipv6_exchange(
+        std::make_shared<MySqlHostIPv6Exchange>(MySqlHostWithOptionsExchange::DHCP6_ONLY));
+
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
@@ -3325,8 +3341,7 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
 
     ConstHostCollection collection;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR,
-                             inbind, impl_->host_ipv6_exchange_,
-                             collection, true);
+                             inbind, host_ipv6_exchange, collection, true);
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
@@ -3339,7 +3354,8 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
 
 // Miscellaneous database methods.
 
-std::string MySqlHostDataSource::getName() const {
+std::string
+MySqlHostDataSource::getName() const {
     std::string name = "";
     try {
         name = impl_->conn_.getParameter("name");
@@ -3349,7 +3365,8 @@ std::string MySqlHostDataSource::getName() const {
     return (name);
 }
 
-std::string MySqlHostDataSource::getDescription() const {
+std::string
+MySqlHostDataSource::getDescription() const {
     return (std::string("Host data source that stores host information"
                         "in MySQL database"));
 }
