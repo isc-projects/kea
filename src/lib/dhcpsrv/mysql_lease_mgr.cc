@@ -1681,24 +1681,68 @@ private:
     int64_t state_count_;
 };
 
+// MySqlLeaseContext Constructor
+
+MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters) : conn_(parameters) {
+}
+
+// MySqlLeaseContextAlloc Constructor and Destructor
+
+MySqlLeaseMgr::MySqlLeaseContextAlloc::MySqlLeaseContextAlloc(const MySqlLeaseMgr& mgr)
+    : ctx_(), mgr_(mgr) {
+    {
+        lock_guard<mutex> lock(mgr_.pool_->mutex_);
+        if (!mgr_.pool_->pool_.empty()) {
+            ctx_ = mgr_.pool_->pool_.back();
+            mgr_.pool_->pool_.pop_back();
+        }
+    }
+    if (!ctx_) {
+        ctx_ = mgr_.createContext();
+    }
+}
+
+MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
+    lock_guard<mutex> lock(mgr_.pool_->mutex_);
+    mgr_.pool_->pool_.push_back(ctx_);
+}
+
 // MySqlLeaseMgr Constructor and Destructor
 
 MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
-    : conn_(parameters) {
+    : parameters_(parameters) {
+
+    pool_.reset(new MySqlLeaseContextPool());
+    pool_->pool_.push_back(createContext(true));
+}
+
+MySqlLeaseMgr::~MySqlLeaseMgr() {
+    // There is no need to close the database in this destructor: it is
+    // closed in the destructor of the mysql_ member variable.
+}
+
+// Create context.
+
+MySqlLeaseContextPtr
+MySqlLeaseMgr::createContext(bool check_version /* = false */) const {
+
+    MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_));
 
     // Open the database.
-    conn_.openDatabase();
+    ctx->conn_.openDatabase();
 
     // Test schema version before we try to prepare statements.
-    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
-                                               MYSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
-    if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "MySQL schema version mismatch: need version: "
+    if (check_version) {
+        std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                                   MYSQL_SCHEMA_VERSION_MINOR);
+        std::pair<uint32_t, uint32_t> db_version = getVersion(ctx->conn_);
+        if (code_version != db_version) {
+            isc_throw(DbOpenError,
+                      "MySQL schema version mismatch: need version: "
                       << code_version.first << "." << code_version.second
                       << " found version:  " << db_version.first << "."
                       << db_version.second);
+        }
     }
 
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
@@ -1706,23 +1750,21 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     // cause the changes to be written to the log, but flushed to disk in the
     // background every second.  Setting the parameter to that value will speed
     // up the system, but at the risk of losing data if the system crashes.
-    my_bool result = mysql_autocommit(conn_.mysql_, 1);
+    my_bool result = mysql_autocommit(ctx->conn_.mysql_, 1);
     if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(conn_.mysql_));
+        isc_throw(DbOperationError, mysql_error(ctx->conn_.mysql_));
     }
 
     // Prepare all statements likely to be used.
-    conn_.prepareStatements(tagged_statements.begin(), tagged_statements.end());
+    ctx->conn_.prepareStatements(tagged_statements.begin(),
+                                 tagged_statements.end());
 
     // Create the exchange objects for use in exchanging data between the
     // program and the database.
-    exchange4_.reset(new MySqlLease4Exchange());
-    exchange6_.reset(new MySqlLease6Exchange());
-}
+    ctx->exchange4_.reset(new MySqlLease4Exchange());
+    ctx->exchange6_.reset(new MySqlLease6Exchange());
 
-MySqlLeaseMgr::~MySqlLeaseMgr() {
-    // There is no need to close the database in this destructor: it is
-    // closed in the destructor of the mysql_ member variable.
+    return (ctx);
 }
 
 std::string
@@ -1739,24 +1781,25 @@ MySqlLeaseMgr::getDBVersion() {
 // statement, then call common code to execute the statement.
 
 bool
-MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
+MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr ctx,
+                              StatementIndex stindex,
                               std::vector<MYSQL_BIND>& bind) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
-    checkError(status, stindex, "unable to bind parameters");
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], &bind[0]);
+    checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
+    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
     if (status != 0) {
 
         // Failure: check for the special case of duplicate entry.  If this is
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
-        if (mysql_errno(conn_.mysql_) == ER_DUP_ENTRY) {
+        if (mysql_errno(ctx->conn_.mysql_) == ER_DUP_ENTRY) {
             return (false);
         }
-        checkError(status, stindex, "unable to execute");
+        checkError(ctx, status, stindex, "unable to execute");
     }
 
     // Insert succeeded
@@ -1768,11 +1811,15 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_ADD_ADDR4).arg(lease->addr_.toText());
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Create the MYSQL_BIND array for the lease
-    std::vector<MYSQL_BIND> bind = exchange4_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = ctx->exchange4_->createBindForSend(lease);
 
     // ... and drop to common code.
-    return (addLeaseCommon(INSERT_LEASE4, bind));
+    return (addLeaseCommon(ctx, INSERT_LEASE4, bind));
 }
 
 bool
@@ -1781,11 +1828,15 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
               DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText())
               .arg(lease->type_);
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Create the MYSQL_BIND array for the lease
-    std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = ctx->exchange6_->createBindForSend(lease);
 
     // ... and drop to common code.
-    return (addLeaseCommon(INSERT_LEASE6, bind));
+    return (addLeaseCommon(ctx, INSERT_LEASE6, bind));
 }
 
 // Extraction of leases from the database.
@@ -1814,7 +1865,8 @@ MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 // holding zero or one leases into an appropriate Lease object.
 
 template <typename Exchange, typename LeaseCollection>
-void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
+void MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr ctx,
+                                       StatementIndex stindex,
                                        MYSQL_BIND* bind,
                                        Exchange& exchange,
                                        LeaseCollection& result,
@@ -1824,60 +1876,61 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 
     if (bind) {
         // Bind the selection parameters to the statement
-        status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
-        checkError(status, stindex, "unable to bind WHERE clause parameter");
+        status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+        checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
     }
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(conn_.statements_[stindex], &outbind[0]);
-    checkError(status, stindex, "unable to bind SELECT clause parameters");
+    status = mysql_stmt_bind_result(ctx->conn_.statements_[stindex], &outbind[0]);
+    checkError(ctx, status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
+    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(conn_.statements_[stindex]);
-    checkError(status, stindex, "unable to set up for storing all results");
+    status = mysql_stmt_store_result(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data.
-    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
+    MySqlFreeResult fetch_release(ctx->conn_.statements_[stindex]);
     int count = 0;
-    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) == 0) {
+    while ((status = mysql_stmt_fetch(ctx->conn_.statements_[stindex])) == 0) {
         try {
             result.push_back(exchange->getLeaseData());
 
         } catch (const isc::BadValue& ex) {
             // Rethrow the exception with a bit more data.
             isc_throw(BadValue, ex.what() << ". Statement is <" <<
-                      conn_.text_statements_[stindex] << ">");
+                      ctx->conn_.text_statements_[stindex] << ">");
         }
 
         if (single && (++count > 1)) {
             isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
-                      << conn_.text_statements_[stindex]);
+                      << ctx->conn_.text_statements_[stindex]);
         }
     }
 
     // How did the fetch end?
     if (status == 1) {
         // Error - unable to fetch results
-        checkError(status, stindex, "unable to fetch results");
+        checkError(ctx, status, stindex, "unable to fetch results");
     } else if (status == MYSQL_DATA_TRUNCATED) {
         // Data truncated - throw an exception indicating what was at fault
-        isc_throw(DataTruncated, conn_.text_statements_[stindex]
+        isc_throw(DataTruncated, ctx->conn_.text_statements_[stindex]
                   << " returned truncated data: columns affected are "
                   << exchange->getErrorColumns());
     }
 }
 
-void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
+void MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
+                             StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
@@ -1885,7 +1938,7 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease4Collection collection;
-    getLeaseCollection(stindex, bind, exchange4_, collection, true);
+    getLeaseCollection(ctx, stindex, bind, ctx->exchange4_, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1895,7 +1948,8 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
     }
 }
 
-void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
+void MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
+                             StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
@@ -1903,7 +1957,7 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease6Collection collection;
-    getLeaseCollection(stindex, bind, exchange6_, collection, true);
+    getLeaseCollection(ctx, stindex, bind, ctx->exchange6_, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1932,7 +1986,12 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_ADDR, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE4_ADDR, inbind, result);
 
     return (result);
 }
@@ -1968,7 +2027,12 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
     // Get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_HWADDR, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_HWADDR, inbind, result);
 
     return (result);
 }
@@ -2009,7 +2073,12 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_HWADDR_SUBID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE4_HWADDR_SUBID, inbind, result);
 
     return (result);
 }
@@ -2040,7 +2109,12 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
 
     // Get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_CLIENTID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_CLIENTID, inbind, result);
 
     return (result);
 }
@@ -2086,7 +2160,12 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_CLIENTID_SUBID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE4_CLIENTID_SUBID, inbind, result);
 
     return (result);
 }
@@ -2107,7 +2186,12 @@ MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 
     // ... and get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_SUBID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_SUBID, inbind, result);
 
     return (result);
 }
@@ -2138,7 +2222,12 @@ MySqlLeaseMgr::getLeases4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET4);
 
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4, 0, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4, 0, result);
 
     return (result);
 }
@@ -2175,7 +2264,12 @@ MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 
     // Get the leases
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_PAGE, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_PAGE, inbind, result);
 
     return (result);
 }
@@ -2207,7 +2301,12 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
     inbind[1].is_unsigned = MLM_TRUE;
 
     Lease6Ptr result;
-    getLease(GET_LEASE6_ADDR, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE6_ADDR, inbind, result);
 
     return (result);
 }
@@ -2264,7 +2363,12 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_DUID_IAID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_DUID_IAID, inbind, result);
 
     return (result);
 }
@@ -2309,7 +2413,12 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_DUID_IAID_SUBID, inbind, result);
 
     return (result);
 }
@@ -2330,7 +2439,12 @@ MySqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_SUBID, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_SUBID, inbind, result);
 
     return (result);
 }
@@ -2340,7 +2454,12 @@ MySqlLeaseMgr::getLeases6() const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET6);
 
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6, 0, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6, 0, result);
 
     return (result);
 }
@@ -2365,7 +2484,11 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     Lease6Collection result;
 
-    getLeaseCollection(GET_LEASE6_DUID, inbind, result);
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_DUID, inbind, result);
 
     return result;
 }
@@ -2432,7 +2555,12 @@ MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
 
     // Get the leases
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_PAGE, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_PAGE, inbind, result);
 
     return (result);
 }
@@ -2470,7 +2598,7 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
     // Expiration timestamp.
     MYSQL_TIME expire_time;
-    conn_.convertToDatabaseTime(time(NULL), expire_time);
+    MySqlConnection::convertToDatabaseTime(time(NULL), expire_time);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
     inbind[1].buffer_length = sizeof(expire_time);
@@ -2483,8 +2611,12 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     inbind[2].buffer = reinterpret_cast<char*>(&limit);
     inbind[2].is_unsigned = MLM_TRUE;
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Get the data
-    getLeaseCollection(statement_index, inbind, expired_leases);
+    getLeaseCollection(ctx, statement_index, inbind, expired_leases);
 }
 
 // Update lease methods.  These comprise common code that handles the actual
@@ -2493,20 +2625,21 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
 template <typename LeasePtr>
 void
-MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
+MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr ctx,
+                                 StatementIndex stindex, MYSQL_BIND* bind,
                                  const LeasePtr& lease) {
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
-    checkError(status, stindex, "unable to bind parameters");
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    checkError(ctx, status, stindex, "unable to bind parameters");
 
     // Execute
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
+    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
 
     // See how many rows were affected.  The statement should only update a
     // single row.
-    int affected_rows = mysql_stmt_affected_rows(conn_.statements_[stindex]);
+    int affected_rows = mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]);
     if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
                   lease->addr_ << " as it does not exist");
@@ -2525,8 +2658,12 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_UPDATE_ADDR4).arg(lease->addr_.toText());
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Create the MYSQL_BIND array for the data being updated
-    std::vector<MYSQL_BIND> bind = exchange4_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = ctx->exchange4_->createBindForSend(lease);
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
     MYSQL_BIND where;
@@ -2539,7 +2676,7 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     bind.push_back(where);
 
     // Drop to common update code
-    updateLeaseCommon(stindex, &bind[0], lease);
+    updateLeaseCommon(ctx, stindex, &bind[0], lease);
 }
 
 void
@@ -2550,8 +2687,12 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
               DHCPSRV_MYSQL_UPDATE_ADDR6).arg(lease->addr_.toText())
               .arg(lease->type_);
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Create the MYSQL_BIND array for the data being updated
-    std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
+    std::vector<MYSQL_BIND> bind = ctx->exchange6_->createBindForSend(lease);
 
     // Set up the WHERE clause value
     MYSQL_BIND where;
@@ -2569,7 +2710,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     bind.push_back(where);
 
     // Drop to common update code
-    updateLeaseCommon(stindex, &bind[0], lease);
+    updateLeaseCommon(ctx, stindex, &bind[0], lease);
 }
 
 // Delete lease methods.  Similar to other groups of methods, these comprise
@@ -2580,17 +2721,21 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 uint64_t
 MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Bind the input parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
-    checkError(status, stindex, "unable to bind WHERE clause parameter");
+    int status = mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind);
+    checkError(ctx, status, stindex, "unable to bind WHERE clause parameter");
 
     // Execute
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
-    checkError(status, stindex, "unable to execute");
+    status = mysql_stmt_execute(ctx->conn_.statements_[stindex]);
+    checkError(ctx, status, stindex, "unable to execute");
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (static_cast<uint64_t>(mysql_stmt_affected_rows(conn_.statements_[stindex])));
+    return (static_cast<uint64_t>(mysql_stmt_affected_rows(ctx->conn_.statements_[stindex])));
 }
 
 bool
@@ -2657,7 +2802,7 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
     // Expiration timestamp.
     MYSQL_TIME expire_time;
-    conn_.convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs), expire_time);
+    MySqlConnection::convertToDatabaseTime(time(NULL) - static_cast<time_t>(secs), expire_time);
     inbind[1].buffer_type = MYSQL_TYPE_TIMESTAMP;
     inbind[1].buffer = reinterpret_cast<char*>(&expire_time);
     inbind[1].buffer_length = sizeof(expire_time);
@@ -2673,7 +2818,11 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery4() {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
                                                       ALL_LEASE4_STATS,
                                                       false));
     query->start();
@@ -2682,10 +2831,14 @@ MySqlLeaseMgr::startLeaseStatsQuery4() {
 
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
-                                                       SUBNET_LEASE4_STATS,
-                                                       false,
-                                                       subnet_id));
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
+                                                      SUBNET_LEASE4_STATS,
+                                                      false,
+                                                      subnet_id));
     query->start();
     return(query);
 }
@@ -2693,17 +2846,26 @@ MySqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
                                                    const SubnetID& last_subnet_id) {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
-                                                       SUBNET_RANGE_LEASE4_STATS,
-                                                       false,
-                                                       first_subnet_id, last_subnet_id));
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
+                                                      SUBNET_RANGE_LEASE4_STATS,
+                                                      false,
+                                                      first_subnet_id,
+                                                      last_subnet_id));
     query->start();
     return(query);
 }
 
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery6() {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
                                                       ALL_LEASE6_STATS,
                                                       true));
     query->start();
@@ -2712,7 +2874,11 @@ MySqlLeaseMgr::startLeaseStatsQuery6() {
 
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
                                                       SUBNET_LEASE6_STATS,
                                                       true,
                                                       subnet_id));
@@ -2723,10 +2889,15 @@ MySqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
                                                    const SubnetID& last_subnet_id) {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(ctx->conn_,
                                                       SUBNET_RANGE_LEASE6_STATS,
                                                       true,
-                                                      first_subnet_id, last_subnet_id));
+                                                      first_subnet_id,
+                                                      last_subnet_id));
     query->start();
     return(query);
 }
@@ -2745,9 +2916,13 @@ MySqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
 
 std::string
 MySqlLeaseMgr::getName() const {
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
     std::string name = "";
     try {
-        name = conn_.getParameter("name");
+        name = ctx->conn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }
@@ -2761,14 +2936,26 @@ MySqlLeaseMgr::getDescription() const {
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
+    // Get a connection.
+    MySqlConnection conn(parameters_);
+
+    // Open the database.
+    conn.openDatabase();
+
+    // Get the version.
+    return (getVersion(conn));
+}
+
+std::pair<uint32_t, uint32_t>
+MySqlLeaseMgr::getVersion(MySqlConnection& conn) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_VERSION);
 
     // Allocate a new statement.
-    MYSQL_STMT *stmt = mysql_stmt_init(conn_.mysql_);
+    MYSQL_STMT *stmt = mysql_stmt_init(conn.mysql_);
     if (stmt == NULL) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                "statement structure, reason: " << mysql_error(conn_.mysql_));
+                "statement structure, reason: " << mysql_error(conn.mysql_));
     }
 
     // Prepare the statement from SQL text.
@@ -2776,13 +2963,13 @@ MySqlLeaseMgr::getVersion() const {
     int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
     if (status != 0) {
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                  << version_sql << ">, reason: " << mysql_error(conn_.mysql_));
+                  << version_sql << ">, reason: " << mysql_error(conn.mysql_));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
         isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2803,14 +2990,14 @@ MySqlLeaseMgr::getVersion() const {
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
     }
 
     // Fetch the data.
     if (mysql_stmt_fetch(stmt)) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
     }
 
     // Discard the statement and its resources
@@ -2822,23 +3009,18 @@ MySqlLeaseMgr::getVersion() const {
 void
 MySqlLeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
-    if (mysql_commit(conn_.mysql_) != 0) {
-        isc_throw(DbOperationError, "commit failed: " << mysql_error(conn_.mysql_));
-    }
 }
 
 void
 MySqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
-    if (mysql_rollback(conn_.mysql_) != 0) {
-        isc_throw(DbOperationError, "rollback failed: " << mysql_error(conn_.mysql_));
-    }
 }
 
 void
-MySqlLeaseMgr::checkError(int status, StatementIndex index,
-                           const char* what) const {
-    conn_.checkError(status, index, what);
+MySqlLeaseMgr::checkError(MySqlLeaseContextPtr ctx,
+                          int status, StatementIndex index,
+                          const char* what) const {
+    ctx->conn_.checkError(status, index, what);
 }
 
 }  // namespace dhcp
