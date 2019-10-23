@@ -4,7 +4,7 @@
 	string options that consist solely of nulls.  The servers
 	will now quiely omit empty or all-null string options from
 	inbound packets.
-	(Gitlab #900, !561 git TBD)
+	(Gitlab #900,!561, git c75a7c10bde74f59d481a7717b4e03b9cb2268a6)
 
 1672.	[build]		fdupont
 	Deprecated bind1st and bind2nd templates were replaced with
