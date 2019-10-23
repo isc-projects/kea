@@ -59,7 +59,7 @@ public:
 
     /// @brief Set the mode.
     ///
-    /// @param mode The new mode.
+    /// @param enabled The new mode.
     void setMode(bool enabled);
 
 protected:
