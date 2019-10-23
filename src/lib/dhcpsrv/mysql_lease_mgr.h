@@ -111,7 +111,12 @@ public:
     ///
     /// @param check_version If true and the database successfully opened
     /// check the schema version.
-    /// @return A new context.
+    /// @return A new (never null) context.
+    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given.
+    /// @throw isc::db::DbOpenError Error opening the database or the schema
+    /// version is incorrect.
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    /// failed.
     MySqlLeaseContextPtr createContext(bool check_version = false) const;
 
     /// @brief Local version of getDBVersion() class method
