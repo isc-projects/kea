@@ -12,12 +12,9 @@
 namespace isc {
 namespace util {
 
-/// @file multi_threading_mgr.h Multi Threading Manager.
+/// @brief Multi Threading Manager.
 ///
 /// This singleton class holds the multi-threading mode.
-///
-/// It is split into two classes to hide the setMode method from the
-/// instance static method.
 ///
 /// The standard way to use it is:
 /// @code
@@ -43,37 +40,7 @@ namespace util {
 ///     }
 /// }
 /// @endcode
-
-/// @brief The base class hiding the setter.
-class BaseMultiThreadingMgr : public boost::noncopyable {
-public:
-
-    /// @brief Get the mode.
-    ///
-    /// @return the current mode: true if multi-threading is enabled,
-    /// false otherwise.
-    bool getMode() const;
-
-protected:
-
-    /// @brief Constructor.
-    BaseMultiThreadingMgr();
-
-    /// @brief Destructor.
-    virtual ~BaseMultiThreadingMgr();
-
-    /// @brief Set the mode.
-    ///
-    /// @param mode The new mode.
-    void setMode(bool enabled);
-
-private:
-    /// @brief the current mode.
-    bool enabled_;
-};
-
-/// @brief The class providing instance and setter.
-class MultiThreadingMgr : public BaseMultiThreadingMgr {
+class MultiThreadingMgr : public boost::noncopyable {
 public:
 
     /// @brief Returns a single instance of Multi Threading Manager.
@@ -82,19 +49,33 @@ public:
     /// of accessing it.
     ///
     /// @return the single instance.
-    static BaseMultiThreadingMgr& instance();
+    static MultiThreadingMgr& instance();
 
-    using BaseMultiThreadingMgr::setMode;
+    /// @brief Get the mode.
+    ///
+    /// @return the current mode: true if multi-threading is enabled,
+    /// false otherwise.
+    bool getMode() const;
+
+    /// @brief Set the mode.
+    ///
+    /// @param mode The new mode.
+    void setMode(bool enabled);
 
 protected:
+
     /// @brief Constructor.
     MultiThreadingMgr();
 
     /// @brief Destructor.
     virtual ~MultiThreadingMgr();
+
+private:
+    /// @brief the current mode.
+    bool enabled_;
 };
 
-} // namespace isc::dhcp
+} // namespace isc::util
 } // namespace isc
 
 #endif // MULTI_THREADING_MGR_H

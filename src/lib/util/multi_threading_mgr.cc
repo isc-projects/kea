@@ -9,33 +9,27 @@
 namespace isc {
 namespace util {
 
-BaseMultiThreadingMgr::BaseMultiThreadingMgr() : enabled_(false) {
-}
-
-BaseMultiThreadingMgr::~BaseMultiThreadingMgr() {
-}
-
-bool
-BaseMultiThreadingMgr::getMode() const
-{
-    return (enabled_);
-}
-
-void
-BaseMultiThreadingMgr::setMode(bool enabled) {
-    enabled_ = enabled;
-}
-
-MultiThreadingMgr::MultiThreadingMgr() : BaseMultiThreadingMgr() {
+MultiThreadingMgr::MultiThreadingMgr() : enabled_(false) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {
 }
 
-BaseMultiThreadingMgr&
+MultiThreadingMgr&
 MultiThreadingMgr::instance() {
     static MultiThreadingMgr manager;
     return (manager);
+}
+
+bool
+MultiThreadingMgr::getMode() const
+{
+    return (enabled_);
+}
+
+void
+MultiThreadingMgr::setMode(bool enabled) {
+    enabled_ = enabled;
 }
 
 } // namespace isc::util
