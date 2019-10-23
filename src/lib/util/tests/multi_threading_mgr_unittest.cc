@@ -17,7 +17,7 @@ TEST(MultiThreadingMgrTest, default) {
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
 }
 
-// Verifies that the instance can be dynamic cast and setter works.
+// Verifies that the setter works.
 TEST(MultiThreadingMgrTest, setMode) {
     EXPECT_NO_THROW(MultiThreadingMgr::instance().setMode(true));
     EXPECT_TRUE(MultiThreadingMgr::instance().getMode());

@@ -22,8 +22,7 @@ MultiThreadingMgr::instance() {
 }
 
 bool
-MultiThreadingMgr::getMode() const
-{
+MultiThreadingMgr::getMode() const {
     return (enabled_);
 }
 
