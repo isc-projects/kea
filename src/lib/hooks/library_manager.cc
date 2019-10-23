@@ -7,9 +7,6 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#if 0
-#include <util/multi_threading_mgr.h>
-#endif
 #include <hooks/hooks.h>
 #include <hooks/hooks_log.h>
 #include <hooks/callout_manager.h>
@@ -20,6 +17,7 @@
 #include <log/logger_manager.h>
 #include <log/logger_support.h>
 #include <log/message_initializer.h>
+#include <util/multi_threading_mgr.h>
 
 #include <string>
 #include <vector>
@@ -30,7 +28,6 @@ using namespace std;
 
 namespace isc {
 namespace hooks {
-
 
 // Constructor (used by external agency)
 LibraryManager::LibraryManager(const std::string& name, int index,
@@ -143,11 +140,9 @@ bool
 LibraryManager::checkMultiThreadingCompatible() const {
 
     // Compatible with single-threaded.
-#if 0
-    if (!MultiThreadingMgr::instance().getMode()) {
+    if (!util::MultiThreadingMgr::instance().getMode()) {
         return (true);
     }
-#endif
 
     // Get the pointer to the "multi_threading_compatible" function.
     PointerConverter pc(dlsym(dl_handle_, MULTI_THREADING_COMPATIBLE_FUNCTION_NAME));
@@ -315,11 +310,7 @@ LibraryManager::loadLibrary() {
 
         // Library opened OK, see if a version function is present and if so,
         // check what value it returns. Check multi-threading compatibility.
-#if 0
         if (checkVersion() && checkMultiThreadingCompatible()) {
-#else
-        if (checkVersion()) {
-#endif
             // Version OK, so now register the standard callouts and call the
             // library's load() function if present.
             registerStandardCallouts();
@@ -402,12 +393,8 @@ LibraryManager::validateLibrary(const std::string& name) {
     LibraryManager manager(name);
 
     // Try to open it and, if we succeed, check the version.
-#if 0
     bool validated = manager.openLibrary() && manager.checkVersion() &&
-        checkMultiThreadingCompatible();
-#else
-    bool validated = manager.openLibrary() && manager.checkVersion();
-#endif
+        manager.checkMultiThreadingCompatible();
 
     // Regardless of whether the version checked out, close the library. (This
     // is a no-op if the library failed to open.)
