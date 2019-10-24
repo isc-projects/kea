@@ -13,6 +13,7 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
 #include <util/signal_set.h>
@@ -629,8 +630,7 @@ const int Memfile_LeaseMgr::MAJOR_VERSION;
 const int Memfile_LeaseMgr::MINOR_VERSION;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), lfc_setup_(), conn_(parameters)
-    {
+    : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_() {
     bool conversion_needed = false;
 
     // Check the universe and use v4 file or v6 file.
@@ -657,8 +657,8 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     // issue a warning. It is ok not to write leases to disk when
     // doing testing, but it should not be done in normal server
     // operation.
-   if (!persistLeases(V4) && !persistLeases(V6)) {
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
+    if (!persistLeases(V4) && !persistLeases(V6)) {
+       LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
     } else  {
         if (conversion_needed) {
             LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
@@ -667,6 +667,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         lfcSetup(conversion_needed);
     }
 
+    mutex_.reset(new std::mutex);
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -689,11 +690,8 @@ Memfile_LeaseMgr::getDBVersion() {
 }
 
 bool
-Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_ADD_ADDR4).arg(lease->addr_.toText());
-
-    if (getLease4(lease->addr_)) {
+Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
+    if (getLease4Internal(lease->addr_)) {
         // there is a lease with specified address already
         return (false);
     }
@@ -710,11 +708,21 @@ Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
 }
 
 bool
-Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
+Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_ADD_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_MEMFILE_ADD_ADDR4).arg(lease->addr_.toText());
 
-    if (getLease6(lease->type_, lease->addr_)) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (addLeaseInternal(lease));
+    } else {
+        return (addLeaseInternal(lease));
+    }
+}
+
+bool
+Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
+    if (getLease6Internal(lease->type_, lease->addr_)) {
         // there is a lease with specified address already
         return (false);
     }
@@ -730,11 +738,21 @@ Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     return (true);
 }
 
-Lease4Ptr
-Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
+bool
+Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_ADDR4).arg(addr.toText());
+              DHCPSRV_MEMFILE_ADD_ADDR6).arg(lease->addr_.toText());
 
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (addLeaseInternal(lease));
+    } else {
+        return (addLeaseInternal(lease));
+    }
+}
+
+Lease4Ptr
+Memfile_LeaseMgr::getLease4Internal(const isc::asiolink::IOAddress& addr) const {
     const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
     Lease4StorageAddressIndex::iterator l = idx.find(addr);
     if (l == idx.end()) {
@@ -744,12 +762,22 @@ Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     }
 }
 
-Lease4Collection
-Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
+Lease4Ptr
+Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
-    Lease4Collection collection;
+              DHCPSRV_MEMFILE_GET_ADDR4).arg(addr.toText());
 
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLease4Internal(addr));
+    } else {
+        return (getLease4Internal(addr));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
+                                    Lease4Collection& collection) const {
     // Using composite index by 'hw address' and 'subnet id'. It is
     // ok to use it for searching by the 'hw address' only.
     const Lease4StorageHWAddressSubnetIdIndex& idx =
@@ -761,16 +789,27 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     for(auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
+    Lease4Collection collection;
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLease4Internal(hwaddr, collection);
+    } else {
+        getLease4Internal(hwaddr, collection);
+    }
 
     return (collection);
 }
 
 Lease4Ptr
-Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
-        .arg(hwaddr.toText());
-
+Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
+                                    SubnetID subnet_id) const {
     // Get the index by HW Address and Subnet Identifier.
     const Lease4StorageHWAddressSubnetIdIndex& idx =
         storage4_.get<HWAddressSubnetIdIndexTag>();
@@ -786,11 +825,23 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     return (Lease4Ptr(new Lease4(**lease)));
 }
 
-Lease4Collection
-Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
+Lease4Ptr
+Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
-    Lease4Collection collection;
+              DHCPSRV_MEMFILE_GET_SUBID_HWADDR).arg(subnet_id)
+        .arg(hwaddr.toText());
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLease4Internal(hwaddr, subnet_id));
+    } else {
+        return (getLease4Internal(hwaddr, subnet_id));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
+                                    Lease4Collection& collection) const {
     // Using composite index by 'client id' and 'subnet id'. It is ok
     // to use it to search by 'client id' only.
     const Lease4StorageClientIdSubnetIdIndex& idx =
@@ -799,22 +850,30 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
               Lease4StorageClientIdSubnetIdIndex::const_iterator> l
         = idx.equal_range(boost::make_tuple(client_id.getClientId()));
 
-    for(auto lease = l.first; lease != l.second; ++lease) {
+    for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
+    Lease4Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLease4Internal(client_id, collection);
+    } else {
+        getLease4Internal(client_id, collection);
     }
 
     return (collection);
 }
 
 Lease4Ptr
-Memfile_LeaseMgr::getLease4(const ClientId& client_id,
-                            const HWAddr& hwaddr,
-                            SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID).arg(client_id.toText())
-                                                        .arg(hwaddr.toText())
-                                                        .arg(subnet_id);
-
+Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
+                                    const HWAddr& hwaddr,
+                                    SubnetID subnet_id) const {
     // Get the index by client id, HW address and subnet id.
     const Lease4StorageClientIdHWAddressSubnetIdIndex& idx =
         storage4_.get<ClientIdHWAddressSubnetIdIndexTag>();
@@ -834,11 +893,24 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
 
 Lease4Ptr
 Memfile_LeaseMgr::getLease4(const ClientId& client_id,
+                            const HWAddr& hwaddr,
                             SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
-              .arg(client_id.toText());
+              DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID).arg(client_id.toText())
+                                                        .arg(hwaddr.toText())
+                                                        .arg(subnet_id);
 
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLease4Internal(client_id, hwaddr, subnet_id));
+    } else {
+        return (getLease4Internal(client_id, hwaddr, subnet_id));
+    }
+}
+
+Lease4Ptr
+Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
+                                    SubnetID subnet_id) const {
     // Get the index by client and subnet id.
     const Lease4StorageClientIdSubnetIdIndex& idx =
         storage4_.get<ClientIdSubnetIdIndexTag>();
@@ -853,12 +925,24 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
     return (Lease4Ptr(new Lease4(**lease)));
 }
 
-Lease4Collection
-Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID4)
-        .arg(subnet_id);
+Lease4Ptr
+Memfile_LeaseMgr::getLease4(const ClientId& client_id,
+                            SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
+              .arg(client_id.toText());
 
-    Lease4Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLease4Internal(client_id, subnet_id));
+    } else {
+        return (getLease4Internal(client_id, subnet_id));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLeases4Internal(SubnetID subnet_id,
+                                     Lease4Collection& collection) const {
     const Lease4StorageSubnetIdIndex& idx = storage4_.get<SubnetIdIndexTag>();
     std::pair<Lease4StorageSubnetIdIndex::const_iterator,
               Lease4StorageSubnetIdIndex::const_iterator> l =
@@ -867,8 +951,29 @@ Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
     for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID4)
+        .arg(subnet_id);
+
+    Lease4Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases4Internal(subnet_id, collection);
+    } else {
+        getLeases4Internal(subnet_id, collection);
+    }
 
     return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases4Internal(Lease4Collection& collection) const {
+   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
+       collection.push_back(Lease4Ptr(new Lease4(**lease)));
+   }
 }
 
 Lease4Collection
@@ -894,11 +999,34 @@ Memfile_LeaseMgr::getLeases4() const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET4);
 
    Lease4Collection collection;
-   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
-       collection.push_back(Lease4Ptr(new Lease4(**lease)));
+   if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases4Internal(collection);
+   } else {
+        getLeases4Internal(collection);
    }
 
    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases4Internal(const asiolink::IOAddress& lower_bound_address,
+                                     const LeasePageSize& page_size,
+                                     Lease4Collection& collection) const {
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    Lease4StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
+
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
+    // Return all other leases being within the page size.
+    for (auto lease = lb;
+         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
 }
 
 Lease4Collection
@@ -916,22 +1044,25 @@ Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
         .arg(lower_bound_address.toText());
 
     Lease4Collection collection;
-    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
-    Lease4StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
-
-    // Exclude the lower bound address specified by the caller.
-    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
-        ++lb;
-    }
-
-    // Return all other leases being within the page size.
-    for (auto lease = lb;
-         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
-         ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases4Internal(lower_bound_address, page_size, collection);
+    } else {
+        getLeases4Internal(lower_bound_address, page_size, collection);
     }
 
     return (collection);
+}
+
+Lease6Ptr
+Memfile_LeaseMgr::getLease6Internal(Lease::Type type,
+                                    const isc::asiolink::IOAddress& addr) const {
+    Lease6Storage::iterator l = storage6_.find(addr);
+    if (l == storage6_.end() || !(*l) || ((*l)->type_ != type)) {
+        return (Lease6Ptr());
+    } else {
+        return (Lease6Ptr(new Lease6(**l)));
+    }
 }
 
 Lease6Ptr
@@ -941,11 +1072,28 @@ Memfile_LeaseMgr::getLease6(Lease::Type type,
               DHCPSRV_MEMFILE_GET_ADDR6)
         .arg(addr.toText())
         .arg(Lease::typeToText(type));
-    Lease6Storage::iterator l = storage6_.find(addr);
-    if (l == storage6_.end() || !(*l) || ((*l)->type_ != type)) {
-        return (Lease6Ptr());
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLease6Internal(type, addr));
     } else {
-        return (Lease6Ptr(new Lease6(**l)));
+        return (getLease6Internal(type, addr));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLeases6Internal(Lease::Type type,
+                                     const DUID& duid,
+                                     uint32_t iaid,
+                                     Lease6Collection& collection) const {
+    // Get the index by DUID, IAID, lease type.
+    const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
+    // Try to get the lease using the DUID, IAID and lease type.
+    std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
+              Lease6StorageDuidIaidTypeIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
+    for (Lease6StorageDuidIaidTypeIndex::const_iterator lease =
+            l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 }
 
@@ -958,19 +1106,36 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
         .arg(duid.toText())
         .arg(Lease::typeToText(type));
 
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(type, duid, iaid, collection);
+    } else {
+        getLeases6Internal(type, duid, iaid, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases6Internal(Lease::Type type,
+                                     const DUID& duid,
+                                     uint32_t iaid,
+                                     SubnetID subnet_id,
+                                     Lease6Collection& collection) const {
     // Get the index by DUID, IAID, lease type.
     const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
     // Try to get the lease using the DUID, IAID and lease type.
     std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
               Lease6StorageDuidIaidTypeIndex::const_iterator> l =
         idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
-    Lease6Collection collection;
-    for(Lease6StorageDuidIaidTypeIndex::const_iterator lease =
+    for (Lease6StorageDuidIaidTypeIndex::const_iterator lease =
             l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+        // Filter out the leases which subnet id doesn't match.
+        if ((*lease)->subnet_id_ == subnet_id) {
+            collection.push_back(Lease6Ptr(new Lease6(**lease)));
+        }
     }
-
-    return (collection);
 }
 
 Lease6Collection
@@ -984,30 +1149,20 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
         .arg(duid.toText())
         .arg(Lease::typeToText(type));
 
-    // Get the index by DUID, IAID, lease type.
-    const Lease6StorageDuidIaidTypeIndex& idx = storage6_.get<DuidIaidTypeIndexTag>();
-    // Try to get the lease using the DUID, IAID and lease type.
-    std::pair<Lease6StorageDuidIaidTypeIndex::const_iterator,
-              Lease6StorageDuidIaidTypeIndex::const_iterator> l =
-        idx.equal_range(boost::make_tuple(duid.getDuid(), iaid, type));
     Lease6Collection collection;
-    for(Lease6StorageDuidIaidTypeIndex::const_iterator lease =
-            l.first; lease != l.second; ++lease) {
-        // Filter out the leases which subnet id doesn't match.
-        if((*lease)->subnet_id_ == subnet_id) {
-            collection.push_back(Lease6Ptr(new Lease6(**lease)));
-        }
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(type, duid, iaid, subnet_id, collection);
+    } else {
+        getLeases6Internal(type, duid, iaid, subnet_id, collection);
     }
 
     return (collection);
 }
 
-Lease6Collection
-Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID6)
-        .arg(subnet_id);
-
-    Lease6Collection collection;
+void
+Memfile_LeaseMgr::getLeases6Internal(SubnetID subnet_id,
+                                     Lease6Collection& collection) const {
     const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
     std::pair<Lease6StorageSubnetIdIndex::const_iterator,
               Lease6StorageSubnetIdIndex::const_iterator> l =
@@ -1016,8 +1171,29 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
     for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID6)
+        .arg(subnet_id);
+
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(subnet_id, collection);
+    } else {
+        getLeases6Internal(subnet_id, collection);
+    }
 
     return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases6Internal(Lease6Collection& collection) const {
+   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
+       collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   }
 }
 
 Lease6Collection
@@ -1043,19 +1219,19 @@ Memfile_LeaseMgr::getLeases6() const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6);
 
    Lease6Collection collection;
-   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
-       collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(collection);
+   } else {
+        getLeases6Internal(collection);
    }
 
    return (collection);
 }
 
-Lease6Collection
-Memfile_LeaseMgr::getLeases6(const DUID& duid) const {
-   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6_DUID)
-       .arg(duid.toText());
-
-    Lease6Collection collection;
+void
+Memfile_LeaseMgr::getLeases6Internal(const DUID& duid,
+                                     Lease6Collection& collection) const {
     const Lease6StorageDuidIndex& idx = storage6_.get<DuidIndexTag>();
     std::pair<Lease6StorageDuidIndex::const_iterator,
               Lease6StorageDuidIndex::const_iterator> l =
@@ -1064,8 +1240,42 @@ Memfile_LeaseMgr::getLeases6(const DUID& duid) const {
     for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(const DUID& duid) const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6_DUID)
+       .arg(duid.toText());
+
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(duid, collection);
+    } else {
+        getLeases6Internal(duid, collection);
+    }
 
     return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases6Internal(const asiolink::IOAddress& lower_bound_address,
+                                     const LeasePageSize& page_size,
+                                     Lease6Collection& collection) const {
+    const Lease6StorageAddressIndex& idx = storage6_.get<AddressIndexTag>();
+    Lease6StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
+
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
+    // Return all other leases being within the page size.
+    for (auto lease = lb;
+         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
 }
 
 Lease6Collection
@@ -1083,30 +1293,19 @@ Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
         .arg(lower_bound_address.toText());
 
     Lease6Collection collection;
-    const Lease6StorageAddressIndex& idx = storage6_.get<AddressIndexTag>();
-    Lease6StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
-
-    // Exclude the lower bound address specified by the caller.
-    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
-        ++lb;
-    }
-
-    // Return all other leases being within the page size.
-    for (auto lease = lb;
-         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
-         ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(lower_bound_address, page_size, collection);
+    } else {
+        getLeases6Internal(lower_bound_address, page_size, collection);
     }
 
     return (collection);
 }
 
 void
-Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
-                                    const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED4)
-        .arg(max_leases);
-
+Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
+                                            const size_t max_leases) const {
     // Obtain the index which segragates leases by state and time.
     const Lease4StorageExpirationIndex& index = storage4_.get<ExpirationIndexTag>();
 
@@ -1127,11 +1326,22 @@ Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
 }
 
 void
-Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                     const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED6)
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED4)
         .arg(max_leases);
 
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getExpiredLeases4Internal(expired_leases, max_leases);
+    } else {
+        getExpiredLeases4Internal(expired_leases, max_leases);
+    }
+}
+
+void
+Memfile_LeaseMgr::getExpiredLeases6Internal(Lease6Collection& expired_leases,
+                                            const size_t max_leases) const {
     // Obtain the index which segragates leases by state and time.
     const Lease6StorageExpirationIndex& index = storage6_.get<ExpirationIndexTag>();
 
@@ -1152,10 +1362,21 @@ Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
 }
 
 void
-Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_UPDATE_ADDR4).arg(lease->addr_.toText());
+Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                    const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED6)
+        .arg(max_leases);
 
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getExpiredLeases6Internal(expired_leases, max_leases);
+    } else {
+        getExpiredLeases6Internal(expired_leases, max_leases);
+    }
+}
+
+void
+Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // Obtain 'by address' index.
     Lease4StorageAddressIndex& index = storage4_.get<AddressIndexTag>();
 
@@ -1178,10 +1399,20 @@ Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
 }
 
 void
-Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
+Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_UPDATE_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_MEMFILE_UPDATE_ADDR4).arg(lease->addr_.toText());
 
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        updateLease4Internal(lease);
+    } else {
+        updateLease4Internal(lease);
+    }
+}
+
+void
+Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // Obtain 'by address' index.
     Lease6StorageAddressIndex& index = storage6_.get<AddressIndexTag>();
 
@@ -1203,10 +1434,21 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
 }
 
-bool
-Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+void
+Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_MEMFILE_UPDATE_ADDR6).arg(lease->addr_.toText());
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        updateLease6Internal(lease);
+    } else {
+        updateLease6Internal(lease);
+    }
+}
+
+bool
+Memfile_LeaseMgr::deleteLeaseInternal(const isc::asiolink::IOAddress& addr) {
     if (addr.isV4()) {
         // v4 lease
         Lease4Storage::iterator l = storage4_.find(addr);
@@ -1250,14 +1492,33 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     }
 }
 
+bool
+Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (deleteLeaseInternal(addr));
+    } else {
+        return (deleteLeaseInternal(addr));
+    }
+}
+
 uint64_t
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4)
         .arg(secs);
-    return (deleteExpiredReclaimedLeases<
-            Lease4StorageExpirationIndex, Lease4
-            >(secs, V4, storage4_, lease_file4_));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (deleteExpiredReclaimedLeases<
+                Lease4StorageExpirationIndex, Lease4
+                >(secs, V4, storage4_, lease_file4_));
+    } else {
+        return (deleteExpiredReclaimedLeases<
+                Lease4StorageExpirationIndex, Lease4
+                >(secs, V4, storage4_, lease_file4_));
+    }
 }
 
 uint64_t
@@ -1265,9 +1526,16 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
-    return (deleteExpiredReclaimedLeases<
-            Lease6StorageExpirationIndex, Lease6
-            >(secs, V6, storage6_, lease_file6_));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (deleteExpiredReclaimedLeases<
+                Lease6StorageExpirationIndex, Lease6
+                >(secs, V6, storage6_, lease_file6_));
+    } else {
+        return (deleteExpiredReclaimedLeases<
+                Lease6StorageExpirationIndex, Lease6
+                >(secs, V6, storage6_, lease_file6_));
+    }
 }
 
 template<typename IndexType, typename LeaseType, typename StorageType,

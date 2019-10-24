@@ -18,6 +18,7 @@
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
 #include <util/range_utilities.h>
 #include <util/stopwatch.h>
@@ -116,6 +117,8 @@ public:
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+
+        MultiThreadingMgr::instance().setMode(false);
     }
 
     /// @brief Reopens the connection to the backend.
@@ -141,6 +144,8 @@ public:
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+        // Disable multi-threading.
+        MultiThreadingMgr::instance().setMode(false);
     }
 
 
@@ -829,12 +834,26 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     testAddGetDelete6();
 }
 
+// Checks that adding/getting/deleting a Lease6 object works.
+TEST_F(MemfileLeaseMgrTest, addGetDelete6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testAddGetDelete6();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4 (by address) and deleteLease (with an
 /// IPv4 address) works.
 TEST_F(MemfileLeaseMgrTest, basicLease4) {
     startBackend(V4);
+    testBasicLease4();
+}
+
+/// @brief Basic Lease4 Checks
+TEST_F(MemfileLeaseMgrTest, basicLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testBasicLease4();
 }
 
@@ -846,15 +865,36 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientId) {
     testGetLease4ClientId();
 }
 
+// Simple test about lease4 retrieval through client id method
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease4ClientId();
+}
+
 // Checks that lease4 retrieval client id is null is working
 TEST_F(MemfileLeaseMgrTest, getLease4NullClientId) {
     startBackend(V4);
     testGetLease4NullClientId();
 }
 
+// Checks that lease4 retrieval client id is null is working
+TEST_F(MemfileLeaseMgrTest, getLease4NullClientIdMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease4NullClientId();
+}
+
 // Checks lease4 retrieval through HWAddr
 TEST_F(MemfileLeaseMgrTest, getLease4HWAddr1) {
     startBackend(V4);
+    testGetLease4HWAddr1();
+}
+
+// Checks lease4 retrieval through HWAddr
+TEST_F(MemfileLeaseMgrTest, getLease4HWAddr1MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLease4HWAddr1();
 }
 
@@ -867,9 +907,23 @@ TEST_F(MemfileLeaseMgrTest, getLease4HWAddr2) {
     testGetLease4HWAddr2();
 }
 
+/// @brief Check GetLease4 methods - access by Hardware Address
+TEST_F(MemfileLeaseMgrTest, getLease4HWAddr2MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease4HWAddr2();
+}
+
 // Checks lease4 retrieval with clientId, HWAddr and subnet_id
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
     startBackend(V4);
+    testGetLease4ClientIdHWAddrSubnetId();
+}
+
+// Checks lease4 retrieval with clientId, HWAddr and subnet_id
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetIdMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLease4ClientIdHWAddrSubnetId();
 }
 
@@ -880,6 +934,13 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
 /// (client-id is optional and may not be present)
 TEST_F(MemfileLeaseMgrTest, lease4NullClientId) {
     startBackend(V4);
+    testLease4NullClientId();
+}
+
+/// @brief Basic Lease4 Checks
+TEST_F(MemfileLeaseMgrTest, lease4NullClientIdMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testLease4NullClientId();
 }
 
@@ -894,6 +955,15 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_getLease4HwaddrSubnetId) {
     testGetLease4HWAddrSubnetId();
 }
 
+/// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
+TEST_F(MemfileLeaseMgrTest, DISABLED_getLease4HwaddrSubnetIdMultiThread) {
+
+    /// @todo: fails on memfile. It's probably a memfile bug.
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease4HWAddrSubnetId();
+}
+
 /// @brief Check GetLease4 methods - access by Client ID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -903,11 +973,25 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientId2) {
     testGetLease4ClientId2();
 }
 
+/// @brief Check GetLease4 methods - access by Client ID
+TEST_F(MemfileLeaseMgrTest, getLease4ClientId2MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease4ClientId2();
+}
+
 // @brief Get Lease4 by client ID
 //
 // Check that the system can cope with a client ID of any size.
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSize) {
     startBackend(V4);
+    testGetLease4ClientIdSize();
+}
+
+// @brief Get Lease4 by client ID
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSizeMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLease4ClientIdSize();
 }
 
@@ -920,9 +1004,23 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
+/// @brief Check GetLease4 methods - access by Client ID & Subnet ID
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetIdMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease4ClientIdSubnetId();
+}
+
 // This test checks that all IPv4 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4SubnetId) {
     startBackend(V4);
+    testGetLeases4SubnetId();
+}
+
+// This test checks that all IPv4 leases for a specified subnet id are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4SubnetIdMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLeases4SubnetId();
 }
 
@@ -932,9 +1030,23 @@ TEST_F(MemfileLeaseMgrTest, getLeases4Hostname) {
     testGetLeases4Hostname();
 }
 
+// This test checks that all IPv4 leases with a specified hostname are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4HostnameMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases4Hostname();
+}
+
 // This test checks that all IPv4 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases4) {
     startBackend(V4);
+    testGetLeases4();
+}
+
+// This test checks that all IPv4 leases are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLeases4();
 }
 
@@ -944,15 +1056,36 @@ TEST_F(MemfileLeaseMgrTest, getLeases4Paged) {
     testGetLeases4Paged();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(MemfileLeaseMgrTest, getLeases4PagedMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases4Paged();
+}
+
 // This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     startBackend(V6);
     testGetLeases6SubnetId();
 }
 
+// This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6SubnetId();
+}
+
 // This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6Hostname) {
     startBackend(V6);
+    testGetLeases6Hostname();
+}
+
+// This test checks that all IPv6 leases with a specified hostname are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6HostnameMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLeases6Hostname();
 }
 
@@ -963,9 +1096,23 @@ TEST_F(MemfileLeaseMgrTest, getLeases6Duid) {
     testGetLeases6Duid();
 }
 
+// This test adds 3 leases  and verifies fetch by DUID.
+TEST_F(MemfileLeaseMgrTest, getLeases6DuidMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6Duid();
+}
+
 // This test checks that all IPv6 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6) {
     startBackend(V6);
+    testGetLeases6();
+}
+
+// This test checks that all IPv6 leases are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLeases6();
 }
 
@@ -975,12 +1122,26 @@ TEST_F(MemfileLeaseMgrTest, getLeases6Paged) {
     testGetLeases6Paged();
 }
 
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(MemfileLeaseMgrTest, getLeases6PagedMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6Paged();
+}
+
 /// @brief Basic Lease6 Checks
 ///
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
 /// IPv6 address) works.
 TEST_F(MemfileLeaseMgrTest, basicLease6) {
     startBackend(V6);
+    testBasicLease6();
+}
+
+/// @brief Basic Lease6 Checks
+TEST_F(MemfileLeaseMgrTest, basicLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testBasicLease6();
 }
 
@@ -996,9 +1157,23 @@ TEST_F(MemfileLeaseMgrTest, getLeases6DuidIaid) {
     testGetLeases6DuidIaid();
 }
 
+/// @brief Check GetLease6 methods - access by DUID/IAID
+TEST_F(MemfileLeaseMgrTest, getLeases6DuidIaidMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6DuidIaid();
+}
+
 /// @brief Check that the system can cope with a DUID of allowed size.
 TEST_F(MemfileLeaseMgrTest, getLeases6DuidSize) {
     startBackend(V6);
+    testGetLeases6DuidSize();
+}
+
+/// @brief Check that the system can cope with a DUID of allowed size.
+TEST_F(MemfileLeaseMgrTest, getLeases6DuidSizeMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLeases6DuidSize();
 }
 
@@ -1014,6 +1189,13 @@ TEST_F(MemfileLeaseMgrTest, getExpiredLeases4) {
     testGetExpiredLeases4();
 }
 
+/// @brief Check that the expired DHCPv4 leases can be retrieved.
+TEST_F(MemfileLeaseMgrTest, getExpiredLeases4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetExpiredLeases4();
+}
+
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
 ///
 /// This test adds a number of leases to the lease database and marks
@@ -1026,15 +1208,36 @@ TEST_F(MemfileLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
+/// @brief Check that the expired DHCPv6 leases can be retrieved.
+TEST_F(MemfileLeaseMgrTest, getExpiredLeases6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetExpiredLeases6();
+}
+
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.
 TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases6) {
     startBackend(V6);
     testDeleteExpiredReclaimedLeases6();
 }
 
+/// @brief Check that expired reclaimed DHCPv6 leases are removed.
+TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testDeleteExpiredReclaimedLeases6();
+}
+
 /// @brief Check that expired reclaimed DHCPv4 leases are removed.
 TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     startBackend(V4);
+    testDeleteExpiredReclaimedLeases4();
+}
+
+/// @brief Check that expired reclaimed DHCPv4 leases are removed.
+TEST_F(MemfileLeaseMgrTest, deleteExpiredReclaimedLeases4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
     testDeleteExpiredReclaimedLeases4();
 }
 
@@ -1051,6 +1254,13 @@ TEST_F(MemfileLeaseMgrTest, lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
 }
 
+/// @brief Check that getLease6 methods discriminate by lease type.
+TEST_F(MemfileLeaseMgrTest, lease6LeaseTypeCheckMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testLease6LeaseTypeCheck();
+}
+
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -1060,10 +1270,25 @@ TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetId) {
     testGetLease6DuidIaidSubnetId();
 }
 
+/// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
+TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease6DuidIaidSubnetId();
+}
+
 /// Checks that getLease6(type, duid, iaid, subnet-id) works with different
 /// DUID sizes
 TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     startBackend(V6);
+    testGetLease6DuidIaidSubnetIdSize();
+}
+
+/// Checks that getLease6(type, duid, iaid, subnet-id) works with different
+/// DUID sizes
+TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSizeMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testGetLease6DuidIaidSubnetIdSize();
 }
 
@@ -1078,6 +1303,13 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease4) {
     testUpdateLease4();
 }
 
+/// @brief Lease4 update tests
+TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testUpdateLease4();
+}
+
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -1086,6 +1318,13 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease4) {
 /// implemented in them.
 TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease6) {
     startBackend(V6);
+    testUpdateLease6();
+}
+
+/// @brief Lease6 update tests
+TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testUpdateLease6();
 }
 
@@ -1099,6 +1338,13 @@ TEST_F(MemfileLeaseMgrTest, testRecreateLease4) {
     testRecreateLease4();
 }
 
+/// @brief DHCPv4 Lease recreation tests
+TEST_F(MemfileLeaseMgrTest, testRecreateLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testRecreateLease4();
+}
+
 /// @brief DHCPv6 Lease recreation tests
 ///
 /// Checks that the lease can be created, deleted and recreated with
@@ -1106,6 +1352,13 @@ TEST_F(MemfileLeaseMgrTest, testRecreateLease4) {
 /// correctly stored in the lease database.
 TEST_F(MemfileLeaseMgrTest, testRecreateLease6) {
     startBackend(V6);
+    testRecreateLease6();
+}
+
+/// @brief DHCPv6 Lease recreation tests
+TEST_F(MemfileLeaseMgrTest, testRecreateLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testRecreateLease6();
 }
 
@@ -1126,9 +1379,26 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_nullDuid) {
     ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
 }
 
+/// @brief Checks that null DUID is not allowed.
+TEST_F(MemfileLeaseMgrTest, DISABLED_nullDuidMultiThread) {
+    MultiThreadingMgr::instance().setMode(true);
+    // Create leases, although we need only one.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    leases[1]->duid_.reset();
+    ASSERT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
 /// @brief Tests whether memfile can store and retrieve hardware addresses
 TEST_F(MemfileLeaseMgrTest, testLease6Mac) {
     startBackend(V6);
+    testLease6MAC();
+}
+
+/// @brief Tests whether memfile can store and retrieve hardware addresses
+TEST_F(MemfileLeaseMgrTest, testLease6MacMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testLease6MAC();
 }
 
@@ -1154,9 +1424,23 @@ TEST_F(MemfileLeaseMgrTest, getDeclined4) {
     testGetDeclinedLeases4();
 }
 
+// Checks that declined IPv4 leases can be returned correctly.
+TEST_F(MemfileLeaseMgrTest, getDeclined4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetDeclinedLeases4();
+}
+
 // Checks that declined IPv6 leases can be returned correctly.
 TEST_F(MemfileLeaseMgrTest, getDeclined6) {
     startBackend(V6);
+    testGetDeclinedLeases6();
+}
+
+// Checks that declined IPv6 leases can be returned correctly.
+TEST_F(MemfileLeaseMgrTest, getDeclined6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
     testGetDeclinedLeases6();
 }
 
