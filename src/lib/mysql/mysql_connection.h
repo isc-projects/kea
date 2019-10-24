@@ -98,7 +98,6 @@ public:
     /// Sets the MySql API connector handle to NULL.
     /// Push a call to mysql_library_end() at exit time.
     MySqlHolder() : connected_(false), prepared_(false), mysql_(NULL) {
-        doNothing();
     }
 
     /// @brief Destructor

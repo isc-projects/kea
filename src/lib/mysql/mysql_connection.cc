@@ -26,10 +26,6 @@ namespace db {
 bool MySqlHolder::atexit_ = []{atexit([]{mysql_library_end();});return true;};
 
 void
-MySqlHolder::doNothing() {
-}
-
-void
 MySqlHolder::setConnection(MYSQL* connection) {
     // clear prepared statements associated to current connection
     clearPrepared();
