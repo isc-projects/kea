@@ -133,7 +133,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state, user_context "
+        "state, user_context "
       "FROM lease4 "
       "WHERE subnet_id = $1"},
 
@@ -307,6 +307,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
         "state = $16, user_context = $17 "
       "WHERE address = $18"},
+
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
       "all_lease4_stats",
@@ -333,7 +334,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 0, { OID_NONE },
      "all_lease6_stats",
      "SELECT subnet_id, lease_type, state, leases as state_count"
-     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state"},
 
     // SUBNET_LEASE6_STATS
     { 1, { OID_INT8 },
@@ -341,7 +342,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, lease_type, state, leases as state_count"
       "  FROM lease6_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY lease_type, state" },
+      "  ORDER BY lease_type, state"},
 
     // SUBNET_RANGE_LEASE6_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -349,7 +350,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, lease_type, state, leases as state_count"
       "  FROM lease6_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, lease_type, state" },
+      "  ORDER BY subnet_id, lease_type, state"},
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
 };
@@ -463,8 +465,7 @@ public:
         lease_ = lease;
 
         try {
-            addr_str_ = boost::lexical_cast<std::string>
-                        (lease->addr_.toUint32());
+            addr_str_ = boost::lexical_cast<std::string>(lease->addr_.toUint32());
             bind_array.add(addr_str_);
 
             if (lease->hwaddr_ && !lease->hwaddr_->hwaddr_.empty()) {
@@ -1113,9 +1114,8 @@ protected:
     bool fetch_type_;
 };
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
-    exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
+PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters) :
+    conn_(parameters) {
     conn_.openDatabase();
 
     // Validate schema version first.
@@ -1132,7 +1132,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
 
     // Now prepare the SQL statements.
     int i = 0;
-    for( ; tagged_statements[i].text != NULL ; ++i) {
+    for(; tagged_statements[i].text != NULL; ++i) {
         conn_.prepareStatement(tagged_statements[i]);
     }
 
@@ -1182,20 +1182,26 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 
 bool
 PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
+        std::make_shared<PgSqlLease4Exchange>());
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(lease->addr_.toText());
 
     PsqlBindArray bind_array;
-    exchange4_->createBindForSend(lease, bind_array);
+    exchange4->createBindForSend(lease, bind_array);
     return (addLeaseCommon(INSERT_LEASE4, bind_array));
 }
 
 bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
+        std::make_shared<PgSqlLease6Exchange>());
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR6).arg(lease->addr_.toText());
     PsqlBindArray bind_array;
-    exchange6_->createBindForSend(lease, bind_array);
+    exchange6->createBindForSend(lease, bind_array);
 
     return (addLeaseCommon(INSERT_LEASE6, bind_array));
 }
@@ -1227,15 +1233,36 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 }
 
 void
+PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
+                                  Lease4Collection& result) const {
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
+        std::make_shared<PgSqlLease4Exchange>());
+
+    getLeaseCollection(stindex, bind_array, exchange4, result);
+}
+
+void
+PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
+                                  Lease6Collection& result) const {
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
+        std::make_shared<PgSqlLease6Exchange>());
+
+    getLeaseCollection(stindex, bind_array, exchange6, result);
+}
+
+void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
-                             Lease4Ptr& result) const {
+                        Lease4Ptr& result) const {
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
+        std::make_shared<PgSqlLease4Exchange>());
+
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease4Collection collection;
-    getLeaseCollection(stindex, bind_array, exchange4_, collection, true);
+    getLeaseCollection(stindex, bind_array, exchange4, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1247,14 +1274,17 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
 
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
-                             Lease6Ptr& result) const {
+                        Lease6Ptr& result) const {
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
+        std::make_shared<PgSqlLease6Exchange>());
+
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease6Collection collection;
-    getLeaseCollection(stindex, bind_array, exchange6_, collection, true);
+    getLeaseCollection(stindex, bind_array, exchange6, collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1273,8 +1303,7 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     PsqlBindArray bind_array;
 
     // LEASE ADDRESS
-    std::string addr_str = boost::lexical_cast<std::string>
-                           (addr.toUint32());
+    std::string addr_str = boost::lexical_cast<std::string>(addr.toUint32());
     bind_array.add(addr_str);
 
     // Get the data
@@ -1738,6 +1767,9 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
 
 void
 PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
+        std::make_shared<PgSqlLease4Exchange>());
+
     const StatementIndex stindex = UPDATE_LEASE4;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -1745,12 +1777,11 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Create the BIND array for the data being updated
     PsqlBindArray bind_array;
-    exchange4_->createBindForSend(lease, bind_array);
+    exchange4->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
-                         (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    std::string addr_str = boost::lexical_cast<std::string>(lease->addr_.toUint32());
+    bind_array.add(addr_str);
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease);
@@ -1758,6 +1789,9 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
 void
 PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
+        std::make_shared<PgSqlLease6Exchange>());
+
     const StatementIndex stindex = UPDATE_LEASE6;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -1765,7 +1799,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Create the BIND array for the data being updated
     PsqlBindArray bind_array;
-    exchange6_->createBindForSend(lease, bind_array);
+    exchange6->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the BIND array
     std::string addr_str = lease->addr_.toText();
@@ -1936,18 +1970,13 @@ PgSqlLeaseMgr::getVersion() const {
                   << version_sql << ", reason: " << PQerrorMessage(conn_));
     }
 
-    istringstream tmp;
-    uint32_t version;
-    tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
-    tmp.str("");
-    tmp.clear();
+    uint32_t major;
+    PgSqlExchange::getColumnValue(r, 0, 0, major);
 
     uint32_t minor;
-    tmp.str(PQgetvalue(r, 0, 1));
-    tmp >> minor;
+    PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
-    return (make_pair(version, minor));
+    return (make_pair(major, minor));
 }
 
 void
@@ -1960,5 +1989,5 @@ PgSqlLeaseMgr::rollback() {
     conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
