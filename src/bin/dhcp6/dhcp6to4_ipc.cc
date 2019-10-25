@@ -54,7 +54,7 @@ void Dhcp6to4Ipc::open() {
     }
 }
 
-void Dhcp6to4Ipc::handler() {
+void Dhcp6to4Ipc::handler(int /* fd */) {
     Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
     Pkt6Ptr pkt;
 

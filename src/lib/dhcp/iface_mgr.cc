@@ -1089,7 +1089,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
             // layer access without integrating any specific features
             // in IfaceMgr
             if (s.callback_) {
-                s.callback_();
+                s.callback_(s.socket_);
             }
 
             return (Pkt4Ptr());
@@ -1184,7 +1184,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         // layer access without integrating any specific features
         // in IfaceMgr
         if (s.callback_) {
-            s.callback_();
+            s.callback_(s.socket_);
         }
 
         return (Pkt4Ptr());
@@ -1313,7 +1313,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         // layer access without integrating any specific features
         // in IfaceMgr
         if (s.callback_) {
-            s.callback_();
+            s.callback_(s.socket_);
         }
 
         return (Pkt6Ptr());
@@ -1430,7 +1430,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
             // layer access without integrating any specific features
             // in IfaceMgr
             if (s.callback_) {
-                s.callback_();
+                s.callback_(s.socket_);
             }
 
             return (Pkt6Ptr());

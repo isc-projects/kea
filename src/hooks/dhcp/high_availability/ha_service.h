@@ -738,6 +738,19 @@ protected:
     /// error we want Connection logic to process it.
     bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
 
+    /// @brief IfaceMgr external socket ready callback handler
+    ///
+    /// IfaceMgr invokes this call back when a registered socket has been
+    /// flagged as ready to read.   It is installed by the invocation to
+    /// register the socket with IfaceMgr made in @ref clientConnectHandler.
+    ///
+    /// @todo add logic to determine if the
+    /// socket is involved in an ongoing transcation or not. If not, it
+    /// will be unregistered from IfaceMgr.
+    ///
+    /// @param tcp_native_fd socket descriptor of the ready socket
+    void socketReadyHandler(int tcp_native_fd);
+
     /// @brief HttpClient close callback handler
     ///
     /// Passed into HttpClient calls to allow unregistration of client's
