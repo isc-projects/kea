@@ -587,7 +587,6 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet4() {
     bool got1 = false;
     bool got2 = false;
     bool got3 = false;
-    bool got4 = false;
     for (auto host : from_hds) {
         if (host->getIdentifierType() == Host::IDENT_HWADDR) {
             EXPECT_FALSE(got1);
@@ -671,7 +670,6 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet6() {
     bool got1 = false;
     bool got2 = false;
     bool got3 = false;
-    bool got4 = false;
     for (auto host : from_hds) {
         if (host->getIdentifierType() == Host::IDENT_HWADDR) {
             EXPECT_FALSE(got1);
