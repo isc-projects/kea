@@ -1,3 +1,9 @@
+1681.	[func]		fdupont
+	Added new command config-backend-pull which to force the server
+	to immediately poll the configuration updates from the
+	configuration backend
+	(Gitlab #904)
+
 1680.	[bug,build]	Kristoffer Larsen
 	A bug in Makefile has been fixed. The changes made to
 	src/lib/dhcpsrv/alloc_engine_messages.mes are now picked up
