@@ -1,3 +1,9 @@
+1675.	[func]		fdupont
+	Both DHCPv4 and DHCPv6 can now listen on and send responses
+	to a custom UDP port, as specified with the -p command line
+	option. This capability is mostly useful for testing.
+	(Gitlab #677,!548, git 47e709fb7b89464d4473e8c7cb138f539042d68b)
+
 1674.	[perf]		fdupont
 	Added a Multi Threading Manager singleton class in the util library.
 	(Gitlab #962,!566, git 66b090e54b45bdeefda266ddd62e42b46ed48d1d)
