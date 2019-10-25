@@ -564,7 +564,7 @@ ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
         auto mode = CBControlDHCPv4::FetchMode::FETCH_UPDATE;
         server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_CB_PULL_FAIL)
+        LOG_ERROR(dhcp4_logger, DHCP4_CB_PULL_FETCH_UPDATES_FAIL)
             .arg(ex.what());
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Server update failed: " + string(ex.what())));
@@ -1076,14 +1076,15 @@ ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
         (*failure_count) = 0;
 
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
+        LOG_ERROR(dhcp4_logger, DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL)
             .arg(ex.what());
 
         // We allow at most 10 consecutive failures after which we stop
         // making further attempts to fetch the configuration updates.
         // Let's return without re-scheduling the timer.
         if (++(*failure_count) > 10) {
-            LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_RETRIES_EXHAUSTED);
+            LOG_ERROR(dhcp4_logger,
+                      DHCP4_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED);
             return;
         }
     }

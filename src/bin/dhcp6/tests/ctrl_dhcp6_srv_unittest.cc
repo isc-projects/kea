@@ -498,13 +498,13 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
 
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-backend-pull\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"server-update\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -938,15 +938,15 @@ TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
     expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
 }
 
-// This test verifies that the DHCP server handles server-update command
-TEST_F(CtrlChannelDhcpv6SrvTest, serverUpdate) {
+// This test verifies that the DHCP server handles config-backend-pull command
+TEST_F(CtrlChannelDhcpv6SrvTest, configBackendPull) {
     createUnixChannelServer();
 
     std::string response;
     std::string expected;
 
-    // Send the server-update command. Note there is no configured backed.
-    sendUnixCommand("{ \"command\": \"server-update\" }", response);
+    // Send the config-backend-pull command. Note there is no configured backed.
+    sendUnixCommand("{ \"command\": \"config-backend-pull\" }", response);
     expected = "{ \"result\": 3, \"text\": \"No config backend.\" }";
     EXPECT_EQ(expected, response);
 }
@@ -1180,6 +1180,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
 
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
+    checkListCommands(rsp, "config-backend-pull");
     checkListCommands(rsp, "config-get");
     checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
@@ -1190,7 +1191,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "libreload");
     checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "server-tag-get");
-    checkListCommands(rsp, "server-update");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");

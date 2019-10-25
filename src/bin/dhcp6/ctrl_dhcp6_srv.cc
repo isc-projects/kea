@@ -545,8 +545,8 @@ ControlledDhcpv6Srv::commandServerTagGetHandler(const std::string&,
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandServerUpdateHandler(const std::string&,
-                                                      ConstElementPtr) {
+ControlledDhcpv6Srv::commandConfigBackendPullHandler(const std::string&,
+                                                     ConstElementPtr) {
     auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
     if (!ctl_info) {
         return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
@@ -564,8 +564,7 @@ ControlledDhcpv6Srv::commandServerUpdateHandler(const std::string&,
         auto mode = CBControlDHCPv6::FetchMode::FETCH_UPDATE;
         server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp6_logger, DHCP6_CB_FETCH_UPDATES_FAIL)
-            .arg("server-update command")
+        LOG_ERROR(dhcp6_logger, DHCP6_CB_PULL_FETCH_UPDATES_FAIL)
             .arg(ex.what());
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Server update failed: " + string(ex.what())));
@@ -630,8 +629,8 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         } else if (command == "server-tag-get") {
             return (srv->commandServerTagGetHandler(command, args));
 
-        } else if (command == "server-update") {
-            return (srv->commandServerUpdateHandler(command, args));
+        } else if (command == "config-backend-pull") {
+            return (srv->commandConfigBackendPullHandler(command, args));
 
         }
 
@@ -859,6 +858,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("build-report",
         boost::bind(&ControlledDhcpv6Srv::commandBuildReportHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("config-backend-pull",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigBackendPullHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("config-get",
         boost::bind(&ControlledDhcpv6Srv::commandConfigGetHandler, this, _1, _2));
 
@@ -882,9 +884,6 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
 
     CommandMgr::instance().registerCommand("server-tag-get",
         boost::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, _1, _2));
-
-    CommandMgr::instance().registerCommand("server-update",
-        boost::bind(&ControlledDhcpv6Srv::commandServerUpdateHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
@@ -950,6 +949,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
+        CommandMgr::instance().deregisterCommand("config-backend-pull");
         CommandMgr::instance().deregisterCommand("config-get");
         CommandMgr::instance().deregisterCommand("config-set");
         CommandMgr::instance().deregisterCommand("config-reload");
@@ -960,7 +960,6 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("server-tag-get");
-        CommandMgr::instance().deregisterCommand("server-update");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
@@ -1095,7 +1094,7 @@ ControlledDhcpv6Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
         (*failure_count) = 0;
 
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp6_logger, DHCP6_CB_FETCH_UPDATES_FAIL)
+        LOG_ERROR(dhcp6_logger, DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL)
             .arg("periodic poll")
             .arg(ex.what());
 
@@ -1103,7 +1102,8 @@ ControlledDhcpv6Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
         // making further attempts to fetch the configuration updates.
         // Let's return without re-scheduling the timer.
         if (++(*failure_count) > 10) {
-            LOG_ERROR(dhcp6_logger, DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED);
+            LOG_ERROR(dhcp6_logger,
+                      DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED);
             return;
         }
     }

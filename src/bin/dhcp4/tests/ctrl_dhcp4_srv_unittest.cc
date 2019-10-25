@@ -479,13 +479,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
 
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-backend-pull\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-backend-pull\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
@@ -1149,6 +1149,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
 
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
+    checkListCommands(rsp, "config-backend-pull");
     checkListCommands(rsp, "config-get");
     checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
@@ -1159,7 +1160,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "libreload");
     checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "server-tag-get");
-    checkListCommands(rsp, "config-backend-pull");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");

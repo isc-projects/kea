@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Oct 25 2019 16:41
+// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes on Fri Oct 25 2019 22:42
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -15,8 +15,9 @@ extern const isc::log::MessageID DHCP6_ALREADY_RUNNING;
 extern const isc::log::MessageID DHCP6_BUFFER_RECEIVED;
 extern const isc::log::MessageID DHCP6_BUFFER_UNPACK;
 extern const isc::log::MessageID DHCP6_BUFFER_WAIT_SIGNAL;
-extern const isc::log::MessageID DHCP6_CB_FETCH_UPDATES_FAIL;
-extern const isc::log::MessageID DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED;
+extern const isc::log::MessageID DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL;
+extern const isc::log::MessageID DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED;
+extern const isc::log::MessageID DHCP6_CB_PULL_FETCH_UPDATES_FAIL;
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED;
 extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED;

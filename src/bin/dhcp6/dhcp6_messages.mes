@@ -53,21 +53,25 @@ by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
 
-% DHCP6_CB_FETCH_UPDATES_FAIL error on attempt to fetch configuration updates from the configuration backend(s): %1
+% DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL error on periodic attempt to fetch configuration updates from the configuration backend(s): %1
 This error message is issued when the server attempted to fetch
-configuration updates from the database and this attempt failed.
-If the error happens during periodic poll, the server will re-try
-according to the configured value of the config-fetch-wait-time
-parameter. The arguments contain the fetch context, i.e. during
-periodic poll or by the server-update command, and the reason for
-failure.
+configuration updates from the database and this periodic attempt failed.
+The server will re-try according to the configured value of the
+config-fetch-wait-time parameter. The sole argument contains the
+reason for failure.
 
-% DHCP6_CB_FETCH_UPDATES_RETRIES_EXHAUSTED maximum number of configuration fetch attempts: 10, has been exhausted without success
+% DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED maximum number of configuration fetch attempts: 10, has been exhausted without success
 This error indicates that the server has made a number of unsuccessful
-attempts to fetch configuration updates from a configuration backend.
+periodic attempts to fetch configuration updates from a configuration backend.
 The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
+
+% DHCP6_CB_PULL_FETCH_UPDATES_FAIL error on pull attempt to fetch configuration updates from the configuration backend(s): %1
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this pull attempt failed.
+The sole argument which is returned to the config-backend-pull command
+caller too contains the reason for failure.
 
 % DHCP6_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified

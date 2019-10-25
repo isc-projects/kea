@@ -257,7 +257,7 @@ public:
             EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 1);
 
             ConstElementPtr result =
-                ControlledDhcpv6Srv::processCommand("server-update",
+                ControlledDhcpv6Srv::processCommand("config-backend-pull",
                                                     ConstElementPtr());
             EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 2);
             std::string expected;
@@ -878,20 +878,20 @@ TEST_F(JSONFileBackendTest, configBackendTimerWithThrow) {
     testConfigBackendTimer(1, true);
 }
 
-// This test verifies that the server will be updated by the server-update
-// command.
+// This test verifies that the server will be updated by the
+// config-backend-pull command.
 TEST_F(JSONFileBackendTest, configBackendCommand) {
     testConfigBackendTimer(0, false, true);
 }
 
-// This test verifies that the server will be updated by the server-update
-// command even when updates fail.
+// This test verifies that the server will be updated by the
+// config-backend-pull command even when updates fail.
 TEST_F(JSONFileBackendTest, configBackendCommandWithThrow) {
     testConfigBackendTimer(0, true, true);
 }
 
-// This test verifies that the server will be updated by the server-update
-// command and the timer rescheduled.
+// This test verifies that the server will be updated by the
+// config-backend-pull command and the timer rescheduled.
 TEST_F(JSONFileBackendTest, configBackendCommandWithTimer) {
     testConfigBackendTimer(1, false, true);
 }
