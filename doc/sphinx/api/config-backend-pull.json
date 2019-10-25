@@ -6,11 +6,11 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"server-update\"",
+        "    \"command\": \"config-backend-pull\"",
         "}"
     ],
-    "description": "See <xref linkend=\"command-server-update\"/>",
-    "name": "server-update",
+    "description": "See <xref linkend=\"command-config-backend-pull\"/>",
+    "name": "config-backend-pull",
     "resp-comment": [
         "When no Config Backends are configured this command returns empty (3); ",
         "If an error occurs error (1) is returned with the error details; ",

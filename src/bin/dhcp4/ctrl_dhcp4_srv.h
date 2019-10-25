@@ -304,9 +304,9 @@ private:
     commandServerTagGetHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
-    /// @brief handler for server-update command
+    /// @brief handler for config-backend-pull command
     ///
-    /// This method handles the server-update command, which updates
+    /// This method handles the config-backend-pull command, which updates
     /// the server configuration from the Config Backends immediately.
     ///
     /// @param command (parameter ignored)
@@ -314,8 +314,8 @@ private:
     ///
     /// @return status of the command/
     isc::data::ConstElementPtr
-    commandServerUpdateHandler(const std::string& command,
-                               isc::data::ConstElementPtr args);
+    commandConfigBackendPullHandler(const std::string& command,
+                                    isc::data::ConstElementPtr args);
 
     /// @brief Reclaims expired IPv4 leases and reschedules timer.
     ///

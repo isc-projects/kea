@@ -546,12 +546,12 @@ The server-tag-get Command:
 The ``server-tag-get`` command returns the configured server tag of
 the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept)
 
-.. _command-server-update:
+.. _command-config-backend-pull:
 
-The server-update Command:
+The config-backend-pull Command:
 --------------------------
 
-The ``server-update`` command triggers the polling of Config Backends
+The ``config-backend-pull`` command triggers the polling of Config Backends
 (which should be configured for this command to do something)
 explained in :ref:`dhcp4-cb-json`.
 

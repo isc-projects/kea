@@ -12,6 +12,7 @@ api/class-del.json
 api/class-get.json
 api/class-list.json
 api/class-update.json
+api/config-backend-pull.json
 api/config-get.json
 api/config-reload.json
 api/config-set.json
@@ -129,7 +130,6 @@ api/reservation-get-all.json
 api/reservation-get-by-hostname.json
 api/reservation-get-page.json
 api/server-tag-get.json
-api/server-update.json
 api/shutdown.json
 api/statistic-get-all.json
 api/statistic-get.json
