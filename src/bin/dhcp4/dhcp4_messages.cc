@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Wed Jul 10 2019 15:10
+// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes on Fri Oct 25 2019 16:40
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -150,7 +150,7 @@ const char* values[] = {
     "DHCP4_BUFFER_RECEIVE_FAIL", "error on attempt to receive packet: %1",
     "DHCP4_BUFFER_UNPACK", "parsing buffer received from %1 to %2 over interface %3",
     "DHCP4_BUFFER_WAIT_SIGNAL", "signal received while waiting for next packet, next waiting signal is %1",
-    "DHCP4_CB_FETCH_UPDATES_FAIL", "error on attempt to fetch configuration updates from the configuration backend(s): %1",
+    "DHCP4_CB_FETCH_UPDATES_FAIL", "error on attempt to fetch configuration updates from the configuration backend(s) for %1: %2",
     "DHCP4_CB_FETCH_UPDATES_RETRIES_EXHAUSTED", "maximum number of configuration fetch attempts: 10, has been exhausted without success",
     "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class(es): %2",
     "DHCP4_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",

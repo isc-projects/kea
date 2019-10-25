@@ -46,12 +46,14 @@ by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
 
-% DHCP4_CB_FETCH_UPDATES_FAIL error on attempt to fetch configuration updates from the configuration backend(s): %1
+% DHCP4_CB_FETCH_UPDATES_FAIL error on attempt to fetch configuration updates from the configuration backend(s) for %1: %2
 This error message is issued when the server attempted to fetch
 configuration updates from the database and this attempt failed.
-The server will re-try according to the configured value of the
-config-fetch-wait-time parameter. The sole argument contains the
-reason for failure.
+If the error happens during periodic poll, the server will re-try
+according to the configured value of the config-fetch-wait-time
+parameter. The arguments contain the fetch context, i.e. during
+periodic poll or by the server-update command, and the reason for
+failure.
 
 % DHCP4_CB_FETCH_UPDATES_RETRIES_EXHAUSTED maximum number of configuration fetch attempts: 10, has been exhausted without success
 This error indicates that the server has made a number of unsuccessful

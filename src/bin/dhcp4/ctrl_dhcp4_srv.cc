@@ -565,6 +565,7 @@ ControlledDhcpv4Srv::commandServerUpdateHandler(const std::string&,
         server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
+            .arg("server-update command")
             .arg(ex.what());
         return (createAnswer(CONTROL_RESULT_ERROR,
                              "Server update failed: " + string(ex.what())));
@@ -1077,6 +1078,7 @@ ControlledDhcpv4Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CB_FETCH_UPDATES_FAIL)
+            .arg("periodic poll")
             .arg(ex.what());
 
         // We allow at most 10 consecutive failures after which we stop
