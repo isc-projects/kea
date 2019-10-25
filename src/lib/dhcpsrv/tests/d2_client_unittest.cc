@@ -77,10 +77,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     size_t max_queue_size = 2048;
     dhcp_ddns::NameChangeProtocol ncr_protocol = dhcp_ddns::NCR_UDP;
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
-    bool override_no_update = true;
-    bool override_client_update = true;
-    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode = D2ClientConfig::
-                                                                     RCM_WHEN_PRESENT;
     std::string generated_prefix = "the_prefix";
     std::string qualifying_suffix = "the.suffix.";
     std::string hostname_char_set = "[^A-Z]";
