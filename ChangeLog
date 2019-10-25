@@ -1,3 +1,10 @@
+1679.	[func]		fdupont
+	Added new commands to the lease_cmds hooks library to search for
+	leases by hardware address, client-id, DUID and hostname. Note
+	that now in leases hostnames are stored in lower case, e.g.
+	the MySQL hostname columns are now lower case.
+	(Gitlab #393)
+
 1678.	[build]		fdupont
 	The arguments passed to configure are now stored and are available
 	using -W command line option.
