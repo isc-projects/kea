@@ -1,3 +1,8 @@
+1678.	[build]		fdupont
+	The arguments passed to configure are now stored and are available
+	using -W command line option.
+	(Gitlab #869)
+
 1677.	[doc]		wlodek
 	Sample configs now all use the same paths for contol sockets.
 	(Gitlab #795)
