@@ -139,6 +139,12 @@ public:
     /// @return true if transaction has been initiated, false otherwise.
     bool isTransactionOngoing() const;
 
+    /// @brief Checks if a transaction has been initiated over this connection and
+    /// socket descriptor.
+    ///
+    /// @return true if transaction has been initiated, false otherwise.
+    bool isTransactionOngoing(int socket_fd) const;
+
     /// @brief Checks and logs if premature transaction timeout is suspected.
     ///
     /// There are cases when the premature timeout occurs, e.g. as a result of
@@ -439,6 +445,23 @@ public:
         queue_.clear();
     }
 
+    /// @brief Deteremines if there is an ongoing transaction associated
+    /// with a given socket desecriptor.
+    ///
+    /// @param socket_fd socket descriptor to check
+    ///
+    /// @return True if the pool contains a connection which is using the
+    /// given socket descriptor for an ongoing transaction.
+    bool isTransactionOngoing(int socket_fd) {
+        for (auto conns_it = conns_.begin(); conns_it != conns_.end();
+             ++conns_it) {
+            if (conns_it->second->isTransactionOngoing(socket_fd)) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
 private:
 
     /// @brief Holds reference to the IO service.
@@ -605,6 +628,12 @@ Connection::close() {
 bool
 Connection::isTransactionOngoing() const {
     return (static_cast<bool>(current_request_));
+}
+
+bool
+Connection::isTransactionOngoing(int socket_fd) const {
+    return ((static_cast<bool>(current_request_)) &&
+            (socket_.getNative() == socket_fd));
 }
 
 bool
@@ -921,6 +950,11 @@ HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
 
     impl_->conn_pool_->queueRequest(url, request, response, request_timeout.value_,
                                     request_callback, connect_callback, close_callback);
+}
+
+bool
+HttpClient::isTransactionOngoing(int socket_fd) const {
+    return (impl_->conn_pool_->isTransactionOngoing(socket_fd));
 }
 
 void

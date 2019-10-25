@@ -1646,12 +1646,11 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
 
 void
 HAService::socketReadyHandler(int tcp_native_fd) {
-    std::cout << "HAService::socketReadyHandler - ready socket:" << tcp_native_fd << std::endl;
-    // If the socket is not usable/or in a transaction
-    // we'll unregister it
-    // if (socket bad) /{
-    //      IfaceMgr::instance().deleteExternalSocket(tcp_native_fd, 0);
-    // }
+    // If the socket is ready but does not belong to one of our client's
+    // ongoing transactions we unregister it.
+    if (!client_.isTransactionOngoing(tcp_native_fd)) {
+        IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
+    }
 }
 
 void

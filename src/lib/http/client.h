@@ -191,6 +191,12 @@ public:
     /// @brief Closes all connections.
     void stop();
 
+    /// @brief Deteremines if a socket is part of an ongoing transaction.
+    ///
+    /// @return True if the given socket descriptor is being used by an
+    /// ongoing transaction
+    bool isTransactionOngoing(int socket_fd) const;
+
 private:
 
     /// @brief Pointer to the HTTP client implementation.
