@@ -321,7 +321,7 @@ public:
     /// @brief lease4-get-by-hostname and lease6-get-by-hostname commands
     /// handler
     ///
-    /// Thesecommands attempt to retrieve all IPv4 or Ipv6 leases with
+    /// These commands attempt to retrieve all IPv4 or Ipv6 leases with
     /// a particular hostname.
     ///
     /// Example command for v4:

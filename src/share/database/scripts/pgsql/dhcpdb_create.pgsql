@@ -896,11 +896,11 @@ CREATE INDEX hosts_by_hostname ON hosts (lower(hostname))
 WHERE hostname IS NOT NULL;
 
 -- Create a hostname index for lease4.
-CREATE INDEX lease4_by_hostname ON lease4 (hostname)
+CREATE INDEX lease4_by_hostname ON lease4 (lower(hostname))
 WHERE hostname IS NOT NULL;
 
 -- Create a hostname index for lease6.
-CREATE INDEX lease6_by_hostname ON lease6 (hostname)
+CREATE INDEX lease6_by_hostname ON lease6 (lower(hostname))
 WHERE hostname IS NOT NULL;
 
 -- Set 6.0 schema version.

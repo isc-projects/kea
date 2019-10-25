@@ -65,7 +65,7 @@ This library provides the following commands:
 -  ``lease4-get-by-client-id`` - return all IPv4 leases with the specified
    client id.
 
--  ``lease6-get-by-duid`` - returns all IPv6 leases with the specified duid.
+-  ``lease6-get-by-duid`` - returns all IPv6 leases with the specified DUID.
 
 -  ``lease4-get-by-hostname`` - return all IPv4 leases with the specified
    hostname.

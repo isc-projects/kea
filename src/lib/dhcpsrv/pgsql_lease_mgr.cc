@@ -145,7 +145,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, "
       "state, user_context "
       "FROM lease4 "
-      "WHERE hostname = $1"},
+      "WHERE lower(hostname) = $1"},
 
     // GET_LEASE4_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -247,7 +247,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context "
       "FROM lease6 "
-      "WHERE hostname = $1"},
+      "WHERE lower(hostname) = $1"},
 
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
