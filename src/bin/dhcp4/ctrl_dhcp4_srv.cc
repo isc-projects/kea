@@ -564,12 +564,14 @@ ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
         auto mode = CBControlDHCPv4::FetchMode::FETCH_UPDATE;
         server_->getCBControl()->databaseConfigFetch(srv_cfg, mode);
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_CB_PULL_FETCH_UPDATES_FAIL)
+        LOG_ERROR(dhcp4_logger, DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL)
             .arg(ex.what());
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Server update failed: " + string(ex.what())));
+                             "On demand configuration update failed: " +
+                             string(ex.what())));
     }
-    return (createAnswer(CONTROL_RESULT_SUCCESS, "Server update successful."));
+    return (createAnswer(CONTROL_RESULT_SUCCESS,
+                         "On demand configuration update successful."));
 }
 
 ConstElementPtr

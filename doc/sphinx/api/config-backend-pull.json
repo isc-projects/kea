@@ -19,7 +19,7 @@
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"Server update successful.\"",
+        "    \"text\": \"On demand configuration update successful.\"",
         "}"
     ],
 

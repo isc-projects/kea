@@ -60,9 +60,9 @@ The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
 
-% DHCP4_CB_PULL_FETCH_UPDATES_FAIL error on pull attempt to fetch configuration updates from the configuration backend(s): %1
+% DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL error on demand attempt to fetch configuration updates from the configuration backend(s): %1
 This error message is issued when the server attempted to fetch
-configuration updates from the database and this pull attempt failed.
+configuration updates from the database and this on demand attempt failed.
 The sole argument which is returned to the config-backend-pull command
 caller too contains the reason for failure.
 
