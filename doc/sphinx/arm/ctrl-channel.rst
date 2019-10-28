@@ -549,7 +549,7 @@ the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept)
 .. _command-config-backend-pull:
 
 The config-backend-pull Command:
---------------------------~~~~~~
+--------------------------------
 
 The ``config-backend-pull`` command triggers the polling of Config Backends
 (which should be configured for this command to do something)
