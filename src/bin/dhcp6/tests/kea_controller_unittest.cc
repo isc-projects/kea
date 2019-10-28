@@ -264,11 +264,11 @@ public:
 
             if (throw_during_fetch) {
                 expected = "{ \"result\": 1, \"text\": ";
-                expected += "\"Server update failed: ";
+                expected += "\"On demand configuration update failed: ";
                 expected += "testing if exceptions are corectly handled\" }";
             } else {
                 expected = "{ \"result\": 0, \"text\": ";
-                expected += "\"Server update successful.\" }";
+                expected += "\"On demand configuration update successful.\" }";
             }
             EXPECT_EQ(expected, result->str());
 
