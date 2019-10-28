@@ -744,16 +744,14 @@ protected:
     /// flagged as ready to read.   It is installed by the invocation to
     /// register the socket with IfaceMgr made in @ref clientConnectHandler.
     ///
-    /// The handler checks if the ready socket belongs to one our client's
-    /// ongoing transactions.  If it does, it simply returns.  If it does
-    /// not belong to an ongoing transactions, the socket descriptor is
-    /// unregistered from IfaceMgr.
+    /// The handler calls @ref HttpClient::closeIfOutOfBandwidth() to catch
+    /// and close any sockets that have gone ready outside of transactions.
     ///
     /// We do this in case the other peer closed the socket (e.g. idle timeout
     /// for example), as this will cause the socket /appear ready to read to
-    /// the IfaceMgr::select(). If this happens in while no transcations are
+    /// the IfaceMgr::select(). If this happens while no transcations are
     /// in progess, we won't have anything to deal with the socket event.
-    /// This causes IfaceMgr::select() to endlessly interrupt on this socket.
+    /// This causes IfaceMgr::select() to endlessly interrupt on the socket.
     ///
     /// @param tcp_native_fd socket descriptor of the ready socket
     void socketReadyHandler(int tcp_native_fd);

@@ -191,11 +191,19 @@ public:
     /// @brief Closes all connections.
     void stop();
 
-    /// @brief Deteremines if a socket is part of an ongoing transaction.
+    /// @brief Closes a connection if it has an out-of-bandwidth socket event
     ///
-    /// @return True if the given socket descriptor is being used by an
-    /// ongoing transaction
-    bool isTransactionOngoing(int socket_fd) const;
+    /// If the  client owns a connection using the given socket and that
+    /// connection is currently in a transaction the method returns as this
+    /// indicates a normal ready event.  If the connection is not in an
+    /// ongoing transaction, then the connection is closed.
+    ///
+    /// This is method is intended to be used to detect and clean up then
+    /// sockets that are marked ready outside of transactions. The most comman
+    /// case is the other end of the socket being closed.
+    ///
+    /// @param socket_fd socket descriptor to check
+    void closeIfOutOfBandwidth(int socket_fd);
 
 private:
 

@@ -139,11 +139,12 @@ public:
     /// @return true if transaction has been initiated, false otherwise.
     bool isTransactionOngoing() const;
 
-    /// @brief Checks if a transaction has been initiated over this connection and
-    /// socket descriptor.
+    /// @brief Checks if a socket descriptor belongs to this connection.
     ///
-    /// @return true if transaction has been initiated, false otherwise.
-    bool isTransactionOngoing(int socket_fd) const;
+    /// @param socket_fd socket descriptor to check
+    ///
+    /// @return True if the socket fd belongs to this connection.
+    bool isMySocket(int socket_fd) const;
 
     /// @brief Checks and logs if premature transaction timeout is suspected.
     ///
@@ -445,21 +446,41 @@ public:
         queue_.clear();
     }
 
-    /// @brief Deteremines if there is an ongoing transaction associated
-    /// with a given socket desecriptor.
+    /// @brief Closes a connection if it has an out-of-bandwidth socket event
+    ///
+    /// If the pool contains a connection using the given socket and that
+    /// connection is currently in a transaction the method returns as this
+    /// indicates a normal ready event.  If the connection is not in an
+    /// ongoing transaction, then the connection is closed.
+    ///
+    /// This is method is intended to be used to detect and clean up then
+    /// sockets that are marked ready outside of transactions. The most comman
+    /// case is the other end of the socket being closed.
     ///
     /// @param socket_fd socket descriptor to check
-    ///
-    /// @return True if the pool contains a connection which is using the
-    /// given socket descriptor for an ongoing transaction.
-    bool isTransactionOngoing(int socket_fd) {
+    void closeIfOutOfBandwidth(int socket_fd) {
+        // First we look for a connection with the socket.
         for (auto conns_it = conns_.begin(); conns_it != conns_.end();
              ++conns_it) {
-            if (conns_it->second->isTransactionOngoing(socket_fd)) {
-                return (true);
+
+            if (!conns_it->second->isMySocket(socket_fd)) {
+                // Not this connection.
+                continue;
             }
+
+            if (conns_it->second->isTransactionOngoing()) {
+                // Matches but is in a transaction, all is well.
+                return;
+            }
+
+            // Socket has no transaction, so any ready event is
+            // out-of-bandwidth (other end probably closed), so
+            // let's close it.  Note we do not remove any queued
+            // requests, as this might somehow be occurring in
+            // between them.
+            conns_it->second->close();
+            conns_.erase(conns_it);
         }
-        return (false);
     }
 
 private:
@@ -631,9 +652,8 @@ Connection::isTransactionOngoing() const {
 }
 
 bool
-Connection::isTransactionOngoing(int socket_fd) const {
-    return ((static_cast<bool>(current_request_)) &&
-            (socket_.getNative() == socket_fd));
+Connection::isMySocket(int socket_fd) const {
+    return (socket_.getNative() == socket_fd);
 }
 
 bool
@@ -952,9 +972,9 @@ HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
                                     request_callback, connect_callback, close_callback);
 }
 
-bool
-HttpClient::isTransactionOngoing(int socket_fd) const {
-    return (impl_->conn_pool_->isTransactionOngoing(socket_fd));
+void
+HttpClient::closeIfOutOfBandwidth(int socket_fd)  {
+    return (impl_->conn_pool_->closeIfOutOfBandwidth(socket_fd));
 }
 
 void
