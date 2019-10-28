@@ -11,8 +11,6 @@
 #include <util/lock_guard.h>
 #include <exceptions/exceptions.h>
 
-#include <exceptions/exceptions.h>
-
 #include <condition_variable>
 #include <list>
 #include <mutex>
@@ -20,7 +18,6 @@
 #include <thread>
 
 using namespace isc::util;
-using namespace isc::util::thread;
 using namespace std;
 
 namespace {
@@ -161,7 +158,7 @@ private:
     std::thread::id id_;
 };
 
-/// @brief Test Fixture for testing isc::util::thread::LockGuard
+/// @brief Test Fixture for testing isc::util::LockGuard
 class LockGuardTest : public ::testing::Test {
 };
 
