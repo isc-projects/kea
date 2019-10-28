@@ -1,3 +1,9 @@
+1680.	[bug,build]	Kristoffer Larsen
+	A bug in Makefile has been fixed. The changes made to
+	src/lib/dhcpsrv/alloc_engine_messages.mes are now picked up
+	properly.
+	(Gitlab #752)
+
 1679.	[func]		fdupont
 	Added new commands to the lease_cmds hooks library to search for
 	leases by hardware address, client-id, DUID and hostname. Now

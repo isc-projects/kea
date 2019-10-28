@@ -202,3 +202,6 @@ We have received the following contributions:
 
  - lpaserati, Thorsten Krohn
    2018-11: Two bugfixes in kea-admin
+
+ - Kristoffer Larsen
+   2019-10: Changes in alloc_engine_messages.mes are now picked up correctly.
