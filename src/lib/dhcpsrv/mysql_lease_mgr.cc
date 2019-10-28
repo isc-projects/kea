@@ -1759,7 +1759,7 @@ MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 
 bool
 MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
-    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+    std::shared_ptr<MySqlLease4Exchange> exchange4(
         std::make_shared<MySqlLease4Exchange>());
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -1774,7 +1774,7 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
-    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+    std::shared_ptr<MySqlLease6Exchange> exchange6(
         std::make_shared<MySqlLease6Exchange>());
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -1879,21 +1879,21 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 
 void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                                        Lease4Collection& result) const {
-    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+    std::shared_ptr<MySqlLease4Exchange> exchange4(
         std::make_shared<MySqlLease4Exchange>());
     getLeaseCollection(stindex, bind, exchange4, result);
 }
 
 void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                                        Lease6Collection& result) const {
-    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+    std::shared_ptr<MySqlLease6Exchange> exchange6(
         std::make_shared<MySqlLease6Exchange>());
     getLeaseCollection(stindex, bind, exchange6, result);
 }
 
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
-    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+    std::shared_ptr<MySqlLease4Exchange> exchange4(
         std::make_shared<MySqlLease4Exchange>());
 
     // Create appropriate collection object and get all leases matching
@@ -1914,7 +1914,7 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
 
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
-    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+    std::shared_ptr<MySqlLease6Exchange> exchange6(
         std::make_shared<MySqlLease6Exchange>());
 
     // Create appropriate collection object and get all leases matching
@@ -2540,7 +2540,7 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
 
 void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
-    thread_local std::shared_ptr<MySqlLease4Exchange> exchange4(
+    std::shared_ptr<MySqlLease4Exchange> exchange4(
         std::make_shared<MySqlLease4Exchange>());
 
     const StatementIndex stindex = UPDATE_LEASE4;
@@ -2567,7 +2567,7 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
-    thread_local std::shared_ptr<MySqlLease6Exchange> exchange6(
+    std::shared_ptr<MySqlLease6Exchange> exchange6(
         std::make_shared<MySqlLease6Exchange>());
 
     const StatementIndex stindex = UPDATE_LEASE6;
