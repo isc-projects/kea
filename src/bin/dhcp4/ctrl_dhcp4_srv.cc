@@ -548,7 +548,7 @@ ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
-                                                      ConstElementPtr) {
+                                                     ConstElementPtr) {
     auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
     if (!ctl_info) {
         return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));

@@ -379,6 +379,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     isc::config::parseAnswer(rcode, result);
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
         // Use new configuration.
         CfgMgr::instance().commit();
     } else {
