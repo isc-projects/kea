@@ -1097,7 +1097,6 @@ ControlledDhcpv6Srv::cbFetchUpdates(const SrvConfigPtr& srv_cfg,
 
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL)
-            .arg("periodic poll")
             .arg(ex.what());
 
         // We allow at most 10 consecutive failures after which we stop
