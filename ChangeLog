@@ -1,5 +1,5 @@
 1681.	[func]		fdupont
-	Added new command config-backend-pull which to force the server
+	Added new command config-backend-pull which forces the server
 	to immediately poll the configuration updates from the
 	configuration backend
 	(Gitlab #904)
