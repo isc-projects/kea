@@ -1019,10 +1019,11 @@ public:
     /// parameters (for all subnets), a subnet id for a single subnet, or
     /// a first and last subnet id for a subnet range.
     void start() {
+        PgSqlHolder& holderHandle = conn_.handle();
 
         if (getSelectMode() == ALL_SUBNETS) {
             // Run the query with no where clause parameters.
-            result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+            result_set_.reset(new PgSqlResult(PQexecPrepared(holderHandle, statement_.name,
                                                              0, 0, 0, 0, 0)));
         } else {
             // Set up the WHERE clause values
@@ -1040,7 +1041,7 @@ public:
             }
 
             // Run the query with where clause parameters.
-            result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+            result_set_.reset(new PgSqlResult(PQexecPrepared(holderHandle, statement_.name,
                                               parms.size(), &parms.values_[0],
                                               &parms.lengths_[0], &parms.formats_[0], 0)));
         }
@@ -1158,7 +1159,9 @@ PgSqlLeaseMgr::getDBVersion() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1212,8 +1215,10 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
+    PgSqlHolder& holderHandle = conn_.handle();
     const int n = tagged_statements[stindex].nbparams;
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name, n,
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name, n,
                                  n > 0 ? &bind_array.values_[0] : NULL,
                                  n > 0 ? &bind_array.lengths_[0] : NULL,
                                  n > 0 ? &bind_array.formats_[0] : NULL, 0));
@@ -1738,7 +1743,9 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1812,7 +1819,9 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 uint64_t
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1963,11 +1972,13 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
+    PgSqlHolder& holderHandle = conn_.handle();
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_, version_sql));
+
+    PgSqlResult r(PQexec(holderHandle, version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ", reason: " << PQerrorMessage(conn_));
+                  << version_sql << ">, reason: " << PQerrorMessage(holderHandle));
     }
 
     uint32_t major;

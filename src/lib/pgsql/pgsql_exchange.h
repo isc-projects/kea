@@ -70,7 +70,6 @@ struct PsqlBindArray {
     /// @return Returns true if there are no entries in the array, false
     /// otherwise.
     bool empty() const {
-
         return (values_.empty());
     }
 
@@ -393,7 +392,7 @@ public:
 protected:
     /// @brief Stores text labels for columns, currently only used for
     /// logging and errors.
-    std::vector<std::string>columns_;
+    std::vector<std::string> columns_;
 };
 
 }; // end of isc::db namespace
