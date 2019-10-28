@@ -108,38 +108,10 @@ public:
         // @note Moved the call to mysql_library_end() to atexit.
     }
 
-    /// @brief Clear all resources
-    ///
-    /// Clear all resources.
-    void clear() {
-        setConnection(NULL);
-    }
-
-    /// @brief Clear prepared statements
-    ///
-    /// Clear prepared statements.
-    void clearPrepared();
-
     /// @brief Sets the connection to the value given
     ///
-    /// Sets the database back-end object.
-    ///
-    /// @param connection - pointer to the MySql connection instance
+    /// @param connection - pointer to the MYSQL connection instance
     void setConnection(MYSQL* connection);
-
-    /// @brief Open database
-    ///
-    /// Open database and apply MySql connection parameters.
-    ///
-    /// @param connection - associated connection which holds connection properties.
-    void openDatabase(MySqlConnection& connection);
-
-    /// @brief Prepare statements
-    ///
-    /// Prepare statements.
-    ///
-    /// @param connection - associated connection which holds the text statements.
-    void prepareStatements(MySqlConnection& connection);
 
     /// @brief Conversion Operator
     ///
@@ -149,20 +121,27 @@ public:
         return (mysql_);
     }
 
+    void clear() {
+        setConnection(NULL);
+    }
+
+    void clearPrepared();
+
+    void openDatabase(MySqlConnection& connection);
+
+    void prepareStatements(MySqlConnection& connection);
+
     /// @brief Prepared statements
     ///
     /// This field is public, because it is used heavily from MySqlConnection
     /// and from MySqlHostDataSource.
     std::vector<MYSQL_STMT*> statements_;
 
-    /// @brief The connected flag
     bool connected_;     ///< Flag to indicate openDatabase has been called
 
 private:
-    /// @brief The prepared flag
     bool prepared_;      ///< Flag to indicate prepareStatements has been called
 
-    /// @brief The atexit parameter called only once on initialization
     static bool atexit_; ///< Flag to call atexit once.
 
     /// @brief The MySql database back-end object associated to this holder
