@@ -297,7 +297,7 @@ public:
         // most recently added host is different than the host id of the
         // currently processed host.
         if (hosts.empty() || row_host_id != hosts.back()->getHostId()) {
-            HostPtr host = retrieveHost(r, row, row_host_id);
+            HostPtr host(retrieveHost(r, row, row_host_id));
             hosts.push_back(host);
         }
     }
@@ -1263,7 +1263,7 @@ private:
     OptionPtr option_;
 };
 
-} // end of anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -1854,7 +1854,7 @@ TaggedStatementArray tagged_statements = { {
     // Using fixed scope_id = 3, which associates an option with host.
     {7,
      { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8},
+       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8 },
      "insert_v4_host_option",
      "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
      "  persistent, user_context, host_id, scope_id) "
@@ -1866,7 +1866,7 @@ TaggedStatementArray tagged_statements = { {
     // Using fixed scope_id = 3, which associates an option with host.
     {7,
      { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8},
+       OID_VARCHAR, OID_BOOL, OID_TEXT, OID_INT8 },
      "insert_v6_host_option",
      "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
      "  persistent, user_context, host_id, scope_id) "
@@ -1903,7 +1903,7 @@ TaggedStatementArray tagged_statements = { {
 }
 };
 
-}; // end anonymous namespace
+}  // namespace
 
 PgSqlHostDataSourceImpl::
 PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
@@ -1927,7 +1927,7 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
                       << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
+                      << " found version: " << db_version.first << "."
                       << db_version.second);
     }
 
@@ -1957,8 +1957,10 @@ uint64_t
 PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
                                       PsqlBindArrayPtr& bind_array,
                                       const bool return_last_id) {
+    PgSqlHolder& holderHandle = conn_.handle();
     uint64_t last_id = 0;
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -1987,7 +1989,9 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 bool
 PgSqlHostDataSourceImpl::delStatement(StatementIndex stindex,
                                       PsqlBindArrayPtr& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -2062,9 +2066,10 @@ PgSqlHostDataSourceImpl::
 getHostCollection(StatementIndex stindex, PsqlBindArrayPtr bind_array,
                   boost::shared_ptr<PgSqlHostExchange> exchange,
                   ConstHostCollection& result, bool single) const {
+    PgSqlHolder& holderHandle = conn_.handle();
 
     exchange->clear();
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array->values_[0],
                                  &bind_array->lengths_[0],
@@ -2110,29 +2115,34 @@ getHost(const SubnetID& subnet_id,
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
 
-std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
+pair<uint32_t, uint32_t>
+PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
+
+    PgSqlHolder& holderHandle = conn_.handle();
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_, version_sql));
+
+    PgSqlResult r(PQexec(holderHandle, version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ">, reason: " << PQerrorMessage(conn_));
+                  << version_sql << ">, reason: " << PQerrorMessage(holderHandle));
     }
 
-    uint32_t version;
-    PgSqlExchange::getColumnValue(r, 0, 0, version);
+    uint32_t major;
+    PgSqlExchange::getColumnValue(r, 0, 0, major);
 
     uint32_t minor;
     PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
-    return (std::make_pair(version, minor));
+    return (make_pair(major, minor));
 }
 
 void
@@ -2455,8 +2465,8 @@ ConstHostPtr
 PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
     if (!address.isV4()) {
-        isc_throw(BadValue, "PgSqlHostDataSource::get4(id, address) - "
-                  " wrong address type, address supplied is an IPv6 address");
+        isc_throw(BadValue, "PgSqlHostDataSource::get4(id, address): "
+                  "wrong address type, address supplied is an IPv6 address");
     }
 
     // Set up the WHERE clause value
@@ -2475,8 +2485,9 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -2550,7 +2561,8 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
 
 // Miscellaneous database methods.
 
-std::string PgSqlHostDataSource::getName() const {
+std::string
+PgSqlHostDataSource::getName() const {
     std::string name = "";
     try {
         name = impl_->conn_.getParameter("name");
@@ -2560,7 +2572,8 @@ std::string PgSqlHostDataSource::getName() const {
     return (name);
 }
 
-std::string PgSqlHostDataSource::getDescription() const {
+std::string
+PgSqlHostDataSource::getDescription() const {
     return (std::string("Host data source that stores host information"
                         "in PostgreSQL database"));
 }
@@ -2583,5 +2596,5 @@ PgSqlHostDataSource::rollback() {
     impl_->conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

@@ -37,6 +37,62 @@ const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
 const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 
+void
+PgSqlHolder::setConnection(PGconn* connection) {
+    clearPrepared();
+    if (pgconn_ != NULL) {
+        PQfinish(pgconn_);
+    }
+    pgconn_ = connection;
+    connected_ = false;
+    prepared_ = false;
+}
+
+void
+PgSqlHolder::clearPrepared() {
+    if (pgconn_ != NULL) {
+        // Deallocate the prepared queries.
+        if (PQstatus(pgconn_) == CONNECTION_OK) {
+            PgSqlResult r(PQexec(pgconn_, "DEALLOCATE all"));
+            if(PQresultStatus(r) != PGRES_COMMAND_OK) {
+                // Highly unlikely but we'll log it and go on.
+                DB_LOG_ERROR(PGSQL_DEALLOC_ERROR)
+                    .arg(PQerrorMessage(pgconn_));
+            }
+        }
+    }
+}
+
+void
+PgSqlHolder::openDatabase(PgSqlConnection& connection) {
+    if (connected_) {
+        return;
+    }
+    connected_ = true;
+    prepared_ = true;
+    connection.openDatabase();
+    prepared_ = false;
+}
+
+void
+PgSqlHolder::prepareStatements(PgSqlConnection& connection) {
+    if (prepared_) {
+        return;
+    }
+    clearPrepared();
+    // Prepare all statements queries with all known fields datatype
+    for (auto it = connection.statements_.begin();
+        it != connection.statements_.end(); ++it) {
+        PgSqlResult r(PQprepare(pgconn_, (*it)->name, (*it)->text,
+                                (*it)->nbparams, (*it)->types));
+        if (PQresultStatus(r) != PGRES_COMMAND_OK) {
+            isc_throw(DbOperationError, "unable to prepare PostgreSQL statement: "
+                      << (*it)->text << ", reason: " << PQerrorMessage(pgconn_));
+        }
+    }
+    prepared_ = true;
+}
+
 PgSqlResult::PgSqlResult(PGresult *result)
     : result_(result), rows_(0), cols_(0) {
     if (!result) {
@@ -103,7 +159,10 @@ PgSqlTransaction::PgSqlTransaction(PgSqlConnection& conn)
 PgSqlTransaction::~PgSqlTransaction() {
     // If commit() wasn't explicitly called, rollback.
     if (!committed_) {
-        conn_.rollback();
+        try {
+            conn_.rollback();
+        } catch (...) {
+        }
     }
 }
 
@@ -114,28 +173,14 @@ PgSqlTransaction::commit() {
 }
 
 PgSqlConnection::~PgSqlConnection() {
-    if (conn_) {
-        // Deallocate the prepared queries.
-        if (PQstatus(conn_) == CONNECTION_OK) {
-            PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
-            if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-                // Highly unlikely but we'll log it and go on.
-                DB_LOG_ERROR(PGSQL_DEALLOC_ERROR)
-                    .arg(PQerrorMessage(conn_));
-            }
-        }
-    }
+    statements_.clear();
+    handle().clear();
 }
 
 void
 PgSqlConnection::prepareStatement(const PgSqlTaggedStatement& statement) {
-    // Prepare all statements queries with all known fields datatype
-    PgSqlResult r(PQprepare(conn_, statement.name, statement.text,
-                            statement.nbparams, statement.types));
-    if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-        isc_throw(DbOperationError, "unable to prepare PostgreSQL statement: "
-                  << statement.text << ", reason: " << PQerrorMessage(conn_));
-    }
+    statements_.push_back(&statement);
+    prepared_ = true;
 }
 
 void
@@ -276,7 +321,10 @@ PgSqlConnection::openDatabase() {
     }
 
     // We have a valid connection, so let's save it to our holder
-    conn_.setConnection(new_conn);
+    PgSqlHolder& holderHandle = handle();
+    holderHandle.setConnection(new_conn);
+    holderHandle.connected_ = true;
+    connected_ = true;
 }
 
 bool
@@ -296,6 +344,9 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         // error class. Note, there is a severity field, but it can be
         // misleadingly returned as fatal. However, a loss of connectivity
         // can lead to a NULL sqlstate with a status of PGRES_FATAL_ERROR.
+
+        PgSqlHolder& holderHandle = handle();
+
         const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
         if  ((sqlstate == NULL) ||
             ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
@@ -305,7 +356,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
              (memcmp(sqlstate, "58", 2) == 0))) { // System error
             DB_LOG_ERROR(PGSQL_FATAL_ERROR)
                 .arg(statement.name)
-                .arg(PQerrorMessage(conn_))
+                .arg(PQerrorMessage(holderHandle))
                 .arg(sqlstate ? sqlstate : "<sqlstate null>");
 
             // If there's no lost db callback or it returns false,
@@ -321,7 +372,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         }
 
         // Apparently it wasn't fatal, so we throw with a helpful message.
-        const char* error_message = PQerrorMessage(conn_);
+        const char* error_message = PQerrorMessage(holderHandle);
         isc_throw(DbOperationError, "Statement exec failed:" << " for: "
                 << statement.name << ", status: " << s
                 << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>")
@@ -332,9 +383,12 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
 void
 PgSqlConnection::startTransaction() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_START_TRANSACTION);
-    PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
+
+    PgSqlHolder& holderHandle = handle();
+
+    PgSqlResult r(PQexec(holderHandle, "START TRANSACTION"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
+        const char* error_message = PQerrorMessage(holderHandle);
         isc_throw(DbOperationError, "unable to start transaction"
                   << error_message);
     }
@@ -343,9 +397,12 @@ PgSqlConnection::startTransaction() {
 void
 PgSqlConnection::commit() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_COMMIT);
-    PgSqlResult r(PQexec(conn_, "COMMIT"));
+
+    PgSqlHolder& holderHandle = handle();
+
+    PgSqlResult r(PQexec(holderHandle, "COMMIT"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
+        const char* error_message = PQerrorMessage(holderHandle);
         isc_throw(DbOperationError, "commit failed: " << error_message);
     }
 }
@@ -353,12 +410,16 @@ PgSqlConnection::commit() {
 void
 PgSqlConnection::rollback() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_ROLLBACK);
-    PgSqlResult r(PQexec(conn_, "ROLLBACK"));
+
+    PgSqlHolder& holderHandle = handle();
+
+    PgSqlResult r(PQexec(holderHandle, "ROLLBACK"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        const char* error_message = PQerrorMessage(conn_);
+        const char* error_message = PQerrorMessage(holderHandle);
         isc_throw(DbOperationError, "rollback failed: " << error_message);
     }
 }
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+}  // namespace db
+}  // namespace isc
+

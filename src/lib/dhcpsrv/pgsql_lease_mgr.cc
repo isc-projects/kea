@@ -133,7 +133,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state, user_context "
+        "state, user_context "
       "FROM lease4 "
       "WHERE subnet_id = $1"},
 
@@ -307,6 +307,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
         "state = $16, user_context = $17 "
       "WHERE address = $18"},
+
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
       "all_lease4_stats",
@@ -333,7 +334,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 0, { OID_NONE },
      "all_lease6_stats",
      "SELECT subnet_id, lease_type, state, leases as state_count"
-     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state"},
 
     // SUBNET_LEASE6_STATS
     { 1, { OID_INT8 },
@@ -341,7 +342,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, lease_type, state, leases as state_count"
       "  FROM lease6_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY lease_type, state" },
+      "  ORDER BY lease_type, state"},
 
     // SUBNET_RANGE_LEASE6_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -349,7 +350,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, lease_type, state, leases as state_count"
       "  FROM lease6_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, lease_type, state" },
+      "  ORDER BY subnet_id, lease_type, state"},
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
 };
@@ -463,8 +465,7 @@ public:
         lease_ = lease;
 
         try {
-            addr_str_ = boost::lexical_cast<std::string>
-                        (lease->addr_.toUint32());
+            addr_str_ = boost::lexical_cast<std::string>(lease->addr_.toUint32());
             bind_array.add(addr_str_);
 
             if (lease->hwaddr_ && !lease->hwaddr_->hwaddr_.empty()) {
@@ -1018,10 +1019,11 @@ public:
     /// parameters (for all subnets), a subnet id for a single subnet, or
     /// a first and last subnet id for a subnet range.
     void start() {
+        PgSqlHolder& holderHandle = conn_.handle();
 
         if (getSelectMode() == ALL_SUBNETS) {
             // Run the query with no where clause parameters.
-            result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+            result_set_.reset(new PgSqlResult(PQexecPrepared(holderHandle, statement_.name,
                                                              0, 0, 0, 0, 0)));
         } else {
             // Set up the WHERE clause values
@@ -1039,7 +1041,7 @@ public:
             }
 
             // Run the query with where clause parameters.
-            result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+            result_set_.reset(new PgSqlResult(PQexecPrepared(holderHandle, statement_.name,
                                               parms.size(), &parms.values_[0],
                                               &parms.lengths_[0], &parms.formats_[0], 0)));
         }
@@ -1132,7 +1134,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
 
     // Now prepare the SQL statements.
     int i = 0;
-    for( ; tagged_statements[i].text != NULL ; ++i) {
+    for(; tagged_statements[i].text != NULL; ++i) {
         conn_.prepareStatement(tagged_statements[i]);
     }
 
@@ -1158,7 +1160,9 @@ PgSqlLeaseMgr::getDBVersion() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1206,8 +1210,10 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
+    PgSqlHolder& holderHandle = conn_.handle();
     const int n = tagged_statements[stindex].nbparams;
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name, n,
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name, n,
                                  n > 0 ? &bind_array.values_[0] : NULL,
                                  n > 0 ? &bind_array.lengths_[0] : NULL,
                                  n > 0 ? &bind_array.formats_[0] : NULL, 0));
@@ -1273,8 +1279,7 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     PsqlBindArray bind_array;
 
     // LEASE ADDRESS
-    std::string addr_str = boost::lexical_cast<std::string>
-                           (addr.toUint32());
+    std::string addr_str = boost::lexical_cast<std::string>(addr.toUint32());
     bind_array.add(addr_str);
 
     // Get the data
@@ -1709,7 +1714,9 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1748,9 +1755,8 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
-                         (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    std::string addr_str = boost::lexical_cast<std::string>(lease->addr_.toUint32());
+    bind_array.add(addr_str);
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease);
@@ -1778,7 +1784,9 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 uint64_t
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlHolder& holderHandle = conn_.handle();
+
+    PgSqlResult r(PQexecPrepared(holderHandle, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1929,25 +1937,22 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
+    PgSqlHolder& holderHandle = conn_.handle();
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_, version_sql));
+
+    PgSqlResult r(PQexec(holderHandle, version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ", reason: " << PQerrorMessage(conn_));
+                  << version_sql << ">, reason: " << PQerrorMessage(holderHandle));
     }
 
-    istringstream tmp;
-    uint32_t version;
-    tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
-    tmp.str("");
-    tmp.clear();
+    uint32_t major;
+    PgSqlExchange::getColumnValue(r, 0, 0, major);
 
     uint32_t minor;
-    tmp.str(PQgetvalue(r, 0, 1));
-    tmp >> minor;
+    PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
-    return (make_pair(version, minor));
+    return (make_pair(major, minor));
 }
 
 void
@@ -1960,5 +1965,5 @@ PgSqlLeaseMgr::rollback() {
     conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
