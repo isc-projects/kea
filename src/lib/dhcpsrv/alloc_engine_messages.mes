@@ -41,6 +41,14 @@ to clients that are no longer active on the network will become available
 sooner.
 
 % ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES %1: Failed to allocate an IPv4 address for client with classes: %2
+This warning message is printed when Kea failed to allocate an address
+and the client's packet belongs to one or more classes. There may be several
+reasons why a lease was not assigned. One of them may be a case when all
+pools require packet to belong to certain classes and the incoming packet
+didn't belong to any of them. Another case where this information may be
+useful is to point out that the pool reserved to a given class has ran
+out of addresses. When you see this message, you may consider checking your
+pool size and your classification definitions.
 
 % ALLOC_ENGINE_V4_DECLINED_RECOVERED IPv4 address %1 was recovered after %2 seconds of probation-period
 This informational message indicates that the specified address was reported

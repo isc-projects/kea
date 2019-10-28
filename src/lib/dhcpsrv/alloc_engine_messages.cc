@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Fri Feb 08 2019 20:31
+// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Mon Oct 28 2019 01:43
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -11,6 +11,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_LEASE_RECLAIMED = "ALLOC_ENGINE_LE
 extern const isc::log::MessageID ALLOC_ENGINE_REMOVAL_NCR_FAILED = "ALLOC_ENGINE_REMOVAL_NCR_FAILED";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_ERROR = "ALLOC_ENGINE_V4_ALLOC_ERROR";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL = "ALLOC_ENGINE_V4_ALLOC_FAIL";
+extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES = "ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_DECLINED_RECOVERED = "ALLOC_ENGINE_V4_DECLINED_RECOVERED";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT = "ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_DISCOVER_HR = "ALLOC_ENGINE_V4_DISCOVER_HR";
@@ -82,6 +83,7 @@ const char* values[] = {
     "ALLOC_ENGINE_REMOVAL_NCR_FAILED", "sending removal name change request failed for lease %1: %2",
     "ALLOC_ENGINE_V4_ALLOC_ERROR", "%1: error during attempt to allocate an IPv4 address: %2",
     "ALLOC_ENGINE_V4_ALLOC_FAIL", "%1: failed to allocate an IPv4 address after %2 attempt(s)",
+    "ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES", "%1: Failed to allocate an IPv4 address for client with classes: %2",
     "ALLOC_ENGINE_V4_DECLINED_RECOVERED", "IPv4 address %1 was recovered after %2 seconds of probation-period",
     "ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT", "%1: conflicting reservation for address %2 with existing lease %3",
     "ALLOC_ENGINE_V4_DISCOVER_HR", "client %1 sending DHCPDISCOVER has reservation for the address %2",

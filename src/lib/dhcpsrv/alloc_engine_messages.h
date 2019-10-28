@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Fri Feb 08 2019 20:31
+// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes on Mon Oct 28 2019 01:43
 
 #ifndef ALLOC_ENGINE_MESSAGES_H
 #define ALLOC_ENGINE_MESSAGES_H
@@ -12,6 +12,7 @@ extern const isc::log::MessageID ALLOC_ENGINE_LEASE_RECLAIMED;
 extern const isc::log::MessageID ALLOC_ENGINE_REMOVAL_NCR_FAILED;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_ERROR;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL;
+extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_DECLINED_RECOVERED;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_DISCOVER_HR;
