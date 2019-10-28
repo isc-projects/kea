@@ -23,7 +23,69 @@ using namespace std;
 namespace isc {
 namespace db {
 
-bool MySqlHolder::atexit_ = false;
+bool MySqlHolder::atexit_ = []{atexit([]{mysql_library_end();});return true;};
+
+void
+MySqlHolder::setConnection(MYSQL* connection) {
+    clearPrepared();
+    if (mysql_ != NULL) {
+        mysql_close(mysql_);
+    }
+    mysql_ = connection;
+    connected_ = false;
+    prepared_ = false;
+}
+
+void
+MySqlHolder::clearPrepared() {
+    // Free up the prepared statements, ignoring errors. (What would we do
+    // about them? We're destroying this object and are not really concerned
+    // with errors on a database connection that is about to go away.)
+    for (int i = 0; i < statements_.size(); ++i) {
+        if (statements_[i] != NULL) {
+            (void) mysql_stmt_close(statements_[i]);
+            statements_[i] = NULL;
+       }
+    }
+    statements_.clear();
+}
+
+void
+MySqlHolder::openDatabase(MySqlConnection& connection) {
+    if (connected_) {
+        return;
+    }
+    connected_ = true;
+    prepared_ = true;
+    connection.openDatabase();
+    prepared_ = false;
+}
+
+void
+MySqlHolder::prepareStatements(MySqlConnection& connection) {
+    if (prepared_) {
+        return;
+    }
+    clearPrepared();
+    statements_.resize(connection.text_statements_.size(), NULL);
+    uint32_t index = 0;
+    for (auto it = connection.text_statements_.begin();
+        it != connection.text_statements_.end(); ++it) {
+        statements_[index] = mysql_stmt_init(mysql_);
+        if (statements_[index] == NULL) {
+            isc_throw(DbOperationError, "unable to allocate MySQL prepared "
+                      "statement structure, reason: " << mysql_error(mysql_));
+        }
+
+        int status = mysql_stmt_prepare(statements_[index], it->c_str(), it->size());
+        if (status != 0) {
+            isc_throw(DbOperationError, "unable to prepare MySQL statement <" <<
+                      *it << ">, reason: " << mysql_error(mysql_));
+        }
+        ++index;
+    }
+    prepared_ = true;
+}
 
 /// @todo: Migrate this default value to src/bin/dhcpX/simple_parserX.cc
 const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
@@ -37,7 +99,10 @@ MySqlTransaction::~MySqlTransaction() {
     // Rollback if the MySqlTransaction::commit wasn't explicitly
     // called.
     if (!committed_) {
-        conn_.rollback();
+        try {
+            conn_.rollback();
+        } catch (...) {
+        }
     }
 }
 
@@ -126,10 +191,8 @@ MySqlConnection::openDatabase() {
         // No timeout parameter, we are going to use the default timeout.
         stimeout = "";
     }
-
     if (stimeout.size() > 0) {
         // Timeout was given, so try to convert it to an integer.
-
         try {
             connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
         } catch (...) {
@@ -162,18 +225,26 @@ MySqlConnection::openDatabase() {
     // connection after a reconnect as among other things, it drops all our
     // pre-compiled statements.
     my_bool auto_reconnect = MLM_FALSE;
-    int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
+
+    MYSQL* new_conn = mysql_init(NULL);
+    if (new_conn == NULL) {
+        isc_throw(db::DbOpenError, "unable to initialize MySQL");
+    }
+
+    int result = mysql_options(new_conn, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
+        mysql_close(new_conn);
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
-                  mysql_error(mysql_));
+                  mysql_error(new_conn));
     }
 
     // Make sure we have a large idle time window ... say 30 days...
     const char *wait_time = "SET SESSION wait_timeout = 30 * 86400";
-    result = mysql_options(mysql_, MYSQL_INIT_COMMAND, wait_time);
+    result = mysql_options(new_conn, MYSQL_INIT_COMMAND, wait_time);
     if (result != 0) {
+        mysql_close(new_conn);
         isc_throw(DbOpenError, "unable to set wait_timeout " <<
-                  mysql_error(mysql_));
+                  mysql_error(new_conn));
     }
 
     // Set SQL mode options for the connection:  SQL mode governs how what
@@ -181,18 +252,20 @@ MySqlConnection::openDatabase() {
     // invalid data.  We want to ensure we get the strictest behavior and
     // to reject invalid data with an error.
     const char *sql_mode = "SET SESSION sql_mode ='STRICT_ALL_TABLES'";
-    result = mysql_options(mysql_, MYSQL_INIT_COMMAND, sql_mode);
+    result = mysql_options(new_conn, MYSQL_INIT_COMMAND, sql_mode);
     if (result != 0) {
+        mysql_close(new_conn);
         isc_throw(DbOpenError, "unable to set SQL mode options: " <<
-                  mysql_error(mysql_));
+                  mysql_error(new_conn));
     }
 
     // Connection timeout, the amount of time taken for the client to drop
     // the connection if the server is not responding.
-    result = mysql_options(mysql_, MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
+    result = mysql_options(new_conn, MYSQL_OPT_CONNECT_TIMEOUT, &connect_timeout);
     if (result != 0) {
+        mysql_close(new_conn);
         isc_throw(DbOpenError, "unable to set database connection timeout: " <<
-                  mysql_error(mysql_));
+                  mysql_error(new_conn));
     }
 
     // Open the database.
@@ -205,11 +278,31 @@ MySqlConnection::openDatabase() {
     // This makes it hard to distinguish whether the UPDATE changed no rows
     // because no row matching the WHERE clause was found, or because a
     // row was found but no data was altered.
-    MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
+    MYSQL* status = mysql_real_connect(new_conn, host, user, password, name,
                                        port, NULL, CLIENT_FOUND_ROWS);
-    if (status != mysql_) {
-        isc_throw(DbOpenError, mysql_error(mysql_));
+    if (status != new_conn) {
+        mysql_close(new_conn);
+        isc_throw(DbOpenError, mysql_error(new_conn));
     }
+
+    // Enable autocommit. In case transaction is explicitly used, this
+    // setting will be overwritten for the transaction. However, there are
+    // cases when lack of autocommit could cause transactions to hang
+    // until commit or rollback is explicitly called. This already
+    // caused issues for some unit tests which were unable to cleanup
+    // the database after the test because of pending transactions.
+    // Use of autocommit will eliminate this problem.
+    my_bool auto_commit = mysql_autocommit(new_conn, 1);
+    if (auto_commit != MLM_FALSE) {
+        mysql_close(new_conn);
+        isc_throw(DbOperationError, mysql_error(new_conn));
+    }
+
+    // We have a valid connection, so let's save it to our holder
+    MySqlHolder& holderHandle = handle();
+    holderHandle.setConnection(new_conn);
+    holderHandle.connected_ = true;
+    connected_ = true;
 }
 
 
@@ -224,25 +317,13 @@ void
 MySqlConnection::prepareStatement(uint32_t index, const char* text) {
     // Validate that there is space for the statement in the statements array
     // and that nothing has been placed there before.
-    if ((index >= statements_.size()) || (statements_[index] != NULL)) {
+    if (index >= text_statements_.size()) {
         isc_throw(InvalidParameter, "invalid prepared statement index (" <<
-                  static_cast<int>(index) << ") or indexed prepared " <<
-                  "statement is not null");
+                  static_cast<int>(index) << ")");
     }
 
     // All OK, so prepare the statement
     text_statements_[index] = std::string(text);
-    statements_[index] = mysql_stmt_init(mysql_);
-    if (statements_[index] == NULL) {
-        isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                  "statement structure, reason: " << mysql_error(mysql_));
-    }
-
-    int status = mysql_stmt_prepare(statements_[index], text, strlen(text));
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to prepare MySQL statement <" <<
-                  text << ">, reason: " << mysql_error(mysql_));
-    }
 }
 
 void
@@ -251,34 +332,20 @@ MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
     // Created the MySQL prepared statements for each DML statement.
     for (const TaggedStatement* tagged_statement = start_statement;
          tagged_statement != end_statement; ++tagged_statement) {
-        if (tagged_statement->index >= statements_.size()) {
-            statements_.resize(tagged_statement->index + 1, NULL);
+        if (tagged_statement->index >= text_statements_.size()) {
             text_statements_.resize(tagged_statement->index + 1,
                                     std::string(""));
         }
         prepareStatement(tagged_statement->index,
                          tagged_statement->text);
     }
-}
-
-void MySqlConnection::clearStatements() {
-    statements_.clear();
-    text_statements_.clear();
+    prepared_ = true;
 }
 
 /// @brief Destructor
 MySqlConnection::~MySqlConnection() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them? We're destroying this object and are not really concerned
-    // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
-        if (statements_[i] != NULL) {
-            (void) mysql_stmt_close(statements_[i]);
-            statements_[i] = NULL;
-        }
-    }
-    statements_.clear();
     text_statements_.clear();
+    handle().clear();
 }
 
 // Time conversion methods.
@@ -299,8 +366,8 @@ MySqlConnection::convertToDatabaseTime(const time_t input_time,
 
 void
 MySqlConnection::convertToDatabaseTime(const time_t cltt,
-                                     const uint32_t valid_lifetime,
-                                     MYSQL_TIME& expire) {
+                                       const uint32_t valid_lifetime,
+                                       MYSQL_TIME& expire) {
     MySqlBinding::convertToDatabaseTime(cltt, valid_lifetime, expire);
 }
 
@@ -315,31 +382,39 @@ MySqlConnection::startTransaction() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_START_TRANSACTION);
     // We create prepared statements for all other queries, but MySQL
     // don't support prepared statements for START TRANSACTION.
-    int status = mysql_query(mysql_, "START TRANSACTION");
+
+    MySqlHolder& holderHandle = handle();
+
+    int status = mysql_query(holderHandle, "START TRANSACTION");
     if (status != 0) {
         isc_throw(DbOperationError, "unable to start transaction, "
-                  "reason: " << mysql_error(mysql_));
+                  "reason: " << mysql_error(holderHandle));
     }
 }
 
 void
 MySqlConnection::commit() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_COMMIT);
-    if (mysql_commit(mysql_) != 0) {
+
+    MySqlHolder& holderHandle = handle();
+
+    if (mysql_commit(holderHandle) != 0) {
         isc_throw(DbOperationError, "commit failed: "
-                  << mysql_error(mysql_));
+                  << mysql_error(holderHandle));
     }
 }
 
 void
 MySqlConnection::rollback() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_ROLLBACK);
-    if (mysql_rollback(mysql_) != 0) {
+
+    MySqlHolder& holderHandle = handle();
+
+    if (mysql_rollback(holderHandle) != 0) {
         isc_throw(DbOperationError, "rollback failed: "
-                  << mysql_error(mysql_));
+                  << mysql_error(holderHandle));
     }
 }
 
-
-} // namespace isc::db
-} // namespace isc
+}  // namespace db
+}  // namespace isc

@@ -1027,10 +1027,26 @@ private:
             // processing.
             most_recent_option_id_ = 0;
 
+            option_id_ = 0;
+            code_ = 0;
+            persistent_ = false;
+            option_id_null_ = MLM_FALSE;
+            code_null_ = MLM_FALSE;
+            value_null_ = MLM_FALSE;
+            formatted_value_null_ = MLM_FALSE;
+            space_null_ = MLM_FALSE;
+            user_context_null_ = MLM_FALSE;
+
+            memset(value_, 0, sizeof(value_));
+            memset(formatted_value_, 0, sizeof(formatted_value_));
+            memset(space_, 0, sizeof(space_));
+            memset(user_context_, 0, sizeof(user_context_));
+
             // option_id : INT UNSIGNED NOT NULL AUTO_INCREMENT,
             bind[option_id_index_].buffer_type = MYSQL_TYPE_LONG;
             bind[option_id_index_].buffer = reinterpret_cast<char*>(&option_id_);
             bind[option_id_index_].is_unsigned = MLM_TRUE;
+            bind[option_id_index_].is_null = &option_id_null_;
 
             // code : TINYINT OR SHORT UNSIGNED NOT NULL
             bind[code_index_].buffer_type = MYSQL_TYPE_SHORT;
@@ -2255,7 +2271,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2296,7 +2311,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2409,7 +2423,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2498,18 +2511,6 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
                   << db_version.second);
     }
 
-    // Enable autocommit. In case transaction is explicitly used, this
-    // setting will be overwritten for the transaction. However, there are
-    // cases when lack of autocommit could cause transactions to hang
-    // until commit or rollback is explicitly called. This already
-    // caused issues for some unit tests which were unable to cleanup
-    // the database after the test because of pending transactions.
-    // Use of autocommit will eliminate this problem.
-    my_bool result = mysql_autocommit(conn_.mysql_, 1);
-    if (result != 0) {
-        isc_throw(DbOperationError, mysql_error(conn_.mysql_));
-    }
-
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
     // database is read only for the current user.
@@ -2532,18 +2533,6 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
 }
 
 MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them? We're destroying this object and are not really concerned
-    // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < conn_.statements_.size(); ++i) {
-        if (conn_.statements_[i] != NULL) {
-            (void) mysql_stmt_close(conn_.statements_[i]);
-            conn_.statements_[i] = NULL;
-        }
-    }
-
-    // There is no need to close the database in this destructor: it is
-    // closed in the destructor of the mysql_ member variable.
 }
 
 std::pair<uint32_t, uint32_t>
@@ -2551,25 +2540,29 @@ MySqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
 
+    MySqlHolder& holderHandle = conn_.handle();
+
     // Allocate a new statement.
-    MYSQL_STMT *stmt = mysql_stmt_init(conn_.mysql_);
+    MYSQL_STMT *stmt = mysql_stmt_init(holderHandle);
     if (stmt == NULL) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                  "statement structure, reason: " << mysql_error(conn_.mysql_));
+                  "statement structure, reason: " << mysql_error(holderHandle));
     }
 
     // Prepare the statement from SQL text.
     const char* version_sql = "SELECT version, minor FROM schema_version";
     int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
     if (status != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
+        mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2590,14 +2583,14 @@ MySqlHostDataSourceImpl::getVersion() const {
 
     if (mysql_stmt_bind_result(stmt, bind)) {
         isc_throw(DbOperationError, "unable to bind result set for <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Fetch the data.
     if (mysql_stmt_fetch(stmt)) {
         mysql_stmt_close(stmt);
         isc_throw(DbOperationError, "unable to bind result set for <"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << version_sql << ">, reason: " << mysql_error(holderHandle));
     }
 
     // Discard the statement and its resources
@@ -2606,21 +2599,21 @@ MySqlHostDataSourceImpl::getVersion() const {
     return (std::make_pair(major, minor));
 }
 
-
 void
 MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
                                       std::vector<MYSQL_BIND>& bind) {
+    MySqlHolder& holderHandle = conn_.handle();
 
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(holderHandle.statements_[stindex], &bind[0]);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
+    status = mysql_stmt_execute(holderHandle.statements_[stindex]);
 
     if (status != 0) {
         // Failure: check for the special case of duplicate entry.
-        if (mysql_errno(conn_.mysql_) == ER_DUP_ENTRY) {
+        if (mysql_errno(holderHandle) == ER_DUP_ENTRY) {
             isc_throw(DuplicateEntry, "Database duplicate entry error");
         }
         checkError(status, stindex, "unable to execute");
@@ -2630,19 +2623,21 @@ MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
 bool
 MySqlHostDataSourceImpl::delStatement(StatementIndex stindex,
                                       MYSQL_BIND* bind) {
+    MySqlHolder& holderHandle = conn_.handle();
+
     // Bind the parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
+    int status = mysql_stmt_bind_param(holderHandle.statements_[stindex], &bind[0]);
     checkError(status, stindex, "unable to bind parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
+    status = mysql_stmt_execute(holderHandle.statements_[stindex]);
 
     if (status != 0) {
         checkError(status, stindex, "unable to execute");
     }
 
     // Let's check how many hosts were deleted.
-    my_ulonglong numrows = mysql_stmt_affected_rows(conn_.statements_[stindex]);
+    my_ulonglong numrows = mysql_stmt_affected_rows(holderHandle.statements_[stindex]);
     return (numrows != 0);
 }
 
@@ -2706,32 +2701,33 @@ MySqlHostDataSourceImpl::
 getHostCollection(StatementIndex stindex, MYSQL_BIND* bind,
                   boost::shared_ptr<MySqlHostExchange> exchange,
                   ConstHostCollection& result, bool single) const {
+    MySqlHolder& holderHandle = conn_.handle();
 
     // Bind the selection parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
+    int status = mysql_stmt_bind_param(holderHandle.statements_[stindex], bind);
     checkError(status, stindex, "unable to bind WHERE clause parameter");
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
     std::vector<MYSQL_BIND> outbind = exchange->createBindForReceive();
-    status = mysql_stmt_bind_result(conn_.statements_[stindex], &outbind[0]);
+    status = mysql_stmt_bind_result(holderHandle.statements_[stindex], &outbind[0]);
     checkError(status, stindex, "unable to bind SELECT clause parameters");
 
     // Execute the statement
-    status = mysql_stmt_execute(conn_.statements_[stindex]);
+    status = mysql_stmt_execute(holderHandle.statements_[stindex]);
     checkError(status, stindex, "unable to execute");
 
     // Ensure that all the lease information is retrieved in one go to avoid
     // overhead of going back and forth between client and server.
-    status = mysql_stmt_store_result(conn_.statements_[stindex]);
+    status = mysql_stmt_store_result(holderHandle.statements_[stindex]);
     checkError(status, stindex, "unable to set up for storing all results");
 
     // Set up the fetch "release" object to release resources associated
     // with the call to mysql_stmt_fetch when this method exits, then
     // retrieve the data. mysql_stmt_fetch return value equal to 0 represents
     // successful data fetch.
-    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
-    while ((status = mysql_stmt_fetch(conn_.statements_[stindex])) ==
+    MySqlFreeResult fetch_release(holderHandle.statements_[stindex]);
+    while ((status = mysql_stmt_fetch(holderHandle.statements_[stindex])) ==
            MLM_MYSQL_FETCH_SUCCESS) {
         try {
             exchange->processFetchedData(result);
@@ -2801,8 +2797,9 @@ getHost(const SubnetID& subnet_id,
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -2826,6 +2823,8 @@ MySqlHostDataSource::~MySqlHostDataSource() {
 
 void
 MySqlHostDataSource::add(const HostPtr& host) {
+    MySqlHolder& holderHandle = impl_->conn_.handle();
+
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
 
@@ -2842,7 +2841,7 @@ MySqlHostDataSource::add(const HostPtr& host) {
     impl_->addStatement(MySqlHostDataSourceImpl::INSERT_HOST, bind);
 
     // Gets the last inserted hosts id
-    uint64_t host_id = mysql_insert_id(impl_->conn_.mysql_);
+    uint64_t host_id = mysql_insert_id(holderHandle);
 
     // Insert DHCPv4 options.
     ConstCfgOptionPtr cfg_option4 = host->getCfgOption4();
@@ -2896,7 +2895,7 @@ MySqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& a
     }
 
     // v6
-    ConstHostPtr host = get6(subnet_id, addr);
+    ConstHostPtr host(get6(subnet_id, addr));
     if (!host) {
         return (false);
     }
@@ -3223,10 +3222,9 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
-    // Check that address is IPv4, not IPv6.
     if (!address.isV4()) {
-        isc_throw(BadValue, "MySqlHostDataSource::get4(2): wrong address type, "
-                            "address supplied is not an IPv4 address");
+        isc_throw(BadValue, "MySqlHostDataSource::get4(id, address): "
+                  "wrong address type, address supplied is an IPv6 address");
     }
 
     // Set up the WHERE clause value
@@ -3248,8 +3246,9 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 
     // Return single record if present, else clear the host.
     ConstHostPtr result;
-    if (!collection.empty())
+    if (!collection.empty()) {
         result = *collection.begin();
+    }
 
     return (result);
 }
@@ -3339,7 +3338,8 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
 
 // Miscellaneous database methods.
 
-std::string MySqlHostDataSource::getName() const {
+std::string
+MySqlHostDataSource::getName() const {
     std::string name = "";
     try {
         name = impl_->conn_.getParameter("name");
@@ -3349,7 +3349,8 @@ std::string MySqlHostDataSource::getName() const {
     return (name);
 }
 
-std::string MySqlHostDataSource::getDescription() const {
+std::string
+MySqlHostDataSource::getDescription() const {
     return (std::string("Host data source that stores host information"
                         "in MySQL database"));
 }

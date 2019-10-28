@@ -19,16 +19,18 @@ MySqlGenericBackendTest::MySqlGenericBackendTest()
 
 size_t
 MySqlGenericBackendTest::countRows(MySqlConnection& conn, const std::string& table) const {
+    MySqlHolder& holderHandle = conn.handle();
+
     // Execute a simple select query on all rows.
     std::string query = "SELECT * FROM " + table;
-    auto status = mysql_query(conn.mysql_, query.c_str());
+    auto status = mysql_query(holderHandle, query.c_str());
     if (status != 0) {
-        ADD_FAILURE() << "Query failed: " << mysql_error(conn.mysql_);
+        ADD_FAILURE() << "Query failed: " << mysql_error(holderHandle);
         return (0);
     }
 
     // Get the number of rows returned and free the result.
-    MYSQL_RES * res = mysql_store_result(conn.mysql_);
+    MYSQL_RES * res = mysql_store_result(holderHandle);
     unsigned numrows = static_cast<unsigned>(mysql_num_rows(res));
     mysql_free_result(res);
 

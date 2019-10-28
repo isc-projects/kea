@@ -10,6 +10,7 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
+#include <dhcpsrv/thread_resource_mgr.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_constants.h>
@@ -23,7 +24,6 @@
 
 namespace isc {
 namespace db {
-
 
 /// @brief Fetch and Release MySQL Results
 ///
@@ -41,7 +41,6 @@ namespace db {
 
 class MySqlFreeResult {
 public:
-
     /// @brief Constructor
     ///
     /// Store the pointer to the statement for which data is being fetched.
@@ -52,18 +51,18 @@ public:
     /// way, any error from mysql_stmt_free_result is ignored. (Generating
     /// an exception is not much help, as it will only confuse things if the
     /// method calling mysql_stmt_fetch is exiting via an exception.)
-    MySqlFreeResult(MYSQL_STMT* statement) : statement_(statement)
-    {}
+    MySqlFreeResult(MYSQL_STMT* statement) : statement_(statement) {
+    }
 
     /// @brief Destructor
     ///
     /// Frees up fetch context if a fetch has been successfully executed.
     ~MySqlFreeResult() {
-        (void) mysql_stmt_free_result(statement_);
+        (void)mysql_stmt_free_result(statement_);
     }
 
 private:
-    MYSQL_STMT*     statement_;     ///< Statement for which results are freed
+    MYSQL_STMT* statement_;  ///< Statement for which results are freed
 };
 
 /// @brief MySQL Selection Statements
@@ -75,6 +74,10 @@ struct TaggedStatement {
     uint32_t index;
     const char* text;
 };
+
+
+/// @brief Forward declaration to @ref MySqlConnection.
+class MySqlConnection;
 
 /// @brief MySQL Handle Holder
 ///
@@ -89,32 +92,27 @@ struct TaggedStatement {
 /// For this reason, the class is declared noncopyable.
 class MySqlHolder : public boost::noncopyable {
 public:
-
     /// @brief Constructor
     ///
     /// Push a call to mysql_library_end() at exit time.
     /// Initialize MySql and store the associated context object.
     ///
     /// @throw DbOpenError Unable to initialize MySql handle.
-    MySqlHolder() : mysql_(mysql_init(NULL)) {
-        if (!atexit_) {
-            atexit([]{ mysql_library_end(); });
-            atexit_ = true;
-        }
-        if (mysql_ == NULL) {
-            isc_throw(db::DbOpenError, "unable to initialize MySQL");
-        }
+    MySqlHolder() : connected_(false), prepared_(false), mysql_(NULL) {
     }
 
     /// @brief Destructor
     ///
     /// Frees up resources allocated by the initialization of MySql.
     ~MySqlHolder() {
-        if (mysql_ != NULL) {
-            mysql_close(mysql_);
-        }
+        clear();
         // @note Moved the call to mysql_library_end() to atexit.
     }
+
+    /// @brief Sets the connection to the value given
+    ///
+    /// @param connection - pointer to the MYSQL connection instance
+    void setConnection(MYSQL* connection);
 
     /// @brief Conversion Operator
     ///
@@ -124,14 +122,31 @@ public:
         return (mysql_);
     }
 
+    void clear() {
+        setConnection(NULL);
+    }
+
+    void clearPrepared();
+
+    void openDatabase(MySqlConnection& connection);
+
+    void prepareStatements(MySqlConnection& connection);
+
+    /// @brief Prepared statements
+    ///
+    /// This field is public, because it is used heavily from MySqlConnection
+    /// and from MySqlHostDataSource.
+    std::vector<MYSQL_STMT*> statements_;
+
+    bool connected_;     ///< Flag to indicate openDatabase has been called
+
 private:
+    bool prepared_;      ///< Flag to indicate prepareStatements has been called
+
     static bool atexit_; ///< Flag to call atexit once.
 
     MYSQL* mysql_;       ///< Initialization context
 };
-
-/// @brief Forward declaration to @ref MySqlConnection.
-class MySqlConnection;
 
 /// @brief RAII object representing MySQL transaction.
 ///
@@ -155,7 +170,6 @@ class MySqlConnection;
 /// database which don't use transactions will still be auto committed.
 class MySqlTransaction : public boost::noncopyable {
 public:
-
     /// @brief Constructor.
     ///
     /// Starts transaction by making a "START TRANSACTION" query.
@@ -175,7 +189,6 @@ public:
     void commit();
 
 private:
-
     /// @brief Holds reference to the MySQL database connection.
     MySqlConnection& conn_;
 
@@ -186,7 +199,6 @@ private:
     bool committed_;
 };
 
-
 /// @brief Common MySQL Connector Pool
 ///
 /// This class provides common operations for MySQL database connection
@@ -196,15 +208,14 @@ private:
 /// that use instances of MySqlConnection.
 class MySqlConnection : public db::DatabaseConnection {
 public:
-
     /// @brief Function invoked to process fetched row.
     typedef std::function<void(MySqlBindingCollection&)> ConsumeResultFun;
 
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
-    MySqlConnection(const ParameterMap& parameters)
-        : DatabaseConnection(parameters) {
+    MySqlConnection(const ParameterMap& parameters) :
+        DatabaseConnection(parameters), connected_(false), prepared_(false) {
     }
 
     /// @brief Destructor
@@ -241,9 +252,6 @@ public:
     ///        represents an internal error within the code.
     void prepareStatements(const TaggedStatement* start_statement,
                            const TaggedStatement* end_statement);
-
-    /// @brief Clears prepared statements and text statements.
-    void clearStatements();
 
     /// @brief Open Database
     ///
@@ -350,6 +358,8 @@ public:
                      const MySqlBindingCollection& in_bindings,
                      MySqlBindingCollection& out_bindings,
                      ConsumeResultFun process_result) {
+        MySqlHolder& holderHandle = handle();
+
         // Extract native input bindings.
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
@@ -359,7 +369,7 @@ public:
         int status = 0;
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
-            status = mysql_stmt_bind_param(statements_[index],
+            status = mysql_stmt_bind_param(holderHandle.statements_[index],
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
             checkError(status, index, "unable to bind parameters for select");
         }
@@ -370,20 +380,20 @@ public:
             out_bind_vec.push_back(out_binding->getMySqlBinding());
         }
         if (!out_bind_vec.empty()) {
-            status = mysql_stmt_bind_result(statements_[index], &out_bind_vec[0]);
+            status = mysql_stmt_bind_result(holderHandle.statements_[index], &out_bind_vec[0]);
             checkError(status, index, "unable to bind result parameters for select");
         }
 
         // Execute query.
-        status = mysql_stmt_execute(statements_[index]);
+        status = mysql_stmt_execute(holderHandle.statements_[index]);
         checkError(status, index, "unable to execute");
 
-        status = mysql_stmt_store_result(statements_[index]);
+        status = mysql_stmt_store_result(holderHandle.statements_[index]);
         checkError(status, index, "unable to set up for storing all results");
 
         // Fetch results.
-        MySqlFreeResult fetch_release(statements_[index]);
-        while ((status = mysql_stmt_fetch(statements_[index])) ==
+        MySqlFreeResult fetch_release(holderHandle.statements_[index]);
+        while ((status = mysql_stmt_fetch(holderHandle.statements_[index])) ==
                MLM_MYSQL_FETCH_SUCCESS) {
             try {
                 // For each returned row call user function which should
@@ -427,26 +437,28 @@ public:
     template<typename StatementIndex>
     void insertQuery(const StatementIndex& index,
                      const MySqlBindingCollection& in_bindings) {
+        MySqlHolder& holderHandle = handle();
         std::vector<MYSQL_BIND> in_bind_vec;
+
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index],
+        int status = mysql_stmt_bind_param(holderHandle.statements_[index],
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = mysql_stmt_execute(statements_[index]);
+        status = mysql_stmt_execute(holderHandle.statements_[index]);
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
-            if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+            if (mysql_errno(holderHandle) == ER_DUP_ENTRY) {
                 isc_throw(DuplicateEntry, "Database duplicate entry error");
             }
             // Failure: check for the special case of WHERE returning NULL.
-            if (mysql_errno(mysql_) == ER_BAD_NULL_ERROR) {
+            if (mysql_errno(holderHandle) == ER_BAD_NULL_ERROR) {
                 isc_throw(NullKeyError, "Database bad NULL error");
             }
             checkError(status, index, "unable to execute");
@@ -470,30 +482,32 @@ public:
     template<typename StatementIndex>
     uint64_t updateDeleteQuery(const StatementIndex& index,
                                const MySqlBindingCollection& in_bindings) {
+        MySqlHolder& holderHandle = handle();
         std::vector<MYSQL_BIND> in_bind_vec;
+
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index],
+        int status = mysql_stmt_bind_param(holderHandle.statements_[index],
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = mysql_stmt_execute(statements_[index]);
+        status = mysql_stmt_execute(holderHandle.statements_[index]);
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
-            if ((mysql_errno(mysql_) == ER_DUP_ENTRY)
+            if ((mysql_errno(holderHandle) == ER_DUP_ENTRY)
 #ifdef ER_FOREIGN_DUPLICATE_KEY
-                || (mysql_errno(mysql_) == ER_FOREIGN_DUPLICATE_KEY)
+                || (mysql_errno(holderHandle) == ER_FOREIGN_DUPLICATE_KEY)
 #endif
 #ifdef ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO
-                || (mysql_errno(mysql_) == ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO)
+                || (mysql_errno(holderHandle) == ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO)
 #endif
 #ifdef ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO
-                || (mysql_errno(mysql_) == ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO)
+                || (mysql_errno(holderHandle) == ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO)
 #endif
                 ) {
                 isc_throw(DuplicateEntry, "Database duplicate entry error");
@@ -502,7 +516,7 @@ public:
         }
 
         // Let's return how many rows were affected.
-        return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[index])));
+        return (static_cast<uint64_t>(mysql_stmt_affected_rows(holderHandle.statements_[index])));
     }
 
 
@@ -552,11 +566,13 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    template<typename StatementIndex>
+    template <typename StatementIndex>
     void checkError(const int status, const StatementIndex& index,
                     const char* what) const {
+        MySqlHolder& holderHandle = handle();
+
         if (status != 0) {
-            switch(mysql_errno(mysql_)) {
+            switch(mysql_errno(holderHandle)) {
                 // These are the ones we consider fatal. Remember this method is
                 // used to check errors of API calls made subsequent to successfully
                 // connecting.  Errors occurring while attempting to connect are
@@ -570,13 +586,13 @@ public:
                 DB_LOG_ERROR(db::MYSQL_FATAL_ERROR)
                     .arg(what)
                     .arg(text_statements_[static_cast<int>(index)])
-                    .arg(mysql_error(mysql_))
-                    .arg(mysql_errno(mysql_));
+                    .arg(mysql_error(holderHandle))
+                    .arg(mysql_errno(holderHandle));
 
                 // If there's no lost db callback or it returns false,
                 // then we're not attempting to recover so we're done
                 if (!invokeDbLostCallback()) {
-                    exit (-1);
+                    exit(-1);
                 }
 
                 // We still need to throw so caller can error out of the current
@@ -588,32 +604,43 @@ public:
                 isc_throw(db::DbOperationError, what << " for <"
                           << text_statements_[static_cast<int>(index)]
                           << ">, reason: "
-                          << mysql_error(mysql_) << " (error code "
-                          << mysql_errno(mysql_) << ")");
+                          << mysql_error(holderHandle) << " (error code "
+                          << mysql_errno(holderHandle) << ")");
             }
         }
     }
 
-    /// @brief Prepared statements
-    ///
-    /// This field is public, because it is used heavily from MySqlConnection
-    /// and will be from MySqlHostDataSource.
-    std::vector<MYSQL_STMT*> statements_;
-
     /// @brief Raw text of statements
     ///
     /// This field is public, because it is used heavily from MySqlConnection
-    /// and will be from MySqlHostDataSource.
+    /// and from MySqlHostDataSource.
     std::vector<std::string> text_statements_;
 
     /// @brief MySQL connection handle
     ///
     /// This field is public, because it is used heavily from MySqlConnection
-    /// and will be from MySqlHostDataSource.
-    MySqlHolder mysql_;
+    /// and from MySqlHostDataSource.
+    MySqlHolder& handle() const {
+        auto result = handles_.resource();
+        // thread_local std::shared_ptr<MySqlHolder> result(std::make_shared<MySqlHolder>());
+        if (connected_) {
+            result->openDatabase(*(const_cast<MySqlConnection*>(this)));
+        }
+        if (prepared_) {
+            result->prepareStatements(*(const_cast<MySqlConnection*>(this)));
+        }
+        return *result;
+    }
+
+private:
+    bool connected_;     ///< Flag to indicate openDatabase has been called
+
+    bool prepared_;      ///< Flag to indicate prepareStatements has been called
+
+    mutable isc::dhcp::ThreadResourceMgr<MySqlHolder> handles_;
 };
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+}  // namespace db
+}  // namespace isc
 
-#endif // MYSQL_CONNECTION_H
+#endif  // MYSQL_CONNECTION_H
