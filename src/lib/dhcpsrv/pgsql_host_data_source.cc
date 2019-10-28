@@ -1986,7 +1986,7 @@ PgSqlHostDataSourceImpl::delStatement(StatementIndex stindex,
 void
 PgSqlHostDataSourceImpl::addResv(const IPv6Resrv& resv,
                                  const HostID& id) {
-    thread_local std::shared_ptr<PgSqlIPv6ReservationExchange> host_ipv6_reservation_exchange(
+    std::shared_ptr<PgSqlIPv6ReservationExchange> host_ipv6_reservation_exchange(
         std::make_shared<PgSqlIPv6ReservationExchange>());
 
     PsqlBindArrayPtr bind_array;
@@ -2001,7 +2001,7 @@ PgSqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const std::string& opt_space,
                                    const Optional<SubnetID>&,
                                    const HostID& id) {
-    thread_local std::shared_ptr<PgSqlOptionExchange> host_option_exchange(
+    std::shared_ptr<PgSqlOptionExchange> host_option_exchange(
         std::make_shared<PgSqlOptionExchange>());
 
     PsqlBindArrayPtr bind_array;
@@ -2140,7 +2140,7 @@ PgSqlHostDataSource::add(const HostPtr& host) {
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
 
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Initiate PostgreSQL transaction as we will have to make multiple queries
@@ -2250,7 +2250,7 @@ ConstHostCollection
 PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                             const uint8_t* identifier_begin,
                             const size_t identifier_len) const {
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv46_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv46_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
 
     // Set up the WHERE clause value
@@ -2270,7 +2270,7 @@ PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
 
 ConstHostCollection
 PgSqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
@@ -2288,7 +2288,7 @@ PgSqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
 
 ConstHostCollection
 PgSqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
@@ -2306,7 +2306,7 @@ PgSqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
 
 ConstHostCollection
 PgSqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv46_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv46_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP4_AND_DHCP6));
 
     // Set up the WHERE clause value
@@ -2325,7 +2325,7 @@ PgSqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
 ConstHostCollection
 PgSqlHostDataSource::getAllbyHostname4(const std::string& hostname,
                                        const SubnetID& subnet_id) const {
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
@@ -2347,7 +2347,7 @@ PgSqlHostDataSource::getAllbyHostname4(const std::string& hostname,
 ConstHostCollection
 PgSqlHostDataSource::getAllbyHostname6(const std::string& hostname,
                                        const SubnetID& subnet_id) const {
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
@@ -2371,7 +2371,7 @@ PgSqlHostDataSource::getPage4(const SubnetID& subnet_id,
                               size_t& /*source_index*/,
                               uint64_t lower_host_id,
                               const HostPageSize& page_size) const {
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
@@ -2400,7 +2400,7 @@ PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
                               size_t& /*source_index*/,
                               uint64_t lower_host_id,
                               const HostPageSize& page_size) const {
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
@@ -2426,7 +2426,7 @@ PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
 
 ConstHostCollection
 PgSqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
@@ -2447,7 +2447,7 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
@@ -2464,7 +2464,7 @@ PgSqlHostDataSource::get4(const SubnetID& subnet_id,
                   "wrong address type, address supplied is an IPv6 address");
     }
 
-    thread_local std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
+    std::shared_ptr<PgSqlHostWithOptionsExchange> host_ipv4_exchange(
         std::make_shared<PgSqlHostWithOptionsExchange>(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
 
     // Set up the WHERE clause value
@@ -2494,7 +2494,7 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     return (impl_->getHost(subnet_id, identifier_type, identifier_begin,
@@ -2510,7 +2510,7 @@ PgSqlHostDataSource::get6(const asiolink::IOAddress& prefix,
                   "wrong address type, address supplied is an IPv4 address");
     }
 
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
@@ -2543,7 +2543,7 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
                   "wrong address type, address supplied is an IPv4 address");
     }
 
-    thread_local std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
+    std::shared_ptr<PgSqlHostIPv6Exchange> host_ipv6_exchange(
         std::make_shared<PgSqlHostIPv6Exchange>(PgSqlHostWithOptionsExchange::DHCP6_ONLY));
 
     // Set up the WHERE clause value
