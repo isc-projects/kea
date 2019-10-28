@@ -63,11 +63,6 @@ public:
         try {
             // Open new connection.
             conn_.openDatabase();
-            my_bool result = mysql_autocommit(conn_.mysql_, 1);
-            if (result != 0) {
-                isc_throw(DbOperationError, "failed to set autocommit option "
-                          "for test MySQL connection");
-            }
 
             // Create mysql_connection_test table.
             createTestTable();
@@ -124,22 +119,24 @@ public:
     ///
     /// @param sql Query in the textual form.
     void runQuery(const std::string& sql) {
-        MYSQL_STMT *stmt = mysql_stmt_init(conn_.mysql_);
+        MySqlHolder& holderHandle = conn_.handle();
+
+        MYSQL_STMT *stmt = mysql_stmt_init(holderHandle);
         if (stmt == NULL) {
             isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                  "statement structure, reason: " << mysql_error(conn_.mysql_));
+                  "statement structure, reason: " << mysql_error(holderHandle));
         }
 
         int status = mysql_stmt_prepare(stmt, sql.c_str(), sql.length());
         if (status != 0) {
             isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                      << sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                      << sql << ">, reason: " << mysql_errno(holderHandle));
         }
 
         // Execute the prepared statement.
         if (mysql_stmt_execute(stmt) != 0) {
             isc_throw(DbOperationError, "cannot execute MySQL query <"
-                  << sql << ">, reason: " << mysql_errno(conn_.mysql_));
+                  << sql << ">, reason: " << mysql_errno(holderHandle));
         }
 
         // Discard the statement and its resources
