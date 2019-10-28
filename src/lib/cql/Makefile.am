@@ -20,7 +20,7 @@ libkea_cql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cql_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_cql_la_LDFLAGS = -no-undefined -version-info 2:0:0
+libkea_cql_la_LDFLAGS = -no-undefined -version-info 2:0:1
 
 libkea_cql_la_LDFLAGS += $(CQL_LIBS)
 
