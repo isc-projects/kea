@@ -109,7 +109,7 @@
 , <command><link linkend="ref-lease4-get-all">lease4-get-all</link></command>
 , <command><link linkend="ref-lease4-update">lease4-update</link></command>
 , <command><link linkend="ref-lease4-wipe">lease4-wipe</link></command>
-, <command><link linkend="ref-lease6-wipe">lease6-wipe</link></command>
+, <command><link linkend="ref-leases-reclaim">leases-reclaim</link></command>
 , <command><link linkend="ref-libreload">libreload</link></command>
 , <command><link linkend="ref-list-commands">list-commands</link></command>
 , <command><link linkend="ref-network4-add">network4-add</link></command>
@@ -241,7 +241,7 @@
 <!-- start of build-report -->
 <section xml:id="reference-build-report">
 <title>build-report reference</title>
-<para xml:id="ref-build-report"><command>build-report</command> - returns a list of compilation options that this particular binary was built with</para>
+<para xml:id="ref-build-report"><command>build-report</command> - Returns a list of compilation options that this particular binary was built with</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
@@ -527,7 +527,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of config-get -->
 <section xml:id="reference-config-get">
 <title>config-get reference</title>
-<para xml:id="ref-config-get"><command>config-get</command> - retrieves the current configuration used by the server. The configuration
+<para xml:id="ref-config-get"><command>config-get</command> - Retrieves the current configuration used by the server. The configuration
               is roughtly equal to the configuration file, but includes additional
               changes made by other commands and due to parameters inheritance.</para>
 
@@ -1397,7 +1397,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease6-wipe reference</title>
 <para xml:id="ref-lease6-wipe"><command>lease6-wipe</command> - lease6-wipe is designed to remove all leases associated with a given subnet.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1435,7 +1435,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>leases-reclaim reference</title>
 <para xml:id="ref-leases-reclaim"><command>leases-reclaim</command> - The leases-reclaim command instructs the server to reclaim all expired leases immediately.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.0.0 (built-in)</para>
 
@@ -2208,7 +2208,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of reservation-get -->
 <section xml:id="reference-reservation-get">
 <title>reservation-get reference</title>
-<para xml:id="ref-reservation-get"><command>reservation-get</command> - attempts to retrieve an existing host reservation</para>
+<para xml:id="ref-reservation-get"><command>reservation-get</command> - Attempts to retrieve an existing host reservation</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
