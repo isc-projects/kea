@@ -93,7 +93,7 @@ PgSqlHolder::prepareStatements(PgSqlConnection& connection) {
     if (prepared_) {
         return;
     }
-    // clear previous prepared statements
+    // clear previously prepared statements
     clearPrepared();
     // Prepare all statements queries with all known fields datatype
     for (auto it = connection.statements_.begin();
