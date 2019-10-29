@@ -480,6 +480,7 @@ public:
             // between them.
             conns_it->second->close();
             conns_.erase(conns_it);
+            break;
         }
     }
 
