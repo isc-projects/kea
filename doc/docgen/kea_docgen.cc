@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <ctime>
 
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
@@ -157,7 +158,16 @@ public:
     /// @param f stream to write copyrights to
     void generateCopyright(stringstream& f) {
         f << "<!--" << endl;
-        f << " - Copyright (C) 2018 Internet Systems Consortium, Inc. (\"ISC\")" << endl;
+
+        std::time_t t = time(0);
+        std::tm* now = std::localtime(&t);
+
+        if (now->tm_year + 1900 == 2018) {
+            f << " - Copyright (C) 2018 Internet Systems Consortium, Inc. (\"ISC\")" << endl;
+        } else {
+            // Whoaa! the future is now!
+            f << " - Copyright (C) 2018-" << (now->tm_year + 1900) << " Internet Systems Consortium, Inc. (\"ISC\")" << endl;
+        }
         f << " -" << endl;
         f << " - This Source Code Form is subject to the terms of the Mozilla Public" << endl;
         f << " - License, v. 2.0. If a copy of the MPL was not distributed with this" << endl;
