@@ -70,7 +70,7 @@ software separately. (For the build requirements, also see :ref:`build-requireme
    is running. This is an optional dependency; Kea can be built
    without RADIUS support.
 
--  As of the 1.5.0 release, Kea provides a NETCONF interface with the
+-  Kea provides a NETCONF interface with the
    kea-netconf agent. This Kea module is built optionally and requires
    Sysrepo software when used. Building Kea with NETCONF support
    requires many dependencies to be installed, which are described in
