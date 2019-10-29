@@ -80,7 +80,7 @@ MySqlHolder::prepareStatements(MySqlConnection& connection) {
     if (prepared_) {
         return;
     }
-    // clear previous prepared statements
+    // clear previously prepared statements
     clearPrepared();
     statements_.resize(connection.text_statements_.size(), NULL);
     uint32_t index = 0;
