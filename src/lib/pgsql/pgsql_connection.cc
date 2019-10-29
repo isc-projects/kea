@@ -39,25 +39,30 @@ const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 
 void
 PgSqlHolder::setConnection(PGconn* connection) {
+    // clear prepared statements associated to current connection
     clearPrepared();
-    if (pgconn_ != NULL) {
-        PQfinish(pgconn_);
+    // clear old database back-end object
+    if (pgsql_ != NULL) {
+        PQfinish(pgsql_);
     }
-    pgconn_ = connection;
+    // set new database back-end object
+    pgsql_ = connection;
+    // clear connected flag
     connected_ = false;
+    // clear prepared flag
     prepared_ = false;
 }
 
 void
 PgSqlHolder::clearPrepared() {
-    if (pgconn_ != NULL) {
+    if (pgsql_ != NULL) {
         // Deallocate the prepared queries.
-        if (PQstatus(pgconn_) == CONNECTION_OK) {
-            PgSqlResult r(PQexec(pgconn_, "DEALLOCATE all"));
+        if (PQstatus(pgsql_) == CONNECTION_OK) {
+            PgSqlResult r(PQexec(pgsql_, "DEALLOCATE all"));
             if(PQresultStatus(r) != PGRES_COMMAND_OK) {
                 // Highly unlikely but we'll log it and go on.
                 DB_LOG_ERROR(PGSQL_DEALLOC_ERROR)
-                    .arg(PQerrorMessage(pgconn_));
+                    .arg(PQerrorMessage(pgsql_));
             }
         }
     }
@@ -65,31 +70,42 @@ PgSqlHolder::clearPrepared() {
 
 void
 PgSqlHolder::openDatabase(PgSqlConnection& connection) {
+    // return if holder has already called openDatabase
     if (connected_) {
         return;
     }
+    // set connected flag
     connected_ = true;
+    // set prepared flag to true so that PgSqlConnection::handle() within
+    // openDatabase function does not call prepareStatements before opening
+    // the new connection
     prepared_ = true;
+    // call openDatabase for this holder handle
     connection.openDatabase();
+    // set prepared flag to false so that PgSqlConnection::handle() will
+    // call prepareStatements for this holder handle
     prepared_ = false;
 }
 
 void
 PgSqlHolder::prepareStatements(PgSqlConnection& connection) {
+    // return if holder has already called prepareStatemens
     if (prepared_) {
         return;
     }
+    // clear previous prepared statements
     clearPrepared();
     // Prepare all statements queries with all known fields datatype
     for (auto it = connection.statements_.begin();
         it != connection.statements_.end(); ++it) {
-        PgSqlResult r(PQprepare(pgconn_, (*it)->name, (*it)->text,
+        PgSqlResult r(PQprepare(pgsql_, (*it)->name, (*it)->text,
                                 (*it)->nbparams, (*it)->types));
         if (PQresultStatus(r) != PGRES_COMMAND_OK) {
             isc_throw(DbOperationError, "unable to prepare PostgreSQL statement: "
-                      << (*it)->text << ", reason: " << PQerrorMessage(pgconn_));
+                      << (*it)->text << ", reason: " << PQerrorMessage(pgsql_));
         }
     }
+    // set prepared flag
     prepared_ = true;
 }
 

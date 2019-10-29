@@ -184,31 +184,48 @@ class PgSqlHolder : public boost::noncopyable {
 public:
     /// @brief Constructor
     ///
-    /// Sets the Postgresql API connector handle to NULL.
-    ///
-    PgSqlHolder() : connected_(false), prepared_(false), pgconn_(NULL) {
+    /// Sets the PgSql API connector handle to NULL.
+    PgSqlHolder() : connected_(false), prepared_(false), pgsql_(NULL) {
     }
 
     /// @brief Destructor
     ///
-    /// Frees up resources allocated by the connection.
+    /// Frees up resources allocated by the connection holder.
     ~PgSqlHolder() {
         clear();
     }
 
+    /// @brief Clear all resources
+    ///
+    /// Clear all resources.
     void clear() {
         setConnection(NULL);
     }
 
+    /// @brief Clear prepared statements
+    ///
+    /// Clear prepared statements.
     void clearPrepared();
 
     /// @brief Sets the connection to the value given
     ///
-    /// @param connection - pointer to the Postgresql connection instance
+    /// Sets the database back-end object.
+    ///
+    /// @param connection - pointer to the PgSql connection instance
     void setConnection(PGconn* connection);
 
+    /// @brief Open database
+    ///
+    /// Open database and apply PgSql connection parameters.
+    ///
+    /// @param connection - associated connection which holds connection properties.
     void openDatabase(PgSqlConnection& connection);
 
+    /// @brief Prepare statements
+    ///
+    /// Prepare statements.
+    ///
+    /// @param connection - associated connection which holds the text statements.
     void prepareStatements(PgSqlConnection& connection);
 
     /// @brief Conversion Operator
@@ -216,15 +233,18 @@ public:
     /// Allows the PgSqlHolder object to be passed as the context argument to
     /// PQxxxx functions.
     operator PGconn*() const {
-        return (pgconn_);
+        return (pgsql_);
     }
 
+    /// @brief The connected flag
     bool connected_;     ///< Flag to indicate openDatabase has been called
 
 private:
+    /// @brief The prepared flag
     bool prepared_;      ///< Flag to indicate prepareStatements has been called
 
-    PGconn* pgconn_;     ///< Postgresql connection
+    /// @brief The PgSql database back-end object associated to this holder
+    PGconn* pgsql_;     ///< Postgresql connection
 };
 
 /// @brief RAII object representing a PostgreSQL transaction.
