@@ -53,6 +53,12 @@ by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
 
+% DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL error on demand attempt to fetch configuration updates from the configuration backend(s): %1
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this on demand attempt failed.
+The sole argument which is returned to the config-backend-pull command
+caller too contains the reason for failure.
+
 % DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL error on periodic attempt to fetch configuration updates from the configuration backend(s): %1
 This error message is issued when the server attempted to fetch
 configuration updates from the database and this periodic attempt failed.
@@ -66,12 +72,6 @@ periodic attempts to fetch configuration updates from a configuration backend.
 The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
-
-% DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL error on demand attempt to fetch configuration updates from the configuration backend(s): %1
-This error message is issued when the server attempted to fetch
-configuration updates from the database and this on demand attempt failed.
-The sole argument which is returned to the config-backend-pull command
-caller too contains the reason for failure.
 
 % DHCP6_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
