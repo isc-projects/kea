@@ -428,7 +428,6 @@ public:
     /// and from PgSqlHostDataSource.
     PgSqlHolder& handle() const {
         auto result = handles_.resource();
-        // thread_local std::shared_ptr<PgSqlHolder> result(std::make_shared<PgSqlHolder>());
         if (connected_) {
             result->openDatabase(*(const_cast<PgSqlConnection*>(this)));
         }
