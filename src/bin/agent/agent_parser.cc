@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.4.1.
+// A Bison parser, made by GNU Bison 3.4.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -92,9 +92,6 @@
 # endif
 
 
-// Suppress unused-variable warnings by "using" E.
-#define YYUSE(E) ((void) (E))
-
 // Enable debugging if requested.
 #if AGENT_DEBUG
 
@@ -142,7 +139,7 @@
 
 #line 14 "agent_parser.yy"
 namespace isc { namespace agent {
-#line 146 "agent_parser.cc"
+#line 143 "agent_parser.cc"
 
 
   /* Return YYSTR after stripping away unnecessary quotes and
@@ -389,43 +386,43 @@ namespace isc { namespace agent {
       case 42: // "constant string"
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < std::string > (); }
-#line 393 "agent_parser.cc"
+#line 390 "agent_parser.cc"
         break;
 
       case 43: // "integer"
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < int64_t > (); }
-#line 399 "agent_parser.cc"
+#line 396 "agent_parser.cc"
         break;
 
       case 44: // "floating point"
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < double > (); }
-#line 405 "agent_parser.cc"
+#line 402 "agent_parser.cc"
         break;
 
       case 45: // "boolean"
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < bool > (); }
-#line 411 "agent_parser.cc"
+#line 408 "agent_parser.cc"
         break;
 
       case 54: // value
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 417 "agent_parser.cc"
+#line 414 "agent_parser.cc"
         break;
 
       case 57: // map_value
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 423 "agent_parser.cc"
+#line 420 "agent_parser.cc"
         break;
 
       case 108: // socket_type_value
 #line 104 "agent_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 429 "agent_parser.cc"
+#line 426 "agent_parser.cc"
         break;
 
       default:
@@ -687,19 +684,19 @@ namespace isc { namespace agent {
   case 2:
 #line 115 "agent_parser.yy"
     { ctx.ctx_ = ctx.NO_KEYWORDS; }
-#line 691 "agent_parser.cc"
+#line 688 "agent_parser.cc"
     break;
 
   case 4:
 #line 116 "agent_parser.yy"
     { ctx.ctx_ = ctx.CONFIG; }
-#line 697 "agent_parser.cc"
+#line 694 "agent_parser.cc"
     break;
 
   case 6:
 #line 117 "agent_parser.yy"
     { ctx.ctx_ = ctx.AGENT; }
-#line 703 "agent_parser.cc"
+#line 700 "agent_parser.cc"
     break;
 
   case 8:
@@ -709,7 +706,7 @@ namespace isc { namespace agent {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 713 "agent_parser.cc"
+#line 710 "agent_parser.cc"
     break;
 
   case 9:
@@ -717,7 +714,7 @@ namespace isc { namespace agent {
     {
     // parsing completed
 }
-#line 721 "agent_parser.cc"
+#line 718 "agent_parser.cc"
     break;
 
   case 10:
@@ -726,49 +723,49 @@ namespace isc { namespace agent {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 730 "agent_parser.cc"
+#line 727 "agent_parser.cc"
     break;
 
   case 11:
 #line 142 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 736 "agent_parser.cc"
+#line 733 "agent_parser.cc"
     break;
 
   case 12:
 #line 143 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 742 "agent_parser.cc"
+#line 739 "agent_parser.cc"
     break;
 
   case 13:
 #line 144 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 748 "agent_parser.cc"
+#line 745 "agent_parser.cc"
     break;
 
   case 14:
 #line 145 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 754 "agent_parser.cc"
+#line 751 "agent_parser.cc"
     break;
 
   case 15:
 #line 146 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 760 "agent_parser.cc"
+#line 757 "agent_parser.cc"
     break;
 
   case 16:
 #line 147 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 766 "agent_parser.cc"
+#line 763 "agent_parser.cc"
     break;
 
   case 17:
 #line 148 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 772 "agent_parser.cc"
+#line 769 "agent_parser.cc"
     break;
 
   case 18:
@@ -779,7 +776,7 @@ namespace isc { namespace agent {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 783 "agent_parser.cc"
+#line 780 "agent_parser.cc"
     break;
 
   case 19:
@@ -789,13 +786,13 @@ namespace isc { namespace agent {
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 793 "agent_parser.cc"
+#line 790 "agent_parser.cc"
     break;
 
   case 20:
 #line 163 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 799 "agent_parser.cc"
+#line 796 "agent_parser.cc"
     break;
 
   case 23:
@@ -804,7 +801,7 @@ namespace isc { namespace agent {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 808 "agent_parser.cc"
+#line 805 "agent_parser.cc"
     break;
 
   case 24:
@@ -814,7 +811,7 @@ namespace isc { namespace agent {
                   // comma and string:value
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 818 "agent_parser.cc"
+#line 815 "agent_parser.cc"
     break;
 
   case 25:
@@ -823,14 +820,14 @@ namespace isc { namespace agent {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 827 "agent_parser.cc"
+#line 824 "agent_parser.cc"
     break;
 
   case 26:
 #line 191 "agent_parser.yy"
     {
 }
-#line 834 "agent_parser.cc"
+#line 831 "agent_parser.cc"
     break;
 
   case 29:
@@ -839,7 +836,7 @@ namespace isc { namespace agent {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 843 "agent_parser.cc"
+#line 840 "agent_parser.cc"
     break;
 
   case 30:
@@ -848,7 +845,7 @@ namespace isc { namespace agent {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 852 "agent_parser.cc"
+#line 849 "agent_parser.cc"
     break;
 
   case 31:
@@ -859,7 +856,7 @@ namespace isc { namespace agent {
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 863 "agent_parser.cc"
+#line 860 "agent_parser.cc"
     break;
 
   case 32:
@@ -870,7 +867,7 @@ namespace isc { namespace agent {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 874 "agent_parser.cc"
+#line 871 "agent_parser.cc"
     break;
 
   case 33:
@@ -880,7 +877,7 @@ namespace isc { namespace agent {
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 884 "agent_parser.cc"
+#line 881 "agent_parser.cc"
     break;
 
   case 42:
@@ -896,7 +893,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.AGENT);
 }
-#line 900 "agent_parser.cc"
+#line 897 "agent_parser.cc"
     break;
 
   case 43:
@@ -907,7 +904,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 911 "agent_parser.cc"
+#line 908 "agent_parser.cc"
     break;
 
   case 54:
@@ -915,7 +912,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 919 "agent_parser.cc"
+#line 916 "agent_parser.cc"
     break;
 
   case 55:
@@ -925,7 +922,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("http-host", host);
     ctx.leave();
 }
-#line 929 "agent_parser.cc"
+#line 926 "agent_parser.cc"
     break;
 
   case 56:
@@ -934,7 +931,7 @@ namespace isc { namespace agent {
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-port", prf);
 }
-#line 938 "agent_parser.cc"
+#line 935 "agent_parser.cc"
     break;
 
   case 57:
@@ -942,7 +939,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 946 "agent_parser.cc"
+#line 943 "agent_parser.cc"
     break;
 
   case 58:
@@ -969,7 +966,7 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 973 "agent_parser.cc"
+#line 970 "agent_parser.cc"
     break;
 
   case 59:
@@ -977,7 +974,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 981 "agent_parser.cc"
+#line 978 "agent_parser.cc"
     break;
 
   case 60:
@@ -1006,7 +1003,7 @@ namespace isc { namespace agent {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1010 "agent_parser.cc"
+#line 1007 "agent_parser.cc"
     break;
 
   case 61:
@@ -1017,7 +1014,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1021 "agent_parser.cc"
+#line 1018 "agent_parser.cc"
     break;
 
   case 62:
@@ -1026,7 +1023,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1030 "agent_parser.cc"
+#line 1027 "agent_parser.cc"
     break;
 
   case 67:
@@ -1036,7 +1033,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1040 "agent_parser.cc"
+#line 1037 "agent_parser.cc"
     break;
 
   case 68:
@@ -1044,7 +1041,7 @@ namespace isc { namespace agent {
     {
     ctx.stack_.pop_back();
 }
-#line 1048 "agent_parser.cc"
+#line 1045 "agent_parser.cc"
     break;
 
   case 74:
@@ -1052,7 +1049,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1056 "agent_parser.cc"
+#line 1053 "agent_parser.cc"
     break;
 
   case 75:
@@ -1062,7 +1059,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1066 "agent_parser.cc"
+#line 1063 "agent_parser.cc"
     break;
 
   case 76:
@@ -1070,7 +1067,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1074 "agent_parser.cc"
+#line 1071 "agent_parser.cc"
     break;
 
   case 77:
@@ -1079,7 +1076,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1083 "agent_parser.cc"
+#line 1080 "agent_parser.cc"
     break;
 
   case 78:
@@ -1090,7 +1087,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKETS);
 }
-#line 1094 "agent_parser.cc"
+#line 1091 "agent_parser.cc"
     break;
 
   case 79:
@@ -1099,7 +1096,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1103 "agent_parser.cc"
+#line 1100 "agent_parser.cc"
     break;
 
   case 86:
@@ -1110,7 +1107,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1114 "agent_parser.cc"
+#line 1111 "agent_parser.cc"
     break;
 
   case 87:
@@ -1119,7 +1116,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1123 "agent_parser.cc"
+#line 1120 "agent_parser.cc"
     break;
 
   case 88:
@@ -1130,7 +1127,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1134 "agent_parser.cc"
+#line 1131 "agent_parser.cc"
     break;
 
   case 89:
@@ -1139,7 +1136,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1143 "agent_parser.cc"
+#line 1140 "agent_parser.cc"
     break;
 
   case 90:
@@ -1150,7 +1147,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1154 "agent_parser.cc"
+#line 1151 "agent_parser.cc"
     break;
 
   case 91:
@@ -1159,7 +1156,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1163 "agent_parser.cc"
+#line 1160 "agent_parser.cc"
     break;
 
   case 99:
@@ -1167,7 +1164,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1171 "agent_parser.cc"
+#line 1168 "agent_parser.cc"
     break;
 
   case 100:
@@ -1177,7 +1174,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1181 "agent_parser.cc"
+#line 1178 "agent_parser.cc"
     break;
 
   case 101:
@@ -1185,7 +1182,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.SOCKET_TYPE);
 }
-#line 1189 "agent_parser.cc"
+#line 1186 "agent_parser.cc"
     break;
 
   case 102:
@@ -1194,13 +1191,13 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1198 "agent_parser.cc"
+#line 1195 "agent_parser.cc"
     break;
 
   case 103:
 #line 491 "agent_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
-#line 1204 "agent_parser.cc"
+#line 1201 "agent_parser.cc"
     break;
 
   case 104:
@@ -1208,7 +1205,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1212 "agent_parser.cc"
+#line 1209 "agent_parser.cc"
     break;
 
   case 105:
@@ -1217,7 +1214,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1221 "agent_parser.cc"
+#line 1218 "agent_parser.cc"
     break;
 
   case 106:
@@ -1225,7 +1222,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1229 "agent_parser.cc"
+#line 1226 "agent_parser.cc"
     break;
 
   case 107:
@@ -1234,7 +1231,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1238 "agent_parser.cc"
+#line 1235 "agent_parser.cc"
     break;
 
   case 108:
@@ -1242,7 +1239,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1246 "agent_parser.cc"
+#line 1243 "agent_parser.cc"
     break;
 
   case 109:
@@ -1251,7 +1248,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1255 "agent_parser.cc"
+#line 1252 "agent_parser.cc"
     break;
 
   case 110:
@@ -1262,7 +1259,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 1266 "agent_parser.cc"
+#line 1263 "agent_parser.cc"
     break;
 
   case 111:
@@ -1271,7 +1268,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1275 "agent_parser.cc"
+#line 1272 "agent_parser.cc"
     break;
 
   case 115:
@@ -1282,7 +1279,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1286 "agent_parser.cc"
+#line 1283 "agent_parser.cc"
     break;
 
   case 116:
@@ -1291,7 +1288,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1295 "agent_parser.cc"
+#line 1292 "agent_parser.cc"
     break;
 
   case 119:
@@ -1301,7 +1298,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1305 "agent_parser.cc"
+#line 1302 "agent_parser.cc"
     break;
 
   case 120:
@@ -1309,7 +1306,7 @@ namespace isc { namespace agent {
     {
     ctx.stack_.pop_back();
 }
-#line 1313 "agent_parser.cc"
+#line 1310 "agent_parser.cc"
     break;
 
   case 130:
@@ -1317,7 +1314,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1321 "agent_parser.cc"
+#line 1318 "agent_parser.cc"
     break;
 
   case 131:
@@ -1327,7 +1324,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1331 "agent_parser.cc"
+#line 1328 "agent_parser.cc"
     break;
 
   case 132:
@@ -1336,7 +1333,7 @@ namespace isc { namespace agent {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1340 "agent_parser.cc"
+#line 1337 "agent_parser.cc"
     break;
 
   case 133:
@@ -1344,7 +1341,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1348 "agent_parser.cc"
+#line 1345 "agent_parser.cc"
     break;
 
   case 134:
@@ -1354,7 +1351,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1358 "agent_parser.cc"
+#line 1355 "agent_parser.cc"
     break;
 
   case 135:
@@ -1365,7 +1362,7 @@ namespace isc { namespace agent {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1369 "agent_parser.cc"
+#line 1366 "agent_parser.cc"
     break;
 
   case 136:
@@ -1374,7 +1371,7 @@ namespace isc { namespace agent {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1378 "agent_parser.cc"
+#line 1375 "agent_parser.cc"
     break;
 
   case 139:
@@ -1384,7 +1381,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1388 "agent_parser.cc"
+#line 1385 "agent_parser.cc"
     break;
 
   case 140:
@@ -1392,7 +1389,7 @@ namespace isc { namespace agent {
     {
     ctx.stack_.pop_back();
 }
-#line 1396 "agent_parser.cc"
+#line 1393 "agent_parser.cc"
     break;
 
   case 148:
@@ -1400,7 +1397,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1404 "agent_parser.cc"
+#line 1401 "agent_parser.cc"
     break;
 
   case 149:
@@ -1410,7 +1407,7 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1414 "agent_parser.cc"
+#line 1411 "agent_parser.cc"
     break;
 
   case 150:
@@ -1419,7 +1416,7 @@ namespace isc { namespace agent {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1423 "agent_parser.cc"
+#line 1420 "agent_parser.cc"
     break;
 
   case 151:
@@ -1428,7 +1425,7 @@ namespace isc { namespace agent {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1432 "agent_parser.cc"
+#line 1429 "agent_parser.cc"
     break;
 
   case 152:
@@ -1437,7 +1434,7 @@ namespace isc { namespace agent {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1441 "agent_parser.cc"
+#line 1438 "agent_parser.cc"
     break;
 
   case 153:
@@ -1445,7 +1442,7 @@ namespace isc { namespace agent {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1449 "agent_parser.cc"
+#line 1446 "agent_parser.cc"
     break;
 
   case 154:
@@ -1455,11 +1452,11 @@ namespace isc { namespace agent {
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1459 "agent_parser.cc"
+#line 1456 "agent_parser.cc"
     break;
 
 
-#line 1463 "agent_parser.cc"
+#line 1460 "agent_parser.cc"
 
             default:
               break;
@@ -2048,7 +2045,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2052 "agent_parser.cc"
+#line 2049 "agent_parser.cc"
 
 #line 668 "agent_parser.yy"
 

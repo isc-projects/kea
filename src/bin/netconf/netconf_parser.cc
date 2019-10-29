@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.4.1.
+// A Bison parser, made by GNU Bison 3.4.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -92,9 +92,6 @@
 # endif
 
 
-// Suppress unused-variable warnings by "using" E.
-#define YYUSE(E) ((void) (E))
-
 // Enable debugging if requested.
 #if NETCONF_DEBUG
 
@@ -142,7 +139,7 @@
 
 #line 14 "netconf_parser.yy"
 namespace isc { namespace netconf {
-#line 146 "netconf_parser.cc"
+#line 143 "netconf_parser.cc"
 
 
   /* Return YYSTR after stripping away unnecessary quotes and
@@ -389,43 +386,43 @@ namespace isc { namespace netconf {
       case 46: // "constant string"
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < std::string > (); }
-#line 393 "netconf_parser.cc"
+#line 390 "netconf_parser.cc"
         break;
 
       case 47: // "integer"
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < int64_t > (); }
-#line 399 "netconf_parser.cc"
+#line 396 "netconf_parser.cc"
         break;
 
       case 48: // "floating point"
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < double > (); }
-#line 405 "netconf_parser.cc"
+#line 402 "netconf_parser.cc"
         break;
 
       case 49: // "boolean"
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < bool > (); }
-#line 411 "netconf_parser.cc"
+#line 408 "netconf_parser.cc"
         break;
 
       case 58: // value
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 417 "netconf_parser.cc"
+#line 414 "netconf_parser.cc"
         break;
 
       case 61: // map_value
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 423 "netconf_parser.cc"
+#line 420 "netconf_parser.cc"
         break;
 
       case 120: // socket_type_value
 #line 108 "netconf_parser.yy"
         { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 429 "netconf_parser.cc"
+#line 426 "netconf_parser.cc"
         break;
 
       default:
@@ -687,19 +684,19 @@ namespace isc { namespace netconf {
   case 2:
 #line 119 "netconf_parser.yy"
     { ctx.ctx_ = ctx.NO_KEYWORDS; }
-#line 691 "netconf_parser.cc"
+#line 688 "netconf_parser.cc"
     break;
 
   case 4:
 #line 120 "netconf_parser.yy"
     { ctx.ctx_ = ctx.CONFIG; }
-#line 697 "netconf_parser.cc"
+#line 694 "netconf_parser.cc"
     break;
 
   case 6:
 #line 121 "netconf_parser.yy"
     { ctx.ctx_ = ctx.NETCONF; }
-#line 703 "netconf_parser.cc"
+#line 700 "netconf_parser.cc"
     break;
 
   case 8:
@@ -709,7 +706,7 @@ namespace isc { namespace netconf {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 713 "netconf_parser.cc"
+#line 710 "netconf_parser.cc"
     break;
 
   case 9:
@@ -717,7 +714,7 @@ namespace isc { namespace netconf {
     {
     // parsing completed
 }
-#line 721 "netconf_parser.cc"
+#line 718 "netconf_parser.cc"
     break;
 
   case 10:
@@ -726,49 +723,49 @@ namespace isc { namespace netconf {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 730 "netconf_parser.cc"
+#line 727 "netconf_parser.cc"
     break;
 
   case 11:
 #line 146 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 736 "netconf_parser.cc"
+#line 733 "netconf_parser.cc"
     break;
 
   case 12:
 #line 147 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 742 "netconf_parser.cc"
+#line 739 "netconf_parser.cc"
     break;
 
   case 13:
 #line 148 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 748 "netconf_parser.cc"
+#line 745 "netconf_parser.cc"
     break;
 
   case 14:
 #line 149 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 754 "netconf_parser.cc"
+#line 751 "netconf_parser.cc"
     break;
 
   case 15:
 #line 150 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 760 "netconf_parser.cc"
+#line 757 "netconf_parser.cc"
     break;
 
   case 16:
 #line 151 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 766 "netconf_parser.cc"
+#line 763 "netconf_parser.cc"
     break;
 
   case 17:
 #line 152 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 772 "netconf_parser.cc"
+#line 769 "netconf_parser.cc"
     break;
 
   case 18:
@@ -779,7 +776,7 @@ namespace isc { namespace netconf {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 783 "netconf_parser.cc"
+#line 780 "netconf_parser.cc"
     break;
 
   case 19:
@@ -789,13 +786,13 @@ namespace isc { namespace netconf {
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 793 "netconf_parser.cc"
+#line 790 "netconf_parser.cc"
     break;
 
   case 20:
 #line 167 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 799 "netconf_parser.cc"
+#line 796 "netconf_parser.cc"
     break;
 
   case 23:
@@ -804,7 +801,7 @@ namespace isc { namespace netconf {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 808 "netconf_parser.cc"
+#line 805 "netconf_parser.cc"
     break;
 
   case 24:
@@ -814,7 +811,7 @@ namespace isc { namespace netconf {
                   // comma and string:value
                   ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 818 "netconf_parser.cc"
+#line 815 "netconf_parser.cc"
     break;
 
   case 25:
@@ -823,14 +820,14 @@ namespace isc { namespace netconf {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 827 "netconf_parser.cc"
+#line 824 "netconf_parser.cc"
     break;
 
   case 26:
 #line 195 "netconf_parser.yy"
     {
 }
-#line 834 "netconf_parser.cc"
+#line 831 "netconf_parser.cc"
     break;
 
   case 29:
@@ -839,7 +836,7 @@ namespace isc { namespace netconf {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 843 "netconf_parser.cc"
+#line 840 "netconf_parser.cc"
     break;
 
   case 30:
@@ -848,7 +845,7 @@ namespace isc { namespace netconf {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 852 "netconf_parser.cc"
+#line 849 "netconf_parser.cc"
     break;
 
   case 31:
@@ -859,7 +856,7 @@ namespace isc { namespace netconf {
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 863 "netconf_parser.cc"
+#line 860 "netconf_parser.cc"
     break;
 
   case 32:
@@ -870,7 +867,7 @@ namespace isc { namespace netconf {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 874 "netconf_parser.cc"
+#line 871 "netconf_parser.cc"
     break;
 
   case 33:
@@ -880,7 +877,7 @@ namespace isc { namespace netconf {
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 884 "netconf_parser.cc"
+#line 881 "netconf_parser.cc"
     break;
 
   case 38:
@@ -896,7 +893,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.NETCONF);
 }
-#line 900 "netconf_parser.cc"
+#line 897 "netconf_parser.cc"
     break;
 
   case 39:
@@ -907,7 +904,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 911 "netconf_parser.cc"
+#line 908 "netconf_parser.cc"
     break;
 
   case 53:
@@ -916,7 +913,7 @@ namespace isc { namespace netconf {
     ElementPtr flag(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("boot-update", flag);
 }
-#line 920 "netconf_parser.cc"
+#line 917 "netconf_parser.cc"
     break;
 
   case 54:
@@ -925,7 +922,7 @@ namespace isc { namespace netconf {
     ElementPtr flag(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subscribe-changes", flag);
 }
-#line 929 "netconf_parser.cc"
+#line 926 "netconf_parser.cc"
     break;
 
   case 55:
@@ -934,7 +931,7 @@ namespace isc { namespace netconf {
     ElementPtr flag(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("validate-changes", flag);
 }
-#line 938 "netconf_parser.cc"
+#line 935 "netconf_parser.cc"
     break;
 
   case 56:
@@ -942,7 +939,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 946 "netconf_parser.cc"
+#line 943 "netconf_parser.cc"
     break;
 
   case 57:
@@ -969,7 +966,7 @@ namespace isc { namespace netconf {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 973 "netconf_parser.cc"
+#line 970 "netconf_parser.cc"
     break;
 
   case 58:
@@ -977,7 +974,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 981 "netconf_parser.cc"
+#line 978 "netconf_parser.cc"
     break;
 
   case 59:
@@ -1006,7 +1003,7 @@ namespace isc { namespace netconf {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1010 "netconf_parser.cc"
+#line 1007 "netconf_parser.cc"
     break;
 
   case 60:
@@ -1017,7 +1014,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1021 "netconf_parser.cc"
+#line 1018 "netconf_parser.cc"
     break;
 
   case 61:
@@ -1026,7 +1023,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1030 "netconf_parser.cc"
+#line 1027 "netconf_parser.cc"
     break;
 
   case 66:
@@ -1036,7 +1033,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1040 "netconf_parser.cc"
+#line 1037 "netconf_parser.cc"
     break;
 
   case 67:
@@ -1044,7 +1041,7 @@ namespace isc { namespace netconf {
     {
     ctx.stack_.pop_back();
 }
-#line 1048 "netconf_parser.cc"
+#line 1045 "netconf_parser.cc"
     break;
 
   case 73:
@@ -1052,7 +1049,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1056 "netconf_parser.cc"
+#line 1053 "netconf_parser.cc"
     break;
 
   case 74:
@@ -1062,7 +1059,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1066 "netconf_parser.cc"
+#line 1063 "netconf_parser.cc"
     break;
 
   case 75:
@@ -1070,7 +1067,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1074 "netconf_parser.cc"
+#line 1071 "netconf_parser.cc"
     break;
 
   case 76:
@@ -1079,7 +1076,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1083 "netconf_parser.cc"
+#line 1080 "netconf_parser.cc"
     break;
 
   case 77:
@@ -1090,7 +1087,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.MANAGED_SERVERS);
 }
-#line 1094 "netconf_parser.cc"
+#line 1091 "netconf_parser.cc"
     break;
 
   case 78:
@@ -1099,7 +1096,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1103 "netconf_parser.cc"
+#line 1100 "netconf_parser.cc"
     break;
 
   case 88:
@@ -1110,7 +1107,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1114 "netconf_parser.cc"
+#line 1111 "netconf_parser.cc"
     break;
 
   case 89:
@@ -1119,7 +1116,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1123 "netconf_parser.cc"
+#line 1120 "netconf_parser.cc"
     break;
 
   case 90:
@@ -1130,7 +1127,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1134 "netconf_parser.cc"
+#line 1131 "netconf_parser.cc"
     break;
 
   case 91:
@@ -1139,7 +1136,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1143 "netconf_parser.cc"
+#line 1140 "netconf_parser.cc"
     break;
 
   case 92:
@@ -1150,7 +1147,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1154 "netconf_parser.cc"
+#line 1151 "netconf_parser.cc"
     break;
 
   case 93:
@@ -1159,7 +1156,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1163 "netconf_parser.cc"
+#line 1160 "netconf_parser.cc"
     break;
 
   case 94:
@@ -1170,7 +1167,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1174 "netconf_parser.cc"
+#line 1171 "netconf_parser.cc"
     break;
 
   case 95:
@@ -1179,7 +1176,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1183 "netconf_parser.cc"
+#line 1180 "netconf_parser.cc"
     break;
 
   case 106:
@@ -1187,7 +1184,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1191 "netconf_parser.cc"
+#line 1188 "netconf_parser.cc"
     break;
 
   case 107:
@@ -1197,7 +1194,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("model", model);
     ctx.leave();
 }
-#line 1201 "netconf_parser.cc"
+#line 1198 "netconf_parser.cc"
     break;
 
   case 108:
@@ -1208,7 +1205,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 1212 "netconf_parser.cc"
+#line 1209 "netconf_parser.cc"
     break;
 
   case 109:
@@ -1217,7 +1214,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1221 "netconf_parser.cc"
+#line 1218 "netconf_parser.cc"
     break;
 
   case 118:
@@ -1225,7 +1222,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.SOCKET_TYPE);
 }
-#line 1229 "netconf_parser.cc"
+#line 1226 "netconf_parser.cc"
     break;
 
   case 119:
@@ -1234,25 +1231,25 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1238 "netconf_parser.cc"
+#line 1235 "netconf_parser.cc"
     break;
 
   case 120:
 #line 537 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
-#line 1244 "netconf_parser.cc"
+#line 1241 "netconf_parser.cc"
     break;
 
   case 121:
 #line 538 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("http", ctx.loc2pos(yystack_[0].location))); }
-#line 1250 "netconf_parser.cc"
+#line 1247 "netconf_parser.cc"
     break;
 
   case 122:
 #line 539 "netconf_parser.yy"
     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("stdout", ctx.loc2pos(yystack_[0].location))); }
-#line 1256 "netconf_parser.cc"
+#line 1253 "netconf_parser.cc"
     break;
 
   case 123:
@@ -1260,7 +1257,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1264 "netconf_parser.cc"
+#line 1261 "netconf_parser.cc"
     break;
 
   case 124:
@@ -1270,7 +1267,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1274 "netconf_parser.cc"
+#line 1271 "netconf_parser.cc"
     break;
 
   case 125:
@@ -1278,7 +1275,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1282 "netconf_parser.cc"
+#line 1279 "netconf_parser.cc"
     break;
 
   case 126:
@@ -1288,7 +1285,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("socket-url", url);
     ctx.leave();
 }
-#line 1292 "netconf_parser.cc"
+#line 1289 "netconf_parser.cc"
     break;
 
   case 127:
@@ -1299,7 +1296,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 1303 "netconf_parser.cc"
+#line 1300 "netconf_parser.cc"
     break;
 
   case 128:
@@ -1308,7 +1305,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1312 "netconf_parser.cc"
+#line 1309 "netconf_parser.cc"
     break;
 
   case 132:
@@ -1319,7 +1316,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1323 "netconf_parser.cc"
+#line 1320 "netconf_parser.cc"
     break;
 
   case 133:
@@ -1328,7 +1325,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1332 "netconf_parser.cc"
+#line 1329 "netconf_parser.cc"
     break;
 
   case 136:
@@ -1338,7 +1335,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1342 "netconf_parser.cc"
+#line 1339 "netconf_parser.cc"
     break;
 
   case 137:
@@ -1346,7 +1343,7 @@ namespace isc { namespace netconf {
     {
     ctx.stack_.pop_back();
 }
-#line 1350 "netconf_parser.cc"
+#line 1347 "netconf_parser.cc"
     break;
 
   case 147:
@@ -1354,7 +1351,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1358 "netconf_parser.cc"
+#line 1355 "netconf_parser.cc"
     break;
 
   case 148:
@@ -1364,7 +1361,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1368 "netconf_parser.cc"
+#line 1365 "netconf_parser.cc"
     break;
 
   case 149:
@@ -1373,7 +1370,7 @@ namespace isc { namespace netconf {
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1377 "netconf_parser.cc"
+#line 1374 "netconf_parser.cc"
     break;
 
   case 150:
@@ -1381,7 +1378,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1385 "netconf_parser.cc"
+#line 1382 "netconf_parser.cc"
     break;
 
   case 151:
@@ -1391,7 +1388,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1395 "netconf_parser.cc"
+#line 1392 "netconf_parser.cc"
     break;
 
   case 152:
@@ -1402,7 +1399,7 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1406 "netconf_parser.cc"
+#line 1403 "netconf_parser.cc"
     break;
 
   case 153:
@@ -1411,7 +1408,7 @@ namespace isc { namespace netconf {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1415 "netconf_parser.cc"
+#line 1412 "netconf_parser.cc"
     break;
 
   case 156:
@@ -1421,7 +1418,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1425 "netconf_parser.cc"
+#line 1422 "netconf_parser.cc"
     break;
 
   case 157:
@@ -1429,7 +1426,7 @@ namespace isc { namespace netconf {
     {
     ctx.stack_.pop_back();
 }
-#line 1433 "netconf_parser.cc"
+#line 1430 "netconf_parser.cc"
     break;
 
   case 165:
@@ -1437,7 +1434,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1441 "netconf_parser.cc"
+#line 1438 "netconf_parser.cc"
     break;
 
   case 166:
@@ -1447,7 +1444,7 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1451 "netconf_parser.cc"
+#line 1448 "netconf_parser.cc"
     break;
 
   case 167:
@@ -1456,7 +1453,7 @@ namespace isc { namespace netconf {
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1460 "netconf_parser.cc"
+#line 1457 "netconf_parser.cc"
     break;
 
   case 168:
@@ -1465,7 +1462,7 @@ namespace isc { namespace netconf {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1469 "netconf_parser.cc"
+#line 1466 "netconf_parser.cc"
     break;
 
   case 169:
@@ -1474,7 +1471,7 @@ namespace isc { namespace netconf {
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1478 "netconf_parser.cc"
+#line 1475 "netconf_parser.cc"
     break;
 
   case 170:
@@ -1482,7 +1479,7 @@ namespace isc { namespace netconf {
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1486 "netconf_parser.cc"
+#line 1483 "netconf_parser.cc"
     break;
 
   case 171:
@@ -1492,11 +1489,11 @@ namespace isc { namespace netconf {
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1496 "netconf_parser.cc"
+#line 1493 "netconf_parser.cc"
     break;
 
 
-#line 1500 "netconf_parser.cc"
+#line 1497 "netconf_parser.cc"
 
             default:
               break;
@@ -2108,7 +2105,7 @@ namespace isc { namespace netconf {
 
 #line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2112 "netconf_parser.cc"
+#line 2109 "netconf_parser.cc"
 
 #line 711 "netconf_parser.yy"
 
