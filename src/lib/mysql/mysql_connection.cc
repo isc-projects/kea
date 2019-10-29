@@ -27,12 +27,17 @@ bool MySqlHolder::atexit_ = []{atexit([]{mysql_library_end();});return true;};
 
 void
 MySqlHolder::setConnection(MYSQL* connection) {
+    // clear prepared statements associated to current connection
     clearPrepared();
+    // clear old database back-end object
     if (mysql_ != NULL) {
         mysql_close(mysql_);
     }
+    // set new database back-end object
     mysql_ = connection;
+    // clear connected flag
     connected_ = false;
+    // clear prepared flag
     prepared_ = false;
 }
 
@@ -52,20 +57,30 @@ MySqlHolder::clearPrepared() {
 
 void
 MySqlHolder::openDatabase(MySqlConnection& connection) {
+    // return if holder has already called openDatabase
     if (connected_) {
         return;
     }
+    // set connected flag
     connected_ = true;
+    // set prepared flag to true so that MySqlConnection::handle() within
+    // openDatabase function does not call prepareStatements before opening
+    // the new connection
     prepared_ = true;
+    // call openDatabase for this holder handle
     connection.openDatabase();
+    // set prepared flag to false so that MySqlConnection::handle() will
+    // call prepareStatements for this holder handle
     prepared_ = false;
 }
 
 void
 MySqlHolder::prepareStatements(MySqlConnection& connection) {
+    // return if holder has already called prepareStatemens
     if (prepared_) {
         return;
     }
+    // clear previous prepared statements
     clearPrepared();
     statements_.resize(connection.text_statements_.size(), NULL);
     uint32_t index = 0;
@@ -84,6 +99,7 @@ MySqlHolder::prepareStatements(MySqlConnection& connection) {
         }
         ++index;
     }
+    // set prepared flag
     prepared_ = true;
 }
 
