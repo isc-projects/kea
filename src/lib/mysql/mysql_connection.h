@@ -642,7 +642,6 @@ public:
     /// and from MySqlHostDataSource.
     MySqlHolder& handle() const {
         auto result = handles_.resource();
-        // thread_local std::shared_ptr<MySqlHolder> result(std::make_shared<MySqlHolder>());
         if (connected_) {
             result->openDatabase(*(const_cast<MySqlConnection*>(this)));
         }
