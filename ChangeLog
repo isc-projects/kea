@@ -1,3 +1,15 @@
+1682.	[bug]*		tmark
+	Added logic to core code and HA hook lib to allow HA peers
+	to detect and handle out of bandwidth socket events.  This
+	corrects a defect introduced in Kea 1.6.0 that can cause
+	an HA server to become unresponsive when an HA socket has
+	been closed by a peer.  Note that there is a change to the
+	signature of the external socket callback handler invoked
+	by IfaceMgr.  Custome hook libraries happen register external
+	sockets with IfaceMgr will require modification and
+	recompilation.
+	(Gitlab #964)
+
 Kea 1.7.1 released on Oct 30, 2019
 
 1681.	[func]		fdupont

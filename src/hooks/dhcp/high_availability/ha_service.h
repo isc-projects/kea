@@ -747,9 +747,9 @@ protected:
     /// The handler calls @ref HttpClient::closeIfOutOfBandwidth() to catch
     /// and close any sockets that have gone ready outside of transactions.
     ///
-    /// We do this in case the other peer closed the socket (e.g. idle timeout
-    /// for example), as this will cause the socket /appear ready to read to
-    /// the IfaceMgr::select(). If this happens while no transcations are
+    /// We do this in case the other peer closed the socket (e.g. idle timeout),
+    /// as this will cause the socket to appear ready to read to the
+    /// IfaceMgr::select(). If this happens while no transcations are
     /// in progess, we won't have anything to deal with the socket event.
     /// This causes IfaceMgr::select() to endlessly interrupt on the socket.
     ///
