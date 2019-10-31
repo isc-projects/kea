@@ -287,10 +287,10 @@ public:
             EXPECT_EQ(expected, result->str());
 
             // No good way to check the rescheduling...
-            ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 15));
+            ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 20));
 
             if (config_wait_fetch_time > 0) {
-                EXPECT_GE(cb_control->getDatabaseConfigFetchCalls(), 12);
+                EXPECT_GE(cb_control->getDatabaseConfigFetchCalls(), 5);
             } else {
                 EXPECT_EQ(cb_control->getDatabaseConfigFetchCalls(), 2);
             }
@@ -893,19 +893,19 @@ TEST_F(JSONFileBackendTest, configBackendTimerWithThrow) {
 
 // This test verifies that the server will be updated by the
 // config-backend-pull command.
-TEST_F(JSONFileBackendTest, configBackendCommand) {
+TEST_F(JSONFileBackendTest, configBackendPullCommand) {
     testConfigBackendTimer(0, false, true);
 }
 
 // This test verifies that the server will be updated by the
 // config-backend-pull command even when updates fail.
-TEST_F(JSONFileBackendTest, configBackendCommandWithThrow) {
+TEST_F(JSONFileBackendTest, configBackendPullCommandWithThrow) {
     testConfigBackendTimer(0, true, true);
 }
 
 // This test verifies that the server will be updated by the
 // config-backend-pull command and the timer rescheduled.
-TEST_F(JSONFileBackendTest, configBackendCommandWithTimer) {
+TEST_F(JSONFileBackendTest, configBackendPullCommandWithTimer) {
     testConfigBackendTimer(1, false, true);
 }
 
