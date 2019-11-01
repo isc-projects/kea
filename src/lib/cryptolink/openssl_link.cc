@@ -14,6 +14,11 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define OPENSSL_VERSION SSLEAY_VERSION
+#define OpenSSL_version SSLeay_version
+#endif
+
 namespace isc {
 namespace cryptolink {
 
@@ -79,7 +84,7 @@ CryptoLink::initialize() {
 
 std::string
 CryptoLink::getVersion() {
-    return (SSLeay_version(SSLEAY_VERSION));
+    return (OpenSSL_version(OPENSSL_VERSION);
 }
 
 } // namespace cryptolink
