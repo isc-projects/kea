@@ -969,13 +969,6 @@ Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
     return (collection);
 }
 
-void
-Memfile_LeaseMgr::getLeases4Internal(Lease4Collection& collection) const {
-   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
-       collection.push_back(Lease4Ptr(new Lease4(**lease)));
-   }
-}
-
 Lease4Collection
 Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_HOSTNAME4)
@@ -992,6 +985,29 @@ Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
     }
 
     return (collection);
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_HOSTNAME4)
+        .arg(hostname);
+
+    Lease4Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases4Internal(hostname, collection);
+    } else {
+        getLeases4Internal(hostname, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases4Internal(Lease4Collection& collection) const {
+   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
+       collection.push_back(Lease4Ptr(new Lease4(**lease)));
+   }
 }
 
 Lease4Collection
@@ -1189,13 +1205,6 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
     return (collection);
 }
 
-void
-Memfile_LeaseMgr::getLeases6Internal(Lease6Collection& collection) const {
-   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
-       collection.push_back(Lease6Ptr(new Lease6(**lease)));
-   }
-}
-
 Lease6Collection
 Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_HOSTNAME6)
@@ -1212,6 +1221,29 @@ Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
     }
 
     return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_HOSTNAME6)
+        .arg(hostname);
+
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6Internal(hostname, collection);
+    } else {
+        getLeases6Internal(hostname, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases6Internal(Lease6Collection& collection) const {
+   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
+       collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   }
 }
 
 Lease6Collection

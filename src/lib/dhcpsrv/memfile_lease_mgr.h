@@ -518,6 +518,13 @@ private:
     void getLeases4Internal(SubnetID subnet_id,
                             Lease4Collection& collection) const;
 
+    /// @brief Returns all IPv4 leases for the particular hostname.
+    ///
+    /// @param hostname hostname in lower case.
+    /// @param collection lease collection
+    void getLeases4Internal(const std::string& hostname,
+                            Lease4Collection& collection) const;
+
     /// @brief Gets all IPv4 leases.
     ///
     /// @param collection lease collection
@@ -572,6 +579,13 @@ private:
     /// @param collection lease collection
     void getLeases6Internal(SubnetID subnet_id,
                             Lease6Collection& collection) const;
+
+    /// @brief Returns all IPv6 leases for the particular hostname.
+    ///
+    /// @param hostname hostname in lower case.
+    /// @param collection lease collection
+    void  getLeases6Internal(const std::string& hostname,
+                             Lease6Collection& collection) const;
 
     /// @brief Returns all IPv6 leases.
     ///
