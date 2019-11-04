@@ -24,7 +24,7 @@ Kea 1.7.1 released on Oct 30, 2019
 	(Gitlab #869)
 
 1677.	[doc]		wlodek
-	Sample configs now all use the same paths for contol sockets.
+	Sample configs now all use the same paths for control sockets.
 	(Gitlab #795)
 
 1676.	[func]		fdupont
@@ -50,7 +50,7 @@ Kea 1.7.1 released on Oct 30, 2019
 	Fixed a bug introduced in Kea 1.6.0 (see #539) that caused
 	kea-dhcp4 and kea-dhcp6 to discard inbound packets containing
 	string options that consist solely of nulls.  The servers
-	will now quiely omit empty or all-null string options from
+	will now quietly omit empty or all-null string options from
 	inbound packets.
 	(Gitlab #900,!561, git c75a7c10bde74f59d481a7717b4e03b9cb2268a6)
 
@@ -72,7 +72,7 @@ Kea 1.7.1 released on Oct 30, 2019
 
 1669.	[func]		tmark
 	Rather than within the 'dhcp-ddns' section, DDNS behavioral
-	parameters may now be specifed at global, shared-network,
+	parameters may now be specified at global, shared-network,
 	and subnet scopes.  Implemented for both kea-dhcp4 and
 	kea-dhcp6.  Not yet supported by Config Backend or Netconf.
 	(Gitlab #35,!517, git 49ce6286f5d00f99c1c890f12cbc0fd633c9dbf6)
@@ -82,8 +82,8 @@ Kea 1.7.1 released on Oct 30, 2019
 	(Gitlab #907,!519, git 1b27dc52aae23753643461086f0950b125bf9c93)
 
 1667.	[build]		fdupont
-	The availability of C++11 thead, mutex, condition variable and
-	atomic librairies is now checked by ./configure.
+	The availability of C++11 thread, mutex, condition variable and
+	atomic libraries is now checked by ./configure.
 	(Gitlab #918,!520, git baf4097520c1cd38366ee4f33a95dde040906e9e)
 
 1666.	[doc]		tmark
