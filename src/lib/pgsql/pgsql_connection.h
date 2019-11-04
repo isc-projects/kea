@@ -7,7 +7,7 @@
 #define PGSQL_CONNECTION_H
 
 #include <database/database_connection.h>
-#include <dhcpsrv/thread_resource_mgr.h>
+#include <util/thread_resource.h>
 
 #include <libpq-fe.h>
 #include <boost/scoped_ptr.hpp>
@@ -442,7 +442,7 @@ private:
 
     bool prepared_;      ///< Flag to indicate prepareStatements has been called
 
-    mutable isc::dhcp::ThreadResourceMgr<PgSqlHolder> handles_;
+    mutable isc::dhcp::ThreadResource<PgSqlHolder> handles_;
 };
 
 }  // namespace db
