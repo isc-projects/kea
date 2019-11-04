@@ -28,6 +28,7 @@ libkea_util_la_SOURCES += state_model.cc state_model.h
 libkea_util_la_SOURCES += stopwatch.cc stopwatch.h
 libkea_util_la_SOURCES += stopwatch_impl.cc stopwatch_impl.h
 libkea_util_la_SOURCES += strutil.h strutil.cc
+libkea_util_la_SOURCES += thread_resource.h
 libkea_util_la_SOURCES += time_utilities.h time_utilities.cc
 libkea_util_la_SOURCES += versioned_csv_file.h versioned_csv_file.cc
 libkea_util_la_SOURCES += watch_socket.cc watch_socket.h
