@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <dhcpsrv/thread_resource_mgr.h>
+#include <util/thread_resource.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -121,15 +121,15 @@ std::mutex Resource<T>::mutex_;
 template <typename T>
 std::set<T*> Resource<T>::set_;
 
-/// @brief Test Fixture for testing isc::dhcp::ThreadResourceMgr
-class ThreadResourceMgrTest : public ::testing::Test {
+/// @brief Test Fixture for testing isc::dhcp::ThreadResource
+class ThreadResourceTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    ThreadResourceMgrTest() : wait_thread_(false), wait_(false) {
+    ThreadResourceTest() : wait_thread_(false), wait_(false) {
     }
 
     /// @brief Destructor
-    ~ThreadResourceMgrTest() {
+    ~ThreadResourceTest() {
     }
 
     /// @brief flag which indicates if main thread should wait for the test
@@ -166,13 +166,13 @@ public:
         wait_cv_.notify_all();
     }
 
-    /// @brief reset resource manager for the specific class type and perform
-    /// sanity checks, then reset the wait flag so threads wait for the main
-    /// thread signal to exit
+    /// @brief reset resource for the specific class type and perform sanity
+    /// checks, then reset the wait flag so threads wait for the main thread
+    /// signal to exit
     template <typename T>
     void reset() {
-        // reset the resource manager
-        get<T>() = make_shared<ThreadResourceMgr<Resource<T>>>();
+        // reset the resource
+        get<T>() = make_shared<ThreadResource<Resource<T>>>();
         // perform sanity checks
         sanityCheck<T>();
         // reset the wait flag
@@ -201,13 +201,13 @@ public:
         ASSERT_EQ(Resource<T>::destroyedCount(), expected_destroyed);
     }
 
-    /// @brief get the instance of the resource manager responsible for a
-    /// specific class type
+    /// @brief get the instance of the resource responsible for a specific class
+    /// type
     ///
-    /// @return the resource manager responsible for a specific class type
+    /// @return the resource responsible for a specific class type
     template <typename T>
-    shared_ptr<ThreadResourceMgr<Resource<T>>> &get() {
-        static shared_ptr<ThreadResourceMgr<Resource<T>>> container;
+    shared_ptr<ThreadResource<Resource<T>>> &get() {
+        static shared_ptr<ThreadResource<Resource<T>>> container;
         return container;
     }
 
@@ -293,8 +293,8 @@ private:
 /// It is very important for the threads to run in parallel and not just run and
 /// join the thread as this will cause newer threads to use the old thread id
 /// and receive the same resource.
-/// If destroying threads, the resource manager should also be reset.
-TEST_F(ThreadResourceMgrTest, testThreadResources) {
+/// If destroying threads, the resource should also be reset.
+TEST_F(ThreadResourceTest, testThreadResources) {
     std::list<shared_ptr<std::thread>> threads;
 
     // reset statistics for uint_32 type
@@ -305,14 +305,14 @@ TEST_F(ThreadResourceMgrTest, testThreadResources) {
     resetWaitThread();
     // call run on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
-        &ThreadResourceMgrTest::run<uint32_t>, this, 2, 2, 0, true)));
+        &ThreadResourceTest::run<uint32_t>, this, 2, 2, 0, true)));
     // wait for the thread to process
     wait();
     // configure wait for test thread
     resetWaitThread();
     // call run again on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
-        &ThreadResourceMgrTest::run<uint32_t>, this, 3, 3, 0, true)));
+        &ThreadResourceTest::run<uint32_t>, this, 3, 3, 0, true)));
     // wait for the thread to process
     wait();
     // signal all threads
@@ -336,14 +336,14 @@ TEST_F(ThreadResourceMgrTest, testThreadResources) {
     resetWaitThread();
     // call run on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
-        &ThreadResourceMgrTest::run<bool>, this, 2, 2, 0, true)));
+        &ThreadResourceTest::run<bool>, this, 2, 2, 0, true)));
     // wait for the thread to process
     wait();
     // configure wait for test thread
     resetWaitThread();
     // call run again on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
-        &ThreadResourceMgrTest::run<bool>, this, 3, 3, 0, true)));
+        &ThreadResourceTest::run<bool>, this, 3, 3, 0, true)));
     // wait for the thread to process
     wait();
     // signal all threads

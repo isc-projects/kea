@@ -16,7 +16,7 @@ namespace isc {
 namespace dhcp {
 
 template <typename Resource>
-class ThreadResourceMgr {
+class ThreadResource {
     typedef std::shared_ptr<Resource> ResourcePtr;
 public:
     /// @brief function to retrieve the specific resource of calling thread
