@@ -2223,7 +2223,12 @@ MySqlLeaseMgr::getLeases4(const string& hostname) const {
 
     // ... and get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_HOSTNAME, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_HOSTNAME, inbind, result);
 
     return (result);
 }
@@ -2520,7 +2525,12 @@ MySqlLeaseMgr::getLeases6(const string& hostname) const {
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_HOSTNAME, inbind, result);
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_HOSTNAME, inbind, result);
 
     return (result);
 }
