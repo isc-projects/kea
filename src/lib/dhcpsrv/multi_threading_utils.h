@@ -16,11 +16,11 @@ namespace dhcp {
 /// When called from a thread of the pool it can deadlock.
 
 /// @brief Function stopping and joining all threads of the pool.
-/// #throw isc::NotImplemented until is implemented.
+/// @throw isc::NotImplemented until is implemented.
 void stop_pkt_processing();
 
 /// @brief Function (re)starting threads of the pool.
-/// #throw isc::NotImplemented until is implemented.
+/// @throw isc::NotImplemented until is implemented.
 void start_pkt_processing();
 
 /// @brief RAII class creating a critical section.
