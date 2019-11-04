@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef THREAD_RESOURCE_MGR_H
-#define THREAD_RESOURCE_MGR_H
+#ifndef THREAD_RESOURCE_H
+#define THREAD_RESOURCE_H
 
 #include <boost/shared_ptr.hpp>
 #include <mutex>
@@ -46,4 +46,4 @@ private:
 }  // namespace dhcp
 }  // namespace isc
 
-#endif  // THREAD_RESOURCE_MGR_H
+#endif  // THREAD_RESOURCE_H
