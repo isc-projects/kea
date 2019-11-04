@@ -916,12 +916,9 @@ private:
         const MySqlLeaseMgr& mgr_;
     };
 
-    // Members
-
-    /// @brief The context
-    MySqlLeaseContextPtr ctx_;
-
 private:
+
+    // Members
 
     /// @brief The parameters
     db::DatabaseConnection::ParameterMap parameters_;
