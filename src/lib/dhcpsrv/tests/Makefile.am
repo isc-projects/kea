@@ -124,7 +124,6 @@ libdhcpsrv_unittests_SOURCES += shared_networks_list_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
-libdhcpsrv_unittests_SOURCES += thread_resource_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
 libdhcpsrv_unittests_SOURCES += thread_pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_utils.cc test_utils.h
