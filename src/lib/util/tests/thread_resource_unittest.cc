@@ -155,7 +155,6 @@ public:
         cv_.wait(lck, [&]{ return (waitThread() == false); });
     }
 
-
     /// @brief function used by main thread to unblock processing threads
     void signalThreads() {
         lock_guard<mutex> lk(wait_mutex_);
