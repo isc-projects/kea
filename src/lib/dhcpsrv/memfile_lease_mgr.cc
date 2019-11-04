@@ -658,7 +658,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     // doing testing, but it should not be done in normal server
     // operation.
     if (!persistLeases(V4) && !persistLeases(V6)) {
-       LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
     } else  {
         if (conversion_needed) {
             LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
@@ -971,7 +971,7 @@ Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
 
 void
 Memfile_LeaseMgr::getLeases4Internal(const std::string& hostname,
-				     Lease4Collection& collection) const {
+                                     Lease4Collection& collection) const {
     const Lease4StorageHostnameIndex& idx = storage4_.get<HostnameIndexTag>();
     std::pair<Lease4StorageHostnameIndex::const_iterator,
               Lease4StorageHostnameIndex::const_iterator> l =
@@ -1202,7 +1202,7 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
 
 void
 Memfile_LeaseMgr::getLeases6Internal(const std::string& hostname,
-				     Lease6Collection& collection) const {
+                                     Lease6Collection& collection) const {
     const Lease6StorageHostnameIndex& idx = storage6_.get<HostnameIndexTag>();
     std::pair<Lease6StorageHostnameIndex::const_iterator,
               Lease6StorageHostnameIndex::const_iterator> l =
