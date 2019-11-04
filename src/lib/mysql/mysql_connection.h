@@ -10,10 +10,10 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
-#include <dhcpsrv/thread_resource_mgr.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_constants.h>
+#include <util/thread_resource.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
@@ -656,7 +656,7 @@ private:
 
     bool prepared_;      ///< Flag to indicate prepareStatements has been called
 
-    mutable isc::dhcp::ThreadResourceMgr<MySqlHolder> handles_;
+    mutable isc::dhcp::ThreadResource<MySqlHolder> handles_;
 };
 
 }  // namespace db
