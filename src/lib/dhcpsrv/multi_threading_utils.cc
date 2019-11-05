@@ -29,15 +29,14 @@ MultiThreadingCriticalSection::startPktProcessing() {
               "is not yet implemented");
 }
 
-MultiThreadingCriticalSection::MultiThreadingCriticalSection()
-    : enabled_(MultiThreadingMgr::instance().getMode()) {
-    if (enabled_) {
+MultiThreadingCriticalSection::MultiThreadingCriticalSection() {
+    if (MultiThreadingMgr::instance().getMode()) {
         stopPktProcessing();
     }
 }
 
 MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
-    if (enabled_) {
+    if (MultiThreadingMgr::instance().getMode()) {
         startPktProcessing();
     }
 }

@@ -12,7 +12,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @note: everything here MUST be used only from the main thread.
+/// @note: everything here MUST be used ONLY from the main thread.
 /// When called from a thread of the pool it can deadlock.
 
 /// @brief Function stopping and joining all threads of the pool.
@@ -24,6 +24,9 @@ void stopPktProcessing();
 void startPktProcessing();
 
 /// @brief RAII class creating a critical section.
+///
+/// @note: the multi-threading mode MUST NOT be changed in the RAII
+/// @c MultiThreadingCriticalSection body.
 class MultiThreadingCriticalSection : public boost::noncopyable {
 public:
     /// @brief Constructor.
@@ -41,10 +44,6 @@ public:
     /// @brief Class method (re)starting threads of the pool.
     /// @throw isc::NotImplemented until is implemented.
     static void startPktProcessing();
-
-private:
-    /// @brief Local copy of the multi-threading mode.
-    bool enabled_;
 };
 
 }
