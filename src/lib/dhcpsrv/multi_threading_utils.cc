@@ -16,29 +16,29 @@ namespace isc {
 namespace dhcp {
 
 void
-MultiThreadingCriticalSection::stop_pkt_processing() {
+MultiThreadingCriticalSection::stopPktProcessing() {
     isc_throw(NotImplemented,
-              "MultiThreadingCriticalSection::stop_pkt_processing "
+              "MultiThreadingCriticalSection::stopPktProcessing "
               "is not yet implemented");
 }
 
 void
-MultiThreadingCriticalSection::start_pkt_processing() {
+MultiThreadingCriticalSection::startPktProcessing() {
     isc_throw(NotImplemented,
-              "MultiThreadingCriticalSection::start_pkt_processing "
+              "MultiThreadingCriticalSection::startPktProcessing "
               "is not yet implemented");
 }
 
 MultiThreadingCriticalSection::MultiThreadingCriticalSection()
     : enabled_(MultiThreadingMgr::instance().getMode()) {
     if (enabled_) {
-        stop_pkt_processing();
+        stopPktProcessing();
     }
 }
 
 MultiThreadingCriticalSection::~MultiThreadingCriticalSection() {
     if (enabled_) {
-        start_pkt_processing();
+        startPktProcessing();
     }
 }
 

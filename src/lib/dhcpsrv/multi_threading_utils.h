@@ -17,11 +17,11 @@ namespace dhcp {
 
 /// @brief Function stopping and joining all threads of the pool.
 /// @throw isc::NotImplemented until is implemented.
-void stop_pkt_processing();
+void stopPktProcessing();
 
 /// @brief Function (re)starting threads of the pool.
 /// @throw isc::NotImplemented until is implemented.
-void start_pkt_processing();
+void startPktProcessing();
 
 /// @brief RAII class creating a critical section.
 class MultiThreadingCriticalSection : public boost::noncopyable {
@@ -36,11 +36,11 @@ public:
 
     /// @brief Class method stopping and joining all threads of the pool.
     /// @throw isc::NotImplemented until is implemented.
-    static void stop_pkt_processing();
+    static void stopPktProcessing();
 
     /// @brief Class method (re)starting threads of the pool.
     /// @throw isc::NotImplemented until is implemented.
-    static void start_pkt_processing();
+    static void startPktProcessing();
 
 private:
     /// @brief Local copy of the multi-threading mode.
