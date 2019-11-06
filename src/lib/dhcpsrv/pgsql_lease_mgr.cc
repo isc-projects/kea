@@ -1182,7 +1182,7 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 
 bool
 PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
-    std::shared_ptr<PgSqlLease4Exchange> exchange4(
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
         std::make_shared<PgSqlLease4Exchange>());
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -1195,7 +1195,7 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 
 bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
-    std::shared_ptr<PgSqlLease6Exchange> exchange6(
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
         std::make_shared<PgSqlLease6Exchange>());
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
@@ -1235,7 +1235,7 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 void
 PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                                   Lease4Collection& result) const {
-    std::shared_ptr<PgSqlLease4Exchange> exchange4(
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
         std::make_shared<PgSqlLease4Exchange>());
 
     getLeaseCollection(stindex, bind_array, exchange4, result);
@@ -1244,7 +1244,7 @@ PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bin
 void
 PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                                   Lease6Collection& result) const {
-    std::shared_ptr<PgSqlLease6Exchange> exchange6(
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
         std::make_shared<PgSqlLease6Exchange>());
 
     getLeaseCollection(stindex, bind_array, exchange6, result);
@@ -1253,7 +1253,7 @@ PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bin
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                         Lease4Ptr& result) const {
-    std::shared_ptr<PgSqlLease4Exchange> exchange4(
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
         std::make_shared<PgSqlLease4Exchange>());
 
     // Create appropriate collection object and get all leases matching
@@ -1275,7 +1275,7 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                         Lease6Ptr& result) const {
-    std::shared_ptr<PgSqlLease6Exchange> exchange6(
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
         std::make_shared<PgSqlLease6Exchange>());
 
     // Create appropriate collection object and get all leases matching
@@ -1767,7 +1767,7 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
 
 void
 PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
-    std::shared_ptr<PgSqlLease4Exchange> exchange4(
+    thread_local std::shared_ptr<PgSqlLease4Exchange> exchange4(
         std::make_shared<PgSqlLease4Exchange>());
 
     const StatementIndex stindex = UPDATE_LEASE4;
@@ -1789,7 +1789,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
 void
 PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
-    std::shared_ptr<PgSqlLease6Exchange> exchange6(
+    thread_local std::shared_ptr<PgSqlLease6Exchange> exchange6(
         std::make_shared<PgSqlLease6Exchange>());
 
     const StatementIndex stindex = UPDATE_LEASE6;
