@@ -262,15 +262,22 @@ erver multi-threading configuration. The value 0 means not compatible
 and is the default when the function is not implemented. not 0 values
 mean compatible.
 
+If your code implements it and returns the value 0 it is recommended
+to document the reason so someone revisiting the code will not by
+accident change the code.
+
 To be compatible means:
 - the code associated with DHCP packet processing callouts e.g.
-pkt4_receive or pkt6_send must be reentrant so the multi-threaded DHCP service
-can simultaneously calls more than once on of these callouts.
-- commands a library registers must be reentrant
-- when a library implements a backend API (e.g. host data source) the service
-methods must be reentrant
-- (shall be modified later) a library must not modify the internal
-configuration of the server, e.g. create or delete a subnet.
+pkt4_receive or pkt6_send must be thread safe so the multi-threaded
+DHCP service can simultaneously calls more than once on of these callouts.
+- commands a library registers are not required to be thread safe because
+commands are executed by the main thread. Now it is a good idea to make
+them thread safe and to document cases where they are not.
+- when a library implements a thread safe backend API (e.g. host data
+ource) the service methods must be thread safe.
+- a library which modifies the internal configuration of the server,
+e.g. create or delete a subnet, must enter a critical section using
+the @c isc::dhcp::MultiThreadingCriticalSection RAII class.
 
 In the tutoral, we'll put "multi_threading_compatible" in its own file,
 multi_threading_compatible.cc. The contents are:
@@ -284,6 +291,23 @@ int multi_threading_compatible() {
     return (0);
 }
 
+}
+@endcode
+
+and for a command creating a new subnet:
+
+@code
+#include <dhcpsrv/multi_threading_utils.h>
+
+int commandHandler(CalloutHandle& handle) {
+    ...
+    {
+        // Enter the critical section.
+        MultiThreadingCriticalSection ct;
+        <add the subnet>
+        // Leave the critical section.
+    }
+    ...
 }
 @endcode
 
