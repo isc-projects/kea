@@ -128,9 +128,19 @@ MySqlTransaction::commit() {
     committed_ = true;
 }
 
+MySqlHolder&
+MySqlConnection::handle() const {
+    thread_local std::shared_ptr<MySqlHolder> result(std::make_shared<MySqlHolder>());
+    if (connected_) {
+        result->openDatabase(*(const_cast<MySqlConnection*>(this)));
+    }
+    if (prepared_) {
+        result->prepareStatements(*(const_cast<MySqlConnection*>(this)));
+    }
+    return *result;
+}
 
 // Open the database using the parameters passed to the constructor.
-
 void
 MySqlConnection::openDatabase() {
 
