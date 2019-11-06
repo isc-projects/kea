@@ -456,7 +456,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                 opt = def->optionFactory(Option::V6, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
-            } catch (const SkipThisOptionError& ex)  {
+            } catch (const SkipThisOptionError&)  {
                 opt.reset();
             }
         }
@@ -599,7 +599,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                 opt = def->optionFactory(Option::V4, opt_type,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len);
-            } catch (const SkipThisOptionError& ex)  {
+            } catch (const SkipThisOptionError&)  {
                 opt.reset();
             }
         }

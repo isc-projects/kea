@@ -55,6 +55,15 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown during option unpacking
+/// This exception is thrown when an error has occurred unpacking
+/// an option from a packet and rather than drop the whole packet, we
+/// wish to simply skip over the option (i.e. omit it from the unpacked
+/// results), and resume unpacking with the next option in the buffer.
+/// The intent is to allow us to be liberal with what we receive, and
+/// skip nonsensical options rather than drop the whole packet. This
+/// exception is thrown, for instance, when string options are found to
+/// be empty or to contain only nuls.
 class SkipThisOptionError : public Exception {
 public:
     SkipThisOptionError (const char* file, size_t line, const char* what) :

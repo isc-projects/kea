@@ -54,33 +54,35 @@ namespace test {
     } \
 } \
 
-/// @brief Adds a non-fatal failure with exception info, if the given 
-/// expression throws
-/// 
+/// @brief Adds a non-fatal failure with exception info, if the given
+/// expression throws.  Note the type name emitted may be mangled.
+///
 /// @param statement - statement block to execute
 #define EXPECT_NO_THROW_LOG(statement) \
 { \
     try { \
         statement; \
     } catch (const std::exception& ex)  { \
-        ADD_FAILURE() << #statement <<  "threw: " << ex.what(); \
+        ADD_FAILURE() << #statement <<  " threw type: " << typeid(ex).name() \
+                      << ", what: " << ex.what(); \
     } catch (...) { \
         ADD_FAILURE() << #statement <<  "threw non-std::exception"; \
     } \
 } \
 
-/// @brief Generates a fatal failure with exception info, if the given 
-/// expression throws
-/// 
+/// @brief Generates a fatal failure with exception info, if the given
+/// expression throws.  Note the type name emitted may be mangled.
+///
 /// @param statement - statement block to execute
 #define ASSERT_NO_THROW_LOG(statement) \
 { \
     try { \
         statement; \
     } catch (const std::exception& ex)  { \
-        GTEST_FAIL() << #statement <<  "threw: " << ex.what(); \
+        GTEST_FAIL() << #statement <<  " threw type: " << typeid(ex).name() \
+                     << ", what: " << ex.what(); \
     } catch (...) { \
-        GTEST_FAIL() << #statement <<  "threw non-std::exception"; \
+        GTEST_FAIL() << #statement <<  " threw non-std::exception"; \
     } \
 } \
 

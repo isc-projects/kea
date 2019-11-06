@@ -51,13 +51,13 @@ OptionString::setValue(const std::string& value) {
                   << getType() << "' must not be empty");
     }
 
-    // Trim off any trailing NULLs.
+    // Trim off any trailing nuls.
     auto begin = value.begin();
     auto end = util::str::seekTrimmed(begin, value.end(), 0x0);
 
     if (std::distance(begin, end) == 0) {
         isc_throw(isc::OutOfRange, "string value carried by the option '"
-                  << getType() << "' contained only NULLs");
+                  << getType() << "' contained only nuls");
     }
 
     // Now set the value.
@@ -85,12 +85,12 @@ OptionString::pack(isc::util::OutputBuffer& buf) const {
 void
 OptionString::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
-    // Trim off trailing null(s)
+    // Trim off trailing nul(s)
     end = util::str::seekTrimmed(begin, end, 0x0);
     if (std::distance(begin, end) == 0) {
         isc_throw(isc::dhcp::SkipThisOptionError, "failed to parse an option '"
                   << getType() << "' holding string value"
-                  << "' was empty or contained only NULLs");
+                  << "' was empty or contained only nuls");
     }
 
     // Now set the data.

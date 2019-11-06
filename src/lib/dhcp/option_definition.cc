@@ -264,12 +264,12 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             ;
         }
         return (OptionPtr(new OptionCustom(*this, u, begin, end)));
-    } catch (const SkipThisOptionError& ex) {
+    } catch (const SkipThisOptionError&) {
         // We need to throw this one as is.
-        throw ex;
-    } catch (const SkipRemainingOptionsError& ex) {
+        throw;
+    } catch (const SkipRemainingOptionsError&) {
         // We need to throw this one as is.
-        throw ex;
+        throw;
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
     }
