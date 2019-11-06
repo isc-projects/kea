@@ -188,6 +188,18 @@ PgSqlTransaction::commit() {
     committed_ = true;
 }
 
+PgSqlHolder&
+PgSqlConnection::handle() const {
+    thread_local std::shared_ptr<PgSqlHolder> result(std::make_shared<PgSqlHolder>());
+    if (connected_) {
+        result->openDatabase(*(const_cast<PgSqlConnection*>(this)));
+    }
+    if (prepared_) {
+        result->prepareStatements(*(const_cast<PgSqlConnection*>(this)));
+    }
+    return *result;
+}
+
 PgSqlConnection::~PgSqlConnection() {
     statements_.clear();
     handle().clear();
