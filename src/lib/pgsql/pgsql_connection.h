@@ -426,23 +426,11 @@ public:
     ///
     /// This field is public, because it is used heavily from PgSqlLeaseMgr
     /// and from PgSqlHostDataSource.
-    PgSqlHolder& handle() const {
-        auto result = handles_.resource();
-        if (connected_) {
-            result->openDatabase(*(const_cast<PgSqlConnection*>(this)));
-        }
-        if (prepared_) {
-            result->prepareStatements(*(const_cast<PgSqlConnection*>(this)));
-        }
-        return *result;
-    }
-
+    PgSqlHolder& handle() const;
 private:
     bool connected_;     ///< Flag to indicate openDatabase has been called
 
     bool prepared_;      ///< Flag to indicate prepareStatements has been called
-
-    mutable isc::dhcp::ThreadResource<PgSqlHolder> handles_;
 };
 
 }  // namespace db
