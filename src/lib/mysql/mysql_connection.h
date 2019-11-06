@@ -640,23 +640,11 @@ public:
     ///
     /// This field is public, because it is used heavily from MySqlConnection
     /// and from MySqlHostDataSource.
-    MySqlHolder& handle() const {
-        auto result = handles_.resource();
-        if (connected_) {
-            result->openDatabase(*(const_cast<MySqlConnection*>(this)));
-        }
-        if (prepared_) {
-            result->prepareStatements(*(const_cast<MySqlConnection*>(this)));
-        }
-        return *result;
-    }
-
+    MySqlHolder& handle() const;
 private:
     bool connected_;     ///< Flag to indicate openDatabase has been called
 
     bool prepared_;      ///< Flag to indicate prepareStatements has been called
-
-    mutable isc::dhcp::ThreadResource<MySqlHolder> handles_;
 };
 
 }  // namespace db
