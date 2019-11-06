@@ -13,12 +13,14 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/tests/pkt_captures.h>
+#include <testutils/gtest_utils.h>
 #include <util/range_utilities.h>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -1581,7 +1583,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
 // (Relay Supplied Options option). This test checks whether it was parsed
 // properly. See captureRelayed2xRSOO() description for details.
 TEST_F(Pkt6Test, rsoo) {
-    Pkt6Ptr msg = test::PktCaptures::captureRelayed2xRSOO();
+    Pkt6Ptr msg = dhcp::test::PktCaptures::captureRelayed2xRSOO();
 
     EXPECT_NO_THROW(msg->unpack());
 
@@ -1728,7 +1730,7 @@ TEST_F(Pkt6Test, getLabelEmptyClientId) {
 TEST_F(Pkt6Test, truncatedVendorLength) {
 
     // Build a good Solicit packet
-    Pkt6Ptr pkt = test::PktCaptures::captureSolicitWithVIVSO();
+    Pkt6Ptr pkt = dhcp::test::PktCaptures::captureSolicitWithVIVSO();
 
     // Unpacking should not throw
     ASSERT_NO_THROW(pkt->unpack());
@@ -1743,7 +1745,7 @@ TEST_F(Pkt6Test, truncatedVendorLength) {
     EXPECT_EQ(8, vivso->len()); // data + opt code + len
 
     // Build a bad Solicit packet
-    pkt = test::PktCaptures::captureSolicitWithTruncatedVIVSO();
+    pkt = dhcp::test::PktCaptures::captureSolicitWithTruncatedVIVSO();
 
     // Unpack should throw Skip exception
     ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
@@ -1752,6 +1754,62 @@ TEST_F(Pkt6Test, truncatedVendorLength) {
     // VIVSO option should not be there
     x = pkt->getOption(D6O_VENDOR_OPTS);
     ASSERT_FALSE(x);
+}
+
+// Checks that unpacking correctly handles SkipThisOptionError by
+// omitting the offending option from the unpacked options.
+TEST_F(Pkt6Test, testSkipThisOptionError) {
+    // Get a packet. We're really interested in its on-wire
+    // representation only.
+    Pkt6Ptr donor(capture1());
+
+    // That's our original content. It should be sane.
+    OptionBuffer orig = donor->data_;
+
+    orig.push_back(0);
+    orig.push_back(41);   // new-posix-timezone
+    orig.push_back(0);
+    orig.push_back(3);    // length=3
+    orig.push_back(0x61); // data="abc"
+    orig.push_back(0x62);
+    orig.push_back(0x63);
+
+    orig.push_back(0);
+    orig.push_back(59);   // bootfile-url
+    orig.push_back(0);
+    orig.push_back(3);    // length=3
+    orig.push_back(0);    // data= all nulls
+    orig.push_back(0);
+    orig.push_back(0);
+
+    orig.push_back(0);
+    orig.push_back(42);   // new-tzdb-timezone
+    orig.push_back(0);
+    orig.push_back(3);    // length=3
+    orig.push_back(0x64); // data="def"
+    orig.push_back(0x65);
+    orig.push_back(0x66);
+
+    // Unpacking should not throw.
+    Pkt6Ptr pkt(new Pkt6(&orig[0], orig.size()));
+    ASSERT_NO_THROW_LOG(pkt->unpack());
+
+    // We should have option 41 = "abc".
+    OptionPtr opt;
+    OptionStringPtr opstr;
+    ASSERT_TRUE(opt = pkt->getOption(41));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ("abc", opstr->getValue());
+
+    // We should not have option 59.
+    EXPECT_FALSE(opt = pkt->getOption(59));
+
+    // We should have option 42 = "def".
+    ASSERT_TRUE(opt = pkt->getOption(42));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ("def", opstr->getValue());
 }
 
 }

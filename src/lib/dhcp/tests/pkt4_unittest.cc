@@ -16,6 +16,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
+#include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
 #include <pkt_captures.h>
@@ -1180,7 +1181,7 @@ TEST_F(Pkt4Test, getType) {
 TEST_F(Pkt4Test, truncatedVendorLength) {
 
     // Build a good discover packet
-    Pkt4Ptr pkt = test::PktCaptures::discoverWithValidVIVSO();
+    Pkt4Ptr pkt = dhcp::test::PktCaptures::discoverWithValidVIVSO();
 
     // Unpacking should not throw
     ASSERT_NO_THROW(pkt->unpack());
@@ -1195,7 +1196,7 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     EXPECT_EQ(133+2, vivso->len()); // data + opt code + len
 
     // Build a bad discover packet
-    pkt = test::PktCaptures::discoverWithTruncatedVIVSO();
+    pkt = dhcp::test::PktCaptures::discoverWithTruncatedVIVSO();
 
     // Unpack should throw Skip exception
     ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
@@ -1297,6 +1298,60 @@ TEST_F(Pkt4Test, nullTerminatedOptions) {
 
     // Make sure the packed content is as expected.
     EXPECT_EQ(0, memcmp(&packed[base_size], &packed_opts[0], packed_opts.size()));
+}
+
+// Checks that unpacking correctly handles SkipThisOptionError by
+// omitting the offending option from the unpacked options.
+TEST_F(Pkt4Test, testSkipThisOptionError) {
+    vector<uint8_t> orig = generateTestPacket2();
+
+    orig.push_back(0x63);
+    orig.push_back(0x82);
+    orig.push_back(0x53);
+    orig.push_back(0x63);
+
+    orig.push_back(53);   // Message Type
+    orig.push_back(1);    // length=1
+    orig.push_back(2);    // type=2
+
+    orig.push_back(14);   // merit-dump
+    orig.push_back(3);    // length=3
+    orig.push_back(0x61); // data="abc"
+    orig.push_back(0x62);
+    orig.push_back(0x63);
+
+    orig.push_back(12);   // Hostname
+    orig.push_back(3);    // length=3
+    orig.push_back(0);    // data= all nulls
+    orig.push_back(0);
+    orig.push_back(0);
+
+    orig.push_back(17);   // root-path
+    orig.push_back(3);    // length=3
+    orig.push_back(0x64); // data="def"
+    orig.push_back(0x65);
+    orig.push_back(0x66);
+
+    // Unpacking should not throw.
+    Pkt4Ptr pkt(new Pkt4(&orig[0], orig.size()));
+    ASSERT_NO_THROW_LOG(pkt->unpack());
+
+    // We should have option 14 = "abc".
+    OptionPtr opt;
+    OptionStringPtr opstr;
+    ASSERT_TRUE(opt = pkt->getOption(14));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ("abc", opstr->getValue());
+
+    // We should not have option 12.
+    EXPECT_FALSE(opt = pkt->getOption(12));
+
+    // We should have option 17 = "def".
+    ASSERT_TRUE(opt = pkt->getOption(17));
+    ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
+    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ("def", opstr->getValue());
 }
 
 } // end of anonymous namespace

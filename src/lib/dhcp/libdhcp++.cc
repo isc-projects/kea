@@ -448,16 +448,24 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
                                        buf.begin() + offset,
                                        buf.begin() + offset + opt_len));
         } else {
-            // The option definition has been found. Use it to create
-            // the option instance from the provided buffer chunk.
-            const OptionDefinitionPtr& def = *(range.first);
-            assert(def);
-            opt = def->optionFactory(Option::V6, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len);
+            try {
+                // The option definition has been found. Use it to create
+                // the option instance from the provided buffer chunk.
+                const OptionDefinitionPtr& def = *(range.first);
+                assert(def);
+                opt = def->optionFactory(Option::V6, opt_type,
+                                         buf.begin() + offset,
+                                         buf.begin() + offset + opt_len);
+            } catch (const SkipThisOptionError& ex)  {
+                opt.reset();
+            }
         }
+
         // add option to options
-        options.insert(std::make_pair(opt_type, opt));
+        if (opt) {
+            options.insert(std::make_pair(opt_type, opt));
+        }
+
         offset += opt_len;
     }
 
@@ -583,16 +591,24 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                        buf.begin() + offset + opt_len));
             opt->setEncapsulatedSpace(DHCP4_OPTION_SPACE);
         } else {
-            // The option definition has been found. Use it to create
-            // the option instance from the provided buffer chunk.
-            const OptionDefinitionPtr& def = *(range.first);
-            assert(def);
-            opt = def->optionFactory(Option::V4, opt_type,
-                                     buf.begin() + offset,
-                                     buf.begin() + offset + opt_len);
+            try {
+                // The option definition has been found. Use it to create
+                // the option instance from the provided buffer chunk.
+                const OptionDefinitionPtr& def = *(range.first);
+                assert(def);
+                opt = def->optionFactory(Option::V4, opt_type,
+                                         buf.begin() + offset,
+                                         buf.begin() + offset + opt_len);
+            } catch (const SkipThisOptionError& ex)  {
+                opt.reset();
+            }
         }
 
-        options.insert(std::make_pair(opt_type, opt));
+        // If we have the option, insert it
+        if (opt) {
+            options.insert(std::make_pair(opt_type, opt));
+        }
+
         offset += opt_len;
     }
     last_offset = offset;
