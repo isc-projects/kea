@@ -37,8 +37,7 @@ public:
         Resource::count_++;
         // increase the total number of instances ever created
         Resource::created_count_++;
-        // check that this instance in new and should not be found in the
-        // verification set
+        // check that this instance is not found in the verification set
         EXPECT_TRUE(Resource::set_.find(&data_) == Resource::set_.end());
         // add this instance to the verification set
         Resource::set_.emplace(&data_);
@@ -107,7 +106,7 @@ private:
     /// @brief mutex used to keep the internal state consistent
     static std::mutex mutex_;
 
-    /// @brief set to fold
+    /// @brief set to hold the distinct identification data of each instance
     static std::set<T*> set_;
 };
 
@@ -133,12 +132,27 @@ public:
     ~ThreadResourceTest() {
     }
 
+    /// @brief flag which indicates if main thread should wait for the test
+    /// thread to start
+    ///
+    /// @return the wait flag
+    bool waitThread() {
+        return wait_thread_;
+    }
+
     /// @brief flag which indicates if working thread should wait for main
     /// thread signal
     ///
     /// @return the wait flag
-    bool wait() {
+    bool waitMain() {
         return wait_;
+    }
+
+    /// @brief block main thread until testing thread has processed the task
+    void wait() {
+        unique_lock<mutex> lck(mutex_);
+        // wait for the testing thread to process
+        cv_.wait(lck, [&]{ return (waitThread() == false); });
     }
 
     /// @brief function used by main thread to unblock processing threads
@@ -160,7 +174,13 @@ public:
         get<T>() = make_shared<ThreadResource<Resource<T>>>();
         // perform sanity checks
         sanityCheck<T>();
+        // reset the wait flag
         wait_ = true;
+    }
+
+    /// @brief reset wait thread flag
+    void resetWaitThread() {
+        wait_thread_ = true;
     }
 
     /// @brief check statistics
@@ -217,20 +237,49 @@ public:
         // sequential requests for the same resource
         checkInstances<T>(expected_count, expected_created, expected_destroyed);
 
+        {
+            // make sure this thread has started
+            lock_guard<mutex> lk(mutex_);
+            // reset wait thread flag
+            wait_thread_ = false;
+            // wake main thread if it is waiting for this thread to process
+            cv_.notify_all();
+        }
+
         if (signal) {
             unique_lock<std::mutex> lk(wait_mutex_);
             // if specified, wait for signal from main thread
-            wait_cv_.wait(lk, [&]{ return (wait() == false); });
+            wait_cv_.wait(lk, [&]{ return (waitMain() == false); });
         }
     }
 
 private:
+    /// @brief sanity check that the number of created instances is equal to the
+    /// number of destroyed instances
+    template <typename T>
+    void sanityCheck() {
+        // the number of created instances should match the number of destroyed
+        // instances
+        ASSERT_EQ(Resource<T>::createdCount(), Resource<T>::destroyedCount());
+    }
+
+    /// @brief mutex used to keep the internal state consistent
+    std::mutex mutex_;
+
+    /// @brief condition variable used to signal main thread that test thread
+    /// has started processing
+    condition_variable cv_;
+
     /// @brief mutex used to keep the internal state consistent
     /// related to the control of the main thread over the working threads exit
     std::mutex wait_mutex_;
 
     /// @brief condition variable used to signal working threads to exit
     condition_variable wait_cv_;
+
+    /// @brief flag which indicates if main thread should wait for test thread
+    /// to start
+    bool wait_thread_;
 
     /// @brief flag which indicates if working thread should wait for main
     /// thread signal
@@ -251,6 +300,8 @@ TEST_F(ThreadResourceTest, testThreadResources) {
     reset<uint32_t>();
     // call run function on main thread and verify statistics
     run<uint32_t>(1, 1, 0);
+    // configure wait for test thread
+    resetWaitThread();
     // call run on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
         &ThreadResourceTest::run<uint32_t>, this, 2, 2, 0, true)));
@@ -280,6 +331,8 @@ TEST_F(ThreadResourceTest, testThreadResources) {
     reset<bool>();
     // call run function on main thread and verify statistics
     run<bool>(1, 1, 0);
+    // configure wait for test thread
+    resetWaitThread();
     // call run on a different thread and verify statistics
     threads.push_back(std::make_shared<std::thread>(std::bind(
         &ThreadResourceTest::run<bool>, this, 2, 2, 0, true)));
