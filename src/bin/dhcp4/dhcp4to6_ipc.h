@@ -47,7 +47,7 @@ public:
     ///
     /// The handler processes the DHCPv4-query DHCPv6 packet and
     /// sends the DHCPv4-response DHCPv6 packet back to the DHCPv6 server
-    static void handler();
+    static void handler(int /* fd */);
 };
 
 } // namespace isc

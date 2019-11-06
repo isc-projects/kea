@@ -478,7 +478,8 @@ boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 class IfaceMgr : public boost::noncopyable {
 public:
     /// Defines callback used when data is received over external sockets.
-    typedef boost::function<void ()> SocketCallback;
+    /// @param fd socket descriptor of the ready socket
+    typedef boost::function<void (int fd)> SocketCallback;
 
     /// Keeps callback information for external sockets.
     struct SocketCallbackInfo {

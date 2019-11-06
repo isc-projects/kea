@@ -1632,7 +1632,9 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
         // run by an explicit call IOService ready in kea-dhcp<n> code.
         // We are registerin the socket only to interrupt main-thread
         // select().
-        IfaceMgr::instance().addExternalSocket(tcp_native_fd, 0);
+        IfaceMgr::instance().addExternalSocket(tcp_native_fd,
+            boost::bind(&HAService::socketReadyHandler, this, _1)
+        );
     }
 
     // If ec.value() == boost::asio::error::already_connected, we should already
@@ -1640,6 +1642,15 @@ HAService::clientConnectHandler(const boost::system::error_code& ec, int tcp_nat
     // failed and Connection logic should handle that, not us, so no matter
     // what happens we're returning true.
     return (true);
+}
+
+void
+HAService::socketReadyHandler(int tcp_native_fd) {
+    // If the socket is ready but does not belong to one of our client's
+    // ongoing transactions, we close it.  This will unregister it from
+    // IfaceMgr and ensure the client starts over with a fresh connection
+    // if it needs to do so.
+    client_.closeIfOutOfBandwidth(tcp_native_fd);
 }
 
 void

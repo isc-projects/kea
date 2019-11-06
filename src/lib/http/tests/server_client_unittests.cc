@@ -1402,6 +1402,7 @@ public:
             if (++resp_num > 1) {
                 io_service_.stop();
             }
+
             EXPECT_FALSE(ec);
         },
             HttpClient::RequestTimeout(10000),
@@ -1455,6 +1456,140 @@ public:
         // and an invalid registered fd
         EXPECT_EQ(2, monitor.connect_cnt_);
         EXPECT_EQ(1, monitor.close_cnt_);
+        EXPECT_EQ(-1, monitor.registered_fd_);
+    }
+
+    /// @brief Tests detection and handling out-of-bandwidth socket events
+    ///
+    /// It initiates a transacation and verifies that a mid-transacation call
+    /// to HttpClient::closeIfOutOfBandwidth() has no affect on the connection.
+    /// After succesful completion of the transaction, a second call is made
+    /// HttpClient::closeIfOutOfBandwidth().  This should result in the connection
+    /// being closed.
+    /// This step is repeated to verify that after an OOB closure, transactions
+    /// to the same destination can be processed.
+    ///
+    /// Lastly, we verify that HttpClient::stop() closes the connection correctly.
+    ///
+    /// @param version HTTP version to be used.
+    void testCloseIfOutOfBandwidth(const HttpVersion& version) {
+        // Start the server.
+        ASSERT_NO_THROW(listener_.start());
+
+        // Create a client and specify the URL on which the server can be reached.
+        HttpClient client(io_service_);
+        Url url("http://127.0.0.1:18123");
+
+        // Initiate request to the server.
+        PostHttpRequestJsonPtr request1 = createRequest("sequence", 1, version);
+        HttpResponseJsonPtr response1(new HttpResponseJson());
+        unsigned resp_num = 0;
+        ExternalMonitor monitor;
+
+        ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
+            [this, &client, &resp_num, &monitor](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num == 1) {
+                io_service_.stop();
+            }
+
+            EXPECT_EQ(1, monitor.connect_cnt_);      // We should have 1 connect.
+            EXPECT_EQ(0, monitor.close_cnt_);        // We should have 0 closes
+            ASSERT_GT(monitor.registered_fd_, -1);   // We should have a valid fd.
+            int orig_fd = monitor.registered_fd_;
+
+            // Test our socket for OOBness.
+            client.closeIfOutOfBandwidth(monitor.registered_fd_);
+
+            // Since we're in a transaction, we should have no closes and
+            // the same valid fd.
+            EXPECT_EQ(0, monitor.close_cnt_);
+            ASSERT_EQ(monitor.registered_fd_, orig_fd);
+
+            EXPECT_FALSE(ec);
+        },
+            HttpClient::RequestTimeout(10000),
+            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
+            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+        ));
+
+        // Actually trigger the requests. The requests should be handlded by the
+        // server one after another. While the first request is being processed
+        // the server should queue another one.
+        ASSERT_NO_THROW(runIOService());
+
+        // Make sure that we received a response.
+        ASSERT_TRUE(response1);
+        ConstElementPtr sequence1 = response1->getJsonElement("sequence");
+        ASSERT_TRUE(sequence1);
+        EXPECT_EQ(1, sequence1->intValue());
+
+        // We should have had 1 connect invocations, no closes
+        // and a valid registered fd
+        EXPECT_EQ(1, monitor.connect_cnt_);
+        EXPECT_EQ(0, monitor.close_cnt_);
+        EXPECT_GT(monitor.registered_fd_, -1);
+
+        // Test our socket for OOBness.
+        client.closeIfOutOfBandwidth(monitor.registered_fd_);
+
+        // Since we're in a transaction, we should have no closes and
+        // the same valid fd.
+        EXPECT_EQ(1, monitor.close_cnt_);
+        EXPECT_EQ(-1, monitor.registered_fd_);
+
+        // Now let's do another request to the destination to verify that
+        // we'll reopen the connection without issue.
+        PostHttpRequestJsonPtr request2 = createRequest("sequence", 2, version);
+        HttpResponseJsonPtr response2(new HttpResponseJson());
+        resp_num = 0;
+        ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
+            [this, &client, &resp_num, &monitor](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num == 1) {
+                io_service_.stop();
+            }
+
+            EXPECT_EQ(2, monitor.connect_cnt_);      // We should have 1 connect.
+            EXPECT_EQ(1, monitor.close_cnt_);        // We should have 0 closes
+            ASSERT_GT(monitor.registered_fd_, -1);   // We should have a valid fd.
+            int orig_fd = monitor.registered_fd_;
+
+            // Test our socket for OOBness.
+            client.closeIfOutOfBandwidth(monitor.registered_fd_);
+
+            // Since we're in a transaction, we should have no closes and
+            // the same valid fd.
+            EXPECT_EQ(1, monitor.close_cnt_);
+            ASSERT_EQ(monitor.registered_fd_, orig_fd);
+
+            EXPECT_FALSE(ec);
+        },
+            HttpClient::RequestTimeout(10000),
+            boost::bind(&ExternalMonitor::connectHandler, &monitor, _1, _2),
+            boost::bind(&ExternalMonitor::closeHandler, &monitor, _1)
+        ));
+
+        // Actually trigger the requests. The requests should be handlded by the
+        // server one after another. While the first request is being processed
+        // the server should queue another one.
+        ASSERT_NO_THROW(runIOService());
+
+        // Make sure that we received the second response.
+        ASSERT_TRUE(response2);
+        ConstElementPtr sequence2 = response2->getJsonElement("sequence");
+        ASSERT_TRUE(sequence2);
+        EXPECT_EQ(2, sequence2->intValue());
+
+        // Stopping the client the close the connection.
+        client.stop();
+
+        // We should have had 2 connect invocations, 2 closes
+        // and an invalid registered fd
+        EXPECT_EQ(2, monitor.connect_cnt_);
+        EXPECT_EQ(2, monitor.close_cnt_);
         EXPECT_EQ(-1, monitor.registered_fd_);
     }
 
@@ -1825,6 +1960,11 @@ TEST_F(HttpClientTest, clientConnectTimeout) {
 /// Tests that connect and close callbacks work correctly.
 TEST_F(HttpClientTest, connectCloseCallbacks) {
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
+}
+
+/// Tests that HttpClient::closeIfOutOfBandwidth works correctly.
+TEST_F(HttpClientTest, closeIfOutOfBandwidth) {
+    ASSERT_NO_FATAL_FAILURE(testCloseIfOutOfBandwidth(HttpVersion(1, 1)));
 }
 
 }

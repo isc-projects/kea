@@ -44,7 +44,7 @@ public:
     /// @brief On receive handler
     ///
     /// The handler sends the DHCPv6 packet back to the remote address
-    static void handler();
+    static void handler(int /* fd */);
 
     /// @param client_port UDP port where all responses are sent to.
     /// Not zero is mostly useful for testing purposes.

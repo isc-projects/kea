@@ -738,6 +738,24 @@ protected:
     /// error we want Connection logic to process it.
     bool clientConnectHandler(const boost::system::error_code& ec, int tcp_native_fd);
 
+    /// @brief IfaceMgr external socket ready callback handler
+    ///
+    /// IfaceMgr invokes this call back when a registered socket has been
+    /// flagged as ready to read.   It is installed by the invocation to
+    /// register the socket with IfaceMgr made in @ref clientConnectHandler.
+    ///
+    /// The handler calls @ref HttpClient::closeIfOutOfBandwidth() to catch
+    /// and close any sockets that have gone ready outside of transactions.
+    ///
+    /// We do this in case the other peer closed the socket (e.g. idle timeout),
+    /// as this will cause the socket to appear ready to read to the
+    /// IfaceMgr::select(). If this happens while no transcations are
+    /// in progess, we won't have anything to deal with the socket event.
+    /// This causes IfaceMgr::select() to endlessly interrupt on the socket.
+    ///
+    /// @param tcp_native_fd socket descriptor of the ready socket
+    void socketReadyHandler(int tcp_native_fd);
+
     /// @brief HttpClient close callback handler
     ///
     /// Passed into HttpClient calls to allow unregistration of client's
