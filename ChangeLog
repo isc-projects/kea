@@ -1,3 +1,11 @@
+1660.	[bug]		tmark
+	Fixed a bug introduced in Kea 1.6.0 (see #539) that caused
+	kea-dhcp4 and kea-dhcp6 to discard inbound packets containing
+	string options that consist solely of nulls.  The servers
+	will now quietly omit empty or all-null string options from
+	inbound packets.
+	(Gitlab #900)
+
 1659.	[bug]*		tmark
 	Added logic to core code and HA hook lib to allow HA peers
 	to detect and handle out of bandwidth socket events.  This
