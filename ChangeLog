@@ -1,3 +1,8 @@
+1683.	[doc]		marcin
+	Described the usage of the ha-heartbeat command to check the
+	states of the HA enabled DHCP servers.
+	(Gitlab #998)
+
 1682.	[bug]*		tmark
 	Added logic to core code and HA hook lib to allow HA peers
 	to detect and handle out of bandwidth socket events.  This
