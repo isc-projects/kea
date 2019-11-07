@@ -12,6 +12,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/multi_threading_utils.h>
 #include <dhcpsrv/subnet_id.h>
 #include <hooks/hooks.h>
 #include <exceptions/exceptions.h>
@@ -661,15 +662,19 @@ LeaseStatCmdsImpl::getSubnetStat(const SubnetID& subnet_id, const std::string& n
     return (0);
 }
 
+// Using a critical section to avoid any changes in parallel.
+
 int
 StatCmds::statLease4GetHandler(CalloutHandle& handle) {
     LeaseStatCmdsImpl impl;
+    MultiThreadingCriticalSection sc;
     return(impl.statLease4GetHandler(handle));
 }
 
 int
 StatCmds::statLease6GetHandler(CalloutHandle& handle) {
     LeaseStatCmdsImpl impl;
+    MultiThreadingCriticalSection sc;
     return(impl.statLease6GetHandler(handle));
 }
 
