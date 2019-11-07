@@ -130,8 +130,6 @@ clocks and restart the servers.
 Server States
 ~~~~~~~~~~~~~
 
-.. _command-ha-heartbeat:
-
 A DHCP server operating within an HA setup runs a state machine, and the
 state of the server can be retrieved by its peers using the
 ``ha-heartbeat`` command sent over the RESTful API. If the partner
@@ -1216,5 +1214,88 @@ command structure is as simple as:
 ::
 
    {
-       "command": "ha-continue"
+       "command": "ha-continue",
+       "service": [ "dhcp4" ]
    }
+
+
+.. _command-ha-heartbeat:
+
+The ha-heartbeat Command
+------------------------
+
+The :ref:`ha-server-states` describes how the ``ha-heartbeat`` command is used by
+the active HA servers to detect a failure of one of them. This command, however,
+can also be sent by the system administrator to one or both servers to check their
+state with regards to the HA relationship. This allows for hooking up a monitoring
+system to the HA enabled servers to periodically check if they are operational
+or if any manual intervention is required. The ``ha-heartbeat`` command takes no
+arguments, e.g.:
+
+::
+
+   {
+       "command": "ha-heartbeat",
+       "service": [ "dhcp4" ]
+   }
+
+Upon successful communication with the server a response similar to this should
+be returned:
+
+::
+
+   {
+      "result": 0,
+      "text": "HA peer status returned.",
+      "arguments":
+          {
+              "state": "partner-down",
+              "date-time": "Thu, 07 Nov 2019 08:49:37 GMT"
+          }
+   }
+
+The returned state value may be one of the values listed in :ref:`ha-server-states`.
+In the example above the ``partner-down`` state is returned, which indicates that
+the server which responded to the command is assuming that its partner is offline,
+thus it is serving all DHCP requests sent to the servers. In order to ensure that
+the partner is indeed offline the administrator should send the ``ha-heartbeat``
+command to the second server. If sending the command fails, e.g. as a result of
+inability to establish TCP connection to the Control Agent or the Control Agent
+reports issues with communication with the DHCP server, it is very likely that
+the server is not running.
+
+The typical response returned by one of the servers when both servers are
+operational is:
+
+::
+
+   {
+      "result": 0,
+      "text": "HA peer status returned.",
+      "arguments":
+          {
+              "state": "load-balancing",
+              "date-time": "Thu, 07 Nov 2019 08:49:37 GMT"
+          }
+   }
+
+In most cases it is desired to send the ``ha-heartbeat`` command to both HA
+enabled servers to verify the state of the entire HA setup. In particular,
+if the response sent to one of the servers indicates that the server is in the
+``load-balancing`` state, it merely means that this server is operating as if
+the partner is still functional. When the partner dies it actually takes some
+time for the surviving server to realize it. The :ref:`ha-scope-transition`
+section describes the algorithm which the surviving server follows before
+it transitions to the ``partner-down`` state. If the ``ha-heartbeat`` command
+is sent during the time window between the failure of one of the servers and the
+transition of the surviving server to the ``partner-down`` state, the response
+from the surviving server doesn't reflect the failure. Sending the command
+to the failing server allows for detecting the failure.
+
+.. note::
+
+  Remember! Always send the ``ha-heartbeat`` command to both active HA servers
+  to check the state of the entire HA setup. Sending it to only one of the
+  servers may not reflect issues with one of the servers that just began.
+
+
