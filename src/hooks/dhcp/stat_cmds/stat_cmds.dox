@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -198,8 +198,9 @@ and DHCPv6 response might look like this:
 
 @section stat_cmdsMTCompatibility Multi-Threading Compatibility
 
-The Stat Commands Hook library currently reports it is not
-compatible with multi-threading. This will be revisited as there is
-no essential reason for such uncompatibility.
+The Stat Commands Hook library reports it is compatible with
+multi-threading. All commands are executed inside a critical section,
+i.e. with threads stopped. It makes sense to not have lease state
+changes when taking lease counts.
 
 */
