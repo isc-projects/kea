@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the End User License
 // Agreement. See COPYING file in the premium/ directory.
@@ -58,6 +58,16 @@ int load(LibraryHandle& handle) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     LOG_INFO(stat_cmds_logger, STAT_CMDS_DEINIT_OK);
+    return (0);
+}
+
+/// @brief This function is called to know the multi-threading compatibility.
+///
+/// @note: this should be revisited as the library is not essentially
+/// uncompatible.
+///
+/// @return 0 which means not compatible with multi-threading.
+int multi_threading_compatible() {
     return (0);
 }
 

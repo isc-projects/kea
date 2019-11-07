@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,5 +94,11 @@ library is loaded. The only exception for that was lease4-wipe and lease6-wipe
 commands that remove all leases from specific subnet. As there were no
 queries that could retrieve or otherwise enumerate leases for a specific subnet,
 a new query type and a new index had to be added.
+
+@section lease_cmdsTCompatibility Multi-Threading Compatibility
+
+The Lease Commands Hook library is compatible with multi-threading.
+All commands modifying leases are performed inside a critical section
+i.e. with the DHCP server stopped.
 
 */

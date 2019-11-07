@@ -122,4 +122,11 @@ int unload() {
     return (0);
 }
 
+/// @brief This function is called to know the multi-threading compatibility.
+///
+/// @return 1 which means compatible with multi-threading.
+int multi_threading_compatible() {
+    return (1);
+}
+
 } // end extern "C"
