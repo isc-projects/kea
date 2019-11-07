@@ -1,3 +1,8 @@
+1694.	[doc]		marcin
+	Described the usage of the ha-heartbeat command to check the
+	states of the HA enabled DHCP servers.
+	(Gitlab #998)
+
 1693.	[func]		fdupont
 	Client supplied ciaddr is now sent back when responding to
 	DHCPINFORM
