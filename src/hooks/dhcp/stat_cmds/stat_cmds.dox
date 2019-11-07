@@ -196,4 +196,10 @@ and DHCPv6 response might look like this:
         }
 @endcode
 
+@section stat_cmdsMTCompatibility Multi-Threading Compatibility
+
+The Stat Commands Hook library currently reports it is not
+compatible with multi-threading. This will be revisited as there is
+no essential reason for such uncompatibility.
+
 */

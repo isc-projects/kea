@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -241,5 +241,14 @@ int unload() {
     return (0);
 }
 
+/// @brief This function is called to know the multi-threading compatibility.
+///
+/// @note: this should be revisited as the library is not essentially
+/// uncompatible.
+///
+/// @return 0 which means not compatible with multi-threading.
+int multi_threading_compatible() {
+    return (0);
+}
 
 } // end extern "C"

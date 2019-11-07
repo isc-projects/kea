@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -406,5 +406,11 @@ Addressing this issue requires two enhancements:
 - Implementing callouts for the "lease4_expire" and "lease6_expire" hook
   points via which the server removing the lease from the database could
   notify the partner about such removal.
+
+@section haMTCompatibility Multi-Threading Compatibility
+
+The High Availability hooks library currently reports it is not
+compatible with multi-threading. This will be revisited as there is
+no essential reason for such uncompatibility.
 
 */

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -212,6 +212,10 @@ registered=yes
 
 Note the library always opens this file in append mode and does not limit its size.
 
+@section libdhcp_user_chkMTCompatibility Multi-Threading Compaibility
 
+The user_chk hooks library does not define a multi_threading_compatible()
+C function so is considered as not compatible with multi-threading
+(and the current code should be in fact really not compatible).
 
 */

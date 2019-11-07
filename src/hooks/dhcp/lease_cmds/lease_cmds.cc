@@ -14,6 +14,7 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/multi_threading_utils.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/sanity_checker.h>
 #include <dhcp/duid.h>
@@ -1564,19 +1565,23 @@ LeaseCmdsImpl::createFailedLeaseMap(const Lease::Type& lease_type,
     return (failed_lease_map);
 }
 
+// Do lease changes in a critical section.
+
 int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
-    return(impl_->leaseAddHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->leaseAddHandler(handle));
 }
 
 int
 LeaseCmds::lease6BulkApplyHandler(CalloutHandle& handle) {
+    MultiThreadingCriticalSection cs;
     return (impl_->lease6BulkApplyHandler(handle));
 }
 
 int
 LeaseCmds::leaseGetHandler(CalloutHandle& handle) {
-    return(impl_->leaseGetHandler(handle));
+    return (impl_->leaseGetHandler(handle));
 }
 
 int
@@ -1611,32 +1616,38 @@ LeaseCmds::leaseGetByHostnameHandler(hooks::CalloutHandle& handle) {
 
 int
 LeaseCmds::lease4DelHandler(CalloutHandle& handle) {
-    return(impl_->lease4DelHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->lease4DelHandler(handle));
 }
 
 int
 LeaseCmds::lease6DelHandler(CalloutHandle& handle) {
-    return(impl_->lease6DelHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->lease6DelHandler(handle));
 }
 
 int
 LeaseCmds::lease4UpdateHandler(CalloutHandle& handle) {
-    return(impl_->lease4UpdateHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->lease4UpdateHandler(handle));
 }
 
 int
 LeaseCmds::lease6UpdateHandler(CalloutHandle& handle) {
-    return(impl_->lease6UpdateHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->lease6UpdateHandler(handle));
 }
 
 int
 LeaseCmds::lease4WipeHandler(CalloutHandle& handle) {
-   return(impl_->lease4WipeHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->lease4WipeHandler(handle));
 }
 
 int
 LeaseCmds::lease6WipeHandler(CalloutHandle& handle) {
-   return(impl_->lease6WipeHandler(handle));
+    MultiThreadingCriticalSection cs;
+    return (impl_->lease6WipeHandler(handle));
 }
 
 LeaseCmds::LeaseCmds()
