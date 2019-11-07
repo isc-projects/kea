@@ -1685,13 +1685,15 @@ private:
 
 // MySqlLeaseContext Constructor
 
-MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters) : conn_(parameters) {
+MySqlLeaseContext::
+MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters)
+    : conn_(parameters) {
 }
 
 // MySqlLeaseContextAlloc Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseContextAlloc::MySqlLeaseContextAlloc(const MySqlLeaseMgr& mgr)
-    : ctx_(), mgr_(mgr) {
+MySqlLeaseMgr::MySqlLeaseContextAlloc::
+MySqlLeaseContextAlloc(const MySqlLeaseMgr& mgr) : ctx_(), mgr_(mgr) {
     if (MultiThreadingMgr::instance().getMode()) {
         {
             lock_guard<mutex> lock(mgr_.pool_->mutex_);
@@ -1707,7 +1709,7 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::MySqlLeaseContextAlloc(const MySqlLeaseMg
         if (mgr_.pool_->pool_.empty()) {
             isc_throw(Unexpected, "No available MySQL lease context?!");
         }
-        ctx_ = mgr_.pool_->pool_[0];
+        ctx_ = mgr_.pool_->pool_.back();
     }
 }
 

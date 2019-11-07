@@ -911,7 +911,7 @@ private:
         /// @brief The context
         MySqlLeaseContextPtr ctx_;
 
-        private:
+    private:
         /// @brief The manager
         const MySqlLeaseMgr& mgr_;
     };
