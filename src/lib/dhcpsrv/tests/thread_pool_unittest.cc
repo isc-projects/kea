@@ -10,6 +10,8 @@
 
 #include <dhcpsrv/thread_pool.h>
 
+#include <boost/function.hpp>
+
 using namespace isc::dhcp;
 using namespace std;
 
@@ -184,11 +186,13 @@ private:
     list<shared_ptr<std::thread>> threads_;
 };
 
+typedef function<void()> CallBack;
+
 /// @brief test ThreadPool add and count
 TEST_F(ThreadPoolTest, testAddAndCount) {
     uint32_t items_count;
-    ThreadPool::WorkItemCallBack call_back;
-    ThreadPool thread_pool;
+    CallBack call_back;
+    ThreadPool<CallBack> thread_pool;
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
@@ -202,170 +206,12 @@ TEST_F(ThreadPoolTest, testAddAndCount) {
     for (uint32_t i = 0; i < items_count; ++i) {
         thread_pool.add(call_back);
     }
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-}
 
-/// @brief test ThreadPool create and destroy
-TEST_F(ThreadPoolTest, testCreateAndDestroy) {
-    uint32_t items_count;
-    uint32_t thread_count;
-    ThreadPool::WorkItemCallBack call_back;
-    ThreadPool thread_pool;
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    items_count = 4;
-    thread_count = 4;
-    // prepare setup
-    reset(thread_count);
-
-    // create tasks which block thread pool threads until signaled by main
-    // thread to force all threads of the thread pool to run exactly one task
-    call_back = std::bind(&ThreadPoolTest::runAndWait, this);
-
-    // add items to stopped thread pool
-    for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
-    }
     // the item count should match
     ASSERT_EQ(thread_pool.count(), items_count);
 
-    // calling create with false should not create threads and should remove all
-    // queued items
-    thread_pool.create(thread_count, false);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // add items to stopped thread pool
-    for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
-    }
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // calling destroy should clear all threads and should remove all queued
-    // items
-    thread_pool.destroy();
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // do it once again to check if it works
-    thread_pool.destroy();
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // calling create with false should not create threads and should remove all
-    // queued items
-    thread_pool.create(thread_count, false);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // add items to stopped thread pool
-    for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
-    }
-    // the item count should match
-    ASSERT_EQ(thread_pool.count(), items_count);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // calling create with true should create threads and should remove all
-    // queued items
-    thread_pool.create(thread_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
-
-    // add items to running thread pool
-    for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
-    }
-
-    // wait for all items to be processed
-    waitTasks(thread_count, items_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
-    // as each thread pool thread is still waiting on main to unblock, each
-    // thread should have been registered in ids list
-    checkIds(items_count);
-    // all items should have been processed
-    ASSERT_EQ(count(), items_count);
-
-    // check that the number of processed tasks matches the number of items
-    checkRunHistory(items_count);
-
-    // signal thread pool tasks to continue
-    signalThreads();
-
-    // calling destroy should clear all threads and should remove all queued
-    // items
-    thread_pool.destroy();
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    // do it once again to check if it works
-    thread_pool.destroy();
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
-
-    items_count = 64;
-    thread_count = 16;
-    // prepare setup
-    reset(thread_count);
-
-    // create tasks which do not block the thread pool threads so that several
-    // tasks can be run on the same thread and some of the threads never even
-    // having a chance to run
-    call_back = std::bind(&ThreadPoolTest::run, this);
-
-    // calling create with true should create threads and should remove all
-    // queued items
-    thread_pool.create(thread_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
-
-    // add items to running thread pool
-    for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
-    }
-
-    // wait for all items to be processed
-    waitTasks(thread_count, items_count);
-    // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
-    // the thread count should match
-    ASSERT_EQ(thread_pool.size(), thread_count);
-    // all items should have been processed
-    ASSERT_EQ(count(), items_count);
-
-    // check that the number of processed tasks matches the number of items
-    checkRunHistory(items_count);
-
-    // calling destroy should clear all threads and should remove all queued
-    // items
-    thread_pool.destroy();
+    // calling reset should clear all threads and should remove all queued items
+    thread_pool.reset();
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
@@ -376,8 +222,8 @@ TEST_F(ThreadPoolTest, testCreateAndDestroy) {
 TEST_F(ThreadPoolTest, testStartAndStop) {
     uint32_t items_count;
     uint32_t thread_count;
-    ThreadPool::WorkItemCallBack call_back;
-    ThreadPool thread_pool;
+    CallBack call_back;
+    ThreadPool<CallBack> thread_pool;
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
@@ -406,8 +252,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     // the thread count should match
     ASSERT_EQ(thread_pool.size(), thread_count);
 
-    // calling stop with false should clear all threads and should keep queued
-    // items
+    // calling stop should clear all threads and should keep queued items
     thread_pool.stop();
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
@@ -425,22 +270,28 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     for (uint32_t i = 0; i < items_count; ++i) {
         thread_pool.add(call_back);
     }
+
     // the item count should match
     ASSERT_EQ(thread_pool.count(), items_count);
     // the thread count should be 0
     ASSERT_EQ(thread_pool.size(), 0);
 
-    // calling stop with false should clear all threads and should keep queued
-    // items
+    // calling stop should clear all threads and should keep queued items
     thread_pool.stop();
     // the item count should match
     ASSERT_EQ(thread_pool.count(), items_count);
     // the thread count should be 0
     ASSERT_EQ(thread_pool.size(), 0);
 
-    // calling stop with true should clear all threads and should remove all
-    // queued items
-    thread_pool.stop(true);
+    // calling reset should clear all threads and should remove all queued items
+    thread_pool.reset();
+    // the item count should be 0
+    ASSERT_EQ(thread_pool.count(), 0);
+    // the thread count should be 0
+    ASSERT_EQ(thread_pool.size(), 0);
+
+    // do it once again to check if it works
+    thread_pool.reset();
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
     // the thread count should be 0
@@ -476,8 +327,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     // signal thread pool tasks to continue
     signalThreads();
 
-    // calling stop with false should clear all threads and should keep queued
-    // items
+    // calling stop should clear all threads and should keep queued items
     thread_pool.stop();
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
@@ -498,6 +348,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     for (uint32_t i = 0; i < items_count; ++i) {
         thread_pool.add(call_back);
     }
+
     // the item count should match
     ASSERT_EQ(thread_pool.count(), items_count);
     // the thread count should be 0
@@ -520,8 +371,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
     // check that the number of processed tasks matches the number of items
     checkRunHistory(items_count);
 
-    // calling stop with false should clear all threads and should keep queued
-    // items
+    // calling stop should clear all threads and should keep queued items
     thread_pool.stop();
     // the item count should be 0
     ASSERT_EQ(thread_pool.count(), 0);
