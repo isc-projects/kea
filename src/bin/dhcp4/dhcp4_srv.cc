@@ -2331,6 +2331,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     }
 }
 
+/// @todo: Take care of the fact that the valid lifetime can be infinite.
 void
 Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp) {
 
