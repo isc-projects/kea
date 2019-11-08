@@ -8,11 +8,11 @@
 
 #include <gtest/gtest.h>
 
-#include <dhcpsrv/thread_pool.h>
+#include <util/thread_pool.h>
 
 #include <boost/function.hpp>
 
-using namespace isc::dhcp;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -186,6 +186,7 @@ private:
     list<shared_ptr<std::thread>> threads_;
 };
 
+/// @brief define CallBack type
 typedef function<void()> CallBack;
 
 /// @brief test ThreadPool add and count
