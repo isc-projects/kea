@@ -989,6 +989,13 @@ TEST_F(HostMgrTest, getAllbyHostnameSubnet4) {
 // This test verifies that HostMgr returns all reservations for the specified
 // hostname and DHCPv6 subnet. The reservations are defined in the server's
 // configuration.
+TEST_F(HostMgrTest, getAllbyHostnameSubnet6) {
+    testGetAllbyHostnameSubnet6(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the specified
+// hostname and DHCPv6 subnet. The reservations are defined in the server's
+// configuration.
 TEST_F(HostMgrTest, getAllbyHostname6) {
     testGetAllbyHostnameSubnet4(*getCfgHosts(), *getCfgHosts());
 }
