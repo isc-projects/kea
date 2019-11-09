@@ -65,7 +65,7 @@ protected:
 
 // Instantiate specific typed tests
 typedef ::testing::Types<generic::NSEC, generic::NSEC3> TestRdataTypes;
-TYPED_TEST_CASE(NSECLikeBitmapTest, TestRdataTypes);
+TYPED_TEST_SUITE(NSECLikeBitmapTest, TestRdataTypes);
 
 // NSEC and NSEC3 bitmaps have some subtle differences, in which case we
 // need to test them separately.  Using these typedef type names with TEST_F

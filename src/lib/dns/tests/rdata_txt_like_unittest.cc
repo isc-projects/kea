@@ -72,7 +72,7 @@ protected:
 // The list of types we want to test.
 typedef testing::Types<generic::TXT, generic::SPF> Implementations;
 
-TYPED_TEST_CASE(Rdata_TXT_LIKE_Test, Implementations);
+TYPED_TEST_SUITE(Rdata_TXT_LIKE_Test, Implementations);
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     // Below we check the behavior for the "from text" constructors, both

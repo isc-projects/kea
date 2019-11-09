@@ -9923,8 +9923,8 @@ public:
 };
 
 /// Define the parameterized test loop.
-INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
-                        ::testing::Range(static_cast<size_t>(0),
-                                         max_config_counter),
-                        IntToString());
+INSTANTIATE_TEST_SUITE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
+                         ::testing::Range(static_cast<size_t>(0),
+                                          max_config_counter),
+                         IntToString());
 }  // namespace

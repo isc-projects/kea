@@ -77,7 +77,7 @@ protected:
 
 // Instantiate specific typed tests
 typedef ::testing::Types<generic::NSEC3, generic::NSEC3PARAM> TestRdataTypes;
-TYPED_TEST_CASE(NSEC3PARAMLikeTest, TestRdataTypes);
+TYPED_TEST_SUITE(NSEC3PARAMLikeTest, TestRdataTypes);
 
 template <>
 RRType
