@@ -144,7 +144,7 @@ public:
     /// @param hostname hostname in lower case.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(const std::string& hostname) const {
+    virtual Lease4Collection getLeases4(const std::string&) const {
         return (Lease4Collection());
     }
 
@@ -240,7 +240,7 @@ public:
     /// @param hostname hostname in lower case.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(const std::string& hostname) const {
+    virtual Lease6Collection getLeases6(const std::string&) const {
         return (Lease6Collection());
     }
 
