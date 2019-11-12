@@ -92,9 +92,9 @@ LibDHCP::getOptionDefs(const std::string& space) {
     static mutex local_mutex;
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(local_mutex);
-        return LibDHCP::getOptionDefs(space);
+        return LibDHCP::getOptionDefsInternal(space);
     } else {
-        return LibDHCP::getOptionDefs(space);
+        return LibDHCP::getOptionDefsInternal(space);
     }
 }
 
