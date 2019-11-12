@@ -19,6 +19,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
@@ -89,7 +90,16 @@ void initOptionSpace(OptionDefContainerPtr& defs,
 const OptionDefContainerPtr&
 LibDHCP::getOptionDefs(const std::string& space) {
     static mutex local_mutex;
-    std::lock_guard<std::mutex> lock(local_mutex);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(local_mutex);
+        return LibDHCP::getOptionDefs(space);
+    } else {
+        return LibDHCP::getOptionDefs(space);
+    }
+}
+
+const OptionDefContainerPtr&
+LibDHCP::getOptionDefsInternal(const std::string& space) {
     // If any of the containers is not initialized, it means that we haven't
     // initialized option definitions at all.
     if (option_defs_.end() == option_defs_.find(space)) {
