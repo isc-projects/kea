@@ -83,12 +83,14 @@ AdaptorOption::initCodes(OptionCodes& codes, const string& space) {
         initCodesInternal(codes, space, LAST_RESORT_V4_OPTION_DEFINITIONS,
                           LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE);
         initCodesInternal(codes, "vendor-4491",
-                          DOCSIS3_V4_DEFS, DOCSIS3_V4_DEFS_SIZE);
+                          DOCSIS3_V4_OPTION_DEFINITIONS,
+                          DOCSIS3_V4_OPTION_DEFINITIONS_SIZE);
     } else if (space == "dhcp6") {
         initCodesInternal(codes, space, STANDARD_V6_OPTION_DEFINITIONS,
                           STANDARD_V6_OPTION_DEFINITIONS_SIZE);
         initCodesInternal(codes, "vendor-4491",
-                          DOCSIS3_V6_DEFS, DOCSIS3_V6_DEFS_SIZE);
+                          DOCSIS3_V6_OPTION_DEFINITIONS,
+                          DOCSIS3_V6_OPTION_DEFINITIONS_SIZE);
         initCodesInternal(codes, MAPE_V6_OPTION_SPACE,
                           MAPE_V6_OPTION_DEFINITIONS,
                           MAPE_V6_OPTION_DEFINITIONS_SIZE);

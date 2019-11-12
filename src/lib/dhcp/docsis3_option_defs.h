@@ -19,13 +19,15 @@ namespace dhcp {
 #define DOCSIS3_V4_TFTP_SERVERS 2
 
 /// @brief Definitions of standard DHCPv4 options.
-const OptionDefParams DOCSIS3_V4_DEFS[] = {
+const OptionDefParams DOCSIS3_V4_OPTION_DEFINITIONS[] = {
     { "oro", DOCSIS3_V4_ORO, OPT_UINT8_TYPE, true, NO_RECORD_DEF, "" },
     { "tftp-servers", DOCSIS3_V4_TFTP_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" }
 };
 
 /// Number of option definitions defined.
-const int DOCSIS3_V4_DEFS_SIZE  = sizeof(DOCSIS3_V4_DEFS) / sizeof(OptionDefParams);
+const int DOCSIS3_V4_OPTION_DEFINITIONS_SIZE =
+    sizeof(DOCSIS3_V4_OPTION_DEFINITIONS) /
+    sizeof(DOCSIS3_V4_OPTION_DEFINITIONS[0]);
 
 /// @todo define remaining docsis3 v6 codes
 #define DOCSIS3_V6_ORO 1
@@ -43,7 +45,7 @@ const int DOCSIS3_V4_DEFS_SIZE  = sizeof(DOCSIS3_V4_DEFS) / sizeof(OptionDefPara
 #define DOCSIS3_V6_CMTS_CM_MAC 1026
 
 /// @brief Definitions of standard DHCPv6 options.
-const OptionDefParams DOCSIS3_V6_DEFS[] = {
+const OptionDefParams DOCSIS3_V6_OPTION_DEFINITIONS[] = {
     { "oro",            DOCSIS3_V6_ORO, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "device-type",    DOCSIS3_V6_DEVICE_TYPE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "vendor-type",    DOCSIS3_V6_VENDOR_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
@@ -58,14 +60,15 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
 };
 
 /// Number of option definitions defined.
-const int DOCSIS3_V6_DEFS_SIZE =
-    sizeof(DOCSIS3_V6_DEFS) / sizeof(DOCSIS3_V6_DEFS[0]);
+const int DOCSIS3_V6_OPTION_DEFINITIONS_SIZE =
+    sizeof(DOCSIS3_V6_OPTION_DEFINITIONS) /
+    sizeof(DOCSIS3_V6_OPTION_DEFINITIONS[0]);
 
 /// The class as specified in vendor-class option by the devices
 extern const char* DOCSIS3_CLASS_EROUTER;
 extern const char* DOCSIS3_CLASS_MODEM;
 
-}; // isc::dhcp namespace
-}; // isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DOCSIS3_OPTION_DEFS_H
