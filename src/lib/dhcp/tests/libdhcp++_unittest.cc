@@ -1856,9 +1856,9 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     // RFC7598 options
     LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
-                                 typeid(OptionCustom), "s46-rule-options");
+                                 typeid(OptionCustom), V4V6_RULE_OPTION_SPACE);
     LibDhcpTest::testOptionDefs6(MAPT_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
-                                 typeid(OptionCustom), "s46-rule-options");
+                                 typeid(OptionCustom), V4V6_RULE_OPTION_SPACE);
     LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_BR, begin, end,
                                  typeid(OptionCustom));
     LibDhcpTest::testOptionDefs6(LW_V6_OPTION_SPACE, D6O_S46_BR, begin, end,
@@ -1867,18 +1867,18 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                  typeid(OptionCustom));
     LibDhcpTest::testOptionDefs6(LW_V6_OPTION_SPACE, D6O_S46_V4V6BIND, begin,
                                  end, typeid(OptionCustom),
-                                 "s46-v4v6bind-options");
+                                 V4V6_BIND_OPTION_SPACE);
     LibDhcpTest::testOptionDefs6(V4V6_RULE_OPTION_SPACE, D6O_S46_PORTPARAMS,
                                  begin, end, typeid(OptionCustom), "");
     LibDhcpTest::testStdOptionDefs6(D6O_S46_CONT_MAPE, begin, end,
                                     typeid(OptionCustom),
-                                    "s46-cont-mape-options");
+                                    MAPE_V6_OPTION_SPACE);
     LibDhcpTest::testStdOptionDefs6(D6O_S46_CONT_MAPT, begin, end,
                                     typeid(OptionCustom),
-                                    "s46-cont-mapt-options");
+                                    MAPT_V6_OPTION_SPACE);
     LibDhcpTest::testStdOptionDefs6(D6O_S46_CONT_LW, begin, end,
                                     typeid(OptionCustom),
-                                    "s46-cont-lw-options");
+                                    LW_V6_OPTION_SPACE);
 
 }
 
