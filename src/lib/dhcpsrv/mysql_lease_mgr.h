@@ -87,7 +87,7 @@ public:
     /// - user - Username under which to connect (optional)
     /// - password - Password for "user" on the database (optional)
     ///
-    /// Create an initial context checking the schema version.
+    /// Check the schema version and create an initial context.
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
@@ -104,20 +104,13 @@ public:
 
     /// #brief Create a new context.
     ///
-    /// The database in opened.
-    /// If wanted the version number in the schema_version table will be
-    /// checked against hard-coded value in the implementation file.
-    /// Finally, all the SQL commands are pre-compiled.
+    /// The database in opened withh all the SQL commands pre-compiled.
     ///
-    /// @param check_version If true and the database successfully opened
-    /// check the schema version.
     /// @return A new (never null) context.
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given.
-    /// @throw isc::db::DbOpenError Error opening the database or the schema
-    /// version is incorrect.
     /// @throw isc::db::DbOperationError An operation on the open database has
     /// failed.
-    MySqlLeaseContextPtr createContext(bool check_version = false) const;
+    MySqlLeaseContextPtr createContext() const;
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();
@@ -671,21 +664,6 @@ public:
     };
 
 private:
-    /// @brief Returns backend version.
-    ///
-    /// The method is called by the constructor after opening the database
-    /// but prior to preparing SQL statements, to verify that the schema version
-    /// is correct. Thus it must not rely on a pre-prepared statement or
-    /// formal statement execution error checking.
-    ///
-    /// @param conn Initial connecion.
-    /// @return Version number as a pair of unsigned integers.  "first" is the
-    ///         major version number, "second" the minor number.
-    ///
-    /// @throw isc::db::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion(db::MySqlConnection& conn) const;
-
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
