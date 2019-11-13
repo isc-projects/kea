@@ -13,17 +13,23 @@
 #include <stdint.h>
 #include <string>
 
-#define DHCP4_OPTION_SPACE          "dhcp4"
-#define DHCP6_OPTION_SPACE          "dhcp6"
-#define DOCSIS3_V4_OPTION_SPACE     "docsis3-v4"
-#define DOCSIS3_V6_OPTION_SPACE     "docsis3-v6"
-#define ISC_V6_OPTION_SPACE         "4o6"
-#define MAPE_V6_OPTION_SPACE        "s46-cont-mape-options"
-#define MAPT_V6_OPTION_SPACE        "s46-cont-mapt-options"
-#define LW_V6_OPTION_SPACE          "s46-cont-lw-options"
-#define V4V6_RULE_OPTION_SPACE      "s46-rule-options"
-#define V4V6_BIND_OPTION_SPACE      "s46-v4v6bind-options"
-#define LAST_RESORT_V4_OPTION_SPACE "last-resort-v4"
+/// @brief global option spaces
+#define DHCP4_OPTION_SPACE               "dhcp4"
+#define DHCP6_OPTION_SPACE               "dhcp6"
+#define DOCSIS3_V4_OPTION_SPACE          "docsis3-v4"
+#define DOCSIS3_V6_OPTION_SPACE          "docsis3-v6"
+#define ISC_V6_OPTION_SPACE              "4o6"
+#define MAPE_V6_OPTION_SPACE             "s46-cont-mape-options"
+#define MAPT_V6_OPTION_SPACE             "s46-cont-mapt-options"
+#define LW_V6_OPTION_SPACE               "s46-cont-lw-options"
+#define V4V6_RULE_OPTION_SPACE           "s46-rule-options"
+#define V4V6_BIND_OPTION_SPACE           "s46-v4v6bind-options"
+#define LAST_RESORT_V4_OPTION_SPACE      "last-resort-v4"
+
+/// @brief encapsulated option spaces
+#define DHCP_AGENT_OPTION_SPACE          "dhcp-agent-options-space"
+#define VENDOR_OPTION_SPACE              "vendor-opts-space"
+#define VENDOR_ENCAPSULATED_OPTION_SPACE "vendor-encapsulated-options-space"
 
 namespace isc {
 namespace dhcp {

@@ -208,7 +208,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       RECORD_DEF(SERVICE_SCOPE_RECORDS), "" },
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
-      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
+      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, DHCP_AGENT_OPTION_SPACE },
     { "nds-servers", DHO_NDS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "nds-tree-name", DHO_NDS_TREE_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "nds-context", DHO_NDS_CONTEXT, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
@@ -279,7 +279,7 @@ const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
 /// are applied in deferred unpacking when none is found).
 const OptionDefParams LAST_RESORT_V4_OPTION_DEFINITIONS[] = {
     { "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
-      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" }
+      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, VENDOR_ENCAPSULATED_OPTION_SPACE }
 };
 
 const int LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE =
@@ -367,7 +367,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "vendor-class", D6O_VENDOR_CLASS, OPT_RECORD_TYPE, false,
       RECORD_DEF(VENDOR_CLASS_RECORDS), "" },
     { "vendor-opts", D6O_VENDOR_OPTS, OPT_UINT32_TYPE, false,
-      NO_RECORD_DEF, "vendor-opts-space" },
+      NO_RECORD_DEF, VENDOR_OPTION_SPACE },
     { "interface-id", D6O_INTERFACE_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "reconf-msg", D6O_RECONF_MSG, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "reconf-accept", D6O_RECONF_ACCEPT, OPT_EMPTY_TYPE, false,

@@ -1667,7 +1667,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, vopt_buf.begin(),
                                     vopt_buf.end(),
                                     typeid(OptionVendor),
-                                    "vendor-opts-space");
+                                    VENDOR_OPTION_SPACE);
 
     LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, begin, end,
                                     typeid(Option));
@@ -2141,7 +2141,7 @@ TEST_F(LibDhcpTest, option43) {
     ASSERT_TRUE(def);
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(43, def->getCode());
-    EXPECT_EQ("vendor-encapsulated-options-space", def->getEncapsulatedSpace());
+    EXPECT_EQ(VENDOR_ENCAPSULATED_OPTION_SPACE, def->getEncapsulatedSpace());
     EXPECT_EQ("vendor-encapsulated-options", def->getName());
     EXPECT_EQ(0, def->getRecordFields().size());
     EXPECT_EQ(OptionDataType::OPT_EMPTY_TYPE, def->getType());
