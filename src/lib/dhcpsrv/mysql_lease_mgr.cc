@@ -1725,8 +1725,21 @@ MySqlLeaseMgr::MySqlLeaseContextAlloc::~MySqlLeaseContextAlloc() {
 MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     : parameters_(parameters) {
 
+    // Test schema version.
+    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                               MYSQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError,
+                  "MySQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
+    }
+
+    // Create an initial context.
     pool_.reset(new MySqlLeaseContextPool());
-    pool_->pool_.push_back(createContext(true));
+    pool_->pool_.push_back(createContext());
 }
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
@@ -1737,26 +1750,12 @@ MySqlLeaseMgr::~MySqlLeaseMgr() {
 // Create context.
 
 MySqlLeaseContextPtr
-MySqlLeaseMgr::createContext(bool check_version /* = false */) const {
+MySqlLeaseMgr::createContext() const {
 
     MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_));
 
     // Open the database.
     ctx->conn_.openDatabase();
-
-    // Test schema version before we try to prepare statements.
-    if (check_version) {
-        std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
-                                                   MYSQL_SCHEMA_VERSION_MINOR);
-        std::pair<uint32_t, uint32_t> db_version = getVersion(ctx->conn_);
-        if (code_version != db_version) {
-            isc_throw(DbOpenError,
-                      "MySQL schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
-                      << db_version.second);
-        }
-    }
 
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
     // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
@@ -2959,20 +2958,14 @@ MySqlLeaseMgr::getDescription() const {
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_VERSION);
+
     // Get a connection.
     MySqlConnection conn(parameters_);
 
     // Open the database.
     conn.openDatabase();
-
-    // Get the version.
-    return (getVersion(conn));
-}
-
-std::pair<uint32_t, uint32_t>
-MySqlLeaseMgr::getVersion(MySqlConnection& conn) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_VERSION);
 
     // Allocate a new statement.
     MYSQL_STMT *stmt = mysql_stmt_init(conn.mysql_);
