@@ -9,6 +9,7 @@
 
 #include <stats/observation.h>
 #include <boost/shared_ptr.hpp>
+#include <mutex>
 #include <string>
 
 namespace isc {
@@ -28,7 +29,7 @@ public:
 /// all statistics related to a given subnet or all statistics related to a
 /// given network interface.
 struct StatContext {
- public:
+public:
 
     /// @brief attempts to get an observation
     /// @param name name of the statistic
@@ -45,14 +46,23 @@ struct StatContext {
     /// @return true if successful, false if no such statistic was found
     bool del(const std::string& name);
 
+    size_t size();
+
+    void clear();
+
+    void reset();
+
+    void setMaxSampleAgeAll(const StatsDuration& duration);
+
+    void setMaxSampleCountAll(uint32_t max_samples);
+
+    isc::data::ConstElementPtr getAll() const;
+
+private:
     /// @brief Statistics container
-    ///
-    /// It is public to allow various operations that require iterating over
-    /// all elements. In particular, two operations (setting all stats to 0;
-    /// reporting all stats) will take advantage of this. Alternatively, we
-    /// could make it protected and then return a pointer to it, but that
-    /// would defeat the purpose of the hermetization in the first place.
     std::map<std::string, ObservationPtr> stats_;
+
+    mutable std::mutex mutex_;
 };
 
 /// @brief Pointer to the statistics context

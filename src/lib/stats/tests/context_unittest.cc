@@ -24,8 +24,7 @@ TEST(ContextTest, basic) {
     StatContext ctx;
 
     // By default the context does not hold any statistics.
-    EXPECT_EQ(0, ctx.stats_.size());
-    EXPECT_TRUE(ctx.stats_.empty());
+    EXPECT_EQ(0, ctx.size());
 
     // It should be possible to add 'a' statistic
     EXPECT_NO_THROW(ctx.add(a));
@@ -38,8 +37,7 @@ TEST(ContextTest, basic) {
     EXPECT_NO_THROW(ctx.add(c));
 
     // By now we should have 3 statistics recorded
-    EXPECT_EQ(3, ctx.stats_.size());
-    EXPECT_FALSE(ctx.stats_.empty());
+    EXPECT_EQ(3, ctx.size());
 
     // Let's try to retrieve them
     ObservationPtr from_ctx;
