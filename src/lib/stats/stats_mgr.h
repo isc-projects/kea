@@ -12,6 +12,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 #include <sstream>
@@ -223,6 +224,8 @@ class StatsMgr : public boost::noncopyable {
     /// @param name name of the statistic
     /// @return Pointer to the Observation object
     ObservationPtr getObservation(const std::string& name) const;
+
+    ObservationPtr getObservationInternal(const std::string& name) const;
 
     /// @brief Generates statistic name in a given context
     ///
@@ -447,14 +450,13 @@ private:
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void setValueInternal(const std::string& name, DataType value) {
-
         // If we want to log each observation, here would be the best place for it.
-        ObservationPtr stat = getObservation(name);
+        ObservationPtr stat = getObservationInternal(name);
         if (stat) {
             stat->setValue(value);
         } else {
             stat.reset(new Observation(name, value));
-            addObservation(stat);
+            addObservationInternal(stat);
         }
     }
 
@@ -472,14 +474,13 @@ private:
     /// @throw InvalidStatType is statistic exists and has a different type.
     template<typename DataType>
     void addValueInternal(const std::string& name, DataType value) {
-
         // If we want to log each observation, here would be the best place for it.
-        ObservationPtr existing = getObservation(name);
+        ObservationPtr existing = getObservationInternal(name);
         if (!existing) {
             // We tried to add to a non-existing statistic. We can recover from
             // that. Simply add the new incremental value as a new statistic and
             // we're done.
-            setValue(name, value);
+            setValueInternal(name, value);
             return;
         } else {
             // Let's hope it is of correct type. If not, the underlying
@@ -497,6 +498,8 @@ private:
     /// @param stat observation
     void addObservation(const ObservationPtr& stat);
 
+    void addObservationInternal(const ObservationPtr& stat);
+
     /// @private
 
     /// @brief Tries to delete an observation.
@@ -504,6 +507,8 @@ private:
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
     bool deleteObservation(const std::string& name);
+
+    bool deleteObservationInternal(const std::string& name);
 
     /// @brief Utility method that attempts to extract statistic name
     ///
@@ -562,6 +567,9 @@ private:
 
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
+
+    /// @brief Mutex for protecting stats.
+    mutable std::mutex mutex_;
 };
 
 };

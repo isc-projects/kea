@@ -8,6 +8,7 @@
 #define MULTI_THREADING_MGR_H
 
 #include <boost/noncopyable.hpp>
+#include <mutex>
 
 namespace isc {
 namespace util {
@@ -61,6 +62,16 @@ public:
     ///
     /// @param enabled The new mode.
     void setMode(bool enabled);
+
+    template<typename Callable>
+    static void call(std::mutex& lk, const Callable& f) {
+        if (MultiThreadingMgr::instance().getMode()) {
+            std::lock_guard<std::mutex> lock(lk);
+            f();
+        } else {
+            f();
+        }
+    }
 
 protected:
 
