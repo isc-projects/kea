@@ -178,7 +178,7 @@ StatsMgr::removeAll() {
 
 ConstElementPtr
 StatsMgr::get(const string& name) const {
-    isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
+    ElementPtr response = Element::createMap(); // a map
     auto lambda = [&]() {
         ObservationPtr obs = getObservationInternal(name);
         if (obs) {

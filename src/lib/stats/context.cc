@@ -78,7 +78,7 @@ void StatContext::reset() {
 
 ConstElementPtr
 StatContext::getAll() const {
-    ElementPtr map = isc::data::Element::createMap(); // a map
+    ElementPtr map = Element::createMap(); // a map
     auto lambda = [&]() {
         // Let's iterate over all stored statistics...
         for (auto s : stats_) {
