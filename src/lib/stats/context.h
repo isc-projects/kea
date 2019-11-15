@@ -31,7 +31,7 @@ public:
 struct StatContext {
 public:
 
-    /// @brief attempts to get an observation
+    /// @brief Attempts to get an observation
     /// @param name name of the statistic
     /// @return appropriate Observation object (or NULL)
     ObservationPtr get(const std::string& name) const;
@@ -46,22 +46,33 @@ public:
     /// @return true if successful, false if no such statistic was found
     bool del(const std::string& name);
 
+    /// @brief Returns the number of observations
+    /// @return the number of observations
     size_t size();
 
+    /// @brief Removes all observations
     void clear();
 
+    /// @brief Resets all observations
     void reset();
 
-    void setMaxSampleAgeAll(const StatsDuration& duration);
-
+    /// @brief Sets max sample count for all observations
+    /// @param max_samples value to be set for all observations
     void setMaxSampleCountAll(uint32_t max_samples);
 
+    /// @brief Sets duration for all observations
+    /// @param duration value to be set for all observations
+    void setMaxSampleAgeAll(const StatsDuration& duration);
+
+    /// @brief Returns a map with all observations
+    /// @return map with all observations
     isc::data::ConstElementPtr getAll() const;
 
 private:
     /// @brief Statistics container
     std::map<std::string, ObservationPtr> stats_;
 
+    /// @brief Mutex used to protect internal state
     mutable std::mutex mutex_;
 };
 

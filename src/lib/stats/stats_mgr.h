@@ -135,7 +135,6 @@ class StatsMgr : public boost::noncopyable {
     /// approach. For sample count constrained approach, see @ref
     /// setMaxSampleCount() below.
     ///
-    ///
     /// @param name name of the observation
     /// @param duration determines maximum age of samples
     /// @return true if successful, false if there's no such statistic
@@ -151,7 +150,6 @@ class StatsMgr : public boost::noncopyable {
     /// Specifies that statistic name should be stored not as single value, but
     /// rather as a set of values. In this form, at most max_samples will be kept.
     /// When adding max_samples + 1 sample, the oldest sample will be discarded.
-    ///
     ///
     /// @param name name of the observation
     /// @param max_samples how many samples of a given statistic should be kept
@@ -179,6 +177,7 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// This is a convenience function and is equivalent to setValue(name,
     /// neutral_value), where neutral_value is 0, 0.0 or "".
+    ///
     /// @param name name of the statistic to be reset.
     /// @return true if successful, false if there's no such statistic
     bool reset(const std::string& name);
@@ -221,10 +220,18 @@ class StatsMgr : public boost::noncopyable {
     /// @brief Returns an observation.
     ///
     /// Used in testing only. Production code should use @ref get() method.
+    /// Calls @ref getObservationInternal() method in a thread safe context.
+    ///
     /// @param name name of the statistic
     /// @return Pointer to the Observation object
     ObservationPtr getObservation(const std::string& name) const;
 
+    /// @brief Returns an observation in a thread safe context.
+    ///
+    /// Used in testing only. Production code should use @ref get() method.
+    /// Should be called in a thread safe context.
+    /// @param name name of the statistic
+    /// @return Pointer to the Observation object
     ObservationPtr getObservationInternal(const std::string& name) const;
 
     /// @brief Generates statistic name in a given context
@@ -430,13 +437,14 @@ class StatsMgr : public boost::noncopyable {
     /// @}
 
 private:
+    /// @private
 
     /// @brief Private constructor.
     /// StatsMgr is a singleton. It should be accessed using @ref instance
     /// method.
     StatsMgr();
 
-    /// @public
+    /// @private
 
     /// @brief Sets a given statistic to specified value (internal version).
     ///
@@ -460,7 +468,7 @@ private:
         }
     }
 
-    /// @public
+    /// @private
 
     /// @brief Adds specified value to a given statistic (internal version).
     ///
@@ -489,26 +497,49 @@ private:
         }
     }
 
-    /// @public
+    /// @private
 
     /// @brief Adds a new observation.
     ///
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
+    /// Calls @ref addObservationInternal() method in a thread safe context.
+    ///
     /// @param stat observation
     void addObservation(const ObservationPtr& stat);
 
+    /// @private
+
+    /// @brief Adds a new observation in a thread safe context.
+    ///
+    /// That's an utility method used by public @ref setValue() and
+    /// @ref addValue() methods.
+    /// Should be called in a thread safe context.
+    ///
+    /// @param stat observation
     void addObservationInternal(const ObservationPtr& stat);
 
     /// @private
 
     /// @brief Tries to delete an observation.
     ///
+    /// Calls @ref deleteObservationInternal() method in a thread safe context.
+    ///
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
     bool deleteObservation(const std::string& name);
 
+    /// @private
+
+    /// @brief Tries to delete an observation in a thread safe context.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param name of the statistic to be deleted
+    /// @return true if deleted, false if not found
     bool deleteObservationInternal(const std::string& name);
+
+    /// @private
 
     /// @brief Utility method that attempts to extract statistic name
     ///
@@ -525,6 +556,8 @@ private:
     static bool getStatName(const isc::data::ConstElementPtr& params,
                             std::string& name,
                             std::string& reason);
+
+    /// @private
 
     /// @brief Utility method that attempts to extract duration limit for
     /// a given statistic
@@ -545,6 +578,8 @@ private:
     static bool getStatDuration(const isc::data::ConstElementPtr& params,
                                 StatsDuration& duration,
                                 std::string& reason);
+
+    /// @private
 
     /// @brief Utility method that attempts to extract count limit for
     /// a given statistic
@@ -568,7 +603,7 @@ private:
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
 
-    /// @brief Mutex for protecting stats.
+    /// @brief Mutex used to protect internal state
     mutable std::mutex mutex_;
 };
 
