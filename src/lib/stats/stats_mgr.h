@@ -134,15 +134,15 @@ class StatsMgr : public boost::noncopyable {
     /// Samples older than duration will be discarded. This is time-constrained
     /// approach. For sample count constrained approach, see @ref
     /// setMaxSampleCount() below.
-    ///
-    /// @param name name of the observation
-    /// @param duration determines maximum age of samples
-    /// @return true if successful, false if there's no such statistic
     /// Example:
     /// To set a statistic to keep observations for the last 5 minutes, call:
     /// setMaxSampleAge("incoming-packets", time_duration(0, 5, 0, 0));
     /// to revert statistic to a single value, call:
     /// setMaxSampleAge("incoming-packets", time_duration(0, 0, 0, 0));
+    ///
+    /// @param name name of the observation
+    /// @param duration determines maximum age of samples
+    /// @return true if successful, false if there's no such statistic
     bool setMaxSampleAge(const std::string& name, const StatsDuration& duration);
 
     /// @brief Determines how many samples of a given statistic should be kept.
@@ -150,13 +150,13 @@ class StatsMgr : public boost::noncopyable {
     /// Specifies that statistic name should be stored not as single value, but
     /// rather as a set of values. In this form, at most max_samples will be kept.
     /// When adding max_samples + 1 sample, the oldest sample will be discarded.
+    /// Example:
+    /// To set a statistic to keep the last 100 observations, call:
+    /// setMaxSampleCount("incoming-packets", 100);
     ///
     /// @param name name of the observation
     /// @param max_samples how many samples of a given statistic should be kept
     /// @return true if successful, false if there's no such statistic
-    /// Example:
-    /// To set a statistic to keep the last 100 observations, call:
-    /// setMaxSampleCount("incoming-packets", 100);
     bool setMaxSampleCount(const std::string& name, uint32_t max_samples);
 
     /// @brief Set duration limit for all collected statistics.
@@ -230,6 +230,7 @@ class StatsMgr : public boost::noncopyable {
     ///
     /// Used in testing only. Production code should use @ref get() method.
     /// Should be called in a thread safe context.
+    ///
     /// @param name name of the statistic
     /// @return Pointer to the Observation object
     ObservationPtr getObservationInternal(const std::string& name) const;
@@ -440,6 +441,7 @@ private:
     /// @private
 
     /// @brief Private constructor.
+    ///
     /// StatsMgr is a singleton. It should be accessed using @ref instance
     /// method.
     StatsMgr();
