@@ -198,7 +198,7 @@ StatsMgr::getAll() const {
 
 void
 StatsMgr::resetAll() {
-    MultiThreadingMgr::call(mutex_, [&]() {global_->reset();});
+    MultiThreadingMgr::call(mutex_, [&]() {global_->resetAll();});
 }
 
 size_t

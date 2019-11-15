@@ -8,10 +8,12 @@
 
 #include <stats/context.h>
 #include <gtest/gtest.h>
+#include <util/boost_time_utils.h>
 #include <string>
 
 using namespace isc::data;
 using namespace isc::stats;
+using namespace boost::posix_time;
 using namespace std;
 
 // Basic test that checks get, add, del methods
@@ -83,7 +85,7 @@ TEST(ContextTest, basic) {
     EXPECT_EQ(result->str(), expected_result->str());
 
     // Reset all statistics.
-    EXPECT_NO_THROW(ctx.reset());
+    EXPECT_NO_THROW(ctx.resetAll());
 
     EXPECT_NO_THROW(from_ctx = ctx.get("alpha"));
     ASSERT_TRUE(from_ctx);
@@ -94,6 +96,28 @@ TEST(ContextTest, basic) {
     ASSERT_TRUE(from_ctx);
     EXPECT_NE(expected_c, from_ctx->getJSON()->str());
     EXPECT_EQ(0.0, c->getFloat().first);
+
+    // Set sample count for all statistics
+    EXPECT_NO_THROW(ctx.setMaxSampleCountAll(50));
+
+    EXPECT_NO_THROW(from_ctx = ctx.get("alpha"));
+    ASSERT_TRUE(from_ctx);
+    EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50);
+
+    EXPECT_NO_THROW(from_ctx = ctx.get("gamma"));
+    ASSERT_TRUE(from_ctx);
+    EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50);
+
+    // Set sample age for all statistics
+    EXPECT_NO_THROW(ctx.setMaxSampleAgeAll(millisec::time_duration(0, 4, 5, 3)));
+
+    EXPECT_NO_THROW(from_ctx = ctx.get("alpha"));
+    ASSERT_TRUE(from_ctx);
+    EXPECT_EQ(from_ctx->getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
+
+    EXPECT_NO_THROW(from_ctx = ctx.get("gamma"));
+    ASSERT_TRUE(from_ctx);
+    EXPECT_EQ(from_ctx->getMaxSampleAge().second, millisec::time_duration(0, 4, 5, 3));
 
     // Clear all statistics.
     EXPECT_NO_THROW(ctx.clear());

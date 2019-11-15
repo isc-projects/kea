@@ -65,7 +65,7 @@ void StatContext::clear() {
     MultiThreadingMgr::call(mutex_, [&]() {stats_.clear();});
 }
 
-void StatContext::reset() {
+void StatContext::resetAll() {
     auto lambda = [&]() {
         // Let's iterate over all stored statistics...
         for (auto s : stats_) {
@@ -91,24 +91,24 @@ StatContext::getAll() const {
 }
 
 void
-StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
-    auto lambda = [&]() {
-        // Let's iterate over all stored statistics...
-        for (auto s : stats_) {
-            // ... and set duration limit for each statistic.
-            s.second->setMaxSampleAge(duration);
-        }
-    };
-    MultiThreadingMgr::call(mutex_, lambda);
-}
-
-void
 StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     auto lambda = [&]() {
         // Let's iterate over all stored statistics...
         for (auto s : stats_) {
             // ... and set count limit for each statistic.
             s.second->setMaxSampleCount(max_samples);
+        }
+    };
+    MultiThreadingMgr::call(mutex_, lambda);
+}
+
+void
+StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
+    auto lambda = [&]() {
+        // Let's iterate over all stored statistics...
+        for (auto s : stats_) {
+            // ... and set duration limit for each statistic.
+            s.second->setMaxSampleAge(duration);
         }
     };
     MultiThreadingMgr::call(mutex_, lambda);

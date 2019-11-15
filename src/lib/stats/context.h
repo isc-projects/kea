@@ -54,7 +54,7 @@ public:
     void clear();
 
     /// @brief Resets all observations
-    void reset();
+    void resetAll();
 
     /// @brief Sets max sample count for all observations
     /// @param max_samples value to be set for all observations
