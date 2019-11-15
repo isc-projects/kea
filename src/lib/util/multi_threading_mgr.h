@@ -33,14 +33,10 @@ namespace util {
 /// } // end of locked namespace
 ///
 /// void foo() {
-///     if (MultiThreadingMgr::instance().getMode()) {
-///         lock_guard<mutex> lock(mutex_);
-///         locked::foo();
-///     } else {
-///         locked::foo();
-///     }
+///     MultiThreadingMgr::call(mutex_, locked::foo);
 /// }
 /// @endcode
+
 class MultiThreadingMgr : public boost::noncopyable {
 public:
 
@@ -63,10 +59,10 @@ public:
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
-    template<typename Callable>
-    static void call(std::mutex& lk, const Callable& f) {
+    template<typename Lockable, typename Callable>
+    static void call(Lockable& lk, const Callable& f) {
         if (MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lock(lk);
+            std::lock_guard<Lockable> lock(lk);
             f();
         } else {
             f();
