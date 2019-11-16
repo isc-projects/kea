@@ -62,7 +62,7 @@ TEST_F(StatsMgrTest, integerStat) {
                                                   static_cast<int64_t>(1234)));
 
     ObservationPtr alpha;
-    EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
+    EXPECT_NO_THROW(alpha = StatsMgr::instance().testGetObservation("alpha"));
     ASSERT_TRUE(alpha);
 
     std::string exp = "{ \"alpha\": [ [ 1234, \"" +
@@ -77,7 +77,7 @@ TEST_F(StatsMgrTest, floatStat) {
     EXPECT_NO_THROW(StatsMgr::instance().setValue("beta", 12.34));
 
     ObservationPtr beta;
-    EXPECT_NO_THROW(beta = StatsMgr::instance().getObservation("beta"));
+    EXPECT_NO_THROW(beta = StatsMgr::instance().testGetObservation("beta"));
     ASSERT_TRUE(beta);
 
     std::string exp = "{ \"beta\": [ [ 12.34, \"" +
@@ -93,7 +93,7 @@ TEST_F(StatsMgrTest, durationStat) {
                                                   microsec::time_duration(1, 2, 3, 4)));
 
     ObservationPtr gamma;
-    EXPECT_NO_THROW(gamma = StatsMgr::instance().getObservation("gamma"));
+    EXPECT_NO_THROW(gamma = StatsMgr::instance().testGetObservation("gamma"));
     ASSERT_TRUE(gamma);
 
     std::string exp = "{ \"gamma\": [ [ \"01:02:03.000004\", \"" +
@@ -109,7 +109,7 @@ TEST_F(StatsMgrTest, stringStat) {
                                                   "Lorem ipsum"));
 
     ObservationPtr delta;
-    EXPECT_NO_THROW(delta = StatsMgr::instance().getObservation("delta"));
+    EXPECT_NO_THROW(delta = StatsMgr::instance().testGetObservation("delta"));
     ASSERT_TRUE(delta);
 
     std::string exp = "{ \"delta\": [ [ \"Lorem ipsum\", \"" +
@@ -174,45 +174,45 @@ TEST_F(StatsMgrTest, setLimitsAll) {
     EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleAgeAll(time_duration(0, 0, 1, 0)));
 
     // check if time limit was set properly and whether count limit is disabled
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().second,
               time_duration(0, 0, 1, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleAge().second,
               time_duration(0, 0, 1, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleCount().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleAge().second,
               time_duration(0, 0, 1, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleCount().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleAge().second,
               time_duration(0, 0, 1, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleCount().first, false);
 
     // check the setting of count limit to existing statistics
     EXPECT_NO_THROW(StatsMgr::instance().setMaxSampleCountAll(1200));
 
     // check if count limit was set properly and whether count limit is disabled
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().second, 1200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().second, 1200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().second, 1200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleCount().second, 1200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleAge().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().second, 1200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleCount().second, 1200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleAge().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().second, 1200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleCount().second, 1200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleAge().first, false);
 }
 
 // This test checks whether a single (get("foo")) and all (getAll())
@@ -226,16 +226,16 @@ TEST_F(StatsMgrTest, getGetAll) {
 
     // The string's representation of firstly added statistics
     std::string alpha_first = ", [ 1234, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
     std::string beta_first = ", [ 12.34, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
     std::string gamma_first = ", [ \"01:02:03.000004\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
     std::string delta_first = ", [ \"Lorem\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Now add some values to them
@@ -259,16 +259,16 @@ TEST_F(StatsMgrTest, getGetAll) {
     ASSERT_TRUE(rep_delta);
 
     std::string exp_str_alpha = "[ [ 6912, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("alpha")
                                    ->getInteger().second) + "\" ]" + alpha_first;
     std::string exp_str_beta = "[ [ 69.12, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("beta")
                                    ->getFloat().second) + "\" ]" + beta_first;
     std::string exp_str_gamma = "[ [ \"06:08:10.000012\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("gamma")
                                    ->getDuration().second) + "\" ]" + gamma_first;
     std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("delta")
                                    ->getString().second) + "\" ]" + delta_first;
 
     // Check that individual stats are reported properly
@@ -310,26 +310,26 @@ TEST_F(StatsMgrTest, reset) {
     // This should reset alpha to 0
     EXPECT_NO_THROW(StatsMgr::instance().reset("alpha"));
     EXPECT_EQ(0,
-              StatsMgr::instance().getObservation("alpha")->getInteger().first);
+              StatsMgr::instance().testGetObservation("alpha")->getInteger().first);
 
     // The other stats should remain untouched
     EXPECT_EQ(12.34,
-              StatsMgr::instance().getObservation("beta")->getFloat().first);
+              StatsMgr::instance().testGetObservation("beta")->getFloat().first);
     EXPECT_EQ(time_duration(1, 2, 3, 4),
-              StatsMgr::instance().getObservation("gamma")->getDuration().first);
+              StatsMgr::instance().testGetObservation("gamma")->getDuration().first);
     EXPECT_EQ("Lorem ipsum",
-              StatsMgr::instance().getObservation("delta")->getString().first);
+              StatsMgr::instance().testGetObservation("delta")->getString().first);
 
     // Now let's wipe them, too.
     EXPECT_NO_THROW(StatsMgr::instance().reset("beta"));
     EXPECT_NO_THROW(StatsMgr::instance().reset("gamma"));
     EXPECT_NO_THROW(StatsMgr::instance().reset("delta"));
     EXPECT_EQ(0.0,
-              StatsMgr::instance().getObservation("beta")->getFloat().first);
+              StatsMgr::instance().testGetObservation("beta")->getFloat().first);
     EXPECT_EQ(time_duration(0, 0, 0, 0),
-              StatsMgr::instance().getObservation("gamma")->getDuration().first);
+              StatsMgr::instance().testGetObservation("gamma")->getDuration().first);
     EXPECT_EQ("",
-              StatsMgr::instance().getObservation("delta")->getString().first);
+              StatsMgr::instance().testGetObservation("delta")->getString().first);
 
     // Resetting statistics should not remove them
     EXPECT_EQ(4, StatsMgr::instance().count());
@@ -346,13 +346,13 @@ TEST_F(StatsMgrTest, resetAll) {
     // This should reset alpha to 0
     EXPECT_NO_THROW(StatsMgr::instance().resetAll());
     EXPECT_EQ(0,
-              StatsMgr::instance().getObservation("alpha")->getInteger().first);
+              StatsMgr::instance().testGetObservation("alpha")->getInteger().first);
     EXPECT_EQ(0.0,
-              StatsMgr::instance().getObservation("beta")->getFloat().first);
+              StatsMgr::instance().testGetObservation("beta")->getFloat().first);
     EXPECT_EQ(time_duration(0, 0, 0, 0),
-              StatsMgr::instance().getObservation("gamma")->getDuration().first);
+              StatsMgr::instance().testGetObservation("gamma")->getDuration().first);
     EXPECT_EQ("",
-              StatsMgr::instance().getObservation("delta")->getString().first);
+              StatsMgr::instance().testGetObservation("delta")->getString().first);
 
     // Resetting all statistics should not remove them
     EXPECT_EQ(4, StatsMgr::instance().count());
@@ -379,10 +379,10 @@ TEST_F(StatsMgrTest, removeAll) {
     EXPECT_EQ("{  }", StatsMgr::instance().get("delta")->str());
 
     // There should be no such statistics anymore
-    EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
-    EXPECT_FALSE(StatsMgr::instance().getObservation("beta"));
-    EXPECT_FALSE(StatsMgr::instance().getObservation("gamma"));
-    EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("alpha"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("beta"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("gamma"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("delta"));
 }
 
 // This is a performance benchmark that checks how long does it take
@@ -516,7 +516,7 @@ TEST_F(StatsMgrTest, commandStatisticGet) {
                                                                    params);
 
     ObservationPtr alpha;
-    EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
+    EXPECT_NO_THROW(alpha = StatsMgr::instance().testGetObservation("alpha"));
     ASSERT_TRUE(alpha);
 
     std::string exp = "{ \"alpha\": [ [ 1234, \"" +
@@ -570,16 +570,16 @@ TEST_F(StatsMgrTest, commandGetAll) {
     ASSERT_TRUE(rep_delta);
 
     std::string exp_str_alpha = "[ [ 1234, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
     std::string exp_str_beta = "[ [ 12.34, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
     std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
     std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Check that all of them can be reported at once
@@ -620,7 +620,7 @@ TEST_F(StatsMgrTest, commandStatisticReset) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     ObservationPtr alpha;
-    EXPECT_NO_THROW(alpha = StatsMgr::instance().getObservation("alpha"));
+    EXPECT_NO_THROW(alpha = StatsMgr::instance().testGetObservation("alpha"));
     ASSERT_TRUE(alpha);
 
     // Check that it was indeed reset
@@ -673,16 +673,16 @@ TEST_F(StatsMgrTest, commandResetAll) {
     ASSERT_TRUE(rep_delta);
 
     std::string exp_str_alpha = "[ [ 1234, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("alpha")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("alpha")
                                    ->getInteger().second) + "\" ] ]";
     std::string exp_str_beta = "[ [ 12.34, \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("beta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("beta")
                                    ->getFloat().second) + "\" ] ]";
     std::string exp_str_gamma = "[ [ \"01:02:03.000004\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("gamma")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("gamma")
                                    ->getDuration().second) + "\" ] ]";
     std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
-        isc::util::ptimeToText(StatsMgr::instance().getObservation("delta")
+        isc::util::ptimeToText(StatsMgr::instance().testGetObservation("delta")
                                    ->getString().second) + "\" ] ]";
 
     // Check that all of them can be reset at once
@@ -696,13 +696,13 @@ TEST_F(StatsMgrTest, commandResetAll) {
 
     // Check that they're indeed reset
     EXPECT_EQ(0,
-              StatsMgr::instance().getObservation("alpha")->getInteger().first);
+              StatsMgr::instance().testGetObservation("alpha")->getInteger().first);
     EXPECT_EQ(0.0f,
-              StatsMgr::instance().getObservation("beta")->getFloat().first);
+              StatsMgr::instance().testGetObservation("beta")->getFloat().first);
     EXPECT_EQ(time_duration(0, 0, 0, 0),
-              StatsMgr::instance().getObservation("gamma")->getDuration().first);
+              StatsMgr::instance().testGetObservation("gamma")->getDuration().first);
     EXPECT_EQ("",
-              StatsMgr::instance().getObservation("delta")->getString().first);
+              StatsMgr::instance().testGetObservation("delta")->getString().first);
 }
 
 // Test checks if statistic-remove handler is able to remove a statistic.
@@ -719,7 +719,7 @@ TEST_F(StatsMgrTest, commandStatisticRemove) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     // It should be gone.
-    EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("alpha"));
     EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
@@ -765,10 +765,10 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
     ASSERT_EQ(0, status_code);
 
-    EXPECT_FALSE(StatsMgr::instance().getObservation("alpha"));
-    EXPECT_FALSE(StatsMgr::instance().getObservation("beta"));
-    EXPECT_FALSE(StatsMgr::instance().getObservation("gamma"));
-    EXPECT_FALSE(StatsMgr::instance().getObservation("delta"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("alpha"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("beta"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("gamma"));
+    EXPECT_FALSE(StatsMgr::instance().testGetObservation("delta"));
     EXPECT_EQ(0, StatsMgr::instance().count());
 }
 
@@ -788,10 +788,10 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAge) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     // check if time limit was set properly and whether count limit is disabled
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().second,
               time_duration(0, 20, 45, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().first, false);
 }
 
 // Test checks if statistic-sample-age-set is able to handle:
@@ -845,25 +845,25 @@ TEST_F(StatsMgrTest, commandSetMaxSampleAgeAll) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     // check if time limit was set properly and whether count limit is disabled
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().second,
               time_duration(1, 2, 45, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleAge().second,
               time_duration(1, 2, 45, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleCount().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleAge().second,
               time_duration(1, 2, 45, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleCount().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().second,
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleAge().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleAge().second,
               time_duration(1, 2, 45, 0));
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleCount().first, false);
 }
 
 // This test checks whether statistic-sample-count-set command really set
@@ -882,9 +882,9 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCount) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     // check if time limit was set properly and whether duration limit is disabled
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().second, 15);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().second, 15);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().first, false);
 }
 
 // Test checks if statistic-sample-count-set is able to handle:
@@ -938,21 +938,21 @@ TEST_F(StatsMgrTest, commandSetMaxSampleCountAll) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
 
     // check if count limit was set properly and whether count limit is disabled
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleCount().second, 200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("alpha")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleCount().second, 200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("alpha")->getMaxSampleAge().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleCount().second, 200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("beta")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleCount().second, 200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("beta")->getMaxSampleAge().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleCount().second, 200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("gamma")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleCount().second, 200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("gamma")->getMaxSampleAge().first, false);
 
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().first, true);
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleCount().second, 200);
-    EXPECT_EQ(StatsMgr::instance().getObservation("delta")->getMaxSampleAge().first, false);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleCount().first, true);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleCount().second, 200);
+    EXPECT_EQ(StatsMgr::instance().testGetObservation("delta")->getMaxSampleAge().first, false);
 }
 
 };

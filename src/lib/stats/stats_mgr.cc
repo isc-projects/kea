@@ -11,11 +11,13 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <util/boost_time_utils.h>
+#include <util/multi_threading_mgr.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace stats {
@@ -31,40 +33,89 @@ StatsMgr::StatsMgr() :
 }
 
 void StatsMgr::setValue(const std::string& name, const int64_t value) {
-    setValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        setValueInternal(name, value);
+    } else {
+        setValueInternal(name, value);
+    }
 }
 
 void StatsMgr::setValue(const std::string& name, const double value) {
-    setValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        setValueInternal(name, value);
+    } else {
+        setValueInternal(name, value);
+    }
 }
 
 void StatsMgr::setValue(const std::string& name, const StatsDuration& value) {
-    setValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        setValueInternal(name, value);
+    } else {
+        setValueInternal(name, value);
+    }
 }
 void StatsMgr::setValue(const std::string& name, const std::string& value) {
-    setValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        setValueInternal(name, value);
+    } else {
+        setValueInternal(name, value);
+    }
 }
 
 void StatsMgr::addValue(const std::string& name, const int64_t value) {
-    addValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        addValueInternal(name, value);
+    } else {
+        addValueInternal(name, value);
+    }
 }
 
 void StatsMgr::addValue(const std::string& name, const double value) {
-    addValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        addValueInternal(name, value);
+    } else {
+        addValueInternal(name, value);
+    }
 }
 
 void StatsMgr::addValue(const std::string& name, const StatsDuration& value) {
-    addValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        addValueInternal(name, value);
+    } else {
+        addValueInternal(name, value);
+    }
 }
 
 void StatsMgr::addValue(const std::string& name, const std::string& value) {
-    addValueInternal(name, value);
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        addValueInternal(name, value);
+    } else {
+        addValueInternal(name, value);
+    }
 }
 
 ObservationPtr StatsMgr::getObservation(const std::string& name) const {
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
     return (global_->get(name));
+}
+
+ObservationPtr StatsMgr::testGetObservation(const std::string& name) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (getObservation(name));
+    } else {
+        return (getObservation(name));
+    }
 }
 
 void StatsMgr::addObservation(const ObservationPtr& stat) {
@@ -79,8 +130,8 @@ bool StatsMgr::deleteObservation(const std::string& name) {
     return (global_->del(name));
 }
 
-bool StatsMgr::setMaxSampleAge(const std::string& name,
-                               const StatsDuration& duration) {
+bool StatsMgr::setMaxSampleAgeInternal(const std::string& name,
+                                       const StatsDuration& duration) {
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->setMaxSampleAge(duration);
@@ -90,8 +141,18 @@ bool StatsMgr::setMaxSampleAge(const std::string& name,
     }
 }
 
-bool StatsMgr::setMaxSampleCount(const std::string& name,
-                                 uint32_t max_samples) {
+bool StatsMgr::setMaxSampleAge(const std::string& name,
+                               const StatsDuration& duration) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (setMaxSampleAgeInternal(name, duration));
+    } else {
+        return (setMaxSampleAgeInternal(name, duration));
+    }
+}
+
+bool StatsMgr::setMaxSampleCountInternal(const std::string& name,
+                                         uint32_t max_samples) {
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->setMaxSampleCount(max_samples);
@@ -101,7 +162,17 @@ bool StatsMgr::setMaxSampleCount(const std::string& name,
     }
 }
 
-void StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
+bool StatsMgr::setMaxSampleCount(const std::string& name,
+                                 uint32_t max_samples) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (setMaxSampleCountInternal(name, max_samples));
+    } else {
+        return (setMaxSampleCountInternal(name, max_samples));
+    }
+}
+
+void StatsMgr::setMaxSampleAgeAllInternal(const StatsDuration& duration) {
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
          s != global_->stats_.end(); ++s) {
@@ -111,7 +182,16 @@ void StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
     }
 }
 
-void StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
+void StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (setMaxSampleAgeAllInternal(duration));
+    } else {
+        return (setMaxSampleAgeAllInternal(duration));
+    }
+}
+
+void StatsMgr::setMaxSampleCountAllInternal(uint32_t max_samples) {
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
          s != global_->stats_.end(); ++s) {
@@ -121,7 +201,16 @@ void StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
     }
 }
 
-bool StatsMgr::reset(const std::string& name) {
+void StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (setMaxSampleCountAllInternal(max_samples));
+    } else {
+        return (setMaxSampleCountAllInternal(max_samples));
+    }
+}
+
+bool StatsMgr::resetInternal(const std::string& name) {
     ObservationPtr obs = getObservation(name);
     if (obs) {
         obs->reset();
@@ -131,37 +220,74 @@ bool StatsMgr::reset(const std::string& name) {
     }
 }
 
+bool StatsMgr::reset(const std::string& name) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (resetInternal(name));
+    } else {
+        return (resetInternal(name));
+    }
+}
+
 bool StatsMgr::del(const std::string& name) {
-    return (global_->del(name));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (global_->del(name));
+    } else {
+        return (global_->del(name));
+    }
 }
 
 void StatsMgr::removeAll() {
-    global_->stats_.clear();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        global_->stats_.clear();
+    } else {
+        global_->stats_.clear();
+    }
 }
 
-isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
-    isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
+void StatsMgr::getInternal(const std::string& name,
+                           ElementPtr& response) const {
     ObservationPtr obs = getObservation(name);
     if (obs) {
         response->set(name, obs->getJSON()); // that contains observations
     }
+}
+
+isc::data::ConstElementPtr StatsMgr::get(const std::string& name) const {
+    isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        getInternal(name, response);
+    } else {
+        getInternal(name, response);
+    }
     return (response);
 }
 
-isc::data::ConstElementPtr StatsMgr::getAll() const {
-    isc::data::ElementPtr map = isc::data::Element::createMap(); // a map
-
+void StatsMgr::getAllInternal(ElementPtr& response) const {
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
          s != global_->stats_.end(); ++s) {
 
         // ... and add each of them to the map.
-        map->set(s->first, s->second->getJSON());
+        response->set(s->first, s->second->getJSON());
     }
-    return (map);
 }
 
-void StatsMgr::resetAll() {
+isc::data::ConstElementPtr StatsMgr::getAll() const {
+    isc::data::ElementPtr response = isc::data::Element::createMap(); // a map
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        getAllInternal(response);
+    } else {
+        getAllInternal(response);
+    }
+    return (response);
+}
+
+void StatsMgr::resetAllInternal() {
     // Let's iterate over all stored statistics...
     for (std::map<std::string, ObservationPtr>::iterator s = global_->stats_.begin();
          s != global_->stats_.end(); ++s) {
@@ -171,7 +297,16 @@ void StatsMgr::resetAll() {
     }
 }
 
-size_t StatsMgr::getSize(const std::string& name) const {
+void StatsMgr::resetAll() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        resetAllInternal();
+    } else {
+        resetAllInternal();
+    }
+}
+
+size_t StatsMgr::getSizeInternal(const std::string& name) const {
     ObservationPtr obs = getObservation(name);
     size_t size = 0;
     if (obs) {
@@ -180,8 +315,22 @@ size_t StatsMgr::getSize(const std::string& name) const {
     return (size);
 }
 
+size_t StatsMgr::getSize(const std::string& name) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (getSizeInternal(name));
+    } else {
+        return (getSizeInternal(name));
+    }
+}
+
 size_t StatsMgr::count() const {
-    return (global_->stats_.size());
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(global_->mutex_);
+        return (global_->stats_.size());
+    } else {
+        return (global_->stats_.size());
+    }
 }
 
 isc::data::ConstElementPtr

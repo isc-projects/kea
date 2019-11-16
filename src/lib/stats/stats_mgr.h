@@ -140,7 +140,7 @@ class StatsMgr : public boost::noncopyable {
     /// @return true if successful, false if there's no such statistic
     /// Example:
     /// To set a statistic to keep observations for the last 5 minutes, call:
-    /// setMaxSampleAge("incoming-packets", time_duration(0, 5, 0, 0));
+    /// setMaxSampleAge~("incoming-packets", time_duration(0, 5, 0, 0));
     /// to revert statistic to a single value, call:
     /// setMaxSampleAge("incoming-packets", time_duration(0, 0, 0, 0));
     bool setMaxSampleAge(const std::string& name, const StatsDuration& duration);
@@ -161,9 +161,13 @@ class StatsMgr : public boost::noncopyable {
     bool setMaxSampleCount(const std::string& name, uint32_t max_samples);
 
     /// @brief Set duration limit for all collected statistics.
+    ///
+    /// @param duration determines maximum age of samples
     void setMaxSampleAgeAll(const StatsDuration& duration);
 
     /// @brief Set count limit for all collected statistics.
+    ///
+    /// @param max_samples how many samples of a given statistic should be kept
     void setMaxSampleCountAll(uint32_t max_samples);
 
     /// @}
@@ -216,13 +220,6 @@ class StatsMgr : public boost::noncopyable {
     isc::data::ConstElementPtr getAll() const;
 
     /// @}
-
-    /// @brief Returns an observation.
-    ///
-    /// Used in testing only. Production code should use @ref get() method.
-    /// @param name name of the statistic
-    /// @return Pointer to the Observation object
-    ObservationPtr getObservation(const std::string& name) const;
 
     /// @brief Generates statistic name in a given context
     ///
@@ -426,6 +423,11 @@ class StatsMgr : public boost::noncopyable {
 
     /// @}
 
+    /// @brief Returns an observation (test only).
+    ///
+    /// Used in testing only. Production code should use @ref get() method.
+    ObservationPtr testGetObservation(const std::string& name) const;
+
 private:
 
     /// @brief Private constructor.
@@ -440,6 +442,8 @@ private:
     /// This template method sets statistic identified by name to a value
     /// specified by value. This internal method is used by public @ref setValue
     /// methods.
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
     ///
     /// @tparam DataType one of int64_t, double, StatsDuration or string
     /// @param name name of the statistic
@@ -466,6 +470,8 @@ private:
     /// by name to a value). This internal method is used by public @ref setValue
     /// methods.
     ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
     /// @tparam DataType one of int64_t, double, StatsDuration or string
     /// @param name name of the statistic
     /// @param value specified statistic will be set to this value
@@ -490,7 +496,19 @@ private:
 
     /// @public
 
+    /// @brief Returns an observation.
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param name name of the statistic
+    /// @return Pointer to the Observation object
+    ObservationPtr getObservation(const std::string& name) const;
+
+    /// @public
+
     /// @brief Adds a new observation.
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
     ///
     /// That's an utility method used by public @ref setValue() and
     /// @ref addValue() methods.
@@ -500,6 +518,8 @@ private:
     /// @private
 
     /// @brief Tries to delete an observation.
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
     ///
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
@@ -559,6 +579,89 @@ private:
     static bool getStatMaxSamples(const isc::data::ConstElementPtr& params,
                                   uint32_t& max_samples,
                                   std::string& reason);
+
+    /// @brief Determines maximum age of samples (internal version).
+    ///
+    /// Specifies that statistic name should be stored not as a single value,
+    /// but rather as a set of values. duration determines the timespan.
+    /// Samples older than duration will be discarded. This is time-constrained
+    /// approach. For sample count constrained approach, see @ref
+    /// setMaxSampleCount() below.
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param name name of the observation
+    /// @param duration determines maximum age of samples
+    /// @return true if successful, false if there's no such statistic
+    bool setMaxSampleAgeInternal(const std::string& name,
+                                 const StatsDuration& duration);
+
+    /// @brief Determines how many samples of a given statistic should be kept
+    /// (internal version).
+    ///
+    /// Specifies that statistic name should be stored not as single value, but
+    /// rather as a set of values. In this form, at most max_samples will be kept.
+    /// When adding max_samples + 1 sample, the oldest sample will be discarded.
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param name name of the observation
+    /// @param max_samples how many samples of a given statistic should be kept
+    /// @return true if successful, false if there's no such statistic
+    bool setMaxSampleCountInternal(const std::string& name,
+                                   uint32_t max_samples);
+
+    /// @brief Set duration limit for all collected statistics (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param duration determines maximum age of samples
+    void setMaxSampleAgeAllInternal(const StatsDuration& duration);
+
+    /// @brief Set count limit for all collected statistics (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param max_samples how many samples of a given statistic should be kept
+    void setMaxSampleCountAllInternal(uint32_t max_samples);
+
+    /// @brief Resets specified statistic (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param name name of the statistic to be reset.
+    /// @return true if successful, false if there's no such statistic
+    bool resetInternal(const std::string& name);
+
+    /// @brief Resets all collected statistics back to zero (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    void resetAllInternal();
+
+    /// @brief Returns size of specified statistic (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param name name of the statistic which size should be return.
+    /// @return size of specified statistic, 0 means lack of given statistic.
+    size_t getSizeInternal(const std::string& name) const;
+
+    /// @brief Returns a single statistic as a JSON structure (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param name name of the statistic to get.
+    /// @param response JSON structures representing a single statistic
+    void getInternal(const std::string& name,
+                     isc::data::ElementPtr& response) const;
+
+    /// @brief Returns all statistics as a JSON structure (internal version).
+    ///
+    /// Called with the mutex held when multi-threading is enabled.
+    ///
+    /// @param response JSON structures representing allstatistics
+    void getAllInternal(isc::data::ElementPtr& response) const;
 
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;

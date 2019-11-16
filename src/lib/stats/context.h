@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <stats/observation.h>
 #include <boost/shared_ptr.hpp>
+#include <mutex>
 #include <string>
 
 namespace isc {
@@ -27,6 +28,9 @@ public:
 /// related to a given context together. Two examples of such contexts are
 /// all statistics related to a given subnet or all statistics related to a
 /// given network interface.
+///
+/// When multi-threading is enabled the mutex must be held for any use of
+/// a method or the stats_ map.
 struct StatContext {
  public:
 
@@ -53,6 +57,11 @@ struct StatContext {
     /// could make it protected and then return a pointer to it, but that
     /// would defeat the purpose of the hermetization in the first place.
     std::map<std::string, ObservationPtr> stats_;
+
+    /// @brief The mutex to protect concurrent access when multi-threading
+    /// is enabled.
+    std::mutex mutex_;
+
 };
 
 /// @brief Pointer to the statistics context
