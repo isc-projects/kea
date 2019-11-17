@@ -60,7 +60,7 @@ namespace stats {
 /// for adding logging have been marked in @ref addValueInternal and
 /// @ref setValueInternal.
 class StatsMgr : public boost::noncopyable {
- public:
+public:
 
     /// @brief Statistics Manager accessor method.
     static StatsMgr& instance();
@@ -442,6 +442,7 @@ class StatsMgr : public boost::noncopyable {
     /// @}
 
 private:
+
     /// @private
 
     /// @brief Private constructor.

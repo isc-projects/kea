@@ -60,7 +60,7 @@ public:
     void setMode(bool enabled);
 
     template<typename Callable, typename Lockable>
-    static auto call(Lockable& lk, const Callable& f) -> decltype(f()) {
+    static auto call(Lockable& lk, const Callable& f) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<Lockable> lock(lk);
             return f();
