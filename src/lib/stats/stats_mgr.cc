@@ -74,9 +74,8 @@ StatsMgr::addValue(const string& name, const string& value) {
 
 ObservationPtr
 StatsMgr::getObservation(const string& name) const {
-    ObservationPtr result;
-    MultiThreadingMgr::call(mutex_, [&]() {result = getObservationInternal(name);});
-    return (result);
+    return (MultiThreadingMgr::call(mutex_,
+        [&]() {return getObservationInternal(name);}));
 }
 
 ObservationPtr
@@ -95,14 +94,13 @@ void
 StatsMgr::addObservationInternal(const ObservationPtr& stat) {
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
-    return (global_->add(stat));
+    global_->add(stat);
 }
 
 bool
 StatsMgr::deleteObservation(const string& name) {
-    bool result;
-    MultiThreadingMgr::call(mutex_, [&]() {result = deleteObservationInternal(name);});
-    return (result);
+    return (MultiThreadingMgr::call(mutex_,
+        [&]() {return deleteObservationInternal(name);}));
 }
 
 bool
@@ -114,111 +112,150 @@ StatsMgr::deleteObservationInternal(const string& name) {
 
 bool
 StatsMgr::setMaxSampleAge(const string& name, const StatsDuration& duration) {
-    bool result = false;
-    auto lambda = [&]() {
-        ObservationPtr obs = getObservationInternal(name);
-        if (obs) {
-            obs->setMaxSampleAge(duration);
-            result = true;
-        }
-    };
-    MultiThreadingMgr::call(mutex_, lambda);
-    return (result);
+    return (MultiThreadingMgr::call(mutex_,
+        [&]() {return setMaxSampleAgeInternal(name, duration);}));
+}
+
+bool
+StatsMgr::setMaxSampleAgeInternal(const string& name,
+                                  const StatsDuration& duration) {
+    ObservationPtr obs = getObservationInternal(name);
+    if (obs) {
+        obs->setMaxSampleAge(duration);
+        return (true);
+    }
+    return (false);
 }
 
 bool
 StatsMgr::setMaxSampleCount(const string& name, uint32_t max_samples) {
-    bool result = false;
-    auto lambda = [&]() {
-        ObservationPtr obs = getObservationInternal(name);
-        if (obs) {
-            obs->setMaxSampleCount(max_samples);
-            result = true;
-        }
-    };
-    MultiThreadingMgr::call(mutex_, lambda);
-    return (result);
+    return (MultiThreadingMgr::call(mutex_,
+        [&]() {return setMaxSampleCountInternal(name, max_samples);}));
+}
+
+bool
+StatsMgr::setMaxSampleCountInternal(const string& name,
+                                    uint32_t max_samples) {
+    ObservationPtr obs = getObservationInternal(name);
+    if (obs) {
+        obs->setMaxSampleCount(max_samples);
+        return (true);
+    }
+    return (false);
 }
 
 void
 StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
-    MultiThreadingMgr::call(mutex_, [&]() {global_->setMaxSampleAgeAll(duration);});
+    MultiThreadingMgr::call(mutex_, [&]() {setMaxSampleAgeAllInternal(duration);});
+}
+
+void
+StatsMgr::setMaxSampleAgeAllInternal(const StatsDuration& duration) {
+    global_->setMaxSampleAgeAll(duration);
 }
 
 void
 StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
-    MultiThreadingMgr::call(mutex_, [&]() {global_->setMaxSampleCountAll(max_samples);});
+    MultiThreadingMgr::call(mutex_, [&]() {setMaxSampleCountAllInternal(max_samples);});
+}
+
+void
+StatsMgr::setMaxSampleCountAllInternal(uint32_t max_samples) {
+    global_->setMaxSampleCountAll(max_samples);
 }
 
 bool
 StatsMgr::reset(const string& name) {
-    bool result = false;
-    auto lambda = [&]() {
-        ObservationPtr obs = getObservationInternal(name);
-        if (obs) {
-            obs->reset();
-            result = true;
-        }
-    };
-    MultiThreadingMgr::call(mutex_, lambda);
-    return (result);
+    return MultiThreadingMgr::call(mutex_, [&]() {return resetInternal(name);});
+}
+
+bool
+StatsMgr::resetInternal(const string& name) {
+    ObservationPtr obs = getObservationInternal(name);
+    if (obs) {
+        obs->reset();
+        return (true);
+    }
+    return (false);
 }
 
 bool
 StatsMgr::del(const string& name) {
-    bool result;
-    MultiThreadingMgr::call(mutex_, [&]() {result = global_->del(name);});
-    return (result);
+    return (MultiThreadingMgr::call(mutex_, [&]() {return delInternal(name);}));
+}
+
+bool
+StatsMgr::delInternal(const string& name) {
+    return (global_->del(name));
 }
 
 void
 StatsMgr::removeAll() {
-    MultiThreadingMgr::call(mutex_, [&]() {global_->clear();});
+    MultiThreadingMgr::call(mutex_, [&]() {removeAllInternal();});
+}
+
+void
+StatsMgr::removeAllInternal() {
+    global_->clear();
 }
 
 ConstElementPtr
 StatsMgr::get(const string& name) const {
-    ElementPtr response = Element::createMap(); // a map
-    auto lambda = [&]() {
-        ObservationPtr obs = getObservationInternal(name);
-        if (obs) {
-            response->set(name, obs->getJSON()); // that contains observations
-        }
-    };
-    MultiThreadingMgr::call(mutex_, lambda);
-    return (response);
+    return (MultiThreadingMgr::call(mutex_, [&]() {return getInternal(name);}));
+}
+
+ConstElementPtr
+StatsMgr::getInternal(const string& name) const {
+    ElementPtr map = Element::createMap(); // a map
+    ObservationPtr obs = getObservationInternal(name);
+    if (obs) {
+        map->set(name, obs->getJSON()); // that contains observations
+    }
+    return (map);
 }
 
 ConstElementPtr
 StatsMgr::getAll() const {
-    ConstElementPtr result;
-    MultiThreadingMgr::call(mutex_, [&]() {result = global_->getAll();});
-    return (result);
+    return (MultiThreadingMgr::call(mutex_, [&]() {return getAllInternal();}));
+}
+
+ConstElementPtr
+StatsMgr::getAllInternal() const {
+    return (global_->getAll());
 }
 
 void
 StatsMgr::resetAll() {
-    MultiThreadingMgr::call(mutex_, [&]() {global_->resetAll();});
+    MultiThreadingMgr::call(mutex_, [&]() {resetAllInternal();});
+}
+
+void
+StatsMgr::resetAllInternal() {
+    global_->resetAll();
 }
 
 size_t
 StatsMgr::getSize(const string& name) const {
-    size_t size = 0;
-    auto lambda = [&]() {
-        ObservationPtr obs = getObservationInternal(name);
-        if (obs) {
-            size = obs->getSize();
-        }
-    };
-    MultiThreadingMgr::call(mutex_, lambda);
-    return (size);
+    return (MultiThreadingMgr::call(mutex_, [&]() {return getSizeInternal(name);}));
+}
+
+size_t
+StatsMgr::getSizeInternal(const string& name) const {
+    ObservationPtr obs = getObservationInternal(name);
+    if (obs) {
+        return (obs->getSize());
+    }
+    return (0);
 }
 
 size_t
 StatsMgr::count() const {
-    size_t result;
-    MultiThreadingMgr::call(mutex_, [&]() {result = global_->size();});
-    return (result);
+    return (MultiThreadingMgr::call(mutex_, [&]() {return countInternal();}));
+}
+
+size_t
+StatsMgr::countInternal() const {
+    return (global_->size());
 }
 
 ConstElementPtr
