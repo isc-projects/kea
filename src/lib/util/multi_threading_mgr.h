@@ -29,11 +29,11 @@ namespace util {
 /// For instance for a class protected by its mutex:
 /// @code
 /// namespace locked {
-///     void foo() { ... }
+///     int foo() { ... }
 /// } // end of locked namespace
 ///
-/// void foo() {
-///     MultiThreadingMgr::call(mutex_, locked::foo);
+/// int foo() {
+///     return MultiThreadingMgr::call(mutex_, []() {return locked::foo()});
 /// }
 /// @endcode
 
@@ -59,13 +59,13 @@ public:
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
-    template<typename Lockable, typename Callable>
-    static void call(Lockable& lk, const Callable& f) {
+    template<typename Callable, typename Lockable>
+    static auto call(Lockable& lk, const Callable& f) -> decltype(f()) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<Lockable> lock(lk);
-            f();
+            return f();
         } else {
-            f();
+            return f();
         }
     }
 

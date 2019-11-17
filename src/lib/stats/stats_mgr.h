@@ -160,9 +160,13 @@ class StatsMgr : public boost::noncopyable {
     bool setMaxSampleCount(const std::string& name, uint32_t max_samples);
 
     /// @brief Set duration limit for all collected statistics.
+    ///
+    /// @param duration determines maximum age of samples
     void setMaxSampleAgeAll(const StatsDuration& duration);
 
     /// @brief Set count limit for all collected statistics.
+    ///
+    /// @param max_samples how many samples of a given statistic should be kept
     void setMaxSampleCountAll(uint32_t max_samples);
 
     /// @}
@@ -540,6 +544,117 @@ private:
     /// @param name of the statistic to be deleted
     /// @return true if deleted, false if not found
     bool deleteObservationInternal(const std::string& name);
+
+    /// @private
+
+    /// @brief Determines maximum age of samples.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param name name of the observation
+    /// @param duration determines maximum age of samples
+    /// @return true if successful, false if there's no such statistic
+    bool setMaxSampleAgeInternal(const std::string& name, const StatsDuration& duration);
+
+    /// @private
+
+    /// @brief Determines how many samples of a given statistic should be kept.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param name name of the observation
+    /// @param max_samples how many samples of a given statistic should be kept
+    /// @return true if successful, false if there's no such statistic
+    bool setMaxSampleCountInternal(const std::string& name, uint32_t max_samples);
+
+    /// @private
+
+    /// @brief Set duration limit for all collected statistics.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param duration determines maximum age of samples
+    void setMaxSampleAgeAllInternal(const StatsDuration& duration);
+
+    /// @private
+
+    /// @brief Set count limit for all collected statistics.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param max_samples how many samples of a given statistic should be kept
+    void setMaxSampleCountAllInternal(uint32_t max_samples);
+
+    /// @private
+
+    /// @brief Resets specified statistic.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param name name of the statistic to be reset.
+    /// @return true if successful, false if there's no such statistic
+    bool resetInternal(const std::string& name);
+
+    /// @private
+
+    /// @brief Removes specified statistic.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param name name of the statistic to be removed.
+    /// @return true if successful, false if there's no such statistic
+    bool delInternal(const std::string& name);
+
+    /// @private
+
+    /// @brief Resets all collected statistics back to zero.
+    ///
+    /// Should be called in a thread safe context.
+    void resetAllInternal();
+
+    /// @private
+
+    /// @brief Removes all collected statistics.
+    ///
+    /// Should be called in a thread safe context.
+    void removeAllInternal();
+
+    /// @private
+
+    /// @brief Returns size of specified statistic.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @param name name of the statistic which size should be return.
+    /// @return size of specified statistic, 0 means lack of given statistic.
+    size_t getSizeInternal(const std::string& name) const;
+
+    /// @private
+
+    /// @brief Returns number of available statistics.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return number of recorded statistics.
+    size_t countInternal() const;
+
+    /// @private
+
+    /// @brief Returns a single statistic as a JSON structure.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return JSON structures representing a single statistic
+    isc::data::ConstElementPtr getInternal(const std::string& name) const;
+
+    /// @private
+
+    /// @brief Returns all statistics as a JSON structure.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return JSON structures representing all statistics
+    isc::data::ConstElementPtr getAllInternal() const;
 
     /// @private
 
