@@ -76,6 +76,7 @@ public:
     isc::data::ConstElementPtr getAll() const;
 
 private:
+
     /// @brief Attempts to get an observation
     ///
     /// @param name name of the statistic
