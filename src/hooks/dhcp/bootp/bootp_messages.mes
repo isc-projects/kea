@@ -1,0 +1,16 @@
+# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+
+% BOOTP_LOAD Bootp hooks library has been loaded
+This info message indicates that the Bootp hooks library has been loaded.
+
+% BOOTP_PROCESSED processed BOOTP query: %1
+This debug message is printed when a BOOTP query was processed.
+The query client and transaction identification are displayed.
+
+% BOOTP_PROCESS_ERROR %1: failed to process packet: %2
+This error message indicates an error during processing of a packet.
+The first argument contains the client and transaction identification
+information.  The second argument includes the details of the error.
+
+% BOOTP_UNLOAD Bootp hooks library has been unloaded
+This info message indicates that the Bootp hooks library has been unloaded.

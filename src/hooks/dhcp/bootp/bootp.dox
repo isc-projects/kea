@@ -1,0 +1,63 @@
+// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_bootp Kea Bootp Hooks Library
+
+@section libdhcp_bootpIntro Introduction
+
+Welcome to Kea Bootp Hooks Library. This documentation is addressed to
+developers who are interested in the internal operation of the Bootp
+library. This file provides information needed to understand and
+perhaps extend this library.
+
+This documentation is stand-alone: you should have read and understood
+the <a href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea
+Developer's Guide</a> and in particular its section about hooks.
+
+@section libdhcp_bootpUser Now To Use libdhcp_bootp
+## Introduction
+libdhcp_bootp is a hooks library which allows the processing
+of BOOTP queries following the RFC1497. Old RFC951 BOOTP queries
+without vendor extensions are not supported.
+
+## Configuring the DHCPv4 Module
+
+It must be configured as a hook library for the desired DHCP server
+modules. Note that the bootp library is installed alongside the
+Kea libraries in "<install-dir>/lib" where <install-dir> is determined
+by the --prefix option of the configure script.  It defaults to
+"/usr/local". Assuming the default value then, configuring kea-dhcp4
+to load the bootp library could be done with the following Kea4
+configuration:
+
+@code
+"Dhcp4": {
+    "hook_libraries": [
+        {   "library": "/usr/local/lib/libdhcp_bootp.so" },
+        ...
+    ]
+}
+@endcode
+
+No parameter is defined.
+
+## Internal operation
+
+The first function called in @ref load() located in the
+bootp_callouts.cc. It checks if the necessary parameter is passed and
+decodes the option configurations. @ref unload() free the configuration.
+
+Kea engine checks if the library has functions that match known hook
+point names. This library has one such function: @ref pkt4_receive
+located in bootp_callouts.cc.
+
+If the receive query has to dhcp-message-type option then it is a BOOTP
+one: the BOOTP client class and a DHCPREQUEST dhcp-message-type option
+are added to the BOOTP query.
+
+*/
