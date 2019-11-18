@@ -423,11 +423,6 @@ class StatsMgr : public boost::noncopyable {
 
     /// @}
 
-    /// @brief Returns an observation (test only).
-    ///
-    /// Used in testing only. Production code should use @ref get() method.
-    ObservationPtr testGetObservation(const std::string& name) const;
-
 private:
 
     /// @brief Private constructor.
@@ -665,6 +660,9 @@ private:
 
     // This is a global context. All statistics will initially be stored here.
     StatContextPtr global_;
+
+    /// Making getObservation visible for unit tests.
+    friend class StatsMgrTest;
 };
 
 };

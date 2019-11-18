@@ -109,15 +109,6 @@ ObservationPtr StatsMgr::getObservation(const std::string& name) const {
     return (global_->get(name));
 }
 
-ObservationPtr StatsMgr::testGetObservation(const std::string& name) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(global_->mutex_);
-        return (getObservation(name));
-    } else {
-        return (getObservation(name));
-    }
-}
-
 void StatsMgr::addObservation(const ObservationPtr& stat) {
     /// @todo: Implement contexts.
     // Currently we keep everything in a global context.
