@@ -46,7 +46,6 @@ BUILT_SOURCES = client_messages.h client_messages.cc
 noinst_LTLIBRARIES = libclient.la
 
 libclient_la_SOURCES  =
-libclient_la_SOURCES += main.cc
 libclient_la_SOURCES += client_interface.h client_interface.cc
 libclient_la_SOURCES += executor.cc executor.h
 libclient_la_SOURCES += clnt_process.cc clnt_process.h
