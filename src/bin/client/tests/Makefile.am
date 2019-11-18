@@ -24,9 +24,6 @@ if HAVE_GTEST
 TESTS += client_unittests
 
 client_unittests_SOURCES  = client_unittests.cc
-client_unittests_SOURCES  += state_machine_unittest.cc
-
-# client_unittests_SOURCES  += ../client_interface.cc
 
 client_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 client_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
