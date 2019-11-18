@@ -39,8 +39,10 @@ struct ThreadPool {
 
     /// @brief reset the thread pool stopping threads and clearing the internal
     /// queue
+    ///
+    /// It can be called several times even when the thread pool is stopped
     void reset() {
-        stop();
+        stopInternal();
         queue_.clear();
     }
 
@@ -48,13 +50,24 @@ struct ThreadPool {
     ///
     /// @param thread_count specifies the number of threads to be created and
     /// started
+    ///
+    /// @throw InvalidOperation if thread pool already started
+    /// @throw InvalidParameter if thread count is 0
     void start(uint32_t thread_count) {
         if (!thread_count) {
             isc_throw(InvalidParameter, "thread count is 0");
         }
         if (running_) {
-            isc_throw(InvalidParameter, "thread pool already started");
+            isc_throw(InvalidOperation, "thread pool already started");
         }
+        startInternal(thread_count);
+    }
+
+    /// @brief start all the threads
+    ///
+    /// @param thread_count specifies the number of threads to be created and
+    /// started
+    void startInternal(uint32_t thread_count) {
         queue_.enable();
         running_ = true;
         for (uint32_t i = 0; i < thread_count; ++i) {
@@ -63,10 +76,17 @@ struct ThreadPool {
     }
 
     /// @brief stop all the threads
+    ///
+    /// @throw InvalidOperation if thread pool already stopped
     void stop() {
         if (!running_) {
-            isc_throw(InvalidParameter, "thread pool already stopped");
+            isc_throw(InvalidOperation, "thread pool already stopped");
         }
+        stopInternal();
+    }
+
+    /// @brief stop all the threads
+    void stopInternal() {
         running_ = false;
         queue_.disable();
         for (auto thread : threads_) {
@@ -181,7 +201,7 @@ private:
         /// Removes all queued work items
         void clear() {
             std::lock_guard<std::mutex> lock(mutex_);
-            queue_ = std::queue<Item>();
+            queue_ = QueueContainer();
         }
 
         /// @brief enable the queue
@@ -226,6 +246,7 @@ private:
                 try {
                     (*item)();
                 } catch (...) {
+                    // catch all exceptions
                 }
             }
         }
