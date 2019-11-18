@@ -1692,8 +1692,8 @@ MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters)
 
 // MySqlLeaseContextAlloc Constructor and Destructor
 
-MySqlLeaseMgr::MySqlLeaseContextAlloc::
-MySqlLeaseContextAlloc(const MySqlLeaseMgr& mgr) : ctx_(), mgr_(mgr) {
+MySqlLeaseMgr::MySqlLeaseContextAlloc::MySqlLeaseContextAlloc(
+        const MySqlLeaseMgr& mgr) : ctx_(), mgr_(mgr) {
     if (MultiThreadingMgr::instance().getMode()) {
         {
             lock_guard<mutex> lock(mgr_.pool_->mutex_);
