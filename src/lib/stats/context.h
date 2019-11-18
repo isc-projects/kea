@@ -77,55 +77,8 @@ public:
 
 private:
 
-    /// @brief Attempts to get an observation
-    ///
-    /// @param name name of the statistic
-    /// @return appropriate Observation object (or NULL)
-    ObservationPtr getInternal(const std::string& name) const;
-
-    /// @brief Adds a new observation
-    ///
-    /// @param obs observation to be added
-    /// @throw DuplicateStat if an observation with the same name exists already
-    void addInternal(const ObservationPtr& obs);
-
-    /// @brief Attempts to delete an observation
-    ///
-    /// @param name name of the observation to be deleted
-    /// @return true if successful, false if no such statistic was found
-    bool delInternal(const std::string& name);
-
-    /// @brief Returns the number of observations
-    ///
-    /// @return the number of observations
-    size_t sizeInternal();
-
-    /// @brief Removes all observations
-    void clearInternal();
-
-    /// @brief Resets all observations
-    void resetAllInternal();
-
-    /// @brief Sets max sample count for all observations
-    ///
-    /// @param max_samples value to be set for all observations
-    void setMaxSampleCountAllInternal(uint32_t max_samples);
-
-    /// @brief Sets duration for all observations
-    ///
-    /// @param duration value to be set for all observations
-    void setMaxSampleAgeAllInternal(const StatsDuration& duration);
-
-    /// @brief Returns a map with all observations
-    ///
-    /// @return map with all observations
-    isc::data::ConstElementPtr getAllInternal() const;
-
     /// @brief Statistics container
     std::map<std::string, ObservationPtr> stats_;
-
-    /// @brief Mutex used to protect internal state
-    mutable std::mutex mutex_;
 };
 
 /// @brief Pointer to the statistics context
