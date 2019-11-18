@@ -8,6 +8,7 @@
 #define CLNT_CONFIG_H
 
 #include <process/d_cfg_mgr.h>
+#include <process/config_base.h>
 
 namespace isc {
 namespace client {
@@ -15,12 +16,12 @@ namespace client {
 class ClntConfig;
 typedef boost::shared_ptr<ClntConfig> ClntConfigPtr;
 
-class ClntConfig : public process::DCfgContextBase {
+class ClntConfig : public process::ConfigBase {
 public:
   ClntConfig();
 
-  virtual process::BaseConfigPtr clone() const {
-      return (process::BaseConfigPtr(new ClntConfig(*this)));
+  virtual process::ConfigPtr clone() const {
+      return (process::ConfigPtr(new ClntConfig(*this)));
   }
 
   virtual isc::data::ElementPtr toElement() const;

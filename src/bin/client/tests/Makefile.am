@@ -41,7 +41,6 @@ client_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 client_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 client_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 client_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-client_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 client_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 client_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 client_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)

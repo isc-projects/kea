@@ -14,7 +14,7 @@ namespace isc {
 namespace client {
 
 ClntCfgMgr::ClntCfgMgr()
-  :DCfgMgrBase(process::DCfgContextBasePtr(new ClntConfig())) {
+  :DCfgMgrBase(process::ConfigPtr(new ClntConfig())) {
 }
 
 std::string
@@ -27,15 +27,9 @@ ClntCfgMgr::parse(isc::data::ConstElementPtr config, bool check_only) {
     return (ConstElementPtr(new MapElement()));
 }
 
-isc::dhcp::ParserPtr
-ClntCfgMgr::createConfigParser(const std::string&,
-                               const isc::data::Element::Position& pos) {
-    return (isc::dhcp::ParserPtr());
-}
-
-process::DCfgContextBasePtr
+process::ConfigPtr
 ClntCfgMgr::createNewContext() {
-  return (process::DCfgContextBasePtr(new ClntConfig()));
+  return (process::ConfigPtr(new ClntConfig()));
 }
 
 void ClntCfgMgr::ensureCurrentAllocated() {

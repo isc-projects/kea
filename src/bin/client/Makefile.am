@@ -46,7 +46,7 @@ BUILT_SOURCES = client_messages.h client_messages.cc
 noinst_LTLIBRARIES = libclient.la
 
 libclient_la_SOURCES  =
-libclient_la_SOURCES += client_interface.h client_interface.cc
+libclient_la_SOURCES += client6_interface.h client6_interface.cc
 libclient_la_SOURCES += executor.cc executor.h
 libclient_la_SOURCES += clnt_process.cc clnt_process.h
 libclient_la_SOURCES += clnt_cfg_mgr.cc clnt_cfg_mgr.h
@@ -62,7 +62,7 @@ sbin_PROGRAMS = kea-client
 
 kea_client_SOURCES = main.cc
 
-kea_client_LDADD  = libclnt.la
+kea_client_LDADD  = libclient.la
 
 kea_client_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_client_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

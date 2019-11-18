@@ -11,7 +11,6 @@
 #include <cc/data.h>
 #include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
-#include <process/base_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
 
 namespace isc {
@@ -55,14 +54,6 @@ protected:
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only);
 
-    /// @brief This is no longer used.
-    ///
-    /// @throw NotImplemented
-    /// @return nothing, always throws
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string&,
-                       const isc::data::Element::Position& pos);
-
     /// @brief Creates a new, blank CtrlAgentCfgContext context.
     ///
     ///
@@ -73,7 +64,7 @@ protected:
     /// error.
     ///
     /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual process::DCfgContextBasePtr createNewContext();
+    virtual process::ConfigPtr createNewContext();
 };
 
 };

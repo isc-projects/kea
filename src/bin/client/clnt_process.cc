@@ -8,6 +8,7 @@
 #include <client/clnt_cfg_mgr.h>
 #include <cc/command_interpreter.h>
 #include <process/d_cfg_mgr.h>
+#include <iostream>
 
 using namespace isc::client;
 using namespace isc::config;
