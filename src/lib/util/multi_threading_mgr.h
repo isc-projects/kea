@@ -67,7 +67,7 @@ public:
     /// @param f the functor to call
     /// @result the result of the functor call
     template<typename Lockable, typename Callable>
-    static auto call(Lockable& lk, const Callable& f) {
+    static auto call(Lockable& lk, const Callable& f) -> decltype(f()) {
         if (MultiThreadingMgr::instance().getMode()) {
             std::lock_guard<Lockable> lock(lk);
             return f();
