@@ -1,3 +1,5 @@
+Kea 1.6.1 released on Nov 20, 2019
+
 1660.	[bug]		tmark
 	Fixed a bug introduced in Kea 1.6.0 (see #539) that caused
 	kea-dhcp4 and kea-dhcp6 to discard inbound packets containing
