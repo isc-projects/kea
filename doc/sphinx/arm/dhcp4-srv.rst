@@ -5679,7 +5679,11 @@ However, some of them are implications of the design choices made. Those
 are clearly marked as such.
 
 -  BOOTP (`RFC 951 <https://tools.ietf.org/html/rfc951>`__) is not
-   supported. This is a design choice; BOOTP support is not planned.
+   supported. This is a design choice; historic BOOTP support is not planned.
+
+-  BOOTP with vendor information extensions
+   (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__) is supported
+   by the BOOTP hooks library; see :ref:`bootp-library` for details.
 
 -  On Linux and BSD system families the DHCP messages are sent and
    received over the raw sockets (using LPF and BPF) and all packet

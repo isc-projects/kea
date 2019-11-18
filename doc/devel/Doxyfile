@@ -779,6 +779,8 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/bin/netconf \
                          ../../src/bin/perfdhcp \
                          ../../src/bin/sockcreator \
+                         ../../src/hooks/dhcp/bootp \
+                         ../../src/hooks/dhcp/flex_option \
                          ../../src/hooks/dhcp/high_availability \
                          ../../src/hooks/dhcp/lease_cmds \
                          ../../src/hooks/dhcp/stat_cmds \

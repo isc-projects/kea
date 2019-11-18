@@ -1,3 +1,5 @@
+src/hooks/dhcp/flex_option/flex_option_messages.mes
+src/hooks/dhcp/bootp/bootp_messages.mes
 src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes
 src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
 src/hooks/dhcp/high_availability/ha_messages.mes
