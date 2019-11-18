@@ -205,7 +205,7 @@ TEST_F(ThreadPoolTest, testAddAndCount) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
+        thread_pool.add(make_shared<CallBack>(call_back));
     }
 
     // the item count should match
@@ -269,7 +269,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
+        thread_pool.add(make_shared<CallBack>(call_back));
     }
 
     // the item count should match
@@ -307,7 +307,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to running thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
+        thread_pool.add(make_shared<CallBack>(call_back));
     }
 
     // wait for all items to be processed
@@ -347,7 +347,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        thread_pool.add(call_back);
+        thread_pool.add(make_shared<CallBack>(call_back));
     }
 
     // the item count should match
