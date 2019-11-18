@@ -63,18 +63,6 @@ struct ThreadPool {
         startInternal(thread_count);
     }
 
-    /// @brief start all the threads
-    ///
-    /// @param thread_count specifies the number of threads to be created and
-    /// started
-    void startInternal(uint32_t thread_count) {
-        queue_.enable();
-        running_ = true;
-        for (uint32_t i = 0; i < thread_count; ++i) {
-            threads_.push_back(std::make_shared<std::thread>(&ThreadPool::run, this));
-        }
-    }
-
     /// @brief stop all the threads
     ///
     /// @throw InvalidOperation if thread pool already stopped
@@ -83,16 +71,6 @@ struct ThreadPool {
             isc_throw(InvalidOperation, "thread pool already stopped");
         }
         stopInternal();
-    }
-
-    /// @brief stop all the threads
-    void stopInternal() {
-        running_ = false;
-        queue_.disable();
-        for (auto thread : threads_) {
-            thread->join();
-        }
-        threads_.clear();
     }
 
     /// @brief add a work item to the thread pool
@@ -117,6 +95,28 @@ struct ThreadPool {
     }
 
 private:
+    /// @brief start all the threads
+    ///
+    /// @param thread_count specifies the number of threads to be created and
+    /// started
+    void startInternal(uint32_t thread_count) {
+        queue_.enable();
+        running_ = true;
+        for (uint32_t i = 0; i < thread_count; ++i) {
+            threads_.push_back(std::make_shared<std::thread>(&ThreadPool::run, this));
+        }
+    }
+
+    /// @brief stop all the threads
+    void stopInternal() {
+        running_ = false;
+        queue_.disable();
+        for (auto thread : threads_) {
+            thread->join();
+        }
+        threads_.clear();
+    }
+
     /// @brief Defines a generic thread pool queue.
     ///
     /// The main purpose is to safely manage thread pool tasks.
