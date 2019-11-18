@@ -104,7 +104,7 @@ public:
 
     /// #brief Create a new context.
     ///
-    /// The database in opened with all the SQL commands pre-compiled.
+    /// The database is opened with all the SQL commands pre-compiled.
     ///
     /// @return A new (never null) context.
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given.
@@ -883,7 +883,7 @@ private:
 
         /// @brief Destructor
         ///
-        /// This destructor puts back the context to the pool.
+        /// This destructor puts back the context in the pool.
         ~MySqlLeaseContextAlloc();
 
         /// @brief The context
