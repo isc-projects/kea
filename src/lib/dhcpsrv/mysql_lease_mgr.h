@@ -30,13 +30,13 @@ class MySqlLease6Exchange;
 
 /// @brief MySQL Lease Context
 ///
-/// This class stores the per thread context for the manager pool.
+/// This class stores the thread context for the manager pool.
 class MySqlLeaseContext {
 public:
 
     /// @brief Constructor
     ///
-    /// @param parameters See MySqlLeaseMgr contructor.
+    /// @param parameters See MySqlLeaseMgr constructor.
     MySqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// The exchange objects are used for transfer of data to/from the database.
@@ -62,7 +62,7 @@ public:
     /// @brief The vector of available contexts.
     std::vector<MySqlLeaseContextPtr> pool_;
 
-    /// @brief The mjutex to protect pool access.
+    /// @brief The mutex to protect pool access.
     std::mutex mutex_;
 };
 
@@ -104,7 +104,7 @@ public:
 
     /// #brief Create a new context.
     ///
-    /// The database in opened withh all the SQL commands pre-compiled.
+    /// The database in opened with all the SQL commands pre-compiled.
     ///
     /// @return A new (never null) context.
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given.
