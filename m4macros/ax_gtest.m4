@@ -91,10 +91,20 @@ if test "x$enable_gtest" = "xyes" ; then
                 [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
         fi
         have_gtest_source=yes
+
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
         GTEST_VERSION="`basename $GTEST_SOURCE`"
+
+# Versions starting from 1.8.0 are put in the googletest directory. If the basename
+# returns googletest string, we need to cut it off and try baseline again.
+        if test "$GTEST_VERSION" == "googletest"; then
+            GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
+            GTEST_VERSION=`basename $GTEST_VERSION`
+        fi
+        GTEST_VERSION="${GTEST_VERSION#googletest-release-}"
+        GTEST_VERSION="${GTEST_VERSION#gtest-}"
     fi
 
     if test "$gtest_path" != "no" ; then
