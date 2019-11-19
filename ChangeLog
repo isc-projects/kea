@@ -1,3 +1,7 @@
+1691.	[build]		tomek
+	Google test version detection improved.
+	(Gitlab #206)
+
 1690.	[func]		fdupont, razvan
 	As a preparation for upcoming multi-threading, the PgSQL
 	connection pool has been implemented. This code is not
