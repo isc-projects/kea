@@ -264,9 +264,13 @@ Dhcpv4Exchange::copyDefaultFields() {
 
     // explicitly set this to 0
     resp_->setSiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-    // ciaddr is always 0, except for the Renew/Rebind state when it may
-    // be set to the ciaddr sent by the client.
-    resp_->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+    // ciaddr is always 0, except for the Renew/Rebind state and for
+    // Inform when it may be set to the ciaddr sent by the client.
+    if (query_->getType() == DHCPINFORM) {
+        resp_->setCiaddr(query_->getCiaddr());
+    } else {
+        resp_->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+    }
     resp_->setHops(query_->getHops());
 
     // copy MAC address
