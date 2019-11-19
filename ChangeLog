@@ -1,3 +1,7 @@
+16XX.	[build]		tomek
+	Google test version detection improved.
+	(Gitlab #206)
+
 1682.	[bug]*		tmark
 	Added logic to core code and HA hook lib to allow HA peers
 	to detect and handle out of bandwidth socket events.  This
