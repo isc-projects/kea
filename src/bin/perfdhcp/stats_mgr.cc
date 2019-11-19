@@ -54,11 +54,11 @@ ExchangeStats::ExchangeStats(const ExchangeType xchg_type,
       ordered_lookups_(0),
       sent_packets_num_(0),
       rcvd_packets_num_(0),
+      rejected_leases_num_(0),
       boot_time_(boot_time)
 {
     next_sent_ = sent_packets_.begin();
 }
-
 
 void
 ExchangeStats::updateDelays(const dhcp::PktPtr& sent_packet,

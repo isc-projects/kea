@@ -14,6 +14,8 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/foreach.hpp>
@@ -887,7 +889,7 @@ public:
             // transaction ids from the range from 11 to 20 (the range of
             // 1 to 10 has been used by Solicit-Advertise).
             tc.processReceivedPacket6(advertise);
-    }
+        }
 
         // Requests have been sent, so now let's simulate responses from the
         // server. Generate corresponding Reply messages with the transaction
@@ -922,6 +924,49 @@ public:
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
 
+    }
+
+    /// \brief Test counting rejected leases in Solicit-Advertise.
+    ///
+    /// This function simulates acquiring 4 leases from the server and
+    /// rejecting allocating of 6 leases
+
+    void testCountRejectedLeasesSolAdv() {
+        // Build a command line.
+        CommandOptions opt;
+        std::ostringstream s;
+        s << "perfdhcp -6 -l fake -r 10 -R 10 -L 10547 -n 10 ::1";
+        processCmdLine(opt, s.str());
+        // Create a test controller class.
+        NakedTestControl tc(opt);
+        // Set the transaction id generator to sequential to control to
+        // guarantee that transaction ids are predictable.
+        boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+
+        // Send a number of Solicit messages. Each generated Solicit will be
+        // assigned a different transaction id, starting from 1 to 10.
+        tc.sendPackets(10);
+
+        // Simulate Advertise responses from the server. Each advertise is
+        // assigned a transaction id from the range of 1 to 6 with incorrect IA
+        // included in the message
+        for (unsigned i = generator->getNext() - 10; i < 7; ++i) {
+            Pkt6Ptr advertise(createAdvertisePkt6(tc, i, false));
+            tc.processReceivedPacket6(advertise);
+        }
+        // counter of rejected leases has to be 6
+        EXPECT_EQ(tc.stats_mgr_.getRejLeasesNum(ExchangeType::SA), 6);
+        // Simulate Advertise responses from the server. Each advertise is
+        // assigned a transaction id from the range of 7 to 10 with correct IA
+        // included in the message
+        for (unsigned i = generator->getNext() - 7; i < 11; ++i) {
+            Pkt6Ptr advertise(createAdvertisePkt6(tc, i));
+            tc.processReceivedPacket6(advertise);
+        }
+        // counter of rejected leases can't change at this point
+        EXPECT_EQ(tc.stats_mgr_.getRejLeasesNum(ExchangeType::SA), 6);
     }
 
     /// \brief Parse command line string with CommandOptions.
@@ -975,16 +1020,27 @@ public:
     /// \param transid transaction id.
     /// \return instance of the packet.
     Pkt6Ptr
-    createAdvertisePkt6(NakedTestControl &tc, const uint32_t transid) const {
+    createAdvertisePkt6(NakedTestControl &tc, const uint32_t transid,
+                        const bool validIA = true) const {
         boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
         // Add IA_NA if requested by the client.
         if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::ADDRESS)) {
             OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+            if (validIA) {
+                OptionPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
+                                 isc::asiolink::IOAddress("fe80::abcd"), 300, 500));
+                opt_ia_na->addOption(iaaddr);
+            }
             advertise->addOption(opt_ia_na);
         }
         // Add IA_PD if requested by the client.
         if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::PREFIX)) {
             OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
+            if (validIA) {
+                OptionPtr iapref(new Option6IAPrefix(D6O_IAPREFIX,
+                                 isc::asiolink::IOAddress("fe80::"), 64, 300, 500));
+                opt_ia_pd->addOption(iapref);
+            }
             advertise->addOption(opt_ia_pd);
         }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
@@ -998,16 +1054,27 @@ public:
     }
 
     Pkt6Ptr
-    createReplyPkt6(NakedTestControl &tc, const uint32_t transid) const {
+    createReplyPkt6(NakedTestControl &tc, const uint32_t transid,
+                    const bool validIA = true) const {
         Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, transid));
         // Add IA_NA if requested by the client.
         if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::ADDRESS)) {
             OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+            if (validIA) {
+                OptionPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
+                                 isc::asiolink::IOAddress("fe80::abcd"), 300, 500));
+                opt_ia_na->addOption(iaaddr);
+            }
             reply->addOption(opt_ia_na);
         }
         // Add IA_PD if requested by the client.
         if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::PREFIX)) {
             OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
+            if (validIA) {
+                OptionPtr iapref(new Option6IAPrefix(D6O_IAPREFIX,
+                                 isc::asiolink::IOAddress("fe80::"), 64, 300, 500));
+                opt_ia_pd->addOption(iapref);
+            }
             reply->addOption(opt_ia_pd);
         }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
@@ -1621,6 +1688,12 @@ TEST_F(TestControlTest, createRequest) {
 // and that it comprises all required options.
 TEST_F(TestControlTest, createRenew) {
     testCreateRenewRelease(DHCPV6_RENEW);
+}
+
+// This test verifies that the counter of rejected leases in
+// Solicit-Advertise message exchange works correctly
+TEST_F(TestControlTest, rejectedLeasesAdv) {
+    testCountRejectedLeasesSolAdv();
 }
 
 // This test verifies that the DHCPv6 Release message is created correctly

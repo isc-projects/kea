@@ -17,6 +17,8 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/option6_ia.h>
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <util/unittests/check_valgrind.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -795,6 +797,41 @@ TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
     }
 }
 
+bool
+TestControl::validateIA(const Pkt6Ptr& pkt6) {
+    // check if iaaddr exists - if it does, we can continue sending request
+    // if not we will update statistics about rejected leases
+    // @todo it's checking just one iaaddress option for now it's ok
+    // but when perfdhcp will be extended to create message with multiple IA
+    // this will have to be iterate on:
+    // OptionCollection ias = pkt6->getOptions(D6O_IA_NA);
+    Option6IAPrefixPtr iapref;
+    Option6IAAddrPtr iaaddr;
+    if (pkt6->getOption(D6O_IA_PD)){
+        iapref = boost::dynamic_pointer_cast<
+                 Option6IAPrefix>(pkt6->getOption(D6O_IA_PD)->getOption(D6O_IAPREFIX));
+    }
+    if (pkt6->getOption(D6O_IA_NA)){
+        iaaddr = boost::dynamic_pointer_cast<
+                 Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->getOption(D6O_IAADDR));
+    }
+    if ((options_.getLeaseType()
+         .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX) && iapref && iaaddr)
+       || (options_.getLeaseType()
+           .includes(CommandOptions::LeaseType::PREFIX) && iapref
+           && !options_.getLeaseType()
+               .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX))
+       || (options_.getLeaseType()
+           .includes(CommandOptions::LeaseType::ADDRESS) && iaaddr
+          && !options_.getLeaseType()
+             .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX))) {
+       return true;
+    }
+    else {
+        return false;
+    }
+}
+
 void
 TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
     uint8_t packet_type = pkt6->getType();
@@ -803,15 +840,17 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
         Pkt6Ptr solicit_pkt6(boost::dynamic_pointer_cast<Pkt6>(pkt));
         CommandOptions::ExchangeMode xchg_mode = options_.getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
-            /// @todo check whether received ADVERTISE packet is sane.
-            /// We might want to check if STATUS_CODE option is non-zero
-            /// and if there is IAADR option in IA_NA.
-            if (template_buffers_.size() < 2) {
-                sendRequest6(pkt6);
-            } else {
-                /// @todo add defines for packet type index that can be
-                /// used to access template_buffers_.
-                sendRequest6(template_buffers_[1], pkt6);
+            if (validateIA(pkt6)) {
+               if (template_buffers_.size() < 2) {
+                    sendRequest6(pkt6);
+               } else {
+                    /// @todo add defines for packet type index that can be
+                    /// used to access template_buffers_.
+                    sendRequest6(template_buffers_[1], pkt6);
+               }
+            }
+            else {
+                stats_mgr_.updateRejLeases(ExchangeType::SA);
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
@@ -825,12 +864,18 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
             // being sent. Note that, Reply messages hold the information about
             // leases assigned. We use this information to construct Renew and
             // Release messages.
-            if (stats_mgr_.hasExchangeStats(ExchangeType::RN) ||
-                stats_mgr_.hasExchangeStats(ExchangeType::RL)) {
-                // Renew or Release messages are sent, because StatsMgr has the
-                // specific exchange type specified. Let's append the Reply
-                // message to a storage.
-                reply_storage_.append(pkt6);
+            if (validateIA(pkt6)) {
+                // check if there is correct IA to continue with Renew/Release
+                if (stats_mgr_.hasExchangeStats(ExchangeType::RN) ||
+                    stats_mgr_.hasExchangeStats(ExchangeType::RL)) {
+                    // Renew or Release messages are sent, because StatsMgr has the
+                    // specific exchange type specified. Let's append the Reply
+                    // message to a storage.
+                    reply_storage_.append(pkt6);
+                }
+            }
+            else {
+                stats_mgr_.updateRejLeases(ExchangeType::RR);
             }
         // The Reply message is not a server's response to the Request message
         // sent within the 4-way exchange. It may be a response to the Renew

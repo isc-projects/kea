@@ -459,6 +459,13 @@ public:
         return(drops);
     }
 
+    /// \brief Return total number of rejected leases.
+    ///
+    /// Method returns total number of rejected leases.
+    ///
+    /// \return number of rejected leases.
+    uint64_t getRejLeasesNum() const { return(rejected_leases_num_); }
+    void updateRejLeases() { ++rejected_leases_num_; }
     /// \brief Print main statistics for packet exchange.
     ///
     /// Method prints main statistics for particular exchange.
@@ -482,7 +489,8 @@ public:
              << "received packets: " << getRcvdPacketsNum() << endl
              << "drops: " << drops << endl
              << "drops ratio: " << drops_ratio << " %" << endl
-             << "orphans: " << getOrphans() << endl;
+             << "orphans: " << getOrphans() << endl
+             << "rejected leases: " << getRejLeasesNum() << endl;
     }
 
     /// \brief Print round trip time packets statistics.
@@ -619,6 +627,8 @@ private:
 
     uint64_t sent_packets_num_;    ///< Total number of sent packets.
     uint64_t rcvd_packets_num_;    ///< Total number of received packets.
+
+    uint64_t rejected_leases_num_;  ///< Total number of rejected leases (e.g. NoAddrAvail)
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
 };
 
@@ -962,7 +972,21 @@ public:
         return(xchg_stats->getCollectedNum());
     }
 
-
+    /// \brief Return total number of rejected leases
+    ///
+    /// Method returns total number of rejected leases for specified
+    /// exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of received packets.
+    uint64_t getRejLeasesNum(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getRejLeasesNum());
+    }
+    void updateRejLeases(const ExchangeType xchg_type) {
+    ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+           xchg_stats->updateRejLeases(); }
     /// \brief Get time period since the start of test.
     ///
     /// Calculate dna return period since the test start. This
@@ -1017,6 +1041,7 @@ public:
         std::ostringstream stream_sent;
         std::ostringstream stream_rcvd;
         std::ostringstream stream_drops;
+        std::ostringstream stream_reject;
         std::string sep("");
         for (ExchangesMapIterator it = exchanges_.begin();
              it != exchanges_.end(); ++it) {
@@ -1027,10 +1052,12 @@ public:
             stream_sent << sep << it->second->getSentPacketsNum();
             stream_rcvd << sep << it->second->getRcvdPacketsNum();
             stream_drops << sep << it->second->getDroppedPacketsNum();
+            stream_reject << sep << it->second->getRejLeasesNum();
         }
         std::cout << "sent: " << stream_sent.str()
                   << "; received: " << stream_rcvd.str()
                   << "; drops: " << stream_drops.str()
+                  << "; rejected: " << stream_reject.str()
                   << std::endl;
     }
 

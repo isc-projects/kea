@@ -536,6 +536,15 @@ protected:
     /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket4(const dhcp::Pkt4Ptr& pkt4);
 
+    /// \brief Process IA in received DHCPv6 packet.
+    ///
+    /// Process IA in received message to check if it contain proper
+    /// address and/or prefix
+    ///
+    /// \param [in] pkt6 object representing DHCPv6 packet received.
+    /// \return true if the message include correct IA, false otherwise.
+    bool validateIA(const dhcp::Pkt6Ptr& pkt6);
+
     /// \brief Process received DHCPv6 packet.
     ///
     /// Method performs processing of the received DHCPv6 packet,

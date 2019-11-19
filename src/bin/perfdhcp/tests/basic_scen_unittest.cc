@@ -14,7 +14,8 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/iface_mgr.h>
-
+#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/foreach.hpp>
 
@@ -99,11 +100,17 @@ public:
         // Add IA_NA if requested by the client.
         if (opt_.getLeaseType().includes(CommandOptions::LeaseType::ADDRESS)) {
             OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+            OptionPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
+                             isc::asiolink::IOAddress("fe80::abcd"), 300, 500));
+            opt_ia_na->addOption(iaaddr);
             pkt->addOption(opt_ia_na);
         }
         // Add IA_PD if requested by the client.
         if (opt_.getLeaseType().includes(CommandOptions::LeaseType::PREFIX)) {
             OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
+            OptionPtr iapref(new Option6IAPrefix(D6O_IAPREFIX,
+                             isc::asiolink::IOAddress("fe80::"), 64, 300, 500));
+            opt_ia_pd->addOption(iapref);
             pkt->addOption(opt_ia_pd);
         }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
