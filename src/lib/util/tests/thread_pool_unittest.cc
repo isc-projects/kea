@@ -95,7 +95,7 @@ public:
         }
         // start test threads
         for (uint32_t i = 0; i < thread_count; ++i) {
-            threads_.push_back(make_shared<std::thread>(runFunction, this));
+            threads_.push_back(boost::make_shared<std::thread>(runFunction, this));
         }
     }
 
@@ -185,7 +185,7 @@ private:
     map<std::thread::id, list<uint32_t>> history_;
 
     /// @brief the list of test threads
-    list<shared_ptr<std::thread>> threads_;
+    list<boost::shared_ptr<std::thread>> threads_;
 };
 
 /// @brief define CallBack type
@@ -207,7 +207,7 @@ TEST_F(ThreadPoolTest, testAddAndCount) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(make_shared<CallBack>(call_back)));
+        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
     }
 
     // the item count should match
@@ -273,7 +273,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(make_shared<CallBack>(call_back)));
+        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
     }
 
     // the item count should match
@@ -311,7 +311,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to running thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(make_shared<CallBack>(call_back)));
+        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
     }
 
     // wait for all items to be processed
@@ -351,7 +351,7 @@ TEST_F(ThreadPoolTest, testStartAndStop) {
 
     // add items to stopped thread pool
     for (uint32_t i = 0; i < items_count; ++i) {
-        EXPECT_NO_THROW(thread_pool.add(make_shared<CallBack>(call_back)));
+        EXPECT_NO_THROW(thread_pool.add(boost::make_shared<CallBack>(call_back)));
     }
 
     // the item count should match

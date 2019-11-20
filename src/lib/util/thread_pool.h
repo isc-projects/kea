@@ -8,6 +8,8 @@
 #define THREAD_POOL_H
 
 #include <exceptions/exceptions.h>
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <atomic>
 #include <condition_variable>
@@ -24,9 +26,9 @@ namespace util {
 ///
 /// @tparam WorkItem a functor
 /// @tparam Container a 'queue like' container
-template <typename WorkItem, typename Container = std::queue<std::shared_ptr<WorkItem>>>
+template <typename WorkItem, typename Container = std::queue<boost::shared_ptr<WorkItem>>>
 struct ThreadPool {
-    typedef typename std::shared_ptr<WorkItem> WorkItemPtr;
+    typedef typename boost::shared_ptr<WorkItem> WorkItemPtr;
 
     /// @brief Constructor
     ThreadPool() : running_(false) {
@@ -103,7 +105,7 @@ private:
         queue_.enable();
         running_ = true;
         for (uint32_t i = 0; i < thread_count; ++i) {
-            threads_.push_back(std::make_shared<std::thread>(&ThreadPool::run, this));
+            threads_.push_back(boost::make_shared<std::thread>(&ThreadPool::run, this));
         }
     }
 
@@ -253,7 +255,7 @@ private:
     }
 
     /// @brief list of worker threads
-    std::vector<std::shared_ptr<std::thread>> threads_;
+    std::vector<boost::shared_ptr<std::thread>> threads_;
 
     /// @brief underlying work items queue
     ThreadPoolQueue<WorkItemPtr, Container> queue_;
