@@ -1,3 +1,11 @@
+1683.   [bug]           wlodek
+	Perfdhcp is able to parse incoming packet and determine
+	if included IA_NA/IA_PD options are correct, counter
+	of rejected leases is introduced for all DHCP v6 message
+	exchanges. Perfdhcp will no longer send Request/Renew/Release
+	message without proper IA_NA/IA_PD included.
+	(Gitlab #572)
+
 1682.	[bug]*		tmark
 	Added logic to core code and HA hook lib to allow HA peers
 	to detect and handle out of bandwidth socket events.  This
