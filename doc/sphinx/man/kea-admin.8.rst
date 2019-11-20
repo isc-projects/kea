@@ -30,25 +30,25 @@ Arguments
 ``command``
    Specifies the command to be issued to the servers. It can be one of the following:
 
-   **lease-init**
-      Initializes a new lease database, which is useful during the first Kea
+   **db-init**
+      Initializes a new database schema. This is useful during a new Kea
       installation. The database is initialized to the latest version
-      supported by the version of the software.
+      supported by the version of the software being installed.
 
-   **lease-version**
-      Reports the lease database version. This is not necessarily the same as the
-      Kea version, as each backend has its own versioning scheme.
+   **db-version**
+      Reports the database backend version number. This is not necessarily
+      equal to the Kea version number as each backend has its own
+      versioning scheme.
 
-   **lease-upgrade**
-      Conducts a lease database upgrade. This is useful when migrating
-      between old and new Kea versions.
+   **db-upgrade**
+      Conducts a database schema upgrade. This is useful when upgrading Kea.
 
-   **lease-dump**
-      Dumps the contents of the lease database (MySQL and PostgreSQL
-      backends) to a text file. The content of the file consists of
-      comma-separated values (CSV) where each line in the file contains
-      all of the values for a single lease. The first line of the file is a
-      header line containing the column names.
+   **db-dump**
+      Dumps the contents of the lease database (for MySQL, PostgreSQL,
+      or CQL backends) to a CSV (comma-separated values) text file.
+      The first line of the file contains the column names. This is meant
+      to be used as a diagnostic tool, so it provides a portable,
+      human-readable form of the lease data.
 
 ``backend``
    Specifies the backend type. Currently allowed backends are: memfile,
