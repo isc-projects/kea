@@ -160,7 +160,7 @@ private:
             std::lock_guard<std::mutex> lock(mutex_);
             queue_.push(item);
             // Notify pop function so that it can effectively remove a work item.
-            cv_.notify_all();
+            cv_.notify_one();
         }
 
         /// @brief pop work item from the queue or block waiting
