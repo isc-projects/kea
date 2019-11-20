@@ -815,17 +815,17 @@ TestControl::validateIA(const Pkt6Ptr& pkt6) {
         iaaddr = boost::dynamic_pointer_cast<
                  Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->getOption(D6O_IAADDR));
     }
-    if ((options_.getLeaseType()
-         .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX) && iapref && iaaddr)
-       || (options_.getLeaseType()
-           .includes(CommandOptions::LeaseType::PREFIX) && iapref
-           && !options_.getLeaseType()
-               .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX))
-       || (options_.getLeaseType()
-           .includes(CommandOptions::LeaseType::ADDRESS) && iaaddr
-          && !options_.getLeaseType()
-             .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX))) {
-       return true;
+
+    bool address_and_prefix = options_.getLeaseType().includes(
+                              CommandOptions::LeaseType::ADDRESS_AND_PREFIX);
+    bool prefix_only = options_.getLeaseType().includes(
+                       CommandOptions::LeaseType::PREFIX);
+    bool address_only = options_.getLeaseType().includes(
+                        CommandOptions::LeaseType::ADDRESS);
+    if ((address_and_prefix && iapref && iaaddr) ||
+        (prefix_only && iapref && !address_and_prefix) ||
+        (address_only && iaaddr && !address_and_prefix)) {
+        return true;
     } else {
         return false;
     }

@@ -996,8 +996,9 @@ public:
     /// Method increase total number of rejected leases by one
     /// for specified exchange type
     void updateRejLeases(const ExchangeType xchg_type) {
-    ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        xchg_stats->updateRejLeases(); }
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        xchg_stats->updateRejLeases();
+    }
 
     /// \brief Get time period since the start of test.
     ///
