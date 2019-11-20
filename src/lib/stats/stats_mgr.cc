@@ -29,52 +29,52 @@ StatsMgr::instance() {
 }
 
 StatsMgr::StatsMgr() :
-    global_(new StatContext()) {
+    global_(boost::make_shared<StatContext>()), mutex_(new mutex) {
 }
 
 void
 StatsMgr::setValue(const string& name, const int64_t value) {
-    MultiThreadingMgr::call(mutex_, [&]() {setValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {setValueInternal(name, value);});
 }
 
 void
 StatsMgr::setValue(const string& name, const double value) {
-    MultiThreadingMgr::call(mutex_, [&]() {setValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {setValueInternal(name, value);});
 }
 
 void
 StatsMgr::setValue(const string& name, const StatsDuration& value) {
-    MultiThreadingMgr::call(mutex_, [&]() {setValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {setValueInternal(name, value);});
 }
 
 void
 StatsMgr::setValue(const string& name, const string& value) {
-    MultiThreadingMgr::call(mutex_, [&]() {setValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {setValueInternal(name, value);});
 }
 
 void
 StatsMgr::addValue(const string& name, const int64_t value) {
-    MultiThreadingMgr::call(mutex_, [&]() {addValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {addValueInternal(name, value);});
 }
 
 void
 StatsMgr::addValue(const string& name, const double value) {
-    MultiThreadingMgr::call(mutex_, [&]() {addValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {addValueInternal(name, value);});
 }
 
 void
 StatsMgr::addValue(const string& name, const StatsDuration& value) {
-    MultiThreadingMgr::call(mutex_, [&]() {addValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {addValueInternal(name, value);});
 }
 
 void
 StatsMgr::addValue(const string& name, const string& value) {
-    MultiThreadingMgr::call(mutex_, [&]() {addValueInternal(name, value);});
+    MultiThreadingMgr::call(*mutex_, [&]() {addValueInternal(name, value);});
 }
 
 ObservationPtr
 StatsMgr::getObservation(const string& name) const {
-    return (MultiThreadingMgr::call(mutex_,
+    return (MultiThreadingMgr::call(*mutex_,
         [&]() {return getObservationInternal(name);}));
 }
 
@@ -87,7 +87,7 @@ StatsMgr::getObservationInternal(const string& name) const {
 
 void
 StatsMgr::addObservation(const ObservationPtr& stat) {
-    MultiThreadingMgr::call(mutex_, [&]() {addObservationInternal(stat);});
+    MultiThreadingMgr::call(*mutex_, [&]() {addObservationInternal(stat);});
 }
 
 void
@@ -99,7 +99,7 @@ StatsMgr::addObservationInternal(const ObservationPtr& stat) {
 
 bool
 StatsMgr::deleteObservation(const string& name) {
-    return (MultiThreadingMgr::call(mutex_,
+    return (MultiThreadingMgr::call(*mutex_,
         [&]() {return deleteObservationInternal(name);}));
 }
 
@@ -112,7 +112,7 @@ StatsMgr::deleteObservationInternal(const string& name) {
 
 bool
 StatsMgr::setMaxSampleAge(const string& name, const StatsDuration& duration) {
-    return (MultiThreadingMgr::call(mutex_,
+    return (MultiThreadingMgr::call(*mutex_,
         [&]() {return setMaxSampleAgeInternal(name, duration);}));
 }
 
@@ -129,7 +129,7 @@ StatsMgr::setMaxSampleAgeInternal(const string& name,
 
 bool
 StatsMgr::setMaxSampleCount(const string& name, uint32_t max_samples) {
-    return (MultiThreadingMgr::call(mutex_,
+    return (MultiThreadingMgr::call(*mutex_,
         [&]() {return setMaxSampleCountInternal(name, max_samples);}));
 }
 
@@ -146,7 +146,7 @@ StatsMgr::setMaxSampleCountInternal(const string& name,
 
 void
 StatsMgr::setMaxSampleAgeAll(const StatsDuration& duration) {
-    MultiThreadingMgr::call(mutex_, [&]() {setMaxSampleAgeAllInternal(duration);});
+    MultiThreadingMgr::call(*mutex_, [&]() {setMaxSampleAgeAllInternal(duration);});
 }
 
 void
@@ -156,7 +156,7 @@ StatsMgr::setMaxSampleAgeAllInternal(const StatsDuration& duration) {
 
 void
 StatsMgr::setMaxSampleCountAll(uint32_t max_samples) {
-    MultiThreadingMgr::call(mutex_, [&]() {setMaxSampleCountAllInternal(max_samples);});
+    MultiThreadingMgr::call(*mutex_, [&]() {setMaxSampleCountAllInternal(max_samples);});
 }
 
 void
@@ -166,7 +166,7 @@ StatsMgr::setMaxSampleCountAllInternal(uint32_t max_samples) {
 
 bool
 StatsMgr::reset(const string& name) {
-    return MultiThreadingMgr::call(mutex_, [&]() {return resetInternal(name);});
+    return MultiThreadingMgr::call(*mutex_, [&]() {return resetInternal(name);});
 }
 
 bool
@@ -181,7 +181,7 @@ StatsMgr::resetInternal(const string& name) {
 
 bool
 StatsMgr::del(const string& name) {
-    return (MultiThreadingMgr::call(mutex_, [&]() {return delInternal(name);}));
+    return (MultiThreadingMgr::call(*mutex_, [&]() {return delInternal(name);}));
 }
 
 bool
@@ -191,7 +191,7 @@ StatsMgr::delInternal(const string& name) {
 
 void
 StatsMgr::removeAll() {
-    MultiThreadingMgr::call(mutex_, [&]() {removeAllInternal();});
+    MultiThreadingMgr::call(*mutex_, [&]() {removeAllInternal();});
 }
 
 void
@@ -201,7 +201,7 @@ StatsMgr::removeAllInternal() {
 
 ConstElementPtr
 StatsMgr::get(const string& name) const {
-    return (MultiThreadingMgr::call(mutex_, [&]() {return getInternal(name);}));
+    return (MultiThreadingMgr::call(*mutex_, [&]() {return getInternal(name);}));
 }
 
 ConstElementPtr
@@ -216,7 +216,7 @@ StatsMgr::getInternal(const string& name) const {
 
 ConstElementPtr
 StatsMgr::getAll() const {
-    return (MultiThreadingMgr::call(mutex_, [&]() {return getAllInternal();}));
+    return (MultiThreadingMgr::call(*mutex_, [&]() {return getAllInternal();}));
 }
 
 ConstElementPtr
@@ -226,7 +226,7 @@ StatsMgr::getAllInternal() const {
 
 void
 StatsMgr::resetAll() {
-    MultiThreadingMgr::call(mutex_, [&]() {resetAllInternal();});
+    MultiThreadingMgr::call(*mutex_, [&]() {resetAllInternal();});
 }
 
 void
@@ -236,7 +236,7 @@ StatsMgr::resetAllInternal() {
 
 size_t
 StatsMgr::getSize(const string& name) const {
-    return (MultiThreadingMgr::call(mutex_, [&]() {return getSizeInternal(name);}));
+    return (MultiThreadingMgr::call(*mutex_, [&]() {return getSizeInternal(name);}));
 }
 
 size_t
@@ -250,7 +250,7 @@ StatsMgr::getSizeInternal(const string& name) const {
 
 size_t
 StatsMgr::count() const {
-    return (MultiThreadingMgr::call(mutex_, [&]() {return countInternal();}));
+    return (MultiThreadingMgr::call(*mutex_, [&]() {return countInternal();}));
 }
 
 size_t

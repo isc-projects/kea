@@ -10,6 +10,7 @@
 #include <stats/observation.h>
 #include <stats/context.h>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <map>
 #include <mutex>
@@ -722,7 +723,7 @@ private:
     StatContextPtr global_;
 
     /// @brief Mutex used to protect internal state
-    mutable std::mutex mutex_;
+    const boost::scoped_ptr<std::mutex> mutex_;
 };
 
 };
