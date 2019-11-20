@@ -13,6 +13,7 @@
 #include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/make_shared.hpp>
 
 using namespace std;
 using namespace isc::data;
