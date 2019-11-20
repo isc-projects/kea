@@ -123,12 +123,13 @@ public:
     /// @return A pointer to dequeued packet, or an empty pointer
     /// if the queue is empty.
     virtual PacketTypePtr popPacket(const QueueEnd& from = QueueEnd::FRONT) {
+        std::lock_guard<std::mutex> lock(mutex_);
+
         PacketTypePtr packet;
         if (queue_.empty()) {
             return (packet);
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
         if (from == QueueEnd::FRONT) {
             packet = queue_.front();
             queue_.pop_front();
@@ -161,7 +162,14 @@ public:
 
     /// @brief Returns True if the queue is empty.
     virtual bool empty() const {
-        return(queue_.empty());
+        return (queue_.empty());
+    }
+
+    /// @brief return True if dequeue will not return null.
+    /// Use the mutex so race free with a concurrent enqueue.
+    virtual bool canDequeue() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return (!queue_.empty());
     }
 
     /// @brief Returns the maximum number of packets allowed in the buffer.
