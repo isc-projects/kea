@@ -952,7 +952,7 @@ public:
         // Simulate Advertise responses from the server. Each advertise is
         // assigned a transaction id from the range of 1 to 6 with incorrect IA
         // included in the message
-        for (unsigned i = generator->getNext() - 10; i < 7; ++i) {
+        for (uint32_t i = generator->getNext() - 10; i < 7; ++i) {
             Pkt6Ptr advertise(createAdvertisePkt6(tc, i, false));
             tc.processReceivedPacket6(advertise);
         }
@@ -961,7 +961,7 @@ public:
         // Simulate Advertise responses from the server. Each advertise is
         // assigned a transaction id from the range of 7 to 10 with correct IA
         // included in the message
-        for (unsigned i = generator->getNext() - 7; i < 11; ++i) {
+        for (uint32_t i = generator->getNext() - 7; i < 11; ++i) {
             Pkt6Ptr advertise(createAdvertisePkt6(tc, i));
             tc.processReceivedPacket6(advertise);
         }

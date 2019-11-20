@@ -465,7 +465,12 @@ public:
     ///
     /// \return number of rejected leases.
     uint64_t getRejLeasesNum() const { return(rejected_leases_num_); }
+
+    /// \brief Increase number of rejected leases.
+    ///
+    /// Method increase total number of rejected leases by one.
     void updateRejLeases() { ++rejected_leases_num_; }
+
     /// \brief Print main statistics for packet exchange.
     ///
     /// Method prints main statistics for particular exchange.
@@ -628,7 +633,8 @@ private:
     uint64_t sent_packets_num_;    ///< Total number of sent packets.
     uint64_t rcvd_packets_num_;    ///< Total number of received packets.
 
-    uint64_t rejected_leases_num_;  ///< Total number of rejected leases (e.g. NoAddrAvail)
+    uint64_t rejected_leases_num_; ///< Total number of rejected leases
+                                   /// (e.g. NoAddrAvail)
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
 };
 
@@ -984,9 +990,15 @@ public:
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return(xchg_stats->getRejLeasesNum());
     }
+
+    /// \brief Increase total number of rejected leases
+    ///
+    /// Method increase total number of rejected leases by one
+    /// for specified exchange type
     void updateRejLeases(const ExchangeType xchg_type) {
     ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-           xchg_stats->updateRejLeases(); }
+        xchg_stats->updateRejLeases(); }
+
     /// \brief Get time period since the start of test.
     ///
     /// Calculate dna return period since the test start. This

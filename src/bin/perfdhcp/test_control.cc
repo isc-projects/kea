@@ -807,11 +807,11 @@ TestControl::validateIA(const Pkt6Ptr& pkt6) {
     // OptionCollection ias = pkt6->getOptions(D6O_IA_NA);
     Option6IAPrefixPtr iapref;
     Option6IAAddrPtr iaaddr;
-    if (pkt6->getOption(D6O_IA_PD)){
+    if (pkt6->getOption(D6O_IA_PD)) {
         iapref = boost::dynamic_pointer_cast<
                  Option6IAPrefix>(pkt6->getOption(D6O_IA_PD)->getOption(D6O_IAPREFIX));
     }
-    if (pkt6->getOption(D6O_IA_NA)){
+    if (pkt6->getOption(D6O_IA_NA)) {
         iaaddr = boost::dynamic_pointer_cast<
                  Option6IAAddr>(pkt6->getOption(D6O_IA_NA)->getOption(D6O_IAADDR));
     }
@@ -826,8 +826,7 @@ TestControl::validateIA(const Pkt6Ptr& pkt6) {
           && !options_.getLeaseType()
              .includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX))) {
        return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -848,8 +847,7 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
                     /// used to access template_buffers_.
                     sendRequest6(template_buffers_[1], pkt6);
                }
-            }
-            else {
+            } else {
                 stats_mgr_.updateRejLeases(ExchangeType::SA);
             }
         }
@@ -873,8 +871,7 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
                     // message to a storage.
                     reply_storage_.append(pkt6);
                 }
-            }
-            else {
+            } else {
                 stats_mgr_.updateRejLeases(ExchangeType::RR);
             }
         // The Reply message is not a server's response to the Request message
