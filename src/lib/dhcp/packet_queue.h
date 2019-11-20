@@ -82,6 +82,11 @@ public:
     /// @brief return True if the queue is empty.
     virtual bool empty() const = 0;
 
+    /// @brief return True if dequeue will not return null.
+    ///
+    /// In fact it is !empty within a lock guard.
+    virtual bool canDequeue() = 0;
+
     /// @brief Returns the current number of packets in the buffer.
     virtual size_t getSize() const = 0;
 

@@ -1032,7 +1032,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // DHCP packets are waiting so we don't starve external
     // sockets under heavy DHCP load.
     struct timeval select_timeout;
-    if (getPacketQueue4()->empty()) {
+    if (!getPacketQueue4()->canDequeue()) {
         select_timeout.tv_sec = timeout_sec;
         select_timeout.tv_usec = timeout_usec;
     } else {
@@ -1045,7 +1045,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
-    if ((result == 0) && getPacketQueue4()->empty()) {
+    if ((result == 0) && !getPacketQueue4()->canDequeue()) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr());
     } else if (result < 0) {
@@ -1373,7 +1373,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // DHCP packets are waiting so we don't starve external
     // sockets under heavy DHCP load.
     struct timeval select_timeout;
-    if (getPacketQueue6()->empty()) {
+    if (!getPacketQueue6()->canDequeue()) {
         select_timeout.tv_sec = timeout_sec;
         select_timeout.tv_usec = timeout_usec;
     } else {
@@ -1386,7 +1386,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
-    if ((result == 0) && getPacketQueue6()->empty()) {
+    if ((result == 0) && !getPacketQueue6()->canDequeue()) {
         // nothing received and timeout has been reached
         return (Pkt6Ptr());
     } else if (result < 0) {
