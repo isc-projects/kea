@@ -1,3 +1,11 @@
+1684.	[func]		fdupont
+	As a preparation for upcoming multi-threading, the MySQL
+	connection pool has been implemented. This code is not
+	usable on its own yet, but it will allow all threads
+	to have share a pool of connections in the future. This
+	should improve the overall MySQL lease backend performance.
+	(Gitlab #960)
+
 1683.   [bug]           wlodek
 	Perfdhcp is able to parse incoming packet and determine
 	if included IA_NA/IA_PD options are correct, counter
