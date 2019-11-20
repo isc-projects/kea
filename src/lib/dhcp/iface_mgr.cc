@@ -992,6 +992,82 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
     return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt) == 0);
 }
 
+namespace {
+
+// The thread sanitizer (aka TSAN) does not transmit signals to
+// blocking select system calls.
+int
+do_select(int nfds, fd_set* readfds, struct timeval* timeout) {
+#if !defined(__has_feature) || !__has_feature(thread_sanitizer)
+    return (select(nfds, readfds, 0, 0, timeout));
+#else
+    // First case: blocking forever.
+    if (!timeout) {
+        for (;;) {
+            fd_set fds;
+            FD_COPY(readfds, &fds);
+            struct timeval tm;
+            tm.tv_sec = tm.tv_usec = 0;
+            // poll.
+            int ret = select(nfds, &fds, 0, 0, &tm);
+            if (ret != 0) {
+                // Copy back the read file descriptor set.
+                FD_COPY(&fds, readfds);
+                return (ret);
+            }
+            // sleep 1ms.
+            ret = usleep(1000);
+            if (ret != 0) {
+                return (ret);
+            }
+        }
+    }
+
+    // Second case: not blocking (ie polling).
+    if ((timeout->tv_sec == 0) && (timeout->tv_usec == 0)) {
+        return (select(nfds, readfds, 0, 0, timeout));
+    }
+
+    // Last case: blocking with timeout.
+    struct timeval now;
+    (void) gettimeofday(&now, 0);
+    struct timeval till;
+    // till = now + *timeout.
+    till.tv_sec = now.tv_sec + timeout->tv_sec;
+    till.tv_usec = now.tv_usec + timeout->tv_usec;
+    if (till.tv_usec >= 1000000) {
+        till.tv_sec++;
+        till.tv_usec -= 1000000;
+    }
+    for (;;) {
+        fd_set fds;
+        FD_COPY(readfds, &fds);
+        struct timeval tm;
+        tm.tv_sec = tm.tv_usec = 0;
+        // poll.
+        int ret = select(nfds, &fds, 0, 0, &tm);
+        if (ret != 0) {
+            // Copy back the read file descriptor set.
+            FD_COPY(&fds, readfds);
+            return (ret);
+        }
+        // sleep 1ms.
+        ret = usleep(1000);
+        if (ret != 0) {
+            return (ret);
+        }
+        // Check if we need another round: now < till.
+        (void) gettimeofday(&now, 0);
+        if ((now.tv_sec > till.tv_sec) ||
+            ((now.tv_sec == till.tv_sec) && (now.tv_usec >= till.tv_usec))) {
+            return (0);
+        }
+    }
+#endif
+}
+
+} // end of anonymous namespace.
+
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     if (isDHCPReceiverRunning()) {
         return (receive4Indirect(timeout_sec, timeout_usec));
@@ -1043,7 +1119,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = do_select(maxfd + 1, &sockets, &select_timeout);
 
     if ((result == 0) && !getPacketQueue4()->canDequeue()) {
         // nothing received and timeout has been reached
@@ -1146,7 +1222,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = do_select(maxfd + 1, &sockets, &select_timeout);
 
     if (result == 0) {
         // nothing received and timeout has been reached
@@ -1275,7 +1351,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = do_select(maxfd + 1, &sockets, &select_timeout);
 
     if (result == 0) {
         // nothing received and timeout has been reached
@@ -1384,7 +1460,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    int result = do_select(maxfd + 1, &sockets, &select_timeout);
 
     if ((result == 0) && !getPacketQueue6()->canDequeue()) {
         // nothing received and timeout has been reached
@@ -1481,7 +1557,7 @@ IfaceMgr::receiveDHCP4Packets() {
         errno = 0;
 
         // Select with null timeouts to wait indefinetly an event
-        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
+        int result = do_select(maxfd + 1, &rd_set, 0);
 
         // Re-check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
@@ -1556,7 +1632,7 @@ IfaceMgr::receiveDHCP6Packets() {
         errno = 0;
 
         // Note we wait until something happen.
-        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
+        int result = do_select(maxfd + 1, &rd_set, 0);
 
         // Re-check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
