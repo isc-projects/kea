@@ -37,6 +37,7 @@ int pkt4_receive(CalloutHandle& handle) {
     try {
         if (query->getType() != DHCP_NOTYPE) {
             // DHCP query.
+            query->addClass("DHCP");
             return (0);
         }
         if (query->getOp() == BOOTREPLY) {

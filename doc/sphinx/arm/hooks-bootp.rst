@@ -34,7 +34,38 @@ It takes no parameter.
    This library is only meant to be loaded by the ``kea-dhcp4`` process
    as there is no BOOTP protocol for IPv6.
 
-.. _books-bootp-limitations:
+
+.. _hooks-bootp-config:
+
+Incoming BOOTP packets are added to the BOOTP class. Incoming packets that
+are DHCP packets are added to the DHCP class. This can be used to segregate
+BOOTP clients to separate pool. For example you can do the following:
+
+::
+
+   "Dhcp4": {
+       "subnet4": [
+           {
+               "subnet": "192.0.2.0/24",
+               "pools": [
+               {
+                   // BOOTP clients will be handled here
+                   "pool": "192.0.2.200 - 192.0.2.254",
+                   "class": "BOOTP"
+               },
+               {
+                   // Regular DHCP clients will be handled here
+                   "pool": "192.0.2.1 - 192.0.2.199"
+               }],
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+
+.. _hooks-bootp-limitations:
 
 BOOTP Hooks Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~
