@@ -90,6 +90,12 @@ public:
         } else {
             EXPECT_EQ(type, pkt->getType());
         }
+
+        if (dhcp) {
+            EXPECT_TRUE(pkt->inClass("DHCP"));
+        } else {
+            EXPECT_FALSE(pkt->inClass("DHCP"));
+        }
     }
 
     /// @brief Callout manager accessed by this CalloutHandle.
@@ -118,7 +124,7 @@ TEST_F(BootpTest, dhcpOffer) {
 TEST_F(BootpTest, bootReply) {
     // The constructor does not allow to directly create a BOOTREPLY packet.
     Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 12345));
-    pkt->setType(DHCP_NOTYPE);
+    //pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREPLY, pkt->getOp());
     calloutsCall(pkt, false);
@@ -128,7 +134,7 @@ TEST_F(BootpTest, bootReply) {
 TEST_F(BootpTest, bootRequest) {
     // The constructor does not allow to directly create a BOOTREQUEST packet.
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 12345));
-    pkt->setType(DHCP_NOTYPE);
+    // pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREQUEST, pkt->getOp());
     calloutsCall(pkt, true);
