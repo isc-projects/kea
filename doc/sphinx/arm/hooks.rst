@@ -2780,31 +2780,7 @@ following:
 The ``network6-subnet-del`` command uses exactly the same syntax for
 both the command and the response.
 
-.. _bootp-library:
-
-bootp BOOTP support
-===================
-
-This library adds support for BOOTP with vendor information extensions
-(`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__). Received BOOTP
-requests are recognized, translated into DHCPREQUEST packets by adding
-a dhcp-message-type option and put into the "BOOTP" client class.
-Members of this class get infinite lifetime leases but the class can
-be used too for instance to guard a pool of addresses.
-
-The library is available since Kea 1.7.2 and can be loaded in a
-similar way as other hook libraries by the ``kea-dhcp4`` process.
-It takes no parameter.
-
-::
-
-    "Dhcp4": {
-        "hook_libraries": [
-            {   "library": "/usr/local/lib/libdhcp_bootp.so" },
-            ...
-        ]
-    }
-
+.. include:: hooks-bootp.rst
 .. include:: hooks-class-cmds.rst
 .. include:: hooks-cb-cmds.rst
 .. include:: hooks-ha.rst

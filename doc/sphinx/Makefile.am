@@ -31,6 +31,7 @@ rst_arm_sources+=arm/ddns.rst
 rst_arm_sources+=arm/dhcp4-srv.rst
 rst_arm_sources+=arm/dhcp6-srv.rst
 rst_arm_sources+=arm/hammer.rst
+rst_arm_sources+=arm/hooks-bootp.rst
 rst_arm_sources+=arm/hooks-cb-cmds.rst
 rst_arm_sources+=arm/hooks-class-cmds.rst
 rst_arm_sources+=arm/hooks-ha.rst
