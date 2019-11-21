@@ -75,6 +75,21 @@ CqlConnection::~CqlConnection() {
     }
 }
 
+std::pair<uint32_t, uint32_t>
+CqlConnection::getVersion(const ParameterMap& parameters) {
+    // Get a connection.
+    CqlConnection conn(parameters);
+
+    // Open the database.
+    conn.openDatabase();
+
+    // Prepare statement.
+    conn.prepareStatements(CqlVersionExchange::tagged_statements_);
+
+    std::unique_ptr<CqlVersionExchange> version_exchange(new CqlVersionExchange());
+    return version_exchange->retrieveVersion(conn);
+}
+
 CassConsistency CqlConnection::parseConsistency(std::string value) {
     static std::map<std::string, CassConsistency> consistency_map {
         {"any", CASS_CONSISTENCY_ANY},

@@ -311,6 +311,19 @@ public:
     /// @brief Destructor
     virtual ~PgSqlConnection();
 
+    /// @brief Get the schema version.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
+    ///
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    ///        failed.
+    static std::pair<uint32_t, uint32_t>
+    getVersion(const ParameterMap& parameters);
+
     /// @brief Prepare Single Statement
     ///
     /// Creates a prepared statement from the text given and adds it to the
@@ -318,7 +331,7 @@ public:
     ///
     /// @param statement SQL statement to be prepared.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     void prepareStatement(const PgSqlTaggedStatement& statement);
 
@@ -332,7 +345,7 @@ public:
     /// @param end_statement Pointer to the statement marking end of the
     /// range of statements to be compiled. This last statement is not compiled.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     void prepareStatements(const PgSqlTaggedStatement* start_statement,
                            const PgSqlTaggedStatement* end_statement);
@@ -396,7 +409,7 @@ public:
     /// @param r result of the last PostgreSQL operation
     /// @param statement - tagged statement that was executed
     ///
-    /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
+    /// @throw isc::db::DbOperationError Detailed PostgreSQL failure
     void checkStatementError(const PgSqlResult& r,
                              PgSqlTaggedStatement& statement) const;
 

@@ -2320,6 +2320,9 @@ protected:
                             HostPtr& target_host) const;
 
 private:
+    /// @brief Parameters
+    db::DatabaseConnection::ParameterMap parameters_;
+
     /// @brief CQL connection
     mutable CqlConnection dbconn_;
 };  // class CqlHostDataSourceImpl
@@ -2366,14 +2369,8 @@ operator==(const HostKey& key1, const HostKey& key2) {
 }
 
 CqlHostDataSourceImpl::CqlHostDataSourceImpl(const CqlConnection::ParameterMap& parameters)
-    : dbconn_(parameters) {
-    // Open the database.
-    dbconn_.openDatabase();
-
-    // Prepare the version exchange first.
-    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
-
-    // Validate the schema version.
+    : parameters_(parameters), dbconn_(parameters) {
+    // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(CQL_SCHEMA_VERSION_MAJOR,
                                                CQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
@@ -2383,6 +2380,9 @@ CqlHostDataSourceImpl::CqlHostDataSourceImpl(const CqlConnection::ParameterMap& 
                   << " found version: " << db_version.first << "."
                   << db_version.second);
     }
+
+    // Open the database.
+    dbconn_.openDatabase();
 
     // Prepare all possible statements.
     dbconn_.prepareStatements(CqlHostExchange::tagged_statements_);
@@ -2748,8 +2748,7 @@ CqlHostDataSourceImpl::getName() const {
 
 VersionPair
 CqlHostDataSourceImpl::getVersion() const {
-    std::unique_ptr<CqlVersionExchange> version_exchange(new CqlVersionExchange());
-    return (version_exchange->retrieveVersion(dbconn_));
+    return CqlConnection::getVersion(parameters_);
 }
 
 bool

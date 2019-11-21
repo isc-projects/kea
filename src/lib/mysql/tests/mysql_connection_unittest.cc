@@ -390,4 +390,29 @@ TEST_F(MySqlConnectionTest, deleteByValue) {
     EXPECT_TRUE(deleted);
 }
 
+/// @brief Test fixture class for @c MySqlConnection class methods.
+class MySqlSchemaTest : public ::testing::Test {
+public:
+    /// @brief Constructor.
+    MySqlSchemaTest() {
+        // Ensure we have the proper schema.
+        createMySQLSchema();
+    }
+
+    /// @brief Destructor.
+    virtual ~MySqlSchemaTest() {
+        destroyMySQLSchema();
+    }
+};
+
+/// @brief Check that getVersion() returns the expected version.
+TEST_F(MySqlSchemaTest, checkVersion) {
+    // Check version
+    auto parameters = DatabaseConnection::parse(validMySQLConnectionString());
+    std::pair<uint32_t, uint32_t> version;
+    ASSERT_NO_THROW(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
 }

@@ -1115,9 +1115,8 @@ protected:
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
-    exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
-    conn_.openDatabase();
-
+      exchange6_(new PgSqlLease6Exchange()), parameters_(parameters),
+      conn_(parameters) {
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
                                                PG_SCHEMA_VERSION_MINOR);
@@ -1129,6 +1128,9 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
                       << " found version:  " << db_version.first << "."
                       << db_version.second);
     }
+
+    // Open the database.
+    conn_.openDatabase();
 
     // Now prepare the SQL statements.
     int i = 0;
@@ -1929,25 +1931,7 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
-    const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_, version_sql));
-    if(PQresultStatus(r) != PGRES_TUPLES_OK) {
-        isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ", reason: " << PQerrorMessage(conn_));
-    }
-
-    istringstream tmp;
-    uint32_t version;
-    tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
-    tmp.str("");
-    tmp.clear();
-
-    uint32_t minor;
-    tmp.str(PQgetvalue(r, 0, 1));
-    tmp >> minor;
-
-    return (make_pair(version, minor));
+    return (PgSqlConnection::getVersion(parameters_));
 }
 
 void

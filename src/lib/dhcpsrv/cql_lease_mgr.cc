@@ -2029,13 +2029,8 @@ CqlLeaseStatsQuery::executeSelect(const CqlConnection& connection, const AnyArra
 }
 
 CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
-    : LeaseMgr(), dbconn_(parameters) {
-    dbconn_.openDatabase();
-
-    // Prepare the version exchange first.
-    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
-
-    // Validate the schema version.
+  : LeaseMgr(), parameters_(parameters), dbconn_(parameters) {
+    // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(CQL_SCHEMA_VERSION_MAJOR,
                                                CQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
@@ -2045,6 +2040,9 @@ CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
                   << " found version:  " << db_version.first << "."
                   << db_version.second);
     }
+
+    // Open the database.
+    dbconn_.openDatabase();
 
     // Now prepare the rest of the exchanges.
     dbconn_.prepareStatements(CqlLease4Exchange::tagged_statements_);
@@ -2744,8 +2742,7 @@ VersionPair
 CqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_VERSION);
 
-    std::unique_ptr<CqlVersionExchange> version_exchange(new CqlVersionExchange());
-    return version_exchange->retrieveVersion(dbconn_);
+    return CqlConnection::getVersion(parameters_);
 }
 
 void

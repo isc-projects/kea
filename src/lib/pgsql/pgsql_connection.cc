@@ -25,6 +25,8 @@
 #define PGSQL_STATECODE_LEN 5
 #include <utils/errcodes.h>
 
+#include <sstream>
+
 using namespace std;
 
 namespace isc {
@@ -125,6 +127,35 @@ PgSqlConnection::~PgSqlConnection() {
             }
         }
     }
+}
+
+std::pair<uint32_t, uint32_t>
+PgSqlConnection::getVersion(const ParameterMap& parameters) {
+    // Get a connection.
+    PgSqlConnection conn(parameters);
+
+    // Open the database.
+    conn.openDatabase();
+
+    const char* version_sql =  "SELECT version, minor FROM schema_version;";
+    PgSqlResult r(PQexec(conn.conn_, version_sql));
+    if (PQresultStatus(r) != PGRES_TUPLES_OK) {
+        isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
+                  << version_sql << ", reason: " << PQerrorMessage(conn.conn_));
+    }
+
+    istringstream tmp;
+    uint32_t version;
+    tmp.str(PQgetvalue(r, 0, 0));
+    tmp >> version;
+    tmp.str("");
+    tmp.clear();
+
+    uint32_t minor;
+    tmp.str(PQgetvalue(r, 0, 1));
+    tmp >> minor;
+
+    return (make_pair(version, minor));
 }
 
 void

@@ -770,6 +770,9 @@ private:
     boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
+    /// The parameters.
+    db::DatabaseConnection::ParameterMap parameters_;
+
     /// PostgreSQL connection handle
     db::PgSqlConnection conn_;
 };

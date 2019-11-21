@@ -44,19 +44,20 @@ ScopedAuditRevision::~ScopedAuditRevision() {
 MySqlConfigBackendImpl::
 MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters)
     : conn_(parameters), audit_revision_created_(false) {
-    // Open the database.
-    conn_.openDatabase();
-
-    // Test schema version before we try to prepare statements.
+    // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
-/*    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    std::pair<uint32_t, uint32_t> db_version =
+        MySqlConnection::getVersion(parameters);
     if (code_version != db_version) {
         isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
                   << code_version.first << "." << code_version.second
                   << " found version:  " << db_version.first << "."
                   << db_version.second);
-    } */
+    }
+
+    // Open the database.
+    conn_.openDatabase();
 
     // Enable autocommit. In case transaction is explicitly used, this
     // setting will be overwritten for the transaction. However, there are

@@ -127,6 +127,19 @@ public:
     /// @brief Destructor
     virtual ~CqlConnection();
 
+    /// @brief Get the schema version.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return Version number as a pair of unsigned integers.  "first" is the
+    ///         major version number, "second" the minor number.
+    ///
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    ///        failed.
+    static std::pair<uint32_t, uint32_t>
+    getVersion(const ParameterMap& parameters);
+
     /// @brief Prepare statements
     ///
     /// Creates the prepared statements for all of the CQL statements used

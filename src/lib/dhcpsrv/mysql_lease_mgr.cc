@@ -2961,65 +2961,7 @@ MySqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_VERSION);
 
-    // Get a connection.
-    MySqlConnection conn(parameters_);
-
-    // Open the database.
-    conn.openDatabase();
-
-    // Allocate a new statement.
-    MYSQL_STMT *stmt = mysql_stmt_init(conn.mysql_);
-    if (stmt == NULL) {
-        isc_throw(DbOperationError, "unable to allocate MySQL prepared "
-                "statement structure, reason: " << mysql_error(conn.mysql_));
-    }
-
-    // Prepare the statement from SQL text.
-    const char* version_sql = "SELECT version, minor FROM schema_version";
-    int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                  << version_sql << ">, reason: " << mysql_error(conn.mysql_));
-    }
-
-    // Execute the prepared statement.
-    if (mysql_stmt_execute(stmt) != 0) {
-        isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
-    }
-
-    // Bind the output of the statement to the appropriate variables.
-    MYSQL_BIND bind[2];
-    memset(bind, 0, sizeof(bind));
-
-    uint32_t major;
-    bind[0].buffer_type = MYSQL_TYPE_LONG;
-    bind[0].is_unsigned = 1;
-    bind[0].buffer = &major;
-    bind[0].buffer_length = sizeof(major);
-
-    uint32_t minor;
-    bind[1].buffer_type = MYSQL_TYPE_LONG;
-    bind[1].is_unsigned = 1;
-    bind[1].buffer = &minor;
-    bind[1].buffer_length = sizeof(minor);
-
-    if (mysql_stmt_bind_result(stmt, bind)) {
-        isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
-    }
-
-    // Fetch the data.
-    if (mysql_stmt_fetch(stmt)) {
-        mysql_stmt_close(stmt);
-        isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
-    }
-
-    // Discard the statement and its resources
-    mysql_stmt_close(stmt);
-
-    return (std::make_pair(major, minor));
+    return (MySqlConnection::getVersion(parameters_));
 }
 
 void

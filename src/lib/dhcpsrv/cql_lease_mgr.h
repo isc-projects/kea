@@ -578,6 +578,9 @@ public:
     virtual void rollback() override;
 
 private:
+    /// @brief Connection parameters
+    db::DatabaseConnection::ParameterMap parameters_;
+
     /// @brief Database connection object
     mutable db::CqlConnection dbconn_;
 };
