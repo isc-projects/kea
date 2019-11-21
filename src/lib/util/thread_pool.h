@@ -207,6 +207,7 @@ private:
         ///
         /// Sets the queue state to 'enabled'
         void enable() {
+            std::lock_guard<std::mutex> lock(mutex_);
             enabled_ = true;
         }
 
@@ -214,7 +215,10 @@ private:
         ///
         /// Sets the queue state to 'disabled'
         void disable() {
-            enabled_ = false;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                enabled_ = false;
+            }
             // Notify pop so that it can exit.
             cv_.notify_all();
         }
