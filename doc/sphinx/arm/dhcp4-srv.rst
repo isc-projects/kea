@@ -5624,6 +5624,10 @@ Supported DHCP Standards
 
 The following standards are currently supported:
 
+-  *BOOTP Vendor Information Extensions*, `RFC
+   1497 <https://tools.ietf.org/html/rfc1497>`__: This requires an open
+   source BOOTP hook to be loaded.
+
 -  *Dynamic Host Configuration Protocol*, `RFC
    2131 <https://tools.ietf.org/html/rfc2131>`__: Supported messages are
    DHCPDISCOVER (1), DHCPOFFER (2), DHCPREQUEST (3), DHCPRELEASE (7),

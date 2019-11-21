@@ -441,8 +441,9 @@ loaded by the correct process per the table below.
    |                 |               |database. This library may only be used in conjuction with  |
    |                 |               |one of the supported configuration backend implementations. |
    +-----------------+---------------+------------------------------------------------------------+
-   | BOOTP           | Kea sources   |The BOOTP hooks library recognizes received BOOTP requests: |
-   |                 | (since 1.7.2) |they are translated into DHCPREQUEST packets, put into the  |
+   | BOOTP           | Kea sources   |The BOOTP hooks library adds BOOTP support, as defined in   |
+   |                 | (since 1.7.2) |RFC1497. It recognizes received BOOTP requests:             |
+   |                 |               |they are translated into DHCPREQUEST packets, put into the  |
    |                 |               |BOOTP client class and get infinite lifetime leases.        |
    +-----------------+---------------+------------------------------------------------------------+
 
@@ -1206,7 +1207,7 @@ of the server where the hook library is loaded. Other spaces as vendor
 spaces could be supported in a further version.
 
 The library is available since Kea 1.7.1 and can be loaded in a
-similar way as other hook libraries by the ``kea-dhp4`` or `kea-dhp6``
+similar way as other hook libraries by the ``kea-dhcp4`` or `kea-dhcp6``
 process.. It takes a mandatory ``options`` parameter holding a list of
 per option parameter maps with code, name, add, supersede and remove
 actions. Action entries take a string value representing an
@@ -2792,7 +2793,7 @@ Members of this class get infinite lifetime leases but the class can
 be used too for instance to guard a pool of addresses.
 
 The library is available since Kea 1.7.2 and can be loaded in a
-similar way as other hook libraries by the ``kea-dhp4`` process.
+similar way as other hook libraries by the ``kea-dhcp4`` process.
 It takes no parameter.
 
 ::
