@@ -186,6 +186,11 @@ libraries), or hooks libraries (open source or premium).
    |                                  |                        | packet drop and                |
    |                                  |                        | reject entries.                |
    +----------------------------------+------------------------+--------------------------------+
+   | ``kea-dhcp4.bootp``              | libdhcp_bootp          | This logger is used to log     |
+   |                                  | hook library           | messages related to the        |
+   |                                  |                        | operation of the BOOTP hook    |
+   |                                  |                        | library.                       |
+   +----------------------------------+------------------------+--------------------------------+
    | ``kea-dhcp4.callouts``,          | core                   | Used to log messages           |
    | ``kea-dhcp6.callouts``           |                        | pertaining to the              |
    |                                  |                        | callouts registration          |
