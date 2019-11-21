@@ -5687,7 +5687,7 @@ are clearly marked as such.
 
 -  BOOTP with vendor information extensions
    (`RFC 1497 <https://tools.ietf.org/html/rfc1497>`__) is supported
-   by the BOOTP hooks library; see :ref:`bootp-library` for details.
+   by the BOOTP hooks library; see :ref:`hooks-bootp` for details.
 
 -  On Linux and BSD system families the DHCP messages are sent and
    received over the raw sockets (using LPF and BPF) and all packet
