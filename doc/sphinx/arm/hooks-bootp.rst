@@ -44,6 +44,13 @@ the following:
 ::
 
    "Dhcp4": {
+       "client-classes": [
+           {
+               // The DHCP class is the complement of the BOOTP class
+               "name": "DHCP",
+               "test": "not member('BOOTP')"
+           }
+       ],
        "subnet4": [
            {
                "subnet": "192.0.2.0/24",
@@ -51,11 +58,12 @@ the following:
                {
                    // BOOTP clients will be handled here
                    "pool": "192.0.2.200 - 192.0.2.254",
-                   "class": "BOOTP"
+                   "client-class": "BOOTP"
                },
                {
                    // Regular DHCP clients will be handled here
-                   "pool": "192.0.2.1 - 192.0.2.199"
+                   "pool": "192.0.2.1 - 192.0.2.199",
+                   "client-class": "DHCP"
                }],
                ...
            },
