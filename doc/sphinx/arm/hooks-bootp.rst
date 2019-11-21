@@ -5,7 +5,7 @@ BOOTP support
 
 .. note::
 
-   This is library is still in experimental phase. Use with care!
+   This is library is still in experimental phase. Use with care! 
 
 
 This hooks library adds support for BOOTP with vendor information extensions
