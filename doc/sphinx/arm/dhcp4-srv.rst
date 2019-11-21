@@ -3365,7 +3365,7 @@ ones are:
 DHCPv4 uses two distinct identifiers which are placed by the client in
 the queries sent to the server and copied by the server to its responses
 to the client: "chaddr" and "client identifier". The former was
-introduced as a part of the BOOTP specification and it is also used by 
+introduced as a part of the BOOTP specification and it is also used by
 DHCP to carry the hardware address of the interface used to send the
 query to the server (MAC address for the Ethernet). The latter is
 carried in the Client-identifier option, introduced in `RFC
