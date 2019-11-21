@@ -1,4 +1,4 @@
-.. _hooks-bootp:
+.. _bootp-library:
 
 BOOTP support
 =============

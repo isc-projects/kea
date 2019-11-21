@@ -40,7 +40,6 @@ int buffer4_receive(CalloutHandle& handle) {
 
         if (copy->getType() != DHCP_NOTYPE) {
             // DHCP query.
-            query->addClass("DHCP");
             return (0);
         }
         if (copy->getOp() == BOOTREPLY) {
