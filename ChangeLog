@@ -1,3 +1,10 @@
+16XX.	[func]		fdupont
+	A new hook library libdhcp_bootp has been implemented. Once
+	loaded, this hook will provide support for BOOTP packets, as
+	defined in RFC1497. Please see the "BOOTP Support" Section in the
+	ARM for details.
+	(Gitlab #898)
+
 1695.	[func]		fdupont
 	Added support of BOOTP leases with infinite valid lifetime.
 	This includes representation of such leases in MySQL and
