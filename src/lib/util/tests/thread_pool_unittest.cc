@@ -33,21 +33,23 @@ public:
         run();
         // wait for main thread signal to exit
         unique_lock<mutex> lk(wait_mutex_);
-        wait_cv_.wait(lk, [&]{ return (wait() == false); });
+        wait_cv_.wait(lk, [&]() {return (wait() == false);});
     }
 
     /// @brief task function which registers the thread id and signals main
     /// thread to stop waiting
     void run() {
-        // make sure this thread has started and it is accounted for
-        lock_guard<mutex> lk(mutex_);
-        auto id = this_thread::get_id();
-        // register this thread as doing work on items
-        ids_.emplace(id);
-        // finish task
-        ++count_;
-        // register this task on the history of this thread
-        history_[id].push_back(count_);
+        {
+            // make sure this thread has started and it is accounted for
+            lock_guard<mutex> lk(mutex_);
+            auto id = this_thread::get_id();
+            // register this thread as doing work on items
+            ids_.emplace(id);
+            // finish task
+            ++count_;
+            // register this task on the history of this thread
+            history_[id].push_back(count_);
+        }
         // wake main thread if it is waiting for this thread to process
         cv_.notify_all();
     }
@@ -79,7 +81,7 @@ public:
             startThreads(thread_count, signal);
         }
         // wait for the threads to process all the items
-        cv_.wait(lck, [&]{ return (count() == items_count); });
+        cv_.wait(lck, [&]() {return (count() == items_count);});
     }
 
     /// @brief start test threads
@@ -113,10 +115,12 @@ public:
 
     /// @brief function used by main thread to unblock processing threads
     void signalThreads() {
-        lock_guard<mutex> lk(wait_mutex_);
-        // clear the wait flag so that threads will no longer wait for the main
-        // thread signal
-        wait_ = false;
+        {
+            lock_guard<mutex> lk(wait_mutex_);
+            // clear the wait flag so that threads will no longer wait for the main
+            // thread signal
+            wait_ = false;
+        }
         // wake all threads if waiting for main thread signal
         wait_cv_.notify_all();
     }
@@ -125,7 +129,7 @@ public:
     ///
     /// @return the number of completed tasks
     uint32_t count() {
-        return count_;
+        return (count_);
     }
 
     /// @brief flag which indicates if working thread should wait for main
@@ -133,7 +137,7 @@ public:
     ///
     /// @return the wait flag
     bool wait() {
-        return wait_;
+        return (wait_);
     }
 
     /// @brief check the total number of tasks that have been processed
