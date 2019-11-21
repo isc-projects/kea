@@ -442,7 +442,7 @@ loaded by the correct process per the table below.
    |                 |               |one of the supported configuration backend implementations. |
    +-----------------+---------------+------------------------------------------------------------+
    | BOOTP           | Kea sources   |The BOOTP hooks library adds BOOTP support, as defined in   |
-   |                 | (since 1.7.2) |RFC1497. It recognizes received BOOTP requests:             |
+   |                 | (since 1.7.2) |RFC 1497. It recognizes received BOOTP requests:            |
    |                 |               |they are translated into DHCPREQUEST packets, put into the  |
    |                 |               |BOOTP client class and get infinite lifetime leases.        |
    +-----------------+---------------+------------------------------------------------------------+

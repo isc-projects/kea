@@ -74,6 +74,7 @@ language = None
 exclude_patterns = [
     '_build', 'Thumbs.db', '.DS_Store',
     # included files need to be excluded to avoid duplicate labels
+    'arm/hooks-bootp.rst',
     'arm/hooks-class-cmds.rst',
     'arm/hooks-cb-cmds.rst',
     'arm/config-backend.rst',

@@ -1,4 +1,4 @@
-.. _hooks-bootp:
+.. _bootp-library:
 
 BOOTP support
 =============
@@ -37,9 +37,9 @@ It takes no parameter.
 
 .. _hooks-bootp-config:
 
-Incoming BOOTP packets are added to the BOOTP class. Incoming packets that
-are DHCP packets are added to the DHCP class. This can be used to segregate
-BOOTP clients to separate pool. For example you can do the following:
+Incoming BOOTP packets are added to the BOOTP class. This can be used
+to segregate BOOTP clients to separate pool. For example you can do
+the following:
 
 ::
 
@@ -72,11 +72,13 @@ BOOTP Hooks Limitations
 
 Currently the BOOTP library has the following limitations:
 
-- BOOTP protocol assumes all lease assignments are permanent. Kea does not support
-  infinite leases yet. You may configure arbitrarily long leases (e.g. a year), but
-  after the lease lifetime elapses, Kea will recycle the lease and may assign it
-  to some other device. This limitation will be removed in the near future.
+- BOOTP protocol assumes all lease assignments are permanent. Kea does
+  not support infinite leases yet. You may configure arbitrarily long
+  leases (e.g. a year), but after the lease lifetime elapses, Kea will
+  recycle the lease and may assign it to some other device. This
+  limitation will be removed in the near future.
 
-- A basic BOOTP as defined in `RFC 951 <https://tools.ietf.org/html/rfc951>`__ is
-  not supported. Kea only supports the BOOTP with vendor extensions. Depending on
+- A basic BOOTP as defined in `RFC 951
+  <https://tools.ietf.org/html/rfc951>`__ is not supported. Kea only
+  supports the BOOTP with vendor information extensions. Depending on
   the demand, this may or may not be implemented in the future.
