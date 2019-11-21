@@ -153,7 +153,7 @@ server uses an appropriate pool or subnet to allocate IP addresses
 be found in :ref:`high-availability-library`.
 
 The BOOTP class is used by the BOOTP hook library to classify and
-respond to inbound BOOTP queries.
+respond to inbound BOOTP queries. 
 
 Other examples are the ALL class, which all incoming packets belong to,
 and the KNOWN class, assigned when host reservations exist for a
