@@ -22,7 +22,7 @@ namespace isc {
 namespace util {
 
 /// @brief Defines a thread pool which uses a thread pool queue for managing
-/// work items. Each work item is a 'function' object.
+/// work items. Each work item is a 'functor' object.
 ///
 /// @tparam WorkItem a functor
 /// @tparam Container a 'queue like' container
@@ -31,7 +31,7 @@ struct ThreadPool {
     typedef typename boost::shared_ptr<WorkItem> WorkItemPtr;
 
     /// @brief Constructor
-    ThreadPool() : running_(false) {
+    ThreadPool() {
     }
 
     /// @brief Destructor
@@ -59,7 +59,7 @@ struct ThreadPool {
         if (!thread_count) {
             isc_throw(InvalidParameter, "thread count is 0");
         }
-        if (running_) {
+        if (queue_.enabled()) {
             isc_throw(InvalidOperation, "thread pool already started");
         }
         startInternal(thread_count);
@@ -69,7 +69,7 @@ struct ThreadPool {
     ///
     /// @throw InvalidOperation if thread pool already stopped
     void stop() {
-        if (!running_) {
+        if (!queue_.enabled()) {
             isc_throw(InvalidOperation, "thread pool already stopped");
         }
         stopInternal();
@@ -77,7 +77,7 @@ struct ThreadPool {
 
     /// @brief add a work item to the thread pool
     ///
-    /// @param item the 'function' object to be added to the queue
+    /// @param item the 'functor' object to be added to the queue
     void add(const WorkItemPtr& item) {
         queue_.push(item);
     }
@@ -103,7 +103,6 @@ private:
     /// started
     void startInternal(uint32_t thread_count) {
         queue_.enable();
-        running_ = true;
         for (uint32_t i = 0; i < thread_count; ++i) {
             threads_.push_back(boost::make_shared<std::thread>(&ThreadPool::run, this));
         }
@@ -111,7 +110,6 @@ private:
 
     /// @brief stop all the threads
     void stopInternal() {
-        running_ = false;
         queue_.disable();
         for (auto thread : threads_) {
             thread->join();
@@ -209,21 +207,26 @@ private:
         ///
         /// Sets the queue state to 'enabled'
         void enable() {
-            std::lock_guard<std::mutex> lock(mutex_);
             enabled_ = true;
         }
 
-        /// brief disable the queue
+        /// @brief disable the queue
         ///
         /// Sets the queue state to 'disabled'
         void disable() {
-            {
-                std::lock_guard<std::mutex> lock(mutex_);
-                enabled_ = false;
-            }
+            enabled_ = false;
             // Notify pop so that it can exit.
             cv_.notify_all();
         }
+
+        /// @brief return the state of the queue
+        ///
+        /// Returns the state of the queue
+        ///
+        /// @return the state
+        bool enabled() {
+            return (enabled_);
+	}
 
     private:
         /// @brief underlying queue container
@@ -243,7 +246,7 @@ private:
 
     /// @brief run function of each thread
     void run() {
-        while (running_) {
+        while (queue_.enabled()) {
             WorkItemPtr item = queue_.pop();
             if (item) {
                 try {
@@ -260,11 +263,6 @@ private:
 
     /// @brief underlying work items queue
     ThreadPoolQueue<WorkItemPtr, Container> queue_;
-
-    /// @brief state of the thread pool
-    /// The 'running' state corresponds to true value
-    /// The 'not running' state corresponds to false value
-    std::atomic<bool> running_;
 };
 
 }  // namespace util
