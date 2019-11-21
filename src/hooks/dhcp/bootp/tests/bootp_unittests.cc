@@ -50,7 +50,7 @@ public:
     ///
     /// @param pkt The packet to submit.
     /// @param processed True if the packet must be processed, false otherwise.
-    void pkt4_receiveCall(Pkt4Ptr& pkt, bool processed) {
+    void pkt4_receiveCall(Pkt4Ptr& pkt, bool processed, bool dhcp) {
         // Get callout handle.
         CalloutHandle handle(getCalloutManager());
 
@@ -73,6 +73,12 @@ public:
             EXPECT_FALSE(pkt->inClass("BOOTP"));
             EXPECT_EQ(type, pkt->getType());
         }
+
+        if (dhcp) {
+            EXPECT_TRUE(pkt->inClass("DHCP"));
+        } else {
+            EXPECT_FALSE(pkt->inClass("DHCP"));
+        }
     }
 
     /// @brief Callout manager accessed by this CalloutHandle.
@@ -82,39 +88,39 @@ public:
 // Verifies that DHCPDISCOVER goes through unmodified.
 TEST_F(BootpTest, dhcpDiscover) {
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 12345));
-    pkt4_receiveCall(pkt, false);
+    pkt4_receiveCall(pkt, false, true);
 }
 
 // Verifies that DHCPREQUEST goes through unmodified.
 TEST_F(BootpTest, dhcpRequest) {
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 12345));
-    pkt4_receiveCall(pkt, false);
+    pkt4_receiveCall(pkt, false, true);
 }
 
 // Verifies that DHCPOFFER goes through unmodified.
 TEST_F(BootpTest, dhcpOffer) {
     Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 12345));
-    pkt4_receiveCall(pkt, false);
+    pkt4_receiveCall(pkt, false, true);
 }
 
 // Verifies that BOOTREPLY goes through unmodified.
 TEST_F(BootpTest, bootReply) {
     // The constructor does not allow to directly create a BOOTREPLY packet.
     Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 12345));
-    pkt->setType(DHCP_NOTYPE);
+    //pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREPLY, pkt->getOp());
-    pkt4_receiveCall(pkt, false);
+    pkt4_receiveCall(pkt, false, false);
 }
 
 // Verifies that BOOTREQUEST is recognized and processed.
 TEST_F(BootpTest, bootRequest) {
     // The constructor does not allow to directly create a BOOTREQUEST packet.
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 12345));
-    pkt->setType(DHCP_NOTYPE);
+    // pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREQUEST, pkt->getOp());
-    pkt4_receiveCall(pkt, true);
+    pkt4_receiveCall(pkt, true, false);
 }
 
 } // end of anonymous namespace
