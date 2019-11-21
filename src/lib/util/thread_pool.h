@@ -86,14 +86,14 @@ struct ThreadPool {
     ///
     /// @return the number of work items in the queue
     size_t count() {
-        return queue_.count();
+        return (queue_.count());
     }
 
     /// @brief size number of thread pool threads
     ///
     /// @return the number of threads
     size_t size() {
-        return threads_.size();
+        return (threads_.size());
     }
 
 private:
@@ -157,8 +157,10 @@ private:
             if (!item) {
                 return;
             }
-            std::lock_guard<std::mutex> lock(mutex_);
-            queue_.push(item);
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                queue_.push(item);
+            }
             // Notify pop function so that it can effectively remove a work item.
             cv_.notify_one();
         }
@@ -175,17 +177,14 @@ private:
         /// @return the first work item from the queue or an empty element.
         Item pop() {
             std::unique_lock<std::mutex> lock(mutex_);
-            while (enabled_) {
-                if (queue_.empty()) {
-                    // Wait for push or disable functions.
-                    cv_.wait(lock);
-                    continue;
-                }
-                Item item = queue_.front();
-                queue_.pop();
-                return item;
+            // Wait for push or disable functions.
+            cv_.wait(lock, [&]() {return (!enabled_ || !queue_.empty());});
+            if (!enabled_) {
+                return (Item());
             }
-            return Item();
+            Item item = queue_.front();
+            queue_.pop();
+            return (item);
         }
 
         /// @brief count number of work items in the queue
@@ -195,7 +194,7 @@ private:
         /// @return the number of work items
         size_t count() {
             std::lock_guard<std::mutex> lock(mutex_);
-            return queue_.size();
+            return (queue_.size());
         }
 
         /// @brief clear remove all work items
@@ -218,8 +217,10 @@ private:
         ///
         /// Sets the queue state to 'disabled'
         void disable() {
-            std::lock_guard<std::mutex> lock(mutex_);
-            enabled_ = false;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                enabled_ = false;
+            }
             // Notify pop so that it can exit.
             cv_.notify_all();
         }
