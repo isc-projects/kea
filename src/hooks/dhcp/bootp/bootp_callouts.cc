@@ -89,7 +89,7 @@ int pkt4_receive(CalloutHandle& handle) {
 ///
 /// @param handle library handle (unused).
 /// @return always 0.
-int load(LibraryHandle& /*handle*/) {
+int load(LibraryHandle& /* handle */) {
     LOG_INFO(bootp_logger, BOOTP_LOAD);
     return (0);
 }

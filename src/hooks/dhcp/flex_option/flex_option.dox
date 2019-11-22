@@ -83,11 +83,11 @@ The sole parameter is a options list of options with:
    the query packet. If the option does not already exist in the response
    packet and the expression evaluates to a not empty value, the option
    with the value is added to the response.
- - @supersede - Specifies the supersede action: it takes a string expression
+ - @b supersede - Specifies the supersede action: it takes a string expression
    on the query packet. If the expression evaluates to a not empty value,
    the option with the value is added to the response. If it already exists
    it is overwritten.
- - @remove - Specifies the remove action: it takes a boolean expression
+ - @b remove - Specifies the remove action: it takes a boolean expression
    on the query packet. If the expression evaluates to true and the option
    already exists in the response packet, the option is removed from the
    response. Only one action can be specified.
@@ -108,7 +108,7 @@ all located in flex_option_callouts.cc.
 
 kea-dhcp4 server calls @ref pkt4_send (and kea-dhcp6 @ref pkt6_send) with
 the query and response packets. For each configured option the action is
-applied by the template @ref process located in flex_option.h. When
+applied by the template @c process located in flex_option.h. When
 required the expression is evaluated on the query packet and the result
 is used by the action for instance to add a new option.
 

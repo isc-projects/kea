@@ -45,7 +45,7 @@ public:
     public:
         /// @brief Constructor.
         ///
-        /// @param option code.
+        /// @param code the option code.
         OptionConfig(uint16_t code);
 
         /// @brief Destructor.
