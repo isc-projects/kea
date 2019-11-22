@@ -1,3 +1,9 @@
+1685.	[build]		fdupont
+	Small build improvement. The fcntl.h header is included in more
+	portable way. This should make it easier to build on Alpine systems and
+	possibly other systems.
+	(Gitlab #765)
+
 1684.	[func]		fdupont
 	As a preparation for upcoming multi-threading, the MySQL
 	connection pool has been implemented. This code is not
