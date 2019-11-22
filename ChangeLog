@@ -1,3 +1,9 @@
+1686.	[func]		razvan
+	Added a generic ThreadPool class which can be used to process
+	work items in parallel, on multiple threads. It uses a 'queue like'
+	container to store the items.
+	(Gitlab #883)
+
 1685.	[build]		fdupont
 	Small build improvement. The fcntl.h header is included in more
 	portable way. This should make it easier to build on Alpine systems and
@@ -12,7 +18,7 @@
 	should improve the overall MySQL lease backend performance.
 	(Gitlab #960)
 
-1683.   [bug]           wlodek
+1683.	[bug]		wlodek
 	Perfdhcp is able to parse incoming packet and determine
 	if included IA_NA/IA_PD options are correct, counter
 	of rejected leases is introduced for all DHCP v6 message
