@@ -1,20 +1,20 @@
-// File created from ../../../../src/hooks/dhcp/bootp/bootp_messages.mes on Mon Nov 18 2019 09:30
+// File created from ../../../../src/hooks/dhcp/bootp/bootp_messages.mes on Fri Nov 22 2019 01:05
 
 #include <cstddef>
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+extern const isc::log::MessageID BOOTP_ADDED_CLASS = "BOOTP_ADDED_CLASS";
+extern const isc::log::MessageID BOOTP_ADDED_MSGTYPE = "BOOTP_ADDED_MSGTYPE";
 extern const isc::log::MessageID BOOTP_LOAD = "BOOTP_LOAD";
-extern const isc::log::MessageID BOOTP_PROCESSED = "BOOTP_PROCESSED";
-extern const isc::log::MessageID BOOTP_PROCESS_ERROR = "BOOTP_PROCESS_ERROR";
 extern const isc::log::MessageID BOOTP_UNLOAD = "BOOTP_UNLOAD";
 
 namespace {
 
 const char* values[] = {
+    "BOOTP_ADDED_CLASS", "added BOOTP class to a BOOTP query: %1",
+    "BOOTP_ADDED_MSGTYPE", "added DHCPREQUEST message type to a BOOTP query: %1",
     "BOOTP_LOAD", "Bootp hooks library has been loaded",
-    "BOOTP_PROCESSED", "processed BOOTP query: %1",
-    "BOOTP_PROCESS_ERROR", "%1: failed to process packet: %2",
     "BOOTP_UNLOAD", "Bootp hooks library has been unloaded",
     NULL
 };

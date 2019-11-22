@@ -53,8 +53,8 @@ bootp_callouts.cc. It checks if the necessary parameter is passed and
 decodes the option configurations. @ref unload() free the configuration.
 
 Kea engine checks if the library has functions that match known hook
-point names. This library has one such function: @ref pkt4_receive
-located in bootp_callouts.cc.
+point names. This library has two such functions: @ref buffer4_receive
+and @ref pkt4_receive located in bootp_callouts.cc.
 
 If the receive query has to dhcp-message-type option then it is a BOOTP
 one: the BOOTP client class and a DHCPREQUEST dhcp-message-type option

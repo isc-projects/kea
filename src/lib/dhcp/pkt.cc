@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,6 +98,10 @@ Pkt::inClass(const std::string& client_class) {
 
 void
 Pkt::addClass(const std::string& client_class, bool required) {
+    // Always have ALL first.
+    if (classes_.empty()) {
+        classes_.insert("ALL");
+    }
     ClientClasses& classes = !required ? classes_ : required_classes_;
     if (!classes.contains(client_class)) {
         classes.insert(client_class);

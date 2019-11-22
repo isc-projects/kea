@@ -20,8 +20,10 @@ using namespace isc;
 using namespace isc::bootp;
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace isc::util;
 
 extern "C" {
+extern int buffer4_receive(CalloutHandle& handle);
 extern int pkt4_receive(CalloutHandle& handle);
 }
 
@@ -46,13 +48,19 @@ public:
         return(co_manager_);
     }
 
-    /// @brief Tests pkt4_receive callout.
+    /// @brief Tests buffer4_receive and pkt4_receive callout.
     ///
     /// @param pkt The packet to submit.
     /// @param processed True if the packet must be processed, false otherwise.
-    void pkt4_receiveCall(Pkt4Ptr& pkt, bool processed) {
+    void calloutsCall(Pkt4Ptr& pkt, bool processed) {
         // Get callout handle.
         CalloutHandle handle(getCalloutManager());
+
+        // Fill data so it becomes possible to unpack a copy of it.
+        ASSERT_NO_THROW(pkt->pack());
+        const OutputBuffer& buffer = pkt->getBuffer();
+        pkt->data_.resize(buffer.getLength());
+        memmove(&pkt->data_[0], buffer.getData(), pkt->data_.size());
 
         // Set query.
         handle.setArgument("query4", pkt);
@@ -60,17 +68,26 @@ public:
         // Get type.
         uint8_t type = pkt->getType();
 
-        // Execute pkt4_receive callout.
+        // Execute buffer4_receive callout.
         int ret;
-        ASSERT_NO_THROW(ret = pkt4_receive(handle));
+        ASSERT_NO_THROW(ret = buffer4_receive(handle));
         EXPECT_EQ(0, ret);
 
         // Verify processing.
         if (processed) {
             EXPECT_TRUE(pkt->inClass("BOOTP"));
-            EXPECT_EQ(DHCPREQUEST, pkt->getType());
         } else {
             EXPECT_FALSE(pkt->inClass("BOOTP"));
+        }
+
+        // Execute pkt4_receive callout.
+        ASSERT_NO_THROW(ret = pkt4_receive(handle));
+        EXPECT_EQ(0, ret);
+
+        // Verify processing.
+        if (processed) {
+            EXPECT_EQ(DHCPREQUEST, pkt->getType());
+        } else {
             EXPECT_EQ(type, pkt->getType());
         }
     }
@@ -82,19 +99,19 @@ public:
 // Verifies that DHCPDISCOVER goes through unmodified.
 TEST_F(BootpTest, dhcpDiscover) {
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 12345));
-    pkt4_receiveCall(pkt, false);
+    calloutsCall(pkt, false);
 }
 
 // Verifies that DHCPREQUEST goes through unmodified.
 TEST_F(BootpTest, dhcpRequest) {
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 12345));
-    pkt4_receiveCall(pkt, false);
+    calloutsCall(pkt, false);
 }
 
 // Verifies that DHCPOFFER goes through unmodified.
 TEST_F(BootpTest, dhcpOffer) {
     Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 12345));
-    pkt4_receiveCall(pkt, false);
+    calloutsCall(pkt, false);
 }
 
 // Verifies that BOOTREPLY goes through unmodified.
@@ -104,7 +121,7 @@ TEST_F(BootpTest, bootReply) {
     pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREPLY, pkt->getOp());
-    pkt4_receiveCall(pkt, false);
+    calloutsCall(pkt, false);
 }
 
 // Verifies that BOOTREQUEST is recognized and processed.
@@ -114,7 +131,7 @@ TEST_F(BootpTest, bootRequest) {
     pkt->setType(DHCP_NOTYPE);
     pkt->delOption(DHO_DHCP_MESSAGE_TYPE);
     ASSERT_EQ(BOOTREQUEST, pkt->getOp());
-    pkt4_receiveCall(pkt, true);
+    calloutsCall(pkt, true);
 }
 
 } // end of anonymous namespace

@@ -5625,7 +5625,7 @@ Supported DHCP Standards
 The following standards are currently supported:
 
 -  *BOOTP Vendor Information Extensions*, `RFC
-   1497 <https://tools.ietf.org/html/rfc1497>`__: This requires an open
+   1497 <https://tools.ietf.org/html/rfc1497>`__: This requires the open
    source BOOTP hook to be loaded.
 
 -  *Dynamic Host Configuration Protocol*, `RFC
