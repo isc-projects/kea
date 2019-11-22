@@ -1,7 +1,7 @@
 1686.	[func]		razvan
 	Added a generic ThreadPool class which can be used to process
-	work items in parallel, on multiple threads. It uses a 'queue like'
-	container to store the items.
+	functor work items in parallel, on multiple threads. It uses
+	a queue container to manage the work items.
 	(Gitlab #883)
 
 1685.	[build]		fdupont
