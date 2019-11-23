@@ -109,78 +109,6 @@ LibLoadTest::createValidJsonConfiguration() const {
     return (Element::fromJSON(config_text));
 }
 
-// Simple test that checks the library can be loaded and unloaded several times.
-TEST_F(LibLoadTest, validLoadsDhcp4) {
-
-    // Prepare parameters,
-    ElementPtr params = Element::createMap();
-    params->set("high-availability", createValidJsonConfiguration());
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET);
-    Daemon::setProcName("kea-dhcp4");
-
-    addLib(HA_LIB_SO, params);
-
-    EXPECT_TRUE(loadLibs());
-    unloadLibs();
-
-    EXPECT_TRUE(loadLibs());
-    unloadLibs();
-}
-
-// Simple test that checks the library can be loaded and unloaded several times.
-TEST_F(LibLoadTest, validLoadsDhcp6) {
-
-    // Prepare parameters,
-    ElementPtr params = Element::createMap();
-    params->set("high-availability", createValidJsonConfiguration());
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET6);
-    Daemon::setProcName("kea-dhcp6");
-
-    addLib(HA_LIB_SO, params);
-
-    EXPECT_TRUE(loadLibs());
-    unloadLibs();
-
-    EXPECT_TRUE(loadLibs());
-    unloadLibs();
-}
-
-// Simple test that checks the library can be loaded in a DHCPv4 server.
-TEST_F(LibLoadTest, invalidLoadDhcp4) {
-    // Prepare parameters,
-    ElementPtr params = Element::createMap();
-    params->set("high-availability", createValidJsonConfiguration());
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET);
-    Daemon::setProcName("kea-dhcp6");
-
-    addLib(HA_LIB_SO, params);
-
-    // The process name must be kea-dhcp4 so load shall fail.
-    EXPECT_FALSE(loadLibs());
-}
-
-// Simple test that checks the library can be loaded in a DHCPv6 server.
-TEST_F(LibLoadTest, invalidLoadDhcp6) {
-    // Prepare parameters,
-    ElementPtr params = Element::createMap();
-    params->set("high-availability", createValidJsonConfiguration());
-
-    // Set family and proc name.
-    CfgMgr::instance().setFamily(AF_INET6);
-    Daemon::setProcName("kea-dhcp4");
-
-    addLib(HA_LIB_SO, params);
-
-    // The process name must be kea-dhcp6 so load shall fail.
-    EXPECT_FALSE(loadLibs());
-}
-
 // Simple test that checks the library can be loaded in a DHCPv4 server.
 TEST_F(LibLoadTest, validLoadDhcp4) {
     // Prepare parameters,
@@ -207,6 +135,82 @@ TEST_F(LibLoadTest, validLoadDhcp6) {
 
     addLib(HA_LIB_SO, params);
     EXPECT_TRUE(loadLibs());
+}
+
+// Simple test that checks the library can be loaded in a DHCPv4 server
+// only if it is set for IP.
+TEST_F(LibLoadTest, invalidLoadDhcp4) {
+    // Prepare parameters,
+    ElementPtr params = Element::createMap();
+    params->set("high-availability", createValidJsonConfiguration());
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp6");
+
+    addLib(HA_LIB_SO, params);
+
+    // The process name must be kea-dhcp4 so load shall fail.
+    EXPECT_FALSE(loadLibs());
+}
+
+// Simple test that checks the library can be loaded in a DHCPv6 server
+// only if it is set for IPv6.
+TEST_F(LibLoadTest, invalidLoadDhcp6) {
+    // Prepare parameters,
+    ElementPtr params = Element::createMap();
+    params->set("high-availability", createValidJsonConfiguration());
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp4");
+
+    addLib(HA_LIB_SO, params);
+
+    // The process name must be kea-dhcp6 so load shall fail.
+    EXPECT_FALSE(loadLibs());
+}
+
+// Simple test that checks the library can be loaded and unloaded several times
+// in a DHCPv4 server.
+TEST_F(LibLoadTest, validLoadsDhcp4) {
+
+    // Prepare parameters,
+    ElementPtr params = Element::createMap();
+    params->set("high-availability", createValidJsonConfiguration());
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
+
+    addLib(HA_LIB_SO, params);
+
+    EXPECT_TRUE(loadLibs());
+    unloadLibs();
+
+    EXPECT_TRUE(loadLibs());
+    unloadLibs();
+}
+
+// Simple test that checks the library can be loaded and unloaded several times
+// in a DHCPv6 server.
+TEST_F(LibLoadTest, validLoadsDhcp6) {
+
+    // Prepare parameters,
+    ElementPtr params = Element::createMap();
+    params->set("high-availability", createValidJsonConfiguration());
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp6");
+
+    addLib(HA_LIB_SO, params);
+
+    EXPECT_TRUE(loadLibs());
+    unloadLibs();
+
+    EXPECT_TRUE(loadLibs());
+    unloadLibs();
 }
 
 } // end of anonymous namespace
