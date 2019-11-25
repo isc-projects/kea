@@ -119,7 +119,7 @@ TEST_F(LibLoadTest, validLoadDhcp4) {
     CfgMgr::instance().setFamily(AF_INET);
     Daemon::setProcName("kea-dhcp4");
 
-    addLib(HA_LIB_SO, params);
+    addLib(LIBDHCP_HA_SO, params);
     EXPECT_TRUE(loadLibs());
 }
 
@@ -133,12 +133,12 @@ TEST_F(LibLoadTest, validLoadDhcp6) {
     CfgMgr::instance().setFamily(AF_INET6);
     Daemon::setProcName("kea-dhcp6");
 
-    addLib(HA_LIB_SO, params);
+    addLib(LIBDHCP_HA_SO, params);
     EXPECT_TRUE(loadLibs());
 }
 
 // Simple test that checks the library can be loaded in a DHCPv4 server
-// only if it is set for IP.
+// only if it is set for IPv4.
 TEST_F(LibLoadTest, invalidLoadDhcp4) {
     // Prepare parameters,
     ElementPtr params = Element::createMap();
@@ -148,7 +148,7 @@ TEST_F(LibLoadTest, invalidLoadDhcp4) {
     CfgMgr::instance().setFamily(AF_INET);
     Daemon::setProcName("kea-dhcp6");
 
-    addLib(HA_LIB_SO, params);
+    addLib(LIBDHCP_HA_SO, params);
 
     // The process name must be kea-dhcp4 so load shall fail.
     EXPECT_FALSE(loadLibs());
@@ -165,7 +165,7 @@ TEST_F(LibLoadTest, invalidLoadDhcp6) {
     CfgMgr::instance().setFamily(AF_INET6);
     Daemon::setProcName("kea-dhcp4");
 
-    addLib(HA_LIB_SO, params);
+    addLib(LIBDHCP_HA_SO, params);
 
     // The process name must be kea-dhcp6 so load shall fail.
     EXPECT_FALSE(loadLibs());
@@ -183,7 +183,7 @@ TEST_F(LibLoadTest, validLoadsDhcp4) {
     CfgMgr::instance().setFamily(AF_INET);
     Daemon::setProcName("kea-dhcp4");
 
-    addLib(HA_LIB_SO, params);
+    addLib(LIBDHCP_HA_SO, params);
 
     EXPECT_TRUE(loadLibs());
     unloadLibs();
@@ -204,7 +204,7 @@ TEST_F(LibLoadTest, validLoadsDhcp6) {
     CfgMgr::instance().setFamily(AF_INET6);
     Daemon::setProcName("kea-dhcp6");
 
-    addLib(HA_LIB_SO, params);
+    addLib(LIBDHCP_HA_SO, params);
 
     EXPECT_TRUE(loadLibs());
     unloadLibs();
