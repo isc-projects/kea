@@ -29,23 +29,29 @@ template<typename SharedNetworkParserType>
 class SharedNetworksListParser : public data::SimpleParser {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
+    SharedNetworksListParser(bool check_iface = true)
+        : check_iface_(check_iface) {
+    }
+
     /// @brief Parses a list of shared networks.
     ///
-    /// @tparam Type of the configuration structure into which the result
-    /// will be stored, i.e. @ref CfgSharedNetworks4 or @ref CfgSharedNetworks6.
+    /// @tparam CfgSharedNetworksTypePtr Type of the configuration structure
+    /// into which the result will be stored, i.e. @ref CfgSharedNetworks4
+    /// or @ref CfgSharedNetworks6.
     /// @param [out] cfg Shared networks configuration structure into which
     /// the data should be parsed.
     /// @param shared_networks_list_data List element holding a list of
     /// shared networks.
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     ///
     /// @throw DhcpConfigError when error has occurred, e.g. when networks
     /// with duplicated names have been specified.
     template<typename CfgSharedNetworksTypePtr>
     void parse(CfgSharedNetworksTypePtr& cfg,
-               const data::ConstElementPtr& shared_networks_list_data,
-                bool check_iface = true) {
+               const data::ConstElementPtr& shared_networks_list_data) {
         try {
             // Get the C++ vector holding networks.
             const std::vector<data::ElementPtr>& networks_list =
@@ -53,8 +59,8 @@ public:
             // Iterate over all networks and do the parsing.
             for (auto network_element = networks_list.cbegin();
                  network_element != networks_list.cend(); ++network_element) {
-                SharedNetworkParserType parser;
-                auto network = parser.parse(*network_element, check_iface);
+                SharedNetworkParserType parser(check_iface_);
+                auto network = parser.parse(*network_element);
                 cfg->add(network);
             }
         } catch (const DhcpConfigError&) {
@@ -70,6 +76,10 @@ public:
                       << shared_networks_list_data->getPosition() << ")");
         }
     }
+
+protected:
+    /// Check if the specified interface exists in the system.
+    bool check_iface_;
 };
 
 /// @brief Type of the shared networks list parser for IPv4.

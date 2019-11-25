@@ -26,9 +26,12 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+SharedNetwork4Parser::SharedNetwork4Parser(bool check_iface)
+    : check_iface_(check_iface) {
+}
+
 SharedNetwork4Ptr
-SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
-                            bool check_iface) {
+SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork4Ptr shared_network;
     try {
 
@@ -49,7 +52,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
         if (shared_network_data->contains("interface")) {
             std::string iface = getString(shared_network_data, "interface");
             if (!iface.empty()) {
-                if (check_iface && !IfaceMgr::instance().getIface(iface)) {
+                if (check_iface_ && !IfaceMgr::instance().getIface(iface)) {
                     ConstElementPtr error =
                         shared_network_data->get("interface");
                     isc_throw(DhcpConfigError,
@@ -74,9 +77,9 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
             auto json = shared_network_data->get("subnet4");
 
             // Create parser instance of subnet4.
-            Subnets4ListConfigParser parser;
+            Subnets4ListConfigParser parser(check_iface_);
             Subnet4Collection subnets;
-            parser.parse(subnets, json, check_iface);
+            parser.parse(subnets, json);
 
             // Add all returned subnets into shared network.
             for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
@@ -207,9 +210,12 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
     return (shared_network);
 }
 
+SharedNetwork6Parser::SharedNetwork6Parser(bool check_iface)
+    : check_iface_(check_iface) {
+}
+
 SharedNetwork6Ptr
-SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
-                            bool check_iface) {
+SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
     SharedNetwork6Ptr shared_network;
     std::string name;
     try {
@@ -266,7 +272,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
         // Set interface name. If it is defined, then subnets are available
         // directly over specified network interface.
         if (!iface.unspecified() && !iface.empty()) {
-            if (check_iface && !IfaceMgr::instance().getIface(iface)) {
+            if (check_iface_ && !IfaceMgr::instance().getIface(iface)) {
                 ConstElementPtr error = shared_network_data->get("interface");
                 isc_throw(DhcpConfigError,
                           "Specified network interface name " << iface
@@ -320,9 +326,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             auto json = shared_network_data->get("subnet6");
 
             // Create parser instance of subnet6.
-            Subnets6ListConfigParser parser;
+            Subnets6ListConfigParser parser(check_iface_);
             Subnet6Collection subnets;
-            parser.parse(subnets, json, check_iface);
+            parser.parse(subnets, json);
 
             // Add all returned subnets into shared network.
             for (auto subnet = subnets.cbegin(); subnet != subnets.cend();

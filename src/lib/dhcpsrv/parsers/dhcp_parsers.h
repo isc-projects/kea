@@ -474,7 +474,9 @@ public:
     /// @brief constructor
     ///
     /// @param family address family: @c AF_INET or @c AF_INET6
-    explicit SubnetConfigParser(uint16_t family);
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
+    explicit SubnetConfigParser(uint16_t family, bool check_iface = true);
 
     /// @brief virtual destructor (does nothing)
     virtual ~SubnetConfigParser() { }
@@ -486,13 +488,10 @@ protected:
     /// Subnet6ConfigParser) classes.
     ///
     /// @param subnet pointer to the content of subnet definition
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @return a pointer to newly created subnet
     ///
     /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
-    SubnetPtr parse(isc::data::ConstElementPtr subnet,
-                    bool check_iface = true);
+    SubnetPtr parse(isc::data::ConstElementPtr subnet);
 
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.
@@ -544,16 +543,17 @@ public:
     /// @brief Constructor
     ///
     /// stores global scope parameters, options, option definitions.
-    Subnet4ConfigParser();
+    ///
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
+    Subnet4ConfigParser(bool check_iface = true);
 
     /// @brief Parses a single IPv4 subnet configuration and adds to the
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @return a pointer to created Subnet4 object
-    Subnet4Ptr parse(data::ConstElementPtr subnet, bool check_iface = true);
+    Subnet4Ptr parse(data::ConstElementPtr subnet);
 
 protected:
 
@@ -575,6 +575,12 @@ protected:
 class Subnets4ListConfigParser : public isc::data::SimpleParser {
 public:
 
+    /// @brief constructor
+    ///
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
+    Subnets4ListConfigParser(bool check_iface = true);
+
     /// @brief parses contents of the list
     ///
     /// Iterates over all entries on the list, parses its content
@@ -583,22 +589,21 @@ public:
     ///
     /// @param cfg Pointer to server configuration.
     /// @param subnets_list pointer to a list of IPv4 subnets
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @return number of subnets created
-    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list,
-                 bool check_iface = true);
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
 
     /// @brief Parses contents of the subnet4 list.
     ///
     /// @param [out] subnets Container where parsed subnets will be stored.
     /// @param subnets_list pointer to a list of IPv4 subnets
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @return Number of subnets created.
     size_t parse(Subnet4Collection& subnets,
-                 data::ConstElementPtr subnets_list,
-                 bool check_iface = true);
+                 data::ConstElementPtr subnets_list);
+
+protected:
+
+    /// Check if the specified interface exists in the system.
+    bool check_iface_;
 };
 
 /// @brief Parser for IPv6 pool definitions.
@@ -735,16 +740,17 @@ public:
     /// @brief Constructor
     ///
     /// stores global scope parameters, options, option definitions.
-    Subnet6ConfigParser();
+    ///
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
+    Subnet6ConfigParser(bool check_iface = true);
 
     /// @brief Parses a single IPv6 subnet configuration and adds to the
     /// Configuration Manager.
     ///
     /// @param subnet A new subnet being configured.
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @return a pointer to created Subnet6 object
-    Subnet6Ptr parse(data::ConstElementPtr subnet, bool check_iface = true);
+    Subnet6Ptr parse(data::ConstElementPtr subnet);
 
 protected:
     /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
@@ -776,6 +782,12 @@ protected:
 class Subnets6ListConfigParser : public isc::data::SimpleParser {
 public:
 
+    /// @brief constructor
+    ///
+    /// @param check_iface Check if the specified interface exists in
+    /// the system.
+    Subnets6ListConfigParser(bool check_iface = true);
+
     /// @brief parses contents of the list
     ///
     /// Iterates over all entries on the list, parses its content
@@ -784,11 +796,8 @@ public:
     ///
     /// @param cfg configuration (parsed subnets will be stored here)
     /// @param subnets_list pointer to a list of IPv6 subnets
-    /// @param check_iface Check if the specified interface exists in
-    /// the system.
     /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
-    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list,
-                 bool check_iface = true);
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
 
     /// @brief Parses contents of the subnet6 list.
     ///
@@ -798,9 +807,12 @@ public:
     /// the system.
     /// @return Number of subnets created.
     size_t parse(Subnet6Collection& subnets,
-                 data::ConstElementPtr subnets_list,
-                 bool check_iface = true);
+                 data::ConstElementPtr subnets_list);
 
+protected:
+
+    /// Check if the specified interface exists in the system.
+    bool check_iface_;
 };
 
 /// @brief Parser for  D2ClientConfig

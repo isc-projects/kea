@@ -432,22 +432,38 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
     }
 }
 
-// This test verifies that an interface which is not in the system is rejected.
+// This test verifies that the optional interface check works as expected.
 TEST_F(SharedNetwork4ParserTest, iface) {
     // Basic configuration for shared network.
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
+
+    // The interface check can be disabled.
+    SharedNetwork4Parser parser_no_check(false);
+    SharedNetwork4Ptr network;
+    EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_FALSE(network->getIface().unspecified());
+    EXPECT_EQ("eth1", network->getIface().get());
+
+    // Retry with the interface check enabled.
     SharedNetwork4Parser parser;
-    EXPECT_NO_THROW(parser.parse(config_element, false));
     EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
 
     // Configure default test interfaces.
     IfaceMgrTestConfig ifmgr(true);
 
-    EXPECT_NO_THROW(parser.parse(config_element, false));
-    EXPECT_NO_THROW(parser.parse(config_element));
+    EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_FALSE(network->getIface().unspecified());
+    EXPECT_EQ("eth1", network->getIface().get());
+
+    EXPECT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_FALSE(network->getIface().unspecified());
+    EXPECT_EQ("eth1", network->getIface().get());
 }
 
 
@@ -848,22 +864,38 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
     }
 }
 
-// This test verifies that an interface which is not in the system is rejected.
+// This test verifies that the optional interface check works as expected.
 TEST_F(SharedNetwork6ParserTest, iface) {
     // Basic configuration for shared network.
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
+
+    // The interface check can be disabled.
+    SharedNetwork6Parser parser_no_check(false);
+    SharedNetwork6Ptr network;
+    EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_FALSE(network->getIface().unspecified());
+    EXPECT_EQ("eth1", network->getIface().get());
+
+    // Retry with the interface check enabled.
     SharedNetwork6Parser parser;
-    EXPECT_NO_THROW(parser.parse(config_element, false));
     EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
 
     // Configure default test interfaces.
     IfaceMgrTestConfig ifmgr(true);
 
-    EXPECT_NO_THROW(parser.parse(config_element, false));
-    EXPECT_NO_THROW(parser.parse(config_element));
+    EXPECT_NO_THROW(network = parser_no_check.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_FALSE(network->getIface().unspecified());
+    EXPECT_EQ("eth1", network->getIface().get());
+
+    EXPECT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_FALSE(network->getIface().unspecified());
+    EXPECT_EQ("eth1", network->getIface().get());
 }
 
 } // end of anonymous namespace

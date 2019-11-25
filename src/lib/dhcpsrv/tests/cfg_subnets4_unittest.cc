@@ -1616,7 +1616,7 @@ TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
     }
 }
 
-// This test verifies that an interface which is not in the system is rejected.
+// This test verifies that the optional interface check works as expected.
 TEST(CfgSubnets4Test, iface) {
     // Create a configuration.
     std::string json =
@@ -1630,13 +1630,17 @@ TEST(CfgSubnets4Test, iface) {
     ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
         << "invalid JSON:" << json << "\n test is broken";
 
+    // The interface check can be disabled.
+    Subnet4ConfigParser parser_no_check(false);
+    EXPECT_NO_THROW(parser_no_check.parse(elems));
+
+    // Retry with the interface check enabled.
     Subnet4ConfigParser parser;
-    EXPECT_NO_THROW(parser.parse(elems, false));
     EXPECT_THROW(parser.parse(elems), DhcpConfigError);
 
     // Configure default test interfaces.
     IfaceMgrTestConfig config(true);
-    EXPECT_NO_THROW(parser.parse(elems, false));
+    EXPECT_NO_THROW(parser_no_check.parse(elems));
     EXPECT_NO_THROW(parser.parse(elems));
 }
 

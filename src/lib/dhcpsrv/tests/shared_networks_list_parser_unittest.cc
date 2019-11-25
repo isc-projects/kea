@@ -83,7 +83,7 @@ TEST(SharedNetworkListParserTest, duplicatedName) {
     EXPECT_THROW(parser.parse(cfg, config_element), DhcpConfigError);
 }
 
-// This test verifies that an interface which is not in the system is rejected.
+// This test verifies that the optional interface check works as expected.
 TEST(SharedNetworkListParserTest, iface) {
     // Basic configuration with a shared network.
     std::string config = "["
@@ -94,16 +94,21 @@ TEST(SharedNetworkListParserTest, iface) {
         "]";
 
     ElementPtr config_element = Element::fromJSON(config);
-    SharedNetworks6ListParser parser;
+
+    // The interface check can be disabled.
+    SharedNetworks6ListParser parser_no_check(false);
     CfgSharedNetworks6Ptr cfg(new CfgSharedNetworks6());
-    EXPECT_NO_THROW(parser.parse(cfg, config_element, false));
+    EXPECT_NO_THROW(parser_no_check.parse(cfg, config_element));
     cfg.reset(new CfgSharedNetworks6());
+
+    // Retry with the interface check enabled.
+    SharedNetworks6ListParser parser;
     EXPECT_THROW(parser.parse(cfg, config_element), DhcpConfigError);
+    cfg.reset(new CfgSharedNetworks6());
 
     // Configure default test interfaces.
     IfaceMgrTestConfig ifmgr(true);
-    cfg.reset(new CfgSharedNetworks6());
-    EXPECT_NO_THROW(parser.parse(cfg, config_element, false));
+    EXPECT_NO_THROW(parser_no_check.parse(cfg, config_element));
     cfg.reset(new CfgSharedNetworks6());
     EXPECT_NO_THROW(parser.parse(cfg, config_element));
 }
