@@ -209,7 +209,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
 
     if (!audit_entries.empty() &&
         HooksManager::getHooksManager().calloutsPresent(hooks_.hook_index_cb6_updated_)) {
-        CalloutHandlePtr callout_handle =  HooksManager::createCalloutHandle();
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do

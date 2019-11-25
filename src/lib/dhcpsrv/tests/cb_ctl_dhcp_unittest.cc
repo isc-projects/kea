@@ -810,7 +810,7 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyHook) {
 
     // Install cb4_updated.
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "cb4_updated", cb4_updated_callout));
+        "cb4_updated", cb4_updated_callout));
 
     // Create audit entries.
     addCreateAuditEntry("dhcp4_global_parameter");
@@ -1434,7 +1434,7 @@ TEST_F(CBControlDHCPv6Test, databaseConfigApplyHook) {
 
     // Install cb6_updated.
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "cb6_updated", cb6_updated_callout));
+        "cb6_updated", cb6_updated_callout));
 
     // Create audit entries.
     addCreateAuditEntry("dhcp6_global_parameter");
