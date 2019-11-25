@@ -1415,7 +1415,11 @@ TEST(CfgSubnets6Test, iface) {
 
     // The interface check can be disabled.
     Subnet6ConfigParser parser_no_check(false);
-    EXPECT_NO_THROW(parser_no_check.parse(elems));
+    Subnet6Ptr subnet;
+    EXPECT_NO_THROW(subnet = parser_no_check.parse(elems));
+    ASSERT_TRUE(subnet);
+    EXPECT_FALSE(subnet->getIface().unspecified());
+    EXPECT_EQ("eth1", subnet->getIface().get());
 
     // Retry with the interface check enabled.
     Subnet6ConfigParser parser;
@@ -1423,8 +1427,16 @@ TEST(CfgSubnets6Test, iface) {
 
     // Configure default test interfaces.
     IfaceMgrTestConfig config(true);
-    EXPECT_NO_THROW(parser_no_check.parse(elems));
-    EXPECT_NO_THROW(parser.parse(elems));
+
+    EXPECT_NO_THROW(subnet = parser_no_check.parse(elems));
+    ASSERT_TRUE(subnet);
+    EXPECT_FALSE(subnet->getIface().unspecified());
+    EXPECT_EQ("eth1", subnet->getIface().get());
+
+    EXPECT_NO_THROW(subnet = parser.parse(elems));
+    ASSERT_TRUE(subnet);
+    EXPECT_FALSE(subnet->getIface().unspecified());
+    EXPECT_EQ("eth1", subnet->getIface().get());
 }
 
 } // end of anonymous namespace
