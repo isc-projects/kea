@@ -7,10 +7,6 @@ is primarily funded by revenues from support subscriptions for our open
 source, and we encourage all professional users to consider this option.
 To learn more, see \ https://www.isc.org/support/.
 
-If you would like to contribute to ISC to assist us in continuing to
-make quality open source software, please visit our donations page at
-\ https://www.isc.org/donate/.
-
 We thank all the organizations and individuals who have helped to make
 Kea possible. `Comcast <https://www.comcast.com/>`__ and the Comcast
 Innovation Fund provided major support for the development of Kea's
