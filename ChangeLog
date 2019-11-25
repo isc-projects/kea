@@ -1,3 +1,9 @@
+1689.	[bug]*		fdupont
+	The default Kea Control Agent's configuration file uses port 8000
+	instead of 8080 for the agent. This corrects the mismatch between
+	the default port number used by the kea-shell and the agent.
+	(Gitlab #793)
+
 1688.	[func]		fdupont
 	Added a new callout (hook point) executed when the server has
 	completed a configuration update using the Config Backend.
