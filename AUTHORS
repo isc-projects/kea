@@ -27,7 +27,7 @@ Primary developers:
 Primary area of work mentioned in parentheses. The list is in a roughly
 chronological order.
 
-Kea is using parts of the code of now defunct BIND 10 project. The following
+Kea uses parts of the code of the now-defunct BIND 10 project. The following
 people contributed to BIND 10 code:
 
 Chen Zhengzhang
