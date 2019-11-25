@@ -34,6 +34,10 @@ It takes no parameter.
    This library is only meant to be loaded by the ``kea-dhcp4`` process
    as there is no BOOTP protocol for IPv6.
 
+.. note::
+
+   A host reservation for a BOOTP client should use the hardware address
+   as the identifier (the client-id option is a DHCP specific option).
 
 .. _hooks-bootp-config:
 
