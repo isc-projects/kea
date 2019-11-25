@@ -1,3 +1,8 @@
+1688.	[func]		fdupont
+	Added a new callout (hook point) executed when the server has
+	completed a configuration update using the Config Backend.
+	(Gitlab #596)
+
 1687.	[doc]		fdupont
 	Described for developers the way for a hook library to be loadable
 	only for specific server(s) and applied as an example to ha.
