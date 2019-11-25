@@ -1,3 +1,8 @@
+1687.	[doc]		fdupont
+	Described for developers the way for a hook library to be loadable
+	only for specific server(s) and applied as an example to ha.
+	(Gitlab #50)
+
 1686.	[func]		razvan
 	Added a generic ThreadPool class which can be used to process
 	functor work items in parallel, on multiple threads. It uses
