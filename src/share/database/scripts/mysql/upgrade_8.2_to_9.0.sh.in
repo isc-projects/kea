@@ -39,7 +39,7 @@ CREATE INDEX lease6_by_hostname ON lease6 (hostname);
 UPDATE schema_version
 SET version = '9', minor = '0';
 
-# Add new ddns columns to shared networks and subnets
+# Add new DDNS related columns to shared networks and subnets
 ALTER TABLE dhcp4_shared_network
     ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
     ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
