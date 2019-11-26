@@ -86,12 +86,9 @@ TEST_F(DaemonTest, constructor) {
 
     EXPECT_NO_THROW(Daemon instance1);
 
-    // Check that the verbose mode is not set by default.
+    // Check only instance values.
     Daemon instance2;
-    EXPECT_FALSE(instance2.getVerbose());
-
     EXPECT_TRUE(instance2.getConfigFile().empty());
-    EXPECT_EQ("TestBin", instance2.getProcName());
     EXPECT_EQ(std::string(DATA_DIR), instance2.getPIDFileDir());
     EXPECT_TRUE(instance2.getPIDFileName().empty());
 }
