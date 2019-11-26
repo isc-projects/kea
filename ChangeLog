@@ -1,3 +1,5 @@
+Kea 1.7.2 released on Nov 27, 2019
+
 1689.	[bug]*		fdupont
 	The default Kea Control Agent's configuration file uses port 8000
 	instead of 8080 for the agent. This corrects the mismatch between
