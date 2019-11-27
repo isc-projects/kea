@@ -1,8 +1,7 @@
 EXTRA_DIST=
+sphinxbuilddir=$(builddir)/_build
 
 if GENERATE_DOCS
-
-sphinxbuilddir=$(builddir)/_build
 
 sphinxopts=
 sphinxopts+=-v
@@ -70,7 +69,7 @@ rst_man_sources+=man/perfdhcp.8.rst
 man_sources=$(rst_man_sources) conf.py
 man8s=$(foreach rst,$(rst_man_sources), $(sphinxbuilddir)/$(basename $(rst)))
 
-EXTRA_DIST+=$(main_sources) $(man_sources) mes2doc.py api2doc.py
+EXTRA_DIST+=$(main_sources) $(man_sources) mes2doc.py api2doc.py $(man8s)
 
 # list of messages files that are used to generate kea-messages.rst and then kea-messages.pdf
 mes_files1=$(shell cat mes-files.txt)
@@ -138,19 +137,6 @@ $(man8s): mans
 mans: $(man_sources)
 	$(SPHINXBUILD) -M man $(srcdir) $(sphinxbuilddir) $(sphinxopts)
 
-install-data-local:
-	mkdir -p $(DESTDIR)$(docdir)
-	cp -r $(sphinxbuilddir)/html $(DESTDIR)$(docdir)
-if HAVE_PDFLATEX
-	${INSTALL_DATA} $(sphinxbuilddir)/latex/kea-arm.pdf $(DESTDIR)$(docdir)
-	${INSTALL_DATA} $(sphinxbuilddir)/latex/kea-messages.pdf $(DESTDIR)$(docdir)
-endif
-	${MKDIR_P} ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} $(man8s) ${DESTDIR}${mandir}/man8/
-
-uninstall-local:
-	rm -rf $(DESTDIR)$(docdir)
-
 clean-local:
 	rm -rf $(sphinxbuilddir)
 	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
@@ -160,6 +146,30 @@ clean-local:
 # There are sometimes conflicts when more then one sphinx-build is run at a time.
 # This target blocks running anything in parallel in this Makefile,
 # all is run serially.
-.NOTPARALLEL:
 
 endif
+
+# install and uninstall can occur with GENERATE_DOCS and without it
+# so we want to install all when GENERATE_DOCS is and
+# just mans when GENERATE_DOCS is not used, and when man files exists (e.g release tarball)
+install-data-local:
+	mkdir -p $(DESTDIR)$(docdir)
+mans_found:=$(wildcard $(sphinxbuilddir)/man/*.8)
+if GENERATE_DOCS
+	cp -r $(sphinxbuilddir)/html $(DESTDIR)$(docdir)
+if HAVE_PDFLATEX
+	${INSTALL_DATA} $(sphinxbuilddir)/latex/kea-arm.pdf $(DESTDIR)$(docdir)
+	${INSTALL_DATA} $(sphinxbuilddir)/latex/kea-messages.pdf $(DESTDIR)$(docdir)
+endif
+	${MKDIR_P} ${DESTDIR}${mandir}/man8
+	${INSTALL_DATA} $(man8s) ${DESTDIR}${mandir}/man8/
+else
+if INSTALL_MANS
+	${MKDIR_P} ${DESTDIR}${mandir}/man8
+	${INSTALL_DATA} $(mans_found) ${DESTDIR}${mandir}/man8/
+endif
+endif
+uninstall-local:
+	rm -rf $(DESTDIR)$(docdir)
+
+.NOTPARALLEL:
