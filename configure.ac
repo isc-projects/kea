@@ -1555,13 +1555,13 @@ if test "x$enable_generate_docs" != xno ; then
   fi
   install_mans="no"
 else
- # now let's check if there are some existing manuals
- # checking just one is sufficient
- if test -f `pwd`/doc/sphinx/_build/man/kea-dhcp6.8; then
-  install_mans="yes"
- else
-  install_mans="no"
- fi
+  # now let's check if there are some existing manuals
+  # checking just one is sufficient
+  if test -f `pwd`/doc/sphinx/_build/man/kea-dhcp6.8; then
+    install_mans="yes"
+  else
+    install_mans="no"
+  fi
   generate_docs_report="no"
 fi
 AM_CONDITIONAL(INSTALL_MANS, test "x$install_mans" == "xyes")
@@ -2111,8 +2111,8 @@ Developer:
   Valgrind:                  $found_valgrind
   C++ Code Coverage:         $USE_LCOV
   Logger checks:             $enable_logger_checks
-  Generate Documentation:    $generate_docs_report
   Install existing manuals:  $install_mans
+  Generate Documentation:    $generate_docs_report
   Generate Parser:           $enable_generate_parser
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
