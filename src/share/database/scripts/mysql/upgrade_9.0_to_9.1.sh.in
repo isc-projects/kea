@@ -1,0 +1,64 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "9.0" ]; then
+    printf "This script upgrades 9.0 to 9.1. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Add new DDNS related columns to shared networks and subnets
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '9', minor = '1';
+
+# This line concludes database upgrade to version 9.1.
+
+EOF
+
+RESULT=$?
+
+exit $?
