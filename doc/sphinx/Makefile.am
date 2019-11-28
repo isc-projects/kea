@@ -143,10 +143,6 @@ clean-local:
 
 .PHONY: all pdf html mans
 
-# There are sometimes conflicts when more then one sphinx-build is run at a time.
-# This target blocks running anything in parallel in this Makefile,
-# all is run serially.
-
 endif
 
 # install and uninstall can occur with GENERATE_DOCS and without it
@@ -169,7 +165,12 @@ if INSTALL_MANS
 	${INSTALL_DATA} $(mans_found) ${DESTDIR}${mandir}/man8/
 endif
 endif
+
 uninstall-local:
 	rm -rf $(DESTDIR)$(docdir)
+
+# There are sometimes conflicts when more then one sphinx-build is run at a time.
+# This target blocks running anything in parallel in this Makefile,
+# all is run serially.
 
 .NOTPARALLEL:
