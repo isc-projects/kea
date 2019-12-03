@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
 // code is 5 decimal, ASCII, digits, the first two define the category of
@@ -144,16 +145,11 @@ PgSqlConnection::getVersion(const ParameterMap& parameters) {
                   << version_sql << ", reason: " << PQerrorMessage(conn.conn_));
     }
 
-    istringstream tmp;
     uint32_t version;
-    tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
-    tmp.str("");
-    tmp.clear();
+    PgSqlExchange::getColumnValue(r, 0, 0, version);
 
     uint32_t minor;
-    tmp.str(PQgetvalue(r, 0, 1));
-    tmp >> minor;
+    PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
     return (make_pair(version, minor));
 }

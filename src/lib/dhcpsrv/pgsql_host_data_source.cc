@@ -1442,7 +1442,7 @@ public:
     ///        has failed.
     std::pair<uint32_t, uint32_t> getVersion() const;
 
-    /// @Brief Pointer to the object representing an exchange which
+    /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
     boost::shared_ptr<PgSqlHostWithOptionsExchange> host_exchange_;
 
