@@ -1,0 +1,15 @@
+#!/bin/sh
+
+BRANCH=`git branch | grep '^\*' | cut -b3-`
+
+if test "$BRANCH" == "master"; then
+    echo "ERROR: You are on branch $BRANCH"
+    echo "ERROR: You are not allowed to commit to master directly. Please follow the process"
+    echo "ERROR: (create issue, then MR for it, ...)"
+    exit 1
+fi
+
+BRANCH_NUMBER=`git branch | grep -o '^\* [0-9]*' | cut -b3-`
+/bin/echo -n "[#$BRANCH_NUMBER] " > "$1.msg"
+cat "$1" >> "$1.msg"
+mv "$1.msg" "$1"
