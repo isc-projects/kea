@@ -1442,7 +1442,7 @@ public:
     ///        has failed.
     std::pair<uint32_t, uint32_t> getVersion() const;
 
-    /// @brief Pointer to the object representing an exchange which
+    /// @Brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
     boost::shared_ptr<PgSqlHostWithOptionsExchange> host_exchange_;
 
@@ -1463,6 +1463,9 @@ public:
     /// be used to insert DHCPv4 or DHCPv6 option into dhcp4_options
     /// or dhcp6_options table.
     boost::shared_ptr<PgSqlOptionExchange> host_option_exchange_;
+
+    /// @brief The parameters
+    PgSqlConnection::ParameterMap parameters_;
 
     /// @brief PgSQL connection
     PgSqlConnection conn_;
@@ -1913,11 +1916,9 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new PgSqlIPv6ReservationExchange()),
       host_option_exchange_(new PgSqlOptionExchange()),
+      parameters_(parameters),
       conn_(parameters),
       is_readonly_(false) {
-
-    // Open the database.
-    conn_.openDatabase();
 
     // Validate the schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
@@ -1930,6 +1931,9 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
                       << " found version:  " << db_version.first << "."
                       << db_version.second);
     }
+
+    // Open the database.
+    conn_.openDatabase();
 
     // Now prepare the SQL statements.
     conn_.prepareStatements(tagged_statements.begin(),
