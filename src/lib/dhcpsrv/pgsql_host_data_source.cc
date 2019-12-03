@@ -2123,20 +2123,7 @@ getHost(const SubnetID& subnet_id,
 std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
-    const char* version_sql =  "SELECT version, minor FROM schema_version;";
-    PgSqlResult r(PQexec(conn_, version_sql));
-    if(PQresultStatus(r) != PGRES_TUPLES_OK) {
-        isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
-                  << version_sql << ">, reason: " << PQerrorMessage(conn_));
-    }
-
-    uint32_t version;
-    PgSqlExchange::getColumnValue(r, 0, 0, version);
-
-    uint32_t minor;
-    PgSqlExchange::getColumnValue(r, 0, 1, minor);
-
-    return (std::make_pair(version, minor));
+    return (PgSqlConnection::getVersion(parameters_));
 }
 
 void
