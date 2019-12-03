@@ -251,11 +251,11 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
         MYSQL_BIND bind[2];
         memset(bind, 0, sizeof(bind));
 
-        uint32_t major;
+        uint32_t version;
         bind[0].buffer_type = MYSQL_TYPE_LONG;
         bind[0].is_unsigned = 1;
-        bind[0].buffer = &major;
-        bind[0].buffer_length = sizeof(major);
+        bind[0].buffer = &version;
+        bind[0].buffer_length = sizeof(version);
 
         uint32_t minor;
         bind[1].buffer_type = MYSQL_TYPE_LONG;
@@ -279,7 +279,7 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
         // Discard the statement and its resources
         mysql_stmt_close(stmt);
 
-        return (std::make_pair(major, minor));
+        return (std::make_pair(version, minor));
 
     } catch (const std::exception&) {
         // Avoid a memory leak on error.
