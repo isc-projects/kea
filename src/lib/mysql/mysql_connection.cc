@@ -229,52 +229,65 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
                 "statement structure, reason: " << mysql_error(conn.mysql_));
     }
 
-    // Prepare the statement from SQL text.
-    const char* version_sql = "SELECT version, minor FROM schema_version";
-    int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to prepare MySQL statement <"
-                  << version_sql << ">, reason: " << mysql_error(conn.mysql_));
-    }
+    try {
 
-    // Execute the prepared statement.
-    if (mysql_stmt_execute(stmt) != 0) {
-        isc_throw(DbOperationError, "cannot execute schema version query <"
-                  << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
-    }
+        // Prepare the statement from SQL text.
+        const char* version_sql = "SELECT version, minor FROM schema_version";
+        int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
+        if (status != 0) {
+            isc_throw(DbOperationError, "unable to prepare MySQL statement <"
+                      << version_sql << ">, reason: "
+                      << mysql_error(conn.mysql_));
+        }
 
-    // Bind the output of the statement to the appropriate variables.
-    MYSQL_BIND bind[2];
-    memset(bind, 0, sizeof(bind));
+        // Execute the prepared statement.
+        if (mysql_stmt_execute(stmt) != 0) {
+            isc_throw(DbOperationError, "cannot execute schema version query <"
+                      << version_sql << ">, reason: "
+                      << mysql_errno(conn.mysql_));
+        }
 
-    uint32_t major;
-    bind[0].buffer_type = MYSQL_TYPE_LONG;
-    bind[0].is_unsigned = 1;
-    bind[0].buffer = &major;
-    bind[0].buffer_length = sizeof(major);
+        // Bind the output of the statement to the appropriate variables.
+        MYSQL_BIND bind[2];
+        memset(bind, 0, sizeof(bind));
 
-    uint32_t minor;
-    bind[1].buffer_type = MYSQL_TYPE_LONG;
-    bind[1].is_unsigned = 1;
-    bind[1].buffer = &minor;
-    bind[1].buffer_length = sizeof(minor);
+        uint32_t major;
+        bind[0].buffer_type = MYSQL_TYPE_LONG;
+        bind[0].is_unsigned = 1;
+        bind[0].buffer = &major;
+        bind[0].buffer_length = sizeof(major);
 
-    if (mysql_stmt_bind_result(stmt, bind)) {
-        isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
-    }
+        uint32_t minor;
+        bind[1].buffer_type = MYSQL_TYPE_LONG;
+        bind[1].is_unsigned = 1;
+        bind[1].buffer = &minor;
+        bind[1].buffer_length = sizeof(minor);
 
-    // Fetch the data.
-    if (mysql_stmt_fetch(stmt)) {
+        if (mysql_stmt_bind_result(stmt, bind)) {
+            isc_throw(DbOperationError, "unable to bind result set for <"
+                      << version_sql << ">, reason: "
+                      << mysql_errno(conn.mysql_));
+        }
+
+        // Fetch the data.
+        if (mysql_stmt_fetch(stmt)) {
+            isc_throw(DbOperationError, "unable to bind result set for <"
+                      << version_sql << ">, reason: "
+                      << mysql_errno(conn.mysql_));
+        }
+
+        // Discard the statement and its resources
         mysql_stmt_close(stmt);
-        isc_throw(DbOperationError, "unable to bind result set for <"
-                << version_sql << ">, reason: " << mysql_errno(conn.mysql_));
+
+        return (std::make_pair(major, minor));
+
+    } catch (const std::exception&) {
+        // Avoid a memory leak on error.
+        mysql_stmt_close(stmt);
+
+        // Send the exception to the caller.
+        throw;
     }
-
-    // Discard the statement and its resources
-    mysql_stmt_close(stmt);
-
-    return (std::make_pair(major, minor));
 }
 
 // Prepared statement setup.  The textual form of an SQL statement is stored
