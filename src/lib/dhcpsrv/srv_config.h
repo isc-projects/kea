@@ -38,6 +38,66 @@ namespace dhcp {
 
 class CfgMgr;
 
+/// @brief Convenience container for conveying DDNS behaviorial parameters
+/// It is intended to be populated per Packet exchange and passed into
+/// functions that require them
+class DdnsParams {
+public:
+    DdnsParams() : subnet_(), enable_updates_(false) {};
+
+    DdnsParams(const Subnet4Ptr& subnet, bool enable_updates)
+        : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
+          enable_updates_(enable_updates) {}
+
+    DdnsParams(const Subnet6Ptr& subnet, bool enable_updates)
+        : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
+          enable_updates_(enable_updates) {}
+
+    /// @brief Indicates whether or not DHCP DDNS updating is enabled.
+    bool getEnableUpdates() const;
+
+    /// @brief Should Kea perform updates, even if client requested no updates.
+    /// Overrides the client request for no updates via the N flag.
+    bool getOverrideNoUpdate() const;
+
+    /// @brief Should Kea perform updates, even if client requested delegation.
+    bool getOverrideClientUpdate() const;
+
+    /// @brief How Kea should handle the domain-name supplied by the client.
+    D2ClientConfig::ReplaceClientNameMode getReplaceClientNameMode() const;
+
+    /// @brief Prefix Kea should use when generating domain-names.
+    std::string getGeneratedPrefix() const;
+
+    /// @brief Suffix Kea should use when to qualify partial domain-names.
+    std::string getQualifyingSuffix() const;
+
+    /// @brief Regular expression describing invalid characters for client
+    /// hostnames.  If empty, host name scrubbing should not be done.
+    std::string getHostnameCharSet() const;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    std::string getHostnameCharReplacement() const;
+
+    /// @brief Returns a regular expression string sanitizer
+    ///
+    /// If hostname_char_set_ is not empty, then it is used in conjunction
+    /// hostname_char_replacment_ (which may be empty) to create and
+    /// return a StringSanitizer instance.  Otherwise it will return
+    /// an empty pointer.
+    ///
+    /// @return pointer to the StringSanitizer instance or an empty pointer
+    /// @throw BadValue if the compilation fails.
+    isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
+
+private:
+    SubnetPtr subnet_;
+    bool enable_updates_;
+};
+
+/// @brief Defines a pointer for DdnsParams instances.
+typedef boost::shared_ptr<DdnsParams> DdnsParamsPtr;
 
 /// @brief Specifies current DHCP configuration
 ///
@@ -420,7 +480,9 @@ public:
     ///
     /// @param subnet Subnet for which DDNS parameters are desired.
     /// @return pointer to DddnParams instance
-    DdnsParamsPtr getDdnsParams(const Subnet& subnet) const;
+    DdnsParamsPtr getDdnsParams(const Subnet4Ptr& subnet) const;
+
+    DdnsParamsPtr getDdnsParams(const Subnet6Ptr& subnet) const;
 
     /// @brief Copies the current configuration to a new configuration.
     ///

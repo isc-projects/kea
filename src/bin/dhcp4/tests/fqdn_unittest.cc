@@ -348,7 +348,7 @@ public:
             return (DdnsParamsPtr(new DdnsParams()));
         }
 
-        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(*subnet_));
+        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_));
     }
 
     // Create a lease to be used by various tests.

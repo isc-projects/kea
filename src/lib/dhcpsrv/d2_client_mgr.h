@@ -14,6 +14,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcpsrv/d2_client_cfg.h>
+#include <dhcpsrv/srv_config.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/algorithm/string.hpp>
@@ -208,7 +209,7 @@ public:
     /// @tparam T FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
-    void adjustFqdnFlags(const T& fqdn, T& fqdn_resp, 
+    void adjustFqdnFlags(const T& fqdn, T& fqdn_resp,
                          const DdnsParams& ddns_params);
 
     /// @brief Get directional update flags based on server FQDN flags
@@ -474,8 +475,8 @@ void
 D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddns_params) {
     // If we're configured to replace it or the supplied name is blank
     // set the response name to blank.
-    if ((ddns_params.replace_client_name_mode_ == D2ClientConfig::RCM_ALWAYS ||
-         ddns_params.replace_client_name_mode_ == D2ClientConfig::RCM_WHEN_PRESENT) ||
+    D2ClientConfig::ReplaceClientNameMode mode = ddns_params.getReplaceClientNameMode();
+    if ((mode == D2ClientConfig::RCM_ALWAYS || mode == D2ClientConfig::RCM_WHEN_PRESENT) ||
         fqdn.getDomainName().empty()) {
         fqdn_resp.setDomainName("", T::PARTIAL);
     } else {

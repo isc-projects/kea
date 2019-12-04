@@ -144,7 +144,7 @@ public:
             return (DdnsParamsPtr(new DdnsParams()));
         }
 
-        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(*subnet_));
+        return(CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet_));
     }
 
     /// @brief Construct the DHCPv6 Client FQDN option using flags and
@@ -1663,8 +1663,8 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
 
     Subnet6Ptr subnet = (CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getSubnet(2));
     ASSERT_TRUE(subnet);
-    DdnsParamsPtr p = (CfgMgr::instance().getCurrentCfg()->getDdnsParams(*subnet));
-    ASSERT_TRUE(p->enable_updates_);
+    DdnsParamsPtr p = (CfgMgr::instance().getCurrentCfg()->getDdnsParams(subnet));
+    ASSERT_TRUE(p->getEnableUpdates());
 
     // ddns-send-udpates for subnet 2 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());

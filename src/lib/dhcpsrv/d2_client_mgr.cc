@@ -114,7 +114,7 @@ D2ClientMgr::getD2ClientConfig() const {
 
 void
 D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
-                         bool& server_s, bool& server_n, 
+                         bool& server_s, bool& server_n,
                          const DdnsParams& ddns_params) const {
     // Per RFC 4702 & 4704, the client N and S flags allow the client to
     // request one of three options:
@@ -133,27 +133,27 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 
     switch (mask) {
     case 0:
-        if (!ddns_params.enable_updates_) {
+        if (!ddns_params.getEnableUpdates()) {
             server_s = false;
             server_n = true;
         } else {
             // If updates are enabled and we are overriding client delegation
             // then S flag should be true.  N-flag should be false.
-            server_s = ddns_params.override_client_update_;
+            server_s = ddns_params.getOverrideClientUpdate();
             server_n = false;
         }
         break;
 
     case 1:
-        server_s = ddns_params.enable_updates_;
+        server_s = ddns_params.getEnableUpdates();
         server_n = !server_s;
         break;
 
     case 2:
         // If updates are enabled and we are overriding "no updates" then
         // S flag should be true.
-        server_s = (ddns_params.enable_updates_ &&
-                    ddns_params.override_no_update_);
+        server_s = (ddns_params.getEnableUpdates() &&
+                    ddns_params.getOverrideNoUpdate());
         server_n = !server_s;
         break;
 
@@ -174,7 +174,7 @@ D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
                  (address.isV4() ? '.' : ':'), '-');
 
     std::ostringstream gen_name;
-    gen_name << ddns_params.generated_prefix_ << "-" << hostname;
+    gen_name << ddns_params.getGeneratedPrefix() << "-" << hostname;
     return (qualifyName(gen_name.str(), ddns_params, trailing_dot));
 }
 
@@ -186,14 +186,15 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
     std::ostringstream gen_name;
 
     gen_name << partial_name;
-    if (!ddns_params.qualifying_suffix_.empty()) {
+    std::string suffix = ddns_params.getQualifyingSuffix();
+    if (!suffix.empty()) {
         std::string str = gen_name.str();
         size_t len = str.length();
         if ((len > 0) && (str[len - 1] != '.')) {
             gen_name << ".";
         }
 
-        gen_name << ddns_params.qualifying_suffix_;
+        gen_name << suffix;
     }
 
     std::string str = gen_name.str();

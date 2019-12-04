@@ -338,6 +338,30 @@ TEST(D2ClientMgr, ipv6Config) {
     EXPECT_NE(*original_config, *updated_config);
 }
 
+/// @brief Test class for execerising manager functions that are
+/// influenced by DDNS parameters.
+class D2ClientMgrParamsTest : public ::testing::Test {
+private:
+    /// @brief Prepares the class for a test.
+    virtual void SetUp() {
+        // Create a subnet and then a DdnsParams instance.
+        // We'll use the subnet's setters to alter DDNS parameter values.
+        subnet_.reset(new Subnet4(IOAddress("192.0.2.2"), 16, 1, 2, 3, 10));
+        ddns_params_.reset(new DdnsParams(subnet_, true));
+    }
+
+    /// @brief Cleans up after the test.
+    virtual void TearDown() {};
+
+public:
+    /// @brief Acts as the "selected" subnet.  It is passed into the
+    /// constructor of ddns_params_.  This allows DDNS parameters to
+    /// be modified via setters on subnet_.
+    Subnet4Ptr subnet_;
+    /// @brief Parameter instance based into D2ClientMgr functions
+    DdnsParamsPtr ddns_params_;
+};
+
 /// @brief Tests that analyzeFqdn detects invalid combination of both the
 /// client S and N flags set to true.
 TEST(D2ClientMgr, analyzeFqdnInvalidCombination) {
@@ -354,31 +378,32 @@ TEST(D2ClientMgr, analyzeFqdnInvalidCombination) {
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
 /// updates are enabled and all overrides are off.
-TEST(D2ClientMgr, analyzeFqdnEnabledNoOverrides) {
+TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledNoOverrides) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
     // Create enabled configuration with all controls off (no overrides).
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "";
-    ddns_params.qualifying_suffix_ = "";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("");
+    subnet_->setDdnsQualifyingSuffix("");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
     // and server N should be 0 (server doing reverse updates)
-    mgr.analyzeFqdn(false, false, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(false, false, server_s, server_n, *ddns_params_);
     EXPECT_FALSE(server_s);
     EXPECT_FALSE(server_n);
 
     // client S=1 N=0 means client wants server to do forward update.
     // server S should be 1 (server is doing forward updates)
     // and server N should be 0 (server doing updates)
-    mgr.analyzeFqdn(true, false, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(true, false, server_s, server_n, *ddns_params_);
     EXPECT_TRUE(server_s);
     EXPECT_FALSE(server_n);
 
@@ -386,84 +411,85 @@ TEST(D2ClientMgr, analyzeFqdnEnabledNoOverrides) {
     // client S=0 N=1 means client wants no one to do forward updates.
     // server S should be 0 (server is  not forward updates)
     // and server N should be 1 (server is not doing any updates)
-    mgr.analyzeFqdn(false, true, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(false, true, server_s, server_n, *ddns_params_);
     EXPECT_FALSE(server_s);
     EXPECT_TRUE(server_n);
 }
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
 /// updates are enabled and override-no-update is on.
-TEST(D2ClientMgr, analyzeFqdnEnabledOverrideNoUpdate) {
+TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideNoUpdate) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
     // Create enabled configuration with override-no-update true.
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = true;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "";
-    ddns_params.qualifying_suffix_ = "";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(true);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("");
+    subnet_->setDdnsQualifyingSuffix("");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
     // and server N should be 0 (server is doing reverse updates)
-    mgr.analyzeFqdn(false, false, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(false, false, server_s, server_n, *ddns_params_);
     EXPECT_FALSE(server_s);
     EXPECT_FALSE(server_n);
 
     // client S=1 N=0 means client wants server to do forward update.
     // server S should be 1 (server is doing forward updates)
     // and server N should be 0 (server doing updates)
-    mgr.analyzeFqdn(true, false, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(true, false, server_s, server_n, *ddns_params_);
     EXPECT_TRUE(server_s);
     EXPECT_FALSE(server_n);
 
     // client S=0 N=1 means client wants no one to do forward updates.
     // server S should be 1 (server is doing forward updates)
     // and server N should be 0 (server is doing updates)
-    mgr.analyzeFqdn(false, true, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(false, true, server_s, server_n, *ddns_params_);
     EXPECT_TRUE(server_s);
     EXPECT_FALSE(server_n);
 }
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
 /// updates are enabled and override-client-update is on.
-TEST(D2ClientMgr, analyzeFqdnEnabledOverrideClientUpdate) {
+TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideClientUpdate) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
     // Create enabled configuration with override-client-update true.
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = true;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "";
-    ddns_params.qualifying_suffix_ = "";
-
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(true);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("");
+    subnet_->setDdnsQualifyingSuffix("");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 1 (server is doing forward updates)
     // and server N should be 0 (server doing updates)
-    mgr.analyzeFqdn(false, false, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(false, false, server_s, server_n, *ddns_params_);
     EXPECT_TRUE(server_s);
     EXPECT_FALSE(server_n);
 
     // client S=1 N=0 means client wants server to do forward update.
     // server S should be 1 (server is doing forward updates)
     // and server N should be 0 (server doing updates)
-    mgr.analyzeFqdn(true, false, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(true, false, server_s, server_n, *ddns_params_);
     EXPECT_TRUE(server_s);
     EXPECT_FALSE(server_n);
 
     // client S=0 N=1 means client wants no one to do forward updates.
     // server S should be 0 (server is  not forward updates)
     // and server N should be 1 (server is not doing any updates)
-    mgr.analyzeFqdn(false, true, server_s, server_n, ddns_params);
+    mgr.analyzeFqdn(false, true, server_s, server_n, *ddns_params_);
     EXPECT_FALSE(server_s);
     EXPECT_TRUE(server_n);
 }
@@ -471,19 +497,20 @@ TEST(D2ClientMgr, analyzeFqdnEnabledOverrideClientUpdate) {
 /// @brief Verifies the adustFqdnFlags template with Option4ClientFqdn objects.
 /// Ensures that the method can set the N, S, and O flags properly.
 /// Other permutations are covered by analyzeFqdnFlag tests.
-TEST(D2ClientMgr, adjustFqdnFlagsV4) {
+TEST_F(D2ClientMgrParamsTest, adjustFqdnFlagsV4) {
     D2ClientMgr mgr;
     Option4ClientFqdnPtr request;
     Option4ClientFqdnPtr response;
 
     // Create enabled configuration with override-no-update true.
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = true;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "";
-    ddns_params.qualifying_suffix_ = "";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(true);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("");
+    subnet_->setDdnsQualifyingSuffix("");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
@@ -494,7 +521,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
     response.reset(new Option4ClientFqdn(*request));
     response->resetFlags();
 
-    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response, ddns_params);
+    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response, *ddns_params_);
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_O));
@@ -509,7 +536,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
     response.reset(new Option4ClientFqdn(*request));
     response->resetFlags();
 
-    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response, ddns_params);
+    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response, *ddns_params_);
     EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_O));
@@ -524,7 +551,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
     response.reset(new Option4ClientFqdn(*request));
     response->resetFlags();
 
-    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response, ddns_params);
+    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response, *ddns_params_);
     EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_O));
@@ -567,117 +594,119 @@ TEST(D2ClientMgr, updateDirectionsV4) {
 }
 
 /// @brief Tests the qualifyName method's ability to construct FQDNs
-TEST(D2ClientMgr, qualifyName) {
+TEST_F(D2ClientMgrParamsTest, qualifyName) {
     D2ClientMgr mgr;
     bool do_not_dot = false;
     bool do_dot = true;
 
     // Create enabled configuration
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "prefix";
-    ddns_params.qualifying_suffix_ = "suffix.com";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // Verify that the qualifying suffix gets appended with a trailing dot added.
     std::string partial_name = "somehost";
-    std::string qualified_name = mgr.qualifyName(partial_name, ddns_params, do_dot);
+    std::string qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
     EXPECT_EQ("somehost.suffix.com.", qualified_name);
 
     // Verify that the qualifying suffix gets appended without a trailing dot.
     partial_name = "somehost";
-    qualified_name = mgr.qualifyName(partial_name, ddns_params, do_not_dot);
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost.suffix.com", qualified_name);
 
     // Verify that an empty suffix and false flag, does not change the name
-    ddns_params.qualifying_suffix_ = "";
+    subnet_->setDdnsQualifyingSuffix("");
     partial_name = "somehost";
-    qualified_name = mgr.qualifyName(partial_name, ddns_params, do_not_dot);
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost", qualified_name);
 
     // Verify that a qualifying suffix that already has a trailing
     // dot gets appended without doubling the dot.
-    ddns_params.qualifying_suffix_ = "hasdot.com.";
-    qualified_name = mgr.qualifyName(partial_name, ddns_params, do_dot);
+    subnet_->setDdnsQualifyingSuffix("hasdot.com.");
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
     EXPECT_EQ("somehost.hasdot.com.", qualified_name);
 
     // Verify that the qualifying suffix gets appended without an
     // extraneous dot when partial_name ends with a "."
-    qualified_name = mgr.qualifyName("somehost.", ddns_params, do_dot);
+    qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_dot);
     EXPECT_EQ("somehost.hasdot.com.", qualified_name);
 
     // Verify that a name with a trailing dot does not get an extraneous
     // dot when the suffix is blank
-    ddns_params.qualifying_suffix_ = "";
-    qualified_name = mgr.qualifyName("somehost.", ddns_params, do_dot);
+    subnet_->setDdnsQualifyingSuffix("");
+    qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_dot);
     EXPECT_EQ("somehost.", qualified_name);
 
     // Verify that a name with no trailing dot gets just a dot when the
     // suffix is blank
-    qualified_name = mgr.qualifyName("somehost", ddns_params, do_dot);
+    qualified_name = mgr.qualifyName("somehost", *ddns_params_, do_dot);
     EXPECT_EQ("somehost.", qualified_name);
 
     // Verify that a name with no trailing dot does not get dotted when the
     // suffix is blank and trailing dot is false
-    qualified_name = mgr.qualifyName("somehost", ddns_params, do_not_dot);
+    qualified_name = mgr.qualifyName("somehost", *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost", qualified_name);
 
     // Verify that a name with trailing dot gets "undotted" when the
     // suffix is blank and trailing dot is false
-    qualified_name = mgr.qualifyName("somehost.", ddns_params, do_not_dot);
+    qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost", qualified_name);
 
 }
 
-
 /// @brief Tests the generateFdqn method's ability to construct FQDNs
-TEST(D2ClientMgr, generateFqdn) {
+TEST_F(D2ClientMgrParamsTest, generateFqdn) {
     D2ClientMgr mgr;
     bool do_dot = true;
 
     // Create enabled configuration
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "prefix";
-    ddns_params.qualifying_suffix_ = "suffix.com";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // Verify that it works with an IPv4 address.
     asiolink::IOAddress v4address("192.0.2.75");
     EXPECT_EQ("prefix-192-0-2-75.suffix.com.",
-              mgr.generateFqdn(v4address, ddns_params, do_dot));
+              mgr.generateFqdn(v4address, *ddns_params_, do_dot));
 
     // Verify that it works with an IPv6 address.
     asiolink::IOAddress v6address("2001:db8::2");
     EXPECT_EQ("prefix-2001-db8--2.suffix.com.",
-              mgr.generateFqdn(v6address, ddns_params, do_dot));
+              mgr.generateFqdn(v6address, *ddns_params_, do_dot));
 
     // Create a disabled config.
-    ddns_params.enable_updates_ = false;
+    subnet_->setDdnsSendUpdates(false);
 
     // Verify names generate properly with a disabled configuration.
     EXPECT_EQ("prefix-192-0-2-75.suffix.com.",
-               mgr.generateFqdn(v4address, ddns_params, do_dot));
+               mgr.generateFqdn(v4address, *ddns_params_, do_dot));
     EXPECT_EQ("prefix-2001-db8--2.suffix.com.",
-               mgr.generateFqdn(v6address, ddns_params, do_dot));
+               mgr.generateFqdn(v6address, *ddns_params_, do_dot));
 }
 
 /// @brief Tests adjustDomainName template method with Option4ClientFqdn
-TEST(D2ClientMgr, adjustDomainNameV4) {
+TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4) {
     D2ClientMgr mgr;
 
     // Create enabled configuration
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "prefix";
-    ddns_params.qualifying_suffix_ = "suffix.com";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     struct Scenario {
         std::string description_;
@@ -766,31 +795,33 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
-            ddns_params.replace_client_name_mode_ = scenario.mode_;
+            subnet_->setDdnsReplaceClientNameMode(scenario.mode_);
             Option4ClientFqdn request (0, Option4ClientFqdn::RCODE_CLIENT(),
                                        scenario.client_name_,
                                        scenario.client_name_type_);
 
             Option4ClientFqdn response(request);
-            mgr.adjustDomainName<Option4ClientFqdn>(request, response, ddns_params);
+            mgr.adjustDomainName<Option4ClientFqdn>(request, response, *ddns_params_);
             EXPECT_EQ(scenario.expected_name_, response.getDomainName());
             EXPECT_EQ(scenario.expected_name_type_, response.getDomainNameType());
         }
     }
 }
 
+
 /// @brief Tests adjustDomainName template method with Option6ClientFqdn
-TEST(D2ClientMgr, adjustDomainNameV6) {
+TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6) {
     D2ClientMgr mgr;
 
     // Create enabled configuration
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "prefix";
-    ddns_params.qualifying_suffix_ = "suffix.com";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     struct Scenario {
         std::string description_;
@@ -879,12 +910,12 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
-            ddns_params.replace_client_name_mode_ = scenario.mode_;
+            subnet_->setDdnsReplaceClientNameMode(scenario.mode_);
             Option6ClientFqdn request(0, scenario.client_name_,
                                       scenario.client_name_type_);
 
             Option6ClientFqdn response(request);
-            mgr.adjustDomainName<Option6ClientFqdn>(request, response, ddns_params);
+            mgr.adjustDomainName<Option6ClientFqdn>(request, response, *ddns_params_);
             EXPECT_EQ(scenario.expected_name_, response.getDomainName());
             EXPECT_EQ(scenario.expected_name_type_, response.getDomainNameType());
         }
@@ -894,19 +925,20 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
 /// @brief Verifies the adustFqdnFlags template with Option6ClientFqdn objects.
 /// Ensures that the method can set the N, S, and O flags properly.
 /// Other permutations are covered by analyzeFqdnFlags tests.
-TEST(D2ClientMgr, adjustFqdnFlagsV6) {
+TEST_F(D2ClientMgrParamsTest, adjustFqdnFlagsV6) {
     D2ClientMgr mgr;
     Option6ClientFqdnPtr request;
     Option6ClientFqdnPtr response;
 
     // Create enabled configuration with override-no-update true.
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = true;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "";
-    ddns_params.qualifying_suffix_ = "";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(true);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("");
+    subnet_->setDdnsQualifyingSuffix("");
+    subnet_->setHostnameCharSet("");
+    subnet_->setHostnameCharReplacement("");
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
@@ -916,7 +948,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
     response.reset(new Option6ClientFqdn(*request));
     response->resetFlags();
 
-    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response, ddns_params);
+    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response, *ddns_params_);
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_O));
@@ -930,7 +962,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
     response.reset(new Option6ClientFqdn(*request));
     response->resetFlags();
 
-    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response, ddns_params);
+    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response, *ddns_params_);
     EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_O));
@@ -944,7 +976,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
     response.reset(new Option6ClientFqdn(*request));
     response->resetFlags();
 
-    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response, ddns_params);
+    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response, *ddns_params_);
     EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
     EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_O));
@@ -985,23 +1017,22 @@ TEST(D2ClientMgr, updateDirectionsV6) {
 }
 
 /// @brief Tests v4 FQDN name sanitizing
-TEST(D2ClientMgr, sanitizeFqdnV4) {
+TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
     D2ClientMgr mgr;
 
     // Create enabled configuration with override-no-update true.
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "prefix";
-    ddns_params.qualifying_suffix_ = "suffix.com";
-    ddns_params.hostname_char_set_ = "[^A-Za-z0-9-]";
-    ddns_params.hostname_char_replacement_ = "x";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+    subnet_->setHostnameCharReplacement("x");
 
     // Get the sanitizer.
     str::StringSanitizerPtr hostname_sanitizer;
-    ASSERT_NO_THROW(hostname_sanitizer = ddns_params.getHostnameSanitizer());
+    ASSERT_NO_THROW(hostname_sanitizer = ddns_params_->getHostnameSanitizer());
     ASSERT_TRUE(hostname_sanitizer);
 
     struct Scenario {
@@ -1057,7 +1088,7 @@ TEST(D2ClientMgr, sanitizeFqdnV4) {
                                       scenario.client_name_, scenario.name_type_);
             Option4ClientFqdn response(request);
 
-            mgr.adjustDomainName<Option4ClientFqdn>(request, response, ddns_params);
+            mgr.adjustDomainName<Option4ClientFqdn>(request, response, *ddns_params_);
             EXPECT_EQ(scenario.expected_name_, response.getDomainName());
             EXPECT_EQ(Option4ClientFqdn::FULL, response.getDomainNameType());
         }
@@ -1069,23 +1100,22 @@ TEST(D2ClientMgr, sanitizeFqdnV4) {
 /// downcases strings used to construct it.  For some reason, currently
 /// uknown, Option4ClientFqdn preserves the case, while Option6ClientFqdn
 /// downcases it (see setDomainName() in both classes.  See Trac #5700.
-TEST(D2ClientMgr, sanitizeFqdnV6) {
+TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
     D2ClientMgr mgr;
 
     // Create enabled configuration with override-no-update true.
-    DdnsParams ddns_params;
-    ddns_params.enable_updates_ = true;
-    ddns_params.override_no_update_ = false;
-    ddns_params.override_client_update_ = false;
-    ddns_params.replace_client_name_mode_ = D2ClientConfig::RCM_NEVER;
-    ddns_params.generated_prefix_ = "prefix";
-    ddns_params.qualifying_suffix_ = "suffix.com";
-    ddns_params.hostname_char_set_ = "[^A-Za-z0-9-]";
-    ddns_params.hostname_char_replacement_ = "x";
+    subnet_->setDdnsSendUpdates(true);
+    subnet_->setDdnsOverrideNoUpdate(false);
+    subnet_->setDdnsOverrideClientUpdate(false);
+    subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    subnet_->setDdnsGeneratedPrefix("prefix");
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+    subnet_->setHostnameCharReplacement("x");
 
     // Get the sanitizer.
     str::StringSanitizerPtr hostname_sanitizer;
-    ASSERT_NO_THROW(hostname_sanitizer = ddns_params.getHostnameSanitizer());
+    ASSERT_NO_THROW(hostname_sanitizer = ddns_params_->getHostnameSanitizer());
     ASSERT_TRUE(hostname_sanitizer);
 
     struct Scenario {
@@ -1141,7 +1171,7 @@ TEST(D2ClientMgr, sanitizeFqdnV6) {
             Option6ClientFqdn request(0, scenario.client_name_, scenario.name_type_);
             Option6ClientFqdn response(request);
 
-            mgr.adjustDomainName<Option6ClientFqdn>(request, response, ddns_params);
+            mgr.adjustDomainName<Option6ClientFqdn>(request, response, *ddns_params_);
             EXPECT_EQ(scenario.expected_name_, response.getDomainName());
             EXPECT_EQ(Option6ClientFqdn::FULL, response.getDomainNameType());
         }

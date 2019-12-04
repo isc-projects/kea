@@ -542,7 +542,8 @@ public:
     /// @param inheritance inheritance mode to be used.
     util::Optional<bool>
     getDdnsOverrideNoUpdate(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getDdnsOverrideNoUpdate, ddns_override_no_update_,
+        return (getProperty<Network>(&Network::getDdnsOverrideNoUpdate,
+                                     ddns_override_no_update_,
                                      inheritance, "ddns-override-no-update"));
     }
 
@@ -558,14 +559,16 @@ public:
     /// @param inheritance inheritance mode to be used.
     util::Optional<bool>
     getDdnsOverrideClientUpdate(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getDdnsOverrideClientUpdate, ddns_override_client_update_,
+        return (getProperty<Network>(&Network::getDdnsOverrideClientUpdate,
+                                     ddns_override_client_update_,
                                      inheritance, "ddns-override-client-update"));
     }
 
     /// @brief Sets new ddns-override-client-update
     ///
     /// @param ddns_override_client_update New value to use.
-    void setDdnsOverrideClientUpdate(const util::Optional<bool>& ddns_override_client_update) {
+    void setDdnsOverrideClientUpdate(const util::Optional<bool>&
+                                     ddns_override_client_update) {
         ddns_override_client_update_ = ddns_override_client_update;
     }
 
@@ -608,8 +611,9 @@ public:
     /// @brief Sets new ddns-replace-client-name-mode
     ///
     /// @param ddns_replace_client_name_mode New value to use.
-    void setDdnsReplaceClientNameMode(const util::Optional<D2ClientConfig::ReplaceClientNameMode>&
-                                          ddns_replace_client_name_mode) {
+    void
+    setDdnsReplaceClientNameMode(const util::Optional<D2ClientConfig::ReplaceClientNameMode>&
+                                 ddns_replace_client_name_mode) {
         ddns_replace_client_name_mode_ = ddns_replace_client_name_mode;
     }
 
@@ -618,7 +622,8 @@ public:
     /// @param inheritance inheritance mode to be used.
     util::Optional<std::string>
     getDdnsGeneratedPrefix(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getDdnsGeneratedPrefix, ddns_generated_prefix_,
+        return (getProperty<Network>(&Network::getDdnsGeneratedPrefix,
+                                     ddns_generated_prefix_,
                                      inheritance, "ddns-generated-prefix"));
     }
 
@@ -634,7 +639,8 @@ public:
     /// @param inheritance inheritance mode to be used.
     util::Optional<std::string>
     getDdnsQualifyingSuffix(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getDdnsQualifyingSuffix, ddns_qualifying_suffix_,
+        return (getProperty<Network>(&Network::getDdnsQualifyingSuffix,
+                                     ddns_qualifying_suffix_,
                                      inheritance, "ddns-qualifying-suffix"));
     }
 
@@ -662,14 +668,16 @@ public:
     /// @brief Return the invalid char replacement used to sanitize client hostnames.
     util::Optional<std::string>
     getHostnameCharReplacement(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getHostnameCharReplacement, hostname_char_replacement_,
+        return (getProperty<Network>(&Network::getHostnameCharReplacement,
+                                     hostname_char_replacement_,
                                      inheritance, "hostname-char-replacement"));
     }
 
     /// @brief Sets new hostname-char-replacement
     ///
     /// @param hostname_char_replacement New value to use.
-    void setHostnameCharReplacement(const util::Optional<std::string>& hostname_char_replacement) {
+    void setHostnameCharReplacement(const util::Optional<std::string>&
+                                    hostname_char_replacement) {
         hostname_char_replacement_ = hostname_char_replacement;
     }
 

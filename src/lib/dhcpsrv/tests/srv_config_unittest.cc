@@ -1031,7 +1031,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     EXPECT_EQ(300, cfg_to.getDeclinePeriod());
 
     // echo-client-id should be the preserved "to" member value.
-    EXPECT_EQ(false, cfg_to.getEchoClientId());
+    EXPECT_FALSE(cfg_to.getEchoClientId());
 
     //  dhcp4o6-port should be the "from" configured value.
     EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
@@ -1322,17 +1322,17 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     subnet2->setHostnameCharSet("");
 
     // Get DDNS params for subnet1.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
 
     // Verify subnet1 values are right. Note, updates should be disabled.
-    EXPECT_FALSE(params->enable_updates_);
-    EXPECT_FALSE(params->override_no_update_);
-    EXPECT_FALSE(params->override_client_update_);
-    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->replace_client_name_mode_);
-    EXPECT_TRUE(params->generated_prefix_.empty());
-    EXPECT_TRUE(params->qualifying_suffix_.empty());
-    EXPECT_EQ("[^A-Z]", params->hostname_char_set_);
-    EXPECT_EQ("x", params->hostname_char_replacement_);
+    EXPECT_FALSE(params->getEnableUpdates());
+    EXPECT_FALSE(params->getOverrideNoUpdate());
+    EXPECT_FALSE(params->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->getReplaceClientNameMode());
+    EXPECT_TRUE(params->getGeneratedPrefix().empty());
+    EXPECT_TRUE(params->getQualifyingSuffix().empty());
+    EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
+    EXPECT_EQ("x", params->getHostnameCharReplacement());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1341,18 +1341,18 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_TRUE(sanitizer);
 
     // Get DDNS params for subnet2.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
 
     // Verify subnet2 values are right. Note, updates should be disabled,
     // because D2Client is disabled.
-    EXPECT_FALSE(params->enable_updates_);
-    EXPECT_TRUE(params->override_no_update_);
-    EXPECT_TRUE(params->override_client_update_);
-    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->replace_client_name_mode_);
-    EXPECT_EQ("prefix", params->generated_prefix_);
-    EXPECT_EQ("example.com.", params->qualifying_suffix_);
-    EXPECT_EQ("", params->hostname_char_set_);
-    EXPECT_EQ("x", params->hostname_char_replacement_);
+    EXPECT_FALSE(params->getEnableUpdates());
+    EXPECT_TRUE(params->getOverrideNoUpdate());
+    EXPECT_TRUE(params->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->getReplaceClientNameMode());
+    EXPECT_EQ("prefix", params->getGeneratedPrefix());
+    EXPECT_EQ("example.com.", params->getQualifyingSuffix());
+    EXPECT_EQ("", params->getHostnameCharSet());
+    EXPECT_EQ("x", params->getHostnameCharReplacement());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1362,19 +1362,19 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     enableD2Client(true);
 
     // Make sure subnet1 udpates are still disabled.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
-    EXPECT_FALSE(params->enable_updates_);
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
+    EXPECT_FALSE(params->getEnableUpdates());
 
     // Make sure subnet2 udpates are now enabled.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
-    EXPECT_TRUE(params->enable_updates_);
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
+    EXPECT_TRUE(params->getEnableUpdates());
 
     // Enable sending updates globally.  This should inherit down subnet1.
     conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
 
     // Make sure subnet1 udpates are now enabled.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
-    EXPECT_TRUE(params->enable_updates_);
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
+    EXPECT_TRUE(params->getEnableUpdates());
 }
 
 // Verifies that the scoped values for DDNS parameters can be fetched
@@ -1394,7 +1394,6 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Configure global host sanitizing.
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
-
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64,
@@ -1433,17 +1432,17 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     subnet2->setHostnameCharSet("");
 
     // Get DDNS params for subnet1.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
 
     // Verify subnet1 values are right. Note, updates should be disabled.
-    EXPECT_FALSE(params->enable_updates_);
-    EXPECT_FALSE(params->override_no_update_);
-    EXPECT_FALSE(params->override_client_update_);
-    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->replace_client_name_mode_);
-    EXPECT_TRUE(params->generated_prefix_.empty());
-    EXPECT_TRUE(params->qualifying_suffix_.empty());
-    EXPECT_EQ("[^A-Z]", params->hostname_char_set_);
-    EXPECT_EQ("x", params->hostname_char_replacement_);
+    EXPECT_FALSE(params->getEnableUpdates());
+    EXPECT_FALSE(params->getOverrideNoUpdate());
+    EXPECT_FALSE(params->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->getReplaceClientNameMode());
+    EXPECT_TRUE(params->getGeneratedPrefix().empty());
+    EXPECT_TRUE(params->getQualifyingSuffix().empty());
+    EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
+    EXPECT_EQ("x", params->getHostnameCharReplacement());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1452,18 +1451,18 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_TRUE(sanitizer);
 
     // Get DDNS params for subnet2.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
 
     // Verify subnet1 values are right. Note, updates should be disabled,
     // because D2Client is disabled.
-    EXPECT_FALSE(params->enable_updates_);
-    EXPECT_TRUE(params->override_no_update_);
-    EXPECT_TRUE(params->override_client_update_);
-    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->replace_client_name_mode_);
-    EXPECT_EQ("prefix", params->generated_prefix_);
-    EXPECT_EQ("example.com.", params->qualifying_suffix_);
-    EXPECT_EQ("", params->hostname_char_set_);
-    EXPECT_EQ("x", params->hostname_char_replacement_);
+    EXPECT_FALSE(params->getEnableUpdates());
+    EXPECT_TRUE(params->getOverrideNoUpdate());
+    EXPECT_TRUE(params->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->getReplaceClientNameMode());
+    EXPECT_EQ("prefix", params->getGeneratedPrefix());
+    EXPECT_EQ("example.com.", params->getQualifyingSuffix());
+    EXPECT_EQ("", params->getHostnameCharSet());
+    EXPECT_EQ("x", params->getHostnameCharReplacement());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1473,19 +1472,19 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     enableD2Client(true);
 
     // Make sure subnet1 udpates are still disabled.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
-    EXPECT_FALSE(params->enable_updates_);
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
+    EXPECT_FALSE(params->getEnableUpdates());
 
     // Make sure subnet2 udpates are now enabled.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet2));
-    EXPECT_TRUE(params->enable_updates_);
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet2));
+    EXPECT_TRUE(params->getEnableUpdates());
 
     // Enable sending updates globally.  This should inherit down subnet1.
     conf.addConfiguredGlobal("ddns-send-updates", Element::create(true));
 
     // Make sure subnet1 udpates are now enabled.
-    ASSERT_NO_THROW(params = conf_.getDdnsParams(*subnet1));
-    EXPECT_TRUE(params->enable_updates_);
+    ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
+    EXPECT_TRUE(params->getEnableUpdates());
 }
 
 } // end of anonymous namespace

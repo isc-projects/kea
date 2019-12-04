@@ -1621,9 +1621,9 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
     if (!fqdn) {
-        if (ddns_params->enable_updates_ &&
-            (ddns_params->replace_client_name_mode_ == D2ClientConfig::RCM_ALWAYS ||
-             ddns_params->replace_client_name_mode_ == D2ClientConfig::RCM_WHEN_NOT_PRESENT)) {
+        if (ddns_params->getEnableUpdates() &&
+            (ddns_params->getReplaceClientNameMode() == D2ClientConfig::RCM_ALWAYS ||
+             ddns_params->getReplaceClientNameMode() == D2ClientConfig::RCM_WHEN_NOT_PRESENT)) {
             // Fabricate an empty "client" FQDN with flags requesting
             // the server do all the updates.  The flags will get modified
             // below according the configuration options, the name will
@@ -1686,7 +1686,7 @@ void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                     AllocEngine::ClientContext6& ctx) {
     // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!(ctx.getDdnsParams()->enable_updates_)) {
+    if (!(ctx.getDdnsParams()->getEnableUpdates())) {
         return;
     }
 

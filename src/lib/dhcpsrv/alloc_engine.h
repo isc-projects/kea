@@ -20,6 +20,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/srv_config.h>
 #include <hooks/callout_handle.h>
 
 #include <boost/function.hpp>

@@ -1842,7 +1842,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // but there is no reservation, or the configuration of the server requires
     // that we send the option regardless.
     D2ClientConfig::ReplaceClientNameMode replace_name_mode =
-        ex.getContext()->getDdnsParams()->replace_client_name_mode_;
+        ex.getContext()->getDdnsParams()->getReplaceClientNameMode();
 
     // If we don't have a hostname then either we'll supply it or do nothing.
     if (!opt_hostname) {
@@ -2312,7 +2312,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
-        if (!fake_allocation && (ex.getContext()->getDdnsParams()->enable_updates_)) {
+        if (!fake_allocation && (ex.getContext()->getDdnsParams()->getEnableUpdates())) {
             try {
                 LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_NCR_CREATE)
                     .arg(query->getLabel());

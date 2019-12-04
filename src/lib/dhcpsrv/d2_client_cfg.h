@@ -235,58 +235,6 @@ operator<<(std::ostream& os, const D2ClientConfig& config);
 /// @brief Defines a pointer for D2ClientConfig instances.
 typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 
-/// @brief Convenience container for conveying DDNS behaviorial parameters
-/// It is intended to be populated per Packet exchange and passed into
-/// functions that require them
-struct DdnsParams {
-    DdnsParams() :
-        enable_updates_(false), override_no_update_(false), override_client_update_(false),
-        replace_client_name_mode_(D2ClientConfig::RCM_NEVER),
-        generated_prefix_("myhost"), qualifying_suffix_(""), hostname_char_set_(""),
-        hostname_char_replacement_("") {};
-
-    /// @brief Indicates whether or not DHCP DDNS updating is enabled.
-    bool enable_updates_;
-
-    /// @brief Should Kea perform updates, even if client requested no updates.
-    /// Overrides the client request for no updates via the N flag.
-    bool override_no_update_;
-
-    /// @brief Should Kea perform updates, even if client requested delegation.
-    bool override_client_update_;
-
-    /// @brief How Kea should handle the domain-name supplied by the client.
-    D2ClientConfig::ReplaceClientNameMode replace_client_name_mode_;
-
-    /// @brief Prefix Kea should use when generating domain-names.
-    std::string generated_prefix_;
-
-    /// @brief Suffix Kea should use when to qualify partial domain-names.
-    std::string qualifying_suffix_;
-
-    /// @brief Regular expression describing invalid characters for client hostnames.
-    /// If empty, host name scrubbing should not be done.
-    std::string hostname_char_set_;
-
-    /// @brief A string to replace invalid characters when scrubbing hostnames.
-    /// Meaningful only if hostname_char_set_ is not empty.
-    std::string hostname_char_replacement_;
-
-    /// @brief Returns a regular expression string sanitizer
-    ///
-    /// If hostname_char_set_ is not empty, then it is used in conjunction
-    /// hostname_char_replacment_ (which may be empty) to create and
-    /// return a StringSanitizer instance.  Otherwise it will return
-    /// an empty pointer.
-    ///
-    /// @return pointer to the StringSanitizer instance or an empty pointer
-    /// @throw BadValue if the compilation fails.
-    isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
-};
-
-/// @brief Defines a pointer for DdnsParams instances.
-typedef boost::shared_ptr<DdnsParams> DdnsParamsPtr;
-
 } // namespace isc
 } // namespace dhcp
 

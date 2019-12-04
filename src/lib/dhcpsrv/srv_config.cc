@@ -16,6 +16,8 @@
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
+#include <util/strutil.h>
+
 #include <list>
 #include <sstream>
 
@@ -273,7 +275,7 @@ SrvConfig::updateStatistics() {
     }
 }
 
-isc::data::ConstElementPtr 
+isc::data::ConstElementPtr
 SrvConfig::getConfiguredGlobal(std::string name) const {
     isc::data::ConstElementPtr global;
     if (configured_globals_->contains(name)) {
@@ -590,20 +592,16 @@ SrvConfig::toElement() const {
 }
 
 DdnsParamsPtr
-SrvConfig::getDdnsParams(const Subnet& subnet) const {
-    DdnsParamsPtr params(new DdnsParams());
+SrvConfig::getDdnsParams(const Subnet4Ptr& subnet) const {
+    DdnsParamsPtr params(new DdnsParams(subnet,
+                         getD2ClientConfig()->getEnableUpdates()));
+    return params;
+}
 
-    params->enable_updates_ = (getD2ClientConfig()->getEnableUpdates() &&
-                               subnet.getDdnsSendUpdates().get());
-
-    params->override_no_update_ = subnet.getDdnsOverrideNoUpdate().get();
-    params->override_client_update_ = subnet.getDdnsOverrideClientUpdate().get();
-    params->replace_client_name_mode_= subnet.getDdnsReplaceClientNameMode().get();
-    params->generated_prefix_ = subnet.getDdnsGeneratedPrefix().get();
-    params->qualifying_suffix_ = subnet.getDdnsQualifyingSuffix().get();
-    params->hostname_char_set_ = subnet.getHostnameCharSet().get();
-    params->hostname_char_replacement_ = subnet.getHostnameCharReplacement().get();
-
+DdnsParamsPtr
+SrvConfig::getDdnsParams(const Subnet6Ptr& subnet) const {
+    DdnsParamsPtr params(new DdnsParams(subnet,
+                         getD2ClientConfig()->getEnableUpdates()));
     return params;
 }
 
@@ -655,6 +653,97 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
             d2_elem->remove(param.from_name);
         }
     }
+}
+
+bool
+DdnsParams::getEnableUpdates() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    return (enable_updates_ && subnet_->getDdnsSendUpdates().get());
+}
+
+bool
+DdnsParams::getOverrideNoUpdate() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    return (subnet_->getDdnsOverrideNoUpdate().get());
+}
+
+bool
+DdnsParams::getOverrideClientUpdate() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    return (subnet_->getDdnsOverrideClientUpdate().get());
+}
+
+D2ClientConfig::ReplaceClientNameMode
+DdnsParams::getReplaceClientNameMode() const {
+    if (!subnet_) {
+        return (D2ClientConfig::RCM_NEVER);
+    }
+
+    return (subnet_->getDdnsReplaceClientNameMode().get());
+}
+
+std::string
+DdnsParams::getGeneratedPrefix() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    return (subnet_->getDdnsGeneratedPrefix().get());
+}
+
+std::string
+DdnsParams::getQualifyingSuffix() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    return (subnet_->getDdnsQualifyingSuffix().get());
+}
+
+std::string
+DdnsParams::getHostnameCharSet() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    return (subnet_->getHostnameCharSet().get());
+}
+
+std::string
+DdnsParams::getHostnameCharReplacement() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    return (subnet_->getHostnameCharReplacement().get());
+}
+
+util::str::StringSanitizerPtr
+DdnsParams::getHostnameSanitizer() const {
+    util::str::StringSanitizerPtr sanitizer;
+    if (subnet_) {
+        std::string char_set = getHostnameCharSet();
+        if (!char_set.empty()) {
+            try {
+                sanitizer.reset(new util::str::StringSanitizer(char_set,
+                                                               getHostnameCharReplacement()));
+            } catch (const std::exception& ex) {
+                isc_throw(BadValue, "hostname_char_set_: '" << char_set <<
+                                    "' is not a valid regular expression");
+            }
+        }
+    }
+
+    return (sanitizer);
 }
 
 } // namespace dhcp
