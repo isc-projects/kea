@@ -12,6 +12,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/static_assert.hpp>
 
@@ -26,6 +27,7 @@ using namespace isc::asiolink;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -1113,10 +1115,48 @@ protected:
     bool fetch_type_;
 };
 
+// PgSqlLeaseContext Constructor
+
+PgSqlLeaseContext::PgSqlLeaseContext(
+    const DatabaseConnection::ParameterMap& parameters) : conn_(parameters) {
+}
+
+// PgSqlLeaseContextAlloc Constructor and Destructor
+
+PgSqlLeaseMgr::PgSqlLeaseContextAlloc::PgSqlLeaseContextAlloc(
+    const PgSqlLeaseMgr& mgr) : ctx_(), mgr_(mgr) {
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        {
+            lock_guard<mutex> lock(mgr_.pool_->mutex_);
+            if (!mgr_.pool_->pool_.empty()) {
+                ctx_ = mgr_.pool_->pool_.back();
+                mgr_.pool_->pool_.pop_back();
+            }
+        }
+        if (!ctx_) {
+            ctx_ = mgr_.createContext();
+        }
+    } else {
+        if (mgr_.pool_->pool_.empty()) {
+            isc_throw(Unexpected, "No available PgSql lease context?!");
+        }
+        ctx_ = mgr_.pool_->pool_.back();
+    }
+}
+
+PgSqlLeaseMgr::PgSqlLeaseContextAlloc::~PgSqlLeaseContextAlloc() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(mgr_.pool_->mutex_);
+        mgr_.pool_->pool_.push_back(ctx_);
+    }
+}
+
+// PgSqlLeaseMgr Constructor and Destructor
+
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
-      exchange6_(new PgSqlLease6Exchange()), parameters_(parameters),
-      conn_(parameters) {
+    : LeaseMgr(), parameters_(parameters) {
+
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
                                                PG_SCHEMA_VERSION_MINOR);
@@ -1129,13 +1169,28 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
                       << db_version.second);
     }
 
+    // Create an initial context.
+    pool_.reset(new PgSqlLeaseContextPool());
+    pool_->pool_.push_back(createContext());
+}
+
+PgSqlLeaseMgr::~PgSqlLeaseMgr() {
+}
+
+// Create context.
+
+PgSqlLeaseContextPtr
+PgSqlLeaseMgr::createContext() const {
+
+    PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_));
+
     // Open the database.
-    conn_.openDatabase();
+    ctx->conn_.openDatabase();
 
     // Now prepare the SQL statements.
-    int i = 0;
-    for( ; tagged_statements[i].text != NULL ; ++i) {
-        conn_.prepareStatement(tagged_statements[i]);
+    unsigned i = 0;
+    for ( ; tagged_statements[i].text != NULL ; ++i) {
+        ctx->conn_.prepareStatement(tagged_statements[i]);
     }
 
     // Just in case somebody foo-barred things
@@ -1143,9 +1198,13 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
         isc_throw(DbOpenError, "Number of statements prepared: " << i
                   << " does not match expected count:" << NUM_STATEMENTS);
     }
-}
 
-PgSqlLeaseMgr::~PgSqlLeaseMgr() {
+    // Create the exchange objects for use for transfer of data to/from
+    // the database.
+    ctx->exchange4_.reset(new PgSqlLease4Exchange());
+    ctx->exchange6_.reset(new PgSqlLease6Exchange());
+
+    return (ctx);
 }
 
 std::string
@@ -1158,9 +1217,10 @@ PgSqlLeaseMgr::getDBVersion() {
 }
 
 bool
-PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
+PgSqlLeaseMgr::addLeaseCommon(PgSqlLeaseContextPtr ctx,
+                              StatementIndex stindex,
                               PsqlBindArray& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
@@ -1172,11 +1232,11 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
         // Failure: check for the special case of duplicate entry.  If this is
         // the case, we return false to indicate that the row was not added.
         // Otherwise we throw an exception.
-        if (conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
+        if (ctx->conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
             return (false);
         }
 
-        conn_.checkStatementError(r, tagged_statements[stindex]);
+        ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
     return (true);
@@ -1187,34 +1247,45 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(lease->addr_.toText());
 
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     PsqlBindArray bind_array;
-    exchange4_->createBindForSend(lease, bind_array);
-    return (addLeaseCommon(INSERT_LEASE4, bind_array));
+    ctx->exchange4_->createBindForSend(lease, bind_array);
+    return (addLeaseCommon(ctx, INSERT_LEASE4, bind_array));
 }
 
 bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR6).arg(lease->addr_.toText());
-    PsqlBindArray bind_array;
-    exchange6_->createBindForSend(lease, bind_array);
 
-    return (addLeaseCommon(INSERT_LEASE6, bind_array));
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    PsqlBindArray bind_array;
+    ctx->exchange6_->createBindForSend(lease, bind_array);
+
+    return (addLeaseCommon(ctx, INSERT_LEASE6, bind_array));
 }
 
 template <typename Exchange, typename LeaseCollection>
-void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
+void PgSqlLeaseMgr::getLeaseCollection(PgSqlLeaseContextPtr ctx,
+                                       StatementIndex stindex,
                                        PsqlBindArray& bind_array,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
     const int n = tagged_statements[stindex].nbparams;
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name, n,
+    PgSqlResult r(PQexecPrepared(ctx->conn_,
+                                 tagged_statements[stindex].name, n,
                                  n > 0 ? &bind_array.values_[0] : NULL,
                                  n > 0 ? &bind_array.lengths_[0] : NULL,
                                  n > 0 ? &bind_array.formats_[0] : NULL, 0));
 
-    conn_.checkStatementError(r, tagged_statements[stindex]);
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int rows = PQntuples(r);
     if (single && rows > 1) {
@@ -1229,15 +1300,17 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 }
 
 void
-PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
-                             Lease4Ptr& result) const {
+PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
+                        StatementIndex stindex, PsqlBindArray& bind_array,
+                        Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease4Collection collection;
-    getLeaseCollection(stindex, bind_array, exchange4_, collection, true);
+    getLeaseCollection(ctx, stindex, bind_array, ctx->exchange4_,
+                       collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1248,15 +1321,17 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
 }
 
 void
-PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
-                             Lease6Ptr& result) const {
+PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
+                        StatementIndex stindex, PsqlBindArray& bind_array,
+                        Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" parameter is true to indicate
     // that the called method should throw an exception if multiple
     // matching records are found: this particular method is called when only
     // one or zero matches is expected.
     Lease6Collection collection;
-    getLeaseCollection(stindex, bind_array, exchange6_, collection, true);
+    getLeaseCollection(ctx, stindex, bind_array, ctx->exchange6_,
+                       collection, true);
 
     // Return single record if present, else clear the lease.
     if (collection.empty()) {
@@ -1281,7 +1356,12 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_ADDR, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE4_ADDR, bind_array, result);
 
     return (result);
 }
@@ -1303,7 +1383,12 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
     // Get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_HWADDR, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_HWADDR, bind_array, result);
 
     return (result);
 }
@@ -1330,7 +1415,12 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_HWADDR_SUBID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE4_HWADDR_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1348,7 +1438,12 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
 
     // Get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_CLIENTID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_CLIENTID, bind_array, result);
 
     return (result);
 }
@@ -1381,7 +1476,12 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
     // Get the data
     Lease4Ptr result;
-    getLease(GET_LEASE4_CLIENTID_SUBID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE4_CLIENTID_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1400,7 +1500,12 @@ PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 
     // ... and get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_SUBID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1418,7 +1523,12 @@ PgSqlLeaseMgr::getLeases4(const string& hostname) const {
 
     // ... and get the data
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_HOSTNAME, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_HOSTNAME, bind_array, result);
 
     return (result);
 }
@@ -1431,7 +1541,12 @@ PgSqlLeaseMgr::getLeases4() const {
     // WHERE clause.
     PsqlBindArray bind_array;
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4, bind_array, result);
 
     return (result);
 }
@@ -1464,7 +1579,12 @@ PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 
     // Get the leases
     Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_PAGE, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_PAGE, bind_array, result);
 
     return (result);
 }
@@ -1488,7 +1608,12 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
 
     // ... and get the data
     Lease6Ptr result;
-    getLease(GET_LEASE6_ADDR, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLease(ctx, GET_LEASE6_ADDR, bind_array, result);
 
     return (result);
 }
@@ -1516,7 +1641,12 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_DUID_IAID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_DUID_IAID, bind_array, result);
 
     return (result);
 }
@@ -1548,7 +1678,12 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_DUID_IAID_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1567,7 +1702,12 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_SUBID, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_SUBID, bind_array, result);
 
     return (result);
 }
@@ -1585,8 +1725,12 @@ PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
     bind_array.add(duid.getDuid());
     Lease6Collection result;
 
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     // query to fetch the data
-    getLeaseCollection(GET_LEASE6_DUID, bind_array, result);
+    getLeaseCollection(ctx, GET_LEASE6_DUID, bind_array, result);
 
     return (result);
 }
@@ -1604,7 +1748,12 @@ PgSqlLeaseMgr::getLeases6(const string& hostname) const {
 
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_HOSTNAME, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_HOSTNAME, bind_array, result);
 
     return (result);
 }
@@ -1617,7 +1766,12 @@ PgSqlLeaseMgr::getLeases6() const {
     // WHERE clause.
     PsqlBindArray bind_array;
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6, bind_array, result);
 
     return (result);
 }
@@ -1656,7 +1810,12 @@ PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
 
     // Get the leases
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_PAGE, bind_array, result);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_PAGE, bind_array, result);
 
     return (result);
 }
@@ -1699,31 +1858,36 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     std::string limit_str = boost::lexical_cast<std::string>(limit);
     bind_array.add(limit_str);
 
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Retrieve leases from the database.
-    getLeaseCollection(statement_index, bind_array, expired_leases);
+    getLeaseCollection(ctx, statement_index, bind_array, expired_leases);
 }
 
 template<typename LeasePtr>
 void
-PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
+PgSqlLeaseMgr::updateLeaseCommon(PgSqlLeaseContextPtr ctx,
+                                 StatementIndex stindex,
                                  PsqlBindArray& bind_array,
                                  const LeasePtr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
 
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
                                  &bind_array.formats_[0], 0));
 
-    conn_.checkStatementError(r, tagged_statements[stindex]);
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
 
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
 
     // Check success case first as it is the most likely outcome.
     if (affected_rows == 1) {
-      return;
+        return;
     }
 
     // If no rows affected, lease doesn't exist.
@@ -1745,9 +1909,13 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_UPDATE_ADDR4).arg(lease->addr_.toText());
 
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Create the BIND array for the data being updated
     PsqlBindArray bind_array;
-    exchange4_->createBindForSend(lease, bind_array);
+    ctx->exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
     std::string addr4_ = boost::lexical_cast<std::string>
@@ -1755,7 +1923,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     bind_array.add(addr4_);
 
     // Drop to common update code
-    updateLeaseCommon(stindex, bind_array, lease);
+    updateLeaseCommon(ctx, stindex, bind_array, lease);
 }
 
 void
@@ -1765,28 +1933,36 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
 
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     // Create the BIND array for the data being updated
     PsqlBindArray bind_array;
-    exchange6_->createBindForSend(lease, bind_array);
+    ctx->exchange6_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the BIND array
     std::string addr_str = lease->addr_.toText();
     bind_array.add(addr_str);
 
     // Drop to common update code
-    updateLeaseCommon(stindex, bind_array, lease);
+    updateLeaseCommon(ctx, stindex, bind_array, lease);
 }
 
 uint64_t
 PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
                                  PsqlBindArray& bind_array) {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
                                  &bind_array.lengths_[0],
                                  &bind_array.formats_[0], 0));
 
-    conn_.checkStatementError(r, tagged_statements[stindex]);
+    ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
 
     return (affected_rows);
@@ -1848,16 +2024,27 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startLeaseStatsQuery4() {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_, tagged_statements[ALL_LEASE4_STATS], false));
+        new PgSqlLeaseStatsQuery(ctx->conn_,
+                                 tagged_statements[ALL_LEASE4_STATS],
+                                 false));
     query->start();
     return(query);
 }
 
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_LEASE4_STATS],
+        new PgSqlLeaseStatsQuery(ctx->conn_,
+                                 tagged_statements[SUBNET_LEASE4_STATS],
                                  false, subnet_id));
     query->start();
     return(query);
@@ -1865,9 +2052,14 @@ PgSqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
 
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
-                                                   const SubnetID& last_subnet_id) {
+                                                const SubnetID& last_subnet_id) {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_RANGE_LEASE4_STATS],
+        new PgSqlLeaseStatsQuery(ctx->conn_,
+                                 tagged_statements[SUBNET_RANGE_LEASE4_STATS],
                                  false, first_subnet_id, last_subnet_id));
     query->start();
     return(query);
@@ -1875,16 +2067,27 @@ PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
 
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startLeaseStatsQuery6() {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_, tagged_statements[ALL_LEASE6_STATS], true));
+        new PgSqlLeaseStatsQuery(ctx->conn_,
+                                 tagged_statements[ALL_LEASE6_STATS],
+                                 true));
     query->start();
     return(query);
 }
 
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_LEASE6_STATS],
+        new PgSqlLeaseStatsQuery(ctx->conn_,
+                                 tagged_statements[SUBNET_LEASE6_STATS],
                                  true, subnet_id));
     query->start();
     return(query);
@@ -1893,8 +2096,13 @@ PgSqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
                                                 const SubnetID& last_subnet_id) {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_RANGE_LEASE6_STATS],
+        new PgSqlLeaseStatsQuery(ctx->conn_,
+                                 tagged_statements[SUBNET_RANGE_LEASE6_STATS],
                                  true, first_subnet_id, last_subnet_id));
     query->start();
     return(query);
@@ -1912,9 +2120,13 @@ PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
 
 string
 PgSqlLeaseMgr::getName() const {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
     string name = "";
     try {
-        name = conn_.getParameter("name");
+        name = ctx->conn_.getParameter("name");
     } catch (...) {
         // Return an empty name
     }
@@ -1936,12 +2148,10 @@ PgSqlLeaseMgr::getVersion() const {
 
 void
 PgSqlLeaseMgr::commit() {
-    conn_.commit();
 }
 
 void
 PgSqlLeaseMgr::rollback() {
-    conn_.rollback();
 }
 
 }; // end of isc::dhcp namespace

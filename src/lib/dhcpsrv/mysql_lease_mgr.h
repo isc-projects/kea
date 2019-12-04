@@ -102,7 +102,7 @@ public:
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
 
-    /// #brief Create a new context.
+    /// @brief Create a new context.
     ///
     /// The database is opened with all the SQL commands pre-compiled.
     ///

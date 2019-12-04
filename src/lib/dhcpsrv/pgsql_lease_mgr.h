@@ -17,6 +17,7 @@
 #include <boost/utility.hpp>
 
 #include <vector>
+#include <mutex>
 
 namespace isc {
 namespace dhcp {
@@ -25,6 +26,45 @@ namespace dhcp {
 // See pgsql_lease_mgr.cc file for actual class definitions
 class PgSqlLease4Exchange;
 class PgSqlLease6Exchange;
+
+/// @brief PostgreSQL Lease Context
+class PgSqlLeaseContext {
+public:
+
+    /// @brief Constructor
+    ///
+    /// @param parameters See PgSqlLeaseMgr constructor.
+    PgSqlLeaseContext(const db::DatabaseConnection::ParameterMap& parameters);
+
+    /// The exchange objects are used for transfer of data to/from the database.
+    /// They are pointed-to objects as the contents may change in "const" calls,
+    /// while the rest of this object does not.  (At alternative would be to
+    /// declare them as "mutable".)
+    boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
+    boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
+
+    /// PostgreSQL connection handle
+    db::PgSqlConnection conn_;
+};
+
+/// @brief Type of pointers to contexts.
+typedef boost::shared_ptr<PgSqlLeaseContext> PgSqlLeaseContextPtr;
+
+/// @brief PostgreSQL Lease Context Pool
+///
+/// This class provides a pool of contexts.
+class PgSqlLeaseContextPool {
+public:
+
+    /// @brief The vector of available contexts.
+    std::vector<PgSqlLeaseContextPtr> pool_;
+
+    /// @brief The mutex to protect pool access.
+    std::mutex mutex_;
+};
+
+/// @brief Type of pointers to context pools.
+typedef boost::shared_ptr<PgSqlLeaseContextPool> PgSqlLeaseContextPoolPtr;
 
 /// @brief PostgreSQL Lease Manager
 ///
@@ -43,11 +83,7 @@ public:
     /// - user - Username under which to connect (optional)
     /// - password - Password for "user" on the database (optional)
     ///
-    /// If the database is successfully opened, the version number in the
-    /// schema_version table will be checked against hard-coded value in
-    /// the implementation file.
-    ///
-    /// Finally, all the SQL commands are pre-compiled.
+    /// Check the schema version and create an initial context.
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
@@ -60,6 +96,16 @@ public:
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();
+
+    /// @brief Create a new context.
+    ///
+    /// The database is opened with all the SQL commands pre-compiled.
+    ///
+    /// @return A new (never null) context.
+    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given.
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    /// failed.
+    PgSqlLeaseContextPtr createContext() const;
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion();
@@ -595,6 +641,7 @@ private:
     /// of the addLease method.  It binds the contents of the lease object to
     /// the prepared statement and adds it to the database.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array that has been created for the type
     ///        of lease in question.
@@ -604,13 +651,15 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, db::PsqlBindArray& bind_array);
+    bool addLeaseCommon(PgSqlLeaseContextPtr ctx,
+                        StatementIndex stindex, db::PsqlBindArray& bind_array);
 
     /// @brief Get Lease Collection Common Code
     ///
     /// This method performs the common actions for obtaining multiple leases
     /// from the database.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing the where clause input parameters
     /// @param exchange Exchange object to use
@@ -627,7 +676,9 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
+    void getLeaseCollection(PgSqlLeaseContextPtr ctx,
+                            StatementIndex stindex,
+                            db::PsqlBindArray& bind_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -636,6 +687,7 @@ private:
     /// Gets a collection of Lease4 objects.  This is just an interface to
     /// the get lease collection common code.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing the where clause input parameters
     /// @param lease LeaseCollection object returned.  Note that any leases in
@@ -647,9 +699,11 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
+    void getLeaseCollection(PgSqlLeaseContextPtr ctx,
+                            StatementIndex stindex,
+                            db::PsqlBindArray& bind_array,
                             Lease4Collection& result) const {
-        getLeaseCollection(stindex, bind_array, exchange4_, result);
+        getLeaseCollection(ctx, stindex, bind_array, ctx->exchange4_, result);
     }
 
     /// @brief Get Lease6 Collection
@@ -657,6 +711,7 @@ private:
     /// Gets a collection of Lease6 objects.  This is just an interface to
     /// the get lease collection common code.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease LeaseCollection object returned.  Note that any existing
@@ -667,9 +722,11 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
+    void getLeaseCollection(PgSqlLeaseContextPtr ctx,
+                            StatementIndex stindex,
+                            db::PsqlBindArray& bind_array,
                             Lease6Collection& result) const {
-        getLeaseCollection(stindex, bind_array, exchange6_, result);
+        getLeaseCollection(ctx, stindex, bind_array, ctx->exchange6_, result);
     }
 
     /// @brief Get Lease4 Common Code
@@ -678,10 +735,12 @@ private:
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, db::PsqlBindArray& bind_array,
+    void getLease(PgSqlLeaseContextPtr ctx,
+                  StatementIndex stindex, db::PsqlBindArray& bind_array,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -690,10 +749,12 @@ private:
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
+    /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, db::PsqlBindArray& bind_array,
+    void getLease(PgSqlLeaseContextPtr ctx,
+                  StatementIndex stindex, db::PsqlBindArray& bind_array,
                   Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
@@ -721,6 +782,7 @@ private:
     /// to the prepared statement, executes it, then checks how many rows
     /// were affected.
     ///
+    /// @param ctx Context
     /// @param stindex Index of prepared statement to be executed
     /// @param bind_array array containing lease values and where clause
     /// parameters for the update.
@@ -731,7 +793,9 @@ private:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, db::PsqlBindArray& bind_array,
+    void updateLeaseCommon(PgSqlLeaseContextPtr ctx,
+                           StatementIndex stindex,
+                           db::PsqlBindArray& bind_array,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
@@ -763,18 +827,38 @@ private:
     uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
                                                 StatementIndex statement_index);
 
-    /// The exchange objects are used for transfer of data to/from the database.
-    /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not.  (At alternative would be to
-    /// declare them as "mutable".)
-    boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
-    boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
+    /// @brief Context RAII Allocator.
+    class PgSqlLeaseContextAlloc {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// This constructor takes a context of the pool if one is available
+        /// or creates a new one.
+        ///
+        /// @param mgr A parent instance
+        PgSqlLeaseContextAlloc(const PgSqlLeaseMgr& mgr);
+
+        /// @brief Destructor
+        ///
+        /// This destructor puts back the context in the pool.
+        ~PgSqlLeaseContextAlloc();
+
+        /// @brief The context
+        PgSqlLeaseContextPtr ctx_;
+
+    private:
+        /// @brief The manager
+        const PgSqlLeaseMgr& mgr_;
+    };
+
+    // Members
 
     /// The parameters.
     db::DatabaseConnection::ParameterMap parameters_;
 
-    /// PostgreSQL connection handle
-    db::PgSqlConnection conn_;
+    /// @brief The pool of contexts
+    PgSqlLeaseContextPoolPtr pool_;
 };
 
 }  // namespace dhcp
