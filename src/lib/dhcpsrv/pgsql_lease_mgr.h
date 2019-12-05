@@ -694,7 +694,7 @@ private:
     /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array for input parameters
-    /// @param lease LeaseCollection object returned.  Note that any leases in
+    /// @param result LeaseCollection object returned.  Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
     ///
@@ -718,7 +718,7 @@ private:
     /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array for input parameters
-    /// @param lease LeaseCollection object returned.  Note that any existing
+    /// @param result LeaseCollection object returned.  Note that any existing
     ///        data in the collection is erased first.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
@@ -742,7 +742,7 @@ private:
     /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array for input parameters
-    /// @param lease Lease4 object returned
+    /// @param result Lease4 object returned
     void getLease(PgSqlLeaseContextPtr ctx,
                   StatementIndex stindex,
                   db::PsqlBindArray& bind_array,
@@ -750,14 +750,14 @@ private:
 
     /// @brief Get Lease6 Common Code
     ///
-    /// This method performs the common actions for the various getLease4()
+    /// This method performs the common actions for the various getLease6()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
     /// @param ctx Context
     /// @param stindex Index of statement being executed
     /// @param bind_array array for input parameters
-    /// @param lease Lease6 object returned
+    /// @param result Lease6 object returned
     void getLease(PgSqlLeaseContextPtr ctx,
                   StatementIndex stindex,
                   db::PsqlBindArray& bind_array,
