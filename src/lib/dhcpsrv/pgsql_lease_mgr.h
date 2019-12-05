@@ -811,7 +811,7 @@ private:
     /// see how many rows were deleted.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind_array arrAy containing lease values and where clause
+    /// @param bind_array Array containing lease values and where clause
     /// parameters for the delete
     ///
     /// @return Number of deleted leases.
