@@ -736,7 +736,7 @@ public:
         bind_[10].buffer_type = MYSQL_TYPE_STRING;
         bind_[10].buffer = reinterpret_cast<char*>(user_context_);
         bind_[10].buffer_length = user_context_length_;
-        bind_[10].length= &user_context_length_;
+        bind_[10].length = &user_context_length_;
         bind_[10].is_null = &user_context_null_;
 
         // Add the error flags
@@ -1308,7 +1308,7 @@ public:
         bind_[16].buffer_type = MYSQL_TYPE_STRING;
         bind_[16].buffer = reinterpret_cast<char*>(user_context_);
         bind_[16].buffer_length = user_context_length_;
-        bind_[16].length= &user_context_length_;
+        bind_[16].length = &user_context_length_;
         bind_[16].is_null = &user_context_null_;
 
         // Add the error flags
