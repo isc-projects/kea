@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Wed Oct 16 2019 17:52
+// File created from ../../../src/lib/dhcpsrv/dhcpsrv_messages.mes on Thu Dec 05 2019 16:13
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -440,7 +440,7 @@ const char* values[] = {
     "DHCPSRV_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",
     "DHCPSRV_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCPSRV_PGSQL_ADD_ADDR4", "adding IPv4 lease with address %1",
-    "DHCPSRV_PGSQL_ADD_ADDR6", "adding IPv6 lease with address %1",
+    "DHCPSRV_PGSQL_ADD_ADDR6", "adding IPv6 lease with address %1, lease type %2",
     "DHCPSRV_PGSQL_BEGIN_TRANSACTION", "committing to PostgreSQL database",
     "DHCPSRV_PGSQL_COMMIT", "committing to PostgreSQL database",
     "DHCPSRV_PGSQL_DB", "opening PostgreSQL lease database: %1",
@@ -475,7 +475,7 @@ const char* values[] = {
     "DHCPSRV_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "DHCPSRV_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",
     "DHCPSRV_PGSQL_UPDATE_ADDR4", "updating IPv4 lease for address %1",
-    "DHCPSRV_PGSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1",
+    "DHCPSRV_PGSQL_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
     "DHCPSRV_QUEUE_NCR", "%1: name change request to %2 DNS entry queued: %3",
     "DHCPSRV_QUEUE_NCR_FAILED", "%1: queuing %2 name change request failed for lease %3: %4",
     "DHCPSRV_QUEUE_NCR_SKIP", "%1: skip queuing name change request for lease: %2",
