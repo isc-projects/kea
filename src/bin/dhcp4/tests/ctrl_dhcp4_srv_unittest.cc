@@ -497,6 +497,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"status-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -1024,6 +1025,18 @@ TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
     // Retry...
     sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
     expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
+}
+
+// This test verifies that the DHCP server handles status-get commands
+TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"status-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("\"pid\": ") != string::npos);
 }
 
 // This test verifies that the DHCP server handles config-backend-pull command

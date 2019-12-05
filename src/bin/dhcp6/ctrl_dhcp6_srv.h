@@ -316,6 +316,18 @@ private:
     commandConfigBackendPullHandler(const std::string& command,
                                     isc::data::ConstElementPtr args);
 
+    /// @brief handler for processing 'status-get' command
+    ///
+    /// This handler processes status-get command, which retrieves
+    /// the server process information i.e. the pid and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return process information wrapped in a response
+    isc::data::ConstElementPtr
+    commandStatusGetHandler(const std::string& command,
+                            isc::data::ConstElementPtr args);
+
     /// @brief Reclaims expired IPv6 leases and reschedules timer.
     ///
     /// This is a wrapper method for @c AllocEngine::reclaimExpiredLeases6.

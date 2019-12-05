@@ -516,6 +516,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"statistic-sample-age-set-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-sample-count-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-sample-count-set-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"status-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -916,6 +917,18 @@ TEST_F(CtrlChannelDhcpv6SrvTest, getVersion) {
     sendUnixCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+}
+
+// This test verifies that the DHCP server handles status-get commands
+TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
+    createUnixChannelServer();
+
+    std::string response;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"status-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("\"pid\": ") != string::npos);
 }
 
 // This test verifies that the DHCP server handles server-tag-get command

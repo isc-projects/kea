@@ -574,6 +574,16 @@ ControlledDhcpv6Srv::commandConfigBackendPullHandler(const std::string&,
                          "On demand configuration update successful."));
 }
 
+ConstElementPtr
+ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
+                                             ConstElementPtr /*args*/) {
+    ElementPtr status = Element::createMap();
+    status->set("pid", Element::create(static_cast<int>(getpid())));
+    // TODO...
+
+    return (createAnswer(0, status));
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv6Srv::processCommand(const std::string& command,
                                     isc::data::ConstElementPtr args) {
@@ -634,6 +644,8 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
         } else if (command == "config-backend-pull") {
             return (srv->commandConfigBackendPullHandler(command, args));
 
+        } else if (command == "status-get") {
+            return (srv->commandStatusGetHandler(command, args));
         }
 
         return (isc::config::createAnswer(1, "Unrecognized command:"
@@ -896,6 +908,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("status-get",
+        boost::bind(&ControlledDhcpv6Srv::commandStatusGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("version-get",
         boost::bind(&ControlledDhcpv6Srv::commandVersionGetHandler, this, _1, _2));
 
@@ -973,6 +988,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("statistic-sample-age-set-all");
         CommandMgr::instance().deregisterCommand("statistic-sample-count-set");
         CommandMgr::instance().deregisterCommand("statistic-sample-count-set-all");
+        CommandMgr::instance().deregisterCommand("status-get");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {

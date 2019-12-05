@@ -575,6 +575,16 @@ ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
+                                             ConstElementPtr /*args*/) {
+    ElementPtr status = Element::createMap();
+    status->set("pid", Element::create(static_cast<int>(getpid())));
+    // TODO...
+
+    return (createAnswer(0, status));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::processCommand(const string& command,
                                     ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
@@ -634,6 +644,8 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "config-backend-pull") {
             return (srv->commandConfigBackendPullHandler(command, args));
 
+        } else if (command == "status-get") {
+            return (srv->commandStatusGetHandler(command, args));
         }
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  "Unrecognized command:" + command);
@@ -877,6 +889,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv4Srv::commandShutdownHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("status-get",
+        boost::bind(&ControlledDhcpv4Srv::commandStatusGetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("version-get",
         boost::bind(&ControlledDhcpv4Srv::commandVersionGetHandler, this, _1, _2));
 
@@ -954,6 +969,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("statistic-sample-age-set-all");
         CommandMgr::instance().deregisterCommand("statistic-sample-count-set");
         CommandMgr::instance().deregisterCommand("statistic-sample-count-set-all");
+        CommandMgr::instance().deregisterCommand("status-get");
         CommandMgr::instance().deregisterCommand("version-get");
 
     } catch (...) {
