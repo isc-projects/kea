@@ -775,7 +775,7 @@ private:
 
     /// @brief Get Lease6 Common Code
     ///
-    /// This method performs the common actions for the various getLease4()
+    /// This method performs the common actions for the various getLease6()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
