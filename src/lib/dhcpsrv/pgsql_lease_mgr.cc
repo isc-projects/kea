@@ -1189,8 +1189,8 @@ PgSqlLeaseMgr::createContext() const {
     ctx->conn_.openDatabase();
 
     // Now prepare the SQL statements.
-    unsigned i = 0;
-    for ( ; tagged_statements[i].text != NULL ; ++i) {
+    uint32_t i = 0;
+    for (; tagged_statements[i].text != NULL ; ++i) {
         ctx->conn_.prepareStatement(tagged_statements[i]);
     }
 
