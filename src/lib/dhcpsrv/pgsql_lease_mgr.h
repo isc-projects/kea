@@ -22,12 +22,14 @@
 namespace isc {
 namespace dhcp {
 
-// Forward definitions (needed for shared_ptr definitions)
-// See pgsql_lease_mgr.cc file for actual class definitions
+// Forward declaration of the Lease exchange objects.  These classes are defined
+// in the .cc file.
 class PgSqlLease4Exchange;
 class PgSqlLease6Exchange;
 
 /// @brief PostgreSQL Lease Context
+///
+/// This class stores the thread context for the manager pool.
 class PgSqlLeaseContext {
 public:
 
@@ -43,7 +45,7 @@ public:
     boost::scoped_ptr<PgSqlLease4Exchange> exchange4_; ///< Exchange object
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
-    /// PostgreSQL connection handle
+    /// @brief PostgreSQL connection
     db::PgSqlConnection conn_;
 };
 
@@ -71,6 +73,7 @@ typedef boost::shared_ptr<PgSqlLeaseContextPool> PgSqlLeaseContextPoolPtr;
 /// This class provides the \ref isc::dhcp::LeaseMgr interface to the PostgreSQL
 /// database.  Use of this backend presupposes that a PostgreSQL database is
 /// available and that the Kea schema has been created within it.
+
 class PgSqlLeaseMgr : public LeaseMgr {
 public:
 
@@ -89,7 +92,8 @@ public:
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::db::DbOpenError Error opening the database
+    /// @throw isc::db::DbOpenError Error opening the database or the schema
+    /// version is incorrect.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     PgSqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
@@ -113,6 +117,7 @@ public:
     /// @brief Adds an IPv4 lease
     ///
     /// @param lease lease to be added
+    ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
@@ -305,7 +310,7 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
-                                       uint32_t iaid) const;
+                                        uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -342,11 +347,11 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6() const;
 
-    /// @brief Returns IPv6 leases for the DUID.
+    /// @brief Returns all IPv6 leases for the DUID.
     ///
     /// @todo: implement an optimised of the query using index.
     /// @return Lease collection (may be empty if no IPv6 lease found)
-    /// for the DUID
+    /// for the DUID.
     virtual Lease6Collection getLeases6(const DUID& duid) const;
 
     /// @brief Returns range of IPv6 leases using paging.
@@ -478,7 +483,6 @@ public:
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
 
-
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
     /// It creates an instance of a PgSqlLeaseStatsQuery4 for a subnet range
@@ -490,6 +494,7 @@ public:
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
                                                                 const SubnetID& last_subnet_id);
+
     /// @brief Creates and runs the IPv6 lease stats query
     ///
     /// It creates an instance of a PgSqlLeaseStatsQuery and then
@@ -521,6 +526,7 @@ public:
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
                                                                 const SubnetID& last_subnet_id);
+
     /// @brief Removes specified IPv4 leases.
     ///
     /// This rather dangerous method is able to remove all leases from specified
@@ -552,9 +558,11 @@ public:
         return (std::string("postgresql"));
     }
 
-    /// @brief Returns name of the database.
+    /// @brief Returns backend name.
     ///
-    /// @return database name
+    /// Each backend have specific name.
+    ///
+    /// @return Name of the backend.
     virtual std::string getName() const;
 
     /// @brief Returns description of the backend.
@@ -566,11 +574,6 @@ public:
 
     /// @brief Returns backend version.
     ///
-    /// The method is called by the constructor after opening the database
-    /// but prior to preparing SQL statements, to verify that the schema version
-    /// is correct. Thus it must not rely on a pre-prepared statement or
-    /// formal statement execution error checking.
-    ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
@@ -580,16 +583,18 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.
+    /// Commits all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
     ///
-    /// @throw DbOperationError If the commit failed.
+    /// PostgreSQL supports transactions but this manager does not use them.
     virtual void commit();
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.
+    /// Rolls back all pending database operations.  On databases that don't
+    /// support transactions, this is a no-op.
     ///
-    /// @throw DbOperationError If the rollback failed.
+    /// PostgreSQL supports transactions but this manager does not use them.
     virtual void rollback();
 
     /// @brief Statement Tags
@@ -597,44 +602,43 @@ public:
     /// The contents of the enum are indexes into the list of compiled SQL
     /// statements
     enum StatementIndex {
-        DELETE_LEASE4,              // Delete from lease4 by address
-        DELETE_LEASE4_STATE_EXPIRED,// Delete expired lease4s in certain state.
-        DELETE_LEASE6,              // Delete from lease6 by address
-        DELETE_LEASE6_STATE_EXPIRED,// Delete expired lease6s in certain state.
-        GET_LEASE4,                 // Get all IPv4 leases
-        GET_LEASE4_ADDR,            // Get lease4 by address
-        GET_LEASE4_CLIENTID,        // Get lease4 by client ID
-        GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
-        GET_LEASE4_HWADDR,          // Get lease4 by HW address
-        GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
-        GET_LEASE4_PAGE,            // Get page of leases beginning with an address
-        GET_LEASE4_SUBID,           // Get IPv4 leases by subnet ID
-        GET_LEASE4_HOSTNAME,        // Get IPv4 leases by hostname
-        GET_LEASE4_EXPIRE,          // Get expired lease4
-        GET_LEASE6,                 // Get all IPv6 leases
-        GET_LEASE6_ADDR,            // Get lease6 by address
-        GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
-        GET_LEASE6_PAGE,            // Get page of IPv6 leases beginning with an address
-        GET_LEASE6_SUBID,           // Get IPv6 leases by subnet ID
-        GET_LEASE6_DUID,           // Get IPv6 leases by DUID
-        GET_LEASE6_HOSTNAME,        // Get IPv6 leases by hostname
-        GET_LEASE6_EXPIRE,          // Get expired lease6
-        INSERT_LEASE4,              // Add entry to lease4 table
-        INSERT_LEASE6,              // Add entry to lease6 table
-        UPDATE_LEASE4,              // Update a Lease4 entry
-        UPDATE_LEASE6,              // Update a Lease6 entry
-        ALL_LEASE4_STATS,           // Fetches IPv4 lease statistics
-        SUBNET_LEASE4_STATS,        // Fetched IPv4 lease stats for a single subnet.
-        SUBNET_RANGE_LEASE4_STATS,  // Fetched IPv4 lease stats for a subnet range.
-        ALL_LEASE6_STATS,           // Fetches IPv6 lease statistics
-        SUBNET_LEASE6_STATS,        // Fetched IPv6 lease stats for a single subnet.
-        SUBNET_RANGE_LEASE6_STATS,  // Fetched IPv6 lease stats for a subnet range.
-        NUM_STATEMENTS              // Number of statements
+        DELETE_LEASE4,               // Delete from lease4 by address
+        DELETE_LEASE4_STATE_EXPIRED, // Delete expired lease4 in a given state
+        DELETE_LEASE6,               // Delete from lease6 by address
+        DELETE_LEASE6_STATE_EXPIRED, // Delete expired lease6 in a given state
+        GET_LEASE4,                  // Get all IPv4 leases
+        GET_LEASE4_ADDR,             // Get lease4 by address
+        GET_LEASE4_CLIENTID,         // Get lease4 by client ID
+        GET_LEASE4_CLIENTID_SUBID,   // Get lease4 by client ID & subnet ID
+        GET_LEASE4_HWADDR,           // Get lease4 by HW address
+        GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
+        GET_LEASE4_PAGE,             // Get page of leases beginning with an address
+        GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
+        GET_LEASE4_HOSTNAME,         // Get IPv4 leases by hostname
+        GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
+        GET_LEASE6,                  // Get all IPv6 leases
+        GET_LEASE6_ADDR,             // Get lease6 by address
+        GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
+        GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
+        GET_LEASE6_PAGE,             // Get page of leases beginning with an address
+        GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
+        GET_LEASE6_DUID,             // Get IPv6 leases by DUID
+        GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname
+        GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
+        INSERT_LEASE4,               // Add entry to lease4 table
+        INSERT_LEASE6,               // Add entry to lease6 table
+        UPDATE_LEASE4,               // Update a Lease4 entry
+        UPDATE_LEASE6,               // Update a Lease6 entry
+        ALL_LEASE4_STATS,            // Fetches IPv4 lease statistics
+        SUBNET_LEASE4_STATS,         // Fetched IPv4 lease stats for a single subnet.
+        SUBNET_RANGE_LEASE4_STATS,   // Fetched IPv4 lease stats for a subnet range.
+        ALL_LEASE6_STATS,            // Fetches IPv6 lease statistics
+        SUBNET_LEASE6_STATS,         // Fetched IPv6 lease stats for a single subnet.
+        SUBNET_RANGE_LEASE6_STATS,   // Fetched IPv6 lease stats for a subnet range.
+        NUM_STATEMENTS               // Number of statements
     };
 
 private:
-
     /// @brief Add Lease Common Code
     ///
     /// This method performs the common actions for both flavours (V4 and V6)
@@ -661,9 +665,9 @@ private:
     ///
     /// @param ctx Context
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing the where clause input parameters
+    /// @param bind_array array for input parameters
     /// @param exchange Exchange object to use
-    /// @param result Returned collection of Leases Note that any leases in
+    /// @param result Returned collection of leases. Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
     /// @param single If true, only a single data item is to be retrieved.
@@ -682,14 +686,14 @@ private:
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
-    /// @brief Gets Lease4 Collection
+    /// @brief Get Lease4 Collection
     ///
     /// Gets a collection of Lease4 objects.  This is just an interface to
     /// the get lease collection common code.
     ///
     /// @param ctx Context
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing the where clause input parameters
+    /// @param bind_array array for input parameters
     /// @param lease LeaseCollection object returned.  Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
@@ -713,7 +717,7 @@ private:
     ///
     /// @param ctx Context
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing input parameters for the query
+    /// @param bind_array array for input parameters
     /// @param lease LeaseCollection object returned.  Note that any existing
     ///        data in the collection is erased first.
     ///
@@ -737,10 +741,11 @@ private:
     ///
     /// @param ctx Context
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing input parameters for the query
+    /// @param bind_array array for input parameters
     /// @param lease Lease4 object returned
     void getLease(PgSqlLeaseContextPtr ctx,
-                  StatementIndex stindex, db::PsqlBindArray& bind_array,
+                  StatementIndex stindex,
+                  db::PsqlBindArray& bind_array,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -751,10 +756,11 @@ private:
     ///
     /// @param ctx Context
     /// @param stindex Index of statement being executed
-    /// @param bind_array array containing input parameters for the query
+    /// @param bind_array array for input parameters
     /// @param lease Lease6 object returned
     void getLease(PgSqlLeaseContextPtr ctx,
-                  StatementIndex stindex, db::PsqlBindArray& bind_array,
+                  StatementIndex stindex,
+                  db::PsqlBindArray& bind_array,
                   Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
@@ -784,7 +790,7 @@ private:
     ///
     /// @param ctx Context
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind_array array containing lease values and where clause
+    /// @param bind_array Array containing lease values and where clause
     /// parameters for the update.
     /// @param lease Pointer to the lease object whose record is being updated.
     ///
@@ -805,7 +811,7 @@ private:
     /// see how many rows were deleted.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bind_array array containing lease values and where clause
+    /// @param bind_array arrAy containing lease values and where clause
     /// parameters for the delete
     ///
     /// @return Number of deleted leases.
@@ -852,9 +858,11 @@ private:
         const PgSqlLeaseMgr& mgr_;
     };
 
+private:
+
     // Members
 
-    /// The parameters.
+    /// @brief The parameters
     db::DatabaseConnection::ParameterMap parameters_;
 
     /// @brief The pool of contexts

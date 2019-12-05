@@ -157,7 +157,6 @@ public:
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
-
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
     /// Although in the usual case there will be only one lease, for mobile
@@ -195,7 +194,7 @@ public:
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
-    /// @brief Returns existing IPv4 lease for specified client-id
+    /// @brief Returns existing IPv4 leases for specified client-id
     ///
     /// Although in the usual case there will be only one lease, for mobile
     /// clients or clients with multiple static/fixed/reserved leases there
@@ -586,7 +585,7 @@ public:
 
     /// @brief Returns backend name.
     ///
-    /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    /// Each backend have specific name.
     ///
     /// @return Name of the backend.
     virtual std::string getName() const;
@@ -625,7 +624,8 @@ public:
 
     /// @brief Statement Tags
     ///
-    /// The contents of the enum are indexes into the list of SQL statements
+    /// The contents of the enum are indexes into the list of compiled SQL
+    /// statements
     enum StatementIndex {
         DELETE_LEASE4,               // Delete from lease4 by address
         DELETE_LEASE4_STATE_EXPIRED, // Delete expired lease4 in a given state
@@ -692,7 +692,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param exchange Exchange object to use
-    /// @param lease LeaseCollection object returned.  Note that any leases in
+    /// @param result Returned collection of leases. Note that any leases in
     ///        the collection when this method is called are not erased: the
     ///        new data is appended to the end.
     /// @param single If true, only a single data item is to be retrieved.
@@ -706,11 +706,12 @@ private:
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
     void getLeaseCollection(MySqlLeaseContextPtr ctx,
-                            StatementIndex stindex, MYSQL_BIND* bind,
+                            StatementIndex stindex,
+                            MYSQL_BIND* bind,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
-    /// @brief Get Lease Collection
+    /// @brief Get Lease4 Collection
     ///
     /// Gets a collection of Lease4 objects.  This is just an interface to
     /// the get lease collection common code.
@@ -728,12 +729,13 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(MySqlLeaseContextPtr ctx,
-                            StatementIndex stindex, MYSQL_BIND* bind,
+                            StatementIndex stindex,
+                            MYSQL_BIND* bind,
                             Lease4Collection& result) const {
         getLeaseCollection(ctx, stindex, bind, ctx->exchange4_, result);
     }
 
-    /// @brief Get Lease Collection
+    /// @brief Get Lease6 Collection
     ///
     /// Gets a collection of Lease6 objects.  This is just an interface to
     /// the get lease collection common code.
@@ -750,7 +752,8 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(MySqlLeaseContextPtr ctx,
-                            StatementIndex stindex, MYSQL_BIND* bind,
+                            StatementIndex stindex,
+                            MYSQL_BIND* bind,
                             Lease6Collection& result) const {
         getLeaseCollection(ctx, stindex, bind, ctx->exchange6_, result);
     }
@@ -766,12 +769,13 @@ private:
     /// @param bind MYSQL_BIND array for input parameters
     /// @param lease Lease4 object returned
     void getLease(MySqlLeaseContextPtr ctx,
-                  StatementIndex stindex, MYSQL_BIND* bind,
+                  StatementIndex stindex,
+                  MYSQL_BIND* bind,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
     ///
-    /// This method performs the common actions for the various getLease46)
+    /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
     /// but retrieving only a single lease.
     ///
@@ -780,9 +784,9 @@ private:
     /// @param bind MYSQL_BIND array for input parameters
     /// @param lease Lease6 object returned
     void getLease(MySqlLeaseContextPtr ctx,
-                  StatementIndex stindex, MYSQL_BIND* bind,
+                  StatementIndex stindex,
+                  MYSQL_BIND* bind,
                   Lease6Ptr& result) const;
-
 
     /// @brief Get expired leases common code.
     ///
@@ -822,7 +826,8 @@ private:
     ///        failed.
     template <typename LeasePtr>
     void updateLeaseCommon(MySqlLeaseContextPtr ctx,
-                           StatementIndex stindex, MYSQL_BIND* bind,
+                           StatementIndex stindex,
+                           MYSQL_BIND* bind,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
@@ -840,7 +845,8 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    uint64_t deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind);
+    uint64_t deleteLeaseCommon(StatementIndex stindex,
+                               MYSQL_BIND* bind);
 
     /// @brief Delete expired-reclaimed leases.
     ///

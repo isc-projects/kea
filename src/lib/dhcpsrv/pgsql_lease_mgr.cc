@@ -309,6 +309,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
         "state = $16, user_context = $17 "
       "WHERE address = $18"},
+
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
       "all_lease4_stats",
@@ -420,7 +421,7 @@ private:
 
 public:
 
-    /// @brief Default constructor
+    /// @brief Constructor
     PgSqlLease4Exchange()
         : lease_(), addr4_(0), hwaddr_length_(0), hwaddr_(hwaddr_length_),
         client_id_length_(0) {
@@ -1139,7 +1140,7 @@ PgSqlLeaseMgr::PgSqlLeaseContextAlloc::PgSqlLeaseContextAlloc(
         }
     } else {
         if (mgr_.pool_->pool_.empty()) {
-            isc_throw(Unexpected, "No available PgSql lease context?!");
+            isc_throw(Unexpected, "No available PostgreSQL lease context?!");
         }
         ctx_ = mgr_.pool_->pool_.back();
     }
@@ -1199,8 +1200,8 @@ PgSqlLeaseMgr::createContext() const {
                   << " does not match expected count:" << NUM_STATEMENTS);
     }
 
-    // Create the exchange objects for use for transfer of data to/from
-    // the database.
+    // Create the exchange objects for use in exchanging data between the
+    // program and the database.
     ctx->exchange4_.reset(new PgSqlLease4Exchange());
     ctx->exchange6_.reset(new PgSqlLease6Exchange());
 
@@ -1235,7 +1236,6 @@ PgSqlLeaseMgr::addLeaseCommon(PgSqlLeaseContextPtr ctx,
         if (ctx->conn_.compareError(r, PgSqlConnection::DUPLICATE_KEY)) {
             return (false);
         }
-
         ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
@@ -1245,7 +1245,8 @@ PgSqlLeaseMgr::addLeaseCommon(PgSqlLeaseContextPtr ctx,
 bool
 PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_ADD_ADDR4).arg(lease->addr_.toText());
+              DHCPSRV_PGSQL_ADD_ADDR4)
+              .arg(lease->addr_.toText());
 
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
@@ -1259,7 +1260,9 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_ADD_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_PGSQL_ADD_ADDR6)
+              .arg(lease->addr_.toText())
+              .arg(lease->type_);
 
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
@@ -1344,7 +1347,8 @@ PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
 Lease4Ptr
 PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_ADDR4).arg(addr.toText());
+              DHCPSRV_PGSQL_GET_ADDR4)
+              .arg(addr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1369,7 +1373,8 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 Lease4Collection
 PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_HWADDR).arg(hwaddr.toText());
+              DHCPSRV_PGSQL_GET_HWADDR)
+              .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1397,7 +1402,8 @@ Lease4Ptr
 PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_SUBID_HWADDR)
-              .arg(subnet_id).arg(hwaddr.toText());
+              .arg(subnet_id)
+              .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1428,7 +1434,8 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 Lease4Collection
 PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_CLIENTID).arg(clientid.toText());
+              DHCPSRV_PGSQL_GET_CLIENTID)
+              .arg(clientid.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1462,7 +1469,8 @@ Lease4Ptr
 PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_SUBID_CLIENTID)
-              .arg(subnet_id).arg(clientid.toText());
+              .arg(subnet_id)
+              .arg(clientid.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1488,8 +1496,9 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID4)
-        .arg(subnet_id);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_SUBID4)
+              .arg(subnet_id);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1512,8 +1521,9 @@ PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLeases4(const string& hostname) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME4)
-        .arg(hostname);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_HOSTNAME4)
+              .arg(hostname);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1535,7 +1545,8 @@ PgSqlLeaseMgr::getLeases4(const string& hostname) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLeases4() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET4);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET4);
 
     // Provide empty binding array because our query has no parameters in
     // WHERE clause.
@@ -1561,9 +1572,10 @@ PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
                   << lower_bound_address);
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE4)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_PAGE4)
+              .arg(page_size.page_size_)
+              .arg(lower_bound_address.toText());
 
     // Prepare WHERE clause
     PsqlBindArray bind_array;
@@ -1592,8 +1604,10 @@ PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 Lease6Ptr
 PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR6)
-              .arg(addr.toText()).arg(lease_type);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_ADDR6)
+              .arg(addr.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1623,7 +1637,9 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_IAID_DUID)
-              .arg(iaid).arg(duid.toText()).arg(lease_type);
+              .arg(iaid)
+              .arg(duid.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1656,7 +1672,10 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_IAID_SUBID_DUID)
-              .arg(iaid).arg(subnet_id).arg(duid.toText()).arg(lease_type);
+              .arg(iaid)
+              .arg(subnet_id)
+              .arg(duid.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1690,8 +1709,9 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID6)
-        .arg(subnet_id);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_SUBID6)
+              .arg(subnet_id);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1737,8 +1757,9 @@ PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(const string& hostname) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME6)
-        .arg(hostname);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_HOSTNAME6)
+              .arg(hostname);
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1760,7 +1781,8 @@ PgSqlLeaseMgr::getLeases6(const string& hostname) const {
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET6);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET6);
 
     // Provide empty binding array because our query has no parameters in
     // WHERE clause.
@@ -1786,9 +1808,10 @@ PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                   << lower_bound_address);
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_PAGE6)
+              .arg(page_size.page_size_)
+              .arg(lower_bound_address.toText());
 
     // Prepare WHERE clause
     PsqlBindArray bind_array;
@@ -1823,16 +1846,18 @@ PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
 void
 PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED4)
-        .arg(max_leases);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_EXPIRED4)
+              .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
 }
 
 void
 PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED6)
-        .arg(max_leases);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_EXPIRED6)
+              .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
@@ -1872,9 +1897,6 @@ PgSqlLeaseMgr::updateLeaseCommon(PgSqlLeaseContextPtr ctx,
                                  StatementIndex stindex,
                                  PsqlBindArray& bind_array,
                                  const LeasePtr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_ADD_ADDR4).arg(tagged_statements[stindex].name);
-
     PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
                                  &bind_array.values_[0],
@@ -1907,7 +1929,8 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_UPDATE_ADDR4).arg(lease->addr_.toText());
+              DHCPSRV_PGSQL_UPDATE_ADDR4)
+              .arg(lease->addr_.toText());
 
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
@@ -1931,7 +1954,9 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_PGSQL_UPDATE_ADDR6)
+              .arg(lease->addr_.toText())
+              .arg(lease->type_);
 
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
@@ -1971,7 +1996,8 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
 bool
 PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_PGSQL_DELETE_ADDR)
+              .arg(addr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1992,7 +2018,7 @@ uint64_t
 PgSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4)
-        .arg(secs);
+              .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
@@ -2000,7 +2026,7 @@ uint64_t
 PgSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6)
-        .arg(secs);
+              .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
 }
 
@@ -2028,10 +2054,9 @@ PgSqlLeaseMgr::startLeaseStatsQuery4() {
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(ctx->conn_,
-                                 tagged_statements[ALL_LEASE4_STATS],
-                                 false));
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[ALL_LEASE4_STATS],
+                                                      false));
     query->start();
     return(query);
 }
@@ -2042,10 +2067,10 @@ PgSqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(ctx->conn_,
-                                 tagged_statements[SUBNET_LEASE4_STATS],
-                                 false, subnet_id));
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[SUBNET_LEASE4_STATS],
+                                                      false,
+                                                      subnet_id));
     query->start();
     return(query);
 }
@@ -2057,10 +2082,11 @@ PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(ctx->conn_,
-                                 tagged_statements[SUBNET_RANGE_LEASE4_STATS],
-                                 false, first_subnet_id, last_subnet_id));
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[SUBNET_RANGE_LEASE4_STATS],
+                                                      false,
+                                                      first_subnet_id,
+                                                      last_subnet_id));
     query->start();
     return(query);
 }
@@ -2071,10 +2097,9 @@ PgSqlLeaseMgr::startLeaseStatsQuery6() {
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(ctx->conn_,
-                                 tagged_statements[ALL_LEASE6_STATS],
-                                 true));
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[ALL_LEASE6_STATS],
+                                                      true));
     query->start();
     return(query);
 }
@@ -2085,10 +2110,10 @@ PgSqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(ctx->conn_,
-                                 tagged_statements[SUBNET_LEASE6_STATS],
-                                 true, subnet_id));
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[SUBNET_LEASE6_STATS],
+                                                      true,
+                                                      subnet_id));
     query->start();
     return(query);
 }
@@ -2100,22 +2125,23 @@ PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(ctx->conn_,
-                                 tagged_statements[SUBNET_RANGE_LEASE6_STATS],
-                                 true, first_subnet_id, last_subnet_id));
+    LeaseStatsQueryPtr query(new PgSqlLeaseStatsQuery(ctx->conn_,
+                                                      tagged_statements[SUBNET_RANGE_LEASE6_STATS],
+                                                      true,
+                                                      first_subnet_id,
+                                                      last_subnet_id));
     query->start();
     return(query);
 }
 
 size_t
 PgSqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
-    isc_throw(NotImplemented, "wipeLeases4 is not implemented for PgSQL backend");
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for PostgreSQL backend");
 }
 
 size_t
 PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
-    isc_throw(NotImplemented, "wipeLeases6 is not implemented for PgSQL backend");
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for PostgreSQL backend");
 }
 
 string
@@ -2148,11 +2174,15 @@ PgSqlLeaseMgr::getVersion() const {
 
 void
 PgSqlLeaseMgr::commit() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_COMMIT);
 }
 
 void
 PgSqlLeaseMgr::rollback() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_ROLLBACK);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
