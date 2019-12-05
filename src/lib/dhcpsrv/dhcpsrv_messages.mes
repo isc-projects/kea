@@ -961,7 +961,7 @@ The reason for the failure is appended as an argument of the log message.
 A debug message issued when the server is about to add an IPv4 lease
 with the specified address to the PostgreSQL backend database.
 
-% DHCPSRV_PGSQL_ADD_ADDR6 adding IPv6 lease with address %1
+% DHCPSRV_PGSQL_ADD_ADDR6 adding IPv6 lease with address %1, lease type %2
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
@@ -1132,7 +1132,7 @@ any of these INSERT statements fail.
 A debug message issued when the server is attempting to update IPv4
 lease from the PostgreSQL database for the specified address.
 
-% DHCPSRV_PGSQL_UPDATE_ADDR6 updating IPv6 lease for address %1
+% DHCPSRV_PGSQL_UPDATE_ADDR6 updating IPv6 lease for address %1, lease type %2
 A debug message issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
 
