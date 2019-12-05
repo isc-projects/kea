@@ -1,3 +1,11 @@
+1690.	[func]		fdupont, razvan
+	As a preparation for upcoming multi-threading, the PgSQL
+	connection pool has been implemented. This code is not
+	usable on its own yet, but it will allow all threads
+	to share a pool of connections in the future. This
+	should improve the overall PgSQL lease backend performance.
+	(Gitlab #1044)
+
 Kea 1.7.2 released on Nov 27, 2019
 
 1689.	[bug]*		fdupont
@@ -32,7 +40,7 @@ Kea 1.7.2 released on Nov 27, 2019
 	As a preparation for upcoming multi-threading, the MySQL
 	connection pool has been implemented. This code is not
 	usable on its own yet, but it will allow all threads
-	to have share a pool of connections in the future. This
+	to share a pool of connections in the future. This
 	should improve the overall MySQL lease backend performance.
 	(Gitlab #960)
 
