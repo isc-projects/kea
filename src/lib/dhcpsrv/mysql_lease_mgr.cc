@@ -1820,9 +1820,8 @@ MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr ctx,
 
 bool
 MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_ADD_ADDR4)
-              .arg(lease->addr_.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ADD_ADDR4)
+        .arg(lease->addr_.toText());
 
     // Get a context
     MySqlLeaseContextAlloc get_context(*this);
@@ -1837,10 +1836,9 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_ADD_ADDR6)
-              .arg(lease->addr_.toText())
-              .arg(lease->type_);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ADD_ADDR6)
+        .arg(lease->addr_.toText())
+        .arg(lease->type_);
 
     // Get a context
     MySqlLeaseContextAlloc get_context(*this);
@@ -1986,9 +1984,8 @@ void MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_ADDR4)
-              .arg(addr.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR4)
+        .arg(addr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2013,9 +2010,8 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_HWADDR)
-              .arg(hwaddr.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HWADDR)
+        .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2055,10 +2051,9 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_SUBID_HWADDR)
-              .arg(subnet_id)
-              .arg(hwaddr.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID_HWADDR)
+        .arg(subnet_id)
+        .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -2102,9 +2097,8 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_CLIENTID)
-              .arg(clientid.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_CLIENTID)
+        .arg(clientid.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2149,10 +2143,9 @@ MySqlLeaseMgr::getLease4(const ClientId&, const HWAddr&, SubnetID) const {
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_SUBID_CLIENTID)
-              .arg(subnet_id)
-              .arg(clientid.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID_CLIENTID)
+        .arg(subnet_id)
+        .arg(clientid.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -2191,9 +2184,8 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_SUBID4)
-              .arg(subnet_id);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID4)
+        .arg(subnet_id);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2218,9 +2210,8 @@ MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLeases4(const string& hostname) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_HOSTNAME4)
-              .arg(hostname);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HOSTNAME4)
+        .arg(hostname);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2245,8 +2236,7 @@ MySqlLeaseMgr::getLeases4(const string& hostname) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLeases4() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET4);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET4);
 
     Lease4Collection result;
 
@@ -2269,10 +2259,9 @@ MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
                   << lower_bound_address);
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_PAGE4)
-              .arg(page_size.page_size_)
-              .arg(lower_bound_address.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
 
     // Prepare WHERE clause
     MYSQL_BIND inbind[2];
@@ -2305,10 +2294,9 @@ MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 Lease6Ptr
 MySqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_ADDR6)
-              .arg(addr.toText())
-              .arg(lease_type);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR6)
+        .arg(addr.toText())
+        .arg(lease_type);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -2343,11 +2331,10 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
 Lease6Collection
 MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_IAID_DUID)
-              .arg(iaid)
-              .arg(duid.toText())
-              .arg(lease_type);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_IAID_DUID)
+        .arg(iaid)
+        .arg(duid.toText())
+        .arg(lease_type);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
@@ -2407,12 +2394,11 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 Lease6Collection
 MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_IAID_SUBID_DUID)
-              .arg(iaid)
-              .arg(subnet_id)
-              .arg(duid.toText())
-              .arg(lease_type);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_IAID_SUBID_DUID)
+        .arg(iaid)
+        .arg(subnet_id)
+        .arg(duid.toText())
+        .arg(lease_type);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[4];
@@ -2457,9 +2443,8 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_SUBID6)
-              .arg(subnet_id);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID6)
+        .arg(subnet_id);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2484,8 +2469,7 @@ MySqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET6);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET6);
 
     Lease6Collection result;
 
@@ -2500,9 +2484,8 @@ MySqlLeaseMgr::getLeases6() const {
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6(const DUID& duid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_DUID)
-              .arg(duid.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID)
+        .arg(duid.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2530,9 +2513,8 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6(const string& hostname) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_HOSTNAME6)
-              .arg(hostname);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_HOSTNAME6)
+        .arg(hostname);
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2565,10 +2547,9 @@ MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                   << lower_bound_address);
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_PAGE6)
-              .arg(page_size.page_size_)
-              .arg(lower_bound_address.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
 
     // Prepare WHERE clause
     MYSQL_BIND inbind[2];
@@ -2610,18 +2591,16 @@ MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
 void
 MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_EXPIRED4)
-              .arg(max_leases);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED4)
+        .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
 }
 
 void
 MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_EXPIRED6)
-              .arg(max_leases);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED6)
+        .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
@@ -2699,9 +2678,8 @@ void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_UPDATE_ADDR4)
-              .arg(lease->addr_.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_UPDATE_ADDR4)
+        .arg(lease->addr_.toText());
 
     // Get a context
     MySqlLeaseContextAlloc get_context(*this);
@@ -2728,10 +2706,9 @@ void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_UPDATE_ADDR6)
-              .arg(lease->addr_.toText())
-              .arg(lease->type_);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_UPDATE_ADDR6)
+        .arg(lease->addr_.toText())
+        .arg(lease->type_);
 
     // Get a context
     MySqlLeaseContextAlloc get_context(*this);
@@ -2786,9 +2763,8 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
 bool
 MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_DELETE_ADDR)
-              .arg(addr.toText());
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETE_ADDR)
+        .arg(addr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
@@ -2820,17 +2796,15 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
 uint64_t
 MySqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4)
-              .arg(secs);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4)
+        .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
 uint64_t
 MySqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6)
-              .arg(secs);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6)
+        .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
 }
 
@@ -2856,9 +2830,8 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 
     // Get the number of deleted leases and log it.
     uint64_t deleted_leases = deleteLeaseCommon(statement_index, inbind);
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED)
-              .arg(deleted_leases);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED)
+        .arg(deleted_leases);
 
     return (deleted_leases);
 }
@@ -2983,22 +2956,19 @@ MySqlLeaseMgr::getDescription() const {
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_VERSION);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_VERSION);
 
     return (MySqlConnection::getVersion(parameters_));
 }
 
 void
 MySqlLeaseMgr::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_COMMIT);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
 }
 
 void
 MySqlLeaseMgr::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_ROLLBACK);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
 }
 
 void
