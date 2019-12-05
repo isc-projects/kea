@@ -163,6 +163,9 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
 
 void
 ControlledDhcpv6Srv::init(const std::string& file_name) {
+    // Keep the call timestamp.
+    start_ = boost::posix_time::second_clock::universal_time();
+
     // Configure the server using JSON file.
     ConstElementPtr result = loadConfigFile(file_name);
     int rcode;
@@ -579,7 +582,14 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
                                              ConstElementPtr /*args*/) {
     ElementPtr status = Element::createMap();
     status->set("pid", Element::create(static_cast<int>(getpid())));
-    // TODO...
+
+    auto now = boost::posix_time::second_clock::universal_time();
+    auto uptime = now - start_;
+    status->set("uptime", Element::create(uptime.total_seconds()));
+
+    // todo: duration since last config commit.
+
+    // todo: number of service threads.
 
     return (createAnswer(0, status));
 }

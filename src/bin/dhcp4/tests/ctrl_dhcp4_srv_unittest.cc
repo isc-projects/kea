@@ -1037,6 +1037,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     sendUnixCommand("{ \"command\": \"status-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("\"pid\": ") != string::npos);
+    EXPECT_TRUE(response.find("\"uptime\": ") != string::npos);
 }
 
 // This test verifies that the DHCP server handles config-backend-pull command

@@ -14,6 +14,7 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -424,6 +425,9 @@ private:
     /// Shared pointer to the instance of timer @c TimerMgr is held here to
     /// make sure that the @c TimerMgr outlives instance of this class.
     TimerMgrPtr timer_mgr_;
+
+    /// @brief Timestamp of the start of the server.
+    boost::posix_time::ptime start_;
 };
 
 }; // namespace isc::dhcp
