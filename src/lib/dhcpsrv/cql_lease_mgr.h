@@ -426,16 +426,16 @@ public:
 
     /// @brief Deletes an IPv4 lease.
     ///
-    /// @param lease IPv4 lease being deleted
+    /// @param lease IPv4 lease being deleted.
     ///
-    /// @return true if deletion was successful, false if no such lease exists
+    /// @return true if deletion was successful, false if no such lease exists.
     bool deleteLease(const Lease4Ptr& lease) override final;
 
     /// @brief Deletes an IPv6 lease.
     ///
-    /// @param lease IPv6 lease being deleted
+    /// @param lease IPv6 lease being deleted.
     ///
-    /// @return true if deletion was successful, false if no such lease exists
+    /// @return true if deletion was successful, false if no such lease exists.
     bool deleteLease(const Lease6Ptr& lease) override final;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
