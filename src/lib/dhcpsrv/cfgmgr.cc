@@ -108,6 +108,10 @@ CfgMgr::commit() {
         }
     }
 
+    // Set the last commit timestamp.
+    auto now = boost::posix_time::second_clock::universal_time();
+    configuration_->setLastCommitTime(now);
+
     // Now we need to set the statistics back.
     configuration_->updateStatistics();
 }

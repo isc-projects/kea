@@ -587,7 +587,11 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
     auto uptime = now - start_;
     status->set("uptime", Element::create(uptime.total_seconds()));
 
-    // todo: duration since last config commit.
+    auto last_commit = CfgMgr::instance().getCurrentCfg()->getLastCommitTime();
+    if (!last_commit.is_not_a_date_time()) {
+        auto reload = now - last_commit;
+        status->set("reload", Element::create(reload.total_seconds()));
+    }
 
     // todo: number of service threads.
 
