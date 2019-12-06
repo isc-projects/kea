@@ -1,3 +1,8 @@
+1713.	[bug]*		tmark
+	Code added under #35 to permit scoping of DDNS behavioral parameters
+	was refactored to improve performance.
+	(Gitlab #981)
+
 1712.	[bug]		tmark
 	Corrected an issue in the MySQL CB hook library which could
 	cause subnet and shared-network options, properly added to

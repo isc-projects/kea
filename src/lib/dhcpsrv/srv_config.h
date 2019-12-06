@@ -39,60 +39,92 @@ namespace dhcp {
 class CfgMgr;
 
 /// @brief Convenience container for conveying DDNS behaviorial parameters
-/// It is intended to be populated per Packet exchange and passed into
-/// functions that require them
+/// It is intended to be created per Packet exchange using the selected
+/// subnet passed into functions that require them
 class DdnsParams {
 public:
+    /// @brief Default constructor
     DdnsParams() : subnet_(), enable_updates_(false) {};
 
+    /// @brief Constructor for DHPCv4 subnets
+    ///
+    /// @param subnet Pointer to Subnet4 instance to use for fetching
+    /// parameter values (typically this is the selected subnet).
+    /// @param enable_updates flag which indicates whether or not
+    /// D2Client is enabled (typically the value should come from
+    /// global D2Client configuration).
     DdnsParams(const Subnet4Ptr& subnet, bool enable_updates)
         : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
           enable_updates_(enable_updates) {}
 
+    /// @brief Constructor for DHPCv6 subnets
+    ///
+    /// @param subnet Pointer to Subnet6 instance to use for fetching
+    /// parameter values (typically this is the selected subnet).
+    /// @param enable_updates flag which indicates whether or not
+    /// D2Client is enabled (typically the value should come from
+    /// global D2Client configuration).
     DdnsParams(const Subnet6Ptr& subnet, bool enable_updates)
         : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
           enable_updates_(enable_updates) {}
 
-    /// @brief Indicates whether or not DHCP DDNS updating is enabled.
+    /// @brief Returns whether or not DHCP DDNS updating is enabled.
+    /// The value is the logical AND of enable_updates_ member and
+    /// the value returned by subnet_'s getDdnsSendUpdates().  It
+    /// @return True if updates are enabled, false otherwise or if
+    /// subnet_ is empty.
     bool getEnableUpdates() const;
 
-    /// @brief Should Kea perform updates, even if client requested no updates.
-    /// Overrides the client request for no updates via the N flag.
+    /// @brief Returns whether or not Kea should perform updates, even if
+    /// client requested no updates.
+    /// @return The value from the subnet_ or false if subnet_ is empty.
     bool getOverrideNoUpdate() const;
 
-    /// @brief Should Kea perform updates, even if client requested delegation.
+    /// @brief Returns whether or not Kea should perform updates, even if
+    /// client requested delegation.
+    /// @return The value from the subnet_ or false if subnet_ is empty.
     bool getOverrideClientUpdate() const;
 
-    /// @brief How Kea should handle the domain-name supplied by the client.
+    /// @brief Returns how Kea should handle the domain-name supplied by
+    /// the client.
+    /// @return The value from the subnet_ or RCM_NEVER if subnet_ is empty.
     D2ClientConfig::ReplaceClientNameMode getReplaceClientNameMode() const;
 
-    /// @brief Prefix Kea should use when generating domain-names.
+    /// @brief Returns the Prefix Kea should use when generating domain-names.
+    /// @return The value from the subnet_ or an empty string if subnet_ is empty.
     std::string getGeneratedPrefix() const;
 
-    /// @brief Suffix Kea should use when to qualify partial domain-names.
+    /// @brief Returns the suffix Kea should use when to qualify partial
+    /// domain-names.
+    /// @return The value from the subnet_ or an empty string if subnet_ is empty.
     std::string getQualifyingSuffix() const;
 
-    /// @brief Regular expression describing invalid characters for client
-    /// hostnames.  If empty, host name scrubbing should not be done.
+    /// @brief Returns the regular expression describing invalid characters
+    /// for client hostnames.  If empty, host name scrubbing should not be done.
+    /// @return The value from the subnet_ or an empty string if subnet_ is empty.
     std::string getHostnameCharSet() const;
 
-    /// @brief A string to replace invalid characters when scrubbing hostnames.
-    /// Meaningful only if hostname_char_set_ is not empty.
+    /// @brief Returns the string to replace invalid characters when scrubbing
+    /// hostnames. Meaningful only if hostname_char_set_ is not empty.
+    /// @return The value from the subnet_ or an empty string if subnet_ is empty.
     std::string getHostnameCharReplacement() const;
 
     /// @brief Returns a regular expression string sanitizer
     ///
-    /// If hostname_char_set_ is not empty, then it is used in conjunction
-    /// hostname_char_replacment_ (which may be empty) to create and
-    /// return a StringSanitizer instance.  Otherwise it will return
-    /// an empty pointer.
+    /// If the value returned by getHostnameCharSet() is not empty, then it is
+    /// used in conjunction the value returned by getHostnameCharReplacment()
+    /// (which may be empty) to create and return a StringSanitizer instance.
+    /// Otherwise it will return an empty pointer.
     ///
     /// @return pointer to the StringSanitizer instance or an empty pointer
     /// @throw BadValue if the compilation fails.
     isc::util::str::StringSanitizerPtr getHostnameSanitizer() const;
 
 private:
+    /// @brief Subnet from which values should be fetched.
     SubnetPtr subnet_;
+
+    /// @brief Flag indicating whether or not the D2Client is enabled.
     bool enable_updates_;
 };
 
@@ -465,23 +497,26 @@ public:
         return (hooks_config_);
     }
 
-    /// @brief Fetches the DDNS parameters for a given subnet.
+    /// @brief Fetches the DDNS parameters for a given DHCPv4 subnet.
     ///
-    /// Creates a DdnsParams structure populated with the scoped
-    /// values for DDNS behaviorial parameters. The scope mode used
-    /// is Network::ALL.
+    /// Creates a DdnsParams structure which retain and thereafter
+    /// use the given subnet to fetch DDNS behaviorial parameters.
+    /// The values are fetched with the inheritance scope mode
+    /// of Network::ALL.
     ///
-    /// - enable_updates_ = (DhcpDdns.enable-updates && scoped ddns-enable-updates)
-    /// - override_no_update_ = scoped ddns-override-no-update
-    /// - override_client_update_ = scoped ddns-override-no-update
-    /// - replace_client_name_mode_  = scoped ddns-replace-client-name
-    /// - generated_prefix_ =  scoped ddns-generated-prefix
-    /// - qualifying_suffix_ = scoped ddns-qualifying-suffix
-    ///
-    /// @param subnet Subnet for which DDNS parameters are desired.
+    /// @param subnet DHCPv4 Subnet for which DDNS parameters are desired.
     /// @return pointer to DddnParams instance
     DdnsParamsPtr getDdnsParams(const Subnet4Ptr& subnet) const;
 
+    /// @brief Fetches the DDNS parameters for a given DHCPv6 subnet.
+    ///
+    /// Creates a DdnsParams structure which retain and thereafter
+    /// use the given subnet to fetch DDNS behaviorial parameters.
+    /// The values are fetched with the inheritance scope mode
+    /// of Network::ALL.
+    ///
+    /// @param subnet DHCPv6 Subnet for which DDNS parameters are desired.
+    /// @return pointer to DddnParams instance
     DdnsParamsPtr getDdnsParams(const Subnet6Ptr& subnet) const;
 
     /// @brief Copies the current configuration to a new configuration.
