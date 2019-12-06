@@ -798,7 +798,7 @@ CqlLease4Exchange::getExpiredLeases(const size_t &max_leases,
                                            std::numeric_limits<cass_int32_t>::max();
 
     for (cass_int32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED;
-         state++) {
+         ++state) {
         if (state == keep_state) {
             continue;
         }
@@ -1617,7 +1617,7 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
                                            std::numeric_limits<cass_int32_t>::max();
 
     for (cass_int32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED;
-         state++) {
+         ++state) {
         if (state == keep_state) {
             continue;
         }
