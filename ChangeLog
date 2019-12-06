@@ -1,3 +1,7 @@
+1692.	[build]		fdupont
+	Better support for google test 1.10.0.
+	(Gitlab #954)
+
 1691.	[build]		tomek
 	Google test version detection improved.
 	(Gitlab #206)
