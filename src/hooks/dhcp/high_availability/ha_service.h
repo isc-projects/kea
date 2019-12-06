@@ -246,6 +246,12 @@ public:
     /// queries.
     void waitingStateHandler();
 
+    /// @brief Returns last known state of the partner.
+    /// @ref CommunicationState::getPartnerState.
+    int getPartnerState() const {
+        return (communication_state_->getPartnerState());
+    }
+
 protected:
 
     /// @brief Transitions to a desired state and logs it.

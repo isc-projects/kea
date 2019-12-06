@@ -275,10 +275,22 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
             return;
         }
         // Add the ha state to arguments.
-        std::string state = stateToString(service_->getCurrState());
         ElementPtr mutable_resp_args =
-            boost::const_pointer_cast<Element>(response);
-        mutable_resp_args->set("ha-state", Element::create(state));
+            boost::const_pointer_cast<Element>(resp_args);
+        int state = service_->getCurrState();
+        try {
+            mutable_resp_args->set("ha-state",
+                                   Element::create(stateToString(state)));
+        } catch (const std::exception&) {
+            return;
+        }
+        state = service_->getPartnerState();
+        try {
+            mutable_resp_args->set("ha-partner-state",
+                                   Element::create(stateToString(state)));
+            } catch     (const std::exception&) {
+            return;
+        }
     }
 }
 
