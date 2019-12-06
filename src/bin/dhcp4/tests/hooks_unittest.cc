@@ -735,7 +735,7 @@ public:
         std::vector<uint8_t> id_test;
         handle.getArgument("id_value", id_test);
 
-        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f }; // foo
+        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f };  // foo
         handle.setArgument("id_value", id);
         handle.setArgument("id_type", Host::IDENT_FLEX);
 
@@ -1827,7 +1827,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -1896,7 +1898,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     EXPECT_EQ(temp_valid, l->valid_lft_);
     EXPECT_EQ(temp_timestamp, l->cltt_);
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(req);

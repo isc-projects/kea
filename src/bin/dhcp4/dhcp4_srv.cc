@@ -2894,7 +2894,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
         // Callout didn't indicate to skip the release process. Let's release
         // the lease.
         if (!skip) {
-            bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+            bool success = LeaseMgrFactory::instance().deleteLease(lease);
 
             if (success) {
 
@@ -3785,5 +3785,5 @@ void Dhcpv4Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-}   // namespace dhcp
-}   // namespace isc
+}  // namespace dhcp
+}  // namespace isc

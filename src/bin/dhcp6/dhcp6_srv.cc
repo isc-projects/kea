@@ -198,7 +198,7 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-receive-drop"
 };
 
-}; // anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -1364,7 +1364,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
         switch (pkt->getType()) {
         case DHCPV6_SOLICIT:
         case DHCPV6_REBIND:
-    case DHCPV6_CONFIRM:
+        case DHCPV6_CONFIRM:
             sanityCheck(pkt, MANDATORY, FORBIDDEN);
             return (true);
 
@@ -1587,6 +1587,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
+            break;
         }
         default:
             break;
@@ -2677,7 +2678,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     bool success = false; // was the removal operation successful?
 
     if (!skip) {
-        success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+        success = LeaseMgrFactory::instance().deleteLease(lease);
     }
 
     // Here the success should be true if we removed lease successfully
@@ -2835,7 +2836,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     bool success = false; // was the removal operation successful?
 
     if (!skip) {
-        success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+        success = LeaseMgrFactory::instance().deleteLease(lease);
     } else {
         // Callouts decided to skip the next processing step. The next
         // processing step would to send the packet, so skip at this
@@ -4035,5 +4036,5 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
     }
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc

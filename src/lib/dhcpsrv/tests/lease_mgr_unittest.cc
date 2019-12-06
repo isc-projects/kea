@@ -313,11 +313,19 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be either
-    ///        a V4 address or a V6 address.)
+    /// @param lease Lease v4 to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease(const isc::asiolink::IOAddress&) {
+    virtual bool deleteLease(const Lease4Ptr&) {
+        return (false);
+    }
+
+    /// @brief Deletes a lease.
+    ///
+    /// @param lease Lease v6 to be deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease6Ptr&) {
         return (false);
     }
 
@@ -434,7 +442,7 @@ TEST_F(LeaseMgrTest, getLease6) {
     EXPECT_NO_THROW(lease = mgr->getLease6(leasetype6_[1], *leases[1]->duid_,
                                            leases[1]->iaid_,
                                            leases[1]->subnet_id_));
-    EXPECT_TRUE(Lease6Ptr() == lease);
+    EXPECT_FALSE(lease);
 
     // For a single lease, the function should return that lease
     mgr->leases6_.push_back(leases[1]);
@@ -499,4 +507,4 @@ TEST (LeaseStatsQueryTest, subnetRangeCtor) {
 // are purely virtual, so we would only call ConcreteLeaseMgr methods.
 // Those methods are just stubs that do not return anything.
 
-}; // end of anonymous namespace
+}  // namespace

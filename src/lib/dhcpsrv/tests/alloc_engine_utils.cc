@@ -80,7 +80,7 @@ AllocEngine4Test::testReuseLease4(const AllocEnginePtr& engine,
         // If an existing lease was specified, we need to add it to the
         // database. Let's wipe any leases for that address (if any). We
         // ignore any errors (previous lease may not exist)
-        LeaseMgrFactory::instance().deleteLease(existing_lease->addr_);
+        LeaseMgrFactory::instance().deleteLease(existing_lease);
 
         // Let's add it.
         ASSERT_TRUE(LeaseMgrFactory::instance().addLease(existing_lease));
@@ -534,7 +534,7 @@ AllocEngine6Test::testReuseLease6(const AllocEnginePtr& engine,
         // If an existing lease was specified, we need to add it to the
         // database. Let's wipe any leases for that address (if any). We
         // ignore any errors (previous lease may not exist)
-        LeaseMgrFactory::instance().deleteLease(existing_lease->addr_);
+        LeaseMgrFactory::instance().deleteLease(existing_lease);
 
         // Let's add it.
         ASSERT_TRUE(LeaseMgrFactory::instance().addLease(existing_lease));
@@ -632,6 +632,6 @@ AllocEngine4Test::AllocEngine4Test() {
     ctx_.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

@@ -122,8 +122,11 @@ public:
     /// @param address - IPv4 address for the lease
     /// @param subnet_id - subnet ID to which the lease belongs
     /// @param state - the state of the lease
-    void makeLease4(const std::string& address, const SubnetID& subnet_id,
-                    const uint32_t state = Lease::STATE_DEFAULT);
+    ///
+    /// @return pointer to created Lease4
+    Lease4Ptr makeLease4(const std::string& address,
+                         const SubnetID& subnet_id,
+                         const uint32_t state = Lease::STATE_DEFAULT);
 
     /// @brief Constructs a minimal IPv6 lease and adds it to the lease storage
     ///
@@ -134,9 +137,13 @@ public:
     /// @param prefix_len = length of the prefix (should be 0 for TYPE_NA)
     /// @param subnet_id - subnet ID to which the lease belongs
     /// @param state - the state of the lease
-    void makeLease6(const Lease::Type& type, const std::string& address,
-                    uint8_t prefix_len, const SubnetID& subnet_id,
-                    const uint32_t state = Lease::STATE_DEFAULT);
+    ///
+    /// @return pointer to created Lease6
+    Lease6Ptr makeLease6(const Lease::Type& type,
+                         const std::string& address,
+                         uint8_t prefix_len,
+                         const SubnetID& subnet_id,
+                         const uint32_t state = Lease::STATE_DEFAULT);
 
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();

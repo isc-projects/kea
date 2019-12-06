@@ -1382,7 +1382,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetwork) {
     ASSERT_TRUE(lease2);
     EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease2->addr_));
 
-    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease2->addr_));
+    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease2));
 
     // The client should also be assigned a lease when it specifies a hint
     // that doesn't match the subnet from which the lease is offered. The
@@ -1423,7 +1423,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkClassification) {
     EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
 
     // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    LeaseMgrFactory::instance().deleteLease(lease);
 
     // Apply restrictions on the subnet1. This should be only assigned
     // to clients belonging to cable-modem class.
@@ -1439,7 +1439,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkClassification) {
     EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
 
     // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    LeaseMgrFactory::instance().deleteLease(lease);
 
     // Assign cable-modem class and try again. This time, we should
     // offer an address from the subnet1.
@@ -1476,7 +1476,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
 
     // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    LeaseMgrFactory::instance().deleteLease(lease);
 
     // Apply restrictions on the pool1. This should be only assigned
     // to clients belonging to cable-modem class.
@@ -1492,7 +1492,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
 
     // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    LeaseMgrFactory::instance().deleteLease(lease);
 
     // Assign cable-modem class and try again. This time, we should
     // offer an address from the pool1.
@@ -1546,7 +1546,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     EXPECT_EQ("10.2.3.23", lease->addr_.toText());
 
     // Remove the lease for another test below.
-    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease->addr_));
+    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is allocated again.
@@ -1592,7 +1592,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
     EXPECT_EQ("10.2.3.23", lease->addr_.toText());
 
     // Remove the lease for another test below.
-    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease->addr_));
+    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is allocated again.
@@ -3195,6 +3195,6 @@ TEST_F(AllocEngine4Test, globalReservationDynamicRequest) {
     EXPECT_FALSE(ctx.old_lease_);
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

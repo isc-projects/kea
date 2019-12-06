@@ -15,6 +15,7 @@
 #include <util/multi_threading_mgr.h>
 
 #include <boost/array.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
 
@@ -535,7 +536,7 @@ public:
                 bind_[2].buffer_length = client_id_length_;
                 bind_[2].length = &client_id_length_;
                 // bind_[2].is_null = &MLM_FALSE; // commented out for performance
-                                                 // reasons, see memset() above
+                                                  // reasons, see memset() above
             } else {
                 bind_[2].buffer_type = MYSQL_TYPE_NULL;
                 // According to http://dev.mysql.com/doc/refman/5.5/en/
@@ -606,7 +607,7 @@ public:
             // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
-            // state: uint32_t.
+            // state: uint32_t
             bind_[9].buffer_type = MYSQL_TYPE_LONG;
             bind_[9].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[9].is_unsigned = MLM_TRUE;
@@ -732,7 +733,7 @@ public:
         // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // state:  uint32_t
+        // state: uint32_t
         bind_[9].buffer_type = MYSQL_TYPE_LONG;
         bind_[9].buffer = reinterpret_cast<char*>(&state_);
         bind_[9].is_unsigned = MLM_TRUE;
@@ -811,10 +812,9 @@ public:
             }
         }
 
-        Lease4Ptr lease(new Lease4(addr4_, hwaddr,
-                                     client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, cltt, subnet_id_,
-                                     fqdn_fwd_, fqdn_rev_, hostname));
+        Lease4Ptr lease(boost::make_shared<Lease4>(addr4_, hwaddr, client_id_buffer_,
+                                                   client_id_length_, valid_lifetime_, cltt,
+                                                   subnet_id_, fqdn_fwd_, fqdn_rev_, hostname));
 
         // Set state.
         lease->state_ = state_;
@@ -1147,7 +1147,7 @@ public:
                 bind_[14].is_null = &hwaddr_null_;
             }
 
-            // state:  uint32_t
+            // state: uint32_t
             bind_[15].buffer_type = MYSQL_TYPE_LONG;
             bind_[15].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[15].is_unsigned = MLM_TRUE;
@@ -1314,7 +1314,7 @@ public:
         bind_[14].buffer = reinterpret_cast<char*>(&hwaddr_source_);
         bind_[14].is_unsigned = MLM_TRUE;
 
-        // state:  uint32_t
+        // state: uint32_t
         bind_[15].buffer_type = MYSQL_TYPE_LONG;
         bind_[15].buffer = reinterpret_cast<char*>(&state_);
         bind_[15].is_unsigned = MLM_TRUE;
@@ -1515,7 +1515,7 @@ public:
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
           validateStatement();
     }
 
@@ -1535,7 +1535,7 @@ public:
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
           validateStatement();
     }
 
@@ -1559,7 +1559,7 @@ public:
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
           validateStatement();
     }
 
@@ -1618,7 +1618,7 @@ public:
 
         // state: uint32_t
         bind_[col].buffer_type = MYSQL_TYPE_LONG;
-        bind_[col].buffer = reinterpret_cast<char*>(&lease_state_);
+        bind_[col].buffer = reinterpret_cast<char*>(&state_);
         bind_[col].is_unsigned = MLM_TRUE;
         ++col;
 
@@ -1659,7 +1659,7 @@ public:
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
             row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
             row.lease_type_ = static_cast<Lease::Type>(lease_type_);
-            row.lease_state_ = lease_state_;
+            row.lease_state_ = state_;
             row.state_count_ = state_count_;
             have_row = true;
         } else if (status != MYSQL_NO_DATA) {
@@ -1702,7 +1702,7 @@ private:
     /// @brief Receives the lease type when fetching a row
     uint32_t lease_type_;
     /// @brief Receives the lease state when fetching a row
-    uint32_t lease_state_;
+    uint32_t state_;
     /// @brief Receives the state count when fetching a row
     int64_t state_count_;
 };
@@ -1757,7 +1757,7 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
         isc_throw(DbOpenError,
                   "MySQL schema version mismatch: need version: "
                       << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
+                      << " found version: " << db_version.first << "."
                       << db_version.second);
     }
 
@@ -2786,7 +2786,8 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 }
 
 bool
-MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETE_ADDR)
         .arg(addr.toText());
 
@@ -2794,28 +2795,37 @@ MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    if (addr.isV4()) {
-        uint32_t addr4 = addr.toUint32();
+    uint32_t addr4 = addr.toUint32();
 
-        inbind[0].buffer_type = MYSQL_TYPE_LONG;
-        inbind[0].buffer = reinterpret_cast<char*>(&addr4);
-        inbind[0].is_unsigned = MLM_TRUE;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&addr4);
+    inbind[0].is_unsigned = MLM_TRUE;
 
-        return (deleteLeaseCommon(DELETE_LEASE4, inbind) > 0);
+    return (deleteLeaseCommon(DELETE_LEASE4, inbind) > 0);
+}
 
-    } else {
-        std::string addr6 = addr.toText();
-        unsigned long addr6_length = addr6.size();
+bool
+MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_DELETE_ADDR)
+        .arg(addr.toText());
 
-        // See the earlier description of the use of "const_cast" when accessing
-        // the address for an explanation of the reason.
-        inbind[0].buffer_type = MYSQL_TYPE_STRING;
-        inbind[0].buffer = const_cast<char*>(addr6.c_str());
-        inbind[0].buffer_length = addr6_length;
-        inbind[0].length = &addr6_length;
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
 
-        return (deleteLeaseCommon(DELETE_LEASE6, inbind) > 0);
-    }
+    std::string addr6 = addr.toText();
+    unsigned long addr6_length = addr6.size();
+
+    // See the earlier description of the use of "const_cast" when accessing
+    // the address for an explanation of the reason.
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(addr6.c_str());
+    inbind[0].buffer_length = addr6_length;
+    inbind[0].length = &addr6_length;
+
+    return (deleteLeaseCommon(DELETE_LEASE6, inbind) > 0);
 }
 
 uint64_t

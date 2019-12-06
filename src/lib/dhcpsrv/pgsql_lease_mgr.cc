@@ -14,6 +14,7 @@
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <util/multi_threading_mgr.h>
 
+#include <boost/make_shared.hpp>
 #include <boost/static_assert.hpp>
 
 #include <iomanip>
@@ -583,11 +584,12 @@ public:
                 }
             }
 
-            Lease4Ptr result(new Lease4(addr4_, hwaddr,
-                                         client_id_buffer_, client_id_length_,
-                                         valid_lifetime_, cltt_,
-                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                         hostname_));
+            Lease4Ptr result(boost::make_shared<Lease4>(addr4_, hwaddr,
+                                                        client_id_buffer_,
+                                                        client_id_length_,
+                                                        valid_lifetime_, cltt_,
+                                                        subnet_id_, fqdn_fwd_,
+                                                        fqdn_rev_, hostname_));
 
             result->state_ = state;
 
@@ -899,11 +901,14 @@ public:
                 }
             }
 
-            Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr,
-                                        iaid_u_.uval_, pref_lifetime_,
-                                        valid_lifetime_,
-                                        subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                        hostname_, hwaddr, prefix_len_));
+            Lease6Ptr result(boost::make_shared<Lease6>(lease_type_, addr,
+                                                        duid_ptr,
+                                                        iaid_u_.uval_,
+                                                        pref_lifetime_,
+                                                        valid_lifetime_,
+                                                        subnet_id_, fqdn_fwd_,
+                                                        fqdn_rev_, hostname_,
+                                                        hwaddr, prefix_len_));
             result->cltt_ = cltt_;
 
             result->state_ = state;
@@ -1188,7 +1193,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
                       << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
+                      << " found version: " << db_version.first << "."
                       << db_version.second);
     }
 
@@ -1941,9 +1946,8 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     ctx->exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
-                         (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    std::string addr4_str = boost::lexical_cast<std::string>(lease->addr_.toUint32());
+    bind_array.add(addr4_str);
 
     // Drop to common update code
     updateLeaseCommon(ctx, stindex, bind_array, lease);
@@ -1993,19 +1997,28 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
 }
 
 bool
-PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_DELETE_ADDR)
         .arg(addr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
 
-    if (addr.isV4()) {
-        std::string addr4_str = boost::lexical_cast<std::string>
-                                 (addr.toUint32());
-        bind_array.add(addr4_str);
-        return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
-    }
+    std::string addr4_str = boost::lexical_cast<std::string>(addr.toUint32());
+    bind_array.add(addr4_str);
+    return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
+}
+
+bool
+PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_DELETE_ADDR)
+        .arg(addr.toText());
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
 
     std::string addr6_str = addr.toText();
     bind_array.add(addr6_str);

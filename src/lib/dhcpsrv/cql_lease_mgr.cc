@@ -26,6 +26,7 @@
 #include <dhcp/hwaddr.h>
 
 #include <asiolink/io_address.h>
+#include <boost/make_shared.hpp>
 
 using namespace isc::data;
 using namespace isc::db;
@@ -157,7 +158,7 @@ public:
     /// @param address address of the lease to be deleted
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForDelete(const IOAddress &address,
+    void createBindForDelete(const Lease4Ptr &lease,
                              AnyArray &data,
                              StatementTag statement_tag = NULL);
 
@@ -621,14 +622,20 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
 }
 
 void
-CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
+CqlLease4Exchange::createBindForDelete(const Lease4Ptr &lease, AnyArray &data,
                                        StatementTag /* unused */) {
+    if (!lease) {
+        isc_throw(BadValue, "CqlLease4Exchange::createBindForDelete(): "
+                            "Lease4 object is NULL");
+    }
+    // Store lease object to ensure it remains valid.
+    lease_ = lease;
+
     // Set up the structures for the various components of the lease4
     // structure.
-
     try {
         // address: int
-        address_ = static_cast<cass_int32_t>(address.toUint32());
+        address_ = static_cast<cass_int32_t>(lease_->addr_.toUint32());
 
         // Start with a fresh array.
         data.clear();
@@ -637,8 +644,8 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease4Exchange::createBindForDelete(): "
-                  "could not create bind array with address: "
-                      << address_ << ", reason: " << ex.what());
+                  "could not create bind array from Lease4: "
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
     }
 }
 
@@ -712,7 +719,7 @@ CqlLease4Exchange::retrieve() {
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
-        HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
+        HWAddrPtr hwaddr = boost::make_shared<HWAddr>(hwaddr_, HTYPE_ETHER);
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
 
@@ -725,10 +732,10 @@ CqlLease4Exchange::retrieve() {
             }
         }
 
-        Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
-                                    client_id_.size(), valid_lifetime_,
-                                    cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                    hostname_));
+        Lease4Ptr result(boost::make_shared<Lease4>(addr4, hwaddr, client_id_.data(),
+                                                    client_id_.size(), valid_lifetime_,
+                                                    cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                                    hostname_));
 
         result->state_ = state_;
 
@@ -787,12 +794,11 @@ CqlLease4Exchange::getExpiredLeases(const size_t &max_leases,
 
     // If the number of leases is 0, we will return all leases. This is
     // achieved by setting the limit to a very high value.
-    cass_int32_t limit = max_leases > 0u ?
-                             static_cast<cass_int32_t>(max_leases) :
-                             std::numeric_limits<cass_int32_t>::max();
+    cass_int32_t limit = max_leases > 0u ? static_cast<cass_int32_t>(max_leases) :
+                                           std::numeric_limits<cass_int32_t>::max();
 
-    for (cass_int32_t state = Lease::STATE_DEFAULT;
-         state <= Lease::STATE_EXPIRED_RECLAIMED; state++) {
+    for (cass_int32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED;
+         state++) {
         if (state == keep_state) {
             continue;
         }
@@ -804,8 +810,7 @@ CqlLease4Exchange::getExpiredLeases(const size_t &max_leases,
 
         // Retrieve leases from the database.
         Lease4Collection temp_collection;
-        getLeaseCollection(CqlLease4Exchange::GET_LEASE4_EXPIRE, data,
-                           temp_collection);
+        getLeaseCollection(CqlLease4Exchange::GET_LEASE4_EXPIRE, data, temp_collection);
 
         for (Lease4Ptr &lease : temp_collection) {
             expired_leases.push_back(lease);
@@ -861,10 +866,10 @@ public:
     /// Fills in the CQL_BIND array for sending data in the Lease6 object to
     /// the database. Used for DELETE statements.
     ///
-    /// @param address address of the lease to be deleted
+    /// @param lease address of the lease to be deleted
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForDelete(const IOAddress &address,
+    void createBindForDelete(const Lease6Ptr &lease,
                              AnyArray &data,
                              StatementTag statement_tag = NULL);
 
@@ -1390,14 +1395,26 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
 }
 
 void
-CqlLease6Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
+CqlLease6Exchange::createBindForDelete(const Lease6Ptr &lease, AnyArray &data,
                                        StatementTag /* unused */) {
+    if (!lease) {
+        isc_throw(BadValue, "CqlLease6Exchange::createBindForDelete(): "
+                            "Lease6 object is NULL");
+    }
+    // Store lease object to ensure it remains valid.
+    lease_ = lease;
 
     // Set up the structures for the various components of the lease4
     // structure.
     try {
         // address: varchar
-        address_ = address.toText();
+        address_ = lease_->addr_.toText();
+        if (address_.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue,
+                      "address " << address_ << " of length " << address_.size()
+                                 << " exceeds maximum allowed length of "
+                                 << ADDRESS6_TEXT_MAX_LEN);
+        }
 
         // Start with a fresh array.
         data.clear();
@@ -1406,8 +1423,8 @@ CqlLease6Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease6Exchange::createBindForDelete(): "
-                  "could not create bind array with address: "
-                      << address_ << ", reason: " << ex.what());
+                  "could not create bind array from Lease6: "
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
     }
 }
 
@@ -1510,11 +1527,11 @@ CqlLease6Exchange::retrieve() {
 
         IOAddress addr(address_);
 
-        DuidPtr duid(new DUID(duid_));
+        DuidPtr duid(boost::make_shared<DUID>(duid_));
 
         HWAddrPtr hwaddr;
         if (hwaddr_.size()) {
-            hwaddr.reset(new HWAddr(hwaddr_, hwtype_));
+            hwaddr = boost::make_shared<HWAddr>(hwaddr_, hwtype_);
             hwaddr->source_ = hwaddr_source_;
         }
 
@@ -1529,10 +1546,10 @@ CqlLease6Exchange::retrieve() {
 
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
-        Lease6Ptr result(
-            new Lease6(static_cast<Lease::Type>(lease_type_), addr, duid, iaid_,
-                       pref_lifetime_, valid_lifetime_, subnet_id_,
-                       fqdn_fwd_, fqdn_rev_, hostname_, hwaddr, prefix_len_));
+        Lease6Ptr result(boost::make_shared<Lease6>(static_cast<Lease::Type>(lease_type_), addr, duid,
+                                                    iaid_, pref_lifetime_, valid_lifetime_,
+                                                    subnet_id_, fqdn_fwd_, fqdn_rev_, hostname_,
+                                                    hwaddr, prefix_len_));
 
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
@@ -1596,12 +1613,11 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
 
     // If the number of leases is 0, we will return all leases. This is
     // achieved by setting the limit to a very high value.
-    cass_int32_t limit = max_leases > 0u ?
-                             static_cast<cass_int32_t>(max_leases) :
-                             std::numeric_limits<cass_int32_t>::max();
+    cass_int32_t limit = max_leases > 0u ? static_cast<cass_int32_t>(max_leases) :
+                                           std::numeric_limits<cass_int32_t>::max();
 
-    for (cass_int32_t state = Lease::STATE_DEFAULT;
-         state <= Lease::STATE_EXPIRED_RECLAIMED; state++) {
+    for (cass_int32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED;
+         state++) {
         if (state == keep_state) {
             continue;
         }
@@ -1638,10 +1654,10 @@ public:
     /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set (should be true for v6)
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
-                         const bool fetch_type)
+                       const bool fetch_type)
         : conn_(conn), statement_(statement), fetch_type_(fetch_type),
           cummulative_rows_(), next_row_(cummulative_rows_.begin()),
-          subnet_id_(0), lease_type_(0), lease_state_(0) {
+          subnet_id_(0), lease_type_(0), state_(0) {
     }
 
     /// @brief Constructor to query for a single subnet's stats
@@ -1654,11 +1670,11 @@ public:
     /// fetched from the result set (should be true for v6)
     /// @param subnet_id id of the subnet for which stats are desired
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
-                         const bool fetch_type,  const SubnetID& subnet_id)
+                       const bool fetch_type, const SubnetID& subnet_id)
         : LeaseStatsQuery(subnet_id), conn_(conn), statement_(statement),
           fetch_type_(fetch_type), cummulative_rows_(),
           next_row_(cummulative_rows_.begin()),
-          subnet_id_(0), lease_type_(0), lease_state_(0) {
+          subnet_id_(0), lease_type_(0), state_(0) {
     }
 
     /// @brief Constructor to query for the stats for a range of subnets
@@ -1673,12 +1689,12 @@ public:
     /// @param first_subnet_id first subnet in the range of subnets
     /// @param last_subnet_id last subnet in the range of subnets
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
-                         const bool fetch_type,  const SubnetID& first_subnet_id,
-                         const SubnetID& last_subnet_id)
+                       const bool fetch_type, const SubnetID& first_subnet_id,
+                       const SubnetID& last_subnet_id)
         : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn),
           statement_(statement), fetch_type_(fetch_type), cummulative_rows_(),
           next_row_(cummulative_rows_.begin()),
-          subnet_id_(0), lease_type_(0), lease_state_(0) {
+          subnet_id_(0), lease_type_(0), state_(0) {
     }
 
     /// @brief Destructor
@@ -1781,12 +1797,14 @@ private:
     /// @brief cursor pointing to the next row to read in aggregate map
     std::map<LeaseStatsRow, int>::iterator next_row_;
 
-    /// @brief bind variable for retrieving subnet-id from a result set row
-    int subnet_id_;
-    /// @brief bind variable for retrieving lease-type from a result set row
-    int lease_type_;
-    /// @brief bind variable for retrieving lease-state from a result set row
-    int lease_state_;
+    /// @brief Subnet identifier
+    cass_int32_t subnet_id_;
+
+    /// @brief Lease type (NA, TA or PD)
+    cass_int32_t lease_type_;
+
+    /// @brief Lease state
+    cass_int32_t state_;
 };
 
 constexpr StatementTag CqlLeaseStatsQuery::ALL_LEASE4_STATS;
@@ -1850,12 +1868,10 @@ StatementMap CqlLeaseStatsQuery::tagged_statements_{
         "WHERE subnet_id >= ? and subnet_id <= ? "
         "ALLOW FILTERING "
     }},
-
 };
 
 void
 CqlLeaseStatsQuery::start() {
-
     // Set up where clause parameters as needed
     AnyArray data;
     cass_int32_t first_subnet_id_data;
@@ -1907,7 +1923,7 @@ CqlLeaseStatsQuery::createBindForSelect(AnyArray& data, StatementTag) {
         data.add(&lease_type_);
     }
 
-    data.add(&lease_state_);
+    data.add(&state_);
 }
 
 void
@@ -2006,13 +2022,13 @@ CqlLeaseStatsQuery::executeSelect(const CqlConnection& connection, const AnyArra
         createBindForSelect(return_values, statement_tag);
         CqlCommon::getData(row, return_values);
 
-        if (lease_state_ != Lease::STATE_DEFAULT &&
-            lease_state_ != Lease::STATE_DECLINED) {
+        if (state_ != Lease::STATE_DEFAULT &&
+            state_ != Lease::STATE_DECLINED) {
             continue;
         }
 
         LeaseStatsRow raw_row(subnet_id_, static_cast<Lease::Type>(lease_type_),
-                              lease_state_, 1);
+                              state_, 1);
 
         auto cum_row = cummulative_rows_.find(raw_row);
         if (cum_row != cummulative_rows_.end()) {
@@ -2112,8 +2128,8 @@ CqlLeaseMgr::getLease4(const IOAddress &addr) const {
     // Set up the WHERE clause value
     AnyArray data;
 
-    cass_int32_t address = static_cast<cass_int32_t>(addr.toUint32());
-    data.add(&address);
+    cass_int32_t addr4 = static_cast<cass_int32_t>(addr.toUint32());
+    data.add(&addr4);
 
     // Get the data.
     Lease4Ptr result;
@@ -2566,7 +2582,8 @@ CqlLeaseMgr::updateLease6(const Lease6Ptr &lease) {
 }
 
 bool
-CqlLeaseMgr::deleteLease(const IOAddress &addr) {
+CqlLeaseMgr::deleteLease(const Lease4Ptr &lease) {
+    const IOAddress &addr = lease->addr_;
     std::string addr_data = addr.toText();
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_DELETE_ADDR)
         .arg(addr_data);
@@ -2574,18 +2591,36 @@ CqlLeaseMgr::deleteLease(const IOAddress &addr) {
     // Set up the WHERE clause value
     AnyArray data;
 
+    std::unique_ptr<CqlLease4Exchange> exchange4(
+        new CqlLease4Exchange(dbconn_));
+
     try {
-        if (addr.isV4()) {
-            std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
-            exchange4->createBindForDelete(addr, data, CqlLease4Exchange::DELETE_LEASE4);
-            exchange4->executeMutation(dbconn_, data, CqlLease4Exchange::DELETE_LEASE4);
-        } else if (addr.isV6()) {
-            std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
-            exchange6->createBindForDelete(addr, data, CqlLease6Exchange::DELETE_LEASE6);
-            exchange6->executeMutation(dbconn_, data, CqlLease6Exchange::DELETE_LEASE6);
-        } else {
-            return false;
-        }
+        exchange4->createBindForDelete(lease, data, CqlLease4Exchange::DELETE_LEASE4);
+        exchange4->executeMutation(dbconn_, data, CqlLease4Exchange::DELETE_LEASE4);
+    } catch (const Exception &exception) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_LEASE_EXCEPTION_THROWN)
+            .arg(exception.what());
+        return false;
+    }
+    return true;
+}
+
+bool
+CqlLeaseMgr::deleteLease(const Lease6Ptr &lease) {
+    const IOAddress &addr = lease->addr_;
+    std::string addr_data = addr.toText();
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_DELETE_ADDR)
+        .arg(addr_data);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+
+    std::unique_ptr<CqlLease6Exchange> exchange6(
+        new CqlLease6Exchange(dbconn_));
+
+    try {
+        exchange6->createBindForDelete(lease, data, CqlLease6Exchange::DELETE_LEASE6);
+        exchange6->executeMutation(dbconn_, data, CqlLease6Exchange::DELETE_LEASE6);
     } catch (const Exception &exception) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_LEASE_EXCEPTION_THROWN)
             .arg(exception.what());
@@ -2618,7 +2653,7 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_EXPIRE, data, leases);
     for (Lease4Ptr &lease : leases) {
-        if (deleteLease(lease->addr_)) {
+        if (deleteLease(lease)) {
             ++deleted;
         }
     }
@@ -2631,7 +2666,7 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
               DHCPSRV_CQL_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
     AnyArray data;
-    uint64_t n_of_deleted_leases = 0u;
+    uint64_t deleted = 0u;
     cass_int32_t limit = 1024;
 
     // State is reclaimed.
@@ -2649,11 +2684,11 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_EXPIRE, data, leases);
     for (Lease6Ptr &lease : leases) {
-        if (deleteLease(lease->addr_)) {
-            ++n_of_deleted_leases;
+        if (deleteLease(lease)) {
+            ++deleted;
         }
     }
-    return n_of_deleted_leases;
+    return (deleted);
 }
 
 LeaseStatsQueryPtr
@@ -2676,7 +2711,7 @@ CqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
 
 LeaseStatsQueryPtr
 CqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
-                                                   const SubnetID& last_subnet_id) {
+                                              const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(
         new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::SUBNET_RANGE_LEASE4_STATS,
                                false, first_subnet_id, last_subnet_id));
@@ -2704,7 +2739,7 @@ CqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
 
 LeaseStatsQueryPtr
 CqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
-                                                   const SubnetID& last_subnet_id) {
+                                              const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(
         new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::SUBNET_RANGE_LEASE6_STATS,
                                true, first_subnet_id, last_subnet_id));

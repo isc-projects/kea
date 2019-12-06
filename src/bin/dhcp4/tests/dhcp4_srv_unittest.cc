@@ -1647,7 +1647,9 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // Renew*Lifetime common code.
@@ -1768,7 +1770,9 @@ TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = c.addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test verifies that renewal returns the specified valid lifetime
@@ -1813,7 +1817,9 @@ TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = c.addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test verifies that renewal returns the min valid lifetime
@@ -1858,7 +1864,9 @@ TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = c.addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test verifies that renewal returns the max valid lifetime
@@ -1902,7 +1910,9 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(c.addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = c.addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 } // end of Renew*Lifetime
@@ -3903,4 +3913,4 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
 
-}; // end of anonymous namespace
+}  // namespace
