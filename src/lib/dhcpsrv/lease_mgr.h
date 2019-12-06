@@ -543,21 +543,21 @@ public:
     /// @param lease6 The lease to be updated.
     virtual void updateLease6(const Lease6Ptr& lease6) = 0;
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param lease IPv4 lease to be deleted
+    /// @param lease IPv4 lease to be deleted.
     ///
-    /// @return true if deletion was successful, false if no such lease exists
+    /// @return true if deletion was successful, false if no such lease exists.
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const Lease4Ptr& lease) = 0;
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv6 lease.
     ///
-    /// @param lease IPv6 lease to be deleted
+    /// @param lease IPv6 lease to be deleted.
     ///
-    /// @return true if deletion was successful, false if no such lease exists
+    /// @return true if deletion was successful, false if no such lease exists.
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.

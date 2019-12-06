@@ -311,20 +311,20 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease6(const Lease6Ptr&) {}
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param lease Lease v4 to be deleted.
+    /// @param lease IPv4 lease to be deleted.
     ///
-    /// @return true if deletion was successful, false if no such lease exists
+    /// @return true if deletion was successful, false if no such lease exists.
     virtual bool deleteLease(const Lease4Ptr&) {
         return (false);
     }
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv6 lease.
     ///
-    /// @param lease Lease v6 to be deleted.
+    /// @param lease IPv6 lease to be deleted.
     ///
-    /// @return true if deletion was successful, false if no such lease exists
+    /// @return true if deletion was successful, false if no such lease exists.
     virtual bool deleteLease(const Lease6Ptr&) {
         return (false);
     }
