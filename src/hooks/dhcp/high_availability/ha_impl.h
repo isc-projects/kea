@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -118,6 +118,7 @@ public:
     /// service is enabled in a state for which this is not allowed, e.g.
     /// waiting, syncing etc. We don't want to rely on the HA partner to do
     /// a correct thing in that respect.
+    /// It too adds the HA state to "status-get" commands.
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void commandProcessed(hooks::CalloutHandle& callout_handle);
