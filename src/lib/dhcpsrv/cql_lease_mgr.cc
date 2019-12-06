@@ -1629,8 +1629,7 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
 
         // Retrieve leases from the database.
         Lease6Collection temp_collection;
-        getLeaseCollection(CqlLease6Exchange::GET_LEASE6_EXPIRE, data,
-                           temp_collection);
+        getLeaseCollection(CqlLease6Exchange::GET_LEASE6_EXPIRE, data, temp_collection);
 
         for (Lease6Ptr &lease : temp_collection) {
             expired_leases.push_back(lease);
