@@ -538,6 +538,14 @@ The ``dhcp-enable`` command globally enables the DHCP service.
        "command": "dhcp-enable"
    }
 
+.. _command-status-get:
+
+The status-get Command
+----------------------
+
+The ``status-get`` command return server runtime information:
+todo.
+
 .. _command-server-tag-get:
 
 The server-tag-get Command:

@@ -141,6 +141,7 @@ api/statistic-sample-age-set-all.json
 api/statistic-sample-age-set.json
 api/statistic-sample-count-set-all.json
 api/statistic-sample-count-set.json
+api/status-get.json
 api/stat-lease4-get.json
 api/stat-lease6-get.json
 api/subnet4-add.json

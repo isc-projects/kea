@@ -1,0 +1,28 @@
+{
+    "avail": "1.7.3",
+    "brief": [
+        "This command returns server runtime informations.",
+        "This command does not take any parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"status-get\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-status-get\"/>",
+    "name": "status-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"arguments\": {",
+        "        \"pid\": 1234,",
+        "        \"uptime\": 59",
+        "    }",
+        "}"
+    ],
+
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}
