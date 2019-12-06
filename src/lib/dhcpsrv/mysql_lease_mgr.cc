@@ -1416,10 +1416,10 @@ public:
 
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
-        Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
-                                    pref_lifetime_, valid_lifetime_,
-                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                    hostname, hwaddr, prefixlen_));
+        Lease6Ptr result(boost::make_shared<Lease6>(type, addr, duid_ptr, iaid_,
+                                                    pref_lifetime_, valid_lifetime_,
+                                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                                    hostname, hwaddr, prefixlen_));
         time_t cltt = 0;
         // Recover from overflow
         uint32_t valid_lft = valid_lifetime_;
