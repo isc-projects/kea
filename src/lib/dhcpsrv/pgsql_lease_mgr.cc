@@ -14,7 +14,6 @@
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/make_shared.hpp>
 #include <boost/static_assert.hpp>
 
 #include <iomanip>
@@ -584,12 +583,12 @@ public:
                 }
             }
 
-            Lease4Ptr result(boost::make_shared<Lease4>(addr4_, hwaddr,
-                                                        client_id_buffer_,
-                                                        client_id_length_,
-                                                        valid_lifetime_, cltt_,
-                                                        subnet_id_, fqdn_fwd_,
-                                                        fqdn_rev_, hostname_));
+            Lease4Ptr result(new Lease4(addr4_, hwaddr,
+                                        client_id_buffer_,
+                                        client_id_length_,
+                                        valid_lifetime_, cltt_,
+                                        subnet_id_, fqdn_fwd_,
+                                        fqdn_rev_, hostname_));
 
             result->state_ = state;
 
@@ -901,14 +900,11 @@ public:
                 }
             }
 
-            Lease6Ptr result(boost::make_shared<Lease6>(lease_type_, addr,
-                                                        duid_ptr,
-                                                        iaid_u_.uval_,
-                                                        pref_lifetime_,
-                                                        valid_lifetime_,
-                                                        subnet_id_, fqdn_fwd_,
-                                                        fqdn_rev_, hostname_,
-                                                        hwaddr, prefix_len_));
+            Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr,
+                                        iaid_u_.uval_, pref_lifetime_,
+                                        valid_lifetime_,
+                                        subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                        hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
 
             result->state_ = state;

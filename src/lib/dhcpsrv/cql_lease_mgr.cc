@@ -26,7 +26,6 @@
 #include <dhcp/hwaddr.h>
 
 #include <asiolink/io_address.h>
-#include <boost/make_shared.hpp>
 
 using namespace isc::data;
 using namespace isc::db;
@@ -719,7 +718,7 @@ CqlLease4Exchange::retrieve() {
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
-        HWAddrPtr hwaddr = boost::make_shared<HWAddr>(hwaddr_, HTYPE_ETHER);
+        HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
 
@@ -732,10 +731,10 @@ CqlLease4Exchange::retrieve() {
             }
         }
 
-        Lease4Ptr result(boost::make_shared<Lease4>(addr4, hwaddr, client_id_.data(),
-                                                    client_id_.size(), valid_lifetime_,
-                                                    cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                                    hostname_));
+        Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
+                                    client_id_.size(), valid_lifetime_,
+                                    cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                    hostname_));
 
         result->state_ = state_;
 
@@ -797,8 +796,8 @@ CqlLease4Exchange::getExpiredLeases(const size_t &max_leases,
     cass_int32_t limit = max_leases > 0u ? static_cast<cass_int32_t>(max_leases) :
                                            std::numeric_limits<cass_int32_t>::max();
 
-    for (cass_int32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED;
-         ++state) {
+    for (cass_int32_t state = Lease::STATE_DEFAULT;
+         state <= Lease::STATE_EXPIRED_RECLAIMED; ++state) {
         if (state == keep_state) {
             continue;
         }
@@ -810,7 +809,8 @@ CqlLease4Exchange::getExpiredLeases(const size_t &max_leases,
 
         // Retrieve leases from the database.
         Lease4Collection temp_collection;
-        getLeaseCollection(CqlLease4Exchange::GET_LEASE4_EXPIRE, data, temp_collection);
+        getLeaseCollection(CqlLease4Exchange::GET_LEASE4_EXPIRE, data,
+                           temp_collection);
 
         for (Lease4Ptr &lease : temp_collection) {
             expired_leases.push_back(lease);
@@ -1527,11 +1527,11 @@ CqlLease6Exchange::retrieve() {
 
         IOAddress addr(address_);
 
-        DuidPtr duid(boost::make_shared<DUID>(duid_));
+        DuidPtr duid(new DUID(duid_));
 
         HWAddrPtr hwaddr;
         if (hwaddr_.size()) {
-            hwaddr = boost::make_shared<HWAddr>(hwaddr_, hwtype_);
+            hwaddr.reset(new HWAddr(hwaddr_, hwtype_));
             hwaddr->source_ = hwaddr_source_;
         }
 
@@ -1546,10 +1546,10 @@ CqlLease6Exchange::retrieve() {
 
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
-        Lease6Ptr result(boost::make_shared<Lease6>(static_cast<Lease::Type>(lease_type_), addr, duid,
-                                                    iaid_, pref_lifetime_, valid_lifetime_,
-                                                    subnet_id_, fqdn_fwd_, fqdn_rev_, hostname_,
-                                                    hwaddr, prefix_len_));
+        Lease6Ptr result(new Lease6(static_cast<Lease::Type>(lease_type_), addr, duid,
+                                    iaid_, pref_lifetime_, valid_lifetime_,
+                                    subnet_id_, fqdn_fwd_, fqdn_rev_, hostname_,
+                                    hwaddr, prefix_len_));
 
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
@@ -1616,8 +1616,8 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
     cass_int32_t limit = max_leases > 0u ? static_cast<cass_int32_t>(max_leases) :
                                            std::numeric_limits<cass_int32_t>::max();
 
-    for (cass_int32_t state = Lease::STATE_DEFAULT; state <= Lease::STATE_EXPIRED_RECLAIMED;
-         ++state) {
+    for (cass_int32_t state = Lease::STATE_DEFAULT;
+         state <= Lease::STATE_EXPIRED_RECLAIMED; ++state) {
         if (state == keep_state) {
             continue;
         }
@@ -1629,7 +1629,8 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
 
         // Retrieve leases from the database.
         Lease6Collection temp_collection;
-        getLeaseCollection(CqlLease6Exchange::GET_LEASE6_EXPIRE, data, temp_collection);
+        getLeaseCollection(CqlLease6Exchange::GET_LEASE6_EXPIRE, data,
+                           temp_collection);
 
         for (Lease6Ptr &lease : temp_collection) {
             expired_leases.push_back(lease);

@@ -15,7 +15,6 @@
 #include <util/multi_threading_mgr.h>
 
 #include <boost/array.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
 
@@ -812,9 +811,9 @@ public:
             }
         }
 
-        Lease4Ptr lease(boost::make_shared<Lease4>(addr4_, hwaddr, client_id_buffer_,
-                                                   client_id_length_, valid_lifetime_, cltt,
-                                                   subnet_id_, fqdn_fwd_, fqdn_rev_, hostname));
+        Lease4Ptr lease(new Lease4(addr4_, hwaddr, client_id_buffer_,
+                                   client_id_length_, valid_lifetime_, cltt,
+                                   subnet_id_, fqdn_fwd_, fqdn_rev_, hostname));
 
         // Set state.
         lease->state_ = state_;
@@ -1416,10 +1415,10 @@ public:
 
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
-        Lease6Ptr result(boost::make_shared<Lease6>(type, addr, duid_ptr, iaid_,
-                                                    pref_lifetime_, valid_lifetime_,
-                                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
-                                                    hostname, hwaddr, prefixlen_));
+        Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
+                                    pref_lifetime_, valid_lifetime_,
+                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                    hostname, hwaddr, prefixlen_));
         time_t cltt = 0;
         // Recover from overflow
         uint32_t valid_lft = valid_lifetime_;
