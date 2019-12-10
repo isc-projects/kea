@@ -1181,11 +1181,11 @@ for client classification and the Flex Identifier hook library
 (See either :ref:`classification-using-expressions` or :ref:`flex-id`
 for detailed description of the syntax).
 
-The ``add`` and ``supersede`` actions use an expression returning a 
-string, doing nothing when it evaluates to the empty string. The 
-``remove`` application uses an expression returning true or false, 
-doing nothing on false. When it is necessary to set an option to the 
-empty value this mechanism does not work but a client class can be 
+The ``add`` and ``supersede`` actions use an expression returning a
+string, doing nothing when it evaluates to the empty string. The
+``remove`` application uses an expression returning true or false,
+doing nothing on false. When it is necessary to set an option to the
+empty value this mechanism does not work but a client class can be
 used instead.
 
 The ``add`` action adds an option only when the option does not already
@@ -1215,7 +1215,7 @@ expression.
             {   "library": "/usr/local/lib/libdhcp_flex_option.so",
                 "parameters": {
                     "options": [
-          		    {
+                            {
                             "code": 67,
                             "add":
   "ifelse(option[host-name].exists,concat(option[host-name].text,'.boot'),'')"

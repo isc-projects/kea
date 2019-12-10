@@ -353,13 +353,13 @@ public:
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases6();
 
-    /// @brief Checks that the static (i.e. with infinite valid lifetime)
-    /// DHCPv4 leases will never expire.
-    void testStaticLeases4();
+    /// @brief Checks that DHCPv4 leases with infinite valid lifetime
+    /// will never expire.
+    void testGetNeverExpiredLeases4();
 
-    /// @brief Checks that the static (i.e. with infinite valid lifetime)
-    /// DHCPv4 leases will never expire.
-    void testStaticLeases6();
+    /// @brief Checks that DHCPv6 leases with infinite valid lifetime
+    /// will never expire.
+    void testGetNeverExpiredLeases6();
 
     /// @brief Checks that declined IPv4 leases that have expired can be retrieved.
     ///

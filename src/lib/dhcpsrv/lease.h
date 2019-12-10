@@ -37,6 +37,15 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Infinity (means static, i.e. never expire)
     static const uint32_t INFINITY_LFT = 0xffffffff;
 
+    /// @brief Print lifetime
+    ///
+    /// This converts a lifetime to a string taking into account the
+    /// infinity special value.
+    ///
+    /// @param lifetime lifetime to print
+    /// @return a string representing the finite value or "infinity"
+    static std::string lifetimeToText(uint32_t lifetime);
+
     /// @brief Type of lease or pool
     typedef enum {
         TYPE_NA = 0, ///< the lease contains non-temporary IPv6 address

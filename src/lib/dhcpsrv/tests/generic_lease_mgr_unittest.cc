@@ -127,7 +127,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         // The times used in the next tests are deliberately restricted - we
         // should be able to cope with valid lifetimes up to 0xffffffff.
         //  However, this will lead to overflows.
-        // @TODO: test overflow conditions as now the code was fixed.
+        // @TODO: test overflow conditions when code has been fixed.
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
         lease->subnet_id_ = 37;
@@ -254,7 +254,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // The times used in the next tests are deliberately restricted - we
         // should be able to cope with valid lifetimes up to 0xffffffff.
         //  However, this will lead to overflows.
-        // @TODO: test overflow conditions as now the code was fixed.
+        // @TODO: test overflow conditions when code has been fixed.
         lease->preferred_lft_ = 7200;
         lease->valid_lft_ = 7000;
         lease->cltt_ = 234567;
@@ -2253,7 +2253,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 }
 
 void
-GenericLeaseMgrTest::testStaticLeases4() {
+GenericLeaseMgrTest::testGetNeverExpiredLeases4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
     Lease4Ptr lease = leases[1];
@@ -2274,7 +2274,7 @@ GenericLeaseMgrTest::testStaticLeases4() {
 }
 
 void
-GenericLeaseMgrTest::testStaticLeases6() {
+GenericLeaseMgrTest::testGetNeverExpiredLeases6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     Lease6Ptr lease = leases[1];

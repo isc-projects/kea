@@ -591,10 +591,10 @@ TEST_F(MySqlLeaseMgrTest, getExpiredLeases4MultiThreading) {
     testGetExpiredLeases4();
 }
 
-/// @brief Checks that the static (i.e. with infinite valid lifetime) DHCPv4
-/// leases will never expire.
-TEST_F(MySqlLeaseMgrTest, staticLeases4) {
-    testStaticLeases4();
+/// @brief Checks that DHCPv4 leases with infinite valid lifetime
+/// will never expire.
+TEST_F(MySqlLeaseMgrTest, getNeverExpiredLeases4) {
+    testGetNeverExpiredLeases4();
 }
 
 /// @brief Check that expired reclaimed DHCPv4 leases are removed.
@@ -856,10 +856,10 @@ TEST_F(MySqlLeaseMgrTest, getExpiredLeases6MultiThreading) {
     testGetExpiredLeases6();
 }
 
-/// @brief Checks that the static (i.e. with infinite valid lifetime) DHCPv6
-/// leases will never expire.
-TEST_F(MySqlLeaseMgrTest, staticLeases6) {
-    testStaticLeases6();
+/// @brief Checks that DHCPv6 leases with infinite valid lifetime
+/// will never expire.
+TEST_F(MySqlLeaseMgrTest, getNeverExpiredLeases6) {
+    testGetNeverExpiredLeases6();
 }
 
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.

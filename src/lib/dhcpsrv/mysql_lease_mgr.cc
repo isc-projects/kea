@@ -174,8 +174,9 @@ tagged_statements = { {
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "state, user_context "
                             "FROM lease4 "
-                            "WHERE state != ? AND expire < ?"
-                            " AND valid_lifetime != 4294967295 "
+                            "WHERE state != ?"
+                            " AND valid_lifetime != 4294967295"
+                            " AND expire < ? "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6,
@@ -260,8 +261,9 @@ tagged_statements = { {
                         "hwaddr, hwtype, hwaddr_source, "
                         "state, user_context "
                             "FROM lease6 "
-                            "WHERE state != ? AND expire < ?"
-                            " AND valid_lifetime != 4294967295 "
+                            "WHERE state != ?"
+                            " AND valid_lifetime != 4294967295"
+                            " AND expire < ? "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::INSERT_LEASE4,

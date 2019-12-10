@@ -25,6 +25,17 @@ const uint32_t Lease::STATE_DEFAULT = 0x0;
 const uint32_t Lease::STATE_DECLINED = 0x1;
 const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x2;
 
+std::string
+Lease::lifetimeToText(uint32_t lifetime) {
+    ostringstream repr;
+    if (lifetime == INFINITY_LFT) {
+        repr << "infinity";
+    } else {
+        repr << lifetime;
+    }
+    return repr.str();
+}
+
 Lease::Lease(const isc::asiolink::IOAddress& addr,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
@@ -528,13 +539,9 @@ Lease6::toText() const {
            << "Address:       " << addr_ << "\n"
            << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
            << "IAID:          " << iaid_ << "\n"
-           << "Pref life:     " << preferred_lft_ << "\n";
-    if (valid_lft_ != INFINITY_LFT) {
-        stream << "Valid life:    " << valid_lft_ << "\n";
-    } else {
-        stream << "Valid life:    " << "infinity" << "\n";
-    }
-    stream << "Cltt:          " << cltt_ << "\n"
+           << "Pref life:     " << lifetimeToText(preferred_lft_) << "\n"
+           << "Valid life:    " << lifetimeToText(valid_lft_) << "\n"
+           << "Cltt:          " << cltt_ << "\n"
            << "DUID:          " << (duid_?duid_->toText():"(none)") << "\n"
            << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
@@ -551,13 +558,9 @@ std::string
 Lease4::toText() const {
     ostringstream stream;
 
-    stream << "Address:       " << addr_ << "\n";
-    if (valid_lft_ != INFINITY_LFT) {
-        stream << "Valid life:    " << valid_lft_ << "\n";
-    } else {
-        stream << "Valid life:    " << "infinity" << "\n";
-    }
-    stream << "Cltt:          " << cltt_ << "\n"
+    stream << "Address:       " << addr_ << "\n"
+           << "Valid life:    " << lifetimeToText(valid_lft_) << "\n"
+           << "Cltt:          " << cltt_ << "\n"
            << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"

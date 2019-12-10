@@ -304,8 +304,8 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE state = ? "
-      "AND expire < ? "
       "AND valid_lifetime < 4294967295 "
+      "AND expire < ? "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 
@@ -1019,8 +1019,8 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE state = ? "
-      "AND expire < ? "
       "AND valid_lifetime < 4294967295 "
+      "AND expire < ? "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 

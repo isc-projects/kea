@@ -105,6 +105,23 @@
 
   For details, see @ref isc::db::CqlConnection::openDatabase().
 
+  @subsection infinite-valid-lifetime Infinite Valid Lifetime
+
+  The @c isc::dhcp::Lease class uses cltt (client last transmission time)
+  and valid lifetime, backend lease uses expire and valid lifetime.
+  These quantities are bound by the equation:
+  @code
+        expire = cltt + valid_lifetime
+  @endcode
+
+  But when expire is a 32 bit date and valid lifetime is the infinity
+  special value (0xffffffff) this overflows so for MySQL and PostgreSQL
+  backends this becomes:
+  @code
+        expire = cltt + valid_lifetime if valid_lifetime != 0xffffffff
+        expire = cltt if valid_lifetime == 0xffffffff
+  @endcode
+
   @section dhcpdb-host Host Backends
 
   Host backends (known also as host data sources) are similar to lease
