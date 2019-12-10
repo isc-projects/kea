@@ -90,12 +90,6 @@ public:
         } else {
             EXPECT_EQ(type, pkt->getType());
         }
-
-        if (dhcp) {
-///            EXPECT_TRUE(pkt->inClass("DHCP"));
-        } else {
-            EXPECT_FALSE(pkt->inClass("DHCP"));
-        }
     }
 
     /// @brief Callout manager accessed by this CalloutHandle.
