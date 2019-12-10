@@ -535,5 +535,34 @@ TEST_F(HAImplTest, continueHandler) {
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
 }
 
+// Tests status-get command processed handler.
+TEST_F(HAImplTest, statusGet) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
+                                         HAServerType::DHCPv4));
+
+    std::string name = "status-get";
+    ConstElementPtr response =
+        Element::fromJSON("{ \"arguments\": { \"pid\": 1 }, \"result\": 0 }");
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+    callout_handle->setArgument("name", name);
+    callout_handle->setArgument("response", response);
+
+    ASSERT_NO_THROW(ha_impl.commandProcessed(*callout_handle));
+
+    ConstElementPtr got;
+    callout_handle->getArgument("response", got);
+    ASSERT_TRUE(got);
+
+    std::string expected =
+        "{ \"arguments\": { \"ha-state\": \"waiting\", \"pid\": 1 }, \"result\": 0 }";
+    EXPECT_EQ(expected, got->str());
+}
 
 }
