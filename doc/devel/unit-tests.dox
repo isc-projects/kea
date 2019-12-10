@@ -84,6 +84,17 @@ The following environment variable can affect the unit tests:
 @note Setting KEA_TEST_DB_WIPE_DATA_ONLY to false may dramatically 
 increase the time it takes each unit test to execute. 
 
+@section unitTestsSanitizers Use Sanitizers
+
+  GCC and LLVM support some sanitizers which perform additional tests
+  at runtime, for instance the ThreadSanitizer (aka TSan) detects
+  data race in executed C++ code (unfortunately it intercepts signals
+  and fails to send them to waiting select system calls so some tests
+  always fail when it is used).
+
+  The simplest way to enable a sanitizer is to add it to the CXX
+  environment variable in .configure by e.g. <i>-fsanitize=thread</i>.
+
 @section unitTestsDatabaseConfig Databases Configuration for Unit Tests
 
   With the use of databases requiring separate authorisation, there are

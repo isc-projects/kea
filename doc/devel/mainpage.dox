@@ -39,6 +39,7 @@
  * @section buildingKeaWithUnitTests Building Kea with Unit tests
  * - @subpage unitTests
  *   - @subpage unitTestsEnvironmentVariables
+ *   - @subpage unitTestsSanitizers
  *   - @subpage unitTestsDatabaseConfig
  *   - @subpage unitTestsSysrepo
  *
