@@ -1,7 +1,7 @@
-16XX.	[func]		fdupont
+1696.	[func]		fdupont
 	A new hook library libdhcp_bootp has been implemented. Once
 	loaded, this hook will provide support for BOOTP packets, as
-	defined in RFC1497. Please see the "BOOTP Support" Section in the
+	defined in RFC1497. Please see the "BOOTP support" Section in the
 	ARM for details.
 	(Gitlab #898)
 
