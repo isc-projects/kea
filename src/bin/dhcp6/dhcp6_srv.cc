@@ -3984,7 +3984,7 @@ void Dhcpv6Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-/// @todo: Take care of the fact that the valid lifetime can be infinite.
+/// @todo This logic to be modified if we decide to support infinite lease times.
 void
 Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp) {
     // Default T2 time to zero.

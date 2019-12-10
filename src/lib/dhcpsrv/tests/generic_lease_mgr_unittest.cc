@@ -2253,7 +2253,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 }
 
 void
-GenericLeaseMgrTest::testGetNeverExpiredLeases4() {
+GenericLeaseMgrTest::testInfiniteAreNotExpired4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
     Lease4Ptr lease = leases[1];
@@ -2274,7 +2274,7 @@ GenericLeaseMgrTest::testGetNeverExpiredLeases4() {
 }
 
 void
-GenericLeaseMgrTest::testGetNeverExpiredLeases6() {
+GenericLeaseMgrTest::testInfiniteAreNotExpired6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     Lease6Ptr lease = leases[1];

@@ -494,11 +494,11 @@ public:
             bind_array.add(valid_lifetime_str_);
 
             // Avoid overflow
-            uint32_t valid_lft = lease_->valid_lft_;
-            if (valid_lft == Lease::INFINITY_LFT) {
+            if (lease_->valid_lft_ == Lease::INFINITY_LFT) {
                 expire_str_ = convertToDatabaseTime(lease->cltt_, 0);
             } else {
-                expire_str_ = convertToDatabaseTime(lease->cltt_, valid_lft);
+                expire_str_ = convertToDatabaseTime(lease->cltt_,
+                                                    lease_->valid_lft_);
             }
             bind_array.add(expire_str_);
 
@@ -555,11 +555,10 @@ public:
             getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);
 
             // Recover from overflow
-            uint32_t valid_lft = valid_lifetime_;
-            if (valid_lft == Lease::INFINITY_LFT) {
+            if (valid_lifetime_ == Lease::INFINITY_LFT) {
                 cltt_ = expire_;
             } else {
-                cltt_ = expire_ - valid_lft;
+                cltt_ = expire_ - valid_lifetime_;
             }
 
             getColumnValue(r, row, FQDN_FWD_COL, fqdn_fwd_);
@@ -737,11 +736,11 @@ public:
             bind_array.add(valid_lifetime_str_);
 
             // Avoid overflow
-            uint32_t valid_lft = lease_->valid_lft_;
-            if (valid_lft == Lease::INFINITY_LFT) {
+            if (lease_->valid_lft_ == Lease::INFINITY_LFT) {
                 expire_str_ = convertToDatabaseTime(lease->cltt_, 0);
             } else {
-                expire_str_ = convertToDatabaseTime(lease->cltt_, valid_lft);
+                expire_str_ = convertToDatabaseTime(lease->cltt_,
+                                                    lease_->valid_lft_);
             }
             bind_array.add(expire_str_);
 
@@ -849,11 +848,10 @@ public:
                                                                 EXPIRE_COL));
 
             // Recover from overflow
-            uint32_t valid_lft = valid_lifetime_;
-            if (valid_lft == Lease::INFINITY_LFT) {
+            if (valid_lifetime_ == Lease::INFINITY_LFT) {
                 cltt_ = expire_;
             } else {
-                cltt_ = expire_ - valid_lft;
+                cltt_ = expire_ - valid_lifetime_;
             }
 
             getColumnValue(r, row , SUBNET_ID_COL, subnet_id_);

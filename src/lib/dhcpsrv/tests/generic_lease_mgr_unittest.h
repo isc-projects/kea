@@ -355,11 +355,11 @@ public:
 
     /// @brief Checks that DHCPv4 leases with infinite valid lifetime
     /// will never expire.
-    void testGetNeverExpiredLeases4();
+    void testInfiniteAreNotExpired4();
 
     /// @brief Checks that DHCPv6 leases with infinite valid lifetime
     /// will never expire.
-    void testGetNeverExpiredLeases6();
+    void testInfiniteAreNotExpired6();
 
     /// @brief Checks that declined IPv4 leases that have expired can be retrieved.
     ///

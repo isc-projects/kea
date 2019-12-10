@@ -1,3 +1,10 @@
+1695.	[func]		fdupont
+	Added support of BOOTP leases with infinite valid lifetime.
+	This includes representation of such leases in MySQL and
+	PostgreSQL databases which the expire date can be a 32 bit
+	integer.
+	(Gitlan #897)
+
 1694.	[doc]		marcin
 	Described the usage of the ha-heartbeat command to check the
 	states of the HA enabled DHCP servers.

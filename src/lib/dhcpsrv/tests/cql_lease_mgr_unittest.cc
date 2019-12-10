@@ -627,8 +627,8 @@ TEST_F(CqlLeaseMgrTest, getExpiredLeases4) {
 
 /// @brief Checks that DHCPv4 leases with infinite valid lifetime
 /// will never expire.
-TEST_F(CqlLeaseMgrTest, getNeverExpiredLeases4) {
-    testGetNeverExpiredLeases4();
+TEST_F(CqlLeaseMgrTest, infiniteAreNotExpired4) {
+    testInfiniteAreNotExpired4();
 }
 
 /// @brief Check that expired reclaimed DHCPv4 leases are removed.
@@ -782,8 +782,8 @@ TEST_F(CqlLeaseMgrTest, getExpiredLeases6) {
 
 /// @brief Checks that DHCPv6 leases with infinite valid lifetime
 /// will never expire.
-TEST_F(CqlLeaseMgrTest, getNeverExpiredLeases6) {
-    testGetNeverExpiredLeases6();
+TEST_F(CqlLeaseMgrTest, infiniteAreNotExpired6) {
+    testInfiniteAreNotExpired6();
 }
 
 /// @brief Check that expired reclaimed DHCPv6 leases are removed.
