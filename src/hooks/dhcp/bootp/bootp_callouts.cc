@@ -87,7 +87,6 @@ int pkt4_receive(CalloutHandle& handle) {
 
 /// @brief This function is called when the library is loaded.
 ///
-/// @param handle library handle (unused).
 /// @return always 0.
 int load(LibraryHandle& /* handle */) {
     LOG_INFO(bootp_logger, BOOTP_LOAD);
