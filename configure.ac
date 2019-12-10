@@ -1460,14 +1460,22 @@ if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
 fi
 
-AC_ARG_ENABLE(fuzz, [AC_HELP_STRING([--enable-fuzz],
+AC_ARG_ENABLE([fuzzing], [AC_HELP_STRING([--enable-fuzzing],
   [indicates that the code will be built with AFL (American Fuzzy Lop) support.
    Code built this way is unusable as a regular server. [default=no]])],
-   enable_fuzz=$enableval, enable_fuzz=no)
-AM_CONDITIONAL(ENABLE_AFL, test x$enable_fuzz != xno)
+   [enable_fuzzing=$enableval], [enable_fuzzing=no])
+AM_CONDITIONAL([ENABLE_AFL], [test x$enable_fuzzing != xno])
 
-if test "x$enable_fuzz" != "xno" ; then
+if test "x$enable_fuzzing" != "xno" ; then
     AC_DEFINE([ENABLE_AFL], [1], [AFL fuzzing was enabled.])
+    AC_MSG_CHECKING([for AFL enabled compiler])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+					  [#ifndef __AFL_COMPILER
+					   #error AFL compiler required
+					   #endif
+					  ])],
+			 [AC_MSG_RESULT([yes])],
+			 [AC_MSG_ERROR([set CXX to afl-clang-fast++ when --enable-fuzzing is used])])
 fi
 
 
@@ -1987,7 +1995,7 @@ Developer:
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
   Kea-shell:                 $shell_report
-  Enable fuzz:               $enable_fuzz
+  Enable fuzzing:            $enable_fuzzing
 
 END
 
