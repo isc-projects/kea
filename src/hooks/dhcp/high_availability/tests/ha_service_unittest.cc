@@ -1065,6 +1065,16 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     service.verboseTransition(HA_HOT_STANDBY_ST);
     service.runModel(HAService::NOP_EVT);
 
+    // Check the reported info about servers.
+    ConstElementPtr ha_servers = service.commandProcessed();
+    ASSERT_TRUE(ha_servers);
+    std::string expected = "{ "
+        "\"local\": { \"role\": \"primary\", "
+        "\"scopes\": [ \"server1\" ], "
+        "\"state\": \"hot-standby\" }, "
+        "\"remote\": { \"role\": \"standby\" } }";
+    EXPECT_EQ(expected, ha_servers->str());
+
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
     for (unsigned i = 0; i < queries_num; ++i) {
@@ -1092,6 +1102,15 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
 
     // ... and HA service using this configuration.
     TestHAService service(io_service_, network_state_, config_storage);
+
+    // Check the reported info about servers.
+    ConstElementPtr ha_servers = service.commandProcessed();
+    ASSERT_TRUE(ha_servers);
+    std::string expected = "{ "
+        "\"local\": { \"role\": \"standby\", "
+        "\"scopes\": [  ], \"state\": \"waiting\" }, "
+        "\"remote\": { \"role\": \"primary\" } }";
+    EXPECT_EQ(expected, ha_servers->str());
 
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
@@ -3023,6 +3042,18 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     ASSERT_TRUE(isDoingHeartbeat());
     ASSERT_FALSE(isCommunicationInterrupted());
     ASSERT_FALSE(isFailureDetected());
+
+    // Check the reported info about servers.
+    ConstElementPtr ha_servers = service_->commandProcessed();
+    ASSERT_TRUE(ha_servers);
+    std::cout << ha_servers->str() << "\n";
+    std::string expected = "{ "
+        "\"local\": { \"role\": \"primary\", "
+        "\"scopes\": [ \"server1\", \"server2\" ], "
+        "\"state\": \"load-balancing\" }, "
+        "\"remote\": { \"received-state\": \"ready\", "
+        "\"role\": \"secondary\" } }";
+    EXPECT_EQ(expected, ha_servers->str());
 
     // Crash the partner and see whether our server can return to the partner
     // down state.
