@@ -1031,13 +1031,23 @@ TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
 TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     createUnixChannelServer();
 
-    std::string response;
+    std::string response_txt;
 
     // Send the version-get command
-    sendUnixCommand("{ \"command\": \"status-get\" }", response);
-    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("\"pid\": ") != string::npos);
-    EXPECT_TRUE(response.find("\"uptime\": ") != string::npos);
+    sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    EXPECT_EQ(2, response->size());
+    ConstElementPtr result = response->get("result");
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_EQ(Element::map, arguments->getType());
+    EXPECT_TRUE(arguments->contains("pid"));
+    EXPECT_TRUE(arguments->contains("uptime"));
 }
 
 // This test verifies that the DHCP server handles config-backend-pull command

@@ -507,6 +507,12 @@ public:
     /// @return Pointer to the response to the heartbeat.
     data::ConstElementPtr processHeartbeat();
 
+    /// @brief Processes status-get command and returns a response.
+    ///
+    /// @c HAImpl::commandProcessed calls this to add HA servers info
+    /// into the status-get response.
+    data::ConstElementPtr commandProcessed() const;
+
 protected:
 
     /// @brief Starts asynchronous heartbeat to a peer.

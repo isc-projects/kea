@@ -118,7 +118,8 @@ public:
     /// service is enabled in a state for which this is not allowed, e.g.
     /// waiting, syncing etc. We don't want to rely on the HA partner to do
     /// a correct thing in that respect.
-    /// It too adds the HA state to "status-get" commands.
+    /// It too adds the HA servers information to "status-get" command
+    /// responses by calling @c HAService::commandProcessed.
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void commandProcessed(hooks::CalloutHandle& callout_handle);

@@ -1,8 +1,8 @@
 {
     "avail": "1.7.3",
     "brief": [
-        "This command returns server runtime informations.",
-        "This command does not take any parameters."
+        "This command returns server runtime information.",
+        "It takes no arguments."
     ],
     "cmd-syntax": [
         "{",
@@ -16,7 +16,9 @@
         "    \"result\": 0,",
         "    \"arguments\": {",
         "        \"pid\": 1234,",
-        "        \"uptime\": 59",
+        "        \"uptime\": 59,",
+        "        \"reload\": 10,",
+        "        ...",
         "    }",
         "}"
     ],

@@ -953,6 +953,53 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
 }
 
 ConstElementPtr
+HAService::commandProcessed() const {
+    ElementPtr ha_servers = Element::createMap();
+
+    // Local part
+    ElementPtr local = Element::createMap();
+    HAConfig::PeerConfig::Role role;
+    role = config_->getThisServerConfig()->getRole();
+    std::string role_txt = HAConfig::PeerConfig::roleToString(role);
+    local->set("role", Element::create(role_txt));
+    int state = getCurrState();
+    try {
+        local->set("state", Element::create(stateToString(state)));
+    } catch (const std::exception&) {
+        /* ignore errors */
+    }
+    std::set<std::string> scopes = query_filter_.getServedScopes();
+    ElementPtr list = Element::createList();
+    for (std::string scope : scopes) {
+        list->add(Element::create(scope));
+    }
+    local->set("scopes", list);
+    ha_servers->set("local", local);
+
+    // Remote part
+    ElementPtr remote = Element::createMap();
+    try {
+        role = config_->getFailoverPeerConfig()->getRole();
+        std::string role_txt = HAConfig::PeerConfig::roleToString(role);
+        remote->set("role", Element::create(role_txt));
+    } catch (const std::exception&) {
+        /* ignore errors */
+    }
+    try {
+        state = getPartnerState();
+        remote->set("received-state", Element::create(stateToString(state)));
+    } catch (const std::exception&) {
+        /* ignore errors */
+    }
+    // No current way to get remote scopes.
+    // Add remote if not empty.
+    if (remote->size() > 0) {
+        ha_servers->set("remote", remote);
+    }
+    return (ha_servers);
+}
+
+ConstElementPtr
 HAService::processHeartbeat() {
     ElementPtr arguments = Element::createMap();
     std::string state_label = getState(getCurrState())->getLabel();

@@ -274,23 +274,11 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
         if (!resp_args || (resp_args->getType() != Element::map)) {
             return;
         }
-        // Add the ha state to arguments.
+        // Add the ha servers info to arguments.
         ElementPtr mutable_resp_args =
             boost::const_pointer_cast<Element>(resp_args);
-        int state = service_->getCurrState();
-        try {
-            mutable_resp_args->set("ha-state",
-                                   Element::create(stateToString(state)));
-        } catch (const std::exception&) {
-            return;
-        }
-        state = service_->getPartnerState();
-        try {
-            mutable_resp_args->set("ha-partner-state",
-                                   Element::create(stateToString(state)));
-            } catch     (const std::exception&) {
-            return;
-        }
+        ConstElementPtr ha_servers = service_->commandProcessed();
+        mutable_resp_args->set("ha-servers", ha_servers);
     }
 }
 
@@ -424,7 +412,6 @@ HAImpl::continueHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr response = service_->processContinue();
     callout_handle.setArgument("response", response);
 }
-
 
 } // end of namespace isc::ha
 } // end of namespace isc
