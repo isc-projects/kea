@@ -11,6 +11,9 @@
     ],
     "description": "See <xref linkend=\"command-status-get\"/>",
     "name": "status-get",
+    "resp-comment": [
+        "If the HA hook is loaded it adds HA servers info to the response."
+    ],
     "resp-syntax": [
         "{",
         "    \"result\": 0,",

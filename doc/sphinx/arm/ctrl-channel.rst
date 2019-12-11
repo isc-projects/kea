@@ -543,8 +543,15 @@ The ``dhcp-enable`` command globally enables the DHCP service.
 The status-get Command
 ----------------------
 
-The ``status-get`` command return server runtime information:
-todo.
+The ``status-get`` command returns server runtime information:
+
+ - pid: process id.
+
+ - uptime: number of seconds since the start of the server.
+
+ - reload: number of seconds since the last configuration (re)load.
+
+ - ha-servers: HA hook information when the hook was loaded.
 
 .. _command-server-tag-get:
 
