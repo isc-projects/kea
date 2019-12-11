@@ -1,3 +1,8 @@
+1700.	[func]		godfryd
+	Enabled checking Kea merge request in GitLab CI by Danger tool
+	(see https://danger.systems/guides/dangerfile.html).
+	(Gitlab #672)
+
 Kea 1.7.3 released on Nov 18th, 2019
 
 1699.	[func]		fdupont, marcin
@@ -27,7 +32,7 @@ Kea 1.7.3 released on Nov 18th, 2019
 	This includes representation of such leases in MySQL and
 	PostgreSQL databases which the expire date can be a 32 bit
 	integer.
-	(Gitlan #897)
+	(Gitlab #897)
 
 1694.	[doc]		marcin
 	Described the usage of the ha-heartbeat command to check the
