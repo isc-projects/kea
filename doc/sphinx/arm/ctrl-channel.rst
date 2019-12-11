@@ -551,7 +551,21 @@ The ``status-get`` command returns server runtime information:
 
  - reload: number of seconds since the last configuration (re)load.
 
- - ha-servers: HA hook information when the hook was loaded.
+ - ha-servers: HA hook information when the hook was loaded:
+
+     * local: for the local server the state, the role (primary,
+       secondary, ...) and scopes (i.e. what the server is actually
+       processing).
+
+     * remote: for the remote server the perceived state and the role
+       (scopes should be available in a future release)
+
+.. note::
+
+   The HA local server does not know the real state of the HA remote
+   server (so the perceived state vs the state). The command (or the
+   ``ha-heartbeat``) should be sent to the remote server as explained
+   in HA :ref:`ha-server-states`.
 
 .. _command-server-tag-get:
 
