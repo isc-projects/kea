@@ -72,6 +72,9 @@ CtrlAgentController::registerCommands() {
     CtrlAgentCommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
         boost::bind(&DControllerBase::shutdownHandler, this, _1, _2));
 
+    CtrlAgentCommandMgr::instance().registerCommand(STATUS_GET_COMMAND,
+        boost::bind(&DControllerBase::statusGetHandler, this, _1, _2));
+
     CtrlAgentCommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
         boost::bind(&DControllerBase::versionGetHandler, this, _1, _2));
 }
@@ -85,6 +88,7 @@ CtrlAgentController::deregisterCommands() {
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_WRITE_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(SHUT_DOWN_COMMAND);
+    CtrlAgentCommandMgr::instance().deregisterCommand(STATUS_GET_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(VERSION_GET_COMMAND);
 }
 

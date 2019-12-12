@@ -52,6 +52,9 @@ static const std::string SERVER_TAG_GET_COMMAND("server-tag-get");
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 
+/// @brief String value for the status-get command.
+static const std::string STATUS_GET_COMMAND("status-get");
+
 /// @brief Returned by the process to indicate a command was successful.
 static const int COMMAND_SUCCESS = 0;
 

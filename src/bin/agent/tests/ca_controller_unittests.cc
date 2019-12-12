@@ -454,6 +454,7 @@ TEST_F(CtrlAgentControllerTest, registeredCommands) {
     checkCommandRegistered("config-write");
     checkCommandRegistered("list-commands");
     checkCommandRegistered("shutdown");
+    checkCommandRegistered("status-get");
     checkCommandRegistered("version-get");
 
     ctrl->deregisterCommands();
@@ -655,6 +656,28 @@ TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
 
     // Now clean up after ourselves.
     ctrl->deregisterCommands();
+}
+
+// Tests that status-get returns expected info (pid, uptime and reload).
+TEST_F(CtrlAgentControllerTest, statusGet) {
+    // Start the server.
+    time_duration elapsed_time;
+    runWithConfig(valid_agent_config, 500, elapsed_time);
+
+    const DControllerBasePtr& ctrl = getController();
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = ctrl->statusGetHandler("status-get", ConstElementPtr()));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    EXPECT_EQ(2, response->size());
+    ConstElementPtr result = response->get("result");
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_EQ(Element::map, arguments->getType());
+    EXPECT_TRUE(arguments->contains("pid"));
+    EXPECT_TRUE(arguments->contains("uptime"));
 }
 
 }
