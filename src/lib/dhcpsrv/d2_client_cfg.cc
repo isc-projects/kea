@@ -41,19 +41,19 @@ const char* D2ClientConfig::DFT_HOSTNAME_CHAR_REPLACEMENT = "";
 
 D2ClientConfig::ReplaceClientNameMode
 D2ClientConfig::stringToReplaceClientNameMode(const std::string& mode_str) {
-    if (boost::iequals(mode_str, "never")) {
+    if (mode_str == "never") {
         return (D2ClientConfig::RCM_NEVER);
     }
 
-    if (boost::iequals(mode_str, "always")) {
+    if (mode_str == "always") {
         return (D2ClientConfig::RCM_ALWAYS);
     }
 
-    if (boost::iequals(mode_str, "when-present")) {
+    if (mode_str == "when-present") {
         return (D2ClientConfig::RCM_WHEN_PRESENT);
     }
 
-    if (boost::iequals(mode_str, "when-not-present")) {
+    if (mode_str == "when-not-present") {
         return (D2ClientConfig::RCM_WHEN_NOT_PRESENT);
     }
 

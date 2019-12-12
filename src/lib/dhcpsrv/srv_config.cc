@@ -593,16 +593,14 @@ SrvConfig::toElement() const {
 
 DdnsParamsPtr
 SrvConfig::getDdnsParams(const Subnet4Ptr& subnet) const {
-    DdnsParamsPtr params(new DdnsParams(subnet,
-                         getD2ClientConfig()->getEnableUpdates()));
-    return params;
+    return (DdnsParamsPtr(new DdnsParams(subnet, 
+                                         getD2ClientConfig()->getEnableUpdates())));
 }
 
 DdnsParamsPtr
 SrvConfig::getDdnsParams(const Subnet6Ptr& subnet) const {
-    DdnsParamsPtr params(new DdnsParams(subnet,
-                         getD2ClientConfig()->getEnableUpdates()));
-    return params;
+   return(DdnsParamsPtr(new DdnsParams(subnet,
+                                       getD2ClientConfig()->getEnableUpdates())));
 }
 
 void
@@ -661,7 +659,7 @@ DdnsParams::getEnableUpdates() const {
         return (false);
     }
 
-    return (enable_updates_ && subnet_->getDdnsSendUpdates().get());
+    return (d2_client_enabled_ && subnet_->getDdnsSendUpdates().get());
 }
 
 bool
@@ -672,9 +670,7 @@ DdnsParams::getOverrideNoUpdate() const {
 
     return (subnet_->getDdnsOverrideNoUpdate().get());
 }
-
-bool
-DdnsParams::getOverrideClientUpdate() const {
+bool DdnsParams::getOverrideClientUpdate() const {
     if (!subnet_) {
         return (false);
     }

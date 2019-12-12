@@ -44,32 +44,32 @@ class CfgMgr;
 class DdnsParams {
 public:
     /// @brief Default constructor
-    DdnsParams() : subnet_(), enable_updates_(false) {};
+    DdnsParams() : subnet_(), d2_client_enabled_(false) {};
 
     /// @brief Constructor for DHPCv4 subnets
     ///
     /// @param subnet Pointer to Subnet4 instance to use for fetching
     /// parameter values (typically this is the selected subnet).
-    /// @param enable_updates flag which indicates whether or not
+    /// @param d2_client_enabled flag which indicates whether or not
     /// D2Client is enabled (typically the value should come from
     /// global D2Client configuration).
-    DdnsParams(const Subnet4Ptr& subnet, bool enable_updates)
+    DdnsParams(const Subnet4Ptr& subnet, bool d2_client_enabled)
         : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
-          enable_updates_(enable_updates) {}
+          d2_client_enabled_(d2_client_enabled) {}
 
     /// @brief Constructor for DHPCv6 subnets
     ///
     /// @param subnet Pointer to Subnet6 instance to use for fetching
     /// parameter values (typically this is the selected subnet).
-    /// @param enable_updates flag which indicates whether or not
+    /// @param d2_client_enabled flag which indicates whether or not
     /// D2Client is enabled (typically the value should come from
     /// global D2Client configuration).
-    DdnsParams(const Subnet6Ptr& subnet, bool enable_updates)
+    DdnsParams(const Subnet6Ptr& subnet, bool d2_client_enabled)
         : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
-          enable_updates_(enable_updates) {}
+          d2_client_enabled_(d2_client_enabled) {}
 
     /// @brief Returns whether or not DHCP DDNS updating is enabled.
-    /// The value is the logical AND of enable_updates_ member and
+    /// The value is the logical AND of d2_client_enabled_ and
     /// the value returned by subnet_'s getDdnsSendUpdates().  It
     /// @return True if updates are enabled, false otherwise or if
     /// subnet_ is empty.
@@ -125,7 +125,7 @@ private:
     SubnetPtr subnet_;
 
     /// @brief Flag indicating whether or not the D2Client is enabled.
-    bool enable_updates_;
+    bool d2_client_enabled_;
 };
 
 /// @brief Defines a pointer for DdnsParams instances.
