@@ -557,15 +557,14 @@ The ``status-get`` command returns server runtime information:
        secondary, ...) and scopes (i.e. what the server is actually
        processing).
 
-     * remote: for the remote server the perceived state and the role
+     * remote: for the remote server the last known state and the role
        (scopes should be available in a future release)
 
 .. note::
 
-   The HA local server does not know the real state of the HA remote
-   server (so the perceived state vs the state). The command (or the
-   ``ha-heartbeat``) should be sent to the remote server as explained
-   in HA :ref:`ha-server-states`.
+   The HA local server does not always know the current state of the
+   HA remote server. The command (or the ``ha-heartbeat``) should be
+   sent to the remote server as explained in HA :ref:`ha-server-states`.
 
 .. _command-server-tag-get:
 

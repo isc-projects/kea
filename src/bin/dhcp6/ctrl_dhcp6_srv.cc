@@ -584,8 +584,11 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
     status->set("pid", Element::create(static_cast<int>(getpid())));
 
     auto now = boost::posix_time::second_clock::universal_time();
-    auto uptime = now - start_;
-    status->set("uptime", Element::create(uptime.total_seconds()));
+    // Sanity check: start_ is always initialized.
+    if (!start_.is_not_a_date_time()) {
+        auto uptime = now - start_;
+        status->set("uptime", Element::create(uptime.total_seconds()));
+    }
 
     auto last_commit = CfgMgr::instance().getCurrentCfg()->getLastCommitTime();
     if (!last_commit.is_not_a_date_time()) {

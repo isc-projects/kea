@@ -3051,7 +3051,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
         "\"local\": { \"role\": \"primary\", "
         "\"scopes\": [ \"server1\", \"server2\" ], "
         "\"state\": \"load-balancing\" }, "
-        "\"remote\": { \"received-state\": \"ready\", "
+        "\"remote\": { \"last-known-state\": \"ready\", "
         "\"role\": \"secondary\" } }";
     EXPECT_EQ(expected, ha_servers->str());
 

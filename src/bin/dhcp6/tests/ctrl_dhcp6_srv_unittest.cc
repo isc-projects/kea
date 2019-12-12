@@ -923,6 +923,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, getVersion) {
 TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     createUnixChannelServer();
 
+    // start_ is initialized by init.
+    ASSERT_THROW(server_->init("/no/such/file"), BadValue);
+
     std::string response_txt;
 
     // Send the version-get command

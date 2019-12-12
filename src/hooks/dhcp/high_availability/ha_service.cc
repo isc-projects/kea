@@ -987,7 +987,7 @@ HAService::commandProcessed() const {
     }
     try {
         state = getPartnerState();
-        remote->set("received-state", Element::create(stateToString(state)));
+        remote->set("last-known-state", Element::create(stateToString(state)));
     } catch (const std::exception&) {
         /* ignore errors */
     }

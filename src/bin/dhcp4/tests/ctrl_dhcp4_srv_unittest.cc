@@ -1031,6 +1031,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
 TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     createUnixChannelServer();
 
+    // start_ is initialized by init.
+    ASSERT_THROW(server_->init("/no/such/file"), BadValue);
+
     std::string response_txt;
 
     // Send the version-get command
