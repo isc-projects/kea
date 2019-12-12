@@ -12,6 +12,7 @@
 #include <util/pid_file.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
 
 namespace isc {
@@ -259,6 +260,9 @@ protected:
 
     /// @brief Manufacture the pid file name
     std::string makePIDFileName() const;
+
+    /// @brief Timestamp of the start of the daemon.
+    boost::posix_time::ptime start_;
 
 private:
     /// @brief Config file name or empty if config file not used.

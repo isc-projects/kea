@@ -619,6 +619,8 @@ The D2 server supports only a subset of DHCPv4 / DHCPv6 server commands:
 
 -  shutdown
 
+-  status-get
+
 -  version-get
 
 .. _agent-commands:
@@ -645,5 +647,7 @@ commands are handled by the CA and they relate to the CA process itself:
 -  list-commands
 
 -  shutdown
+
+-  status-get
 
 -  version-get

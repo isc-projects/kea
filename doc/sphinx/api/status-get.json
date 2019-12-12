@@ -28,6 +28,8 @@
 
     "support": [
         "kea-dhcp4",
-        "kea-dhcp6"
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
     ]
 }

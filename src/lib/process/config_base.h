@@ -12,6 +12,7 @@
 #include <process/config_ctl_info.h>
 #include <process/logging_info.h>
 #include <util/optional.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace isc {
 namespace process {
@@ -134,6 +135,18 @@ public:
         return (server_tag_);
     }
 
+    /// @brief Returns the last commit timestamp.
+    /// @return the last commit timestamp.
+    boost::posix_time::ptime getLastCommitTime() const {
+        return (last_commit_time_);
+    }
+
+    /// @brief Sets the last commit timestamp.
+    /// @param last_commit_time last commit timestamp.
+    void setLastCommitTime(const boost::posix_time::ptime& last_commit_time) {
+        last_commit_time_ = last_commit_time;
+    }
+
 protected:
     /// @brief Copies the current configuration to a new configuration.
     ///
@@ -154,6 +167,9 @@ private:
 
     /// @brief Logical name of the server
     util::Optional<std::string> server_tag_;
+
+    /// @brief Stores the last commit timestamp.
+    boost::posix_time::ptime last_commit_time_;
 };
 
 /// @brief Non-const pointer to the @c ConfigBase.

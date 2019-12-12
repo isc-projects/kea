@@ -134,7 +134,7 @@ public:
     /// Certainly once during process startup, and possibly later if the user
     /// alters configuration. This method must not throw, it should catch any
     /// processing errors and return a success or failure answer as described
-    /// below.
+    /// below. On success the last commit timestamp must be updated.
     ///
     /// @param config_set a new configuration (JSON) for the process
     /// @param check_only true if configuration is to be verified only, not applied

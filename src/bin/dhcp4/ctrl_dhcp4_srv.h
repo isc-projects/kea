@@ -14,7 +14,6 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -121,6 +120,7 @@ public:
     static ControlledDhcpv4Srv* getInstance() {
         return (server_);
     }
+
 
 private:
     /// @brief Callback that will be called from iface_mgr when data
@@ -427,9 +427,6 @@ private:
     /// Shared pointer to the instance of timer @c TimerMgr is held here to
     /// make sure that the @c TimerMgr outlives instance of this class.
     TimerMgrPtr timer_mgr_;
-
-    /// @brief Timestamp of the start of the server.
-    boost::posix_time::ptime start_;
 };
 
 }; // namespace isc::dhcp
