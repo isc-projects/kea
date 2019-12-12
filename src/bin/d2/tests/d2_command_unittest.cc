@@ -537,6 +537,7 @@ TEST_F(CtrlChannelD2Test, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-test\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"status-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
 
     // Ok, and now delete the server. It should deregister its commands.
@@ -610,6 +611,30 @@ TEST_F(CtrlChannelD2Test, listCommands) {
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "version-get");
+}
+
+// This test verifies that the D2 server handles status-get commands
+TEST_F(CtrlChannelD2Test, statusGet) {
+    EXPECT_NO_THROW(createUnixChannelServer());
+
+    std::string response_txt;
+
+    // Send the version-get command
+    sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    EXPECT_EQ(2, response->size());
+    ConstElementPtr result = response->get("result");
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_EQ(Element::map, arguments->getType());
+    EXPECT_TRUE(arguments->contains("pid"));
+    // launch is not called so we have only reload, not uptime.
+    EXPECT_TRUE(arguments->contains("reload"));
 }
 
 // Tests if the server returns its configuration using config-get.
