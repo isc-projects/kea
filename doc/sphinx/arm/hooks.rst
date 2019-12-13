@@ -810,11 +810,13 @@ Configuring the Forensic Log Hooks
 
 To use this functionality, the hook library must be included in the
 configuration of the desired DHCP server modules. The legal_log library
-is installed alongside the Kea libraries in ``[kea-install-dir]/var/lib/kea``
-where ``kea-install-dir`` is determined by the "--prefix" option of the
-configure script. It defaults to ``/usr/local``. Assuming the default
-value, configuring kea-dhcp4 to load the legal_log library could be
-done with the following Kea4 configuration:
+is able to save logs to text file or into database (created using
+``kea-admin`` see :ref:`mysql-database-create`, :ref:`pgsql-database-create`).
+Library is installed alongside the Kea libraries in
+``[kea-install-dir]/var/lib/kea`` where ``kea-install-dir`` is determined
+by the "--prefix" option of the configure script. It defaults to
+``/usr/local``. Assuming the default value, configuring kea-dhcp4 to load
+the legal_log library could be done with the following Kea4 configuration:
 
 ::
 
@@ -848,7 +850,7 @@ To configure it for kea-dhcp6, the commands are:
        ]
    }
 
-Two hooks library parameters are supported:
+Two hooks library parameters for text file are supported:
 
 -  path - the directory in which the forensic file(s) will be written.
    The default value is ``[prefix]/var/lib/kea``. The directory must exist.
@@ -856,6 +858,27 @@ Two hooks library parameters are supported:
 -  base-name - an arbitrary value which is used in conjunction with the
    current system date to form the current forensic file name. It
    defaults to ``kea-legal``.
+
+And additional parameters for database connection e.g:
+
+::
+   "Dhcp6": {
+       "hooks-libraries": [
+           {
+               "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+               "parameters": {
+                   "name":"database-name",
+                   "password":"passwd",
+                   "type":"mysql",
+                   "user":"user-name"
+               }
+           },
+           ...
+       ]
+   }
+
+For more specific information about database related parameters please refer to
+:ref:`database-configuration6` and :ref:`database-configuration4`.
 
 If it is desired to restrict forensic logging to certain subnets, the
 "legal-logging" boolean parameter can be specified within a user context
