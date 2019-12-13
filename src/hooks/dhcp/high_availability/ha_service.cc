@@ -1008,6 +1008,13 @@ HAService::processHeartbeat() {
     std::string date_time = HttpDateTime().rfc1123Format();
     arguments->set("date-time", Element::create(date_time));
 
+    auto scopes = query_filter_.getServedScopes();
+    ElementPtr scopes_list = Element::createList();
+    for (auto scope : scopes) {
+        scopes_list->add(Element::create(scope));
+    }
+    arguments->set("scopes", scopes_list);
+
     return (createAnswer(CONTROL_RESULT_SUCCESS, "HA peer status returned.",
                          arguments));
 }

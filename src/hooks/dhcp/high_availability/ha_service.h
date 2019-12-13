@@ -491,12 +491,13 @@ public:
     /// a restart.
     ///
     /// The ha-heartbeat command takes no arguments. The response contains
-    /// a server state and timestamp in the following format:
+    /// a server state, served scopes and timestamp in the following format:
     ///
     /// @code
     /// {
     ///     "arguments": {
     ///         "date-time": "Thu, 01 Feb 2018 21:18:26 GMT",
+    ///         "scopes": [ "server1" ],
     ///         "state": "waiting"
     ///     },
     ///     "result": 0,

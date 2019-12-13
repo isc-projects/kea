@@ -1618,7 +1618,8 @@ TEST_F(HAServiceTest, processHeartbeat) {
     HAConfigParser parser;
     ASSERT_NO_THROW(parser.parse(config_storage, Element::fromJSON(config_text)));
 
-    HAService service(io_service_,  network_state_, config_storage);
+    TestHAService service(io_service_,  network_state_, config_storage);
+    service.query_filter_.serveDefaultScopes();
 
     // Process heartbeat command.
     ConstElementPtr rsp;
@@ -1640,6 +1641,15 @@ TEST_F(HAServiceTest, processHeartbeat) {
     ConstElementPtr date_time = args->get("date-time");
     ASSERT_TRUE(date_time);
     EXPECT_EQ(Element::string, date_time->getType());
+
+    auto scopes_list = args->get("scopes");
+    ASSERT_TRUE(scopes_list);
+    EXPECT_EQ(Element::list, scopes_list->getType());
+    ASSERT_EQ(1, scopes_list->size());
+    auto scope = scopes_list->get(0);
+    ASSERT_TRUE(scope);
+    EXPECT_EQ(Element::string, scope->getType());
+    EXPECT_EQ("server1", scope->stringValue());
 
     // The response should contain the timestamp in the format specified
     // in RFC1123. We use the HttpDateTime method to parse this timestamp.
