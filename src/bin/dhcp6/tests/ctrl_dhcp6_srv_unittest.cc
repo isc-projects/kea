@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <cstdlib>
+#include <unistd.h>
 
 #include <thread>
 
@@ -941,8 +942,24 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     EXPECT_EQ(0, result->intValue());
     ConstElementPtr arguments = response->get("arguments");
     ASSERT_EQ(Element::map, arguments->getType());
-    EXPECT_TRUE(arguments->contains("pid"));
-    EXPECT_TRUE(arguments->contains("uptime"));
+
+    // The returned pid should be the pid of our process.
+    auto found_pid = arguments->get("pid");
+    ASSERT_TRUE(found_pid);
+    EXPECT_EQ(static_cast<int64_t>(getpid()), found_pid->intValue());
+
+    // It is hard to check the actual uptime (and reload) as it is based
+    // on current time. Let's just make sure it is within a reasonable
+    // range.
+    auto found_uptime = arguments->get("uptime");
+    ASSERT_TRUE(found_uptime);
+    EXPECT_LE(found_uptime->intValue(), 5);
+    EXPECT_GE(found_uptime->intValue(), 0);
+
+    auto found_reload = arguments->get("reload");
+    ASSERT_TRUE(found_reload);
+    EXPECT_LE(found_reload->intValue(), 5);
+    EXPECT_GE(found_reload->intValue(), 0);
 }
 
 // This test verifies that the DHCP server handles server-tag-get command
