@@ -1,3 +1,8 @@
+1697.	[doc]		wlodek
+	Forensic logging documentation now mentions database
+	configuration.
+	(Gitlab #943)
+
 1696.	[func]		fdupont
 	A new hook library libdhcp_bootp has been implemented. Once
 	loaded, this hook will provide support for BOOTP packets, as
