@@ -35,9 +35,8 @@ at a specified rate in parallel with the DHCPv6 four-way exchanges.
 Second scenario is called avalanche, which is selected by ``--scenario avalanche``.
 It first sends as many Discovery or Solicit messages as request in -R option then
 back off mechanism is used for each simulated client until all requests are
-answered. It will generate report when all clients will got their
-addresses or when it will be manually stopped. Option ``-p`` is ignored in avalanche
-scenario.
+answered. It will generate report when all clients get their addresses or when
+it will be manually stopped. Option ``-p`` is ignored in avalanche scenario.
 
 When running a performance test, ``perfdhcp`` will exchange packets with
 the server under test as fast as possible unless the ``-r`` parameter is used to
