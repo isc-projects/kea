@@ -11,6 +11,7 @@
 #include <ha_service_states.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <cc/data.h>
 #include <dhcp/pkt.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/function.hpp>
@@ -99,6 +100,12 @@ public:
     /// those returned in response to a ha-heartbeat command.
     /// @throw BadValue if unsupported state value was provided.
     void setPartnerState(const std::string& state);
+
+    std::set<std::string> getPartnerScopes() const {
+        return (partner_scopes_);
+    }
+
+    void setPartnerScopes(data::ConstElementPtr new_scopes);
 
     /// @brief Starts recurring heartbeat (public interface).
     ///
@@ -312,6 +319,9 @@ protected:
     ///
     /// Negative value means that the partner's state is unknown.
     int partner_state_;
+
+    /// @brief Last known set of scopes served by the partner server.
+    std::set<std::string> partner_scopes_;
 
     /// @brief Clock skew between the active servers.
     boost::posix_time::time_duration clock_skew_;

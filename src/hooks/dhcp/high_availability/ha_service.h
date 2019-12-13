@@ -510,8 +510,10 @@ public:
 
     /// @brief Processes status-get command and returns a response.
     ///
-    /// @c HAImpl::commandProcessed calls this to add HA servers info
-    /// into the status-get response.
+    ///
+    ///
+    /// @c HAImpl::commandProcessed calls this to add information about the
+    /// HA servers status into the status-get response.
     data::ConstElementPtr processStatusGet() const;
 
 protected:

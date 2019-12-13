@@ -40,6 +40,7 @@
 #include <gtest/gtest.h>
 #include <functional>
 #include <sstream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -1068,12 +1069,20 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     // Check the reported info about servers.
     ConstElementPtr ha_servers = service.processStatusGet();
     ASSERT_TRUE(ha_servers);
-    std::string expected = "{ "
-        "\"local\": { \"role\": \"primary\", "
-        "\"scopes\": [ \"server1\" ], "
-        "\"state\": \"hot-standby\" }, "
-        "\"remote\": { \"role\": \"standby\" } }";
-    EXPECT_EQ(expected, ha_servers->str());
+    std::string expected = "{"
+        "    \"local\": {"
+        "        \"role\": \"primary\","
+        "        \"scopes\": [ \"server1\" ],"
+        "        \"state\": \"hot-standby\""
+        "    }, "
+        "    \"remote\": {"
+        "        \"in-touch\": false,"
+        "        \"role\": \"standby\","
+        "        \"last-scopes\": [ ],"
+        "        \"last-state\": \"\""
+        "    }"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
 
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
@@ -1106,11 +1115,21 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
     // Check the reported info about servers.
     ConstElementPtr ha_servers = service.processStatusGet();
     ASSERT_TRUE(ha_servers);
-    std::string expected = "{ "
-        "\"local\": { \"role\": \"standby\", "
-        "\"scopes\": [  ], \"state\": \"waiting\" }, "
-        "\"remote\": { \"role\": \"primary\" } }";
-    EXPECT_EQ(expected, ha_servers->str());
+
+    std::string expected = "{"
+        "    \"local\": {"
+        "        \"role\": \"standby\","
+        "        \"scopes\": [ ],"
+        "        \"state\": \"waiting\""
+        "    }, "
+        "    \"remote\": {"
+        "        \"in-touch\": false,"
+        "        \"role\": \"primary\","
+        "        \"last-scopes\": [ ],"
+        "        \"last-state\": \"\""
+        "    }"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
 
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
@@ -2576,7 +2595,7 @@ public:
               const TestHttpResponseCreatorFactoryPtr& factory,
               const std::string& initial_state = "waiting")
         : listener_(listener), factory_(factory), running_(false),
-          static_date_time_() {
+          static_date_time_(), static_scopes_() {
         transition(initial_state);
     }
 
@@ -2593,6 +2612,13 @@ public:
     /// @param static_date_time fixed date-time value.
     void setDateTime(const std::string& static_date_time) {
         static_date_time_ = static_date_time;
+    }
+
+    /// @brief Sets static scopes to be used in responses.
+    ///
+    /// @param scopes Fixed scopes set.
+    void setScopes(const std::set<std::string>& scopes) {
+        static_scopes_ = scopes;
     }
 
     /// @brief Enable response to commands required for leases synchronization.
@@ -2644,6 +2670,13 @@ public:
         if (!static_date_time_.empty()) {
             response_arguments->set("date-time", Element::create(static_date_time_));
         }
+        if (!static_scopes_.empty()) {
+            auto json_scopes = Element::createList();
+            for (auto scope : static_scopes_) {
+                json_scopes->add(Element::create(scope));
+            }
+            response_arguments->set("scopes", json_scopes);
+        }
         factory_->getResponseCreator()->setArguments(response_arguments);
     }
 
@@ -2663,6 +2696,9 @@ private:
 
     /// @brief Static date-time value to be returned.
     std::string static_date_time_;
+
+    /// @brief Static scopes to be reported.
+    std::set<std::string> static_scopes_;
 };
 
 /// @brief Shared pointer to a partner.
@@ -3041,7 +3077,9 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
 
     // Partner shows up and (eventually) transitions to READY state.
-    HAPartner partner(listener2_, factory2_, "ready");
+    HAPartner partner(listener2_, factory2_);
+    partner.setScopes({ "server1", "server2" });
+    partner.transition("ready");
     partner.startup();
 
     // PARTNER DOWN state: receive a response from the partner indicating that
@@ -3056,14 +3094,21 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     // Check the reported info about servers.
     ConstElementPtr ha_servers = service_->processStatusGet();
     ASSERT_TRUE(ha_servers);
-    std::cout << ha_servers->str() << "\n";
-    std::string expected = "{ "
-        "\"local\": { \"role\": \"primary\", "
-        "\"scopes\": [ \"server1\", \"server2\" ], "
-        "\"state\": \"load-balancing\" }, "
-        "\"remote\": { \"last-known-state\": \"ready\", "
-        "\"role\": \"secondary\" } }";
-    EXPECT_EQ(expected, ha_servers->str());
+
+    std::string expected = "{"
+        "    \"local\": {"
+        "        \"role\": \"primary\","
+        "        \"scopes\": [ \"server1\", \"server2\" ], "
+        "        \"state\": \"load-balancing\""
+        "    }, "
+        "    \"remote\": {"
+        "        \"in-touch\": true,"
+        "        \"role\": \"secondary\","
+        "        \"last-scopes\": [ \"server1\", \"server2\" ],"
+        "        \"last-state\": \"ready\""
+        "    }"
+        "}";
+    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
 
     // Crash the partner and see whether our server can return to the partner
     // down state.

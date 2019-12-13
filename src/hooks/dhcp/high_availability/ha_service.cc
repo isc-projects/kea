@@ -965,8 +965,10 @@ HAService::processStatusGet() const {
     int state = getCurrState();
     try {
         local->set("state", Element::create(stateToString(state)));
-    } catch (const std::exception&) {
-        /* ignore errors */
+
+    } catch (...) {
+        // Empty string on error.
+        local->set("state", Element::create(std::string()));
     }
     std::set<std::string> scopes = query_filter_.getServedScopes();
     ElementPtr list = Element::createList();
@@ -978,24 +980,39 @@ HAService::processStatusGet() const {
 
     // Remote part
     ElementPtr remote = Element::createMap();
+
+    // Add the in-touch boolean flag to indicate whether there was any
+    // communication between the HA peers. Based on that, the user
+    // may determine if the status returned for the peer is based on
+    // the heartbeat or is to be determined.
+    remote->set("in-touch", Element::create(communication_state_->getPartnerState() > 0));
+
     try {
         role = config_->getFailoverPeerConfig()->getRole();
         std::string role_txt = HAConfig::PeerConfig::roleToString(role);
         remote->set("role", Element::create(role_txt));
-    } catch (const std::exception&) {
-        /* ignore errors */
+
+    } catch (...) {
+        remote->set("role", Element::create(std::string()));
     }
+
     try {
         state = getPartnerState();
-        remote->set("last-known-state", Element::create(stateToString(state)));
-    } catch (const std::exception&) {
-        /* ignore errors */
+        remote->set("last-state", Element::create(stateToString(state)));
+
+    } catch (...) {
+        remote->set("last-state", Element::create(std::string()));
     }
-    // No current way to get remote scopes.
-    // Add remote if not empty.
-    if (remote->size() > 0) {
-        ha_servers->set("remote", remote);
+
+    // Remote server's scopes.
+    scopes = communication_state_->getPartnerScopes();
+    list = Element::createList();
+    for (auto scope : scopes) {
+        list->add(Element::create(scope));
     }
+    remote->set("last-scopes", list);
+    ha_servers->set("remote", remote);
+
     return (ha_servers);
 }
 
@@ -1084,6 +1101,19 @@ HAService::asyncSendHeartbeat() {
                     }
                     // Note the time returned by the partner to calculate the clock skew.
                     communication_state_->setPartnerTime(date_time->stringValue());
+
+                    // Remember the scopes served by the partner.
+                    try {
+                        auto scopes = args->get("scopes");
+                        communication_state_->setPartnerScopes(scopes);
+
+                    } catch (...) {
+                        // We don't want to fail if the scopes are missing because
+                        // this would be incompatible with old HA hook library
+                        // versions. We may make it mandatory one day, but during
+                        // upgrades of existing HA setup it would be a real issue
+                        // if we failed here.
+                    }
 
                 } catch (const std::exception& ex) {
                     LOG_WARN(ha_logger, HA_HEARTBEAT_FAILED)
