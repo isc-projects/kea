@@ -5,7 +5,7 @@ SHTESTS += dhcp4_process_tests.sh
 
 noinst_SCRIPTS = dhcp4_process_tests.sh
 
-EXTRA_DIST  = dhcp4_process_tests.sh.in
+EXTRA_DIST  = dhcp4_process_tests.sh.in get_config_unittest.cc.skel
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
