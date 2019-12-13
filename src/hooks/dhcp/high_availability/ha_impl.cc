@@ -277,7 +277,7 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
         // Add the ha servers info to arguments.
         ElementPtr mutable_resp_args =
             boost::const_pointer_cast<Element>(resp_args);
-        ConstElementPtr ha_servers = service_->commandProcessed();
+        ConstElementPtr ha_servers = service_->processStatusGet();
         mutable_resp_args->set("ha-servers", ha_servers);
     }
 }

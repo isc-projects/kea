@@ -511,7 +511,7 @@ public:
     ///
     /// @c HAImpl::commandProcessed calls this to add HA servers info
     /// into the status-get response.
-    data::ConstElementPtr commandProcessed() const;
+    data::ConstElementPtr processStatusGet() const;
 
 protected:
 

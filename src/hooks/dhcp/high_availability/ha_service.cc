@@ -953,7 +953,7 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
 }
 
 ConstElementPtr
-HAService::commandProcessed() const {
+HAService::processStatusGet() const {
     ElementPtr ha_servers = Element::createMap();
 
     // Local part

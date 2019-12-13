@@ -1066,7 +1066,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     service.runModel(HAService::NOP_EVT);
 
     // Check the reported info about servers.
-    ConstElementPtr ha_servers = service.commandProcessed();
+    ConstElementPtr ha_servers = service.processStatusGet();
     ASSERT_TRUE(ha_servers);
     std::string expected = "{ "
         "\"local\": { \"role\": \"primary\", "
@@ -1104,7 +1104,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
     TestHAService service(io_service_, network_state_, config_storage);
 
     // Check the reported info about servers.
-    ConstElementPtr ha_servers = service.commandProcessed();
+    ConstElementPtr ha_servers = service.processStatusGet();
     ASSERT_TRUE(ha_servers);
     std::string expected = "{ "
         "\"local\": { \"role\": \"standby\", "
@@ -3044,7 +3044,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     ASSERT_FALSE(isFailureDetected());
 
     // Check the reported info about servers.
-    ConstElementPtr ha_servers = service_->commandProcessed();
+    ConstElementPtr ha_servers = service_->processStatusGet();
     ASSERT_TRUE(ha_servers);
     std::cout << ha_servers->str() << "\n";
     std::string expected = "{ "
