@@ -26,17 +26,25 @@ from simulated multiple clients. It is able to test both IPv4 and IPv6
 servers, and provides statistics concerning response times and the
 number of requests that are dropped.
 
+The tool supports scenarios, which offer certain behaviours.
 By default (basic scenario) tests are run using the full four-packet exchange sequence
 (DORA for DHCPv4, SARR for DHCPv6). An option is provided to run tests
 using the initial two-packet exchange (DO and SA) instead. It is also
 possible to configure ``perfdhcp`` to send DHCPv6 RENEW and RELEASE messages
-at a specified rate in parallel with the DHCPv6 four-way exchanges.
+at a specified rate in parallel with the DHCPv6 four-way exchanges. By
+default, if there is no response received with 1 second, a response is
+considered lost and perfdhcp continues with other transactions.
 
 Second scenario is called avalanche, which is selected by ``--scenario avalanche``.
 It first sends as many Discovery or Solicit messages as request in -R option then
-back off mechanism is used for each simulated client until all requests are
+a retransmission (with exponential back off mechanism) is used for each simulated client until all requests are
 answered. It will generate report when all clients get their addresses or when
-it will be manually stopped. Option ``-p`` is ignored in avalanche scenario.
+it will be manually stopped. This scenario attempts to replicate a
+case where the server is not able to handle the traffic swiftly
+enough. Real clients will assume the packet or the response was lost
+and will retransmit, further increasing DHCP traffic. This is
+sometimes called avalanche effect, thus the scenario name.
+Option ``-p`` is ignored in avalanche scenario.
 
 When running a performance test, ``perfdhcp`` will exchange packets with
 the server under test as fast as possible unless the ``-r`` parameter is used to
