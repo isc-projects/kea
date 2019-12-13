@@ -15,7 +15,7 @@ perfdhcp - DHCP benchmarking tool
 Synopsis
 ~~~~~~~~
 
-:program:`perfdhcp` [**-1**] [**-4**|**-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [-n num-request] [-N remote-port] [-O random-offset] [-o code,hexstring] [-p test-period] [-P preload] [-r rate] [-R num-clients] [-s seed] [-S srvid-offset] [-t report] [-T template-file] [-v] [-W exit-wait-time] [-w script_name] [-x diagnostic-selector] [-X xid-offset] [server]
+:program:`perfdhcp` [**-1**] [**-4**|**-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
 
 Description
 ~~~~~~~~~~~
@@ -26,11 +26,18 @@ from simulated multiple clients. It is able to test both IPv4 and IPv6
 servers, and provides statistics concerning response times and the
 number of requests that are dropped.
 
-By default, tests are run using the full four-packet exchange sequence
+By default (basic scenario) tests are run using the full four-packet exchange sequence
 (DORA for DHCPv4, SARR for DHCPv6). An option is provided to run tests
 using the initial two-packet exchange (DO and SA) instead. It is also
 possible to configure ``perfdhcp`` to send DHCPv6 RENEW and RELEASE messages
 at a specified rate in parallel with the DHCPv6 four-way exchanges.
+
+Second scenario is called avalanche, which is selected by ``--scenario avalanche``.
+It first sends as many Discovery or Solicit messages as request in -R option then
+back off mechanism is used for each simulated client until all requests are
+answered. It will generate report when all clients will got their
+addresses or when it will be manually stopped. Option ``-p`` is ignored in avalanche
+scenario.
 
 When running a performance test, ``perfdhcp`` will exchange packets with
 the server under test as fast as possible unless the ``-r`` parameter is used to
@@ -234,6 +241,9 @@ Options
    Specifies the seed for randomization, making runs of ``perfdhcp``
    repeatable. This must be 0 or a positive integer. The value 0 means that a
    seed is not used; this is the default.
+
+``--scenario name``
+   Specifies type of the scenario, can be **basic** (default) or **avalanche**.
 
 ``-T template-file``
    Specifies a file containing the template to use as a stream of
