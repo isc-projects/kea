@@ -810,7 +810,7 @@ Configuring the Forensic Log Hooks
 
 To use this functionality, the hook library must be included in the
 configuration of the desired DHCP server modules. The legal_log library
-is able to save logs to text file or into database (created using
+is able to save logs to a text file or a database (created using
 ``kea-admin`` see :ref:`mysql-database-create`, :ref:`pgsql-database-create`).
 Library is installed alongside the Kea libraries in
 ``[kea-install-dir]/var/lib/kea`` where ``kea-install-dir`` is determined
@@ -859,7 +859,7 @@ Two hooks library parameters for text file are supported:
    current system date to form the current forensic file name. It
    defaults to ``kea-legal``.
 
-And additional parameters for database connection e.g:
+And additional parameters for database connection can be specified, e.g:
 
 ::
    "Dhcp6": {
