@@ -543,7 +543,7 @@ The ``dhcp-enable`` command globally enables the DHCP service.
 The status-get Command
 ----------------------
 
-The ``status-get`` command returns server runtime information:
+The ``status-get`` command returns server's runtime information:
 
  - pid: process id.
 
@@ -551,20 +551,25 @@ The ``status-get`` command returns server runtime information:
 
  - reload: number of seconds since the last configuration (re)load.
 
- - ha-servers: HA hook information when the hook was loaded:
+ - ha-servers: HA specific status information about the DHCP servers
+   configured to use HA hooks library:
 
      * local: for the local server the state, the role (primary,
        secondary, ...) and scopes (i.e. what the server is actually
        processing).
 
-     * remote: for the remote server the last known state and the role
-       (scopes should be available in a future release)
+     * remote: for the remote server the last known state, served
+       HA scopes and the role of the server in HA relationship.
 
-.. note::
+The ``ha-servers`` information is only returned when the command is
+sent to the DHCP servers being in the HA setup. This parameter is
+never returned when the ``status-get`` command is sent to the
+Control Agent or DDNS deamon.
 
-   The HA local server does not always know the current state of the
-   HA remote server. The command (or the ``ha-heartbeat``) should be
-   sent to the remote server as explained in HA :ref:`ha-server-states`.
+To learn more about the HA status information returned by the
+``status-get`` command please refer to the the :ref:`command-ha-status-get`
+section.
+
 
 .. _command-server-tag-get:
 
