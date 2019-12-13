@@ -859,10 +859,11 @@ Two hooks library parameters for text file are supported:
    current system date to form the current forensic file name. It
    defaults to ``kea-legal``.
 
-And additional parameters for database connection can be specified, e.g:
+Additional parameters for the database connection can be specified, e.g:
 
 ::
-   "Dhcp6": {
+
+    "Dhcp6": {
        "hooks-libraries": [
            {
                "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
