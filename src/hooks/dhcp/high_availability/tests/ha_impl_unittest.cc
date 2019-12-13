@@ -570,6 +570,7 @@ TEST_F(HAImplTest, statusGet) {
         "                \"state\": \"waiting\""
         "            },"
         "            \"remote\": {"
+        "                \"age\": 0,"
         "                \"in-touch\": false,"
         "                \"last-scopes\": [ ],"
         "                \"last-state\": \"\","

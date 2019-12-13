@@ -1076,6 +1076,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
         "        \"state\": \"hot-standby\""
         "    }, "
         "    \"remote\": {"
+        "        \"age\": 0,"
         "        \"in-touch\": false,"
         "        \"role\": \"standby\","
         "        \"last-scopes\": [ ],"
@@ -1123,6 +1124,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
         "        \"state\": \"waiting\""
         "    }, "
         "    \"remote\": {"
+        "        \"age\": 0,"
         "        \"in-touch\": false,"
         "        \"role\": \"primary\","
         "        \"last-scopes\": [ ],"
@@ -3095,6 +3097,22 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     ConstElementPtr ha_servers = service_->processStatusGet();
     ASSERT_TRUE(ha_servers);
 
+    // Hard to know what is the age of the remote data. Therefore, let's simply
+    // grab it from the response.
+    ASSERT_EQ(Element::map, ha_servers->getType());
+    auto remote = ha_servers->get("remote");
+    ASSERT_TRUE(remote);
+    EXPECT_EQ(Element::map, remote->getType());
+    auto age = remote->get("age");
+    ASSERT_TRUE(age);
+    EXPECT_EQ(Element::integer, age->getType());
+    auto age_value = age->intValue();
+    EXPECT_GE(age_value, 0);
+
+    // Now append it to the whole structure for comparison.
+    std::ostringstream s;
+    s << age_value;
+
     std::string expected = "{"
         "    \"local\": {"
         "        \"role\": \"primary\","
@@ -3102,6 +3120,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
         "        \"state\": \"load-balancing\""
         "    }, "
         "    \"remote\": {"
+        "        \"age\": " + s.str() + ","
         "        \"in-touch\": true,"
         "        \"role\": \"secondary\","
         "        \"last-scopes\": [ \"server1\", \"server2\" ],"

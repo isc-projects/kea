@@ -985,7 +985,12 @@ HAService::processStatusGet() const {
     // communication between the HA peers. Based on that, the user
     // may determine if the status returned for the peer is based on
     // the heartbeat or is to be determined.
-    remote->set("in-touch", Element::create(communication_state_->getPartnerState() > 0));
+    auto in_touch = (communication_state_->getPartnerState() > 0);
+    remote->set("in-touch", Element::create(in_touch));
+
+    auto age = in_touch ?
+        static_cast<long long int>(communication_state_->getDurationInMillisecs() / 1000) : 0;
+    remote->set("age", Element::create(age));
 
     try {
         role = config_->getFailoverPeerConfig()->getRole();
