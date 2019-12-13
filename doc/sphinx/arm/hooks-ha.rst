@@ -1330,6 +1330,7 @@ the HA status of two load balancing servers:
                    "state": "load-balancing"
                },
                 "remote": {
+                   "age": 10,
                    "in-touch": true,
                    "role": "secondary",
                    "last-scopes": [ "server2" ],
@@ -1358,4 +1359,6 @@ is gathered during the heartbeat command exchange, so it may not be
 accurate if the communication problem occur between the partners and this
 status information is not refreshed. In such case, it may be useful to
 send the ``status-get`` command to the partner server directly to check
-its current state.
+its current state. The ``age`` parameter specifies the number of seconds
+since the information from the partner was gathered (the age of this
+information).

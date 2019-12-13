@@ -28,6 +28,7 @@
         "                \"state\": <HA state name of the server receiving the command>,",
         "            },",
         "            \"remote\": {",
+        "                \"age\": <the age of the remote status in seconds>,",
         "                \"in-touch\": <indicates if this server communicated with remote>,",
         "                \"last-scopes\": <list of scopes served by partner>,",
         "                \"last-state\": <HA state name of the partner>,",
