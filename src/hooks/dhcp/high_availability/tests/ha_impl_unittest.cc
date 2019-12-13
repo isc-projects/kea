@@ -561,13 +561,23 @@ TEST_F(HAImplTest, statusGet) {
     ASSERT_TRUE(got);
 
     std::string expected =
-        "{ \"arguments\": { "
-        "\"ha-servers\": { "
-        "\"local\": { \"role\": \"primary\", \"scopes\": [  ], "
-        "\"state\": \"waiting\" }, "
-        "\"remote\": { \"role\": \"secondary\" } }, "
-        "\"pid\": 1 }, \"result\": 0 }";
-    EXPECT_EQ(expected, got->str());
+        "{"
+        "    \"arguments\": {"
+        "        \"ha-servers\": {"
+        "            \"local\": {"
+        "                \"role\": \"primary\","
+        "                \"scopes\": [  ],"
+        "                \"state\": \"waiting\""
+        "            },"
+        "            \"remote\": {"
+        "                \"role\": \"secondary\""
+        "            }"
+        "        },"
+        "        \"pid\": 1"
+        "    },"
+        "    \"result\": 0"
+        "}";
+    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
 }
 
 }
