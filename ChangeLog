@@ -1,3 +1,9 @@
+1699.	[func]		fdupont, marcin
+	Implemented status-get command which returns general status
+	information about a Kea server status and optionally
+	HA specific information if the HA hooks library is present.
+	(Gitlab #1041)
+
 1698.	[doc]		wlodek
 	Avalanche scenario for perfdhcp is now documented.
 	(Gitlab #876)
