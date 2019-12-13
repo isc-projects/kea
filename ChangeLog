@@ -1,3 +1,7 @@
+1698.	[doc]		wlodek
+	Avalanche scenario for perfdhcp is now documented.
+	(Gitlab #876)
+
 1697.	[doc]		wlodek
 	Forensic logging documentation now mentions database
 	configuration.
