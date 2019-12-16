@@ -1,3 +1,5 @@
+Kea 1.7.3 released on Nov 18th, 2019
+
 1699.	[func]		fdupont, marcin
 	Implemented status-get command which returns general status
 	information about a Kea server status and optionally
