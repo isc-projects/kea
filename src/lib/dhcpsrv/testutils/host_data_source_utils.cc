@@ -209,6 +209,8 @@ HostDataSourceUtils::compareDuids(const ConstHostPtr& host1,
 void
 HostDataSourceUtils::compareHosts(const ConstHostPtr& host1,
                                   const ConstHostPtr& host2) {
+    ASSERT_TRUE(host1);
+    ASSERT_TRUE(host2);
     // Let's compare HW addresses and expect match.
     compareHwaddrs(host1, host2, true);
 

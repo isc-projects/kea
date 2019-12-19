@@ -1782,9 +1782,9 @@ GenericLeaseMgrTest::testGetLeases6Duid() {
     Lease6Collection returned3 = lmptr_->getLeases6(*(lease3->duid_));
 
     //verify if the returned lease mathces
-    EXPECT_EQ(returned1.size(), 1);
-    EXPECT_EQ(returned2.size(), 1);
-    EXPECT_EQ(returned3.size(), 1);
+    ASSERT_EQ(returned1.size(), 1);
+    ASSERT_EQ(returned2.size(), 1);
+    ASSERT_EQ(returned3.size(), 1);
 
     //verify that the returned lease are same
     EXPECT_TRUE(returned1[0]->addr_ == lease1->addr_);

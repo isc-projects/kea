@@ -26,6 +26,8 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     // odd things happen when they are different: the EXPECT_EQ macro appears to
     // call the operator uint32_t() function, which causes an exception to be
     // thrown for IPv6 addresses.
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(second);
     EXPECT_EQ(first->addr_, second->addr_);
 
     // We need to compare the actual HWAddr objects, not pointers
@@ -66,6 +68,8 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
 
 void
 detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(second);
     EXPECT_EQ(first->type_, second->type_);
 
     // Compare address strings.  Comparison of address objects is not used, as
