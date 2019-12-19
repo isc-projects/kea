@@ -141,6 +141,7 @@
  *   - @subpage logNotes
  * - @subpage LoggingApi
  * - @subpage SocketSessionUtility
+ * - @subpage fuzzer
  * - @subpage docs
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
