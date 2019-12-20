@@ -36,20 +36,21 @@ import xml.etree.ElementTree as ET
 # TODO:
 # - add docker provider
 #   https://developer.fedoraproject.org/tools/docker/docker-installation.html
-# - avoid using network if possible (e.g. check first if pkgs are installed)
 
 
 SYSTEMS = {
     'fedora': [#'27',  # EOLed
                #'28',  # EOLed
                '29',
-               '30'],
+               '30',
+               '31'],
     'centos': ['7', '8'],
     'rhel': ['8'],
     'ubuntu': [#'16.04',
                '18.04',
                #'18.10',  # EOLed
-               '19.04'],
+               '19.04',
+               '19.10'],
     'debian': [#'8',
                '9',
                '10'],
@@ -68,6 +69,8 @@ IMAGE_TEMPLATES = {
     'fedora-29-virtualbox':    {'bare': 'generic/fedora29',            'kea': 'godfryd/kea-fedora-29'},
     'fedora-30-lxc':           {'bare': 'godfryd/lxc-fedora-30',       'kea': 'godfryd/kea-fedora-30'},
     'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
+    'fedora-31-lxc':           {'bare': 'isc/lxc-fedora-31',           'kea': 'isc/kea-fedora-31'},
+    'fedora-31-virtualbox':    {'bare': 'isc/vbox-fedora-31',          'kea': 'isc/kea-fedora-31'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
     'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
@@ -81,6 +84,8 @@ IMAGE_TEMPLATES = {
     'ubuntu-18.10-virtualbox': {'bare': 'ubuntu/cosmic64',             'kea': 'godfryd/kea-ubuntu-18.10'},
     'ubuntu-19.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-19.04',    'kea': 'godfryd/kea-ubuntu-19.04'},
     'ubuntu-19.04-virtualbox': {'bare': 'ubuntu/disco64',              'kea': 'godfryd/kea-ubuntu-19.04'},
+    'ubuntu-19.10-lxc':        {'bare': 'isc/lxc-ubuntu-19.10',        'kea': 'isc/kea-ubuntu-19.10'},
+    'ubuntu-19.10-virtualbox': {'bare': 'generic/ubuntu1910',          'kea': 'isc/kea-ubuntu-19.10'},
     'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
     'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
     'debian-9-lxc':            {'bare': 'godfryd/lxc-debian-9',        'kea': 'godfryd/kea-debian-9'},
@@ -189,6 +194,8 @@ def get_system_revision():
     elif system == 'FreeBSD':
         system = system.lower()
         revision = platform.release()
+    if '"' in revision:
+        revision = revision.replace('"', '')
     return system.lower(), revision
 
 
@@ -1045,7 +1052,7 @@ def _install_cassandra_rpm(system, revision, env, check_times):
     if system == 'centos':
         execute('sudo systemctl daemon-reload')
 
-    if system == 'fedora' and revision == '30':
+    if system == 'fedora' and int(revision) >= 30:
         execute("echo '-Xms1G -Xmx1G' | sudo tee -a /etc/cassandra/jvm.options")
     execute('sudo systemctl start cassandra')
 
@@ -1105,6 +1112,8 @@ def prepare_system_local(features, check_times):
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'texlive', 'texlive-collection-latexextra'])
+            if int(revision) >= 31:
+                packages.extend(['python3-sphinx_rtd_theme'])
 
         if 'mysql' in features:
             execute('sudo dnf remove -y community-mysql-devel || true')
@@ -1112,7 +1121,7 @@ def prepare_system_local(features, check_times):
 
         if 'pgsql' in features:
             packages.extend(['postgresql-devel', 'postgresql-server'])
-            if revision in ['30']:
+            if int(revision) >= 30:
                 packages.extend(['postgresql-server-devel'])
 
         if 'radius' in features:
@@ -1609,6 +1618,9 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     elif system == 'fedora' and revision == '30':
         frc.append('freeradius-client-1.1.7-isc20190916210635.fc30')
         frc.append('freeradius-client-devel-1.1.7-isc20190916210635.fc30')
+    elif system == 'fedora' and revision == '31':
+        frc.append('freeradius-client-1.1.7-isc20191219090215.fc31')
+        frc.append('freeradius-client-devel-1.1.7-isc20191219090215.fc31')
     elif system == 'centos' and revision == '7':
         frc.append('freeradius-client-1.1.7-isc20190916210635.el7')
         frc.append('freeradius-client-devel-1.1.7-isc20190916210635.el7')
@@ -1911,7 +1923,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
 ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg',
-                'radius', 'shell', 'forge', 'perfdhcp', 'ccache']
+                'radius', 'shell', 'forge', 'perfdhcp', 'ccache', 'all']
 
 
 def parse_args():
@@ -2093,13 +2105,27 @@ def destroy_system(path):
 
 def _get_features(args):
     features = set(vars(args)['with'])
-    # distcheck is not compatible with defaults so do not add them
-    if 'distcheck' not in features:
+
+    # establish initial set of features
+    if 'all' in features:
+        # special case 'all' but some of features needs to be removed
+        # as they are not compatible with others
+        features = set(ALL_FEATURES)
+        features.discard('all')
+        features.discard('distcheck')
+        features.discard('native-pkg')
+        features.discard('ccache')
+    elif 'distcheck' not in features:
+        # distcheck is not compatible with defaults so do not add defaults
         features = features.union(DEFAULT_FEATURES)
+
     nofeatures = set(args.without)
     features = features.difference(nofeatures)
+
     if hasattr(args, 'ccache_dir') and args.ccache_dir:
         features.add('ccache')
+
+    # if we build native packages then some features are required and some not
     if 'native-pkg' in features:
         features.add('docs')
         features.add('perfdhcp')
@@ -2108,6 +2134,7 @@ def _get_features(args):
         features.add('pgsql')
         features.add('radius')
         features.discard('unittest')
+
     return features
 
 
