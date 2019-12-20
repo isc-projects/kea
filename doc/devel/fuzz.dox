@@ -280,4 +280,26 @@ above was adopted for the single-threaded Kea 1.6.  Should Kea be modified to
 become multi-threaded, the fuzzing code will need to be changed back to reading
 the AFL input in the background.
 
+@section fuzzNotes Notes
+
+@subsection fuzzNotesUnitTests Unit Test Failures
+
+If unit tests are built when --enable-fuzzing is specified, note that tests
+which check or use the DHCP servers (i.e. the unit tests in src/bin/dhcp4,
+src/bin/dhcp6 and src/bin/kea-admin) will fail.  With no AFL-related
+environment variables defined, a C++ exception will be thrown with the
+description "no fuzzing interface has been set".  However, if the
+KEA_AFL_INTERFACE and KEA_AFL_ADDRESS variables are set to valid values, the
+tests will hang.
+
+Both these results are expected and should cause no concern.  The exception is
+thrown by the fuzzing object constructor when it attempts to create the address
+structures for routing packets between AFL and Kea but discovers it does not
+have the necessary information.  The hang is due to the fact that the AFL
+processing loop does a synchronous read from stdin, something not expected by
+the test. (Should random input be supplied on stdin, e.g.  from the keyboard,
+the test will most likely fail as the input is unlikely to be that expected by
+the test.)
+
+
 */

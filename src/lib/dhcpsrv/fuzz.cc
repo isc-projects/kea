@@ -68,8 +68,8 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
             try {
                 loop_max_ = boost::lexical_cast<long>(loop_max_ptr);
             } catch (const boost::bad_lexical_cast&) {
-                reason << "cannot convert port number specification "
-                       << loop_max_ptr << " to an integer";
+                reason << "cannot convert loop count " << loop_max_ptr
+                       << " to an integer";
                 isc_throw(FuzzInitFail, reason.str());
             }
 
