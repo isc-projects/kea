@@ -185,7 +185,7 @@ public:
     /// suffix itself is empty (i.e. "").
     ///
     /// @return std::string containing the qualified name.
-    std::string qualifyName(const std::string& partial_name,
+    std::string qualifyName(const std::string& partial_name, const std::string& domain_suffix,
                             const bool trailing_dot) const;
 
     /// @brief Set server FQDN flags based on configuration and a given FQDN
@@ -243,7 +243,7 @@ public:
     /// @tparam T  FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
-    void adjustDomainName(const T& fqdn, T& fqdn_resp);
+    void adjustDomainName(const T& fqdn, T& fqdn_resp, const std::string& domain_suffix);
 
     /// @brief Enables sending NameChangeRequests to kea-dhcp-ddns
     ///
@@ -454,7 +454,7 @@ D2ClientMgr::getUpdateDirections(const T& fqdn_resp,
 
 template <class T>
 void
-D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
+D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const std::string & domain_suffix) {
     // If we're configured to replace it or the supplied name is blank
     // set the response name to blank.
     if ((d2_client_config_->getReplaceClientNameMode() == D2ClientConfig::RCM_ALWAYS ||
@@ -464,7 +464,7 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
     } else {
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == T::PARTIAL) {
-            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName(),true), T::FULL);
+            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName(), domain_suffix, true), T::FULL);
         }
     }
 }
