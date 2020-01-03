@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 
 #include <boost/function.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <sstream>
 #include <mutex>
 
@@ -36,6 +37,7 @@ public:
     PacketQueueRing(const std::string& queue_type, size_t capacity)
         : PacketQueue<PacketTypePtr>(queue_type) {
         queue_.set_capacity(capacity);
+        mutex_.reset(new std::mutex);
     }
 
     /// @brief virtual Destructor
@@ -105,7 +107,7 @@ public:
     /// @param to specifies the end of the queue to which the packet
     /// should be added.
     virtual void pushPacket(PacketTypePtr& packet, const QueueEnd& to=QueueEnd::BACK) {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(*mutex_);
         if (to == QueueEnd::BACK) {
             queue_.push_back(packet);
         } else {
@@ -123,9 +125,9 @@ public:
     /// @return A pointer to dequeued packet, or an empty pointer
     /// if the queue is empty.
     virtual PacketTypePtr popPacket(const QueueEnd& from = QueueEnd::FRONT) {
-        std::lock_guard<std::mutex> lock(mutex_);
-
         PacketTypePtr packet;
+        std::lock_guard<std::mutex> lock(*mutex_);
+
         if (queue_.empty()) {
             return (packet);
         }
@@ -162,14 +164,7 @@ public:
 
     /// @brief Returns True if the queue is empty.
     virtual bool empty() const {
-        return (queue_.empty());
-    }
-
-    /// @brief return True if dequeue will not return null.
-    /// Use the mutex so race free with a concurrent enqueue.
-    virtual bool canDequeue() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return (!queue_.empty());
+        return(queue_.empty());
     }
 
     /// @brief Returns the maximum number of packets allowed in the buffer.
@@ -218,7 +213,7 @@ private:
     boost::circular_buffer<PacketTypePtr> queue_;
 
     /// @brief Mutex for protecting queue accesses.
-    std::mutex mutex_;
+    boost::scoped_ptr<std::mutex> mutex_;
 };
 
 

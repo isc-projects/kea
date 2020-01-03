@@ -87,10 +87,11 @@ increase the time it takes each unit test to execute.
 @section unitTestsSanitizers Use Sanitizers
 
   GCC and LLVM support some sanitizers which perform additional tests
-  at runtime, for instance the ThreadSanitizer (aka TSan) detects
-  data race in executed C++ code (unfortunately it intercepts signals
-  and fails to send them to waiting select system calls so some tests
-  always fail when it is used).
+  at runtime, for instance the ThreadSanitizer (aka TSan) detects data
+  race in executed C++ code (unfortunately on macOS it intercepts
+  signals and fails to send them to waiting select system calls so
+  some tests always fail when it is used, experiments are run with
+  different versions of Tsan).
 
   The simplest way to enable a sanitizer is to add it to the CXX
   environment variable in .configure by e.g. <i>-fsanitize=thread</i>.
