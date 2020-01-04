@@ -281,6 +281,9 @@
 
                 // Connection tcp nodelay.
                 "tcp-nodelay": true
+
+                // SSL certificate to be used for connection.
+                "ssl-cert": "/etc/kea/ssl/myclient.crt"
             }
         ],
 
