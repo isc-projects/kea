@@ -85,6 +85,7 @@ using namespace std;
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
   MAX_ROW_ERRORS "max-row-errors"
+  SSL_CERT "ssl-cert"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   MIN_PREFERRED_LIFETIME "min-preferred-lifetime"
@@ -781,6 +782,7 @@ database_map_param: database_type
                   | consistency
                   | serial_consistency
                   | max_row_errors
+                  | ssl_cert
                   | unknown_map_entry
                   ;
 
@@ -862,6 +864,14 @@ reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-row-errors", n);
+};
+
+ssl_cert: SSL_CERT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ssl-cert", cp);
+    ctx.leave();
 };
 
 request_timeout: REQUEST_TIMEOUT COLON INTEGER {
