@@ -67,7 +67,8 @@
 // and contact-points. At least one contact point must be specified, but
 // more than one is required for redundancy. Make sure you specify the
 // contact points without spaces. Kea must be compiled with --with-cql
-// option to use this backend.
+// option to use this backend. To be able to use SSL cpp-driver must be
+// compiled with SSL support and certificate must be provided with ssl-cert
 //  "lease-database": {
 //      "type": "cql",
 //      "keyspace": "keatest",
