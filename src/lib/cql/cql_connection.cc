@@ -30,7 +30,7 @@ namespace db {
 
 CqlConnection::CqlConnection(const ParameterMap& parameters)
     : DatabaseConnection(parameters), statements_(), cluster_(NULL),
-      session_(NULL), consistency_(CASS_CONSISTENCY_QUORUM),
+      session_(NULL), ssl_(NULL), consistency_(CASS_CONSISTENCY_QUORUM),
       serial_consistency_(CASS_CONSISTENCY_UNKNOWN), schema_meta_(NULL),
       keyspace_meta_(NULL), force_consistency_(true) {
 }
@@ -61,6 +61,12 @@ CqlConnection::~CqlConnection() {
         cass_future_free(close_future);
         cass_session_free(session_);
         session_ = NULL;
+    }
+
+    // If SSL is not enabled, then free resources.
+    if (ssl_) {
+        cass_ssl_free(ssl_);
+        ssl_ = NULL;
     }
 
     // Free the cluster if there's one.
@@ -220,6 +226,15 @@ CqlConnection::openDatabase() {
         // No tcp-nodelay. Fine, we'll use the default false.
     }
 
+    const char* ssl_cert = NULL;
+    std::string sssl_cert;
+    try {
+        sssl_cert = getParameter("ssl-cert");
+        ssl_cert = sssl_cert.c_str();
+    } catch (...) {
+        // No ssl-cert. Fine, we'll disable the ssl verification.
+    }
+
     cluster_ = cass_cluster_new();
     cass_cluster_set_contact_points(cluster_, contact_points);
 
@@ -348,6 +363,59 @@ CqlConnection::openDatabase() {
         cass_cluster_set_tcp_nodelay(cluster_, cass_true);
     }
 
+    ssl_ = cass_ssl_new();
+
+    if (ssl_cert) {
+        char* cert;
+        long cert_size;
+        size_t bytes_read;
+
+        FILE *ssl_cert_file = fopen(ssl_cert, "rb");
+        if (ssl_cert_file == NULL) {
+            cass_ssl_free(ssl_);
+            ssl_ = NULL;
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
+            isc_throw(DbOperationError,
+                      "CqlConnection::openDatabase(): "
+                      "invalid ssl certificate file: "
+                          << ssl_cert);
+        }
+
+        fseek(ssl_cert_file, 0, SEEK_END);
+        cert_size = ftell(ssl_cert_file);
+        rewind(ssl_cert_file);
+
+        cert = new char[cert_size];
+        bytes_read = fread(cert, 1, cert_size, ssl_cert_file);
+        fclose(ssl_cert_file);
+
+        bool ssl_error = false;
+        if (bytes_read == (size_t) cert_size) {
+            rc = cass_ssl_add_trusted_cert_n(ssl_, cert, cert_size);
+            if (rc != CASS_OK) {
+                ssl_error = true;
+            }
+        } else {
+            ssl_error = true;
+        }
+        delete[] cert;
+        if (ssl_error) {
+            cass_ssl_free(ssl_);
+            ssl_ = NULL;
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
+            isc_throw(DbOperationError,
+                      "CqlConnection::openDatabase(): "
+                      "error loading ssl certificate file: "
+                          << ssl_cert);
+        }
+        cass_ssl_set_verify_flags(ssl_, CASS_SSL_VERIFY_PEER_CERT);
+        cass_cluster_set_ssl(cluster_, ssl_);
+    } else {
+        cass_ssl_set_verify_flags(ssl_, CASS_SSL_VERIFY_NONE);
+    }
+
     session_ = cass_session_new();
 
     CassFuture* connect_future =
@@ -360,6 +428,8 @@ CqlConnection::openDatabase() {
     rc = cass_future_error_code(connect_future);
     cass_future_free(connect_future);
     if (rc != CASS_OK) {
+        cass_ssl_free(ssl_);
+        ssl_ = NULL;
         cass_session_free(session_);
         session_ = NULL;
         cass_cluster_free(cluster_);
