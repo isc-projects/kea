@@ -195,6 +195,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "contact-points") ||
+                   (keyword == "ssl-cert") ||
+                   (keyword == "ssl-protocol") ||
                    (keyword == "consistency") ||
                    (keyword == "serial-consistency") ||
                    (keyword == "keyspace")) {
