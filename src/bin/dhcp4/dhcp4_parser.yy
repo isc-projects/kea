@@ -101,6 +101,7 @@ using namespace std;
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
   MAX_ROW_ERRORS "max-row-errors"
+  SSL_CERT "ssl-cert"
 
   VALID_LIFETIME "valid-lifetime"
   MIN_VALID_LIFETIME "min-valid-lifetime"
@@ -826,6 +827,7 @@ database_map_param: database_type
                   | consistency
                   | serial_consistency
                   | max_row_errors
+                  | ssl_cert
                   | unknown_map_entry
                   ;
 
@@ -961,6 +963,13 @@ max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ctx.stack_.back()->set("max-row-errors", n);
 };
 
+ssl_cert: SSL_CERT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ssl-cert", cp);
+    ctx.leave();
+};
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
