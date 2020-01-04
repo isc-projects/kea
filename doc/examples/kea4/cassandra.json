@@ -80,6 +80,9 @@
       // - local-one
       // See https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html for more details.
       "serial-consistency": "serial"
+
+      // SSL certificate to be used upon connection
+      "ssl-cert": ""
   },
 
 // Addresses will be assigned with a lifetime of 4000 seconds.
