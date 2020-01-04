@@ -379,7 +379,7 @@ CqlConnection::openDatabase() {
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): "
                       "invalid ssl certificate file: "
-                          << ssl_cert);
+                          << sssl_cert);
         }
 
         fseek(ssl_cert_file, 0, SEEK_END);
@@ -408,7 +408,7 @@ CqlConnection::openDatabase() {
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): "
                       "error loading ssl certificate file: "
-                          << ssl_cert);
+                          << sssl_cert);
         }
         cass_ssl_set_verify_flags(ssl_, CASS_SSL_VERIFY_PEER_CERT);
         cass_cluster_set_ssl(cluster_, ssl_);
