@@ -28,6 +28,8 @@ db_host="localhost"
 db_user="keatest"
 db_password="keatest"
 db_name="keatest"
+# currently for Cassandra CQL - not really necessary if cqlshrc is present!
+db_use_ssl=""
 
 # lease dump parameters
 dump_type=0
@@ -69,6 +71,7 @@ usage() {
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
     printf " -d or --directory - path to upgrade scripts (default: %s)\n" "${SCRIPTS_DIR_DEFAULT}"
+    printf " --ssl - specifies the use of ssl encrypted connections\n"
     printf " -v or --version - print kea-admin version and quit.\n"
     printf "\n"
     printf " Parameters specific to lease-dump:\n"
@@ -710,6 +713,21 @@ do
             scripts_dir=${1}
             if [ -z "${scripts_dir}" ]; then
                 log_error "-d or --directory requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        # Specify use of ssl for DB connection
+        --ssl)
+            shift
+            db_use_ssl=${1}
+            if [ -z ${db_use_ssl} ]; then
+                log_error "--ssl requires a parameter"
+                usage
+                exit 1
+            fi
+            if [ ${db_use_ssl} != "yes" ]; then
+                log_error "--ssl must be set to 'yes'"
                 usage
                 exit 1
             fi
