@@ -2252,7 +2252,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
-                ""
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context "
             "FROM hosts AS h "
@@ -2326,8 +2325,8 @@ TaggedStatementArray tagged_statements = { {
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
             "WHERE h.host_id = "
-                "(SELECT host_id FROM ipv6_reservations "
-                 "WHERE address = ? AND prefix_len = ?) "
+                "( SELECT host_id FROM ipv6_reservations "
+                    "WHERE address = ? AND prefix_len = ? ) "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
     // Retrieves host information, IPv6 reservations and DHCPv6 options
@@ -2447,7 +2446,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, "
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
@@ -2476,9 +2474,9 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context "
             "FROM ( SELECT * FROM hosts AS h "
-                       "WHERE h.dhcp4_subnet_id = ? AND h.host_id > ? "
-                       "ORDER BY h.host_id "
-                       "LIMIT ? ) AS h "
+                    "WHERE h.dhcp4_subnet_id = ? AND h.host_id > ? "
+                    "ORDER BY h.host_id "
+                    "LIMIT ? ) AS h "
             "LEFT JOIN dhcp4_options AS o "
                 "ON h.host_id = o.host_id "
             "ORDER BY h.host_id, o.option_id"},
@@ -2500,9 +2498,9 @@ TaggedStatementArray tagged_statements = { {
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
                 "r.dhcp6_iaid "
             "FROM ( SELECT * FROM hosts AS h "
-                       "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
-                       "ORDER BY h.host_id "
-                       "LIMIT ? ) AS h "
+                    "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
+                    "ORDER BY h.host_id "
+                    "LIMIT ? ) AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
             "LEFT JOIN ipv6_reservations AS r "
@@ -2520,9 +2518,9 @@ TaggedStatementArray tagged_statements = { {
 
     // Inserts a single IPv6 reservation into 'reservations' table.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
-         "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-            "dhcp6_iaid, host_id) "
-         "VALUES (?,?,?,?,?)"},
+            "INSERT INTO ipv6_reservations(address, prefix_len, type, "
+                "dhcp6_iaid, host_id) "
+            "VALUES (?,?,?,?,?)"},
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
