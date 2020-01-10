@@ -1918,7 +1918,7 @@ public:
     /// @brief Constructor
     ///
     /// @param parameters See MySqlHostMgr constructor.
-    MySqlHostContext(const db::DatabaseConnection::ParameterMap& parameters);
+    MySqlHostContext(const DatabaseConnection::ParameterMap& parameters);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
@@ -1948,7 +1948,7 @@ public:
     boost::shared_ptr<MySqlOptionExchange> host_option_exchange_;
 
     /// @brief MySQL connection
-    db::MySqlConnection conn_;
+    MySqlConnection conn_;
 
     /// @brief Indicates if the database is opened in read only mode.
     bool is_readonly_;
@@ -2184,7 +2184,7 @@ public:
     void checkReadOnly(MySqlHostContextPtr& ctx) const;
 
     /// @brief The parameters
-    db::DatabaseConnection::ParameterMap parameters_;
+    DatabaseConnection::ParameterMap parameters_;
 
     /// @brief The pool of contexts
     MySqlHostContextPoolPtr pool_;
