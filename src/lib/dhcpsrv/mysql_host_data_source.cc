@@ -2603,7 +2603,7 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const MySqlConnection::Paramete
     if (code_version != db_version) {
         isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
                   << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << "."
+                  << " found version: " << db_version.first << "."
                   << db_version.second);
     }
 
@@ -3533,5 +3533,5 @@ MySqlHostDataSource::rollback() {
     ctx->conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
