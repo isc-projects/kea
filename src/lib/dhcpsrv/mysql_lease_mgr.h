@@ -684,7 +684,7 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(MySqlLeaseContextPtr ctx,
+    bool addLeaseCommon(MySqlLeaseContextPtr& ctx,
                         StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
     /// @brief Get Lease Collection Common Code
@@ -709,7 +709,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(MySqlLeaseContextPtr ctx,
+    void getLeaseCollection(MySqlLeaseContextPtr& ctx,
                             StatementIndex stindex,
                             MYSQL_BIND* bind,
                             Exchange& exchange, LeaseCollection& result,
@@ -732,7 +732,7 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(MySqlLeaseContextPtr ctx,
+    void getLeaseCollection(MySqlLeaseContextPtr& ctx,
                             StatementIndex stindex,
                             MYSQL_BIND* bind,
                             Lease4Collection& result) const {
@@ -755,7 +755,7 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(MySqlLeaseContextPtr ctx,
+    void getLeaseCollection(MySqlLeaseContextPtr& ctx,
                             StatementIndex stindex,
                             MYSQL_BIND* bind,
                             Lease6Collection& result) const {
@@ -772,7 +772,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param result Lease4 object returned
-    void getLease(MySqlLeaseContextPtr ctx,
+    void getLease(MySqlLeaseContextPtr& ctx,
                   StatementIndex stindex,
                   MYSQL_BIND* bind,
                   Lease4Ptr& result) const;
@@ -787,7 +787,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind MYSQL_BIND array for input parameters
     /// @param result Lease6 object returned
-    void getLease(MySqlLeaseContextPtr ctx,
+    void getLease(MySqlLeaseContextPtr& ctx,
                   StatementIndex stindex,
                   MYSQL_BIND* bind,
                   Lease6Ptr& result) const;
@@ -829,7 +829,7 @@ private:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(MySqlLeaseContextPtr ctx,
+    void updateLeaseCommon(MySqlLeaseContextPtr& ctx,
                            StatementIndex stindex,
                            MYSQL_BIND* bind,
                            const LeasePtr& lease);
@@ -875,7 +875,7 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    void checkError(MySqlLeaseContextPtr ctx,
+    void checkError(MySqlLeaseContextPtr& ctx,
                     int status, StatementIndex index,
                     const char* what) const;
 

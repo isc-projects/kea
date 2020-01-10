@@ -22,12 +22,21 @@ namespace dhcp {
 /// Forward declaration to the implementation of the @ref MySqlHostDataSource.
 class MySqlHostDataSourceImpl;
 
+/// @brief Type of pointers to MySqlHostDataSourceImpl.
+typedef boost::shared_ptr<MySqlHostDataSourceImpl> MySqlHostDataSourceImplPtr;
+
+/// Forward declaration for the thread context for the manager pool.
+class MySqlHostContext;
+
+/// @brief Type of pointers to contexts.
+typedef boost::shared_ptr<MySqlHostContext> MySqlHostContextPtr;
+
 /// @brief MySQL Host Data Source
 ///
 /// This class implements the @ref isc::dhcp::BaseHostDataSource interface to
 /// the MySQL database. Use of this backend presupposes that a MySQL database
 /// is available and that the Kea schema has been created within it.
-class MySqlHostDataSource: public BaseHostDataSource {
+class MySqlHostDataSource : public BaseHostDataSource {
 public:
 
     /// @brief Constructor
@@ -80,7 +89,8 @@ public:
     /// @param addr specified address.
     /// @return true if deletion was successful, false if the host was not there.
     /// @throw various exceptions in case of errors
-    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+    virtual bool del(const SubnetID& subnet_id,
+                     const asiolink::IOAddress& addr);
 
     /// @brief Attempts to delete a host by (subnet4-id, identifier type, identifier)
     ///
@@ -96,7 +106,8 @@ public:
     /// @throw various exceptions in case of errors
     virtual bool del4(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin, const size_t identifier_len);
+                      const uint8_t* identifier_begin,
+                      const size_t identifier_len);
 
     /// @brief Attempts to delete a host by (subnet6-id, identifier type, identifier)
     ///
@@ -112,7 +123,8 @@ public:
     /// @throw various exceptions in case of errors
     virtual bool del6(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin, const size_t identifier_len);
+                      const uint8_t* identifier_begin,
+                      const size_t identifier_len);
 
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
@@ -127,9 +139,9 @@ public:
     /// @param identifier_len Identifier length.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const Host::IdentifierType& identifier_type,
-           const uint8_t* identifier_begin, const size_t identifier_len) const;
+    virtual ConstHostCollection getAll(const Host::IdentifierType& identifier_type,
+                                       const uint8_t* identifier_begin,
+                                       const size_t identifier_len) const;
 
     /// @brief Return all hosts in a DHCPv4 subnet.
     ///
@@ -139,8 +151,7 @@ public:
     /// @param subnet_id subnet identifier to filter by
     ///
     /// @return Collection of const @ref Host objects.
-    virtual ConstHostCollection
-    getAll4(const SubnetID& subnet_id) const;
+    virtual ConstHostCollection getAll4(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
     ///
@@ -150,8 +161,7 @@ public:
     /// @param subnet_id subnet identifier to filter by
     ///
     /// @return Collection of const @ref Host objects.
-    virtual ConstHostCollection
-    getAll6(const SubnetID& subnet_id) const;
+    virtual ConstHostCollection getAll6(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts with a hostname.
     ///
@@ -163,8 +173,7 @@ public:
     /// @param hostname The lower case hostname.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAllbyHostname(const std::string& hostname) const;
+    virtual ConstHostCollection getAllbyHostname(const std::string& hostname) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv4 subnet.
     ///
@@ -175,8 +184,8 @@ public:
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAllbyHostname4(const std::string& hostname, const SubnetID& subnet_id) const;
+    virtual ConstHostCollection getAllbyHostname4(const std::string& hostname,
+                                                  const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts with a hostname in a DHCPv6 subnet.
     ///
@@ -187,8 +196,8 @@ public:
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAllbyHostname6(const std::string& hostname, const SubnetID& subnet_id) const;
+    virtual ConstHostCollection getAllbyHostname6(const std::string& hostname,
+                                                  const SubnetID& subnet_id) const;
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
@@ -202,11 +211,10 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Collection of const @c Host objects (may be empty).
-    virtual ConstHostCollection
-    getPage4(const SubnetID& subnet_id,
-             size_t& source_index,
-             uint64_t lower_host_id,
-             const HostPageSize& page_size) const;
+    virtual ConstHostCollection getPage4(const SubnetID& subnet_id,
+                                         size_t& source_index,
+                                         uint64_t lower_host_id,
+                                         const HostPageSize& page_size) const;
 
     /// @brief Returns range of hosts in a DHCPv6 subnet.
     ///
@@ -220,11 +228,10 @@ public:
     /// @param page_size maximum size of the page returned.
     ///
     /// @return Collection of const @c Host objects (may be empty).
-    virtual ConstHostCollection
-    getPage6(const SubnetID& subnet_id,
-             size_t& source_index,
-             uint64_t lower_host_id,
-             const HostPageSize& page_size) const;
+    virtual ConstHostCollection getPage6(const SubnetID& subnet_id,
+                                         size_t& source_index,
+                                         uint64_t lower_host_id,
+                                         const HostPageSize& page_size) const;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
@@ -234,8 +241,7 @@ public:
     /// @param address IPv4 address for which the @c Host object is searched.
     ///
     /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll4(const asiolink::IOAddress& address) const;
+    virtual ConstHostCollection getAll4(const asiolink::IOAddress& address) const;
 
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
@@ -247,9 +253,10 @@ public:
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin, const size_t identifier_len) const;
+    virtual ConstHostPtr get4(const SubnetID& subnet_id,
+                              const Host::IdentifierType& identifier_type,
+                              const uint8_t* identifier_begin,
+                              const size_t identifier_len) const;
 
     /// @brief Returns a host connected to the IPv4 subnet and having
     /// a reservation for a specified IPv4 address.
@@ -267,8 +274,8 @@ public:
     /// @param address reserved IPv4 address.
     ///
     /// @return Const @c Host object using a specified IPv4 address.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    virtual ConstHostPtr get4(const SubnetID& subnet_id,
+                              const asiolink::IOAddress& address) const;
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
@@ -280,9 +287,10 @@ public:
     ///
     /// @return Const @c Host object for which reservation has been made using
     /// the specified identifier.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
-         const uint8_t* identifier_begin, const size_t identifier_len) const;
+    virtual ConstHostPtr get6(const SubnetID& subnet_id,
+                              const Host::IdentifierType& identifier_type,
+                              const uint8_t* identifier_begin,
+                              const size_t identifier_len) const;
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
@@ -290,8 +298,8 @@ public:
     /// @param prefix_len IPv6 prefix length.
     ///
     /// @return Const @c Host object using a specified IPv6 prefix.
-    virtual ConstHostPtr
-    get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
+    virtual ConstHostPtr get6(const asiolink::IOAddress& prefix,
+                              const uint8_t prefix_len) const;
 
     /// @brief Returns a host connected to the IPv6 subnet and having
     /// a reservation for a specified IPv6 address or prefix.
@@ -300,8 +308,8 @@ public:
     /// @param address reserved IPv6 address/prefix.
     ///
     /// @return Const @c Host object using a specified IPv6 address/prefix.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
+    virtual ConstHostPtr get6(const SubnetID& subnet_id,
+                              const asiolink::IOAddress& address) const;
 
     /// @brief Return backend type
     ///
@@ -346,9 +354,34 @@ public:
     /// Rolls back all pending database operations.
     virtual void rollback();
 
+    /// @brief Context RAII Allocator.
+    class MySqlHostContextAlloc {
+    public:
+
+        /// @brief Constructor
+        ///
+        /// This constructor takes a context of the pool if one is available
+        /// or creates a new one.
+        ///
+        /// @param mgr A parent instance
+        MySqlHostContextAlloc(const MySqlHostDataSourceImpl& mgr);
+
+        /// @brief Destructor
+        ///
+        /// This destructor puts back the context in the pool.
+        ~MySqlHostContextAlloc();
+
+        /// @brief The context
+        MySqlHostContextPtr ctx_;
+
+    private:
+        /// @brief The manager
+        const MySqlHostDataSourceImpl& mgr_;
+    };
+
 private:
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
-    MySqlHostDataSourceImpl* impl_;
+    MySqlHostDataSourceImplPtr impl_;
 };
 
 }

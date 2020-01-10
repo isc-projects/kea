@@ -175,9 +175,9 @@ tagged_statements = { {
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "state, user_context "
                             "FROM lease4 "
-                            "WHERE state != ?"
-                            " AND valid_lifetime != 4294967295"
-                            " AND expire < ? "
+                            "WHERE state != ? "
+                            "AND valid_lifetime != 4294967295 "
+                            "AND expire < ? "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6,
@@ -262,9 +262,9 @@ tagged_statements = { {
                         "hwaddr, hwtype, hwaddr_source, "
                         "state, user_context "
                             "FROM lease6 "
-                            "WHERE state != ?"
-                            " AND valid_lifetime != 4294967295"
-                            " AND expire < ? "
+                            "WHERE state != ? "
+                            "AND valid_lifetime != 4294967295 "
+                            "AND expire < ? "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
     {MySqlLeaseMgr::INSERT_LEASE4,
@@ -682,7 +682,7 @@ public:
         // bind_[2].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // lease_time: unsigned int
+        // valid lifetime: unsigned int
         bind_[3].buffer_type = MYSQL_TYPE_LONG;
         bind_[3].buffer = reinterpret_cast<char*>(&valid_lifetime_);
         bind_[3].is_unsigned = MLM_TRUE;
@@ -736,7 +736,7 @@ public:
         // bind_[9].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // user_context: text null
+        // user_context: text
         user_context_null_ = MLM_FALSE;
         user_context_length_ = sizeof(user_context_);
         bind_[10].buffer_type = MYSQL_TYPE_STRING;
@@ -1109,7 +1109,7 @@ public:
                 bind_[12].is_null = &hwaddr_null_;
             }
 
-            // hardware source: unsigned int (32 bits)
+            // hardware type: unsigned short int (16 bits)
             if (hwaddr) {
                 hwtype_ = lease->hwaddr_->htype_;
                 bind_[13].buffer_type = MYSQL_TYPE_SHORT;
@@ -1223,7 +1223,7 @@ public:
         // bind_[1].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // lease_time: unsigned int
+        // valid lifetime: unsigned int
         bind_[2].buffer_type = MYSQL_TYPE_LONG;
         bind_[2].buffer = reinterpret_cast<char*>(&valid_lifetime_);
         bind_[2].is_unsigned = MLM_TRUE;
@@ -1321,7 +1321,7 @@ public:
         // bind_[15].is_null = &MLM_FALSE; // commented out for performance
                                            // reasons, see memset() above
 
-        // user_context: text null
+        // user_context: text
         user_context_null_ = MLM_FALSE;
         user_context_length_ = sizeof(user_context_);
         bind_[16].buffer_type = MYSQL_TYPE_STRING;
@@ -1357,7 +1357,7 @@ public:
         // Create the IOAddress object corresponding to the received data.
         addr6_buffer_[addr6_length_] = '\0';
         std::string address = addr6_buffer_;
-        isc::asiolink::IOAddress addr(address);
+        IOAddress addr(address);
 
         // Set the lease type in a variable of the appropriate data type, which
         // has been initialized with an arbitrary (but valid) value.
@@ -1500,7 +1500,7 @@ private:
 /// lease storage.  It does so by executing a query which returns a result
 /// containing one row per monitored state per lease type per
 /// subnet, ordered by subnet id in ascending order.
-///
+
 class MySqlLeaseStatsQuery : public LeaseStatsQuery {
 public:
 
@@ -1717,8 +1717,8 @@ private:
 
 // MySqlLeaseContext Constructor
 
-MySqlLeaseContext::MySqlLeaseContext(
-    const DatabaseConnection::ParameterMap& parameters) : conn_(parameters) {
+MySqlLeaseContext::MySqlLeaseContext(const DatabaseConnection::ParameterMap& parameters)
+    : conn_(parameters) {
 }
 
 // MySqlLeaseContextAlloc Constructor and Destructor
@@ -1775,15 +1775,12 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
 }
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
-    // There is no need to close the database in this destructor: it is
-    // closed in the destructor of the mysql_ member variable.
 }
 
 // Create context.
 
 MySqlLeaseContextPtr
 MySqlLeaseMgr::createContext() const {
-
     MySqlLeaseContextPtr ctx(new MySqlLeaseContext(parameters_));
 
     // Open the database.
@@ -1825,7 +1822,7 @@ MySqlLeaseMgr::getDBVersion() {
 // statement, then call common code to execute the statement.
 
 bool
-MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr ctx,
+MySqlLeaseMgr::addLeaseCommon(MySqlLeaseContextPtr& ctx,
                               StatementIndex stindex,
                               std::vector<MYSQL_BIND>& bind) {
 
@@ -1926,7 +1923,6 @@ MySqlLeaseMgr::getLeaseCollection(MySqlLeaseContextPtr ctx,
                                   Exchange& exchange,
                                   LeaseCollection& result,
                                   bool single) const {
-
     int status;
 
     if (bind) {
@@ -2028,7 +2024,7 @@ MySqlLeaseMgr::getLease(MySqlLeaseContextPtr ctx,
 // criteria.
 
 Lease4Ptr
-MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
+MySqlLeaseMgr::getLease4(const IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR4)
         .arg(addr.toText());
 
@@ -2295,7 +2291,7 @@ MySqlLeaseMgr::getLeases4() const {
 }
 
 Lease4Collection
-MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+MySqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
                           const LeasePageSize& page_size) const {
     // Expecting IPv4 address.
     if (!lower_bound_address.isV4()) {
@@ -2338,7 +2334,7 @@ MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(Lease::Type lease_type,
-                         const isc::asiolink::IOAddress& addr) const {
+                         const IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR6)
         .arg(addr.toText())
         .arg(lease_type);
@@ -2583,7 +2579,7 @@ MySqlLeaseMgr::getLeases6(const std::string& hostname) const {
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+MySqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
                           const LeasePageSize& page_size) const {
     // Expecting IPv6 address.
     if (!lower_bound_address.isV6()) {
@@ -2693,7 +2689,7 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
 template <typename LeasePtr>
 void
-MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr ctx,
+MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr& ctx,
                                  StatementIndex stindex, MYSQL_BIND* bind,
                                  const LeasePtr& lease) {
 
@@ -3104,7 +3100,7 @@ MySqlLeaseMgr::rollback() {
 }
 
 void
-MySqlLeaseMgr::checkError(MySqlLeaseContextPtr ctx,
+MySqlLeaseMgr::checkError(MySqlLeaseContextPtr& ctx,
                           int status, StatementIndex index,
                           const char* what) const {
     ctx->conn_.checkError(status, index, what);
