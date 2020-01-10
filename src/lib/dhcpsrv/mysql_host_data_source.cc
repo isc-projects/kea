@@ -2258,7 +2258,7 @@ TaggedStatementArray tagged_statements = { {
             "LEFT JOIN dhcp4_options AS o "
                 "ON h.host_id = o.host_id "
             "WHERE h.dhcp4_subnet_id = ? AND h.dhcp_identifier_type = ? "
-            "   AND h.dhcp_identifier = ? "
+                "AND h.dhcp_identifier = ? "
             "ORDER BY h.host_id, o.option_id"},
 
     // Retrieves host information, IPv6 reservations and DHCPv6 options
@@ -2520,7 +2520,7 @@ TaggedStatementArray tagged_statements = { {
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
             "INSERT INTO ipv6_reservations(address, prefix_len, type, "
                 "dhcp6_iaid, host_id) "
-            "VALUES (?,?,?,?,?)"},
+            "VALUES (?, ?, ?, ?, ?)"},
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
