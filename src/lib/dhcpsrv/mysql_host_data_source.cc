@@ -1688,7 +1688,7 @@ private:
     /// @brief Length of the textual address representation.
     unsigned long address_len_;
 
-     /// @brief Length of the prefix (128 for addresses).
+    /// @brief Length of the prefix (128 for addresses).
     uint8_t prefix_len_;
 
     /// @brief Reservation type.
@@ -2028,6 +2028,7 @@ public:
     /// The database is opened with all the SQL commands pre-compiled.
     ///
     /// @return A new (never null) context.
+    ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given.
     /// @throw isc::db::DbOperationError An operation on the open database has
     /// failed.
@@ -2064,6 +2065,7 @@ public:
     /// @param stindex Index of a statement being executed.
     /// @param bind Vector of MYSQL_BIND objects to be used when making the
     /// query.
+    ///
     /// @return true if any records were deleted, false otherwise
     bool delStatement(MySqlHostContextPtr& ctx,
                       StatementIndex stindex,
@@ -3347,14 +3349,14 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
-    // Get a context
-    MySqlHostContextAlloc get_context(*impl_);
-    MySqlHostContextPtr ctx = get_context.ctx_;
-
     if (!address.isV4()) {
         isc_throw(BadValue, "MySqlHostDataSource::get4(id, address): "
                   "wrong address type, address supplied is an IPv6 address");
     }
+
+    // Get a context
+    MySqlHostContextAlloc get_context(*impl_);
+    MySqlHostContextPtr ctx = get_context.ctx_;
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
