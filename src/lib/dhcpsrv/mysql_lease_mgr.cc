@@ -2837,7 +2837,7 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 
 bool
 MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
-    const isc::asiolink::IOAddress& addr = lease->addr_;
+    const IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_DELETE_ADDR)
         .arg(addr.toText());
 
@@ -2878,7 +2878,7 @@ MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
 
 bool
 MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
-    const isc::asiolink::IOAddress& addr = lease->addr_;
+    const IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_DELETE_ADDR)
         .arg(addr.toText());
