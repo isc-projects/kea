@@ -668,8 +668,9 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(PgSqlLeaseContextPtr ctx,
-                        StatementIndex stindex, db::PsqlBindArray& bind_array);
+    bool addLeaseCommon(PgSqlLeaseContextPtr& ctx,
+                        StatementIndex stindex,
+                        db::PsqlBindArray& bind_array);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -693,7 +694,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(PgSqlLeaseContextPtr ctx,
+    void getLeaseCollection(PgSqlLeaseContextPtr& ctx,
                             StatementIndex stindex,
                             db::PsqlBindArray& bind_array,
                             Exchange& exchange, LeaseCollection& result,
@@ -716,7 +717,7 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(PgSqlLeaseContextPtr ctx,
+    void getLeaseCollection(PgSqlLeaseContextPtr& ctx,
                             StatementIndex stindex,
                             db::PsqlBindArray& bind_array,
                             Lease4Collection& result) const {
@@ -739,7 +740,7 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(PgSqlLeaseContextPtr ctx,
+    void getLeaseCollection(PgSqlLeaseContextPtr& ctx,
                             StatementIndex stindex,
                             db::PsqlBindArray& bind_array,
                             Lease6Collection& result) const {
@@ -756,7 +757,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array for input parameters
     /// @param result Lease4 object returned
-    void getLease(PgSqlLeaseContextPtr ctx,
+    void getLease(PgSqlLeaseContextPtr& ctx,
                   StatementIndex stindex,
                   db::PsqlBindArray& bind_array,
                   Lease4Ptr& result) const;
@@ -771,7 +772,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array for input parameters
     /// @param result Lease6 object returned
-    void getLease(PgSqlLeaseContextPtr ctx,
+    void getLease(PgSqlLeaseContextPtr& ctx,
                   StatementIndex stindex,
                   db::PsqlBindArray& bind_array,
                   Lease6Ptr& result) const;
@@ -812,7 +813,7 @@ private:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(PgSqlLeaseContextPtr ctx,
+    void updateLeaseCommon(PgSqlLeaseContextPtr& ctx,
                            StatementIndex stindex,
                            db::PsqlBindArray& bind_array,
                            const LeasePtr& lease);

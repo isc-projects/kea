@@ -841,7 +841,7 @@ public:
             /// prevent cryptic errors during conversions from NULL
             /// to actual values.
 
-            isc::asiolink::IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
+            IOAddress addr(getIPv6Value(r, row, ADDRESS_COL));
 
             convertFromBytea(r, row, DUID_COL, duid_buffer_, sizeof(duid_buffer_), duid_length_);
             DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
@@ -1147,8 +1147,8 @@ protected:
 
 // PgSqlLeaseContext Constructor
 
-PgSqlLeaseContext::PgSqlLeaseContext(
-    const DatabaseConnection::ParameterMap& parameters) : conn_(parameters) {
+PgSqlLeaseContext::PgSqlLeaseContext(const DatabaseConnection::ParameterMap& parameters)
+    : conn_(parameters) {
 }
 
 // PgSqlLeaseContextAlloc Constructor and Destructor
@@ -1216,7 +1216,6 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
 
 PgSqlLeaseContextPtr
 PgSqlLeaseMgr::createContext() const {
-
     PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_));
 
     // Open the database.
@@ -1252,7 +1251,7 @@ PgSqlLeaseMgr::getDBVersion() {
 }
 
 bool
-PgSqlLeaseMgr::addLeaseCommon(PgSqlLeaseContextPtr ctx,
+PgSqlLeaseMgr::addLeaseCommon(PgSqlLeaseContextPtr& ctx,
                               StatementIndex stindex,
                               PsqlBindArray& bind_array) {
     PgSqlResult r(PQexecPrepared(ctx->conn_, tagged_statements[stindex].name,
@@ -1318,7 +1317,7 @@ PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
 
 template <typename Exchange, typename LeaseCollection>
 void
-PgSqlLeaseMgr::getLeaseCollection(PgSqlLeaseContextPtr ctx,
+PgSqlLeaseMgr::getLeaseCollection(PgSqlLeaseContextPtr& ctx,
                                   StatementIndex stindex,
                                   PsqlBindArray& bind_array,
                                   Exchange& exchange,
@@ -1346,7 +1345,7 @@ PgSqlLeaseMgr::getLeaseCollection(PgSqlLeaseContextPtr ctx,
 }
 
 void
-PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
+PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr& ctx,
                         StatementIndex stindex, PsqlBindArray& bind_array,
                         Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -1367,7 +1366,7 @@ PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
 }
 
 void
-PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
+PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr& ctx,
                         StatementIndex stindex, PsqlBindArray& bind_array,
                         Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -1388,7 +1387,7 @@ PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr ctx,
 }
 
 Lease4Ptr
-PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
+PgSqlLeaseMgr::getLease4(const IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR4)
         .arg(addr.toText());
 
@@ -1597,7 +1596,7 @@ PgSqlLeaseMgr::getLeases4() const {
 }
 
 Lease4Collection
-PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+PgSqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
                           const LeasePageSize& page_size) const {
     // Expecting IPv4 address.
     if (!lower_bound_address.isV4()) {
@@ -1635,7 +1634,7 @@ PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 
 Lease6Ptr
 PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
-                         const isc::asiolink::IOAddress& addr) const {
+                         const IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR6)
         .arg(addr.toText())
         .arg(lease_type);
@@ -1824,7 +1823,7 @@ PgSqlLeaseMgr::getLeases6() const {
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+PgSqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
                           const LeasePageSize& page_size) const {
     // Expecting IPv6 address.
     if (!lower_bound_address.isV6()) {
@@ -1915,7 +1914,7 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
 template<typename LeasePtr>
 void
-PgSqlLeaseMgr::updateLeaseCommon(PgSqlLeaseContextPtr ctx,
+PgSqlLeaseMgr::updateLeaseCommon(PgSqlLeaseContextPtr& ctx,
                                  StatementIndex stindex,
                                  PsqlBindArray& bind_array,
                                  const LeasePtr& lease) {
@@ -2028,7 +2027,7 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
 
 bool
 PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
-    const isc::asiolink::IOAddress& addr = lease->addr_;
+    const IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_DELETE_ADDR)
         .arg(addr.toText());
 
@@ -2062,7 +2061,7 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
 
 bool
 PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
-    const isc::asiolink::IOAddress& addr = lease->addr_;
+    const IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_DELETE_ADDR)
         .arg(addr.toText());
