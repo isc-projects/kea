@@ -595,9 +595,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_SSL(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SSL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ssl", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl", driver.loc_);
     }
 }
 
@@ -606,9 +606,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_SSL_CA(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SSL_CA(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-ca", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl-ca", driver.loc_);
     }
 }
 
@@ -617,9 +617,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_SSL_CERT(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SSL_CERT(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-cert", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl-cert", driver.loc_);
     }
 }
 
@@ -628,9 +628,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_SSL_KEY(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SSL_KEY(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-key", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl-key", driver.loc_);
     }
 }
 
@@ -639,9 +639,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_SSL_PASSWORD(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_SSL_PASSWORD(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-password", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl-password", driver.loc_);
     }
 }
 
