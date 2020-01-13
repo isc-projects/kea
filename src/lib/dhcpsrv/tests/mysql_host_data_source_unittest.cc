@@ -156,7 +156,7 @@ public:
 ///
 /// This test checks if the MySqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// MySqlHostMgr test fixure set.  This test checks that the database can be
+/// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlHostDataSource, OpenDatabase) {
     // Schema needs to be created for the test to work.
@@ -237,11 +237,11 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     destroyMySQLSchema();
 }
 
-/// @brief Check that database can be opened
+/// @brief Check that database can be opened with Multi-Threading
 ///
 /// This test checks if the MySqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// MySqlHostMgr test fixure set.  This test checks that the database can be
+/// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
     // Enable Multi-Threading.
