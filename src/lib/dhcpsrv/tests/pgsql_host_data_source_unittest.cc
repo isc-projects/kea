@@ -154,7 +154,7 @@ public:
 ///
 /// This test checks if the PgSqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// PgSqlHostMgr test fixure set.  This test checks that the database can be
+/// PgSqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(PgSqlHostDataSource, OpenDatabase) {
     // Schema needs to be created for the test to work.
