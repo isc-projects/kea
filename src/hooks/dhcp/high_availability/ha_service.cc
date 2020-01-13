@@ -100,7 +100,7 @@ HAService::defineStates() {
                 config_->getStateMachineConfig()->getStateConfig(HA_LOAD_BALANCING_ST)->getPausing());
 
     defineState(HA_MAINTAINED_ST, stateToString(HA_MAINTAINED_ST),
-                boost::bind(&HAService::normalStateHandler, this),
+                boost::bind(&HAService::maintainedStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_MAINTAINED_ST)->getPausing());
 
     defineState(HA_PARTNER_DOWN_ST, stateToString(HA_PARTNER_DOWN_ST),
@@ -108,7 +108,7 @@ HAService::defineStates() {
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_DOWN_ST)->getPausing());
 
     defineState(HA_PARTNER_MAINTAINED_ST, stateToString(HA_PARTNER_MAINTAINED_ST),
-                boost::bind(&HAService::partnerDownStateHandler, this),
+                boost::bind(&HAService::partnerMaintainedStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_MAINTAINED_ST)->getPausing());
 
     defineState(HA_READY_ST, stateToString(HA_READY_ST),
@@ -171,8 +171,16 @@ HAService::normalStateHandler() {
     }
 
     switch (communication_state_->getPartnerState()) {
+    case HA_MAINTAINED_ST:
+        verboseTransition(HA_PARTNER_MAINTAINED_ST);
+        break;
+
     case HA_PARTNER_DOWN_ST:
         verboseTransition(HA_WAITING_ST);
+        break;
+
+    case HA_PARTNER_MAINTAINED_ST:
+        verboseTransition(HA_MAINTAINED_ST);
         break;
 
     case HA_TERMINATED_ST:
@@ -191,6 +199,11 @@ HAService::normalStateHandler() {
     default:
         postNextEvent(NOP_EVT);
     }
+}
+
+void
+HAService::maintainedStateHandler() {
+    postNextEvent(NOP_EVT);
 }
 
 void
@@ -232,6 +245,7 @@ HAService::partnerDownStateHandler() {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
     case HA_PARTNER_DOWN_ST:
+    case HA_PARTNER_MAINTAINED_ST:
         verboseTransition(HA_WAITING_ST);
         break;
 
@@ -247,6 +261,11 @@ HAService::partnerDownStateHandler() {
     default:
         postNextEvent(NOP_EVT);
     }
+}
+
+void
+HAService::partnerMaintainedStateHandler() {
+    postNextEvent(NOP_EVT);
 }
 
 void
@@ -283,6 +302,14 @@ HAService::readyStateHandler() {
 
     case HA_LOAD_BALANCING_ST:
         verboseTransition(HA_LOAD_BALANCING_ST);
+        break;
+
+    case HA_MAINTAINED_ST:
+        verboseTransition(HA_PARTNER_MAINTAINED_ST);
+        break;
+
+    case HA_PARTNER_MAINTAINED_ST:
+        verboseTransition(HA_MAINTAINED_ST);
         break;
 
     case HA_READY_ST:
@@ -455,7 +482,9 @@ HAService::waitingStateHandler() {
     switch (communication_state_->getPartnerState()) {
     case HA_HOT_STANDBY_ST:
     case HA_LOAD_BALANCING_ST:
+    case HA_MAINTAINED_ST:
     case HA_PARTNER_DOWN_ST:
+    case HA_PARTNER_MAINTAINED_ST:
     case HA_READY_ST:
         // If we're configured to not synchronize lease database, proceed directly
         // to the "ready" state.

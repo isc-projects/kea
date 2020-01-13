@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3507,8 +3507,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -3533,7 +3539,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
@@ -3559,8 +3571,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_READY_ST));
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -3585,7 +3603,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_SYNCING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_SYNCING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
@@ -3658,8 +3682,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -3684,7 +3714,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
@@ -3710,8 +3746,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_READY_ST));
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_READY_ST));
@@ -3736,7 +3778,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_SYNCING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_SYNCING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
@@ -4095,8 +4143,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
@@ -4121,7 +4175,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
@@ -4147,8 +4207,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_READY_ST));
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
@@ -4173,7 +4239,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_SYNCING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_SYNCING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
@@ -4261,8 +4333,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
@@ -4287,7 +4365,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
@@ -4313,8 +4397,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_PARTNER_MAINTAINED_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_DOWN_ST),
                        FinalState(HA_READY_ST));
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
+                       FinalState(HA_MAINTAINED_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_READY_ST));
@@ -4339,7 +4429,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_MAINTAINED_ST),
+                       FinalState(HA_SYNCING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_MAINTAINED_ST),
                        FinalState(HA_SYNCING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),

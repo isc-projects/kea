@@ -59,23 +59,10 @@ CommunicationState::~CommunicationState() {
 
 void
 CommunicationState::setPartnerState(const std::string& state) {
-    if (state == "hot-standby") {
-        partner_state_ = HA_HOT_STANDBY_ST;
-    } else if (state == "load-balancing") {
-        partner_state_ = HA_LOAD_BALANCING_ST;
-    } else if (state == "partner-down") {
-        partner_state_ = HA_PARTNER_DOWN_ST;
-    } else if (state == "ready") {
-        partner_state_ = HA_READY_ST;
-    } else if (state == "syncing") {
-        partner_state_ = HA_SYNCING_ST;
-    } else if (state == "terminated") {
-        partner_state_ = HA_TERMINATED_ST;
-    } else if (state == "waiting") {
-        partner_state_ = HA_WAITING_ST;
-    } else if (state == "unavailable") {
-        partner_state_ = HA_UNAVAILABLE_ST;
-    } else {
+    try {
+        partner_state_ = stringToState(state);
+
+    } catch (...) {
         isc_throw(BadValue, "unsupported HA partner state returned "
                   << state);
     }
