@@ -10,13 +10,15 @@
     "interfaces": [ "ethX" ]
   },
 
-// CQL (Cassandra) backend. Leases will be stored in Cassandra database. Make
-// sure it is up, running and properly initialized. See kea-admin documentation
-// for details on how to initialize the database. The only strictly required
-// parameters are type, keyspace and contact-points. At least one contact point
-// must be specified, but more than one is required for redundancy. Make sure
-// you specify the contact points without spaces. Kea must be compiled with
-// --with-cql option to use this backend.
+// CQL (Cassandra) backend. Leases will be stored in Cassandra
+// database. Make sure it is up, running and properly initialized. See
+// kea-admin documentation for details on how to initialize the database.
+// The only strictly required parameters are type, keyspace and contact-points.
+// At least one contact point must be specified, but more than one is
+// required for redundancy. Make sure you specify the contact-points
+// without spaces. If you speficy just one contact_points -
+// and it's not 127.0.0.1 - be sure to change consistency level to 'one'!
+// Kea must be compiled with --with-cql option to use this backend.
   "lease-database": {
       "type": "cql",
       "keyspace": "keatest",
@@ -78,10 +80,19 @@
       // - local-serial
       // - local-one
       // See https://docs.datastax.com/en/cassandra/3.0/cassandra/dml/dmlConfigSerialConsistency.html for more details.
-      "serial-consistency": "serial"
+      "serial-consistency": "serial",
 
-      // SSL certificate to be used upon connection
-      "ssl-cert": ""
+      // use cass SSL features?
+      "ssl": false,
+
+      // SSL certificate CA to be used for peer verification
+      "ssl-ca": "/etc/kea/ssl/myclient.crt",
+
+      // SSL certificate, private key and password (if any)
+      // for client SSL authentication
+      "ssl-cert": "/etc/kea/ssl/myclient.crt",
+      "ssl-key": "/etc/kea/ssl/myclient.key",
+      "ssl-password": "MyKeyIsSecured"
   },
 
 // Addresses will be assigned with preferred and valid lifetimes

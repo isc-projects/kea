@@ -590,6 +590,61 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"ssl\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_SSL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ssl", driver.loc_);
+    }
+}
+
+\"ssl-ca\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_SSL_CA(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-ca", driver.loc_);
+    }
+}
+
+\"ssl-cert\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_SSL_CERT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-cert", driver.loc_);
+    }
+}
+
+\"ssl-key\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_SSL_KEY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-key", driver.loc_);
+    }
+}
+
+\"ssl-password\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_SSL_PASSWORD(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("ssl-password", driver.loc_);
+    }
+}
+
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

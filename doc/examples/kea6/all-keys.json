@@ -298,8 +298,17 @@
                 // Connection tcp nodelay.
                 "tcp-nodelay": true
 
-                // SSL certificate to be used for connection.
-                "ssl-cert": "/etc/kea/ssl/myclient.crt"
+                // use cass SSL features?
+                "ssl": false,
+
+                // SSL certificate CA to be used for peer verification
+                "ssl-ca": "/etc/kea/ssl/myclient.crt",
+
+                // SSL certificate, private key and password (if any)
+                // for client SSL authentication
+                "ssl-cert": "/etc/kea/ssl/myclient.crt",
+                "ssl-key": "/etc/kea/ssl/myclient.key",
+                "ssl-password": "MyKeyIsSecured"
             }
         ],
 

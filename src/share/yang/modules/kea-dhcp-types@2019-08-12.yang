@@ -227,7 +227,27 @@ module kea-dhcp-types {
     leaf max-row-errors {
       type uint32;
       description "Maximum row errors (0 means unlimited).";
-   }
+    }
+    leaf ssl {
+      type boolean;
+      description "Turns on DataStax cpp-driver SSL support";
+    }
+    leaf ssl-ca {
+      type string;
+      description "Path to the Root CA to be used for peer verification.";
+    }
+    leaf ssl-cert {
+      type string;
+      description "Path to the client certificate to be used for client authentication";
+    }
+    leaf ssl-key {
+      type string;
+      description "Path to the client certificate's private key to be used for client authentication";
+    }
+    leaf ssl-password {
+      type string;
+      description "private key's password - if any";
+    }
     uses kea:user-context {
       refine user-context {
         description "Database user context. Arbitrary JSON data can be

@@ -278,7 +278,12 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"tcp-nodelay\": false, \n"
         "\"type\": \"memfile\", \n"
         "\"user\": \"user_str\", \n"
-        "\"max-row-errors\": 50 \n"
+        "\"max-row-errors\": 50, \n"
+        "\"ssl\": false, \n"
+        "\"ssl-ca\": \"/path/to/root-ca\", \n"
+        "\"ssl-cert\": \"/path/to/client-auth.crt\", \n"
+        "\"ssl-key\": \"/path/to/client-auth.key\", \n"
+        "\"ssl-password\": \"MyKeyIsSecure\" \n"
         "}\n"
     };
 

@@ -61,6 +61,7 @@ DbAccessParser::parse(std::string& access_string,
         try {
             if ((param.first == "persist") ||
                 (param.first == "tcp-nodelay") ||
+                (param.first == "ssl") ||
                 (param.first == "readonly")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
@@ -115,6 +116,10 @@ DbAccessParser::parse(std::string& access_string,
                 // keyspace
                 // consistency
                 // serial-consistency
+                // ssl_ca
+                // ssl_cert
+                // ssl_key
+                // ssl_password
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {

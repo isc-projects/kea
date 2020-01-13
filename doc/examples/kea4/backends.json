@@ -68,7 +68,9 @@
 // more than one is required for redundancy. Make sure you specify the
 // contact points without spaces. Kea must be compiled with --with-cql
 // option to use this backend. To be able to use SSL cpp-driver must be
-// compiled with SSL support and certificate must be provided with ssl-cert
+// compiled with SSL support. After setting ssl to 'true' please provide
+// either ssl-ca for peer verification and/or ssl-cert/ssl-key for client
+// authentication.
 //  "lease-database": {
 //      "type": "cql",
 //      "keyspace": "keatest",

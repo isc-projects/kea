@@ -180,6 +180,7 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             }
         } else if ((keyword == "persist") ||
                    (keyword == "tcp-nodelay") ||
+                   (keyword == "ssl") ||
                    (keyword == "readonly")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
@@ -195,8 +196,10 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "contact-points") ||
+                   (keyword == "ssl-ca") ||
                    (keyword == "ssl-cert") ||
-                   (keyword == "ssl-protocol") ||
+                   (keyword == "ssl-key") ||
+                   (keyword == "ssl-password") ||
                    (keyword == "consistency") ||
                    (keyword == "serial-consistency") ||
                    (keyword == "keyspace")) {

@@ -85,7 +85,11 @@ using namespace std;
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
   MAX_ROW_ERRORS "max-row-errors"
+  SSL "ssl"
+  SSL_CA "ssl-ca"
   SSL_CERT "ssl-cert"
+  SSL_KEY "ssl-key"
+  SSL_PASSWORD "ssl-password"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   MIN_PREFERRED_LIFETIME "min-preferred-lifetime"
@@ -782,7 +786,11 @@ database_map_param: database_type
                   | consistency
                   | serial_consistency
                   | max_row_errors
+                  | ssl
+                  | ssl_ca
                   | ssl_cert
+                  | ssl_key
+                  | ssl_password
                   | unknown_map_entry
                   ;
 
@@ -866,11 +874,40 @@ max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ctx.stack_.back()->set("max-row-errors", n);
 };
 
+ssl: SSL COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ssl", n);
+};
+
+ssl_ca: SSL_CA {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr sslca(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ssl-ca", sslca);
+    ctx.leave();
+};
+
 ssl_cert: SSL_CERT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("ssl-cert", cp);
+    ElementPtr sslc(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ssl-cert", sslc);
+    ctx.leave();
+};
+
+ssl_key: SSL_KEY {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr sslk(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ssl-key", sslk);
+    ctx.leave();
+};
+
+ssl_password: SSL_PASSWORD {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr sslp(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ssl-password", sslp);
     ctx.leave();
 };
 

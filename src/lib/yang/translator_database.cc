@@ -127,6 +127,26 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     if (max_row_errors) {
         result->set("max-row-errors", max_row_errors);
     }
+    ConstElementPtr ssl = getItem(xpath + "/ssl");
+    if (ssl) {
+        result->set("ssl", ssl);
+    }
+    ConstElementPtr ssl = getItem(xpath + "/ssl-ca");
+    if (ssl_ca) {
+        result->set("ssl-ca", ssl_ca);
+    }
+    ConstElementPtr ssl = getItem(xpath + "/ssl-cert");
+    if (ssl_cert) {
+        result->set("ssl-cert", ssl_cert);
+    }
+    ConstElementPtr ssl = getItem(xpath + "/ssl-key");
+    if (ssl_key) {
+        result->set("ssl-key", ssl_key);
+    }
+    ConstElementPtr ssl = getItem(xpath + "/ssl-password");
+    if (ssl_password) {
+        result->set("ssl-password", ssl_password);
+    }
     ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));

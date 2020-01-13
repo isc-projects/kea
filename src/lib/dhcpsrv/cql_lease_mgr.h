@@ -58,6 +58,11 @@ public:
     /// - request-timeout 12000
     /// - tcp-keepalive no
     /// - tcp-nodelay no
+    /// - ssl no
+    /// - ssl-ca
+    /// - ssl-cert
+    /// - ssl-key
+    /// - ssl-password
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
