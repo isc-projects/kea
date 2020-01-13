@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,6 +141,17 @@ public:
     /// it doesn't respond to heartbeats.
     void normalStateHandler();
 
+    /// @brief Handler for the "maintained" state.
+    ///
+    /// This is a handler invoked when one of the servers detected that
+    /// its partner is in the "partner-maintained" state. The server
+    /// being in this state is awaiting the shutdown by the administrator.
+    /// The administrator shuts down the server to perform some planned
+    /// maintenance. Meanwhile, the partner being in the "partner-maintained"
+    /// state responds to all DHCP queries. The server being in the
+    /// "maintained" state responds to no DHCP queries.
+    void maintainedStateHandler();
+
     /// @brief Handler for "partner-down" state.
     ///
     /// This is a handler invoked for the server which detected a failure
@@ -166,6 +177,28 @@ public:
     /// i.e. "load-balancing", "hot-standby" or "partner-down", it transitions
     /// to the "waiting" state to try to resolve the conflict with the partner.
     void partnerDownStateHandler();
+
+    /// @brief Handler for "partner-maintained" state.
+    ///
+    /// This is a handler invoked for the server which was administratively
+    /// transitioned to the "partner-maintained" state. This is the case
+    /// when the partner needs to be shutdown for some planned maintenance.
+    ///
+    /// The server receiving ha-maintenance-start command transitions to this
+    /// state. It sends the ha-maintenance-notify command to the partner to cause
+    /// the partner to stop responding to the DHCP queries. Next, this server
+    /// starts responding to all DHCP queries. This allows the server
+    /// administrator to safely shutdown the partner as it is no longer
+    /// responsible for any portion of the DHCP traffic.
+    ///
+    /// The server being in the "partner-maintained" state remains in this
+    /// state until the first unsuccessful lease update, ha-heartbeat or any
+    /// other command send to the partner due to the issues with communication.
+    /// In that case the server assumes that the partner has been shutdown
+    /// and transitions to the "partner-down" state in which it still responds
+    /// to all DHCP queries but doesn't attempt to send lease updates to the
+    /// offline partner.
+    void partnerMaintainedStateHandler();
 
     /// @brief Handler for "ready" state.
     ///

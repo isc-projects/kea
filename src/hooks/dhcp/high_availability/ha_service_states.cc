@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,8 +17,12 @@ std::string stateToString(int state) {
         return ("hot-standby");
     case HA_LOAD_BALANCING_ST:
         return ("load-balancing");
+    case HA_MAINTAINED_ST:
+        return ("maintained");
     case HA_PARTNER_DOWN_ST:
         return ("partner-down");
+    case HA_PARTNER_MAINTAINED_ST:
+        return ("partner-maintained");
     case HA_READY_ST:
         return ("ready");
     case HA_SYNCING_ST:
@@ -46,8 +50,14 @@ int stringToState(const std::string& state_name) {
     } else if (state_name == "load-balancing") {
         return (HA_LOAD_BALANCING_ST);
 
+    } else if (state_name == "maintained") {
+        return (HA_MAINTAINED_ST);
+
     } else if (state_name == "partner-down") {
         return (HA_PARTNER_DOWN_ST);
+
+    } else if (state_name == "partner-maintained") {
+        return (HA_PARTNER_MAINTAINED_ST);
 
     } else if (state_name == "ready") {
         return (HA_READY_ST);

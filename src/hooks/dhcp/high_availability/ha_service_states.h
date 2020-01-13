@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,20 +22,26 @@ const int HA_HOT_STANDBY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 2;
 /// Load balancing state.
 const int HA_LOAD_BALANCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 3;
 
+/// Maintainedo state.
+const int HA_MAINTAINED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
+
 /// Partner down state.
-const int HA_PARTNER_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 4;
+const int HA_PARTNER_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 5;
+
+/// Partner maintained state.
+const int HA_PARTNER_MAINTAINED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
 
 /// Server ready state, i.e. synchronized database, can enable DHCP service.
-const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 5;
+const int HA_READY_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;
 
 /// Synchronizing database state.
-const int HA_SYNCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 6;
+const int HA_SYNCING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
 
 /// HA service terminated state.
-const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 7;
+const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 9;
 
 /// Server waiting state, i.e. waiting for another server to be ready.
-const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
+const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 10;
 
 /// Special state indicating that this server is unable to communicate with
 /// the partner.

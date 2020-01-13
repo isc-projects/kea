@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,9 +99,17 @@ HAService::defineStates() {
                 boost::bind(&HAService::normalStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_LOAD_BALANCING_ST)->getPausing());
 
+    defineState(HA_MAINTAINED_ST, stateToString(HA_MAINTAINED_ST),
+                boost::bind(&HAService::normalStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_MAINTAINED_ST)->getPausing());
+
     defineState(HA_PARTNER_DOWN_ST, stateToString(HA_PARTNER_DOWN_ST),
                 boost::bind(&HAService::partnerDownStateHandler, this),
                 config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_DOWN_ST)->getPausing());
+
+    defineState(HA_PARTNER_MAINTAINED_ST, stateToString(HA_PARTNER_MAINTAINED_ST),
+                boost::bind(&HAService::partnerDownStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_MAINTAINED_ST)->getPausing());
 
     defineState(HA_READY_ST, stateToString(HA_READY_ST),
                 boost::bind(&HAService::readyStateHandler, this),
